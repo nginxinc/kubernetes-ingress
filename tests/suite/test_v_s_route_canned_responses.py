@@ -77,7 +77,7 @@ class TestVSRCannedResponses:
         wait_and_assert_status_code(200, req_url, v_s_route_setup.vs_host)
         resp = requests.get(req_url, headers={"host": v_s_route_setup.vs_host})
         resp_content = resp.content.decode("utf-8")
-        assert resp.headers["content-type"] == "text/plain" and resp_content == "line1\nline2\nline3"
+        assert resp.headers["content-type"] == "text/plain" and resp_content == "line1\nline2\nline3\n"
 
     def test_update(self, kube_apis, crd_ingress_controller, v_s_route_setup):
         req_host = f"{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"

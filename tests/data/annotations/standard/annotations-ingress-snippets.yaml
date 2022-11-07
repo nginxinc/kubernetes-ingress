@@ -17,4 +17,3 @@ spec:
             name: backend2-svc
             port:
               number: 80
-

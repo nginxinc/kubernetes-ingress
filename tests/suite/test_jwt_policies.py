@@ -68,8 +68,8 @@ class TestJWTPolicies:
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy, test_namespace)
         wait_before_test()
 
-        with open(token, "r") as file:
-            data = file.readline()
+        with open(token) as file:
+            data = file.readline().strip()
         headers = {"host": vs_host, "token": data}
 
         return secret_name, pol_name, headers
@@ -84,8 +84,8 @@ class TestJWTPolicies:
         pol_name_2 = create_policy_from_yaml(kube_apis.custom_objects, policy_2, test_namespace)
 
         wait_before_test()
-        with open(token, "r") as file:
-            data = file.readline()
+        with open(token) as file:
+            data = file.readline().strip()
         headers = {"host": vs_host, "token": data}
 
         return secret_name, pol_name_1, pol_name_2, headers
