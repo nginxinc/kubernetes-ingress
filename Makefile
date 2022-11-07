@@ -6,8 +6,8 @@ VERSION = $(GIT_TAG)-SNAPSHOT-$(GIT_COMMIT_SHORT)
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
 # variables that can be overridden by the user
-PREFIX = nginx/nginx-ingress## The name of the image. For example, nginx/nginx-ingress
-TAG = $(VERSION:v%=%)## The tag of the image. For example, 2.0.0
+PREFIX ?= nginx/nginx-ingress## The name of the image. For example, nginx/nginx-ingress
+TAG ?= $(VERSION:v%=%)## The tag of the image. For example, 2.0.0
 TARGET ?= local## The target of the build. Possible values: local, container and download
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT)## The options for the docker build command. For example, --pull.
 ARCH ?= amd64## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets.
