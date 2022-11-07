@@ -73,7 +73,7 @@ class TestVSCannedResponse:
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
         resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
         resp_content = resp.content.decode("utf-8")
-        assert resp.headers["content-type"] == "text/plain" and resp_content == "line1\nline2\nline3"
+        assert resp.headers["content-type"] == "text/plain" and resp_content == "line1\nline2\nline3\n"
 
     def test_update(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         wait_before_test(1)

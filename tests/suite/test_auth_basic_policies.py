@@ -95,8 +95,8 @@ class TestAuthBasicPolicies:
         if credentials == None:
             return secret_name, pol_name, {"host": vs_host}
 
-        with open(credentials, "r") as file:
-            data = file.readline()
+        with open(credentials) as file:
+            data = file.readline().strip()
         headers = {"host": vs_host, "authorization": f"Basic {to_base64(data)}"}
 
         return secret_name, pol_name, headers
@@ -114,8 +114,8 @@ class TestAuthBasicPolicies:
         pol_name_2 = create_policy_from_yaml(kube_apis.custom_objects, policy_2, test_namespace)
         wait_before_test()
 
-        with open(credentials, "r") as file:
-            data = file.readline()
+        with open(credentials) as file:
+            data = file.readline().strip()
         headers = {"host": vs_host, "authorization": f"Basic {to_base64(data)}"}
 
         return secret_name_list, pol_name_1, pol_name_2, headers

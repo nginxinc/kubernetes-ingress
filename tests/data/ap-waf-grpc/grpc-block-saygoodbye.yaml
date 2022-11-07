@@ -8,7 +8,7 @@ spec:
       violations:
       - name: VIOL_GRPC_METHOD
         block: true
-        alarm: true 
+        alarm: true
     applicationLanguage: utf-8
     bot-defense:
       settings:
@@ -26,7 +26,7 @@ spec:
     idl-files:
     - isBase64: true
       fileName: autheid.proto
-      contents: Ly8gVGhlIGdyZWV0aW5nIHNlcnZpY2UgZGVmaW5pdGlvbi4KCnN5bnRheCA9ICJwcm90bzMiOwoKcGFja2FnZSBoZWxsb3dvcmxkOwoKc2VydmljZSBHcmVldGVyIHsKICAvLyBTZW5kcyBhIGdyZWV0aW5nCiAgcnBjIFNheUhlbGxvIChIZWxsb1JlcXVlc3QpIHJldHVybnMgKEhlbGxvUmVwbHkpIHt9Cn0KCi8vIFRoZSByZXF1ZXN0IG1lc3NhZ2UgY29udGFpbmluZyB0aGUgdXNlcidzIG5hbWUuCm1lc3NhZ2UgSGVsbG9SZXF1ZXN0IHsKICBzdHJpbmcgbmFtZSA9IDE7Cn0KCi8vIFRoZSByZXNwb25zZSBtZXNzYWdlIGNvbnRhaW5pbmcgdGhlIGdyZWV0aW5ncwptZXNzYWdlIEhlbGxvUmVwbHkgewogIHN0cmluZyBtZXNzYWdlID0gMTsKfQo= 
+      contents: Ly8gVGhlIGdyZWV0aW5nIHNlcnZpY2UgZGVmaW5pdGlvbi4KCnN5bnRheCA9ICJwcm90bzMiOwoKcGFja2FnZSBoZWxsb3dvcmxkOwoKc2VydmljZSBHcmVldGVyIHsKICAvLyBTZW5kcyBhIGdyZWV0aW5nCiAgcnBjIFNheUhlbGxvIChIZWxsb1JlcXVlc3QpIHJldHVybnMgKEhlbGxvUmVwbHkpIHt9Cn0KCi8vIFRoZSByZXF1ZXN0IG1lc3NhZ2UgY29udGFpbmluZyB0aGUgdXNlcidzIG5hbWUuCm1lc3NhZ2UgSGVsbG9SZXF1ZXN0IHsKICBzdHJpbmcgbmFtZSA9IDE7Cn0KCi8vIFRoZSByZXNwb25zZSBtZXNzYWdlIGNvbnRhaW5pbmcgdGhlIGdyZWV0aW5ncwptZXNzYWdlIEhlbGxvUmVwbHkgewogIHN0cmluZyBtZXNzYWdlID0gMTsKfQo=
     name: valid_string_encoding_policy
     template:
       name: POLICY_TEMPLATE_NGINX_BASE
