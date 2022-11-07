@@ -1,7 +1,7 @@
 apiVersion: k8s.nginx.org/v1
-kind: Policy 
+kind: Policy
 metadata:
-  name: webapp-policy 
+  name: webapp-policy
 spec:
   accessControl:
     allow:

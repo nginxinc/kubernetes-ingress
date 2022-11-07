@@ -4,8 +4,8 @@ metadata:
   name: dns-udp
 spec:
   listener:
-    name: dns-udp 
-    protocol: UDP 
+    name: dns-udp
+    protocol: UDP
   upstreams:
   - name: dns-app
     service: coredns

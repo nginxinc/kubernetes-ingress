@@ -53,11 +53,11 @@ $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.c
 </html>
 ```
 
-We got a 403 response from NGINX, which means that our policy successfully blocked our request. 
+We got a 403 response from NGINX, which means that our policy successfully blocked our request.
 
 ## Step 5 - Update the Policy
 
-In this step, we update the policy to allow requests from clients from the subnet `10.0.0.0/8`. Make sure to change the `allow` field of the `access-control-policy-allow.yaml` according to your environment. 
+In this step, we update the policy to allow requests from clients from the subnet `10.0.0.0/8`. Make sure to change the `allow` field of the `access-control-policy-allow.yaml` according to your environment.
 
 Update the policy:
 ```

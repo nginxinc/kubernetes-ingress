@@ -45,5 +45,5 @@ The dashboard comes with 4 rows with the following graphs (the corresponding Pro
     * Upstream Error Rate (`nginxplus_upstream_server_responses`). This graph shows all the `4XX` and `5XX` status code responses of upstreams over time.
     * Upstream Server Count (`nginxplus_upstream_server_state`). This graph shows the count for the total number of upstream servers.
     * Upstream Server State (`nginxplus_upstream_server_state`). This graph shows the current state of the upstream servers.
-* SSL 
-    * SSL Performance (`nginxplus_ssl_handshakes`, `nginxplus_ssl_handshakes_failed`). The graph shows the total number of SSL handshakes and the total number of SSL handshakes that failed. 
+* SSL
+    * SSL Performance (`nginxplus_ssl_handshakes`, `nginxplus_ssl_handshakes_failed`). The graph shows the total number of SSL handshakes and the total number of SSL handshakes that failed.

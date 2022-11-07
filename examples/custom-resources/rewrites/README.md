@@ -2,7 +2,7 @@
 
 You can configure NGINX to rewrite the URI of a request before sending it to the application. For example, `/tea/green` can be rewritten to `/green`.
 
-To configure URI rewriting you need to use the [ActionProxy](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) of the [VirtualServer or VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/). 
+To configure URI rewriting you need to use the [ActionProxy](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) of the [VirtualServer or VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/).
 
 ## Example with a Prefix Path
 
