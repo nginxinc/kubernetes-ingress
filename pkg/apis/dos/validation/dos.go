@@ -173,7 +173,7 @@ func validateAppProtectDosMonitor(apDosMonitor v1beta1.ApDosMonitor) error {
 		allErrs = append(allErrs, validation2.ValidateParameter(apDosMonitor.Protocol, validMonitorProtocol, fieldPath)...)
 		err := allErrs.ToAggregate()
 		if err != nil {
-			return fmt.Errorf("app Protect Dos Monitor Protocol must be: %v", err)
+			return fmt.Errorf("app Protect Dos Monitor Protocol must be: %w", err)
 		}
 	}
 
