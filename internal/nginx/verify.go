@@ -37,7 +37,15 @@ func newVerifyClient(timeout time.Duration) *verifyClient {
 // GetConfigVersion get version number that we put in the nginx config to verify that we're using
 // the correct config.
 func (c *verifyClient) GetConfigVersion() (int, error) {
-	resp, err := c.client.Get("http://config-version/configVersion")
+	ctx := context.Background()
+	reqContext, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(reqContext, "GET", "http://config-version/configVersion", nil)
+	if err != nil {
+		return 0, fmt.Errorf("error creating request: %w", err)
+	}
+
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("error getting client: %w", err)
 	}
