@@ -41,7 +41,7 @@ var (
 	watchNamespaces []string
 
 	watchSecretNamespace = flag.String("watch-secret-namespace", "",
-		`Comma separated list of namespaces the Ingress Controller should watch for secrets. By default the Ingress Controller watches all namespaces`)
+		`Comma separated list of namespaces the Ingress Controller should watch for secrets. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See `watch-namespace`. `)
 
 	watchSecretNamespaces []string
 
