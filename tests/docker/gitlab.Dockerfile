@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM python:3.9
+FROM python:3.11.0
 
 ARG GCLOUD_VERSION=364.0.0
 ARG HELM_VERSION=3.5.4
