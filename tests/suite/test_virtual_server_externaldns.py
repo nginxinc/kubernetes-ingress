@@ -1,10 +1,10 @@
 import pytest
 from settings import TEST_DATA
-from suite.custom_assertions import assert_event
-from suite.custom_resources_utils import is_dnsendpoint_present
-from suite.resources_utils import get_events, wait_before_test
-from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml
-from suite.yaml_utils import get_name_from_yaml, get_namespace_from_yaml
+from suite.utils.custom_assertions import assert_event
+from suite.utils.custom_resources_utils import is_dnsendpoint_present
+from suite.utils.resources_utils import get_events, wait_before_test
+from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
+from suite.utils.yaml_utils import get_name_from_yaml, get_namespace_from_yaml
 
 VS_YAML = f"{TEST_DATA}/virtual-server-external-dns/standard/virtual-server.yaml"
 

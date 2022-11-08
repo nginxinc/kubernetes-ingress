@@ -3,8 +3,7 @@ import logging
 import time
 
 import pytest
-from kubernetes.client.rest import ApiException
-from suite.resources_utils import get_first_pod_name, wait_until_all_pods_are_ready
+from suite.utils.resources_utils import get_first_pod_name, wait_until_all_pods_are_ready
 
 
 @pytest.mark.ingresses
@@ -47,7 +46,7 @@ class TestBuildVersion:
                     raise ex
 
         br = io.StringIO(api_response)
-        _log = br.readline()
+        _log = br.readline().strip()
         try:
             _info = _log[_log.find("Version") :].strip()
             logging.info(f"Version and GitCommit info: {_info}")

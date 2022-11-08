@@ -19,6 +19,7 @@ def get_certificate(ip_address, host, port, timeout=10) -> str:
     :return: str
     """
     context = ssl.create_default_context()
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
     ip_address = ip_address.strip("[]")
@@ -60,7 +61,7 @@ class SNIAdapter(HTTPAdapter):
         # overrides the SNI to the value of the host header
         # See urllib3.connection.HTTPSConnection.connect
         self.poolmanager.connection_pool_kw["server_hostname"] = request.headers["host"]
-        return super(SNIAdapter, self).send(request, **kwargs)
+        return super().send(request, **kwargs)
 
 
 def create_sni_session():

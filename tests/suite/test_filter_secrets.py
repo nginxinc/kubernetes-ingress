@@ -1,7 +1,6 @@
 import pytest
-import requests
 from settings import TEST_DATA
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_namespace_with_name_from_yaml,
     create_secret_from_yaml,
     delete_namespace,

@@ -1,8 +1,8 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.custom_assertions import assert_event, assert_vs_conf_not_exists
-from suite.resources_utils import (
+from suite.utils.custom_assertions import assert_event, assert_vs_conf_not_exists
+from suite.utils.resources_utils import (
     create_example_app,
     ensure_response_from_backend,
     get_events,
@@ -10,14 +10,14 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
     create_virtual_server_from_yaml,
     get_vs_nginx_template_conf,
     patch_v_s_route_from_yaml,
     patch_virtual_server_from_yaml,
 )
-from suite.yaml_utils import get_first_host_from_yaml
+from suite.utils.yaml_utils import get_first_host_from_yaml
 
 
 @pytest.mark.vsr

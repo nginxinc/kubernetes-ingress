@@ -2,7 +2,7 @@ from ssl import SSLError
 
 import pytest
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_secret_from_yaml,
     delete_secret,
     ensure_connection,
@@ -10,7 +10,7 @@ from suite.resources_utils import (
     replace_secret,
     wait_before_test,
 )
-from suite.ssl_utils import get_server_certificate_subject
+from suite.utils.ssl_utils import get_server_certificate_subject
 
 
 def assert_cn(endpoint, cn):

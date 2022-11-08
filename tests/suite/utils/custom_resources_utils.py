@@ -5,9 +5,9 @@ from pprint import pprint
 
 import pytest
 import yaml
-from kubernetes.client import ApiextensionsV1Api, CoreV1Api, CustomObjectsApi
+from kubernetes.client import ApiextensionsV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
-from suite.resources_utils import ensure_item_removal, get_file_contents
+from suite.utils.resources_utils import ensure_item_removal
 
 
 def create_crd(api_extensions_v1: ApiextensionsV1Api, body) -> None:

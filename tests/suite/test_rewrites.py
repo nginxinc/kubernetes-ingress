@@ -1,13 +1,13 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_items_from_yaml,
     delete_items_from_yaml,
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
     create_virtual_server_from_yaml,
     delete_v_s_route,

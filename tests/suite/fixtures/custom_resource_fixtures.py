@@ -1,11 +1,10 @@
 """Describe project shared pytest fixtures related to setup of custom resources and apps."""
 
 import pytest
-import yaml
 from settings import TEST_DATA
-from suite.custom_resources_utils import create_gc_from_yaml, create_ts_from_yaml, delete_gc, delete_ts
-from suite.fixtures import PublicEndpoint
-from suite.resources_utils import (
+from suite.fixtures.fixtures import PublicEndpoint
+from suite.utils.custom_resources_utils import create_gc_from_yaml, create_ts_from_yaml, delete_gc, delete_ts
+from suite.utils.resources_utils import (
     create_deployment_with_name,
     create_example_app,
     create_items_from_yaml,
@@ -19,13 +18,13 @@ from suite.resources_utils import (
     get_first_pod_name,
     wait_until_all_pods_are_ready,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
     create_virtual_server_from_yaml,
     delete_v_s_route,
     delete_virtual_server,
 )
-from suite.yaml_utils import (
+from suite.utils.yaml_utils import (
     get_first_host_from_yaml,
     get_paths_from_vs_yaml,
     get_paths_from_vsr_yaml,

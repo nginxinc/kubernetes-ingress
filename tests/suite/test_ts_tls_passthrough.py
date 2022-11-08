@@ -2,9 +2,9 @@ from pprint import pprint
 
 import pytest
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import create_ts_from_yaml, delete_ts, read_ts
-from suite.fixtures import PublicEndpoint
-from suite.resources_utils import (
+from suite.fixtures.fixtures import PublicEndpoint
+from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, read_ts
+from suite.utils.resources_utils import (
     create_items_from_yaml,
     delete_items_from_yaml,
     get_first_pod_name,
@@ -13,9 +13,9 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.ssl_utils import create_sni_session
-from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server, read_vs
-from suite.yaml_utils import get_first_host_from_yaml
+from suite.utils.ssl_utils import create_sni_session
+from suite.utils.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server, read_vs
+from suite.utils.yaml_utils import get_first_host_from_yaml
 
 
 class TransportServerTlsSetup:

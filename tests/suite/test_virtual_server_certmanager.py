@@ -1,10 +1,9 @@
 import pytest
-import requests
 from settings import TEST_DATA
-from suite.custom_assertions import wait_and_assert_status_code
-from suite.resources_utils import create_secret_from_yaml, is_secret_present, wait_before_test
-from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml
-from suite.yaml_utils import get_secret_name_from_vs_yaml
+from suite.utils.custom_assertions import wait_and_assert_status_code
+from suite.utils.resources_utils import create_secret_from_yaml, is_secret_present, wait_before_test
+from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
+from suite.utils.yaml_utils import get_secret_name_from_vs_yaml
 
 
 @pytest.mark.vs
