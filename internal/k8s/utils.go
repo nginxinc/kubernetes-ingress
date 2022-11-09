@@ -18,6 +18,7 @@ package k8s
 
 import (
 	"fmt"
+	discovery_v1 "k8s.io/api/discovery/v1"
 	"reflect"
 	"strings"
 
@@ -87,11 +88,44 @@ type storeToEndpointLister struct {
 	cache.Store
 }
 
+// Store for EndpointSlices
+type storeToEndpointSliceLister struct {
+	cache.Store
+}
+
+// Indexer for EndpointSlices
+type indexerToEndpointSliceLister struct {
+	cache.Indexer
+}
+
 // GetServiceEndpoints returns the endpoints of a service, matched on service name.
 func (s *storeToEndpointLister) GetServiceEndpoints(svc *v1.Service) (ep v1.Endpoints, err error) {
 	for _, m := range s.Store.List() {
 		ep = *m.(*v1.Endpoints)
 		if svc.Name == ep.Name && svc.Namespace == ep.Namespace {
+			return ep, nil
+		}
+	}
+	return ep, fmt.Errorf("could not find endpoints for service: %v", svc.Name)
+}
+
+// GetServiceEndpoints returns the endpoints of a service, matched on service name.
+func (s *storeToEndpointSliceLister) GetServiceEndpointSlices(svc *v1.Service) (ep discovery_v1.EndpointSlice, err error) {
+
+	// -- Code to be used when Indexer is set up
+	//svcNameKey := fmt.Sprintf("%s/%s", svc.Namespace, svc.Name)
+	//epStore, exists, err := s.Store.GetByKey(svcNameKey)
+	//ep = *epStore.(*discovery_v1.EndpointSlice)
+	//if !exists {
+	//
+	//}
+	//if err != nil {
+	//
+	//}
+
+	for _, epStore := range s.Store.List() {
+		ep = *epStore.(*discovery_v1.EndpointSlice)
+		if svc.Name == ep.Labels["kubernetes.io/service-name"] && svc.Namespace == ep.Namespace {
 			return ep, nil
 		}
 	}

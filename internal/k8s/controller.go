@@ -19,6 +19,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	discovery_v1 "k8s.io/api/discovery/v1"
 	"net"
 	"strconv"
 	"strings"
@@ -115,6 +116,7 @@ type LoadBalancerController struct {
 	ingressLister                 []storeToIngressLister
 	svcLister                     []cache.Store
 	endpointLister                []storeToEndpointLister
+	endpointSliceLister           []storeToEndpointSliceLister
 	configMapLister               storeToConfigMapLister
 	podLister                     []indexerToPodLister
 	secretLister                  []cache.Store
@@ -282,6 +284,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.addIngressHandler(createIngressHandlers(lbc))
 	lbc.addServiceHandler(createServiceHandlers(lbc))
 	lbc.addEndpointHandler(createEndpointHandlers(lbc))
+	lbc.addEndpointSliceHandlerWithStore(createEndpointSliceHandlers(lbc)) //New code
 	lbc.addPodHandler()
 
 	secretsTweakListOptionsFunc := func(options *meta_v1.ListOptions) {
@@ -519,6 +522,36 @@ func (lbc *LoadBalancerController) addEndpointHandler(handlers cache.ResourceEve
 	}
 }
 
+// addEndpointSliceHandlerWithStore adds the handler for EndpointSlices to the controller
+func (lbc *LoadBalancerController) addEndpointSliceHandlerWithStore(handlers cache.ResourceEventHandlerFuncs) {
+	for _, sif := range lbc.sharedInformerFactory {
+		informer := sif.Discovery().V1().EndpointSlices().Informer()
+		informer.AddEventHandler(handlers)
+		var el storeToEndpointSliceLister
+		el.Store = informer.GetStore()
+		lbc.endpointSliceLister = append(lbc.endpointSliceLister, el)
+
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
+}
+
+// addEndpointSliceHandlerWithIndexer adds the handler for EndpointSlices to the controller
+//func (lbc *LoadBalancerController) addEndpointSliceHandlerWithIndexer(handlers cache.ResourceEventHandlerFuncs) {
+//	for _, sif := range lbc.sharedInformerFactory {
+//		informer := sif.Discovery().V1().EndpointSlices().Informer()
+//		indexerErr := informer.AddIndexers("metadata/label....")
+//		if indexerErr != nil {
+//			glog.Errorf("unable to add indexer %s for EndpointSlices", "the indexer")
+//		}
+//		informer.AddEventHandler(handlers)
+//		var el indexerToEndpointSliceLister
+//		el.Indexer = informer.GetIndexer().ByIndex("metadata/label...")
+//		lbc.endpointSliceLister = append(lbc.endpointSliceLister, el)
+//
+//		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+//	}
+//}
+
 // addConfigMapHandler adds the handler for config maps to the controller
 func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
 	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformer(
@@ -745,6 +778,55 @@ func (lbc *LoadBalancerController) syncEndpoints(task task) {
 	}
 }
 
+func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
+	key := task.Key
+	var obj interface{}
+	var endpointSliceExists bool
+	var err error
+	glog.V(3).Infof("Syncing EndpointSlices %v", key)
+
+	for _, el := range lbc.endpointSliceLister {
+		obj, endpointSliceExists, err = el.GetByKey(key)
+		if endpointSliceExists {
+			break
+		}
+	}
+
+	if err != nil {
+		lbc.syncQueue.Requeue(task, err)
+		return
+	}
+
+	if !endpointSliceExists {
+		return
+	}
+
+	endpointSlice := obj.(*discovery_v1.EndpointSlice)
+	//resources := lbc.configuration.FindResourcesForEndpointSlices(endpointSlice.Namespace, endpointSlice.Name)
+	// Find EndpointSlices based on service name. This is mapped for the label `kubernetes.io/service-name`.
+	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, endpointSlice.Labels["kubernetes.io/service-name"])
+
+	resourceExes := lbc.createExtendedResources(svcResource)
+
+	if lbc.areCustomResourcesEnabled {
+		if len(resourceExes.VirtualServerExes) > 0 {
+			glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.VirtualServerExes)
+			err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
+			if err != nil {
+				glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.VirtualServerExes, err)
+			}
+		}
+
+		if len(resourceExes.TransportServerExes) > 0 {
+			glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.TransportServerExes)
+			err := lbc.configurator.UpdateEndpointsForTransportServers(resourceExes.TransportServerExes)
+			if err != nil {
+				glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.TransportServerExes, err)
+			}
+		}
+	}
+}
+
 func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) configs.ExtendedResources {
 	var result configs.ExtendedResources
 
@@ -893,6 +975,8 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncConfigMap(task)
 	case endpoints:
 		lbc.syncEndpoints(task)
+	case endpointslice:
+		lbc.syncEndpointSlices(task)
 	case secret:
 		lbc.syncSecret(task)
 	case service:
@@ -3435,6 +3519,7 @@ func (lbc *LoadBalancerController) getExternalEndpointsForIngressBackend(backend
 }
 
 func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networking.IngressBackend, svc *api_v1.Service) (result []podEndpoint, isExternal bool, err error) {
+	// Get Endpoints from api_v1.Endpoints
 	var endps api_v1.Endpoints
 	for _, el := range lbc.endpointLister {
 		endps, err = el.GetServiceEndpoints(svc)
@@ -3442,6 +3527,19 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 			break
 		}
 	}
+
+	// New code
+	// Get Endpoints from discovery_v1.EndpointSlice
+	var endpointSlices discovery_v1.EndpointSlice
+	for _, el := range lbc.endpointSliceLister {
+		endpointSlices, err = el.GetServiceEndpointSlices(svc)
+		if err == nil {
+			break
+		}
+	}
+
+	glog.V(3).Infof("Found EndpointSlices %v", endpointSlices)
+
 	if err != nil {
 		if svc.Spec.Type == api_v1.ServiceTypeExternalName {
 			if !lbc.isNginxPlus {
@@ -3454,12 +3552,70 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 		return nil, false, err
 	}
 
+	//New code
+	//Check if our endpointslices object has endpoints in it.
+	if len(endpointSlices.Endpoints) >= 1 {
+		result, err = lbc.getEndpointsForPortFromEndpointSlice(endpointSlices, backend.Service.Port, svc)
+
+		if err != nil {
+			return nil, false, err
+		}
+		return result, false, nil
+	}
+
 	result, err = lbc.getEndpointsForPort(endps, backend.Service.Port, svc)
 	if err != nil {
 		glog.V(3).Infof("Error getting endpoints for service %s port %v: %v", svc.Name, configs.GetBackendPortAsString(backend.Service.Port), err)
 		return nil, false, err
 	}
 	return result, false, nil
+}
+
+func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlice(endpointSlice discovery_v1.EndpointSlice, backendPort networking.ServiceBackendPort, svc *api_v1.Service) ([]podEndpoint, error) {
+	var targetPort int32
+	var err error
+
+	for _, port := range svc.Spec.Ports {
+		if (backendPort.Name == "" && port.Port == backendPort.Number) || port.Name == backendPort.Name {
+			targetPort, err = lbc.getTargetPort(port, svc)
+			if err != nil {
+				return nil, fmt.Errorf("error determining target port for port %v in Ingress: %w", backendPort, err)
+			}
+			break
+		}
+	}
+
+	if targetPort == 0 {
+		return nil, fmt.Errorf("no port %v in svc %s", backendPort, svc.Name)
+	}
+
+	// Check if the port referenced in the EndpointSlice is the same as
+	// the target port
+	for _, endpointSlicePort := range endpointSlice.Ports {
+		if *endpointSlicePort.Port == targetPort {
+			fmt.Println("Nice!")
+			var endpoints []podEndpoint
+			for _, endpoint := range endpointSlice.Endpoints {
+				for _, endpointAddress := range endpoint.Addresses {
+					address := ipv6SafeAddrPort(endpointAddress, *endpointSlicePort.Port)
+					podEndpoint := podEndpoint{
+						Address: address,
+					}
+					if endpoint.TargetRef != nil {
+						parentType, parentName :=
+							lbc.getPodOwnerTypeAndNameFromAddress(endpoint.TargetRef.Namespace, endpoint.TargetRef.Name)
+						podEndpoint.OwnerType = parentType
+						podEndpoint.OwnerName = parentName
+						podEndpoint.PodName = endpoint.TargetRef.Name
+					}
+					endpoints = append(endpoints, podEndpoint)
+				}
+			}
+			return endpoints, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no endpoints for target port %v in service %s", targetPort, svc.Name)
 }
 
 func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, backendPort networking.ServiceBackendPort, svc *api_v1.Service) ([]podEndpoint, error) {

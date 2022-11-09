@@ -344,13 +344,14 @@ type Configuration struct {
 	globalConfigurationValidator *validation.GlobalConfigurationValidator
 	transportServerValidator     *validation.TransportServerValidator
 
-	secretReferenceChecker     *secretReferenceChecker
-	serviceReferenceChecker    *serviceReferenceChecker
-	endpointReferenceChecker   *serviceReferenceChecker
-	policyReferenceChecker     *policyReferenceChecker
-	appPolicyReferenceChecker  *appProtectResourceReferenceChecker
-	appLogConfReferenceChecker *appProtectResourceReferenceChecker
-	appDosProtectedChecker     *dosResourceReferenceChecker
+	secretReferenceChecker        *secretReferenceChecker
+	serviceReferenceChecker       *serviceReferenceChecker
+	endpointReferenceChecker      *serviceReferenceChecker
+	endpointSliceReferenceChecker *serviceReferenceChecker //New code
+	policyReferenceChecker        *policyReferenceChecker
+	appPolicyReferenceChecker     *appProtectResourceReferenceChecker
+	appLogConfReferenceChecker    *appProtectResourceReferenceChecker
+	appDosProtectedChecker        *dosResourceReferenceChecker
 
 	isPlus                  bool
 	appProtectEnabled       bool
@@ -853,6 +854,11 @@ func (c *Configuration) FindResourcesForService(svcNamespace string, svcName str
 func (c *Configuration) FindResourcesForEndpoints(endpointsNamespace string, endpointsName string) []Resource {
 	// Resources reference not endpoints but the corresponding service, which has the same namespace and name
 	return c.findResourcesForResourceReference(endpointsNamespace, endpointsName, c.endpointReferenceChecker)
+}
+
+// New Code
+func (c *Configuration) FindResourcesForEndpointSlices(endpointSlicesNamespace string, endpointSliceName string) []Resource {
+	return c.findResourcesForResourceReference(endpointSlicesNamespace, endpointSliceName, c.endpointSliceReferenceChecker)
 }
 
 // FindResourcesForSecret finds resources that reference the specified secret.
