@@ -3572,6 +3572,7 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 }
 
 func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlice(endpointSlice discovery_v1.EndpointSlice, backendPort networking.ServiceBackendPort, svc *api_v1.Service) ([]podEndpoint, error) {
+	/// Move this code to a function called 'validateTargetPort`
 	var targetPort int32
 	var err error
 
@@ -3586,11 +3587,13 @@ func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlice(endpoint
 	}
 
 	if targetPort == 0 {
-		return nil, fmt.Errorf("no port %v in svc %s", backendPort, svc.Name)
+		return nil, fmt.Errorf("no port %v in service %s", backendPort, svc.Name)
 	}
+	/// Move this code to a function called 'validateTargetPort`
 
-	// Check if the port referenced in the EndpointSlice is the same as
-	// the target port
+	// Endpoints may be duplicated across multiple EndpointSlices.
+	// Using a set to prevent returning duplicate endpoints.
+	//endpointSet := make(map[podEndpoint]struct{})
 	for _, endpointSlicePort := range endpointSlice.Ports {
 		if *endpointSlicePort.Port == targetPort {
 			fmt.Println("Nice!")

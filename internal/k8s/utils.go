@@ -127,6 +127,7 @@ func (s *storeToEndpointSliceLister) GetServiceEndpointSlices(svc *v1.Service) (
 		ep = *epStore.(*discovery_v1.EndpointSlice)
 		if svc.Name == ep.Labels["kubernetes.io/service-name"] && svc.Namespace == ep.Namespace {
 			return ep, nil
+			// Return a list of endpointslices there can be more than one per service.
 		}
 	}
 	return ep, fmt.Errorf("could not find endpoints for service: %v", svc.Name)
