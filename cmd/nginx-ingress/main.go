@@ -659,10 +659,7 @@ func createPlusAndLatencyCollectors(
 	return plusCollector, syslogListener, lc
 }
 
-func createHealthEndpoint(
-	plusClient *client.NginxClient,
-	cnf *configs.Configurator,
-) {
+func createHealthEndpoint(plusClient *client.NginxClient, cnf *configs.Configurator) {
 	glog.Infof("Starting Health Endpoint")
 	go healthcheck.RunHealthCheck(plusClient, cnf)
 }

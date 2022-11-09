@@ -2,10 +2,11 @@ package healthcheck
 
 import (
 	"fmt"
+	"path"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	"k8s.io/utils/strings/slices"
-	"path"
 
 	"net/http"
 	"strconv"
@@ -24,13 +25,17 @@ func RunHealthCheck(plusClient *client.NginxClient,
 
 func runServer(port string, plusClient *client.NginxClient, cnf *configs.Configurator) {
 	http.HandleFunc("/healthcheck/", func(w http.ResponseWriter, r *http.Request) {
-		var hostname = path.Base(r.URL.Path)
+		hostname := path.Base(r.URL.Path)
 		glog.Infof("Path: %s", hostname)
 
-		var upstreamNames = cnf.GetUpstreamsforHost(hostname)
+		upstreamNames := cnf.GetUpstreamsforHost(hostname)
 		glog.Infof("Upstream Names: %s", upstreamNames)
 
 		upstreams, err := plusClient.GetUpstreams()
+		if err != nil {
+			// handle error
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		var states []string
 
 		for name, u := range *upstreams {
