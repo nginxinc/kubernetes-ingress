@@ -17,8 +17,7 @@ import (
 
 const healthEndpoint = "/healthcheck"
 
-func RunHealthCheck(plusClient *client.NginxClient,
-	cnf *configs.Configurator) {
+func RunHealthCheck(plusClient *client.NginxClient, cnf *configs.Configurator) {
 	glog.Infof("Running Health Endpoint at port 9000")
 	runServer(strconv.Itoa(9000), plusClient, cnf)
 }
