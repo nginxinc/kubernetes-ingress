@@ -2,8 +2,13 @@ package healthcheck
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/nginx-plus-go-client/client"
 )
 
 // ListenAndServeTLS is a drop-in replacement for a default
@@ -35,4 +40,29 @@ func ListenAndServeTLS(addr string, cert, key []byte, handler http.Handler) erro
 // the content of the corresponding files.
 func LoadX509KeyPair(cert, key []byte) (tls.Certificate, error) {
 	return tls.X509KeyPair(cert, key)
+}
+
+// API constructs an http.Handler with all healtcheck routes.
+func API(client *client.NginxClient, cnf *configs.Configurator) http.Handler {
+	health := HealthHandler{
+		client: client,
+		cnf:    cnf,
+	}
+	mux := chi.NewRouter()
+	mux.MethodFunc(http.MethodGet, "/", health.Info)
+	mux.MethodFunc(http.MethodGet, "/healthcheck/{hostname}", health.Retrieve)
+	return mux
+}
+
+// RunHealtcheckServer takes configs and starts healtcheck service.
+func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Configurator) {
+	healthServer := http.Server{
+		Addr:    fmt.Sprintf(":%s", port),
+		Handler: API(nc, cnf),
+
+		// For now hardcoded!
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	healthServer.ListenAndServe()
 }
