@@ -6,7 +6,7 @@ docker_tag=edge
 
 commit_tag=$(git tag --contains ${git_commit})
 
-if [[ ${commit_tag} == ${git_tag} ]]; then
+if [[ ${commit_tag} == *${git_tag}* ]]; then
     # we're on the tag, use the docker image for the tag
     docker_tag=${git_tag//v/}
     echo ${docker_tag}
