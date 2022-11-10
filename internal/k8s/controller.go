@@ -866,6 +866,9 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 // it will report warnings. (See https://github.com/nginxinc/kubernetes-ingress/issues/1448 )
 func (lbc *LoadBalancerController) preSyncSecrets() {
 	for _, ni := range lbc.namespacedInformers {
+		if !ni.isSecretsEnabledNamespace {
+			break
+		}
 		objects := ni.secretLister.List()
 		glog.V(3).Infof("PreSync %d Secrets", len(objects))
 

@@ -2298,7 +2298,7 @@ func TestPreSyncSecrets(t *testing.T) {
 		},
 	}
 	nsi := make(map[string]*namespacedInformer)
-	nsi[""] = &namespacedInformer{secretLister: secretLister}
+	nsi[""] = &namespacedInformer{secretLister: secretLister, isSecretsEnabledNamespace: true}
 
 	lbc := LoadBalancerController{
 		isNginxPlus:         true,
