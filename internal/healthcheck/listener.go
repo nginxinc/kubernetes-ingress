@@ -40,7 +40,7 @@ func runServer(port string, plusClient *client.NginxClient, cnf *configs.Configu
 		for name, u := range *upstreams {
 			if slices.Contains(upstreamNames, name) {
 				for _, p := range u.Peers {
-					glog.Infof("Peer ID: %s, Name: %s, State: %s ", p.ID, p.Name, p.State)
+					glog.Infof("Peer ID: %v, Name: %v, State: %v", p.ID, p.Name, p.State)
 					states = append(states, "IP: "+p.Name+", State: "+p.State)
 				}
 			}
