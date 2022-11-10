@@ -44,11 +44,12 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error adding TransportServer to the transportserver lister: %v", err)
 	}
-	tsl := []cache.Store{tsLister}
+	nsi := make(map[string]*namespacedInformer)
+	nsi["default"] = &namespacedInformer{transportServerLister: tsLister}
 	su := statusUpdater{
-		transportServerLister: tsl,
-		confClient:            fakeClient,
-		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		namespacedInformers: nsi,
+		confClient:          fakeClient,
+		keyFunc:             cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 
 	err = su.UpdateTransportServerStatus(ts, "after status", "after reason", "after message")
@@ -104,11 +105,12 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error adding TransportServer to the transportserver lister: %v", err)
 	}
-	tsl := []cache.Store{tsLister}
+	nsi := make(map[string]*namespacedInformer)
+	nsi["default"] = &namespacedInformer{transportServerLister: tsLister}
 	su := statusUpdater{
-		transportServerLister: tsl,
-		confClient:            fakeClient,
-		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		namespacedInformers: nsi,
+		confClient:          fakeClient,
+		keyFunc:             cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 
 	err = su.UpdateTransportServerStatus(ts, "same status", "same reason", "same message")
@@ -158,12 +160,13 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 		nil,
 	)
 
-	tsl := []cache.Store{tsLister}
+	nsi := make(map[string]*namespacedInformer)
+	nsi[""] = &namespacedInformer{transportServerLister: tsLister}
 
 	su := statusUpdater{
-		transportServerLister: tsl,
-		confClient:            fakeClient,
-		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		namespacedInformers: nsi,
+		confClient:          fakeClient,
+		keyFunc:             cache.DeletionHandlingMetaNamespaceKeyFunc,
 		externalEndpoints: []conf_v1.ExternalEndpoint{
 			{
 				IP:    "123.123.123.123",
@@ -214,14 +217,15 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 		t.Errorf("Error adding Ingress to the ingress lister: %v", err)
 	}
 
-	isl := []storeToIngressLister{ingLister}
+	nsi := make(map[string]*namespacedInformer)
+	nsi[""] = &namespacedInformer{ingressLister: ingLister}
 
 	su := statusUpdater{
 		client:                fakeClient,
 		namespace:             "namespace",
 		externalServiceName:   "service-name",
 		externalStatusAddress: "123.123.123.123",
-		ingressLister:         isl,
+		namespacedInformers:   nsi,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 	err = su.ClearIngressStatus(ing)
@@ -319,13 +323,14 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 		t.Errorf("Error adding Ingress to the ingress lister: %v", err)
 	}
 
-	isl := []storeToIngressLister{ingLister}
+	nsi := make(map[string]*namespacedInformer)
+	nsi[""] = &namespacedInformer{ingressLister: ingLister}
 
 	su := statusUpdater{
 		client:                fakeClient,
 		namespace:             "namespace",
 		externalStatusAddress: "",
-		ingressLister:         isl,
+		namespacedInformers:   nsi,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 
