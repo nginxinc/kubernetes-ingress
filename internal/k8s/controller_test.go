@@ -3,6 +3,7 @@ package k8s
 import (
 	"errors"
 	"fmt"
+	discovery_v1 "k8s.io/api/discovery/v1"
 	"reflect"
 	"sort"
 	"strings"
@@ -468,6 +469,90 @@ func TestFormatWarningsMessages(t *testing.T) {
 	if result != expected {
 		t.Errorf("formatWarningMessages(%v) returned %v but expected %v", warnings, result, expected)
 	}
+}
+
+func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
+
+	lbc := LoadBalancerController{
+		isNginxPlus: true,
+	}
+
+	backendServicePort := networking.ServiceBackendPort{
+		Number: 8080,
+	}
+
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		expectedEps       []podEndpoint
+	}{
+		{
+			desc:       "duplicate endpoints in an endpointslice",
+			targetPort: 8080,
+			expectedEps: []podEndpoint{
+				{
+					Address: "1.2.3.4:8080",
+					MeshPodOwner: configs.MeshPodOwner{
+						OwnerType: "deployment",
+						OwnerName: "deploy-1",
+					},
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+					},
+				},
+				{
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	svc := api_v1.Service{
+		TypeMeta: meta_v1.TypeMeta{},
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "coffee-svc",
+			Namespace: "default",
+		},
+		Spec: api_v1.ServiceSpec{
+			Ports: []api_v1.ServicePort{
+				{
+					Name:       "foo",
+					Port:       80,
+					TargetPort: intstr.FromInt(8080),
+				},
+			},
+		},
+		Status: api_v1.ServiceStatus{},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			//gotEndps := getEndpointsBySubselectedPods(test.targetPort, pods, svcEps)
+			for _, endpointSlice := range test.svcEndpointSlices {
+				_, _ = lbc.getEndpointsForPortFromEndpointSlice(endpointSlice, backendServicePort, &svc)
+			}
+
+			//if !reflect.DeepEqual(gotEndps, test.expectedEps) {
+			//	t.Errorf("getEndpointsBySubselectedPods() = %v, want %v", gotEndps, test.expectedEps)
+			//}
+		})
+	}
+
 }
 
 func TestGetEndpointsBySubselectedPods(t *testing.T) {
