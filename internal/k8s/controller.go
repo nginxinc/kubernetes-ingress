@@ -3530,7 +3530,7 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 
 	// New code
 	// Get Endpoints from discovery_v1.EndpointSlice
-	var endpointSlices discovery_v1.EndpointSlice
+	var endpointSlices []discovery_v1.EndpointSlice
 	for _, el := range lbc.endpointSliceLister {
 		endpointSlices, err = el.GetServiceEndpointSlices(svc)
 		if err == nil {
@@ -3554,8 +3554,8 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 
 	//New code
 	//Check if our endpointslices object has endpoints in it.
-	if len(endpointSlices.Endpoints) >= 1 {
-		result, err = lbc.getEndpointsForPortFromEndpointSlice(endpointSlices, backend.Service.Port, svc)
+	for _, endpointSlice := range endpointSlices {
+		result, err = lbc.getEndpointsForPortFromEndpointSlice(endpointSlice, backend.Service.Port, svc)
 
 		if err != nil {
 			return nil, false, err
