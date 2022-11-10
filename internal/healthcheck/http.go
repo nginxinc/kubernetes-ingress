@@ -118,7 +118,7 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HealthHandler) Status(w http.ResponseWriter, r *http.Request) {
-	// possible implement website that currently is server from listener.go ?
+	// possible implement website that currently is served from listener.go ?
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -128,6 +128,7 @@ type hostStats struct {
 	Unhealthy int // The number of servers (peers) with 'down' status
 }
 
+// countStats calculates and returns statistics.
 func countStats(upstreams *client.Upstreams, upstreamNames []string) hostStats {
 	total, up := 0, 0
 
