@@ -53,7 +53,9 @@ func main() {
 
 	validateIngressClass(kubeClient)
 
-	checkNamespaceExists(kubeClient)
+	checkNamespaceExists(kubeClient, watchNamespaces)
+
+	checkNamespaceExists(kubeClient, watchSecretNamespaces)
 
 	dynClient, confClient := createCustomClients(config)
 
@@ -127,6 +129,7 @@ func main() {
 		RestConfig:                   config,
 		ResyncPeriod:                 30 * time.Second,
 		Namespace:                    watchNamespaces,
+		SecretNamespace:              watchSecretNamespaces,
 		NginxConfigurator:            cnf,
 		DefaultServerSecret:          *defaultServerSecret,
 		AppProtectEnabled:            *appProtect,
@@ -240,8 +243,8 @@ func validateIngressClass(kubeClient kubernetes.Interface) {
 	}
 }
 
-func checkNamespaceExists(kubeClient kubernetes.Interface) {
-	for _, ns := range watchNamespaces {
+func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) {
+	for _, ns := range namespaces {
 		if ns != "" {
 			_, err := kubeClient.CoreV1().Namespaces().Get(context.TODO(), ns, meta_v1.GetOptions{})
 			if err != nil {

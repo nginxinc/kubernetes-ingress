@@ -31,6 +31,11 @@ var (
 
 	watchNamespaces []string
 
+	watchSecretNamespace = flag.String("watch-secret-namespace", "",
+		`Comma separated list of namespaces the Ingress Controller should watch for secrets. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See "watch-namespace". `)
+
+	watchSecretNamespaces []string
+
 	nginxConfigMaps = flag.String("nginx-configmaps", "",
 		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
 	but the Ingress Controller is not able to fetch it from Kubernetes API, the Ingress Controller will fail to start.
@@ -188,6 +193,16 @@ func parseFlags() {
 	initialChecks()
 
 	watchNamespaces = strings.Split(*watchNamespace, ",")
+	glog.Infof("Namespaces watched: %v", watchNamespaces)
+
+	if len(*watchSecretNamespace) > 0 {
+		watchSecretNamespaces = strings.Split(*watchSecretNamespace, ",")
+	} else {
+		// empty => default to watched namespaces
+		watchSecretNamespaces = watchNamespaces
+	}
+
+	glog.Infof("Namespaces watched for secrets: %v", watchSecretNamespaces)
 
 	validationChecks()
 
@@ -295,6 +310,11 @@ func validationChecks() {
 	namespacesNameValidationError := validateNamespaceNames(watchNamespaces)
 	if namespacesNameValidationError != nil {
 		glog.Fatalf("Invalid values for namespaces: %v", namespacesNameValidationError)
+	}
+
+	namespacesNameValidationError = validateNamespaceNames(watchSecretNamespaces)
+	if namespacesNameValidationError != nil {
+		glog.Fatalf("Invalid values for secret namespaces: %v", namespacesNameValidationError)
 	}
 
 	statusPortValidationError := validatePort(*nginxStatusPort)
