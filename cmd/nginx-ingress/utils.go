@@ -1,15 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"runtime"
 	"runtime/debug"
 )
 
-func getBuildInfo() (string, string) {
+func getBuildInfo() (commitHash string, commitTime string, dirtyBuild string) {
+	commitHash = "unknown"
+	commitTime = "unknown"
+	dirtyBuild = "unknown"
+
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
-		return "", ""
+		return
 	}
 	for _, kv := range info.Settings {
 		switch kv.Key {
@@ -18,11 +20,8 @@ func getBuildInfo() (string, string) {
 		case "vcs.time":
 			commitTime = kv.Value
 		case "vcs.modified":
-			dirtyBuild = kv.Value == "true"
+			dirtyBuild = kv.Value
 		}
 	}
-	binaryInfo := fmt.Sprintf("Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v", commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
-	versionInfo := fmt.Sprintf("Version=%v", version)
-
-	return versionInfo, binaryInfo
+	return commitHash, commitTime, dirtyBuild
 }

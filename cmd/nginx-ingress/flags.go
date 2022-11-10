@@ -15,15 +15,6 @@ import (
 )
 
 var (
-
-	// Injected during build
-	version string
-
-	// Info read from the binary
-	commitHash = "unknown"
-	commitTime = "unknown"
-	dirtyBuild = true
-
 	healthStatus = flag.Bool("health-status", false,
 		`Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
 	Useful for external health-checking of the Ingress Controller`)
@@ -192,17 +183,14 @@ var (
 )
 
 //gocyclo:ignore
-func parseFlags(versionInfo string, binaryInfo string) {
+func parseFlags() {
 	flag.Parse()
 
-	initialChecks()
-
 	if *versionFlag {
-		printVersionInfo(versionInfo, binaryInfo)
+		os.Exit(0)
 	}
 
-	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
-	glog.Info(binaryInfo)
+	initialChecks()
 
 	watchNamespaces = strings.Split(*watchNamespace, ",")
 	glog.Infof("Namespaces watched: %v", watchNamespaces)
@@ -299,17 +287,12 @@ func initialChecks() {
 		}
 	}
 
+	glog.Infof("Starting with flags: %+q", os.Args[1:])
+
 	unparsed := flag.Args()
 	if len(unparsed) > 0 {
 		glog.Warningf("Ignoring unhandled arguments: %+q", unparsed)
 	}
-}
-
-// printVersionInfo prints the the version and binary info before exiting if the flag is set
-func printVersionInfo(versionInfo string, binaryInfo string) {
-	fmt.Println(versionInfo)
-	fmt.Println(binaryInfo)
-	os.Exit(0)
 }
 
 // validationChecks checks the values for various flags
