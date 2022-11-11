@@ -1,5 +1,23 @@
 package healthcheck_test
 
+import "testing"
+
+func TestHealthCheckServer_RespondsWithStatisticsOnValidHostname(t *testing.T) {
+	t.Parallel()
+	t.FailNow()
+
+}
+
+func TestHealthCheckServer_RespondsWithCorrectHTTPStatusCodeOnValidHostname(t *testing.T) {
+	t.Parallel()
+	t.FailNow()
+}
+
+func TestHealthCheckServer_RespondsWithCorrectHTTPStatusCodeOnInvalidHostname(t *testing.T) {
+	t.Parallel()
+	t.FailNow()
+}
+
 var (
 	validCert = []byte(`-----BEGIN CERTIFICATE-----
 MIIDWDCCAkACCQDrQWfdxr0rezANBgkqhkiG9w0BAQsFADBuMQswCQYDVQQGEwJJ
