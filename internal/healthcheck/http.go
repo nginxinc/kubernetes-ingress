@@ -118,13 +118,19 @@ func (h *HealthHandler) Info(w http.ResponseWriter, r *http.Request) {
 func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	hostname := chi.URLParam(r, "hostname")
 
+	upstreamNames := h.cnf.GetUpstreamsforHost(hostname)
+	if len(upstreamNames) == 0 {
+		glog.Errorf("no upstreams for hostname %s or hostname does not exist", hostname)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	upstreams, err := h.client.GetUpstreams()
 	if err != nil {
 		glog.Errorf("error retriving upstreams for host: %s", hostname)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	upstreamNames := h.cnf.GetUpstreamsforHost(hostname)
 
 	stats := countStats(upstreams, upstreamNames)
 	data, err := json.Marshal(stats)
