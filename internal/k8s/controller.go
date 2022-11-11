@@ -3549,18 +3549,6 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 		return nil, false, err
 	}
 
-	//Check if our EndpointSlices object has endpoints in it.
-	//if len(endpointSlices) > 0 {
-	//	for _, endpointSlice := range endpointSlices {
-	//		podEndpoints, podEndpointsErr := lbc.getEndpointsForPortFromEndpointSlices(endpointSlice, backend.Service.Port, svc)
-	//		result = append(result, podEndpoints...)
-	//		if podEndpointsErr != nil {
-	//			return nil, false, podEndpointsErr
-	//		}
-	//	}
-	//	return result, false, nil
-	//}
-
 	if len(endpointSlices) > 0 {
 		podEndpoints, podEndpointsErr := lbc.getEndpointsForPortFromEndpointSlices(endpointSlices, backend.Service.Port, svc)
 		if podEndpointsErr != nil {
