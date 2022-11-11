@@ -472,6 +472,8 @@ func TestFormatWarningsMessages(t *testing.T) {
 }
 
 func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
+	var endpointPort int32
+	endpointPort = 8080
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
@@ -479,29 +481,36 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 
 	backendServicePort := networking.ServiceBackendPort{
 		Number: 8080,
+		Name:   "foo",
 	}
 
 	tests := []struct {
-		desc              string
-		targetPort        int32
-		svcEndpointSlices []discovery_v1.EndpointSlice
-		expectedEps       []podEndpoint
+		desc                   string
+		targetPort             int32
+		svcEndpointSlices      []discovery_v1.EndpointSlice
+		expectedEndpointSlices []podEndpoint
 	}{
 		{
 			desc:       "duplicate endpoints in an endpointslice",
 			targetPort: 8080,
-			expectedEps: []podEndpoint{
+			expectedEndpointSlices: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
-					MeshPodOwner: configs.MeshPodOwner{
-						OwnerType: "deployment",
-						OwnerName: "deploy-1",
-					},
 				},
 			},
 			svcEndpointSlices: []discovery_v1.EndpointSlice{
 				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
 					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
 						{
 							Addresses: []string{
 								"1.2.3.4",
@@ -509,11 +518,90 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		{
+			desc:       "two different endpoints in one endpoint slice",
+			targetPort: 8080,
+			expectedEndpointSlices: []podEndpoint{
 				{
+					Address: "1.2.3.4:8080",
+				},
+				{
+					Address: "5.6.7.8:8080",
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
 					Endpoints: []discovery_v1.Endpoint{
 						{
 							Addresses: []string{
 								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"5.6.7.8",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:       "duplicate endpoints across two endpointslices",
+			targetPort: 8080,
+			expectedEndpointSlices: []podEndpoint{
+				{
+					Address: "1.2.3.4:8080",
+				},
+				{
+					Address: "5.6.7.8:8080",
+				},
+				{
+					Address: "10.0.0.1:8080",
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"5.6.7.8",
+							},
+						},
+					},
+				},
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"10.0.0.1",
 							},
 						},
 					},
@@ -539,20 +627,16 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 		},
 		Status: api_v1.ServiceStatus{},
 	}
-
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			//gotEndps := getEndpointsBySubselectedPods(test.targetPort, pods, svcEps)
-			for _, endpointSlice := range test.svcEndpointSlices {
-				_, _ = lbc.getEndpointsForPortFromEndpointSlice(endpointSlice, backendServicePort, &svc)
-			}
+			gotEndpoints, _ := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &svc)
 
-			//if !reflect.DeepEqual(gotEndps, test.expectedEps) {
-			//	t.Errorf("getEndpointsBySubselectedPods() = %v, want %v", gotEndps, test.expectedEps)
-			//}
+			if !reflect.DeepEqual(gotEndpoints, test.expectedEndpointSlices) {
+				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",
+					gotEndpoints, test.expectedEndpointSlices)
+			}
 		})
 	}
-
 }
 
 func TestGetEndpointsBySubselectedPods(t *testing.T) {

@@ -3550,15 +3550,23 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 	}
 
 	//Check if our EndpointSlices object has endpoints in it.
+	//if len(endpointSlices) > 0 {
+	//	for _, endpointSlice := range endpointSlices {
+	//		podEndpoints, podEndpointsErr := lbc.getEndpointsForPortFromEndpointSlices(endpointSlice, backend.Service.Port, svc)
+	//		result = append(result, podEndpoints...)
+	//		if podEndpointsErr != nil {
+	//			return nil, false, podEndpointsErr
+	//		}
+	//	}
+	//	return result, false, nil
+	//}
+
 	if len(endpointSlices) > 0 {
-		for _, endpointSlice := range endpointSlices {
-			podEndpoints, podEndpointsErr := lbc.getEndpointsForPortFromEndpointSlice(endpointSlice, backend.Service.Port, svc)
-			result = append(result, podEndpoints...)
-			if podEndpointsErr != nil {
-				return nil, false, podEndpointsErr
-			}
+		podEndpoints, podEndpointsErr := lbc.getEndpointsForPortFromEndpointSlices(endpointSlices, backend.Service.Port, svc)
+		if podEndpointsErr != nil {
+			return nil, false, podEndpointsErr
 		}
-		return result, false, nil
+		return podEndpoints, false, nil
 	}
 
 	result, err = lbc.getEndpointsForPort(endps, backend.Service.Port, svc)
@@ -3583,41 +3591,44 @@ func (lbc *LoadBalancerController) validateTargetPort(backendPort networking.Ser
 	return targetPort, nil
 }
 
-func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlice(endpointSlice discovery_v1.EndpointSlice, backendPort networking.ServiceBackendPort, svc *api_v1.Service) ([]podEndpoint, error) {
+func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpointSlices []discovery_v1.EndpointSlice, backendPort networking.ServiceBackendPort, svc *api_v1.Service) ([]podEndpoint, error) {
 	targetPort, err := lbc.validateTargetPort(backendPort, svc)
 	if err != nil {
 		return nil, fmt.Errorf("no port %v in service %s", backendPort, svc.Name)
 	}
-	for _, endpointSlicePort := range endpointSlice.Ports {
-		if *endpointSlicePort.Port == targetPort {
-			// Endpoints may be duplicated across multiple EndpointSlices.
-			// Using a set to prevent returning duplicate endpoints.
-			endpointSet := make(map[podEndpoint]struct{})
-			for _, endpoint := range endpointSlice.Endpoints {
-				for _, endpointAddress := range endpoint.Addresses {
-					address := ipv6SafeAddrPort(endpointAddress, *endpointSlicePort.Port)
-					podEndpoint := podEndpoint{
-						Address: address,
+	endpointSet := make(map[podEndpoint]struct{})
+	for _, endpointSlice := range endpointSlices {
+		for _, endpointSlicePort := range endpointSlice.Ports {
+			if *endpointSlicePort.Port == targetPort {
+				// Endpoints may be duplicated across multiple EndpointSlices.
+				// Using a set to prevent returning duplicate endpoints.
+				for _, endpoint := range endpointSlice.Endpoints {
+					for _, endpointAddress := range endpoint.Addresses {
+						address := ipv6SafeAddrPort(endpointAddress, *endpointSlicePort.Port)
+						podEndpoint := podEndpoint{
+							Address: address,
+						}
+						if endpoint.TargetRef != nil {
+							parentType, parentName :=
+								lbc.getPodOwnerTypeAndNameFromAddress(endpoint.TargetRef.Namespace, endpoint.TargetRef.Name)
+							podEndpoint.OwnerType = parentType
+							podEndpoint.OwnerName = parentName
+							podEndpoint.PodName = endpoint.TargetRef.Name
+						}
+						endpointSet[podEndpoint] = struct{}{}
 					}
-					if endpoint.TargetRef != nil {
-						parentType, parentName :=
-							lbc.getPodOwnerTypeAndNameFromAddress(endpoint.TargetRef.Namespace, endpoint.TargetRef.Name)
-						podEndpoint.OwnerType = parentType
-						podEndpoint.OwnerName = parentName
-						podEndpoint.PodName = endpoint.TargetRef.Name
-					}
-					endpointSet[podEndpoint] = struct{}{}
 				}
 			}
-			endpoints := make([]podEndpoint, 0, len(endpointSet))
-			for ep := range endpointSet {
-				endpoints = append(endpoints, ep)
-			}
-			return endpoints, nil
 		}
 	}
-
-	return nil, fmt.Errorf("no endpoints for target port %v in service %s", targetPort, svc.Name)
+	if len(endpointSet) == 0 {
+		return nil, fmt.Errorf("no endpoints for target port %v in service %s", targetPort, svc.Name)
+	}
+	endpoints := make([]podEndpoint, 0, len(endpointSet))
+	for ep := range endpointSet {
+		endpoints = append(endpoints, ep)
+	}
+	return endpoints, nil
 }
 
 func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, backendPort networking.ServiceBackendPort, svc *api_v1.Service) ([]podEndpoint, error) {
