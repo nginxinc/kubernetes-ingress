@@ -77,7 +77,6 @@ func (sc *SpiffeCertFetcher) Start(ctx context.Context, onStart func()) error {
 		case <-stopCh:
 			return sc.client.Close()
 		default:
-			break
 		}
 		time.Sleep(duration)
 	}
