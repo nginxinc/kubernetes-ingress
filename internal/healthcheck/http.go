@@ -28,7 +28,7 @@ func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Confi
 			WriteTimeout: 10 * time.Second,
 		}
 		if err := healthServer.ListenAndServe(); err != nil {
-			return fmt.Errorf("starting healtcheck server: %w", err)
+			return fmt.Errorf("starting healthcheck server: %w", err)
 		}
 	}
 
@@ -47,7 +47,7 @@ func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Confi
 		WriteTimeout: 10 * time.Second,
 	}
 	if err := healthServer.ListenAndServeTLS("", ""); err != nil {
-		return fmt.Errorf("starting healtcheck tls server: %w", err)
+		return fmt.Errorf("starting healthcheck tls server: %w", err)
 	}
 	return nil
 }
