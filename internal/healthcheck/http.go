@@ -3,10 +3,13 @@ package healthcheck
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-chi/chi"
 	"github.com/golang/glog"
@@ -16,20 +19,52 @@ import (
 )
 
 // RunHealtcheckServer takes configs and starts healtcheck service.
-func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Configurator) error {
+func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Configurator, secret *v1.Secret) error {
+	if secret == nil {
+		healthServer := http.Server{
+			Addr:         fmt.Sprintf(":%s", port),
+			Handler:      API(nc, cnf),
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+		}
+		if err := healthServer.ListenAndServe(); err != nil {
+			return fmt.Errorf("starting healtcheck server: %w", err)
+		}
+	}
+
+	tlsCert, err := makeCert(secret)
+	if err != nil {
+		return fmt.Errorf("creating tls cert %w", err)
+	}
+
 	healthServer := http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
 		Handler: API(nc, cnf),
-
-		// For now hardcoded!
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{tlsCert},
+		},
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	if err := healthServer.ListenAndServe(); err != nil {
-		glog.Error("error starting healtcheck server", err)
-		return fmt.Errorf("starting healtcheck server: %w", err)
+	if err := healthServer.ListenAndServeTLS("", ""); err != nil {
+		return fmt.Errorf("starting healtcheck tls server: %w", err)
 	}
 	return nil
+}
+
+// makeCert takes k8s Secret and returns tls Certificate for the server.
+// It errors if either cert, or key are not present in the Secret.
+func makeCert(s *v1.Secret) (tls.Certificate, error) {
+	cert, ok := s.Data[v1.TLSCertKey]
+	if !ok {
+		return tls.Certificate{}, errors.New("missing tls cert")
+	}
+	key, ok := s.Data[v1.TLSPrivateKeyKey]
+	if !ok {
+		return tls.Certificate{}, errors.New("missing tls key")
+
+	}
+	return tls.X509KeyPair(cert, key)
 }
 
 // API constructs an http.Handler with all healtcheck routes.
@@ -92,7 +127,6 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	upstreamNames := h.cnf.GetUpstreamsforHost(hostname)
 
 	stats := countStats(upstreams, upstreamNames)
-
 	data, err := json.Marshal(stats)
 	if err != nil {
 		glog.Error("error marshalling result", err)
@@ -101,11 +135,6 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	// NOTE:
-	// Here we need logic to setup correct header depending on the stats result!
-	// current one is initial implementation.
-	// Do ww have to calculate ratio of total/down to return a different status?
-	// TBD!
 	switch stats.Up {
 	case 0:
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -148,35 +177,4 @@ func countStats(upstreams *client.Upstreams, upstreamNames []string) hostStats {
 		Up:        up,
 		Unhealthy: unhealthy,
 	}
-}
-
-// ListenAndServeTLS is a drop-in replacement for a default
-// ListenAndServeTLS func from the http std library. The func
-// takes not paths to a cert and a key but slices of bytes representing
-// content of the files used by the original http.ListenAndServeTLS function.
-func ListenAndServeTLS(addr string, cert, key []byte, handler http.Handler) error {
-	tlsCert, err := LoadX509KeyPair(cert, key)
-	if err != nil {
-		return err
-	}
-
-	server := &http.Server{
-		Addr:    addr,
-		Handler: handler,
-		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{tlsCert},
-		},
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
-	return server.ListenAndServeTLS("", "")
-}
-
-// LoadX509KeyPair is a drop-in replacement for the LoadX509KeyPair
-// from the http package from the std library. It takes not files
-// containing a cert and a key but a slice of bytes representing
-// the content of the corresponding files.
-func LoadX509KeyPair(cert, key []byte) (tls.Certificate, error) {
-	return tls.X509KeyPair(cert, key)
 }

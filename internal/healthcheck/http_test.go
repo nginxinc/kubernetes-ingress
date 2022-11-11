@@ -1,27 +1,5 @@
 package healthcheck_test
 
-import (
-	"testing"
-
-	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
-)
-
-func TestLoadsKeyPairOnValidInut(t *testing.T) {
-	t.Parallel()
-	_, err := healthcheck.LoadX509KeyPair(validCert, validKey)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDoesNotLoadCertsOnInvalidInput(t *testing.T) {
-	t.Parallel()
-	_, err := healthcheck.LoadX509KeyPair(invalidCert, invalidKey)
-	if err == nil {
-		t.Fatal("want err on invalid cert/key, got nil")
-	}
-}
-
 var (
 	validCert = []byte(`-----BEGIN CERTIFICATE-----
 MIIDWDCCAkACCQDrQWfdxr0rezANBgkqhkiG9w0BAQsFADBuMQswCQYDVQQGEwJJ
