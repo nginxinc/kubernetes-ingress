@@ -75,7 +75,7 @@ func API(client *client.NginxClient, cnf *configs.Configurator) http.Handler {
 	}
 	mux := chi.NewRouter()
 	mux.MethodFunc(http.MethodGet, "/", health.Info)
-	mux.MethodFunc(http.MethodGet, "/healthcheck/{hostname}", health.Retrieve)
+	mux.MethodFunc(http.MethodGet, "/probe/{hostname}", health.Retrieve)
 	return mux
 }
 
@@ -99,7 +99,7 @@ func (h *HealthHandler) Info(w http.ResponseWriter, r *http.Request) {
 	}{
 		Info:    "extended healthcheck endpoint",
 		Version: "0.1",
-		Usage:   "/{hostname}",
+		Usage:   "/probe/{hostname}",
 	}
 	data, err := json.Marshal(info)
 	if err != nil {
