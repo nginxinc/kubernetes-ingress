@@ -12,18 +12,25 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/httprate"
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	"k8s.io/utils/strings/slices"
 )
 
-// RunHealtcheckServer takes configs and starts healtcheck service.
+// RunHealtcheckServer takes config params, creates the health server and starts it.
+// It errors if the server can't be started or provided secret is not valid
+// (tls certificate cannot be created) and the health service with TLS support can't start.
 func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Configurator, secret *v1.Secret) error {
+
+	getUpstreamsForHost := UpstreamsForHost(cnf)
+	getUpstreamsFromNginx := NginxUpstreams(nc)
+
 	if secret == nil {
 		healthServer := http.Server{
 			Addr:         fmt.Sprintf(":%s", port),
-			Handler:      API(nc, cnf),
+			Handler:      API(getUpstreamsForHost, getUpstreamsFromNginx),
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 		}
@@ -39,7 +46,7 @@ func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Confi
 
 	healthServer := http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
-		Handler: API(nc, cnf),
+		Handler: API(getUpstreamsForHost, getUpstreamsFromNginx),
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{tlsCert},
 		},
@@ -67,65 +74,63 @@ func makeCert(s *v1.Secret) (tls.Certificate, error) {
 	return tls.X509KeyPair(cert, key)
 }
 
-// API constructs an http.Handler with all healtcheck routes.
-func API(client *client.NginxClient, cnf *configs.Configurator) http.Handler {
-	health := HealthHandler{
-		client: client,
-		cnf:    cnf,
-	}
-	mux := chi.NewRouter()
-	mux.MethodFunc(http.MethodGet, "/", health.Info)
-	mux.MethodFunc(http.MethodGet, "/probe/{hostname}", health.Retrieve)
-	return mux
-}
-
 // ===================================================================================
 // Handlers
 // ===================================================================================
 
+// API constructs an http.Handler with all healtcheck routes.
+func API(upstreamsFromHost func(string) []string, upstreamsFromNginx func() (*client.Upstreams, error)) http.Handler {
+	health := HealthHandler{
+		UpstreamsForHost: upstreamsFromHost,
+		NginxUpstreams:   upstreamsFromNginx,
+	}
+	mux := chi.NewRouter()
+	mux.Use(httprate.Limit(10, 1*time.Second, httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+	})),
+	)
+	mux.MethodFunc(http.MethodGet, "/probe/{hostname}", health.Retrieve)
+	return mux
+}
+
+// UpstreamsForHost takes configurator and returns a func
+// that is reposnsible for retriving upstreams for the given hostname.
+func UpstreamsForHost(cnf *configs.Configurator) func(hostname string) []string {
+	return func(hostname string) []string {
+		return cnf.GetUpstreamsforHost(hostname)
+	}
+}
+
+// NginxUpstreams takes an instance of NGNX client and returns a func
+// that returns all upstreams.
+func NginxUpstreams(nc *client.NginxClient) func() (*client.Upstreams, error) {
+	return func() (*client.Upstreams, error) {
+		upstreams, err := nc.GetUpstreams()
+		if err != nil {
+			return nil, err
+		}
+		return upstreams, nil
+	}
+}
+
+// HealthHandler holds dependency used in its method(s).
 type HealthHandler struct {
-	client *client.NginxClient
-	cnf    *configs.Configurator
+	UpstreamsForHost func(host string) []string
+	NginxUpstreams   func() (*client.Upstreams, error)
 }
 
-// Info returns basic information about healthcheck service.
-func (h *HealthHandler) Info(w http.ResponseWriter, r *http.Request) {
-	// for now it is a placeholder for the response body
-	// we would return to a caller on GET request to '/'
-	info := struct {
-		Info    string
-		Version string
-		Usage   string
-	}{
-		Info:    "extended healthcheck endpoint",
-		Version: "0.1",
-		Usage:   "/probe/{hostname}",
-	}
-	data, err := json.Marshal(info)
-	if err != nil {
-		glog.Error("error marshalling result", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if _, err = w.Write(data); err != nil {
-		glog.Error("error writing result", err)
-	}
-}
-
-// Retrieve finds health stats for a host identified by an hostname in the request URL.
+// Retrieve finds health stats for the host identified by a hostname in the request URL.
 func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	hostname := chi.URLParam(r, "hostname")
 
-	upstreamNames := h.cnf.GetUpstreamsforHost(hostname)
+	upstreamNames := h.UpstreamsForHost(hostname)
 	if len(upstreamNames) == 0 {
 		glog.Errorf("no upstreams for hostname %s or hostname does not exist", hostname)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	upstreams, err := h.client.GetUpstreams()
+	upstreams, err := h.NginxUpstreams()
 	if err != nil {
 		glog.Errorf("error retriving upstreams for host: %s", hostname)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -139,7 +144,6 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch stats.Up {
 	case 0:
@@ -149,24 +153,22 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err = w.Write(data); err != nil {
 		glog.Error("error writing result", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
 }
 
-func (h *HealthHandler) Status(w http.ResponseWriter, r *http.Request) {
-	// possible implement website that currently is served from listener.go ?
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-type hostStats struct {
+// HostStats holds information about total, up and
+// unhealthy number of 'peers' associated with the
+// given host.
+type HostStats struct {
 	Total     int // Total number of configured servers (peers)
 	Up        int // The number of servers (peers) with 'up' status
 	Unhealthy int // The number of servers (peers) with 'down' status
 }
 
 // countStats calculates and returns statistics.
-func countStats(upstreams *client.Upstreams, upstreamNames []string) hostStats {
+func countStats(upstreams *client.Upstreams, upstreamNames []string) HostStats {
 	total, up := 0, 0
-
 	for name, u := range *upstreams {
 		if slices.Contains(upstreamNames, name) {
 			for _, p := range u.Peers {
@@ -178,7 +180,7 @@ func countStats(upstreams *client.Upstreams, upstreamNames []string) hostStats {
 		}
 	}
 	unhealthy := total - up
-	return hostStats{
+	return HostStats{
 		Total:     total,
 		Up:        up,
 		Unhealthy: unhealthy,

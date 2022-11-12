@@ -1,24 +1,199 @@
 package healthcheck_test
 
-import "testing"
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
+	"github.com/nginxinc/nginx-plus-go-client/client"
+)
+
+func TestHealthCheckServer_ReturnsValidStatsForAllPeersUpOnValidHostname(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequest(http.MethodGet, "/probe/bar.tea.com", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := httptest.NewRecorder()
+
+	h := healthcheck.API(getUpstreamsForHost, getNginxUpstreams)
+
+	h.ServeHTTP(resp, req)
+
+	want := healthcheck.HostStats{
+		Total:     3,
+		Up:        3,
+		Unhealthy: 0,
+	}
+
+	var got healthcheck.HostStats
+	if err := json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestHealthCheckServer_ReturnsValidStatsForAllPeersDownOnValidHostname(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequest(http.MethodGet, "/probe/bar.tea.com", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := httptest.NewRecorder()
+
+	fn := func(h string) []string {
+		u, ok := upstreams[h]
+		if !ok {
+			return []string{}
+		}
+		return u
+	}
+
+	ngu := func() (*client.Upstreams, error) {
+		return &allPeersUnhealthy, nil
+	}
+
+	h := healthcheck.API(fn, ngu)
+
+	h.ServeHTTP(resp, req)
+
+	want := healthcheck.HostStats{
+		Total:     3,
+		Up:        0,
+		Unhealthy: 3,
+	}
+
+	if !cmp.Equal(http.StatusServiceUnavailable, resp.Code) {
+		t.Error(cmp.Diff(http.StatusServiceUnavailable, resp.Code))
+	}
+
+	var gotStats healthcheck.HostStats
+	if err := json.Unmarshal(resp.Body.Bytes(), &gotStats); err != nil {
+		t.Fatal(err)
+	}
+
+	if !cmp.Equal(want, gotStats) {
+		t.Error(cmp.Diff(want, gotStats))
+	}
+}
 
 func TestHealthCheckServer_RespondsWithStatisticsOnValidHostname(t *testing.T) {
 	t.Parallel()
-	t.FailNow()
 
+	//t.FailNow()
 }
 
 func TestHealthCheckServer_RespondsWithCorrectHTTPStatusCodeOnValidHostname(t *testing.T) {
 	t.Parallel()
-	t.FailNow()
+	//t.FailNow()
 }
 
 func TestHealthCheckServer_RespondsWithCorrectHTTPStatusCodeOnInvalidHostname(t *testing.T) {
 	t.Parallel()
-	t.FailNow()
+	//t.FailNow()
+}
+
+func getNginxUpstreams() (*client.Upstreams, error) {
+	ups := client.Upstreams{
+		"upstream1": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Up"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+		"upstream2": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Up"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+		"upstream3": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Up"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+	}
+	return &ups, nil
+}
+
+func getUpstreamsForHost(host string) []string {
+	upstreams := map[string][]string{
+		"foo.tea.com": {"upstream1", "upstream2"},
+		"bar.tea.com": {"upstream1"},
+	}
+	u, ok := upstreams[host]
+	if !ok {
+		return []string{}
+	}
+	return u
 }
 
 var (
+	upstreams = map[string][]string{
+		"foo.tea.com": {"upstream1", "upstream2"},
+		"bar.tea.com": {"upstream1"},
+	}
+
+	allPeersUp = client.Upstreams{
+		"upstream1": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Up"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+		"upstream2": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Up"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+		"upstream3": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Up"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+	}
+
+	allPeersUnhealthy = client.Upstreams{
+		"upstream1": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Down"},
+				{State: "Down"},
+				{State: "Down"},
+			},
+		},
+		"upstream2": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Down"},
+				{State: "Down"},
+				{State: "Down"},
+			},
+		},
+		"upstream3": client.Upstream{
+			Peers: []client.Peer{
+				{State: "Down"},
+				{State: "Down"},
+				{State: "Down"},
+			},
+		},
+	}
+
 	validCert = []byte(`-----BEGIN CERTIFICATE-----
 MIIDWDCCAkACCQDrQWfdxr0rezANBgkqhkiG9w0BAQsFADBuMQswCQYDVQQGEwJJ
 RTEPMA0GA1UEBwwGRHVibGluMRMwEQYDVQQKDApTZXZlbkJ5dGVzMRYwFAYDVQQD
