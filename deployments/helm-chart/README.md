@@ -248,6 +248,12 @@ Parameter | Description | Default
 `controller.readyStatus.initialDelaySeconds` | The number of seconds after the Ingress Controller pod has started before readiness probes are initiated. | 0
 `controller.enableLatencyMetrics` | Enable collection of latency metrics for upstreams. Requires `prometheus.create`. | false
 `controller.minReadySeconds` | Specifies the minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#min-ready-seconds) | 0
+`controller.autoscaling.enabled` | Enables HorizontalPodAutoscaling. | false
+`controller.autoscaling.annotations` | The annotations of the Ingress Controller HorizontalPodAutoscaler. | {}
+`controller.autoscaling.minReplicas` | Minimum number of replicas for the HPA. | 1
+`controller.autoscaling.maxReplicas` | Maximum number of replicas for the HPA. | 3
+`controller.autoscaling.targetCPUUtilizationPercentage` | The target CPU utilization percentage. | 50
+`controller.autoscaling.targetMemoryUtilizationPercentage` | The target memory utilization percentage. | 50
 `controller.strategy` | Specifies the strategy used to replace old Pods by new ones. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) | {}
 `controller.disableIPV6` | Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack. | false
 `rbac.create` | Configures RBAC. | true
