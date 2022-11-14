@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: coffee
 spec:
-  replicas: 220
+  replicas: 2
   selector:
     matchLabels:
       app: coffee
@@ -36,7 +36,7 @@ kind: Deployment
 metadata:
   name: tea
 spec:
-  replicas: 220
+  replicas: 1
   selector:
     matchLabels:
       app: tea
