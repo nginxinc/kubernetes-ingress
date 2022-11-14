@@ -1166,6 +1166,41 @@
           "title": "The priorityClassName",
           "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/priorityClassName"
         },
+        "podDisruptionBudget": {
+          "type": "object",
+          "default": {},
+          "title": "The podDisruptionBudget Schema",
+          "required": [
+            "enabled"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+			"annotations": {
+              "type": "object",
+              "default": {},
+              "title": "The annotations Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+			},
+            "minAvailable": {
+              "type": "integer"
+            },
+            "maxUnavailable": {
+              "type": "integer"
+            }
+          },
+          "examples": [
+            {
+              "enable": true,
+              "minAvailable": 1
+            },
+            {
+              "enable": true,
+              "maxUnavailable": 1
+            }
+          ]
+        },
         "readyStatus": {
           "type": "object",
           "default": {},
@@ -1633,6 +1668,12 @@
         "serviceAccount": {
           "name": "",
           "imagePullSecretName": ""
+        },
+        "podDisruptionBudget": {
+          "enabled": false,
+          "annotations": {},
+          "minAvailable": 0,
+          "minUnavailable": 0
         },
         "serviceMonitor": {
           "create": false,
