@@ -1,11 +1,14 @@
 import grpc
 import pytest
-import requests
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_assertions import assert_grpc_entries_exist, assert_proxy_entries_exist, wait_and_assert_status_code
 from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
-from suite.resources_utils import (
+from suite.utils.custom_assertions import (
+    assert_grpc_entries_exist,
+    assert_proxy_entries_exist,
+    wait_and_assert_status_code,
+)
+from suite.utils.resources_utils import (
     create_example_app,
     create_secret_from_yaml,
     delete_common_app,
@@ -14,8 +17,8 @@ from suite.resources_utils import (
     replace_configmap_from_yaml,
     wait_until_all_pods_are_ready,
 )
-from suite.ssl_utils import get_certificate
-from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
+from suite.utils.ssl_utils import get_certificate
+from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf
 
 
 @pytest.fixture(scope="function")

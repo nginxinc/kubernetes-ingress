@@ -22,7 +22,7 @@ When [installing](/nginx-ingress-controller/installation/installation-with-manif
 The GlobalConfiguration resource defines the global configuration parameters of the Ingress Controller. Below is an example:
 ```yaml
 apiVersion: k8s.nginx.org/v1alpha1
-kind: GlobalConfiguration 
+kind: GlobalConfiguration
 metadata:
   name: nginx-configuration
   namespace: nginx-ingress
@@ -34,13 +34,13 @@ spec:
   - name: dns-tcp
     port: 5353
     protocol: TCP
-``` 
+```
 
-{{% table %}} 
-|Field | Description | Type | Required | 
-| ---| ---| ---| --- | 
-|``listeners`` | A list of listeners. | [[]listener](#listener) | No | 
-{{% /table %}} 
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``listeners`` | A list of listeners. | [[]listener](#listener) | No |
+{{% /table %}}
 
 ### Listener
 
@@ -51,15 +51,15 @@ port: 5353
 protocol: TCP
 ```
 
-{{% table %}} 
-|Field | Description | Type | Required | 
-| ---| ---| ---| --- | 
-|``name`` | The name of the listener. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``listener-123`` are valid. The name must be unique among all listeners. The name ``tls-passthrough`` is reserved for the built-in TLS Passthrough listener and cannot be used. | ``string`` | Yes | 
-|``port`` | The port of the listener. The port must fall into the range ``1..65535`` with the following exceptions: ``80``, ``443``, the [status port](/nginx-ingress-controller/logging-and-monitoring/status-page), the [Prometheus metrics port](/nginx-ingress-controller/logging-and-monitoring/prometheus). Among all listeners, only a single combination of a port-protocol is allowed. | ``int`` | Yes | 
-|``protocol`` | The protocol of the listener. Supported values: ``TCP`` and ``UDP``. | ``string`` | Yes | 
-{{% /table %}} 
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``name`` | The name of the listener. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``listener-123`` are valid. The name must be unique among all listeners. The name ``tls-passthrough`` is reserved for the built-in TLS Passthrough listener and cannot be used. | ``string`` | Yes |
+|``port`` | The port of the listener. The port must fall into the range ``1..65535`` with the following exceptions: ``80``, ``443``, the [status port](/nginx-ingress-controller/logging-and-monitoring/status-page), the [Prometheus metrics port](/nginx-ingress-controller/logging-and-monitoring/prometheus). Among all listeners, only a single combination of a port-protocol is allowed. | ``int`` | Yes |
+|``protocol`` | The protocol of the listener. Supported values: ``TCP`` and ``UDP``. | ``string`` | Yes |
+{{% /table %}}
 
-## Using GlobalConfiguration 
+## Using GlobalConfiguration
 
 You can use the usual `kubectl` commands to work with a GlobalConfiguration resource.
 
@@ -107,7 +107,7 @@ If a resource is not rejected (it doesn't violate the structural schema), the In
 
 The Ingress Controller validates the fields of a GlobalConfiguration resource. If a resource is invalid, the Ingress Controller will not use it. Consider the following two cases:
 1. When the Ingress Controller pod starts, if the GlobalConfiguration resource is invalid, the Ingress Controller will fail to start and exit with an error.
-1. When the Ingress Controller is running, if the GlobalConfiguration resource becomes invalid, the Ingress Controller will ignore the new version. It will report an error and continue to use the previous version. When the resource becomes valid again, the Ingress Controller will start using it. 
+1. When the Ingress Controller is running, if the GlobalConfiguration resource becomes invalid, the Ingress Controller will ignore the new version. It will report an error and continue to use the previous version. When the resource becomes valid again, the Ingress Controller will start using it.
 
 **Note**: If a GlobalConfiguration is deleted while the Ingress Controller is running, the controller will keep using the previous version of the resource.
 

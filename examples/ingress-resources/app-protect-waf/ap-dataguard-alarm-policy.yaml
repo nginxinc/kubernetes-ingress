@@ -6,10 +6,10 @@ spec:
   policy:
     signature-requirements:
     - tag: Fruits
-    signature-sets: 
+    signature-sets:
     - name: apple_sigs
       block: true
-      signatureSet: 
+      signatureSet:
         filter:
           tagValue: Fruits
           tagFilter: eq

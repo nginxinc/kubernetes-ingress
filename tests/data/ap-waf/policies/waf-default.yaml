@@ -5,4 +5,3 @@ metadata:
 spec:
   waf:
     enable: true
-

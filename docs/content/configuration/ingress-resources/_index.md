@@ -1,6 +1,6 @@
 ---
 title: Ingress Resources
-description: 
+description:
 weight: 1500
 menu:
   docs:

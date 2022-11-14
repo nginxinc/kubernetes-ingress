@@ -1,8 +1,8 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.fixtures import PublicEndpoint
-from suite.resources_utils import (
+from suite.fixtures.fixtures import PublicEndpoint
+from suite.utils.resources_utils import (
     create_example_app,
     create_items_from_yaml,
     create_secret_from_yaml,
@@ -15,7 +15,7 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 
 class JWTSecretsSetup:
@@ -50,7 +50,7 @@ class JWTSecret:
 def jwt_secrets_setup(
     request, kube_apis, ingress_controller_endpoint, ingress_controller, test_namespace
 ) -> JWTSecretsSetup:
-    with open(f"{TEST_DATA}/jwt-secrets/tokens/jwt-secrets-token.jwt", "r") as token_file:
+    with open(f"{TEST_DATA}/jwt-secrets/tokens/jwt-secrets-token.jwt") as token_file:
         token = token_file.read().replace("\n", "")
     print("------------------------- Deploy JWT Secrets Example -----------------------------------")
     create_items_from_yaml(

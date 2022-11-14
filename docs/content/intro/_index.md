@@ -1,6 +1,6 @@
 ---
 title: Intro
-description: 
+description:
 weight: 1200
 menu:
   docs:

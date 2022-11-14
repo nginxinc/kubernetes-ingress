@@ -3,10 +3,10 @@
 import logging
 
 import yaml
-from kubernetes.client import ApiextensionsV1Api, CoreV1Api, CustomObjectsApi
+from kubernetes.client import CustomObjectsApi
 from kubernetes.client.rest import ApiException
-from suite.custom_resources_utils import read_custom_resource
-from suite.resources_utils import ensure_item_removal
+from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.resources_utils import ensure_item_removal
 
 
 def read_policy(custom_objects: CustomObjectsApi, namespace, name) -> object:

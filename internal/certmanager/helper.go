@@ -49,25 +49,26 @@ var (
 // apiVersion: k8s.nginx.org/v1
 // kind: VirtualServer
 // spec:
-//   <...>
-//   tls:
-//     <...>
-//     cert-manager:
-//       common-name: example.com
-//       duration: 2160h
-//       renew-before: 1440h
-//       usages: "digital signature,key encipherment"
+//
+//	<...>
+//	tls:
+//	  <...>
+//	  cert-manager:
+//	    common-name: example.com
+//	    duration: 2160h
+//	    renew-before: 1440h
+//	    usages: "digital signature,key encipherment"
 //
 // is mapped to the following Certificate:
 //
-//   kind: Certificate
-//   spec:
-//     commonName: example.com
-//     duration: 2160h
-//     renewBefore: 1440h
-//     usages:
-//       - digital signature
-//       - key encipherment
+//	kind: Certificate
+//	spec:
+//	  commonName: example.com
+//	  duration: 2160h
+//	  renewBefore: 1440h
+//	  usages:
+//	    - digital signature
+//	    - key encipherment
 func translateVsSpec(crt *cmapi.Certificate, vsCmSpec *vsapi.CertManager) error {
 	var errs []string
 	if crt == nil {
@@ -118,4 +119,22 @@ func translateVsSpec(crt *cmapi.Certificate, vsCmSpec *vsapi.CertManager) error 
 		return errors.New(strings.Join(errs, ", "))
 	}
 	return nil
+}
+
+func getNamespacedInformer(ns string, ig map[string]*namespacedInformer) *namespacedInformer {
+	var nsi *namespacedInformer
+	var isGlobalNs bool
+	var exists bool
+
+	nsi, isGlobalNs = ig[""]
+
+	if !isGlobalNs {
+		// get the correct namespaced informers
+		nsi, exists = ig[ns]
+		if !exists {
+			// we are not watching this namespace
+			return nil
+		}
+	}
+	return nsi
 }

@@ -72,14 +72,14 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tea-post 
+      app: tea-post
   template:
     metadata:
       labels:
-        app: tea-post 
+        app: tea-post
     spec:
       containers:
-      - name: tea-post 
+      - name: tea-post
         image: nginxdemos/nginx-hello:plain-text
         ports:
         - containerPort: 8080
@@ -105,14 +105,14 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tea 
+      app: tea
   template:
     metadata:
       labels:
-        app: tea 
+        app: tea
     spec:
       containers:
-      - name: tea 
+      - name: tea
         image: nginxdemos/nginx-hello:plain-text
         ports:
         - containerPort: 8080

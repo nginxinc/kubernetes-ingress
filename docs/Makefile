@@ -22,7 +22,7 @@ hugo-mod:
 
 build-production:
 	hugo --gc -e production
-	
+
 build-staging:
 	hugo --gc -e staging
 

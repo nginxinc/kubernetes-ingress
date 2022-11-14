@@ -23,19 +23,16 @@ import (
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmclient "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
-	cm_informers "github.com/cert-manager/cert-manager/pkg/client/informers/externalversions"
 	controllerpkg "github.com/cert-manager/cert-manager/pkg/controller"
 	testpkg "github.com/nginxinc/kubernetes-ingress/internal/certmanager/test_files"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/util/workqueue"
 
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	vsinformers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
 )
 
 func Test_controller_Register(t *testing.T) {
@@ -138,14 +135,26 @@ func Test_controller_Register(t *testing.T) {
 			// Certificate event is received then HasSynced has not been setup
 			// properly.
 
-			cm := &CmController{
-				ctx:                       b.RootContext,
-				queue:                     workqueue.NewNamedRateLimitingQueue(controllerpkg.DefaultItemBasedRateLimiter(), ControllerName),
-				cmSharedInformerFactory:   []cm_informers.SharedInformerFactory{b.FakeCMInformerFactory()},
-				kubeSharedInformerFactory: []kubeinformers.SharedInformerFactory{b.FakeKubeInformerFactory()},
-				recorder:                  b.Recorder,
-				vsSharedInformerFactory:   []vsinformers.SharedInformerFactory{b.VsSharedInformerFactory},
+			ig := make(map[string]*namespacedInformer)
+
+			nsi := &namespacedInformer{
+				cmSharedInformerFactory:   b.Context.SharedInformerFactory,
+				kubeSharedInformerFactory: b.Context.KubeSharedInformerFactory,
+				vsSharedInformerFactory:   b.VsSharedInformerFactory,
 			}
+
+			ig[""] = nsi
+
+			cm := &CmController{
+				ctx:           b.RootContext,
+				queue:         workqueue.NewNamedRateLimitingQueue(controllerpkg.DefaultItemBasedRateLimiter(), ControllerName),
+				informerGroup: ig,
+				recorder:      b.Recorder,
+				kubeClient:    b.Client,
+				vsClient:      b.VSClient,
+			}
+
+			cm.addHandlers(nsi)
 
 			queue := cm.register()
 

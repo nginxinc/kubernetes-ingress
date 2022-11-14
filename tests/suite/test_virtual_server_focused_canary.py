@@ -2,7 +2,7 @@ import pytest
 import requests
 import yaml
 from settings import TEST_DATA
-from suite.resources_utils import ensure_response_from_backend
+from suite.utils.resources_utils import ensure_response_from_backend
 
 
 def get_weights_of_splitting(file) -> []:

@@ -1,7 +1,7 @@
 apiVersion: k8s.nginx.org/v1
-kind: Policy 
+kind: Policy
 metadata:
-  name: invalid-policy 
+  name: invalid-policy
 spec:
   accessControl:
     deny:

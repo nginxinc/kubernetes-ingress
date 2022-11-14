@@ -1,23 +1,10 @@
-import time
-
 import pytest
 import requests
-from kubernetes.client.rest import ApiException
-from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import read_custom_resource
-from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
-from suite.resources_utils import (
-    create_secret_from_yaml,
-    delete_secret,
-    replace_configmap_from_yaml,
-    replace_secret,
-    wait_before_test,
-)
-from suite.vs_vsr_resources_utils import (
-    create_virtual_server_from_yaml,
-    delete_and_create_vs_from_yaml,
-    delete_virtual_server,
-)
+from settings import TEST_DATA
+from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.utils.resources_utils import create_secret_from_yaml, delete_secret, wait_before_test
+from suite.utils.vs_vsr_resources_utils import delete_and_create_vs_from_yaml
 
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
 jwk_sec_valid_src = f"{TEST_DATA}/jwt-policy/secret/jwk-secret-valid.yaml"
@@ -68,8 +55,8 @@ class TestJWTPolicies:
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy, test_namespace)
         wait_before_test()
 
-        with open(token, "r") as file:
-            data = file.readline()
+        with open(token) as file:
+            data = file.readline().strip()
         headers = {"host": vs_host, "token": data}
 
         return secret_name, pol_name, headers
@@ -84,8 +71,8 @@ class TestJWTPolicies:
         pol_name_2 = create_policy_from_yaml(kube_apis.custom_objects, policy_2, test_namespace)
 
         wait_before_test()
-        with open(token, "r") as file:
-            data = file.readline()
+        with open(token) as file:
+            data = file.readline().strip()
         headers = {"host": vs_host, "token": data}
 
         return secret_name, pol_name_1, pol_name_2, headers

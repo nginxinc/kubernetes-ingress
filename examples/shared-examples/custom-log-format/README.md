@@ -2,7 +2,7 @@
 
 This example lets you set the log-format for NGINX using the configmap resource
 
-```yaml 
+```yaml
 kind: ConfigMap
 apiVersion: v1
 metadata:

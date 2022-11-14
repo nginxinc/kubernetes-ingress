@@ -1,6 +1,6 @@
 ---
 title: Logging And Monitoring
-description: 
+description:
 weight: 1500
 menu:
   docs:

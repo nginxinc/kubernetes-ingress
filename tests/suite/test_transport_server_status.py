@@ -1,7 +1,7 @@
 import pytest
 from settings import TEST_DATA
-from suite.custom_resources_utils import patch_ts_from_yaml, read_ts
-from suite.resources_utils import wait_before_test
+from suite.utils.custom_resources_utils import patch_ts_from_yaml, read_ts
+from suite.utils.resources_utils import wait_before_test
 
 
 @pytest.mark.ts

@@ -3,8 +3,8 @@ import time
 
 import pytest
 import requests
-from suite.resources_utils import get_events
-from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
+from suite.utils.resources_utils import get_events
+from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf
 
 
 def assert_no_new_events(old_list, new_list):

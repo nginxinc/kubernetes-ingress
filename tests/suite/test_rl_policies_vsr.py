@@ -2,17 +2,11 @@ import time
 
 import pytest
 import requests
-from kubernetes.client.rest import ApiException
-from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import read_custom_resource
-from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
-from suite.resources_utils import replace_configmap_from_yaml, wait_before_test
-from suite.vs_vsr_resources_utils import (
-    create_virtual_server_from_yaml,
-    delete_virtual_server,
-    patch_v_s_route_from_yaml,
-    patch_virtual_server_from_yaml,
-)
+from settings import TEST_DATA
+from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.utils.resources_utils import wait_before_test
+from suite.utils.vs_vsr_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml
 
 std_vs_src = f"{TEST_DATA}/virtual-server-route/standard/virtual-server.yaml"
 rl_pol_pri_src = f"{TEST_DATA}/rate-limit/policies/rate-limit-primary.yaml"

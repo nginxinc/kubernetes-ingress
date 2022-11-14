@@ -4,7 +4,7 @@ metadata:
   name: nginx-ingress
   namespace: nginx-ingress
 spec:
-  type: NodePort 
+  type: NodePort
   ports:
   - port: 80
     targetPort: 80

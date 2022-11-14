@@ -1,19 +1,16 @@
-import json
-
 import pytest
 import requests
-from kubernetes.client.rest import ApiException
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import read_custom_resource
-from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
-from suite.resources_utils import (
+from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.utils.resources_utils import (
     get_last_reload_time,
     get_test_file_name,
     replace_configmap_from_yaml,
     wait_before_test,
     write_to_json,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_virtual_server,
     patch_virtual_server_from_yaml,

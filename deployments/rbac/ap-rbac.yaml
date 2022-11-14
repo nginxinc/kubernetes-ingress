@@ -3,15 +3,15 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: nginx-ingress-app-protect
 rules:
-- apiGroups: 
+- apiGroups:
   - appprotect.f5.com
-  resources: 
+  resources:
   - appolicies
   - aplogconfs
   - apusersigs
-  verbs: 
-  - "get" 
-  - "watch" 
+  verbs:
+  - "get"
+  - "watch"
   - "list"
 ---
 kind: ClusterRoleBinding

@@ -7,14 +7,14 @@ metadata:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
 rules:
 {{- if .Values.controller.appprotect.enable }}
-- apiGroups: 
+- apiGroups:
   - appprotect.f5.com
-  resources: 
+  resources:
   - appolicies
   - aplogconfs
   - apusersigs
-  verbs: 
-  - get 
+  verbs:
+  - get
   - watch
   - list
 {{- end }}

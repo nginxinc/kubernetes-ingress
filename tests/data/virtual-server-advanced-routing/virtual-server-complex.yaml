@@ -8,10 +8,10 @@ spec:
   - name: backend2
     service: backend2-svc
     port: 80
-  - name: backend4-stable 
+  - name: backend4-stable
     service: backend4-stable-svc
     port: 80
-  - name: backend1-future 
+  - name: backend1-future
     service: backend1-future-svc
     port: 80
   - name: backend3-deprecated

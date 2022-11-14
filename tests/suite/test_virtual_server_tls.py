@@ -1,15 +1,15 @@
 import pytest
 from _ssl import SSLError
 from settings import TEST_DATA
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_secret_from_yaml,
     delete_secret,
     is_secret_present,
     replace_secret,
     wait_before_test,
 )
-from suite.ssl_utils import get_server_certificate_subject
-from suite.yaml_utils import get_name_from_yaml
+from suite.utils.ssl_utils import get_server_certificate_subject
+from suite.utils.yaml_utils import get_name_from_yaml
 
 
 @pytest.fixture(scope="class")

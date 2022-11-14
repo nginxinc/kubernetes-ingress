@@ -2,12 +2,12 @@ import pytest
 import requests
 from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
-from suite.custom_assertions import (
+from suite.utils.custom_assertions import (
     assert_event_and_count,
     assert_event_and_get_count,
     assert_event_with_full_equality_and_count,
 )
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_service_with_name,
     delete_service,
     get_events,
@@ -16,7 +16,7 @@ from suite.resources_utils import (
     replace_service,
     wait_before_test,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
     create_virtual_server_from_yaml,
     delete_v_s_route,
@@ -24,7 +24,7 @@ from suite.vs_vsr_resources_utils import (
     get_vs_nginx_template_conf,
     patch_v_s_route_from_yaml,
 )
-from suite.yaml_utils import get_paths_from_vsr_yaml
+from suite.utils.yaml_utils import get_paths_from_vsr_yaml
 
 
 def assert_responses_and_server_name(resp_1, resp_2, resp_3):

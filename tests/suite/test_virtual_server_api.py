@@ -3,8 +3,8 @@ import json
 import pytest
 import requests
 from settings import NGINX_API_VERSION
-from suite.nginx_api_utils import get_nginx_generation_value, wait_for_empty_array, wait_for_non_empty_array
-from suite.resources_utils import scale_deployment
+from suite.utils.nginx_api_utils import get_nginx_generation_value, wait_for_empty_array, wait_for_non_empty_array
+from suite.utils.resources_utils import scale_deployment
 
 
 @pytest.mark.vs

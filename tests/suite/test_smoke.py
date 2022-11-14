@@ -2,12 +2,11 @@ import os
 import tempfile
 
 import pytest
-import requests
 import yaml
 from settings import TEST_DATA
-from suite.custom_assertions import wait_and_assert_status_code
-from suite.fixtures import PublicEndpoint
-from suite.resources_utils import (
+from suite.fixtures.fixtures import PublicEndpoint
+from suite.utils.custom_assertions import wait_and_assert_status_code
+from suite.utils.resources_utils import (
     create_example_app,
     create_items_from_yaml,
     create_secret_from_yaml,
@@ -25,7 +24,7 @@ from suite.resources_utils import (
     wait_until_all_pods_are_ready,
     write_to_json,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 paths = ["backend1", "backend2"]
 reload_times = {}

@@ -24,7 +24,7 @@ type TemplateExecutor struct {
 func NewTemplateExecutor(virtualServerTemplatePath string, transportServerTemplatePath string) (*TemplateExecutor, error) {
 	// template names  must be the base name of the template file https://golang.org/pkg/text/template/#Template.ParseFiles
 
-	vsTemplate, err := template.New(path.Base(virtualServerTemplatePath)).ParseFiles(virtualServerTemplatePath)
+	vsTemplate, err := template.New(path.Base(virtualServerTemplatePath)).Funcs(helperFunctions).ParseFiles(virtualServerTemplatePath)
 	if err != nil {
 		return nil, err
 	}

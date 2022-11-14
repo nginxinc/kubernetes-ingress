@@ -86,9 +86,9 @@ In this section, we create resources common for most of the Ingress Controller i
 2. If you would like to use the TCP and UDP load balancing features of the Ingress Controller, create the following additional resources:
 
 Create a custom resource definition for [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resource:
-  
+
     $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
-    
+
 3. If you would like to use the App Protect WAF module, create the following additional resources:
 
 Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:

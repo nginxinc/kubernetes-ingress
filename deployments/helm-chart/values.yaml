@@ -186,6 +186,9 @@ controller:
   ## Comma separated list of namespaces to watch for Ingress resources. By default the Ingress Controller watches all namespaces.
   watchNamespace: ""
 
+  ## Comma separated list of namespaces to watch for Secret resources. By default the Ingress Controller watches all namespaces.
+  watchSecretNamespace: ""
+
   ## Enable the custom resources.
   enableCustomResources: true
 

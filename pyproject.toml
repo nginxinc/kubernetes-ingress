@@ -17,6 +17,8 @@ pythonpath = [
     ".",
     "tests/suite",
     "tests/suite/grpc",
+    "tests/suite/fixtures",
+    "tests/suite/utils",
 ]
 addopts = "--tb=native -ra --disable-warnings -x -l --profile -v"
 log_cli = true

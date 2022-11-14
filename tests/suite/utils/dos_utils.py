@@ -3,7 +3,7 @@ import subprocess
 
 from kubernetes.client import CoreV1Api
 from kubernetes.stream import stream
-from suite.resources_utils import get_file_contents, wait_before_test
+from suite.utils.resources_utils import get_file_contents, wait_before_test
 
 
 def log_content_to_dic(log_contents):

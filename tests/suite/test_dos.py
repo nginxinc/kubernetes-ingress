@@ -4,8 +4,8 @@ from datetime import datetime
 
 import pytest
 import requests
-from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import (
+from settings import TEST_DATA
+from suite.utils.custom_resources_utils import (
     create_dos_logconf_from_yaml,
     create_dos_policy_from_yaml,
     create_dos_protected_from_yaml,
@@ -13,14 +13,13 @@ from suite.custom_resources_utils import (
     delete_dos_policy,
     delete_dos_protected,
 )
-from suite.dos_utils import (
+from suite.utils.dos_utils import (
     check_learning_status_with_admd_s,
     clean_good_bad_clients,
     find_in_log,
     log_content_to_dic,
-    print_admd_log,
 )
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     clear_file_contents,
     create_dos_arbitrator,
     create_example_app,
@@ -42,7 +41,7 @@ from suite.resources_utils import (
     wait_until_all_pods_are_ready,
     write_to_json,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 src_ing_yaml = f"{TEST_DATA}/dos/dos-ingress.yaml"
 valid_resp_addr = "Server address:"

@@ -13,4 +13,3 @@ spec:
   - path: /helloworld.Greeter
     action:
       pass: grpc2
-

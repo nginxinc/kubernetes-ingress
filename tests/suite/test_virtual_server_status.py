@@ -1,9 +1,8 @@
 import pytest
-from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
-from suite.custom_resources_utils import read_custom_resource
-from suite.resources_utils import wait_before_test
-from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml
+from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.resources_utils import wait_before_test
+from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
 
 
 @pytest.mark.vs

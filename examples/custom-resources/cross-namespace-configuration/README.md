@@ -5,7 +5,7 @@ In this example we use the [VirtualServer and VirtualServerRoute](https://docs.n
 * In the coffee namespace, we create the coffee deployment, service, and the corresponding load-balancing configuration.
 * In the cafe namespace, we create the cafe secret with the TLS certificate and key and the load-balancing configuration for the cafe application. That configuration references the coffee and tea configurations.
 
-## Prerequisites  
+## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled.
 1. Save the public IP address of the Ingress Controller into a shell variable:
@@ -21,14 +21,14 @@ In this example we use the [VirtualServer and VirtualServerRoute](https://docs.n
 
 Create the required tea, coffee, and cafe namespaces:
 ```
-$ kubectl create -f namespaces.yaml 
+$ kubectl create -f namespaces.yaml
 ```
 
 ## Step 2 - Deploy the Cafe Application
 
 1. Create the tea deployment and service in the tea namespace:
     ```
-    $ kubectl create -f tea.yaml 
+    $ kubectl create -f tea.yaml
     ```
 1. Create the coffee deployment and service in the coffee namespace:
     ```
@@ -65,8 +65,8 @@ $ kubectl create -f namespaces.yaml
       ----     ------                 ----  ----                      -------
       Warning  NoVirtualServersFound  2m    nginx-ingress-controller  No VirtualServer references VirtualServerRoute tea/tea
       Normal   AddedOrUpdated         1m    nginx-ingress-controller  Configuration for tea/tea was added or updated
-    
-    $ kubectl describe virtualserverroute coffee -n coffee 
+
+    $ kubectl describe virtualserverroute coffee -n coffee
     . . .
     Events:
       Type     Reason                 Age   From                      Message
@@ -82,7 +82,7 @@ $ kubectl create -f namespaces.yaml
       Normal  AddedOrUpdated  1m    nginx-ingress-controller  Configuration for cafe/cafe was added or updated
     ```
 1. Access the application using curl. We'll use curl's `--insecure` option to turn off certificate verification of our self-signed certificate and `--resolve` option to set the IP address and HTTPS port of the Ingress Controller to the domain name of the cafe application:
-    
+
     To get coffee:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure

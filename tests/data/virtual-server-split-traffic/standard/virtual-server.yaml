@@ -11,7 +11,7 @@ spec:
   - name: backend1-v1
     service: backend1-svc-v1
     port: 80
-  - name: backend1-v2 
+  - name: backend1-v2
     service: backend1-svc-v2
     port: 80
   routes:

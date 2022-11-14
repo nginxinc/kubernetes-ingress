@@ -5,8 +5,8 @@ import logging
 import yaml
 from kubernetes.client import CoreV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
-from suite.custom_resources_utils import read_custom_resource
-from suite.resources_utils import ensure_item_removal, get_file_contents
+from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.resources_utils import ensure_item_removal, get_file_contents
 
 
 def read_vs(custom_objects: CustomObjectsApi, namespace, name) -> object:

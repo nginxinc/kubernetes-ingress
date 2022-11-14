@@ -1,9 +1,8 @@
 import pytest
-import requests
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_assertions import wait_and_assert_status_code
-from suite.custom_resources_utils import create_crd_from_yaml, delete_crd
-from suite.resources_utils import (
+from suite.utils.custom_assertions import wait_and_assert_status_code
+from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
+from suite.utils.resources_utils import (
     create_service_from_yaml,
     delete_service,
     patch_rbac,
@@ -11,12 +10,12 @@ from suite.resources_utils import (
     replace_service,
     wait_before_test,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_virtual_server,
     patch_virtual_server_from_yaml,
 )
-from suite.yaml_utils import get_first_host_from_yaml, get_name_from_yaml, get_paths_from_vs_yaml
+from suite.utils.yaml_utils import get_first_host_from_yaml, get_name_from_yaml, get_paths_from_vs_yaml
 
 
 @pytest.mark.vs
