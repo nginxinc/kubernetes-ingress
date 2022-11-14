@@ -608,6 +608,12 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:                   "no endpoints found",
+			targetPort:             8080,
+			expectedEndpointSlices: nil,
+			svcEndpointSlices:      []discovery_v1.EndpointSlice{},
+		},
 	}
 
 	svc := api_v1.Service{
@@ -645,11 +651,45 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 		desc        string
 		targetPort  int32
 		svcEps      api_v1.Endpoints
+		pods        []*api_v1.Pod
 		expectedEps []podEndpoint
 	}{
 		{
 			desc:       "find one endpoint",
 			targetPort: 80,
+			svcEps: api_v1.Endpoints{
+				Subsets: []api_v1.EndpointSubset{
+					{
+						Addresses: []api_v1.EndpointAddress{
+							{
+								IP:       "1.2.3.4",
+								Hostname: "asdf.com",
+							},
+						},
+						Ports: []api_v1.EndpointPort{
+							{
+								Port: 80,
+							},
+						},
+					},
+				},
+			},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+			},
 			expectedEps: []podEndpoint{
 				{
 					Address: "1.2.3.4:80",
@@ -667,44 +707,9 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 		},
 	}
 
-	pods := []*api_v1.Pod{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				OwnerReferences: []meta_v1.OwnerReference{
-					{
-						Kind:       "Deployment",
-						Name:       "deploy-1",
-						Controller: boolPointer(true),
-					},
-				},
-			},
-			Status: api_v1.PodStatus{
-				PodIP: "1.2.3.4",
-			},
-		},
-	}
-
-	svcEps := api_v1.Endpoints{
-		Subsets: []api_v1.EndpointSubset{
-			{
-				Addresses: []api_v1.EndpointAddress{
-					{
-						IP:       "1.2.3.4",
-						Hostname: "asdf.com",
-					},
-				},
-				Ports: []api_v1.EndpointPort{
-					{
-						Port: 80,
-					},
-				},
-			},
-		},
-	}
-
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotEndps := getEndpointsBySubselectedPods(test.targetPort, pods, svcEps)
+			gotEndps := getEndpointsBySubselectedPods(test.targetPort, test.pods, test.svcEps)
 			if !reflect.DeepEqual(gotEndps, test.expectedEps) {
 				t.Errorf("getEndpointsBySubselectedPods() = %v, want %v", gotEndps, test.expectedEps)
 			}
