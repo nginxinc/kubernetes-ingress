@@ -528,7 +528,7 @@ func (lbc *LoadBalancerController) addEndpointHandler(handlers cache.ResourceEve
 
 // addEndpointSliceHandlerWithStore adds the handler for EndpointSlices to the controller
 func (lbc *LoadBalancerController) addEndpointSliceHandlerWithStore(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
-	informer := nsi.secretInformerFactory.Discovery().V1().EndpointSlices().Informer()
+	informer := nsi.sharedInformerFactory.Discovery().V1().EndpointSlices().Informer()
 	informer.AddEventHandler(handlers)
 	var el storeToEndpointSliceLister
 	el.Store = informer.GetStore()
