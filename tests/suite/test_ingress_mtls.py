@@ -1,11 +1,17 @@
-import mock
+from unittest import mock
+
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.policy_resources_utils import create_policy_from_yaml, delete_policy
-from suite.resources_utils import create_secret_from_yaml, delete_secret, wait_before_test
-from suite.ssl_utils import create_sni_session
-from suite.vs_vsr_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml, read_vs, read_vsr
+from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.utils.resources_utils import create_secret_from_yaml, delete_secret, wait_before_test
+from suite.utils.ssl_utils import create_sni_session
+from suite.utils.vs_vsr_resources_utils import (
+    patch_v_s_route_from_yaml,
+    patch_virtual_server_from_yaml,
+    read_vs,
+    read_vsr,
+)
 
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
 std_vsr_src = f"{TEST_DATA}/virtual-server-route/route-multiple.yaml"

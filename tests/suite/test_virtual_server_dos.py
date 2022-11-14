@@ -5,8 +5,8 @@ from datetime import datetime
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.custom_assertions import wait_and_assert_status_code
-from suite.custom_resources_utils import (
+from suite.utils.custom_assertions import wait_and_assert_status_code
+from suite.utils.custom_resources_utils import (
     create_dos_logconf_from_yaml,
     create_dos_policy_from_yaml,
     create_dos_protected_from_yaml,
@@ -14,14 +14,13 @@ from suite.custom_resources_utils import (
     delete_dos_policy,
     delete_dos_protected,
 )
-from suite.dos_utils import (
+from suite.utils.dos_utils import (
     check_learning_status_with_admd_s,
     clean_good_bad_clients,
     find_in_log,
     log_content_to_dic,
-    print_admd_log,
 )
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     clear_file_contents,
     create_example_app,
     delete_common_app,
@@ -32,12 +31,12 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_virtual_server,
     get_vs_nginx_template_conf,
 )
-from suite.yaml_utils import get_first_host_from_yaml, get_paths_from_vs_yaml
+from suite.utils.yaml_utils import get_first_host_from_yaml, get_paths_from_vs_yaml
 
 valid_resp_addr = "Server address:"
 valid_resp_name = "Server name:"

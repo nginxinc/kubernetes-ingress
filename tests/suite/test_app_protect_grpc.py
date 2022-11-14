@@ -1,28 +1,27 @@
 import grpc
 import pytest
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.ap_resources_utils import (
+from suite.grpc.helloworld_pb2 import HelloRequest
+from suite.grpc.helloworld_pb2_grpc import GreeterStub
+from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     delete_ap_logconf,
     delete_ap_policy,
 )
-from suite.grpc.helloworld_pb2 import HelloRequest
-from suite.grpc.helloworld_pb2_grpc import GreeterStub
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_example_app,
     create_ingress_with_ap_annotations,
     create_items_from_yaml,
     delete_common_app,
     delete_items_from_yaml,
     get_file_contents,
-    get_service_endpoint,
     replace_configmap_from_yaml,
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.ssl_utils import get_certificate
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.ssl_utils import get_certificate
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 log_loc = f"/var/log/messages"
 valid_resp_txt = "Hello"

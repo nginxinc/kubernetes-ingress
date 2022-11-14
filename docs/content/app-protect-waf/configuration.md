@@ -17,10 +17,10 @@ The NGINX Ingress Controller has a set of global configuration parameters that a
 
 ## Enabling App Protect
 
-You can enable and configure NGINX App Protect WAF on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis. 
-	
+You can enable and configure NGINX App Protect WAF on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis.
+
 To configure NGINX App Protect WAF on a VirtualServer resource, you would create a Policy Custom Resource referencing the APPolicy Custom Resource, and add this to the VirtualServer definition. See the documentation on the [App Protect WAF Policy](/nginx-ingress-controller/configuration/policy-resource/#waf).
-	
+
 To configure NGINX App Protect WAF on an Ingress resource, you would apply the [App Protect annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect) to each desired resource.
 
 
@@ -211,7 +211,7 @@ spec:
 
 ## OpenAPI Specification in NGINX Ingress Controller
 
-The OpenAPI Specification defines the spec file format needed to describe RESTful APIs. The spec file can be written either in JSON or YAML. Using a spec file simplifies the work of implementing API protection. Refer to the [OpenAPI Specification](#https://github.com/OAI/OpenAPI-Specification) (formerly called Swagger) for details. 
+The OpenAPI Specification defines the spec file format needed to describe RESTful APIs. The spec file can be written either in JSON or YAML. Using a spec file simplifies the work of implementing API protection. Refer to the [OpenAPI Specification](#https://github.com/OAI/OpenAPI-Specification) (formerly called Swagger) for details.
 
 NGINX Ingress Controller supports OpenAPI Specification versions 2.0 and 3.0.
 
@@ -219,7 +219,7 @@ The simplest way to create an API protection policy is using an OpenAPI Specific
 * Methods
 * URLs
 * Parameters
-* JSON profiles 
+* JSON profiles
 
 An OpenAPI-ready policy template is provided with the NGINX App Protect WAF packages and is located in: `/etc/app_protect/conf/NginxApiSecurityPolicy.json`
 
@@ -359,7 +359,7 @@ paths:
           required: false
           allowEmptyValue: true
           schema:
-            type: string           
+            type: string
       responses:
         200:
           description: OK
@@ -398,7 +398,7 @@ In this example we deploy the NGINX Plus Ingress Controller with NGINX App Prote
     $ IC_HTTP_PORT=<port number>
     ```
 
-### Step 1. Deploy a Web Application 
+### Step 1. Deploy a Web Application
 
 Create the application deployment and service:
   ```
@@ -423,7 +423,7 @@ Create the application deployment and service:
 ### Step 3 - Deploy the WAF Policy
 
 Create the WAF policy
- ``` 
+ ```
   $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.1/examples/custom-resources/waf/waf.yaml
   ```
   Note the App Protect configuration settings in the Policy resource. They enable WAF protection by configuring App Protect with the policy and log configuration created in the previous step.

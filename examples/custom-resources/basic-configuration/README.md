@@ -4,7 +4,7 @@ In this example we configure load balancing with TLS termination for a simple we
 
 The example is similar to the [complete example](../../examples/complete-example/README.md). However, instead of the Ingress resource, we use the VirtualServer.
 
-## Prerequisites  
+## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled.
 1. Save the public IP address of the Ingress Controller into a shell variable:
@@ -47,7 +47,7 @@ $ kubectl create -f cafe.yaml
       Normal  AddedOrUpdated  7s    nginx-ingress-controller  Configuration for default/cafe was added or updated
     ```
 1. Access the application using curl. We'll use curl's `--insecure` option to turn off certificate verification of our self-signed certificate and `--resolve` option to set the IP address and HTTPS port of the Ingress Controller to the domain name of the cafe application:
-    
+
     To get coffee:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure

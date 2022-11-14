@@ -47,7 +47,7 @@ $ kubectl get virtualservers
 To see an external hostname address associated with a VirtualServer resource, use the `-o wide` option:
 
 ```
-$ kubectl get virtualservers -o wide 
+$ kubectl get virtualservers -o wide
   NAME   STATE   HOST               IP    EXTERNALHOSTNAME                                                         PORTS      AGE
   cafe   Valid   cafe.example.com         ae430f41a1a0042908655abcdefghijkl-12345678.eu-west-2.elb.amazonaws.com   [80,443]   106s
 ```

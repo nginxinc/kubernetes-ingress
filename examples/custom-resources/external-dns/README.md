@@ -1,8 +1,8 @@
-# External DNS 
+# External DNS
 
 In this example we configure a VirtualServer resource to integrate with [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) to make the resource discoverable via a public DNS server. In this example, we deploy an ExternalDNS deployment with the AWS provider enabled.
 
-## Prerequisites  
+## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled. Additionally, the Ingress Controller must be configured to report the VirtualServer status by setting either the `external-service` command line argument, or setting the `external-status-address` key in the ConfigMap resource (see the [Reporting Resources Status docs](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status#virtualserver-and-virtualserverroute-resources) for more details).
 

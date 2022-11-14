@@ -39,14 +39,14 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app: tea 
+      app: tea
   template:
     metadata:
       labels:
-        app: tea 
+        app: tea
     spec:
       containers:
-      - name: tea 
+      - name: tea
         image: nginxdemos/hello:plain-text
         ports:
         - containerPort: 80

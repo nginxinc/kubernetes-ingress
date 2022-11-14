@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Describe project settings"""
 import os
 

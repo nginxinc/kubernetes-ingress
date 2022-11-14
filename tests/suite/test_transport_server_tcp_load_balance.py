@@ -1,18 +1,10 @@
 import re
 import socket
-import time
 
 import pytest
 from settings import TEST_DATA
-from suite.custom_resources_utils import create_ts_from_yaml, delete_ts, patch_ts_from_yaml, read_ts
-from suite.resources_utils import (
-    get_events,
-    get_ts_nginx_template_conf,
-    scale_deployment,
-    wait_before_test,
-    wait_for_event_increment,
-)
-from urllib3.exceptions import NewConnectionError
+from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, patch_ts_from_yaml, read_ts
+from suite.utils.resources_utils import get_ts_nginx_template_conf, scale_deployment, wait_before_test
 
 
 @pytest.mark.ts

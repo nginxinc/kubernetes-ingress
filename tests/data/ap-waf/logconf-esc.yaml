@@ -13,7 +13,7 @@ spec:
         to: '\"'
     list_prefix: "["
     list_delimiter: ","
-    list_suffix: "]" 
-  
+    list_suffix: "]"
+
   filter:
     request_type: all

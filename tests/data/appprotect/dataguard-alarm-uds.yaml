@@ -1,16 +1,16 @@
 apiVersion: appprotect.f5.com/v1beta1
 kind: APPolicy
-metadata: 
+metadata:
   name: dataguard-alarm
 spec:
   policy:
     signature-requirements:
     - tag: Ingress
-    signature-sets: 
+    signature-sets:
     - name: kic_sigs
       block: true
-      signatureSet: 
-        filter: 
+      signatureSet:
+        filter:
           tagValue: Ingress
           tagFilter: eq
     applicationLanguage: utf-8
@@ -28,7 +28,7 @@ spec:
       lastSsnDigitsToExpose: 4
       maskData: true
       usSocialSecurityNumbers: true
-    enforcementMode: blocking 
+    enforcementMode: blocking
     name: dataguard-alarm
-    template: 
+    template:
       name: POLICY_TEMPLATE_NGINX_BASE

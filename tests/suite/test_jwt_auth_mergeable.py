@@ -1,8 +1,8 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.fixtures import PublicEndpoint
-from suite.resources_utils import (
+from suite.fixtures.fixtures import PublicEndpoint
+from suite.utils.resources_utils import (
     create_example_app,
     create_items_from_yaml,
     create_secret_from_yaml,
@@ -15,7 +15,7 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 
 class JWTAuthMergeableSetup:
@@ -88,7 +88,7 @@ def get_token_from_file(token_type) -> str:
     :param token_type: 'master' or 'minion'
     :return: str
     """
-    with open(f"{TEST_DATA}/jwt-auth-mergeable/tokens/jwt-auth-{token_type}-token.jwt", "r") as token_file:
+    with open(f"{TEST_DATA}/jwt-auth-mergeable/tokens/jwt-auth-{token_type}-token.jwt") as token_file:
         return token_file.read().replace("\n", "")
 
 

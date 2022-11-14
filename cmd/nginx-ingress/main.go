@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -37,9 +38,14 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+// Injected during build
+var version string
+
 func main() {
-	binaryInfo, versionInfo := getBuildInfo()
-	parseFlags(binaryInfo, versionInfo)
+	commitHash, commitTime, dirtyBuild := getBuildInfo()
+	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
+
+	parseFlags()
 
 	config, kubeClient := createConfigAndKubeClient()
 
@@ -47,7 +53,9 @@ func main() {
 
 	validateIngressClass(kubeClient)
 
-	checkNamespaceExists(kubeClient)
+	checkNamespaceExists(kubeClient, watchNamespaces)
+
+	checkNamespaceExists(kubeClient, watchSecretNamespaces)
 
 	dynClient, confClient := createCustomClients(config)
 
@@ -121,6 +129,7 @@ func main() {
 		RestConfig:                   config,
 		ResyncPeriod:                 30 * time.Second,
 		Namespace:                    watchNamespaces,
+		SecretNamespace:              watchSecretNamespaces,
 		NginxConfigurator:            cnf,
 		DefaultServerSecret:          *defaultServerSecret,
 		AppProtectEnabled:            *appProtect,
@@ -234,8 +243,8 @@ func validateIngressClass(kubeClient kubernetes.Interface) {
 	}
 }
 
-func checkNamespaceExists(kubeClient kubernetes.Interface) {
-	for _, ns := range watchNamespaces {
+func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) {
+	for _, ns := range namespaces {
 		if ns != "" {
 			_, err := kubeClient.CoreV1().Namespaces().Get(context.TODO(), ns, meta_v1.GetOptions{})
 			if err != nil {

@@ -2,8 +2,8 @@ import pytest
 import requests
 import yaml
 from settings import TEST_DATA
-from suite.resources_utils import ensure_response_from_backend
-from suite.yaml_utils import get_paths_from_vsr_yaml
+from suite.utils.resources_utils import ensure_response_from_backend
+from suite.utils.yaml_utils import get_paths_from_vsr_yaml
 from yaml.loader import Loader
 
 

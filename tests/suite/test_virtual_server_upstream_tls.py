@@ -2,15 +2,15 @@ import pytest
 import requests
 from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
-from suite.custom_assertions import (
+from suite.utils.custom_assertions import (
     assert_event,
     assert_event_and_get_count,
     assert_event_count_increased,
     assert_no_new_events,
     assert_response_codes,
 )
-from suite.resources_utils import ensure_response_from_backend, get_events, get_first_pod_name, wait_before_test
-from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml
+from suite.utils.resources_utils import ensure_response_from_backend, get_events, get_first_pod_name, wait_before_test
+from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml
 
 
 @pytest.mark.flaky(max_runs=3)

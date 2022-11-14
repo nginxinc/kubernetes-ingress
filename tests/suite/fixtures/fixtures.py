@@ -17,9 +17,9 @@ from kubernetes.client import (
 )
 from kubernetes.client.rest import ApiException
 from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import create_crd_from_yaml, delete_crd
-from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
-from suite.resources_utils import (
+from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
+from suite.utils.kube_config_utils import ensure_context_in_config, get_current_context_name
+from suite.utils.resources_utils import (
     cleanup_rbac,
     configure_rbac,
     create_configmap_from_yaml,
@@ -34,7 +34,7 @@ from suite.resources_utils import (
     wait_before_test,
     wait_for_public_ip,
 )
-from suite.yaml_utils import get_name_from_yaml
+from suite.utils.yaml_utils import get_name_from_yaml
 
 
 class KubeApis:

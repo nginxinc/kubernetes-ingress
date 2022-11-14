@@ -4,13 +4,13 @@ import pytest
 import requests
 from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
-from suite.custom_assertions import (
+from suite.utils.custom_assertions import (
     assert_event_starts_with_text_and_contains_errors,
     assert_vs_conf_not_exists,
     wait_and_assert_status_code,
 )
-from suite.resources_utils import get_events, get_first_pod_name, wait_before_test
-from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml
+from suite.utils.resources_utils import get_events, get_first_pod_name, wait_before_test
+from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml
 
 
 @pytest.mark.vs

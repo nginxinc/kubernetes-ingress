@@ -2,7 +2,7 @@ import pytest
 import requests
 import yaml
 from settings import TEST_DATA
-from suite.ap_resources_utils import (
+from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     create_ap_usersig_from_yaml,
@@ -11,8 +11,8 @@ from suite.ap_resources_utils import (
     delete_ap_policy,
     delete_ap_usersig,
 )
-from suite.policy_resources_utils import delete_policy
-from suite.resources_utils import (
+from suite.utils.policy_resources_utils import delete_policy
+from suite.utils.resources_utils import (
     create_example_app,
     create_ingress,
     create_ingress_with_ap_annotations,
@@ -33,13 +33,13 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_v_s_route,
     create_virtual_server,
     delete_virtual_server,
     patch_virtual_server_from_yaml,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 
 class IngressSetup:

@@ -1,6 +1,7 @@
 package nginx
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -362,7 +363,7 @@ func (lm *LocalManager) SetPlusClients(plusClient *client.NginxClient, plusConfi
 
 // UpdateServersInPlus updates NGINX Plus servers of the given upstream.
 func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error {
-	err := verifyConfigVersion(lm.plusConfigVersionCheckClient, lm.configVersion)
+	err := verifyConfigVersion(lm.plusConfigVersionCheckClient, lm.configVersion, lm.verifyClient.timeout)
 	if err != nil {
 		return fmt.Errorf("error verifying config version: %w", err)
 	}
@@ -393,7 +394,7 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 
 // UpdateStreamServersInPlus updates NGINX Plus stream servers of the given upstream.
 func (lm *LocalManager) UpdateStreamServersInPlus(upstream string, servers []string) error {
-	err := verifyConfigVersion(lm.plusConfigVersionCheckClient, lm.configVersion)
+	err := verifyConfigVersion(lm.plusConfigVersionCheckClient, lm.configVersion, lm.verifyClient.timeout)
 	if err != nil {
 		return fmt.Errorf("error verifying config version: %w", err)
 	}
@@ -432,8 +433,11 @@ func (lm *LocalManager) CreateOpenTracingTracerConfig(content string) error {
 // verifyConfigVersion is used to check if the worker process that the API client is connected
 // to is using the latest version of nginx config. This way we avoid making changes on
 // a worker processes that is being shut down.
-func verifyConfigVersion(httpClient *http.Client, configVersion int) error {
-	req, err := http.NewRequest("GET", "http://nginx-plus-api/configVersionCheck", nil)
+func verifyConfigVersion(httpClient *http.Client, configVersion int, timeout time.Duration) error {
+	ctx := context.Background()
+	reqContext, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(reqContext, "GET", "http://nginx-plus-api/configVersionCheck", nil)
 	if err != nil {
 		return fmt.Errorf("error creating request: %w", err)
 	}

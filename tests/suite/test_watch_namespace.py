@@ -1,7 +1,7 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_example_app,
     create_items_from_yaml,
     create_namespace_with_name_from_yaml,
@@ -10,7 +10,7 @@ from suite.resources_utils import (
     ensure_response_from_backend,
     wait_until_all_pods_are_ready,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 
 class BackendSetup:

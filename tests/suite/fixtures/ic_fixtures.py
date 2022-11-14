@@ -3,11 +3,10 @@
 import time
 
 import pytest
-import yaml
 from kubernetes.client.rest import ApiException
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import create_crd_from_yaml, delete_crd
-from suite.resources_utils import (
+from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
+from suite.utils.resources_utils import (
     cleanup_rbac,
     configure_rbac_with_ap,
     configure_rbac_with_dos,
@@ -22,7 +21,7 @@ from suite.resources_utils import (
     replace_configmap_from_yaml,
     wait_until_all_pods_are_ready,
 )
-from suite.yaml_utils import get_name_from_yaml
+from suite.utils.yaml_utils import get_name_from_yaml
 
 
 @pytest.fixture(scope="class")

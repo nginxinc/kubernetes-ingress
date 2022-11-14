@@ -15,15 +15,6 @@ import (
 )
 
 var (
-
-	// Injected during build
-	version string
-
-	// Info read from the binary
-	commitHash = "unknown"
-	commitTime = "unknown"
-	dirtyBuild = true
-
 	healthStatus = flag.Bool("health-status", false,
 		`Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
 	Useful for external health-checking of the Ingress Controller`)
@@ -39,6 +30,11 @@ var (
 		`Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces`)
 
 	watchNamespaces []string
+
+	watchSecretNamespace = flag.String("watch-secret-namespace", "",
+		`Comma separated list of namespaces the Ingress Controller should watch for secrets. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See "watch-namespace". `)
+
+	watchSecretNamespaces []string
 
 	nginxConfigMaps = flag.String("nginx-configmaps", "",
 		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
@@ -187,19 +183,26 @@ var (
 )
 
 //gocyclo:ignore
-func parseFlags(versionInfo string, binaryInfo string) {
+func parseFlags() {
 	flag.Parse()
+
+	if *versionFlag {
+		os.Exit(0)
+	}
 
 	initialChecks()
 
-	if *versionFlag {
-		printVersionInfo(versionInfo, binaryInfo)
+	watchNamespaces = strings.Split(*watchNamespace, ",")
+	glog.Infof("Namespaces watched: %v", watchNamespaces)
+
+	if len(*watchSecretNamespace) > 0 {
+		watchSecretNamespaces = strings.Split(*watchSecretNamespace, ",")
+	} else {
+		// empty => default to watched namespaces
+		watchSecretNamespaces = watchNamespaces
 	}
 
-	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
-	glog.Info(binaryInfo)
-
-	watchNamespaces = strings.Split(*watchNamespace, ",")
+	glog.Infof("Namespaces watched for secrets: %v", watchSecretNamespaces)
 
 	validationChecks()
 
@@ -284,17 +287,12 @@ func initialChecks() {
 		}
 	}
 
+	glog.Infof("Starting with flags: %+q", os.Args[1:])
+
 	unparsed := flag.Args()
 	if len(unparsed) > 0 {
 		glog.Warningf("Ignoring unhandled arguments: %+q", unparsed)
 	}
-}
-
-// printVersionInfo prints the the version and binary info before exiting if the flag is set
-func printVersionInfo(versionInfo string, binaryInfo string) {
-	fmt.Println(versionInfo)
-	fmt.Println(binaryInfo)
-	os.Exit(0)
 }
 
 // validationChecks checks the values for various flags
@@ -312,6 +310,11 @@ func validationChecks() {
 	namespacesNameValidationError := validateNamespaceNames(watchNamespaces)
 	if namespacesNameValidationError != nil {
 		glog.Fatalf("Invalid values for namespaces: %v", namespacesNameValidationError)
+	}
+
+	namespacesNameValidationError = validateNamespaceNames(watchSecretNamespaces)
+	if namespacesNameValidationError != nil {
+		glog.Fatalf("Invalid values for secret namespaces: %v", namespacesNameValidationError)
 	}
 
 	statusPortValidationError := validatePort(*nginxStatusPort)

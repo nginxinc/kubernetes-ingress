@@ -1,6 +1,6 @@
 import pytest
 import requests
-from suite.resources_utils import ensure_connection
+from suite.utils.resources_utils import ensure_connection
 
 
 @pytest.mark.ingresses

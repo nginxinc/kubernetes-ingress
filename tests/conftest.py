@@ -16,7 +16,7 @@ from settings import (
     NS_COUNT,
     NUM_REPLICAS,
 )
-from suite.resources_utils import get_first_pod_name
+from suite.utils.resources_utils import get_first_pod_name
 
 
 def pytest_addoption(parser) -> None:
@@ -111,7 +111,7 @@ def pytest_addoption(parser) -> None:
 
 
 # import fixtures into pytest global namespace
-pytest_plugins = ["suite.fixtures", "suite.ic_fixtures", "suite.custom_resource_fixtures"]
+pytest_plugins = ["suite.fixtures.fixtures", "suite.fixtures.ic_fixtures", "suite.fixtures.custom_resource_fixtures"]
 
 
 def pytest_collection_modifyitems(config, items) -> None:

@@ -1,15 +1,13 @@
-import json
-
 import pytest
 import requests
-from settings import DEPLOYMENTS, TEST_DATA
-from suite.ap_resources_utils import (
+from settings import TEST_DATA
+from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     delete_ap_logconf,
     delete_ap_policy,
 )
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_example_app,
     create_ingress_with_ap_annotations,
     create_items_from_yaml,
@@ -23,7 +21,7 @@ from suite.resources_utils import (
     wait_until_all_pods_are_ready,
     write_to_json,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 ap_policies_under_test = ["dataguard-alarm", "file-block", "malformed-block"]
 valid_resp_addr = "Server address:"

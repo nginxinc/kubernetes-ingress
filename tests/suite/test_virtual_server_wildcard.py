@@ -2,10 +2,10 @@ import time
 
 import pytest
 from settings import TEST_DATA
-from suite.custom_assertions import wait_and_assert_status_code
-from suite.custom_resources_utils import read_custom_resource
-from suite.resources_utils import wait_before_test
-from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server
+from suite.utils.custom_assertions import wait_and_assert_status_code
+from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.resources_utils import wait_before_test
+from suite.utils.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server
 
 
 @pytest.mark.vs

@@ -1,8 +1,8 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.custom_resource_fixtures import VirtualServerRoute
-from suite.resources_utils import (
+from suite.fixtures.custom_resource_fixtures import VirtualServerRoute
+from suite.utils.resources_utils import (
     create_example_app,
     create_namespace_with_name_from_yaml,
     delete_namespace,
@@ -10,12 +10,12 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.vs_vsr_resources_utils import (
+from suite.utils.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
     create_virtual_server_from_yaml,
     patch_v_s_route_from_yaml,
 )
-from suite.yaml_utils import get_first_host_from_yaml, get_paths_from_vsr_yaml, get_route_namespace_from_vs_yaml
+from suite.utils.yaml_utils import get_first_host_from_yaml, get_paths_from_vsr_yaml, get_route_namespace_from_vs_yaml
 
 
 def execute_assertions(resp_1, resp_2, resp_3):

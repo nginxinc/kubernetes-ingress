@@ -30,4 +30,4 @@ data:
           listen [::]:5353;
           proxy_pass coredns-tcp;
           status_zone coredns-tcp;
-      } 
+      }

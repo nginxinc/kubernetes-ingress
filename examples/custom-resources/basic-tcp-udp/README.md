@@ -1,11 +1,11 @@
-# Basic TCP/UDP Load Balancing 
+# Basic TCP/UDP Load Balancing
 
 In this example, we deploy a DNS server in a cluster and configure TCP and UDP load balancing for it using the TransportServer resource.  As a result, NGINX will pass any connections or datagrams coming to its port 5353 to the DNS server pods.
 
-## Prerequisites  
+## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller:
-   * As part of Step 2 of those instructions, make sure to deploy the GlobalConfiguration resource and configure the Ingress Controller to use it. 
+   * As part of Step 2 of those instructions, make sure to deploy the GlobalConfiguration resource and configure the Ingress Controller to use it.
    * Expose port 5353 of the Ingress Controller both for TCP and UDP traffic.
 1. Save the public IP address of the Ingress Controller into a shell variable:
     ```
