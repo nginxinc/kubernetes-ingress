@@ -1459,7 +1459,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
                         f"After {_} retries at 1 second interval, got {resp.status_code} response. Continue with tests..."
                     )
                     return
-
+                time.sleep(1)
             except requests.exceptions.SSLError as e:
                 exception = str(e)
                 print(f"SSL certificate exception: {exception}")

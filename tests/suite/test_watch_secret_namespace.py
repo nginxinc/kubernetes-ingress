@@ -8,7 +8,7 @@ from suite.utils.resources_utils import create_secret_from_yaml, ensure_response
 from suite.utils.ssl_utils import create_sni_session
 
 
-@pytest.mark.vsr
+@pytest.mark.test
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
@@ -63,20 +63,24 @@ class TestVSRWatchSecretNamespacesValid:
         )
         session = create_sni_session()
         exception = ""
-        resp = ""
-        try:
-            resp = session.get(
-                f"{req_url}{v_s_route_setup.route_m.paths[0]}",
-                headers={"host": v_s_route_setup.vs_host},
-                allow_redirects=False,
-                verify=False,
-            )
-        except requests.exceptions.SSLError as e:
-            exception = str(e)
-            print(f"SSL certificate exception: {exception}")
-            resp = mock.Mock()
-            resp.status_code = "None"
-            resp.text = "None"
+        resp = mock.Mock()
+        resp.status_code = "None"
+        resp.text = "None"
+        retry = 0
+        while resp.status_code == "None" and retry < 10:
+            wait_before_test()
+            try:
+                resp = session.get(
+                    f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+                    headers={"host": v_s_route_setup.vs_host},
+                    allow_redirects=False,
+                    verify=False,
+                )
+            except requests.exceptions.SSLError as e:
+                exception = str(e)
+                print(f"SSL certificate exception: {exception}")
+            retry = +1
+
         assert resp.status_code == 200
 
 
