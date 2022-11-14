@@ -123,7 +123,7 @@ func main() {
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager), cr_validation.IsExternalDNSEnabled(*enableExternalDNS))
 
-	createHealthEndpoint(plusClient, cnf)
+	createHealthProbeEndpoint(kubeClient, plusClient, cnf)
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
@@ -431,6 +431,10 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 		forbiddenListenerPorts[*prometheusMetricsListenPort] = true
 	}
 
+	if *enableHealthProbe {
+		forbiddenListenerPorts[*healthProbeListenPort] = true
+	}
+
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
 }
 
@@ -659,9 +663,20 @@ func createPlusAndLatencyCollectors(
 	return plusCollector, syslogListener, lc
 }
 
-func createHealthEndpoint(plusClient *client.NginxClient, cnf *configs.Configurator) {
-	glog.Infof("Starting Health Endpoint")
-	go healthcheck.RunHealthCheck(plusClient, cnf)
+func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) {
+	var healthProbeSecret *api_v1.Secret
+	var err error
+
+	if *healthProbeTLSSecretName != "" {
+		healthProbeSecret, err = getAndValidateSecret(kubeClient, *healthProbeTLSSecretName)
+		if err != nil {
+			glog.Fatalf("Error trying to get the health probe TLS secret %v: %v", *healthProbeTLSSecretName, err)
+		}
+	}
+
+	if *enableHealthProbe {
+		go healthcheck.RunHealthCheck(*healthProbeListenPort, plusClient, cnf, healthProbeSecret)
+	}
 }
 
 func processGlobalConfiguration() {

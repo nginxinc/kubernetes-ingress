@@ -135,6 +135,15 @@ var (
 	prometheusMetricsListenPort = flag.Int("prometheus-metrics-listen-port", 9113,
 		"Set the port where the Prometheus metrics are exposed. [1024 - 65535]")
 
+	enableHealthProbe = flag.Bool("enable-health-probe", false,
+		`Enable health probe for external load balancers. Requires -nginx-plus`)
+
+	healthProbeTLSSecretName = flag.String("health-probe-tls-secret", "",
+		`A Secret with a TLS certificate and key for TLS termination of the health probe.`)
+
+	healthProbeListenPort = flag.Int("health-probe-listen-port", 9000,
+		"Enable health probe and set the port where the health probe endpoint are exposed. Requires -nginx-plus. [1024 - 65535]")
+
 	enableCustomResources = flag.Bool("enable-custom-resources", true,
 		"Enable custom resources")
 
@@ -256,6 +265,11 @@ func parseFlags() {
 		*enableLatencyMetrics = false
 	}
 
+	if *enableHealthProbe && !*nginxPlus {
+		glog.Warning("enable-health-probe flag support is for NGINX Plus, health probe endpoint will not be exposed")
+		*enableHealthProbe = false
+	}
+
 	if *enableCertManager && !*enableCustomResources {
 		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
 	}
@@ -330,6 +344,11 @@ func validationChecks() {
 	readyStatusPortValidationError := validatePort(*readyStatusPort)
 	if readyStatusPortValidationError != nil {
 		glog.Fatalf("Invalid value for ready-status-port: %v", readyStatusPortValidationError)
+	}
+
+	healthProbePortValidationError := validatePort(*healthProbeListenPort)
+	if healthProbePortValidationError != nil {
+		glog.Fatalf("Invalid value for health-probe-listen-port: %v", metricsPortValidationError)
 	}
 
 	var err error
