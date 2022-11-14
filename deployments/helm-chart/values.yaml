@@ -119,6 +119,21 @@ controller:
   ## The termination grace period of the Ingress Controller pod.
   terminationGracePeriodSeconds: 30
 
+  ## HorizontalPodAutoscaling (HPA)
+  autoscaling:
+    ## Enables HorizontalPodAutoscaling.
+    enabled: false
+    ## The annotations of the Ingress Controller HorizontalPodAutoscaler.
+    annotations: {}
+    ## Minimum number of replicas for the HPA.
+    minReplicas: 1
+    ## Maximum number of replicas for the HPA.
+    maxReplicas: 3
+    ## The target cpu utilization percentage.
+    targetCPUUtilizationPercentage: 50
+    ## The target memory utilization percentage.
+    targetMemoryUtilizationPercentage: 50
+
   ## The resources of the Ingress Controller pods.
   resources:
     requests:
