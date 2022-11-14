@@ -8,7 +8,7 @@ from suite.utils.resources_utils import create_secret_from_yaml, ensure_response
 from suite.utils.ssl_utils import create_sni_session
 
 
-@pytest.mark.test
+@pytest.mark.vsr
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
