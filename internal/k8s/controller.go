@@ -19,7 +19,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	discovery_v1 "k8s.io/api/discovery/v1"
 	"net"
 	"strconv"
 	"strings"
@@ -54,6 +53,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
 	api_v1 "k8s.io/api/core/v1"
+	discovery_v1 "k8s.io/api/discovery/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -536,23 +536,6 @@ func (lbc *LoadBalancerController) addEndpointSliceHandlerWithStore(handlers cac
 
 	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
 }
-
-// addEndpointSliceHandlerWithIndexer adds the handler for EndpointSlices to the controller
-//func (lbc *LoadBalancerController) addEndpointSliceHandlerWithIndexer(handlers cache.ResourceEventHandlerFuncs) {
-//	for _, sif := range lbc.sharedInformerFactory {
-//		informer := sif.Discovery().V1().EndpointSlices().Informer()
-//		indexerErr := informer.AddIndexers("metadata/label....")
-//		if indexerErr != nil {
-//			glog.Errorf("unable to add indexer %s for EndpointSlices", "the indexer")
-//		}
-//		informer.AddEventHandler(handlers)
-//		var el indexerToEndpointSliceLister
-//		el.Indexer = informer.GetIndexer().ByIndex("metadata/label...")
-//		lbc.endpointSliceLister = append(lbc.endpointSliceLister, el)
-//
-//		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
-//	}
-//}
 
 // addConfigMapHandler adds the handler for config maps to the controller
 func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
@@ -3587,8 +3570,7 @@ func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpoin
 							Address: address,
 						}
 						if endpoint.TargetRef != nil {
-							parentType, parentName :=
-								lbc.getPodOwnerTypeAndNameFromAddress(endpoint.TargetRef.Namespace, endpoint.TargetRef.Name)
+							parentType, parentName := lbc.getPodOwnerTypeAndNameFromAddress(endpoint.TargetRef.Namespace, endpoint.TargetRef.Name)
 							podEndpoint.OwnerType = parentType
 							podEndpoint.OwnerName = parentName
 							podEndpoint.PodName = endpoint.TargetRef.Name

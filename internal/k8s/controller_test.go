@@ -3,11 +3,12 @@ package k8s
 import (
 	"errors"
 	"fmt"
-	discovery_v1 "k8s.io/api/discovery/v1"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
+
+	discovery_v1 "k8s.io/api/discovery/v1"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
@@ -472,8 +473,7 @@ func TestFormatWarningsMessages(t *testing.T) {
 }
 
 func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
-	var endpointPort int32
-	endpointPort = 8080
+	endpointPort := int32(8080)
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
@@ -718,8 +718,7 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 }
 
 func TestGetEndpointSlicesBySubselectedPods(t *testing.T) {
-	var endpointPort int32
-	endpointPort = 8080
+	endpointPort := int32(8080)
 
 	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {

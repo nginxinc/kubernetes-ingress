@@ -2,9 +2,10 @@ package k8s
 
 import (
 	"fmt"
-	discovery_v1 "k8s.io/api/discovery/v1"
 	"reflect"
 	"sort"
+
+	discovery_v1 "k8s.io/api/discovery/v1"
 
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 

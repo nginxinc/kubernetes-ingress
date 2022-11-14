@@ -18,9 +18,10 @@ package k8s
 
 import (
 	"fmt"
-	discovery_v1 "k8s.io/api/discovery/v1"
 	"reflect"
 	"strings"
+
+	discovery_v1 "k8s.io/api/discovery/v1"
 
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
@@ -93,11 +94,6 @@ type storeToEndpointSliceLister struct {
 	cache.Store
 }
 
-// Indexer for EndpointSlices
-type indexerToEndpointSliceLister struct {
-	cache.Indexer
-}
-
 // GetServiceEndpoints returns the endpoints of a service, matched on service name.
 func (s *storeToEndpointLister) GetServiceEndpoints(svc *v1.Service) (ep v1.Endpoints, err error) {
 	for _, m := range s.Store.List() {
@@ -111,7 +107,6 @@ func (s *storeToEndpointLister) GetServiceEndpoints(svc *v1.Service) (ep v1.Endp
 
 // GetServiceEndpoints returns the endpoints of a service, matched on service name.
 func (s *storeToEndpointSliceLister) GetServiceEndpointSlices(svc *v1.Service) (endpointSlices []discovery_v1.EndpointSlice, err error) {
-
 	// -- Code to be used when Indexer is set up
 	//svcNameKey := fmt.Sprintf("%s/%s", svc.Namespace, svc.Name)
 	//epStore, exists, err := s.Store.GetByKey(svcNameKey)
