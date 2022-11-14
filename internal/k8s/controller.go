@@ -3364,6 +3364,18 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 		return nil, err
 	}
 
+	var svcEndpointSlices []discovery_v1.EndpointSlice
+	svcEndpointSlices, err = nsi.endpointSliceLister.GetServiceEndpointSlices(svc)
+	if err != nil {
+		glog.V(3).Infof("Error getting endpointslices for service %s from the cache: %v", svc.Name, err)
+		return nil, err
+	}
+
+	if len(svcEndpointSlices) > 0 {
+		endps = getEndpointsFromEndpointSlicesForSubselectedPods(targetPort, pods, svcEndpointSlices)
+		return endps, nil
+	}
+
 	endps = getEndpointsBySubselectedPods(targetPort, pods, svcEps)
 	return endps, nil
 }
@@ -3394,6 +3406,45 @@ func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps 
 		}
 	}
 	return endps
+}
+
+func getEndpointsFromEndpointSlicesForSubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEndpointSlices []discovery_v1.EndpointSlice) (podEndpoints []podEndpoint) {
+	endpointSet := make(map[podEndpoint]struct{})
+	for _, pod := range pods {
+		for _, endpointSlice := range svcEndpointSlices {
+			for _, port := range endpointSlice.Ports {
+				if *port.Port != targetPort {
+					continue
+				}
+				for _, endpoint := range endpointSlice.Endpoints {
+					for _, address := range endpoint.Addresses {
+						if pod.Status.PodIP == address {
+							addr := ipv6SafeAddrPort(pod.Status.PodIP, targetPort)
+							ownerType, ownerName := getPodOwnerTypeAndName(pod)
+							podEndpoint := podEndpoint{
+								Address: addr,
+								PodName: getPodName(endpoint.TargetRef),
+								MeshPodOwner: configs.MeshPodOwner{
+									OwnerType: ownerType,
+									OwnerName: ownerName,
+								},
+							}
+							endpointSet[podEndpoint] = struct{}{}
+							podEndpoints = append(podEndpoints, podEndpoint)
+						}
+					}
+				}
+			}
+		}
+	}
+	if len(endpointSet) == 0 {
+		return nil
+	}
+	endpoints := make([]podEndpoint, 0, len(endpointSet))
+	for ep := range endpointSet {
+		endpoints = append(endpoints, ep)
+	}
+	return endpoints
 }
 
 func ipv6SafeAddrPort(addr string, port int32) string {
@@ -3529,8 +3580,6 @@ func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpoin
 	for _, endpointSlice := range endpointSlices {
 		for _, endpointSlicePort := range endpointSlice.Ports {
 			if *endpointSlicePort.Port == targetPort {
-				// Endpoints may be duplicated across multiple EndpointSlices.
-				// Using a set to prevent returning duplicate endpoints.
 				for _, endpoint := range endpointSlice.Endpoints {
 					for _, endpointAddress := range endpoint.Addresses {
 						address := ipv6SafeAddrPort(endpointAddress, *endpointSlicePort.Port)
