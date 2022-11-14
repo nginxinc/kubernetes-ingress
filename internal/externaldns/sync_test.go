@@ -276,8 +276,10 @@ func TestSync_ReturnsErrorOnFailure(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := EventRecorder{}
-			eplister := []extdnsclient.DNSEndpointLister{DNSEPLister{}}
-			fn := SyncFnFor(rec, nil, eplister)
+			ig := make(map[string]*namespacedInformer)
+			nsi := namespacedInformer{extdnslister: DNSEPLister{}}
+			ig[""] = &nsi
+			fn := SyncFnFor(rec, nil, ig)
 			err := fn(context.TODO(), tc.input)
 			if err == nil {
 				t.Error("want error, got nil")

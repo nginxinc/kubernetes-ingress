@@ -653,12 +653,12 @@ func TestGetPolicies(t *testing.T) {
 		},
 	}
 
-	var pl []cache.Store
-	pl = append(pl, policyLister)
+	nsi := make(map[string]*namespacedInformer)
+	nsi[""] = &namespacedInformer{policyLister: policyLister}
 
 	lbc := LoadBalancerController{
-		isNginxPlus:  true,
-		policyLister: pl,
+		isNginxPlus:         true,
+		namespacedInformers: nsi,
 	}
 
 	policyRefs := []conf_v1.PolicyReference{
@@ -2297,13 +2297,13 @@ func TestPreSyncSecrets(t *testing.T) {
 			}
 		},
 	}
-	var sl []cache.Store
-	sl = append(sl, secretLister)
+	nsi := make(map[string]*namespacedInformer)
+	nsi[""] = &namespacedInformer{secretLister: secretLister, isSecretsEnabledNamespace: true}
 
 	lbc := LoadBalancerController{
-		isNginxPlus:  true,
-		secretStore:  secrets.NewEmptyFakeSecretsStore(),
-		secretLister: sl,
+		isNginxPlus:         true,
+		secretStore:         secrets.NewEmptyFakeSecretsStore(),
+		namespacedInformers: nsi,
 	}
 
 	lbc.preSyncSecrets()

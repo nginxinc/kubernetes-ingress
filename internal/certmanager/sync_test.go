@@ -23,7 +23,6 @@ import (
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
-	cmlisters "github.com/cert-manager/cert-manager/pkg/client/listers/certmanager/v1"
 	"github.com/cert-manager/cert-manager/test/unit/gen"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -491,7 +490,19 @@ func TestSync(t *testing.T) {
 			}
 			b.Init()
 			defer b.Stop()
-			sync := SyncFnFor(b.Recorder, b.CMClient, []cmlisters.CertificateLister{b.SharedInformerFactory.Certmanager().V1().Certificates().Lister()})
+
+			ig := make(map[string]*namespacedInformer)
+
+			nsi := &namespacedInformer{
+				cmSharedInformerFactory:   b.FakeCMInformerFactory(),
+				kubeSharedInformerFactory: b.FakeKubeInformerFactory(),
+				vsSharedInformerFactory:   b.VsSharedInformerFactory,
+				cmLister:                  b.SharedInformerFactory.Certmanager().V1().Certificates().Lister(),
+			}
+
+			ig[""] = nsi
+
+			sync := SyncFnFor(b.Recorder, b.CMClient, ig)
 			b.Start()
 
 			err := sync(context.Background(), &test.VirtualServer)
