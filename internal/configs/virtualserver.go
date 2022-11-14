@@ -132,6 +132,7 @@ type upstreamNamer struct {
 	namespace string
 }
 
+// NewUpstreamNamerForVirtualServer creates a new namer.
 func NewUpstreamNamerForVirtualServer(virtualServer *conf_v1.VirtualServer) *upstreamNamer {
 	return &upstreamNamer{
 		prefix:    fmt.Sprintf("vs_%s_%s", virtualServer.Namespace, virtualServer.Name),
@@ -139,6 +140,7 @@ func NewUpstreamNamerForVirtualServer(virtualServer *conf_v1.VirtualServer) *ups
 	}
 }
 
+// NewUpstreamNamerForVirtualServerRoute creates a new namer.
 func NewUpstreamNamerForVirtualServerRoute(
 	virtualServer *conf_v1.VirtualServer,
 	virtualServerRoute *conf_v1.VirtualServerRoute,

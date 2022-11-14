@@ -23,7 +23,6 @@ import (
 // It errors if the server can't be started or provided secret is not valid
 // (tls certificate cannot be created) and the health service with TLS support can't start.
 func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Configurator, secret *v1.Secret) error {
-
 	getUpstreamsForHost := UpstreamsForHost(cnf)
 	getUpstreamsFromNginx := NginxUpstreams(nc)
 
@@ -49,6 +48,7 @@ func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Confi
 		Handler: API(getUpstreamsForHost, getUpstreamsFromNginx),
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{tlsCert},
+			MinVersion:   tls.VersionTLS12,
 		},
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -69,19 +69,14 @@ func makeCert(s *v1.Secret) (tls.Certificate, error) {
 	key, ok := s.Data[v1.TLSPrivateKeyKey]
 	if !ok {
 		return tls.Certificate{}, errors.New("missing tls key")
-
 	}
 	return tls.X509KeyPair(cert, key)
 }
 
-// ===================================================================================
-// Handlers
-// ===================================================================================
-
 // API constructs an http.Handler with all healtcheck routes.
-func API(upstreamsFromHost func(string) []string, upstreamsFromNginx func() (*client.Upstreams, error)) http.Handler {
+func API(upstreamsForHost func(string) []string, upstreamsFromNginx func() (*client.Upstreams, error)) http.Handler {
 	health := HealthHandler{
-		UpstreamsForHost: upstreamsFromHost,
+		UpstreamsForHost: upstreamsForHost,
 		NginxUpstreams:   upstreamsFromNginx,
 	}
 	mux := chi.NewRouter()
@@ -94,15 +89,15 @@ func API(upstreamsFromHost func(string) []string, upstreamsFromNginx func() (*cl
 }
 
 // UpstreamsForHost takes configurator and returns a func
-// that is reposnsible for retriving upstreams for the given hostname.
+// that is reposnsible for retrieving upstreams for the given hostname.
 func UpstreamsForHost(cnf *configs.Configurator) func(hostname string) []string {
 	return func(hostname string) []string {
 		return cnf.GetUpstreamsforHost(hostname)
 	}
 }
 
-// NginxUpstreams takes an instance of NGNX client and returns a func
-// that returns all upstreams.
+// NginxUpstreams takes an instance of NGNX client and returns
+// a func that returns all upstreams.
 func NginxUpstreams(nc *client.NginxClient) func() (*client.Upstreams, error) {
 	return func() (*client.Upstreams, error) {
 		upstreams, err := nc.GetUpstreams()
@@ -113,7 +108,7 @@ func NginxUpstreams(nc *client.NginxClient) func() (*client.Upstreams, error) {
 	}
 }
 
-// HealthHandler holds dependency used in its method(s).
+// HealthHandler holds dependency for its method(s).
 type HealthHandler struct {
 	UpstreamsForHost func(host string) []string
 	NginxUpstreams   func() (*client.Upstreams, error)
@@ -132,7 +127,7 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 
 	upstreams, err := h.NginxUpstreams()
 	if err != nil {
-		glog.Errorf("error retriving upstreams for host: %s", hostname)
+		glog.Errorf("error retrieving upstreams for host: %s", hostname)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -140,7 +135,7 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	stats := countStats(upstreams, upstreamNames)
 	data, err := json.Marshal(stats)
 	if err != nil {
-		glog.Error("error marshalling result", err)
+		glog.Error("error marshaling result", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -161,9 +156,9 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 // unhealthy number of 'peers' associated with the
 // given host.
 type HostStats struct {
-	Total     int // Total number of configured servers (peers)
-	Up        int // The number of servers (peers) with 'up' status
-	Unhealthy int // The number of servers (peers) with 'down' status
+	Total     int
+	Up        int
+	Unhealthy int
 }
 
 // countStats calculates and returns statistics.
@@ -173,9 +168,10 @@ func countStats(upstreams *client.Upstreams, upstreamNames []string) HostStats {
 		if slices.Contains(upstreamNames, name) {
 			for _, p := range u.Peers {
 				total++
-				if strings.ToLower(p.State) == "up" {
-					up++
+				if strings.ToLower(p.State) != "up" {
+					continue
 				}
+				up++
 			}
 		}
 	}
