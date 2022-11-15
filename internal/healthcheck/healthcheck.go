@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-chi/chi"
@@ -25,7 +24,7 @@ import (
 //
 // If the server encounters an error and it can't start
 // it exits with code 255 (glog.Fatal).
-func RunHealthCheck(port int, plusClient *client.NginxClient, cnf *configs.Configurator, healthProbeTLSSecret *apiv1.Secret) {
+func RunHealthCheck(port int, plusClient *client.NginxClient, cnf *configs.Configurator, healthProbeTLSSecret *v1.Secret) {
 	err := RunHealtcheckServer(strconv.Itoa(port), plusClient, cnf, healthProbeTLSSecret)
 	if err != nil {
 		glog.Fatal(err)
