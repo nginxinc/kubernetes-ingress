@@ -42,7 +42,8 @@ runs:
       id: ingress-type
       run: |
         echo "name=nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress" >> $GITHUB_OUTPUT
-        echo "tag=${{ inputs.image }}${{ contains(inputs.image, 'nap') && '-dos' || '' }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+        echo "tag=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+        echo "modules=${{ contains(inputs.marker, 'appprotect') && 'waf' || '' }}${{ contains(inputs.marker, 'dos') && 'dos' || '' }}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Docker Buildx
@@ -53,8 +54,8 @@ runs:
       with:
         file: build/Dockerfile
         context: '.'
-        cache-from: type=gha,scope=${{ inputs.image }}
-        cache-to: type=gha,scope=${{ inputs.image }},mode=max
+        cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
+        cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }},mode=max
         target: goreleaser
         tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
         load: true
@@ -62,7 +63,8 @@ runs:
         build-args: |
           BUILD_OS=${{ inputs.image }}
           IC_VERSION=CI
-          ${{ contains(inputs.image, 'nap') && 'NAP_MODULES=dos' || '' }}
+          ${{ steps.ingress-type.outputs.modules != '' && format('NAP_MODULES={0}', steps.ingress-type.outputs.modules) || '' }}
+          ${{ contains(inputs.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
         secrets: |
           ${{ contains(inputs.image, 'plus') && format('"nginx-repo.crt={0}"', inputs.nginx-crt) || '' }}
           ${{ contains(inputs.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
