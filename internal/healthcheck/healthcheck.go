@@ -177,16 +177,18 @@ type HostStats struct {
 func countStats(upstreams *client.Upstreams, upstreamNames []string) HostStats {
 	total, up := 0, 0
 	for name, u := range *upstreams {
-		if slices.Contains(upstreamNames, name) {
-			for _, p := range u.Peers {
-				total++
-				if strings.ToLower(p.State) != "up" {
-					continue
-				}
-				up++
+		if !slices.Contains(upstreamNames, name) {
+			continue
+		}
+		for _, p := range u.Peers {
+			total++
+			if strings.ToLower(p.State) != "up" {
+				continue
 			}
+			up++
 		}
 	}
+
 	unhealthy := total - up
 	return HostStats{
 		Total:     total,
