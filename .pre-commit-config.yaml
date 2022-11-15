@@ -29,10 +29,19 @@ repos:
       - id: no-commit-to-branch
       - id: requirements-txt-fixer
       - id: fix-byte-order-marker
+  - repo: local
+    hooks:
+      - id: golang-diff
+        name: create-go-diff
+        entry: bash -c 'git diff -p origin/main > /tmp/diff.patch'
+        language: system
+        types: [go]
+        pass_filenames: false
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.50.1
     hooks:
       - id: golangci-lint
+        args: [--new-from-patch=/tmp/diff.patch]
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.2.0
     hooks:
@@ -53,3 +62,5 @@ repos:
         files: deployments/helm-chart/values.yaml
         types: [yaml]
         args: ['--schemafile', 'deployments/helm-chart/values.schema.json']
+ci:
+  skip: [golang-diff, golangci-lint, check-jsonschema]
