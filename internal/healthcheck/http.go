@@ -48,7 +48,7 @@ func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Confi
 		Handler: API(getUpstreamsForHost, getUpstreamsFromNginx),
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{tlsCert},
-			MinVersion:   tls.VersionTLS10,
+			MinVersion:   tls.VersionTLS12,
 		},
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
