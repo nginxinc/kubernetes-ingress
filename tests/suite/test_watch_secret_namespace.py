@@ -22,26 +22,7 @@ from suite.utils.ssl_utils import create_sni_session
                 ],
             },
             {"example": "watch-secret-namespace"},
-        ),
-        (
-            {
-                "type": "complete",
-                "extra_args": [
-                    f"-enable-custom-resources",
-                    f"-watch-secret-namespace=backends",
-                ],
-            },
-            {"example": "watch-secret-namespace"},
-        ),
-        (
-            {
-                "type": "complete",
-                "extra_args": [
-                    f"-enable-custom-resources",
-                ],
-            },
-            {"example": "watch-secret-namespace"},
-        ),
+        )
     ],
     indirect=True,
 )
@@ -95,17 +76,7 @@ class TestVSRWatchSecretNamespacesValid:
                 ],
             },
             {"example": "watch-secret-namespace"},
-        ),
-        (
-            {
-                "type": "complete",
-                "extra_args": [
-                    f"-enable-custom-resources",
-                    f"-watch-secret-namespace=invalid",
-                ],
-            },
-            {"example": "watch-secret-namespace"},
-        ),
+        )
     ],
     indirect=True,
 )
