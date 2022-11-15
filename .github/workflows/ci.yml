@@ -220,8 +220,8 @@ jobs:
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.14\", \"1.22.13\", \"1.23.10\", \"1.24.4\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
-                                             \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}"
+            echo "matrix={\"k8s\": [\"1.21.14\", \"1.22.15\", \"1.23.13\", \"1.24.7\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+                                             \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}" >> $GITHUB_OUTPUT
           fi
 
   smoke-tests:
