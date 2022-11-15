@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
+	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-chi/chi"
@@ -19,12 +21,23 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
+// RunHealthCheck starts the deep healthcheck service.
+//
+// If the server encounters an error and it can't start
+// it exits with code 255 (glog.Fatal).
+func RunHealthCheck(port int, plusClient *client.NginxClient, cnf *configs.Configurator, healthProbeTLSSecret *apiv1.Secret) {
+	err := RunHealtcheckServer(strconv.Itoa(port), plusClient, cnf, healthProbeTLSSecret)
+	if err != nil {
+		glog.Fatal(err)
+	}
+}
+
 // RunHealtcheckServer takes config params, creates the health server and starts it.
 // It errors if the server can't be started or provided secret is not valid
 // (tls certificate cannot be created) and the health service with TLS support can't start.
 func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Configurator, secret *v1.Secret) error {
-	getUpstreamsForHost := UpstreamsForHost(cnf)
-	getUpstreamsFromNginx := NginxUpstreams(nc)
+	getUpstreamsForHost := upstreamsForHost(cnf)
+	getUpstreamsFromNginx := nginxUpstreams(nc)
 
 	if secret == nil {
 		healthServer := http.Server{
@@ -88,17 +101,17 @@ func API(upstreamsForHost func(string) []string, upstreamsFromNginx func() (*cli
 	return mux
 }
 
-// UpstreamsForHost takes configurator and returns a func
+// upstreamsForHost takes configurator and returns a func
 // that is reposnsible for retrieving upstreams for the given hostname.
-func UpstreamsForHost(cnf *configs.Configurator) func(hostname string) []string {
+func upstreamsForHost(cnf *configs.Configurator) func(hostname string) []string {
 	return func(hostname string) []string {
 		return cnf.GetUpstreamsforHost(hostname)
 	}
 }
 
-// NginxUpstreams takes an instance of NGNX client and returns
+// nginxUpstreams takes an instance of NGNX client and returns
 // a func that returns all upstreams.
-func NginxUpstreams(nc *client.NginxClient) func() (*client.Upstreams, error) {
+func nginxUpstreams(nc *client.NginxClient) func() (*client.Upstreams, error) {
 	return func() (*client.Upstreams, error) {
 		upstreams, err := nc.GetUpstreams()
 		if err != nil {
