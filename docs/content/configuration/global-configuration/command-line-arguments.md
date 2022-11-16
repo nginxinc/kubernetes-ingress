@@ -73,7 +73,7 @@ Default `false`.
 &nbsp;
 <a name="cmdoption-enable-leader-election"></a>
 
-### -inlcude-year
+### -include-year
 Adds year to log headers.
 
 Default `false`.
