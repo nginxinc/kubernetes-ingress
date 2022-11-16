@@ -790,10 +790,25 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 	}
 
 	endpointSlice := obj.(*discovery_v1.EndpointSlice)
-	// Find EndpointSlices based on service name. This is mapped for the label `kubernetes.io/service-name`.
 	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, endpointSlice.Labels["kubernetes.io/service-name"])
 
 	resourceExes := lbc.createExtendedResources(svcResource)
+
+	if len(resourceExes.IngressExes) > 0 {
+		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
+		err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
+		if err != nil {
+			glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.IngressExes, err)
+		}
+	}
+
+	if len(resourceExes.MergeableIngresses) > 0 {
+		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
+		err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
+		if err != nil {
+			glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.MergeableIngresses, err)
+		}
+	}
 
 	if lbc.areCustomResourcesEnabled {
 		if len(resourceExes.VirtualServerExes) > 0 {
