@@ -16,6 +16,10 @@ on:
         required: false
         type: string
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -77,7 +81,7 @@ jobs:
       - name: Get short tag
         id: tag
         run: |
-          version=${{ inputs.tag }}
+          version="${{ inputs.tag }}"
           short="${version%.*}"
           echo "short=$short" >> $GITHUB_OUTPUT
         if: ${{ inputs.tag != '' }}

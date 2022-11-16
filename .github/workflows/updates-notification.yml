@@ -16,6 +16,10 @@ on:
         required: true
         type: string
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   send-notifications:
     name: Send Notifications

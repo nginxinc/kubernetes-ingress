@@ -16,6 +16,10 @@ on:
         required: false
         type: string
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
       runs-on: ubuntu-22.04
