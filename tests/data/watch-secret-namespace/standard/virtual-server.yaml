@@ -1,0 +1,13 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server-route
+spec:
+  host: virtual-server-route.example.com
+  tls:
+    secret: virtual-server-tls-secret
+  routes:
+  - path: "/backends"
+    route: backends # implicit namespace
+  - path: "/backend2"
+    route: backend2-namespace/backend2
