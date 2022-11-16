@@ -84,25 +84,9 @@ func (ipl indexerToPodLister) ListByNamespace(ns string, selector labels.Selecto
 	return pods, err
 }
 
-// storeToEndpointLister makes a Store that lists Endpoints
-type storeToEndpointLister struct {
-	cache.Store
-}
-
 // Store for EndpointSlices
 type storeToEndpointSliceLister struct {
 	cache.Store
-}
-
-// GetServiceEndpoints returns the endpoints of a service, matched on service name.
-func (s *storeToEndpointLister) GetServiceEndpoints(svc *v1.Service) (ep v1.Endpoints, err error) {
-	for _, m := range s.Store.List() {
-		ep = *m.(*v1.Endpoints)
-		if svc.Name == ep.Name && svc.Namespace == ep.Namespace {
-			return ep, nil
-		}
-	}
-	return ep, fmt.Errorf("could not find endpoints for service: %v", svc.Name)
 }
 
 // GetServiceEndpointSlices returns the endpoints of a service, matched on service name.

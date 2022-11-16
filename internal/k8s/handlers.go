@@ -62,40 +62,6 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 	}
 }
 
-// createEndpointHandlers builds the handler funcs for endpoints
-func createEndpointHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			endpoint := obj.(*v1.Endpoints)
-			glog.V(3).Infof("Adding endpoints: %v", endpoint.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			endpoint, isEndpoint := obj.(*v1.Endpoints)
-			if !isEndpoint {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				endpoint, ok = deletedState.Obj.(*v1.Endpoints)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Endpoints object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing endpoints: %v", endpoint.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Endpoints %v changed, syncing", cur.(*v1.Endpoints).Name)
-				lbc.AddSyncQueue(cur)
-			}
-		},
-	}
-}
-
 // createEndpointSliceHandlers builds the handler funcs for EndpointSlices
 func createEndpointSliceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{

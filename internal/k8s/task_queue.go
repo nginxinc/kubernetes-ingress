@@ -110,7 +110,6 @@ type kind int
 // resources
 const (
 	ingress = iota
-	endpoints
 	endpointslice
 	configMap
 	secret
@@ -141,8 +140,6 @@ func newTask(key string, obj interface{}) (task, error) {
 	switch t := obj.(type) {
 	case *networking.Ingress:
 		k = ingress
-	case *v1.Endpoints:
-		k = endpoints
 	case *discovery_v1.EndpointSlice:
 		k = endpointslice
 	case *v1.ConfigMap:
