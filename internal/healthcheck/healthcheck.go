@@ -128,7 +128,7 @@ type HealthHandler struct {
 
 // Retrieve finds health stats for the host identified by a hostname in the request URL.
 func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
-	hostname := chi.URLParam(r, "hostname")
+	hostname := strings.TrimSpace(chi.URLParam(r, "hostname"))
 
 	upstreamNames := h.UpstreamsForHost(hostname)
 	if len(upstreamNames) == 0 {
