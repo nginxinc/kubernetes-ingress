@@ -18,13 +18,13 @@
                 <div class="accordion-heading">
                     <li class="nginx-toc-link l1">
                         <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle" aria-expanded="false"
-                            data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}-collapseOne"
-                            aria-controls="{{.Section | urlize}}-collapseOne">
+                            data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}--{{.Title | urlize}}--collapseOne"
+                            aria-controls="{{.Section | urlize}}--{{.Title | urlize}}--collapseOne">
                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
                                 class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }}</a>
                     </li>
                 </div>
-                <div id="{{.Section | urlize}}-collapseOne" class="accordion-body collapse">
+                <div id="{{.Section | urlize}}--{{.Title | urlize}}--collapseOne" class="accordion-body collapse">
                     <div class="accordion-inner">
                         {{ range .Sections }}
                         <div class="accordion" id="accordion2">
@@ -35,13 +35,13 @@
                                             <li class="nginx-toc-link l2">
                                                 <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle"
                                                     aria-expanded="false" data-toggle="collapse"
-                                                    href="#{{.Title | urlize}}--collapseTwo">
+                                                    href="#{{.Section | urlize}}--{{.Title | urlize}}--collapseTwo">
                                                     <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
                                                         class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }}</a>
                                             </li>
                                         <ul>
                                     </div>
-                                    <div id="{{.Title | urlize}}--collapseTwo" class="accordion-body collapse leaf">
+                                    <div id="{{.Section | urlize}}--{{.Title | urlize}}--collapseTwo" class="accordion-body collapse leaf">
                                         <div class="accordion-inner">
                                             {{ range .Sections }}
                                             <div class="accordion" id="Accordion3">
@@ -52,13 +52,13 @@
                                                                 <li class="nginx-toc-link l2">
                                                                     <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle"
                                                                         aria-expanded="false" data-toggle="collapse"
-                                                                        href="#{{.Title | urlize}}--collapseThree">
+                                                                        href="#{{.Section | urlize}}--{{.Title | urlize}}--collapseThree">
                                                                         <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
                                                                             class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }}</a>
                                                                 </li>
                                                             <ul>
                                                         </div>
-                                                        <div id="{{.Title | urlize}}--collapseThree" class="accordion-body collapse leaf">
+                                                        <div id="{{.Section | urlize}}--{{.Title | urlize}}--collapseThree" class="accordion-body collapse leaf">
                                                             <div class="accordion-inner">
                                                             {{ range .Pages }}
                                                             <ul class="sidebar-l2-padding">
@@ -136,13 +136,13 @@
                 <div class="accordion-heading">
                     <li class="nginx-toc-link l1">
                         <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle" aria-expanded="false"
-                            data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}-collapseOne"
-                            aria-controls="{{.Section | urlize}}-collapseOne">
+                            data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}--{{.Title | urlize}}--collapseOne"
+                            aria-controls="{{.Section | urlize}}--{{.Title | urlize}}--collapseOne">
                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
                                 class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }} </a>
                     </li>
                 </div>
-                <div id="{{.Section | urlize}}-collapseOne" class="accordion-body collapse">
+                <div id="{{.Section | urlize}}--{{.Title | urlize}}--collapseOne" class="accordion-body collapse">
                     <div class="accordion-inner">
                         {{ range .Sections }}
                             {{if eq .Title "NGINX Controller Application Delivery Module" }}
@@ -170,14 +170,14 @@
                                                     <li class="nginx-toc-link l2">                                             
                                                         <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle"
                                                             aria-expanded="false" data-toggle="collapse"
-                                                            href="#{{.Title | urlize}}--collapseTwo">
+                                                            href="#{{.Section | urlize}}--{{.Title | urlize}}--collapseTwo">
                                                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
                                                                 class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }} </a>
                                                         
                                                     </li>
                                                     <ul>
                                             </div>
-                                            <div id="{{.Title | urlize}}--collapseTwo" class="accordion-body collapse leaf">
+                                            <div id="{{.Section | urlize}}--{{.Title | urlize}}--collapseTwo" class="accordion-body collapse leaf">
                                                 <div class="accordion-inner">
                                                     {{ range .Pages }}
                                                     <ul class="sidebar-l2-padding">
@@ -244,13 +244,13 @@
                 <div class="accordion-heading">
                     <li class="nginx-toc-link l1">
                         <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle" aria-expanded="false"
-                            data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}-collapseOne"
-                            aria-controls="{{.Section | urlize}}-collapseOne">
+                            data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}--{{.Title | urlize}}--collapseOne"
+                            aria-controls="{{.Section | urlize}}--{{.Title | urlize}}--collapseOne">
                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
                                 class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }} </a>
                     </li>
                 </div>
-                <div id="{{.Section | urlize}}-collapseOne" class="accordion-body collapse">
+                <div id="{{.Section | urlize}}--{{.Title | urlize}}--collapseOne" class="accordion-body collapse">
                     <div class="accordion-inner">
                         {{ range .Sections }}
                            {{if eq .Title "NGINX Controller API Management Module" }}
@@ -277,14 +277,14 @@
                                                     <li class="nginx-toc-link l2">                                             
                                                         <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle"
                                                             aria-expanded="false" data-toggle="collapse"
-                                                            href="#{{.Title | urlize}}--collapseTwo">
+                                                            href="#{{.Section | urlize}}--{{.Title | urlize}}--collapseTwo">
                                                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
                                                                 class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }} </a>
                                                         
                                                     </li>
                                                     <ul>
                                             </div>
-                                            <div id="{{.Title | urlize}}--collapseTwo" class="accordion-body collapse leaf">
+                                            <div id="{{.Section | urlize}}--{{.Title | urlize}}--collapseTwo" class="accordion-body collapse leaf">
                                                 <div class="accordion-inner">
                                                     {{ range .Pages }}
                                                     <ul class="sidebar-l2-padding">
@@ -308,8 +308,7 @@
                                     <div class="accordion-heading">
                                         {{ if not (eq .Title "NGINX Controller v3.0 - 3.18.2") }}  
                                         <ul>
-                                            <li class="nginx-toc-link l2">
-                                                 
+                                            <li class="nginx-toc-link l2">                                                 
                                                     <a data-menu-id="{{.RelPermalink}}"
                                                     href="{{ .Permalink }}">{{ .Title }}</a>
                                             </li>
