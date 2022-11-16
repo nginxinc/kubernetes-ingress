@@ -81,8 +81,6 @@ runs:
     - name: Deploy Kubernetes
       id: k8s
       run: |
-        # no support for dual stack in < 1.20, we need to use ipv4 only
-        printf '%s\n' "1.20.0" "${{ inputs.k8s-version }}" | sort --version-sort --check=quiet || echo "Using ipv4" && sed -i 's/dual/ipv4/g' ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml
         kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ inputs.k8s-timeout }}
         kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} --name ${{ github.run_id }}
         marker="${{ inputs.marker }}"
