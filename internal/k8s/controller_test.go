@@ -485,15 +485,15 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 	}
 
 	tests := []struct {
-		desc                   string
-		targetPort             int32
-		svcEndpointSlices      []discovery_v1.EndpointSlice
-		expectedEndpointSlices []podEndpoint
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		expectedEndpoints []podEndpoint
 	}{
 		{
 			desc:       "duplicate endpoints in an endpointslice",
 			targetPort: 8080,
-			expectedEndpointSlices: []podEndpoint{
+			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
 				},
@@ -523,7 +523,7 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 		{
 			desc:       "two different endpoints in one endpoint slice",
 			targetPort: 8080,
-			expectedEndpointSlices: []podEndpoint{
+			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
 				},
@@ -556,7 +556,7 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 		{
 			desc:       "duplicate endpoints across two endpointslices",
 			targetPort: 8080,
-			expectedEndpointSlices: []podEndpoint{
+			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
 				},
@@ -609,10 +609,10 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "no endpoints found",
-			targetPort:             8080,
-			expectedEndpointSlices: nil,
-			svcEndpointSlices:      []discovery_v1.EndpointSlice{},
+			desc:              "no endpoints found",
+			targetPort:        8080,
+			expectedEndpoints: nil,
+			svcEndpointSlices: []discovery_v1.EndpointSlice{},
 		},
 	}
 
@@ -637,9 +637,9 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			gotEndpoints, _ := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &svc)
 
-			if !reflect.DeepEqual(gotEndpoints, test.expectedEndpointSlices) {
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
 				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",
-					gotEndpoints, test.expectedEndpointSlices)
+					gotEndpoints, test.expectedEndpoints)
 			}
 		})
 	}
@@ -654,12 +654,12 @@ func TestGetEndpointSlicesBySubselectedPods(t *testing.T) {
 		targetPort        int32
 		svcEndpointSlices []discovery_v1.EndpointSlice
 		pods              []*api_v1.Pod
-		expectedEps       []podEndpoint
+		expectedEndpoints []podEndpoint
 	}{
 		{
 			desc:       "find one pod in one endpointslice",
 			targetPort: 8080,
-			expectedEps: []podEndpoint{
+			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
 					MeshPodOwner: configs.MeshPodOwner{
@@ -704,7 +704,7 @@ func TestGetEndpointSlicesBySubselectedPods(t *testing.T) {
 		{
 			desc:       "find one pod in two endpointslices with duplicate endpoints",
 			targetPort: 8080,
-			expectedEps: []podEndpoint{
+			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
 					MeshPodOwner: configs.MeshPodOwner{
@@ -763,7 +763,7 @@ func TestGetEndpointSlicesBySubselectedPods(t *testing.T) {
 		{
 			desc:       "find two pods in one endpointslice",
 			targetPort: 8080,
-			expectedEps: []podEndpoint{
+			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
 					MeshPodOwner: configs.MeshPodOwner{
@@ -834,7 +834,7 @@ func TestGetEndpointSlicesBySubselectedPods(t *testing.T) {
 		{
 			desc:       "find two pods in two endpointslices",
 			targetPort: 8080,
-			expectedEps: []podEndpoint{
+			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
 					MeshPodOwner: configs.MeshPodOwner{
@@ -912,9 +912,9 @@ func TestGetEndpointSlicesBySubselectedPods(t *testing.T) {
 			},
 		},
 		{
-			desc:        "no pods found",
-			targetPort:  8080,
-			expectedEps: nil,
+			desc:              "no pods found",
+			targetPort:        8080,
+			expectedEndpoints: nil,
 			pods: []*api_v1.Pod{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
@@ -949,20 +949,37 @@ func TestGetEndpointSlicesBySubselectedPods(t *testing.T) {
 			},
 		},
 		{
-			desc:        "targetPort mismatch",
-			targetPort:  21,
-			expectedEps: nil,
+			desc:              "targetPort mismatch",
+			targetPort:        21,
+			expectedEndpoints: nil,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotEndps := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
-			if !reflect.DeepEqual(gotEndps, test.expectedEps) {
-				t.Errorf("getEndpointsFromEndpointSlicesForSubselectedPods() = %v, want %v", gotEndps, test.expectedEps)
+			gotEndpoints := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
+
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("getEndpointsFromEndpointSlicesForSubselectedPods() = got %v, want %v", gotEndpoints, test.expectedEndpoints)
 			}
 		})
 	}
+}
+
+func unorderedEqual(got, want []podEndpoint) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	exists := make(map[string]bool)
+	for _, value := range got {
+		exists[value.Address] = true
+	}
+	for _, value := range want {
+		if !exists[value.Address] {
+			return false
+		}
+	}
+	return true
 }
 
 func TestGetStatusFromEventTitle(t *testing.T) {
