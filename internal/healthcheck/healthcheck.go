@@ -92,7 +92,7 @@ func API(upstreamsForHost func(string) []string, upstreamsFromNginx func() (*cli
 		NginxUpstreams:   upstreamsFromNginx,
 	}
 	mux := chi.NewRouter()
-	mux.Use(httprate.Limit(10, 1*time.Second, httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
+	mux.Use(httprate.Limit(1000, 1*time.Second, httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
 	})),
 	)
@@ -128,18 +128,19 @@ type HealthHandler struct {
 
 // Retrieve finds health stats for the host identified by a hostname in the request URL.
 func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
-	hostname := strings.TrimSpace(chi.URLParam(r, "hostname"))
+	hostname := chi.URLParam(r, "hostname")
+	sanitizedHostname := strings.TrimSpace(hostname)
 
-	upstreamNames := h.UpstreamsForHost(hostname)
+	upstreamNames := h.UpstreamsForHost(sanitizedHostname)
 	if len(upstreamNames) == 0 {
-		glog.Errorf("no upstreams for hostname %s or hostname does not exist", hostname)
+		glog.Errorf("no upstreams for hostname %s or hostname does not exist", sanitizedHostname)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	upstreams, err := h.NginxUpstreams()
 	if err != nil {
-		glog.Errorf("error retrieving upstreams for host: %s", hostname)
+		glog.Errorf("error retrieving upstreams for host: %s", sanitizedHostname)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
