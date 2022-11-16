@@ -362,7 +362,7 @@ func (lbc *LoadBalancerController) newNamespacedInformer(ns string) {
 	lbc.addIngressHandler(createIngressHandlers(lbc), nsi)
 	lbc.addServiceHandler(createServiceHandlers(lbc), nsi)
 	lbc.addEndpointHandler(createEndpointHandlers(lbc), nsi)
-	lbc.addEndpointSliceHandlerWithStore(createEndpointSliceHandlers(lbc), nsi)
+	lbc.addEndpointSliceHandler(createEndpointSliceHandlers(lbc), nsi)
 	lbc.addPodHandler(nsi)
 
 	secretsTweakListOptionsFunc := func(options *meta_v1.ListOptions) {
@@ -526,8 +526,8 @@ func (lbc *LoadBalancerController) addEndpointHandler(handlers cache.ResourceEve
 	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
 }
 
-// addEndpointSliceHandlerWithStore adds the handler for EndpointSlices to the controller
-func (lbc *LoadBalancerController) addEndpointSliceHandlerWithStore(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+// addEndpointSliceHandler adds the handler for EndpointSlices to the controller
+func (lbc *LoadBalancerController) addEndpointSliceHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
 	informer := nsi.sharedInformerFactory.Discovery().V1().EndpointSlices().Informer()
 	informer.AddEventHandler(handlers)
 	var el storeToEndpointSliceLister
