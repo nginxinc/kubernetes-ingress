@@ -90,6 +90,7 @@ def ts_externalname_setup(
     indirect=True,
 )
 class TestTransportServerStatus:
+    @pytest.mark.flaky(max_runs=3)
     def test_template_config(
         self,
         kube_apis,
