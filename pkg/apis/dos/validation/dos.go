@@ -89,7 +89,7 @@ func validateResourceReference(ref string) error {
 	return nil
 }
 
-// checkAppProtectDosLogConfContentField check conetent field doesnt appear in dos log
+// checkAppProtectDosLogConfContentField check content field doesn't appear in dos log
 func checkAppProtectDosLogConfContentField(obj *unstructured.Unstructured) string {
 	_, found, err := unstructured.NestedMap(obj.Object, "spec", "content")
 	if err == nil && found {
