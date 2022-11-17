@@ -55,6 +55,7 @@ class TestVirtualServerUpstreamTls:
         events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event(vs_event_text, events_vs)
 
+    @pytest.mark.flaky(max_runs=3)
     def test_validation_flow(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, virtual_server_setup
     ):
