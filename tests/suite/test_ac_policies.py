@@ -4,12 +4,12 @@ from settings import DEPLOYMENTS, TEST_DATA
 from suite.utils.custom_resources_utils import read_custom_resource
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import (
+    ensure_response_from_backend,
     get_last_reload_time,
     get_test_file_name,
     replace_configmap_from_yaml,
     wait_before_test,
     write_to_json,
-    ensure_response_from_backend,
 )
 from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
@@ -109,7 +109,9 @@ class TestAccessControlPoliciesVs:
         """
         Test if ip (10.0.0.1) block-listing is working: default(no policy) -> deny
         """
-        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"})
+        ensure_response_from_backend(
+            virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"}
+        )
         resp = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host, "X-Real-IP": "10.0.0.1"},
@@ -176,7 +178,9 @@ class TestAccessControlPoliciesVs:
         """
         Test if ip (10.0.0.1) allow-listing is working: default(no policy) -> allow
         """
-        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"})
+        ensure_response_from_backend(
+            virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"}
+        )
         resp = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host, "X-Real-IP": "10.0.0.1"},
@@ -237,7 +241,9 @@ class TestAccessControlPoliciesVs:
         """
         Test if ip allow-listing overrides block-listing: default(no policy) -> deny and allow
         """
-        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"})
+        ensure_response_from_backend(
+            virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"}
+        )
         resp = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host, "X-Real-IP": "10.0.0.1"},
@@ -283,7 +289,9 @@ class TestAccessControlPoliciesVs:
         """
         Test if invalid policy is applied then response is 500
         """
-        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"})
+        ensure_response_from_backend(
+            virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"}
+        )
         resp = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host, "X-Real-IP": "10.0.0.1"},
@@ -338,7 +346,9 @@ class TestAccessControlPoliciesVs:
         """
         Test if valid policy is deleted then response is 500
         """
-        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"})
+        ensure_response_from_backend(
+            virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"}
+        )
         resp = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host, "X-Real-IP": "10.0.0.1"},
@@ -394,7 +404,9 @@ class TestAccessControlPoliciesVs:
         """
         Test allow policy specified under routes overrides block in spec
         """
-        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"})
+        ensure_response_from_backend(
+            virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"X-Real-IP": "10.0.0.1"}
+        )
         resp = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host, "X-Real-IP": "10.0.0.1"},
