@@ -23,7 +23,7 @@ jobs:
 
   binary:
     name: Create Draft Release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/setup-node@v3
       - run: npm install semver

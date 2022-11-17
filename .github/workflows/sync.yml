@@ -15,7 +15,7 @@ concurrency:
 jobs:
   # This job sync this repo to our internal repo
   repo-sync:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Repo Sync
@@ -39,7 +39,7 @@ jobs:
           - nginxinc/nginx-prometheus-exporter
           - nginxinc/nginx-plus-go-client
           - nginxinc/nginx-asg-sync
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Checkout
