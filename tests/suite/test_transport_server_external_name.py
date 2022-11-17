@@ -127,6 +127,7 @@ class TestTransportServerStatus:
             in ts_conf
         )
 
+    @pytest.mark.flaky(max_runs=3)
     def test_event_warning(
         self,
         kube_apis,
