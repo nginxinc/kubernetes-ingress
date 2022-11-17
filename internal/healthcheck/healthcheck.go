@@ -129,18 +129,18 @@ type HealthHandler struct {
 // Retrieve finds health stats for the host identified by a hostname in the request URL.
 func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	hostname := chi.URLParam(r, "hostname")
-	sanitizedHostname := strings.TrimSpace(hostname)
+	sanitizedHostname := sanitize(hostname)
 
 	upstreamNames := h.UpstreamsForHost(sanitizedHostname)
 	if len(upstreamNames) == 0 {
-		glog.Errorf("no upstreams for hostname %s or hostname does not exist", sanitizedHostname)
+		glog.Errorf("no upstreams for requested hostname %s or hostname does not exist", sanitizedHostname)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	upstreams, err := h.NginxUpstreams()
 	if err != nil {
-		glog.Errorf("error retrieving upstreams for host: %s", sanitizedHostname)
+		glog.Errorf("error retrieving upstreams for requested hostname: %s", sanitizedHostname)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -163,6 +163,13 @@ func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 		glog.Error("error writing result", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
+}
+
+func sanitize(s string) string {
+	hostname := strings.TrimSpace(s)
+	hostname = strings.ReplaceAll(hostname, "\n", "")
+	hostname = strings.ReplaceAll(hostname, "\r", "")
+	return hostname
 }
 
 // HostStats holds information about total, up and
