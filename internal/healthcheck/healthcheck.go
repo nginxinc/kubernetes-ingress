@@ -1,6 +1,7 @@
 package healthcheck
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -13,7 +14,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/httprate"
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/nginx-plus-go-client/client"
@@ -92,11 +92,9 @@ func API(upstreamsForHost func(string) []string, upstreamsFromNginx func() (*cli
 		NginxUpstreams:   upstreamsFromNginx,
 	}
 	mux := chi.NewRouter()
-	mux.Use(httprate.Limit(1000, 1*time.Second, httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
-	})),
-	)
-	mux.MethodFunc(http.MethodGet, "/probe/{hostname}", health.Retrieve)
+	mux.Route("/probe", func(r chi.Router) {
+		r.With(hostnameLengthVerifier).Get("/{hostname}", health.Retrieve)
+	})
 	return mux
 }
 
@@ -129,18 +127,18 @@ type HealthHandler struct {
 // Retrieve finds health stats for the host identified by a hostname in the request URL.
 func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	hostname := chi.URLParam(r, "hostname")
-	sanitizedHostname := sanitize(hostname)
+	host := sanitize(hostname)
 
-	upstreamNames := h.UpstreamsForHost(sanitizedHostname)
+	upstreamNames := h.UpstreamsForHost(host)
 	if len(upstreamNames) == 0 {
-		glog.Errorf("no upstreams for requested hostname %s or hostname does not exist", sanitizedHostname)
+		glog.Errorf("no upstreams for requested hostname %s or hostname does not exist", host)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	upstreams, err := h.NginxUpstreams()
 	if err != nil {
-		glog.Errorf("error retrieving upstreams for requested hostname: %s", sanitizedHostname)
+		glog.Errorf("error retrieving upstreams for requested hostname: %s", host)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -172,6 +170,22 @@ func sanitize(s string) string {
 	return hostname
 }
 
+// hostnameLengthVerifier is a middleware that checks max
+// length of the hostname param passed in the probe url.
+//
+// ref: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DomainNameFormat.html
+func hostnameLengthVerifier(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		name := chi.URLParam(r, "hostname")
+		length := bytes.NewReader([]byte(name)).Len()
+		if length > 255 {
+			w.WriteHeader(http.StatusRequestURITooLong)
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
 // HostStats holds information about total, up and
 // unhealthy number of 'peers' associated with the
 // given host.
@@ -181,7 +195,7 @@ type HostStats struct {
 	Unhealthy int
 }
 
-// countStats calculates and returns statistics.
+// countStats calculates and returns statistics for a host.
 func countStats(upstreams *client.Upstreams, upstreamNames []string) HostStats {
 	total, up := 0, 0
 	for name, u := range *upstreams {

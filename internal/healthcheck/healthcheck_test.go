@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,6 +14,72 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
 	"github.com/nginxinc/nginx-plus-go-client/client"
 )
+
+func TestHealthCheckServer_ReturnsValidHTTPErrorOnMissingHostname(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/probe/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := httptest.NewRecorder()
+
+	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXAllUp)
+	h.ServeHTTP(resp, req)
+
+	if !cmp.Equal(http.StatusNotFound, resp.Code) {
+		t.Error(cmp.Diff(http.StatusNotFound, resp.Code))
+	}
+}
+
+func generateStringOfLength(n int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
+func TestHealthCheckServer_ReturnsValidHTTPErrorOnTooLongHostname(t *testing.T) {
+	t.Parallel()
+
+	hostname := generateStringOfLength(256)
+	url := fmt.Sprintf("/probe/%s", hostname)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := httptest.NewRecorder()
+
+	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXAllUp)
+	h.ServeHTTP(resp, req)
+
+	if !cmp.Equal(http.StatusRequestURITooLong, resp.Code) {
+		t.Error(cmp.Diff(http.StatusRequestURITooLong, resp.Code))
+	}
+}
+
+func TestHealthCheckServer_ReturnsValidHTTPCodeOnValidHostnameLength(t *testing.T) {
+	t.Parallel()
+
+	hostname := generateStringOfLength(254)
+	url := fmt.Sprintf("/probe/%s", hostname)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := httptest.NewRecorder()
+
+	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXAllUp)
+	h.ServeHTTP(resp, req)
+
+	if !cmp.Equal(http.StatusNotFound, resp.Code) {
+		t.Error(cmp.Diff(http.StatusNotFound, resp.Code))
+	}
+}
 
 func TestHealthCheckServer_ReturnsValidStatsAndValidHTTPCodeForAllPeersUpOnValidHostname(t *testing.T) {
 	t.Parallel()
