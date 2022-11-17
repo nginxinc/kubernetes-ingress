@@ -1,10 +1,10 @@
 import json
 from unittest import mock
+from unittest.mock import Mock
 
 import pytest
 import requests
 from kubernetes.client.rest import ApiException
-from mock import Mock
 from settings import TEST_DATA
 from suite.utils.custom_assertions import (
     assert_event_starts_with_text_and_contains_errors,
