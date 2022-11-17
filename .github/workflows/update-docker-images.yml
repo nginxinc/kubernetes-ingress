@@ -9,10 +9,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  DOCKER_BUILDKIT: 1
-  K8S_TIMEOUT: 75s
-
 concurrency:
   group: ${{ github.ref_name }}-update
   cancel-in-progress: true
@@ -36,8 +32,8 @@ jobs:
       - name: Set KIC version
         id: kic
         run: |
-          tag=$(git tag --sort=-version:refname | head -n1)
-          echo "::set-output name=tag::${tag//v}"
+          tag="$(git tag --sort=-version:refname | head -n1)"
+          echo "tag=${tag//v}" >> $GITHUB_OUTPUT
       - name: Checkout Repository at ${{ steps.kic.outputs.tag }}
         uses: actions/checkout@v3
         with:
@@ -48,13 +44,13 @@ jobs:
           nginx=library/$(grep -m1 "FROM nginx:" < build/Dockerfile | awk -F" " '{print $2}')
           nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx:.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
           nginx_ubi=$(grep "FROM redhat" < build/Dockerfile | awk -F" " '{print $2}')
-          echo "::set-output name=matrix::[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]"
+          echo "matrix=[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]" >> $GITHUB_OUTPUT
       - name: Set other variables
         id: vars
         run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-          echo "::set-output name=sha_long::$(git rev-parse HEAD)"
-          echo "::set-output name=k8s_version::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "sha_long=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "k8s_version=$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
 
   check:
     name: Check if updates are needed
@@ -72,7 +68,7 @@ jobs:
         id: dist
         run: |
           if [ ${{ matrix.base_image.distro }} == "debian" ]; then dist=""; else dist="-${{ matrix.base_image.distro }}"; fi
-          echo "::set-output name=tag::${{ needs.variables.outputs.kic-tag }}${dist}"
+          echo "tag=${{ needs.variables.outputs.kic-tag }}${dist}" >> $GITHUB_OUTPUT
       - name: Check if update available for ${{ matrix.base_image.version }}
         id: update
         uses: lucacome/docker-image-update-checker@v1
@@ -80,8 +76,7 @@ jobs:
           base-image: ${{ matrix.base_image.version}}
           image: nginx/nginx-ingress:${{ steps.dist.outputs.tag }}
       - id: needs
-        run: echo "::set-output name=${{ matrix.base_image.distro }}::${{ steps.update.outputs.needs-updating }}"
-
+        run: echo "${{ matrix.base_image.distro }}=${{ steps.update.outputs.needs-updating }}" >> $GITHUB_OUTPUT
 
   binary:
     if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' || needs.check.outputs.needs-updating-ubi == 'true' }}
@@ -101,7 +96,7 @@ jobs:
           cache: true
       - name: Determine GOPATH
         id: go
-        run: echo "::set-output name=go_path::$(go env GOPATH)"
+        run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v3
         with:
@@ -116,24 +111,21 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
-  release-docker:
-    name: Release Images
+  test:
+    name: Run tests
     runs-on: ubuntu-20.04
-    needs: [binary, check, variables]
+    needs: [check, variables, binary]
     strategy:
       matrix:
         include:
           - image: debian
             marker: ingresses
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: alpine
-            marker: "vs" # add vsr after 2.3.1/2.4 release
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+            marker: "vs vsr"
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
           - image: ubi
-            marker: "policies" # add ts after 2.3.1/2.4 release
-            platforms: linux/arm64,linux/amd64,linux/s390x
+            marker: "policies ts"
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
       - name: Checkout Repository
@@ -161,146 +153,39 @@ jobs:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
         if: always()
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: arm,arm64,ppc64le,s390x
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: DockerHub Login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Login to Public ECR
-        uses: docker/login-action@v2
-        with:
-          registry: public.ecr.aws
-          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Get short tag
-        id: tag
-        run: |
-          version=${{ needs.variables.outputs.kic-tag }}
-          short="${version%.*}"
-          echo "::set-output name=short::$short"
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            name=nginx/nginx-ingress
-            name=ghcr.io/nginxinc/kubernetes-ingress
-            name=public.ecr.aws/nginx/nginx-ingress
-          flavor: |
-            latest=true
-            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }},onlatest=true
-          tags: |
-            type=raw,value=${{ needs.variables.outputs.kic-tag }}
-            type=raw,value=${{ steps.tag.outputs.short }}
-          labels: |
-            org.opencontainers.image.description=NGINX Ingress Controller for Kubernetes
-            org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
-            org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
-            org.opencontainers.image.revision=${{ needs.variables.outputs.sha_long }}
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/main/README.md
-            io.artifacthub.package.logo-url=https://docs.nginx.com/nginx-ingress-controller/images/icons/NGINX-Ingress-Controller-product-icon.svg
-            io.artifacthub.package.maintainers=[{"name":"NGINX Inc","email":"kubernetes@nginx.com"}]
-            io.artifacthub.package.license=Apache-2.0
-            io.artifacthub.package.keywords=kubernetes,ingress,nginx,controller
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Push to Dockerhub
-        id: push
-        uses: docker/build-push-action@v3
-        with:
-          file: build/Dockerfile
-          context: '.'
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,scope=${{ matrix.image }},mode=max
-          target: goreleaser
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: ${{ matrix.platforms }}
-          push: true
-          no-cache: true
-          pull: true
-          build-args: |
-            BUILD_OS=${{ matrix.image }}
-            IC_VERSION=v${{ needs.variables.outputs.kic-tag }}
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.8.0
-        continue-on-error: true
-        with:
-          image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
-          format: 'sarif'
-          output: 'trivy-results-${{ matrix.image }}.sarif'
-          ignore-unfixed: 'true'
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        continue-on-error: true
-        with:
-          sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Upload Scan Results
-        uses: actions/upload-artifact@v3
-        continue-on-error: true
-        with:
-          name: 'trivy-results-${{ matrix.image }}.sarif'
-          path: 'trivy-results-${{ matrix.image }}.sarif'
-        if: always()
-      - name: Get variables for Slack
-        id: slack
-        run: |
-          echo "::set-output name=message::$(git log -1 --pretty=%B)"
-          echo "::set-output name=date::$(date +%s)"
-      - name: Send Notification
-        uses: 8398a7/action-slack@v3
-        with:
-          status: custom
-          custom_payload: |
-            {
-              username: "Docker",
-              icon_emoji: ":docker:",
-              mention: "here",
-              attachments: [{
-                title: `New Docker image was pushed to DockerHub for ${process.env.AS_REPO}`,
-                color: "good",
-                fields: [{
-                  title: "Docker Image",
-                  value: `<https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=${{ needs.variables.outputs.kic-tag }}|nginx/nginx-ingress:${{ steps.meta.outputs.version }}>`,
-                  short: true
-                },
-                {
-                  title: "Image digest",
-                  value: "${{ steps.push.outputs.digest }}",
-                  short: true
-                },
-                {
-                  title: "Commit Message",
-                  value: `${{ steps.slack.outputs.message }}`,
-                  short: true
-                },
-                {
-                  title: "Commit Hash",
-                  value: `<https://github.com/${{ github.repository }}/commit/${{ needs.variables.outputs.sha_long }}|${{ needs.variables.outputs.sha_short }}>`,
-                  short: true
-                }],
-                footer: "Update DockerHub Image",
-                footer_icon: "https://raw.githubusercontent.com/docker-library/docs/c350af05d3fac7b5c3f6327ac82fe4d990d8729c/docker/logo.png",
-                ts: ${{ steps.slack.outputs.date }}
-              }]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-        if: ${{ matrix.needs-updating == 'true' }}
+
+  release-docker-debian:
+    name: Release Debian Image
+    needs: [binary, check, variables]
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+      image: debian
+      tag: ${{ needs.variables.outputs.kic-tag }}
+      sha_long: ${{ needs.variables.outputs.sha_long }}
+    secrets: inherit
+    if: ${{ needs.check.outputs.needs-updating-debian }}
+
+  release-docker-alpine:
+    name: Release Alpine Image
+    needs: [binary, check, variables]
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+      image: alpine
+      tag: ${{ needs.variables.outputs.kic-tag }}
+      sha_long: ${{ needs.variables.outputs.sha_long }}
+    secrets: inherit
+    if: ${{ needs.check.outputs.needs-updating-alpine }}
+
+  release-docker-ubi:
+    name: Release UBI Image
+    needs: [binary, check, variables]
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: linux/arm64,linux/amd64,linux/s390x
+      image: ubi
+      tag: ${{ needs.variables.outputs.kic-tag }}
+      sha_long: ${{ needs.variables.outputs.sha_long }}
+    secrets: inherit
+    if: ${{ needs.check.outputs.needs-updating-ubi }}
