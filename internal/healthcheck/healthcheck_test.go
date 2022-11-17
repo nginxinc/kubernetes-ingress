@@ -32,11 +32,12 @@ func TestHealthCheckServer_ReturnsValidHTTPErrorOnMissingHostname(t *testing.T) 
 	}
 }
 
+//nolint:gosec
 func generateStringOfLength(n int) string {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		b[i] = letterBytes[rand.Intn(len(letterBytes))] //golint:gosec
 	}
 	return string(b)
 }
