@@ -104,7 +104,7 @@ class TestWatchNamespace:
 class TestWatchMultipleNamespaces:
     def test_response_codes(self, ingress_controller, backend_setup, expected_responses):
         for ing in ["watched-ns-ingress", "watched-ns2-ingress", "foreign-ns-ingress"]:
-            ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_hosts[ing])
+            ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_hosts[ing], check404=True)
             resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[ing]})
             assert (
                 resp.status_code == expected_responses[ing]
