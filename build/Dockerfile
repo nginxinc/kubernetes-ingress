@@ -124,7 +124,7 @@ RUN microdnf --nodocs upgrade -y freetype lua-libs zlib
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
-FROM redhat/ubi8 AS ubi-plus
+FROM redhat/ubi8:8.6-990 AS ubi-plus
 ARG NGINX_PLUS_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -262,11 +262,11 @@ COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ing
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
 FROM common AS aws
 ARG TARGETARCH
-ARG NAP_MODULES=
+ARG NAP_MODULES_AWS
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --link --chown=101:0 dist/aws*${NAP_MODULES}_linux_${TARGETARCH}*/nginx-ingress /
+COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
