@@ -93,7 +93,7 @@ class TestWatchNamespace:
             ), f"Expected: {expected_responses[ing]} response code for {backend_setup.ingress_hosts[ing]}"
 
 
-@pytest.mark.test
+@pytest.mark.ingresses
 @pytest.mark.parametrize(
     "ingress_controller, expected_responses",
     [

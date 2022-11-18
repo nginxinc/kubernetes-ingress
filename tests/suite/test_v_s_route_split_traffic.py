@@ -56,7 +56,6 @@ class TestVSRTrafficSplitting:
         req_url = (
             f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}{split_path[0]}"
         )
-        ensure_response_from_backend(req_url, v_s_route_setup.vs_host)
         weights = get_weights_of_splitting(f"{TEST_DATA}/virtual-server-route-split-traffic/route-multiple.yaml")
         upstreams = get_upstreams_of_splitting(f"{TEST_DATA}/virtual-server-route-split-traffic/route-multiple.yaml")
         sum_weights = sum(weights)
@@ -64,9 +63,13 @@ class TestVSRTrafficSplitting:
 
         counter_v1, counter_v2 = 0, 0
         for _ in range(100):
-            resp = requests.get(req_url, headers={"host": v_s_route_setup.vs_host})
-            if resp.status_code == 502:
-                print("Backend is not ready yet, skip.")
+            ensure_response_from_backend(req_url, v_s_route_setup.vs_host)
+            status_code = 502
+            while status_code == 502:
+                resp = requests.get(req_url, headers={"host": v_s_route_setup.vs_host})
+                status_code = resp.status_code
+                if status_code == 502:
+                    print("Backend is not ready yet, skip.")
             if upstreams[0] in resp.text in resp.text:
                 counter_v1 = counter_v1 + 1
             elif upstreams[1] in resp.text in resp.text:
