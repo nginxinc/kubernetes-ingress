@@ -113,6 +113,7 @@ type LoadBalancerController struct {
 	configMapLister               storeToConfigMapLister
 	globalConfigurationLister     cache.Store
 	ingressLinkLister             cache.Store
+	namespaceLabeledLister        cache.Store
 	syncQueue                     *taskQueue
 	ctx                           context.Context
 	cancel                        context.CancelFunc
@@ -156,6 +157,7 @@ type LoadBalancerController struct {
 	externalDNSController         *ed_controller.ExtDNSController
 	batchSyncEnabled              bool
 	isIPV6Disabled                bool
+	namespaceWatcherController    cache.Controller
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -199,6 +201,7 @@ type NewLoadBalancerControllerInput struct {
 	CertManagerEnabled           bool
 	ExternalDNSEnabled           bool
 	IsIPV6Disabled               bool
+	WatchNamespaceLabel          string
 }
 
 // NewLoadBalancerController creates a controller
@@ -248,6 +251,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		if err != nil {
 			glog.Fatalf("failed to create Spiffe Controller: %v", err)
 		}
+	}
+
+	if input.WatchNamespaceLabel != "" {
+		lbc.addNamespaceHandler(createNamespaceHandlers(lbc), input.WatchNamespaceLabel)
 	}
 
 	if input.CertManagerEnabled {
@@ -608,9 +615,25 @@ func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.Resource
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.ingressLinkInformer.HasSynced)
 }
 
+func (lbc *LoadBalancerController) addNamespaceHandler(handlers cache.ResourceEventHandlerFuncs, nsLabel string) {
+	optionsModifier := func(options *meta_v1.ListOptions) {
+		options.LabelSelector = nsLabel
+	}
+	nsInformer := informers.NewSharedInformerFactoryWithOptions(lbc.client, lbc.resync, informers.WithTweakListOptions(optionsModifier)).Core().V1().Namespaces().Informer()
+	nsInformer.AddEventHandler(handlers)
+	lbc.namespaceLabeledLister = nsInformer.GetStore()
+	lbc.namespaceWatcherController = nsInformer
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, nsInformer.HasSynced)
+}
+
 // Run starts the loadbalancer controller
 func (lbc *LoadBalancerController) Run() {
 	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
+
+	if lbc.namespaceWatcherController != nil {
+		go lbc.namespaceWatcherController.Run(lbc.ctx.Done())
+	}
 
 	if lbc.spiffeCertFetcher != nil {
 		err := lbc.spiffeCertFetcher.Start(lbc.ctx, lbc.addInternalRouteServer)
@@ -912,6 +935,8 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncSecret(task)
 	case service:
 		lbc.syncService(task)
+	case namespace:
+		lbc.syncNamespace(task)
 	case virtualserver:
 		lbc.syncVirtualServer(task)
 		lbc.updateVirtualServerMetrics()
@@ -958,6 +983,16 @@ func (lbc *LoadBalancerController) sync(task task) {
 
 		glog.V(3).Infof("Batch sync completed")
 	}
+}
+
+func (lbc *LoadBalancerController) syncNamespace(task task) {
+	key := task.Key
+	glog.V(2).Infof("Adding, Updating or Deleting Watched Namespace: %v", key)
+	// process namespace and add/ remove to/ from watched namespace list
+	// create new namespaced informer group if required
+	// delete any now unwatched namespaced informer groups if required
+	// if a namespace not deleted but label removed: add check that watched namespace list == what's returned from the API
+	// (will we see an event on update?)
 }
 
 func (lbc *LoadBalancerController) syncIngressLink(task task) {

@@ -114,6 +114,7 @@ const (
 	configMap
 	secret
 	service
+	namespace
 	virtualserver
 	virtualServerRoute
 	globalConfiguration
@@ -148,6 +149,8 @@ func newTask(key string, obj interface{}) (task, error) {
 		k = secret
 	case *v1.Service:
 		k = service
+	case *v1.Namespace:
+		k = namespace
 	case *conf_v1.VirtualServer:
 		k = virtualserver
 	case *conf_v1.VirtualServerRoute:

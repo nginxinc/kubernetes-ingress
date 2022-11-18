@@ -53,9 +53,7 @@ func main() {
 
 	validateIngressClass(kubeClient)
 
-	checkNamespaceExists(kubeClient, watchNamespaces)
-
-	checkNamespaceExists(kubeClient, watchSecretNamespaces)
+	checkNamespaces(kubeClient)
 
 	dynClient, confClient := createCustomClients(config)
 
@@ -160,6 +158,7 @@ func main() {
 		CertManagerEnabled:           *enableCertManager,
 		ExternalDNSEnabled:           *enableExternalDNS,
 		IsIPV6Disabled:               *disableIPV6,
+		WatchNamespaceLabel:          *watchNamespaceLabel,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
@@ -241,6 +240,23 @@ func validateIngressClass(kubeClient kubernetes.Interface) {
 	if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
 		glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v; expected %v", ingressClassRes.Name, ingressClassRes.Spec.Controller, k8s.IngressControllerName)
 	}
+}
+
+func checkNamespaces(kubeClient kubernetes.Interface) {
+	if *watchNamespaceLabel != "" {
+		// bootstrap the watched namespace list
+		nsList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), meta_v1.ListOptions{LabelSelector: *watchNamespaceLabel})
+		if err != nil {
+			glog.Warningf("Error when getting Namespaces with the label selector %v: %v", watchNamespaceLabel, err)
+		}
+		for _, ns := range nsList.Items {
+			watchNamespaces = append(watchNamespaces, ns.Name)
+		}
+		glog.Infof("Namespaces watched using label %v: %v", *watchNamespaceLabel, watchNamespaces)
+	} else {
+		checkNamespaceExists(kubeClient, watchNamespaces)
+	}
+	checkNamespaceExists(kubeClient, watchSecretNamespaces)
 }
 
 func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) {
