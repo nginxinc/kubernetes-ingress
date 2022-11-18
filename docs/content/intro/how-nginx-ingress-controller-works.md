@@ -309,7 +309,7 @@ A reload involves multiple steps:
 2. Assuming the command succeeds, the Ingress Controller periodically checks for the config version by sending an HTTP request to the config version server on  `unix:/var/lib/nginx/nginx-config-version.sock`.
 3. Once the Ingress Controller sees the correct config version returned by NGINX, it considers the reload successful. If it doesn't see the correct config version after the configurable timeout (see `-nginx-reload-timeout` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments), the Ingress Controller considers the reload failed.
 
-> The [Ingress Controler Control Loop](#the-control-loop) stops during a reload so that it cannot change any configuration files or reload NGINX until the current reload succeeds or fails.
+> The [Ingress Controller Control Loop](#the-control-loop) stops during a reload so that it cannot change any configuration files or reload NGINX until the current reload succeeds or fails.
 
 ### When the Ingress Controller Reloads NGINX
 

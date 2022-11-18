@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	// ControllerName is the name of the externaldns controler.
+	// ControllerName is the name of the externaldns controller.
 	ControllerName = "externaldns"
 )
 

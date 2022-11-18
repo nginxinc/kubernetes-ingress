@@ -8,7 +8,7 @@ An ExternalName service is defined by an external DNS name that is resolved into
 
 # Prerequisites
 
-For the illustration purpose we will run NGINX Ingress Controller (refered as NIC in the examples) with the ```-watch-namespace=nginx-ingress,default``` option. The option enables NIC to watch selected namespaces.
+For illustration purposes, we will run NGINX Ingress Controller (referred to as NIC in the examples) with the ```-watch-namespace=nginx-ingress,default``` option. The option enables NIC to watch selected namespaces.
 
 Any application deployed in other namespaces will be treated as an external service.
 
