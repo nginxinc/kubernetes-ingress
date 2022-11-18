@@ -172,6 +172,33 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # COPY build/*.crt  /etc/pki/ca-trust/source/anchors/
 # RUN update-ca-trust extract
 
+############################################# GRAAL: ModSecurity #############################################
+FROM ${BUILD_OS} AS modsecurity-lib
+ARG MS_NGINX_VERSION=1.23.2
+
+RUN apt-get update && apt-get install -y -q --fix-missing --no-install-recommends apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev
+RUN git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity \
+    && cd ModSecurity \
+    && git submodule init \
+    && git submodule update \
+    && ./build.sh \
+    && ./configure \
+    && make \
+    && make install \
+    && cd .. \
+    && ls -all /usr/local/lib
+
+RUN git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git
+
+# Get nginx to build against
+RUN curl -sS -O -L http://nginx.org/download/nginx-${MS_NGINX_VERSION}.tar.gz \
+	&& tar zxvf nginx-${MS_NGINX_VERSION}.tar.gz && rm -f nginx-${MS_NGINX_VERSION}.tar.gz \
+    && cd nginx-${MS_NGINX_VERSION} \
+    && ./configure --with-compat --add-dynamic-module=../ModSecurity-nginx \
+    && make modules \
+    && cp objs/ngx_http_modsecurity_module.so /etc/nginx/modules \
+    && cd .. \
+    && ls -all /usr/local/lib
 
 ############################################# Create common files, permissions and setcap #############################################
 FROM ${BUILD_OS} as common
@@ -181,6 +208,16 @@ ARG IC_VERSION
 ARG GIT_COMMIT
 ARG TARGETPLATFORM
 ARG NAP_MODULES=none
+
+# GRAAL: add modsecurity
+RUN --mount=type=bind,from=modsecurity-lib,target=/tmp/ot/ \
+    ls -all /tmp/ot/usr/local/modsecurity/ \
+    && ls -all /tmp/ot/usr/lib/nginx/modules/ \
+    && mkdir /usr/local/modsecurity \
+	&& cp -av -r /tmp/ot/usr/local/modsecurity /usr/local/ \
+	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_modsecurity_module.so /usr/lib/nginx/modules/ \
+	&& ldconfig /usr/local/lib/
+# /GRAAL
 
 # copy oidc files on plus build
 RUN --mount=type=bind,target=/tmp [ -n "${BUILD_OS##*plus*}" ] && exit 0; mkdir -p /etc/nginx/oidc/ && cp -a /tmp/internal/configs/oidc/* /etc/nginx/oidc/
