@@ -435,7 +435,7 @@ class TestDos:
         Test App Protect Dos: Check new IC pod get learning info with arbitrator from different namespace
         """
 
-        print("Remove dos arbitrator from namesapce: ", ingress_controller_prerequisites.namespace)
+        print("Remove dos arbitrator from namespace: ", ingress_controller_prerequisites.namespace)
         delete_dos_arbitrator(
             kube_apis.v1, kube_apis.apps_v1_api, "appprotect-dos-arb", ingress_controller_prerequisites.namespace
         )
