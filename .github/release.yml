@@ -15,6 +15,9 @@ changelog:
     - title: 📝 Documentation
       labels:
         - documentation
+    - title: 📦 Helm Chart
+      labels:
+        - helm_chart
     - title: 🧪 Tests
       labels:
         - tests
