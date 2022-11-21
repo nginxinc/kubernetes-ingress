@@ -134,6 +134,7 @@ class TestVirtualServerRouteGrpc:
         )
         assert "grpc_pass grpcs://" in config
 
+    @pytest.mark.flaky(max_runs=3)
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_validation_flow(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, backend_setup, v_s_route_setup

@@ -109,6 +109,7 @@ class TestVSRCannedResponses:
         assert_event_count_increased(vs_event_text, initial_count_vs, new_events_ns)
         assert_event_count_increased(vsr_event_text, initial_count_vsr, new_events_ns)
 
+    @pytest.mark.flaky(max_runs=3)
     def test_validation_flow(self, kube_apis, crd_ingress_controller, v_s_route_setup):
         invalid_fields = ["spec.subroutes[0].action.return.code", "spec.subroutes[0].action.return.body"]
         req_host = f"{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"

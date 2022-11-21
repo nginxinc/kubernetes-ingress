@@ -1,4 +1,6 @@
 import json
+from unittest import mock
+from unittest.mock import Mock
 
 import pytest
 import requests
@@ -29,9 +31,21 @@ class TestVSErrorPages:
         wait_and_assert_status_code(
             307, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, allow_redirects=False
         )
-        resp = requests.get(
-            virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host}, allow_redirects=False
-        )
+        retry = 0
+        while retry < 5:
+            wait_before_test()
+            try:
+                resp = requests.get(
+                    virtual_server_setup.backend_1_url,
+                    headers={"host": virtual_server_setup.vs_host},
+                    allow_redirects=False,
+                )
+                print(f"redirect to uri: {resp.next.url}")
+            except AttributeError as e:
+                print(f"Exception occured: {e}")
+                retry = +1
+                continue
+            break
         assert f"http://{virtual_server_setup.vs_host}/error.html" in resp.next.url
 
     def test_return_strategy(self, kube_apis, crd_ingress_controller, virtual_server_setup):

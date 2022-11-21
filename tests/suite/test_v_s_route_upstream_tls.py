@@ -123,6 +123,7 @@ class TestVSRouteUpstreamTls:
         assert_event(vsr_m_event_text, events_ns_m)
         assert_event(vs_event_text, events_ns_m)
 
+    @pytest.mark.flaky(max_runs=3)
     def test_validation_flow(
         self,
         kube_apis,

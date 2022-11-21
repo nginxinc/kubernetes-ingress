@@ -1,0 +1,161 @@
+name: Build Plus
+
+on:
+  workflow_call:
+    inputs:
+      platforms:
+        required: true
+        type: string
+      image:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
+      nap_modules:
+        required: false
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+      runs-on: ubuntu-22.04
+      steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: arm64
+        if: github.event_name != 'pull_request'
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: GCR Login
+        uses: docker/login-action@v2
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCR_JSON_KEY }}
+        if: github.event_name != 'pull_request'
+
+      - name: Login to ECR
+        uses: docker/login-action@v2
+        with:
+          registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        if: startsWith(github.ref, 'refs/tags/')
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws') }}
+          flavor: |
+            suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }},onlatest=true
+            latest=${{ contains(inputs.target, 'aws') && 'false' || 'auto' }}
+          tags: |
+            type=edge
+            type=ref,event=pr
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=semver,pattern={{version}}
+          labels: |
+            org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
+            org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
+            org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
+
+      - name: NAP modules
+        id: nap_modules
+        run: |
+          modules=""
+          if [[ "${{ inputs.nap_modules }}" == "waf,dos" ]]; then
+            modules="both"
+          else
+            modules="${{ inputs.nap_modules }}"
+          fi
+          echo "modules=${modules}" >> $GITHUB_OUTPUT
+        if: ${{ inputs.nap_modules != '' }}
+
+      - name: Build Plus Docker image
+        uses: docker/build-push-action@v3
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}
+          cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},mode=max
+          target: ${{ inputs.target }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ github.event_name != 'pull_request' && inputs.platforms || '' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' }}
+          pull: true
+          no-cache: ${{ github.event_name != 'pull_request' }}
+          build-args: |
+            BUILD_OS=${{ inputs.image }}
+            IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.meta.outputs.version || 'CI' }}
+            ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
+            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ contains(inputs.nap_modules, 'waf') && 'DEBIAN_VERSION=buster-slim' || '' }}
+          secrets: |
+            "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
+
+      - name: Load image for Trivy
+        uses: docker/build-push-action@v3
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=gha,scope=${{ inputs.image }}
+          target: ${{ inputs.target }}
+          tags: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
+          load: true
+          build-args: |
+            BUILD_OS=${{ inputs.image }}
+            IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.meta.outputs.version || 'CI' }}
+            ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
+            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ contains(inputs.nap_modules, 'waf') && 'DEBIAN_VERSION=buster-slim' || '' }}
+          secrets: |
+            "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.8.0
+        continue-on-error: true
+        with:
+          image-ref: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-results-${{ inputs.image }}.sarif'
+          ignore-unfixed: 'true'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        continue-on-error: true
+        with:
+          sarif_file: 'trivy-results-${{ inputs.image }}.sarif'
+
+      - name: Upload Scan Results
+        uses: actions/upload-artifact@v3
+        continue-on-error: true
+        with:
+          name: 'trivy-results-${{ inputs.image }}.sarif'
+          path: 'trivy-results-${{ inputs.image }}.sarif'
+        if: always()

@@ -624,6 +624,7 @@ class TestOptionsSpecificForPlus:
         assert_event(vs_event_text, vs_events)
         assert "slow_start" not in config
 
+    @pytest.mark.flaky(max_runs=3)
     def test_validation_flow(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, virtual_server_setup
     ):

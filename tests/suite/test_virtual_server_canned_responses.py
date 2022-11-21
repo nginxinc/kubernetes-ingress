@@ -98,6 +98,7 @@ class TestVSCannedResponse:
         vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event_count_increased(vs_event_text, initial_count, vs_events)
 
+    @pytest.mark.flaky(max_runs=3)
     def test_validation_flow(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         invalid_fields = ["spec.routes[0].action.return.code", "spec.routes[0].action.return.body"]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
