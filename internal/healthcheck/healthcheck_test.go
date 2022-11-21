@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
 	"math/rand"
+	"net"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -15,20 +15,54 @@ import (
 	"github.com/nginxinc/nginx-plus-go-client/client"
 )
 
-func TestHealthCheckServer_ReturnsValidHTTPErrorOnMissingHostname(t *testing.T) {
-	t.Parallel()
+// newTestHealthServer is a helper func responsible for creating,
+// starting and shutting down healthcheck server for each test.
+func newTestHealthServer(t *testing.T) *healthcheck.HealthServer {
+	t.Helper()
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/probe/", nil)
+	l, err := net.Listen("tcp", ":0") //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp := httptest.NewRecorder()
+	defer l.Close() //nolint:errcheck
 
-	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXAllUp)
-	h.ServeHTTP(resp, req)
+	addr := l.Addr().String()
+	hs, err := healthcheck.NewHealthServer(addr, nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	if !cmp.Equal(http.StatusNotFound, resp.Code) {
-		t.Error(cmp.Diff(http.StatusNotFound, resp.Code))
+	go func() {
+		err := hs.ListenAndServe()
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	}()
+
+	t.Cleanup(func() {
+		err := hs.Shutdown(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+	return hs
+}
+
+func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
+	t.Parallel()
+
+	hs := newTestHealthServer(t)
+	hs.UpstreamsForHost = getUpstreamsForHost
+	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
+
+	resp, err := http.Get(hs.URL + "probe/") //nolint:noctx
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Error(resp.StatusCode)
 	}
 }
 
@@ -37,65 +71,64 @@ func generateStringOfLength(n int) string {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))] //golint:gosec
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	return string(b)
 }
 
-func TestHealthCheckServer_ReturnsValidHTTPErrorOnTooLongHostname(t *testing.T) {
+func TestHealthCheckServer_Returns414OnTooLongHostname(t *testing.T) {
 	t.Parallel()
+
+	hs := newTestHealthServer(t)
+	hs.UpstreamsForHost = getUpstreamsForHost
+	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
 
 	hostname := generateStringOfLength(256)
-	url := fmt.Sprintf("/probe/%s", hostname)
-
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	resp, err := http.Get(hs.URL + "probe/" + hostname) //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp := httptest.NewRecorder()
+	defer resp.Body.Close() //nolint:errcheck
 
-	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXAllUp)
-	h.ServeHTTP(resp, req)
-
-	if !cmp.Equal(http.StatusRequestURITooLong, resp.Code) {
-		t.Error(cmp.Diff(http.StatusRequestURITooLong, resp.Code))
+	if resp.StatusCode != http.StatusRequestURITooLong {
+		t.Error(resp.StatusCode)
 	}
 }
 
-func TestHealthCheckServer_ReturnsValidHTTPCodeOnValidHostnameLength(t *testing.T) {
+func TestHealthCheckServer_ReturnsCorrectHTTPForValidHostnameLength(t *testing.T) {
 	t.Parallel()
+
+	hs := newTestHealthServer(t)
+	hs.UpstreamsForHost = getUpstreamsForHost
+	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
 
 	hostname := generateStringOfLength(254)
-	url := fmt.Sprintf("/probe/%s", hostname)
-
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	resp, err := http.Get(hs.URL + "probe/" + hostname) //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp := httptest.NewRecorder()
+	defer resp.Body.Close() //nolint:errcheck
 
-	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXAllUp)
-	h.ServeHTTP(resp, req)
-
-	if !cmp.Equal(http.StatusNotFound, resp.Code) {
-		t.Error(cmp.Diff(http.StatusNotFound, resp.Code))
+	if resp.StatusCode != http.StatusNotFound {
+		t.Error(resp.StatusCode)
 	}
 }
 
-func TestHealthCheckServer_ReturnsValidStatsAndValidHTTPCodeForAllPeersUpOnValidHostname(t *testing.T) {
+func TestHealthCheckServer_ReturnsCorrectStatsForHostnameForAllPeersUp(t *testing.T) {
 	t.Parallel()
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/probe/bar.tea.com", nil)
+	hs := newTestHealthServer(t)
+	hs.UpstreamsForHost = getUpstreamsForHost
+	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
+
+	resp, err := http.Get(hs.URL + "probe/bar.tea.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp := httptest.NewRecorder()
+	defer resp.Body.Close() //nolint:errcheck
 
-	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXAllUp)
-	h.ServeHTTP(resp, req)
-
-	if !cmp.Equal(http.StatusOK, resp.Code) {
-		t.Error(cmp.Diff(http.StatusOK, resp.Code))
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal(resp.StatusCode)
 	}
 
 	want := healthcheck.HostStats{
@@ -104,7 +137,7 @@ func TestHealthCheckServer_ReturnsValidStatsAndValidHTTPCodeForAllPeersUpOnValid
 		Unhealthy: 0,
 	}
 	var got healthcheck.HostStats
-	if err := json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
 		t.Fatal(err)
 	}
 	if !cmp.Equal(want, got) {
@@ -112,20 +145,21 @@ func TestHealthCheckServer_ReturnsValidStatsAndValidHTTPCodeForAllPeersUpOnValid
 	}
 }
 
-func TestHealthCheckServer_ReturnsValidStatsAndValidHTTPCodeForAllPeersDownOnValidHostname(t *testing.T) {
+func TestHealthCheckServer_ReturnsCorrectStatsAndCorrectHTTPCodeForHostnameOnAllPeersDown(t *testing.T) {
 	t.Parallel()
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/probe/bar.tea.com", nil)
+	hs := newTestHealthServer(t)
+	hs.UpstreamsForHost = getUpstreamsForHost
+	hs.NginxUpstreams = getUpstreamsFromNGINXAllUnhealthy
+
+	resp, err := http.Get(hs.URL + "probe/bar.tea.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp := httptest.NewRecorder()
+	defer resp.Body.Close() //nolint:errcheck
 
-	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXAllUnhealthy)
-	h.ServeHTTP(resp, req)
-
-	if !cmp.Equal(http.StatusServiceUnavailable, resp.Code) {
-		t.Error(cmp.Diff(http.StatusServiceUnavailable, resp.Code))
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatal(resp.StatusCode)
 	}
 
 	want := healthcheck.HostStats{
@@ -135,7 +169,7 @@ func TestHealthCheckServer_ReturnsValidStatsAndValidHTTPCodeForAllPeersDownOnVal
 	}
 
 	var got healthcheck.HostStats
-	if err := json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
 		t.Fatal(err)
 	}
 	if !cmp.Equal(want, got) {
@@ -143,20 +177,21 @@ func TestHealthCheckServer_ReturnsValidStatsAndValidHTTPCodeForAllPeersDownOnVal
 	}
 }
 
-func TestHealthCheckServer_ReturnsValidStatsAndCorrectHTTPStatusCodeForPartOfPeersDownOnValidHostname(t *testing.T) {
+func TestHealthCheckServer_ReturnsCorrectStatsAndCorrectHTTPCodeForHostnameOnPartOfPeersDown(t *testing.T) {
 	t.Parallel()
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/probe/bar.tea.com", nil)
+	hs := newTestHealthServer(t)
+	hs.UpstreamsForHost = getUpstreamsForHost
+	hs.NginxUpstreams = getUpstreamsFromNGINXPartiallyUp
+
+	resp, err := http.Get(hs.URL + "probe/bar.tea.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp := httptest.NewRecorder()
+	defer resp.Body.Close() //nolint:errcheck
 
-	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXPartiallyUp)
-	h.ServeHTTP(resp, req)
-
-	if !cmp.Equal(http.StatusOK, resp.Code) {
-		t.Error(cmp.Diff(http.StatusOK, resp.Code))
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal(resp.StatusCode)
 	}
 
 	want := healthcheck.HostStats{
@@ -166,7 +201,7 @@ func TestHealthCheckServer_ReturnsValidStatsAndCorrectHTTPStatusCodeForPartOfPee
 	}
 
 	var got healthcheck.HostStats
-	if err := json.Unmarshal(resp.Body.Bytes(), &got); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
 		t.Fatal(err)
 	}
 	if !cmp.Equal(want, got) {
@@ -177,35 +212,36 @@ func TestHealthCheckServer_ReturnsValidStatsAndCorrectHTTPStatusCodeForPartOfPee
 func TestHealthCheckServer_RespondsWithHTTPErrCodeOnNotExistingHostname(t *testing.T) {
 	t.Parallel()
 
-	// 'foo.mocha.org' represents not existing hostname
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/probe/foo.mocha.org", nil)
+	hs := newTestHealthServer(t)
+	hs.UpstreamsForHost = getUpstreamsForHost
+	hs.NginxUpstreams = getUpstreamsFromNGINXNotExistingHost
+
+	resp, err := http.Get(hs.URL + "probe/foo.mocha.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp := httptest.NewRecorder()
+	defer resp.Body.Close() //nolint:errcheck
 
-	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXNotExistingHost)
-	h.ServeHTTP(resp, req)
-
-	if !cmp.Equal(http.StatusNotFound, resp.Code) {
-		t.Error(cmp.Diff(http.StatusServiceUnavailable, resp.Code))
+	if resp.StatusCode != http.StatusNotFound {
+		t.Error(resp.StatusCode)
 	}
 }
 
 func TestHealthCheckServer_RespondsWithCorrectHTTPStatusCodeOnErrorFromNGINXAPI(t *testing.T) {
 	t.Parallel()
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/probe/foo.tea.com", nil)
+	hs := newTestHealthServer(t)
+	hs.UpstreamsForHost = getUpstreamsForHost
+	hs.NginxUpstreams = getUpstreamsFromNGINXErrorFromAPI
+
+	resp, err := http.Get(hs.URL + "probe/foo.tea.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp := httptest.NewRecorder()
+	defer resp.Body.Close() //nolint:errcheck
 
-	h := healthcheck.API(getUpstreamsForHost, getUpstreamsFromNGINXErrorFromAPI)
-	h.ServeHTTP(resp, req)
-
-	if !cmp.Equal(http.StatusInternalServerError, resp.Code) {
-		t.Error(cmp.Diff(http.StatusInternalServerError, resp.Code))
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Error(resp.StatusCode)
 	}
 }
 

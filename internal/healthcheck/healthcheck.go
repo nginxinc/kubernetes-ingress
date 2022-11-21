@@ -1,7 +1,9 @@
+// Package healthcheck provides primitives for running deep healtcheck service.
 package healthcheck
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -21,122 +23,82 @@ import (
 )
 
 // RunHealthCheck starts the deep healthcheck service.
-//
-// If the server encounters an error and it can't start
-// it exits with code 255 (glog.Fatal).
 func RunHealthCheck(port int, plusClient *client.NginxClient, cnf *configs.Configurator, healthProbeTLSSecret *v1.Secret) {
-	err := RunHealtcheckServer(strconv.Itoa(port), plusClient, cnf, healthProbeTLSSecret)
+	hs, err := NewHealthServer(strconv.Itoa(port), plusClient, cnf, healthProbeTLSSecret)
 	if err != nil {
 		glog.Fatal(err)
 	}
+	glog.Fatal(hs.ListenAndServe())
 }
 
-// RunHealtcheckServer takes config params, creates the health server and starts it.
-// It errors if the server can't be started or provided secret is not valid
-// (tls certificate cannot be created) and the health service with TLS support can't start.
-func RunHealtcheckServer(port string, nc *client.NginxClient, cnf *configs.Configurator, secret *v1.Secret) error {
-	getUpstreamsForHost := upstreamsForHost(cnf)
-	getUpstreamsFromNginx := nginxUpstreams(nc)
-
-	if secret == nil {
-		healthServer := http.Server{
-			Addr:         fmt.Sprintf(":%s", port),
-			Handler:      API(getUpstreamsForHost, getUpstreamsFromNginx),
-			ReadTimeout:  10 * time.Second,
-			WriteTimeout: 10 * time.Second,
-		}
-		if err := healthServer.ListenAndServe(); err != nil {
-			return fmt.Errorf("starting healthcheck server: %w", err)
-		}
-	}
-
-	tlsCert, err := makeCert(secret)
-	if err != nil {
-		return fmt.Errorf("creating tls cert %w", err)
-	}
-
-	healthServer := http.Server{
-		Addr:    fmt.Sprintf(":%s", port),
-		Handler: API(getUpstreamsForHost, getUpstreamsFromNginx),
-		TLSConfig: &tls.Config{
-			Certificates: []tls.Certificate{tlsCert},
-			MinVersion:   tls.VersionTLS12,
-		},
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-	if err := healthServer.ListenAndServeTLS("", ""); err != nil {
-		return fmt.Errorf("starting healthcheck tls server: %w", err)
-	}
-	return nil
-}
-
-// makeCert takes k8s Secret and returns tls Certificate for the server.
-// It errors if either cert, or key are not present in the Secret.
-func makeCert(s *v1.Secret) (tls.Certificate, error) {
-	cert, ok := s.Data[v1.TLSCertKey]
-	if !ok {
-		return tls.Certificate{}, errors.New("missing tls cert")
-	}
-	key, ok := s.Data[v1.TLSPrivateKeyKey]
-	if !ok {
-		return tls.Certificate{}, errors.New("missing tls key")
-	}
-	return tls.X509KeyPair(cert, key)
-}
-
-// API constructs an http.Handler with all healtcheck routes.
-func API(upstreamsForHost func(string) []string, upstreamsFromNginx func() (*client.Upstreams, error)) http.Handler {
-	health := HealthHandler{
-		UpstreamsForHost: upstreamsForHost,
-		NginxUpstreams:   upstreamsFromNginx,
-	}
-	mux := chi.NewRouter()
-	mux.Route("/probe", func(r chi.Router) {
-		r.With(hostnameLengthVerifier).Get("/{hostname}", health.Retrieve)
-	})
-	return mux
-}
-
-// upstreamsForHost takes configurator and returns a func
-// that is reposnsible for retrieving upstreams for the given hostname.
-func upstreamsForHost(cnf *configs.Configurator) func(hostname string) []string {
-	return func(hostname string) []string {
-		return cnf.GetUpstreamsforHost(hostname)
-	}
-}
-
-// nginxUpstreams takes an instance of NGNX client and returns
-// a func that returns all upstreams.
-func nginxUpstreams(nc *client.NginxClient) func() (*client.Upstreams, error) {
-	return func() (*client.Upstreams, error) {
-		upstreams, err := nc.GetUpstreams()
-		if err != nil {
-			return nil, err
-		}
-		return upstreams, nil
-	}
-}
-
-// HealthHandler holds dependency for its method(s).
-type HealthHandler struct {
+// HealthServer holds data required for running
+// the healthcheck server.
+type HealthServer struct {
+	Server           *http.Server
+	URL              string
 	UpstreamsForHost func(host string) []string
 	NginxUpstreams   func() (*client.Upstreams, error)
 }
 
+// NewHealthServer creates Health Server. If secret is provided,
+// the server is configured with TLS Config.
+func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configurator, secret *v1.Secret) (*HealthServer, error) {
+	hs := HealthServer{
+		Server: &http.Server{
+			Addr:         addr,
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+		},
+		URL:              fmt.Sprintf("http://%s/", addr),
+		UpstreamsForHost: cnf.GetUpstreamsforHost,
+		NginxUpstreams:   nc.GetUpstreams,
+	}
+
+	if secret != nil {
+		tlsCert, err := makeCert(secret)
+		if err != nil {
+			return nil, fmt.Errorf("creating tls sert: %w", err)
+		}
+		hs.Server.TLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{tlsCert},
+			MinVersion:   tls.VersionTLS12,
+		}
+		hs.URL = fmt.Sprintf("https://%s/", addr)
+	}
+	return &hs, nil
+}
+
+// ListenAndServe starts healthcheck server.
+func (hs *HealthServer) ListenAndServe() error {
+	mux := chi.NewRouter()
+	mux.Route("/probe", func(r chi.Router) {
+		r.With(hostnameLengthVerifier).Get("/{hostname}", hs.Retrieve)
+	})
+	hs.Server.Handler = mux
+	if hs.Server.TLSConfig != nil {
+		return hs.Server.ListenAndServeTLS("", "")
+	}
+	return hs.Server.ListenAndServe()
+}
+
+// Shutdown shuts down healthcheck server.
+func (hs *HealthServer) Shutdown(ctx context.Context) error {
+	return hs.Server.Shutdown(ctx)
+}
+
 // Retrieve finds health stats for the host identified by a hostname in the request URL.
-func (h *HealthHandler) Retrieve(w http.ResponseWriter, r *http.Request) {
+func (hs *HealthServer) Retrieve(w http.ResponseWriter, r *http.Request) {
 	hostname := chi.URLParam(r, "hostname")
 	host := sanitize(hostname)
 
-	upstreamNames := h.UpstreamsForHost(host)
+	upstreamNames := hs.UpstreamsForHost(host)
 	if len(upstreamNames) == 0 {
 		glog.Errorf("no upstreams for requested hostname %s or hostname does not exist", host)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	upstreams, err := h.NginxUpstreams()
+	upstreams, err := hs.NginxUpstreams()
 	if err != nil {
 		glog.Errorf("error retrieving upstreams for requested hostname: %s", host)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -170,15 +132,33 @@ func sanitize(s string) string {
 	return hostname
 }
 
-// hostnameLengthVerifier is a middleware that checks max
-// length of the hostname param passed in the probe url.
+// makeCert takes k8s Secret and returns tls Certificate for the server.
+// It errors if either cert, or key are not present in the Secret.
+func makeCert(s *v1.Secret) (tls.Certificate, error) {
+	cert, ok := s.Data[v1.TLSCertKey]
+	if !ok {
+		return tls.Certificate{}, errors.New("missing tls cert")
+	}
+	key, ok := s.Data[v1.TLSPrivateKeyKey]
+	if !ok {
+		return tls.Certificate{}, errors.New("missing tls key")
+	}
+	return tls.X509KeyPair(cert, key)
+}
+
+// MaxHostnameLength is the max number of bytes
+// that the healthcheck service accepts for hostname.
 //
 // ref: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DomainNameFormat.html
+const MaxHostnameLength = 255
+
+// hostnameLengthVerifier is a middleware that checks max
+// length of the hostname param passed in the probe url.
 func hostnameLengthVerifier(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := chi.URLParam(r, "hostname")
 		length := bytes.NewReader([]byte(name)).Len()
-		if length > 255 {
+		if length > MaxHostnameLength {
 			w.WriteHeader(http.StatusRequestURITooLong)
 			return
 		}
