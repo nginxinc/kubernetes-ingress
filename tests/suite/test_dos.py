@@ -125,14 +125,15 @@ def dos_setup(
             nginx_reload(kube_apis.v1, item.metadata.name, ingress_controller_prerequisites.namespace)
 
     def fin():
-        print("Clean up:")
-        delete_dos_policy(kube_apis.custom_objects, pol_name, test_namespace)
-        delete_dos_logconf(kube_apis.custom_objects, log_name, test_namespace)
-        delete_dos_protected(kube_apis.custom_objects, protected_name, test_namespace)
-        delete_common_app(kube_apis, "dos", test_namespace)
-        delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
-        write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
-        clean_good_bad_clients()
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_dos_policy(kube_apis.custom_objects, pol_name, test_namespace)
+            delete_dos_logconf(kube_apis.custom_objects, log_name, test_namespace)
+            delete_dos_protected(kube_apis.custom_objects, protected_name, test_namespace)
+            delete_common_app(kube_apis, "dos", test_namespace)
+            delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+            write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
+            clean_good_bad_clients()
 
     request.addfinalizer(fin)
 

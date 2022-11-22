@@ -145,8 +145,9 @@ def delete_test_namespaces(kube_apis, request) -> None:
     """
 
     def fin():
-        print("------------------------- Delete All Test Namespaces -----------------------------------")
-        delete_testing_namespaces(kube_apis.v1)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("------------------------- Delete All Test Namespaces -----------------------------------")
+            delete_testing_namespaces(kube_apis.v1)
 
     request.addfinalizer(fin)
 
@@ -216,19 +217,20 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
     create_secret_from_yaml(kube_apis.v1, namespace, f"{DEPLOYMENTS}/common/default-server-secret.yaml")
 
     def fin():
-        print("Clean up prerequisites")
-        delete_namespace(kube_apis.v1, namespace)
-        print("Delete IngressClass resources:")
-        subprocess.run(["kubectl", "delete", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
-        subprocess.run(
-            [
-                "kubectl",
-                "delete",
-                "-f",
-                f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
-            ]
-        )
-        cleanup_rbac(kube_apis.rbac_v1, rbac)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up prerequisites")
+            delete_namespace(kube_apis.v1, namespace)
+            print("Delete IngressClass resources:")
+            subprocess.run(["kubectl", "delete", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
+            subprocess.run(
+                [
+                    "kubectl",
+                    "delete",
+                    "-f",
+                    f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
+                ]
+            )
+            cleanup_rbac(kube_apis.rbac_v1, rbac)
 
     request.addfinalizer(fin)
 
@@ -304,6 +306,11 @@ def cli_arguments(request) -> {}:
         assert node_ip is not None and node_ip != "", f"Service 'nodeport' requires a node-ip"
         result["node-ip"] = node_ip
         print(f"Tests will use the node-ip: {result['node-ip']}")
+    result["skip-fixture-teardown"] = request.config.getoption("--skip-fixture-teardown")
+    assert result["skip-fixture-teardown"] == "yes" or result["skip-fixture-teardown"] == "no"
+    print(
+        f"All test fixtures be available for debugging: {result['skip-fixture-teardown']}, /// ONLY USE THIS OPTION FOR INDIVIDUAL TEST DEBUGGING ///"
+    )
     return result
 
 
@@ -363,11 +370,12 @@ def crds(kube_apis, request) -> None:
         pytest.fail("IC setup failed")
 
     def fin():
-        delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
+            delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
+            delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
+            delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
+            delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
 
     request.addfinalizer(fin)
 
@@ -385,12 +393,13 @@ def restore_configmap(request, kube_apis, ingress_controller_prerequisites, test
     """
 
     def fin():
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                ingress_controller_prerequisites.config_map["metadata"]["name"],
+                ingress_controller_prerequisites.namespace,
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            )
 
     request.addfinalizer(fin)
 
@@ -436,8 +445,9 @@ def create_generic_from_yaml(file_path, request):
     subprocess.run(["kubectl", "apply", "-f", f"{file_path}"])
 
     def fin():
-        print("Clean up resources from {file_path}:")
-        subprocess.run(["kubectl", "delete", "-f", f"{file_path}"])
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up resources from {file_path}:")
+            subprocess.run(["kubectl", "delete", "-f", f"{file_path}"])
 
     request.addfinalizer(fin)
 

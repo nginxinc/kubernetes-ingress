@@ -76,10 +76,11 @@ def tls_setup(
     )
 
     def fin():
-        print("Clean up TLS setup")
-        delete_items_from_yaml(kube_apis, ingress_path, test_namespace)
-        if is_secret_present(kube_apis.v1, secret_name, test_namespace):
-            delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up TLS setup")
+            delete_items_from_yaml(kube_apis, ingress_path, test_namespace)
+            if is_secret_present(kube_apis.v1, secret_name, test_namespace):
+                delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 

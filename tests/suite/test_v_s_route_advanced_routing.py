@@ -91,8 +91,9 @@ def vsr_adv_routing_setup(
     wait_until_all_pods_are_ready(kube_apis.v1, ns_1)
 
     def fin():
-        print("Delete test namespace")
-        delete_namespace(kube_apis.v1, ns_1)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Delete test namespace")
+            delete_namespace(kube_apis.v1, ns_1)
 
     request.addfinalizer(fin)
 

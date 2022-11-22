@@ -63,9 +63,10 @@ def transport_server_tls_passthrough_setup(
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
-        print("Clean up TransportServer and app:")
-        delete_ts(kube_apis.custom_objects, ts_resource, test_namespace)
-        delete_items_from_yaml(kube_apis, secure_app_file, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up TransportServer and app:")
+            delete_ts(kube_apis.custom_objects, ts_resource, test_namespace)
+            delete_items_from_yaml(kube_apis, secure_app_file, test_namespace)
 
     request.addfinalizer(fin)
 
