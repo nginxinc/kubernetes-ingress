@@ -193,4 +193,4 @@ def pytest_runtest_makereport(item) -> None:
 
     if rep.when == "call" and item.config.getoption("--skip-fixture-teardown") == "yes":
         print("\n===================== WARNING =====================")
-        print("Make sure to remove resources from this test run manually usinf kubectl utility\n")
+        print("Make sure to remove resources from this test run manually using kubectl utility\n")
