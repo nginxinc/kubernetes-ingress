@@ -115,6 +115,7 @@ class TestVirtualServerGrpc:
         assert_grpc_entries_exist(config)
         assert_proxy_entries_do_not_exist(config)
 
+    @pytest.mark.flaky(max_runs=3)
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_validation_flow(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, backend_setup, virtual_server_setup

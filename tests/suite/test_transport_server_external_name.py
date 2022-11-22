@@ -99,8 +99,8 @@ class TestTransportServerStatus:
         ts_externalname_setup,
     ):
         wait_before_test()
-
         nginx_file_path = f"/etc/nginx/nginx.conf"
+        nginx_conf = ""
         nginx_conf = get_file_contents(
             kube_apis.v1, nginx_file_path, ts_externalname_setup.ic_pod_name, ingress_controller_prerequisites.namespace
         )
@@ -109,9 +109,17 @@ class TestTransportServerStatus:
         ts_file_path = (
             f"/etc/nginx/stream-conf.d/ts_{transport_server_setup.namespace}_{transport_server_setup.name}.conf"
         )
-        ts_conf = get_file_contents(
-            kube_apis.v1, ts_file_path, ts_externalname_setup.ic_pod_name, ingress_controller_prerequisites.namespace
-        )
+        ts_conf = ""
+        retry = 0
+        while f"{ts_externalname_setup.external_host}:5353" not in ts_conf and retry < 5:
+            wait_before_test()
+            ts_conf = get_file_contents(
+                kube_apis.v1,
+                ts_file_path,
+                ts_externalname_setup.ic_pod_name,
+                ingress_controller_prerequisites.namespace,
+            )
+            retry = +1
 
         assert resolver_count == 2  # one for http and other for stream context
         assert (
@@ -119,6 +127,7 @@ class TestTransportServerStatus:
             in ts_conf
         )
 
+    @pytest.mark.flaky(max_runs=3)
     def test_event_warning(
         self,
         kube_apis,

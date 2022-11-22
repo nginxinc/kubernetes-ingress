@@ -17,7 +17,7 @@ jobs:
 
   variables:
     name: Get versions of base images
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       kic-tag: ${{ steps.kic.outputs.tag }}
       versions: ${{ steps.versions.outputs.matrix }}
@@ -54,7 +54,7 @@ jobs:
 
   check:
     name: Check if updates are needed
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: variables
     outputs:
       needs-updating-debian: ${{ steps.needs.outputs.debian }}
@@ -81,7 +81,7 @@ jobs:
   binary:
     if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' || needs.check.outputs.needs-updating-ubi == 'true' }}
     name: Build binaries
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [check, variables]
     steps:
       - name: Checkout Repository
@@ -113,7 +113,7 @@ jobs:
 
   test:
     name: Run tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [check, variables, binary]
     strategy:
       matrix:

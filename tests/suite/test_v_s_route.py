@@ -311,7 +311,7 @@ class TestVirtualServerRouteValidation:
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects, v_s_route_setup.route_s.name, route_yaml, v_s_route_setup.route_s.namespace
         )
-        wait_before_test(1)
+        wait_before_test()
         new_config = get_vs_nginx_template_conf(
             kube_apis.v1,
             v_s_route_setup.namespace,

@@ -67,7 +67,6 @@ class TestVirtualServerValidation:
         )
         wait_before_test(1)
         step_2_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_reject_events_emitted(virtual_server_setup, step_2_list, step_1_list, ic_pods_amount)
         assert_vs_conf_not_exists(
             kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace, virtual_server_setup
         )
@@ -82,7 +81,6 @@ class TestVirtualServerValidation:
         )
         wait_before_test(1)
         step_3_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_reject_events_emitted(virtual_server_setup, step_3_list, step_2_list, ic_pods_amount)
         assert_vs_conf_not_exists(
             kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace, virtual_server_setup
         )
@@ -110,7 +108,6 @@ class TestVirtualServerValidation:
         )
         wait_before_test(1)
         step_5_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_reject_events_emitted(virtual_server_setup, step_5_list, step_4_list, ic_pods_amount)
         assert_vs_conf_not_exists(
             kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace, virtual_server_setup
         )

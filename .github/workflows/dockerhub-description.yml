@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   dockerHubDescription:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: ${{ github.event.repository.fork == false }}
     steps:
       - uses: actions/checkout@v3
