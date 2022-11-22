@@ -1107,7 +1107,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInOneEndpointSlice(t *tes
 	}
 }
 
-func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlice(t *testing.T) {
+func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlices(t *testing.T) {
 	endpointPort := int32(8080)
 
 	boolPointer := func(b bool) *bool { return &b }
@@ -1258,43 +1258,6 @@ func TestGetEndpointSlicesBySubselectedPods_FindNoPods(t *testing.T) {
 					},
 				},
 			},
-		},
-		{
-			desc:       "targetPort mismatch",
-			targetPort: 21,
-			svcEndpointSlices: []discovery_v1.EndpointSlice{
-				{
-					Ports: []discovery_v1.EndpointPort{
-						{
-							Port: &endpointPort,
-						},
-					},
-					Endpoints: []discovery_v1.Endpoint{
-						{
-							Addresses: []string{
-								"1.2.3.4",
-							},
-						},
-					},
-				},
-			},
-			pods: []*api_v1.Pod{
-				{
-					ObjectMeta: meta_v1.ObjectMeta{
-						OwnerReferences: []meta_v1.OwnerReference{
-							{
-								Kind:       "Deployment",
-								Name:       "deploy-1",
-								Controller: boolPointer(true),
-							},
-						},
-					},
-					Status: api_v1.PodStatus{
-						PodIP: "1.2.3.4",
-					},
-				},
-			},
-			expectedEndpoints: nil,
 		},
 	}
 
