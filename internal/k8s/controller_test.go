@@ -660,10 +660,60 @@ func TestGetEndpointsFromEndpointSlices(t *testing.T) {
 				},
 			},
 		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",
+					gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func TestGetEndpointsFromEndpointSlicesErrors(t *testing.T) {
+	lbc := LoadBalancerController{
+		isNginxPlus: true,
+	}
+
+	backendServicePort := networking.ServiceBackendPort{
+		Number: 8080,
+		Name:   "foo",
+	}
+
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svc               api_v1.Service
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		expectedErr       string
+	}{
 		{
-			desc:              "no endpoints found",
-			targetPort:        8080,
-			expectedEndpoints: nil,
+			desc:       "no endpoints found",
+			targetPort: 8080,
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
+			expectedErr:       "no endpointslices for target port 8080 in service coffee-svc",
 			svcEndpointSlices: []discovery_v1.EndpointSlice{},
 		},
 		{
@@ -686,18 +736,20 @@ func TestGetEndpointsFromEndpointSlices(t *testing.T) {
 				},
 				Status: api_v1.ServiceStatus{},
 			},
-			expectedEndpoints: nil,
+			expectedErr:       "no port {foo 8080} in service coffee-svc",
 			svcEndpointSlices: nil,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotEndpoints, _ := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
-
-			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
+			if err == nil {
+				t.Fatal(err)
+			}
+			if result := cmp.Diff(err.Error(), test.expectedErr); result != "" {
 				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",
-					gotEndpoints, test.expectedEndpoints)
+					gotEndpoints, test.expectedErr)
 			}
 		})
 	}
@@ -1007,8 +1059,40 @@ func TestGetEndpointSlicesBySubselectedPods(t *testing.T) {
 			},
 		},
 		{
-			desc:              "targetPort mismatch",
-			targetPort:        21,
+			desc:       "targetPort mismatch",
+			targetPort: 21,
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+					},
+				},
+			},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+			},
 			expectedEndpoints: nil,
 		},
 	}
