@@ -736,13 +736,13 @@ func TestGetEndpointsFromEndpointSlicesErrors(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
+			_, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 			if err == nil {
 				t.Fatal(err)
 			}
 			if result := cmp.Diff(err.Error(), test.expectedErr); result != "" {
 				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",
-					gotEndpoints, test.expectedErr)
+					err.Error(), test.expectedErr)
 			}
 		})
 	}
