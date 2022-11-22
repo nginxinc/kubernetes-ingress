@@ -486,14 +486,12 @@ func TestGetEndpointsFromEndpointSlices(t *testing.T) {
 
 	tests := []struct {
 		desc              string
-		targetPort        int32
 		svc               api_v1.Service
 		svcEndpointSlices []discovery_v1.EndpointSlice
 		expectedEndpoints []podEndpoint
 	}{
 		{
-			desc:       "duplicate endpoints in an endpointslice",
-			targetPort: 8080,
+			desc: "duplicate endpoints in an endpointslice",
 			svc: api_v1.Service{
 				TypeMeta: meta_v1.TypeMeta{},
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -539,8 +537,7 @@ func TestGetEndpointsFromEndpointSlices(t *testing.T) {
 			},
 		},
 		{
-			desc:       "two different endpoints in one endpoint slice",
-			targetPort: 8080,
+			desc: "two different endpoints in one endpoint slice",
 			svc: api_v1.Service{
 				TypeMeta: meta_v1.TypeMeta{},
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -589,8 +586,7 @@ func TestGetEndpointsFromEndpointSlices(t *testing.T) {
 			},
 		},
 		{
-			desc:       "duplicate endpoints across two endpointslices",
-			targetPort: 8080,
+			desc: "duplicate endpoints across two endpointslices",
 			svc: api_v1.Service{
 				TypeMeta: meta_v1.TypeMeta{},
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -688,14 +684,12 @@ func TestGetEndpointsFromEndpointSlicesErrors(t *testing.T) {
 
 	tests := []struct {
 		desc              string
-		targetPort        int32
 		svc               api_v1.Service
 		svcEndpointSlices []discovery_v1.EndpointSlice
 		expectedErr       string
 	}{
 		{
-			desc:       "no endpoints found",
-			targetPort: 8080,
+			desc: "no endpoints found",
 			svc: api_v1.Service{
 				TypeMeta: meta_v1.TypeMeta{},
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -717,8 +711,7 @@ func TestGetEndpointsFromEndpointSlicesErrors(t *testing.T) {
 			svcEndpointSlices: []discovery_v1.EndpointSlice{},
 		},
 		{
-			desc:       "service target port is 0",
-			targetPort: 8080,
+			desc: "service target port is 0",
 			svc: api_v1.Service{
 				TypeMeta: meta_v1.TypeMeta{},
 				ObjectMeta: meta_v1.ObjectMeta{
