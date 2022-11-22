@@ -472,7 +472,7 @@ func TestFormatWarningsMessages(t *testing.T) {
 	}
 }
 
-func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
+func TestGetEndpointsFromEndpointSlices(t *testing.T) {
 	endpointPort := int32(8080)
 
 	lbc := LoadBalancerController{
@@ -487,12 +487,30 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 	tests := []struct {
 		desc              string
 		targetPort        int32
+		svc               api_v1.Service
 		svcEndpointSlices []discovery_v1.EndpointSlice
 		expectedEndpoints []podEndpoint
 	}{
 		{
 			desc:       "duplicate endpoints in an endpointslice",
 			targetPort: 8080,
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
 			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
@@ -523,6 +541,23 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 		{
 			desc:       "two different endpoints in one endpoint slice",
 			targetPort: 8080,
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
 			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
@@ -556,6 +591,23 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 		{
 			desc:       "duplicate endpoints across two endpointslices",
 			targetPort: 8080,
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
 			expectedEndpoints: []podEndpoint{
 				{
 					Address: "1.2.3.4:8080",
@@ -614,28 +666,34 @@ func TestGetEndpointsFromEndpointSlicesDeduplication(t *testing.T) {
 			expectedEndpoints: nil,
 			svcEndpointSlices: []discovery_v1.EndpointSlice{},
 		},
+		{
+			desc:       "service target port is 0",
+			targetPort: 8080,
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       0,
+							TargetPort: intstr.FromInt(0),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
+			expectedEndpoints: nil,
+			svcEndpointSlices: nil,
+		},
 	}
 
-	svc := api_v1.Service{
-		TypeMeta: meta_v1.TypeMeta{},
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "coffee-svc",
-			Namespace: "default",
-		},
-		Spec: api_v1.ServiceSpec{
-			Ports: []api_v1.ServicePort{
-				{
-					Name:       "foo",
-					Port:       80,
-					TargetPort: intstr.FromInt(8080),
-				},
-			},
-		},
-		Status: api_v1.ServiceStatus{},
-	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotEndpoints, _ := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &svc)
+			gotEndpoints, _ := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 
 			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
 				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",

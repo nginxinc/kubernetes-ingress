@@ -3429,25 +3429,24 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 	return result, false, nil
 }
 
-func (lbc *LoadBalancerController) validateTargetPort(backendPort networking.ServiceBackendPort, svc *api_v1.Service) (targetPort int32, err error) {
+func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpointSlices []discovery_v1.EndpointSlice, backendPort networking.ServiceBackendPort, svc *api_v1.Service) ([]podEndpoint, error) {
+	var targetPort int32
+	var err error
+
 	for _, port := range svc.Spec.Ports {
 		if (backendPort.Name == "" && port.Port == backendPort.Number) || port.Name == backendPort.Name {
 			targetPort, err = lbc.getTargetPort(port, svc)
 			if err != nil {
-				return 0, fmt.Errorf("error determining target port for port %v in Ingress: %w", backendPort, err)
+				return nil, fmt.Errorf("error determining target port for port %v in Ingress: %w", backendPort, err)
 			}
 			break
 		}
 	}
 
-	return targetPort, nil
-}
-
-func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpointSlices []discovery_v1.EndpointSlice, backendPort networking.ServiceBackendPort, svc *api_v1.Service) ([]podEndpoint, error) {
-	targetPort, err := lbc.validateTargetPort(backendPort, svc)
-	if err != nil {
+	if targetPort == 0 {
 		return nil, fmt.Errorf("no port %v in service %s", backendPort, svc.Name)
 	}
+
 	endpointSet := make(map[podEndpoint]struct{})
 	for _, endpointSlice := range endpointSlices {
 		for _, endpointSlicePort := range endpointSlice.Ports {
