@@ -61,9 +61,10 @@ def hsts_setup(
     ensure_response_from_backend(req_https_url, ingress_host)
 
     def fin():
-        print("Clean up HSTS Example:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/hsts/{request.param}/hsts-ingress.yaml", test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up HSTS Example:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/hsts/{request.param}/hsts-ingress.yaml", test_namespace)
 
     request.addfinalizer(fin)
 
