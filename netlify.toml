@@ -1,6 +1,7 @@
 [build]
+  base = "docs/"
   publish = "public"
-  command = "hugo --gc"
+  command = "hugo --gc -b $DEPLOY_PRIME_URL/nginx-ingress-controller"
 
 [build.environment]
   HUGO_VERSION = "0.91.0"
