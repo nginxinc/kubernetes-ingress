@@ -47,13 +47,14 @@ def v_s_route_secure_app_setup(request, kube_apis, v_s_route_setup) -> None:
     wait_until_all_pods_are_ready(kube_apis.v1, v_s_route_setup.route_s.namespace)
 
     def fin():
-        print("Clean up the Application:")
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/common/app/vsr/secure/multiple.yaml", v_s_route_setup.route_m.namespace
-        )
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/common/app/vsr/secure/single.yaml", v_s_route_setup.route_s.namespace
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up the Application:")
+            delete_items_from_yaml(
+                kube_apis, f"{TEST_DATA}/common/app/vsr/secure/multiple.yaml", v_s_route_setup.route_m.namespace
+            )
+            delete_items_from_yaml(
+                kube_apis, f"{TEST_DATA}/common/app/vsr/secure/single.yaml", v_s_route_setup.route_s.namespace
+            )
 
     request.addfinalizer(fin)
 

@@ -59,11 +59,12 @@ def smoke_setup(request, kube_apis, ingress_controller_endpoint, ingress_control
     )
 
     def fin():
-        print("Clean up the Smoke Application:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml", test_namespace)
-        delete_secret(kube_apis.v1, secret_name, test_namespace)
-        write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up the Smoke Application:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml", test_namespace)
+            delete_secret(kube_apis.v1, secret_name, test_namespace)
+            write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
 
     request.addfinalizer(fin)
 

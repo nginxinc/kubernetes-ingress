@@ -82,8 +82,9 @@ def appprotect_setup(
         cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name, test_namespace, vs_or_vsr, vs_name, vsr)
 
     def fin():
-        print("Clean up:")
-        cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name, test_namespace, vs_or_vsr, vs_name, vsr)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name, test_namespace, vs_or_vsr, vs_name, vsr)
 
     request.addfinalizer(fin)
     if vs_or_vsr == "vs":

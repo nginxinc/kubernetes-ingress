@@ -66,10 +66,11 @@ def virtual_server_setup_dos(request, kube_apis, ingress_controller_endpoint, te
         wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
-        print("Clean up Virtual Server Example:")
-        delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
-        if request.param["app_type"]:
-            delete_common_app(kube_apis, request.param["app_type"], test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up Virtual Server Example:")
+            delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
+            if request.param["app_type"]:
+                delete_common_app(kube_apis, request.param["app_type"], test_namespace)
 
     request.addfinalizer(fin)
 
@@ -137,11 +138,12 @@ def dos_setup(
             nginx_reload(kube_apis.v1, item.metadata.name, ingress_controller_prerequisites.namespace)
 
     def fin():
-        print("Clean up:")
-        delete_dos_policy(kube_apis.custom_objects, pol_name, test_namespace)
-        delete_dos_logconf(kube_apis.custom_objects, log_name, test_namespace)
-        delete_dos_protected(kube_apis.custom_objects, protected_name, test_namespace)
-        clean_good_bad_clients()
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_dos_policy(kube_apis.custom_objects, pol_name, test_namespace)
+            delete_dos_logconf(kube_apis.custom_objects, log_name, test_namespace)
+            delete_dos_protected(kube_apis.custom_objects, protected_name, test_namespace)
+            clean_good_bad_clients()
 
     request.addfinalizer(fin)
 

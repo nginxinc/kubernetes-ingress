@@ -20,10 +20,11 @@ def setup_single_secret_and_ns(request, kube_apis):
     wait_before_test(1)
 
     def fin():
-        print("Clean up:")
-        if is_secret_present(kube_apis.v1, filtered_secret_1, filtered_ns_1):
-            delete_secret(kube_apis.v1, filtered_secret_1, filtered_ns_1)
-        delete_namespace(kube_apis.v1, filtered_ns_1)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            if is_secret_present(kube_apis.v1, filtered_secret_1, filtered_ns_1):
+                delete_secret(kube_apis.v1, filtered_secret_1, filtered_ns_1)
+            delete_namespace(kube_apis.v1, filtered_ns_1)
 
     request.addfinalizer(fin)
 
@@ -81,15 +82,16 @@ def setup_multiple_ns_and_multiple_secrets(request, kube_apis):
     wait_before_test(1)
 
     def fin():
-        print("Clean up:")
-        if is_secret_present(kube_apis.v1, filtered_secret_1, filtered_ns_1):
-            delete_secret(kube_apis.v1, filtered_secret_1, filtered_ns_1)
-        if is_secret_present(kube_apis.v1, filtered_secret_2, filtered_ns_2):
-            delete_secret(kube_apis.v1, filtered_secret_2, filtered_ns_2)
-        if is_secret_present(kube_apis.v1, nginx_ingress_secret, "nginx-ingress"):
-            delete_secret(kube_apis.v1, nginx_ingress_secret, "nginx-ingress")
-        delete_namespace(kube_apis.v1, filtered_ns_1)
-        delete_namespace(kube_apis.v1, filtered_ns_2)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            if is_secret_present(kube_apis.v1, filtered_secret_1, filtered_ns_1):
+                delete_secret(kube_apis.v1, filtered_secret_1, filtered_ns_1)
+            if is_secret_present(kube_apis.v1, filtered_secret_2, filtered_ns_2):
+                delete_secret(kube_apis.v1, filtered_secret_2, filtered_ns_2)
+            if is_secret_present(kube_apis.v1, nginx_ingress_secret, "nginx-ingress"):
+                delete_secret(kube_apis.v1, nginx_ingress_secret, "nginx-ingress")
+            delete_namespace(kube_apis.v1, filtered_ns_1)
+            delete_namespace(kube_apis.v1, filtered_ns_2)
 
     request.addfinalizer(fin)
 

@@ -40,6 +40,12 @@
             "daemonset"
           ]
         },
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "title": "The annotations Schema",
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+        },
         "nginxplus": {
           "type": "boolean",
           "default": false,
@@ -173,6 +179,22 @@
             true
           ]
         },
+        "dnsPolicy": {
+          "type": "string",
+          "allOf": [
+            {
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/dnsPolicy"
+            },
+            {
+              "enum": [
+                "ClusterFirstWithHostNet",
+                "ClusterFirst",
+                "Default",
+                "None"
+              ]
+            }
+          ]
+        },
         "nginxDebug": {
           "type": "boolean",
           "default": false,
@@ -202,7 +224,7 @@
           "title": "The customPorts to expose on the NGINX ingress controller pod",
           "items": {
             "type": "object",
-            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ContainerPort"
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ContainerPort"
           },
           "examples": [
             [
@@ -258,7 +280,7 @@
               "title": "The pullPolicy for the Ingress Controller image",
               "allOf": [
                 {
-                  "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Container/properties/imagePullPolicy"
+                  "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Container/properties/imagePullPolicy"
                 },
                 {
                   "enum": [
@@ -287,7 +309,7 @@
           "type": "object",
           "default": {},
           "title": "The lifecycle Schema",
-          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Lifecycle"
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Lifecycle"
         },
         "customConfigMap": {
           "type": "string",
@@ -315,7 +337,7 @@
               "type": "object",
               "default": {},
               "title": "The annotations Schema",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
             },
             "entries": {
               "type": "object",
@@ -402,19 +424,19 @@
           "type": "object",
           "default": {},
           "title": "The nodeSelector Schema",
-          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.NodeSelector"
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.NodeSelector"
         },
         "terminationGracePeriodSeconds": {
           "type": "integer",
           "default": 30,
           "title": "The terminationGracePeriodSeconds Schema",
-          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/terminationGracePeriodSeconds"
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/terminationGracePeriodSeconds"
         },
         "resources": {
           "type": "object",
           "default": {},
           "title": "The resources Schema",
-          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements"
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements"
         },
         "tolerations": {
           "type": "array",
@@ -422,20 +444,20 @@
           "title": "The tolerations Schema",
           "items": {
             "type": "object",
-            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Toleration"
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Toleration"
           }
         },
         "affinity": {
           "type": "object",
           "default": {},
           "title": "The affinity Schema",
-          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Affinity"
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Affinity"
         },
         "topologySpreadConstraints": {
           "type": "object",
           "default": {},
           "title": "The topologySpreadConstraints Schema",
-          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.TopologySpreadConstraint"
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.TopologySpreadConstraint"
         },
         "volumes": {
           "type": "array",
@@ -443,7 +465,7 @@
           "title": "The volumes Schema",
           "items": {
             "type": "object",
-            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Volume"
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Volume"
           }
         },
         "volumeMounts": {
@@ -452,7 +474,7 @@
           "title": "The volumeMounts Schema",
           "items": {
             "type": "object",
-            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.VolumeMount"
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.VolumeMount"
           }
         },
         "initContainers": {
@@ -461,14 +483,14 @@
           "title": "The initContainers Schema",
           "items": {
             "type": "object",
-            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Container"
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Container"
           }
         },
         "minReadySeconds": {
           "type": "integer",
           "default": 0,
           "title": "The minReadySeconds Schema",
-          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.apps.v1.DeploymentSpec/properties/minReadySeconds"
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.apps.v1.DeploymentSpec/properties/minReadySeconds"
         },
         "strategy": {
           "type": "object",
@@ -476,7 +498,7 @@
           "title": "The strategy Schema",
           "allOf": [
             {
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.apps.v1.DeploymentStrategy"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.apps.v1.DeploymentStrategy"
             },
             {
               "properties": {
@@ -497,7 +519,7 @@
           "title": "The extraContainers Schema",
           "items": {
             "type": "object",
-            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Container"
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Container"
           }
         },
         "replicaCount": {
@@ -528,6 +550,14 @@
           "type": "string",
           "default": "",
           "title": "The watchNamespace",
+          "examples": [
+            ""
+          ]
+        },
+        "watchSecretNamespace": {
+          "type": "string",
+          "default": "",
+          "title": "The watchSecretNamespace",
           "examples": [
             ""
           ]
@@ -741,19 +771,19 @@
               "type": "string",
               "default": "",
               "title": "The type",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/type"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/type"
             },
             "externalTrafficPolicy": {
               "type": "string",
               "default": "",
               "title": "The externalTrafficPolicy",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/externalTrafficPolicy"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/externalTrafficPolicy"
             },
             "annotations": {
               "type": "object",
               "default": {},
               "title": "The annotations",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
             },
             "extraLabels": {
               "type": "object",
@@ -769,13 +799,13 @@
               "type": "string",
               "default": "",
               "title": "The loadBalancerIP",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/loadBalancerIP"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/loadBalancerIP"
             },
             "externalIPs": {
               "type": "array",
               "default": [],
               "title": "The externalIPs",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/externalIPs"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/externalIPs"
             },
             "loadBalancerSourceRanges": {
               "type": "array",
@@ -798,13 +828,13 @@
               "type": "boolean",
               "default": false,
               "title": "The allocateLoadBalancerNodePorts Schema",
-              "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/allocateLoadBalancerNodePorts"
+              "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/allocateLoadBalancerNodePorts"
             },
             "ipFamilyPolicy": {
               "type": "string",
               "default": "",
               "title": "The ipFamilyPolicy Schema",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/ipFamilyPolicy",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/ipFamilyPolicy",
               "examples": [
                 ""
               ]
@@ -813,7 +843,7 @@
               "type": "array",
               "default": [],
               "title": "The ipFamilies Schema",
-              "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/ipFamilies"
+              "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/ipFamilies"
             },
             "httpPort": {
               "type": "object",
@@ -917,7 +947,7 @@
               "title": "The customPorts",
               "items": {
                 "type": "object",
-                "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServicePort"
+                "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.ServicePort"
               }
             }
           },
@@ -955,6 +985,12 @@
           "title": "The serviceAccount Schema",
           "required": [],
           "properties": {
+            "annotations": {
+              "type": "object",
+              "default": {},
+              "title": "The annotations Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+            },
             "name": {
               "type": "string",
               "default": "",
@@ -1005,13 +1041,13 @@
               "type": "object",
               "default": {},
               "title": "The labels Schema",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
             },
             "selectorMatchLabels": {
               "type": "object",
               "default": {},
               "title": "The selectorMatchLabels Schema",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector/properties/matchLabels"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector/properties/matchLabels"
             },
             "endpoints": {
               "type": "array",
@@ -1083,7 +1119,7 @@
               "type": "object",
               "default": {},
               "title": "The annotations Schema",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
             }
           },
           "examples": [
@@ -1107,13 +1143,13 @@
               "type": "object",
               "default": {},
               "title": "The annotations Schema",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
             },
             "extraLabels": {
               "type": "object",
               "default": {},
               "title": "The extraLabels Schema",
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
             }
           },
           "examples": [
@@ -1156,7 +1192,7 @@
             "initialDelaySeconds": {
               "type": "integer",
               "default": 0,
-              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Probe/properties/initialDelaySeconds"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Probe/properties/initialDelaySeconds"
             }
           },
           "examples": [

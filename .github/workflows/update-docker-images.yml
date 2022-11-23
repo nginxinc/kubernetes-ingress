@@ -26,7 +26,7 @@ jobs:
       k8s_version: ${{ steps.vars.outputs.k8s_version }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
         with:
           fetch-depth: 0
       - name: Set KIC version
@@ -35,7 +35,7 @@ jobs:
           tag="$(git tag --sort=-version:refname | head -n1)"
           echo "tag=${tag//v}" >> $GITHUB_OUTPUT
       - name: Checkout Repository at ${{ steps.kic.outputs.tag }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
         with:
           ref: refs/tags/v${{ steps.kic.outputs.tag }}
       - name: Set NGINX versions
@@ -71,7 +71,7 @@ jobs:
           echo "tag=${{ needs.variables.outputs.kic-tag }}${dist}" >> $GITHUB_OUTPUT
       - name: Check if update available for ${{ matrix.base_image.version }}
         id: update
-        uses: lucacome/docker-image-update-checker@v1
+        uses: lucacome/docker-image-update-checker@93aeebde51b01e63284197bae89f9a1d6dd1921f # v1.1.1
         with:
           base-image: ${{ matrix.base_image.version}}
           image: nginx/nginx-ingress:${{ steps.dist.outputs.tag }}
@@ -85,12 +85,12 @@ jobs:
     needs: [check, variables]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
         with:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
       - name: Setup Golang Environment
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@c4a742cab115ed795e34d4513e2cf7d472deb55f # v3.3.1
         with:
           go-version-file: go.mod
           cache: true
@@ -98,7 +98,7 @@ jobs:
         id: go
         run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@b508e2e3ef3b19d4e4146d4f8fb3ba9db644a757 # v3.2.0
         with:
           version: latest
           args: build --rm-dist --id kubernetes-ingress
@@ -106,7 +106,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ steps.go.outputs.go_path }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v3
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # v3.0.11
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -129,12 +129,12 @@ jobs:
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
         with:
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # v3.0.11
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -148,7 +148,7 @@ jobs:
           k8s-version: ${{ needs.variables.outputs.k8s_version }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Upload Test Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # v3.1.1
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html

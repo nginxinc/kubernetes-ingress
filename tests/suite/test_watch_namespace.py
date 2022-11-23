@@ -63,10 +63,11 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
         )
 
     def fin():
-        print("Clean up:")
-        delete_namespace(kube_apis.v1, watched_namespace)
-        delete_namespace(kube_apis.v1, foreign_namespace)
-        delete_namespace(kube_apis.v1, watched_namespace2)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_namespace(kube_apis.v1, watched_namespace)
+            delete_namespace(kube_apis.v1, foreign_namespace)
+            delete_namespace(kube_apis.v1, watched_namespace2)
 
     request.addfinalizer(fin)
 

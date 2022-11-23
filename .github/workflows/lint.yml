@@ -28,14 +28,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
       - name: Setup Golang Environment
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@c4a742cab115ed795e34d4513e2cf7d472deb55f # v3.3.1
         with:
           go-version-file: go.mod
           cache: true
       - name: Lint Code
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@07db5389c99593f11ad7b44463c2d4233066a9b1 # v3.3.0
         with:
           only-new-issues: true
 
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
-      - uses: reviewdog/action-actionlint@v1
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+      - uses: reviewdog/action-actionlint@5c714fa8ca7b5ea8d929d273ed5bb2e3a4a7c019 # v1.34.1
         with:
           actionlint_flags: -shellcheck ""
