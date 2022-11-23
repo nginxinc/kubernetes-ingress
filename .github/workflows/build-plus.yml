@@ -117,6 +117,7 @@ jobs:
           secrets: |
             "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
+            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
       - name: Load image for Trivy
         uses: docker/build-push-action@v3
@@ -136,6 +137,7 @@ jobs:
           secrets: |
             "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
+            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.8.0

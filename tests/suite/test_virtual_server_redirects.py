@@ -78,6 +78,7 @@ class TestVSRedirects:
         vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event_count_increased(vs_event_text, initial_count, vs_events)
 
+    @pytest.mark.flaky(max_runs=3)
     def test_validation_flow(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         event_text = f"VirtualServer {text} was rejected with error:"

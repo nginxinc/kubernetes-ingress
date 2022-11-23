@@ -54,14 +54,15 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
         pytest.fail(f"VSR GRPC setup failed")
 
     def fin():
-        print("Clean up:")
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
-        )
-        delete_common_app(kube_apis, app_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                ingress_controller_prerequisites.config_map["metadata"]["name"],
+                ingress_controller_prerequisites.namespace,
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            )
+            delete_common_app(kube_apis, app_name, test_namespace)
 
     request.addfinalizer(fin)
 
@@ -134,6 +135,7 @@ class TestVirtualServerRouteGrpc:
         )
         assert "grpc_pass grpcs://" in config
 
+    @pytest.mark.flaky(max_runs=3)
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_validation_flow(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, backend_setup, v_s_route_setup

@@ -74,19 +74,22 @@ def auth_basic_auth_setup(
     wait_before_test(2)
 
     def fin():
-        print("Delete Master Secret:")
-        if is_secret_present(kube_apis.v1, master_secret_name, test_namespace):
-            delete_secret(kube_apis.v1, master_secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Delete Master Secret:")
+            if is_secret_present(kube_apis.v1, master_secret_name, test_namespace):
+                delete_secret(kube_apis.v1, master_secret_name, test_namespace)
 
-        print("Delete Minion Secret:")
-        if is_secret_present(kube_apis.v1, minion_secret_name, test_namespace):
-            delete_secret(kube_apis.v1, minion_secret_name, test_namespace)
+            print("Delete Minion Secret:")
+            if is_secret_present(kube_apis.v1, minion_secret_name, test_namespace):
+                delete_secret(kube_apis.v1, minion_secret_name, test_namespace)
 
-        print("Clean up the Auth Basic Auth Mergeable Minions Application:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/auth-basic-auth-mergeable/mergeable/auth-basic-auth-ingress.yaml", test_namespace
-        )
+            print("Clean up the Auth Basic Auth Mergeable Minions Application:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(
+                kube_apis,
+                f"{TEST_DATA}/auth-basic-auth-mergeable/mergeable/auth-basic-auth-ingress.yaml",
+                test_namespace,
+            )
 
     request.addfinalizer(fin)
 

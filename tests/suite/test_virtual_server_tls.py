@@ -25,9 +25,10 @@ def clean_up(request, kube_apis, test_namespace) -> None:
     secret_name = get_name_from_yaml(f"{TEST_DATA}/virtual-server-tls/tls-secret.yaml")
 
     def fin():
-        print("Clean up after test:")
-        if is_secret_present(kube_apis.v1, secret_name, test_namespace):
-            delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up after test:")
+            if is_secret_present(kube_apis.v1, secret_name, test_namespace):
+                delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 

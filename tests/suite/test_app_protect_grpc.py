@@ -110,19 +110,20 @@ def backend_setup(
         pytest.fail(f"AP GRPC setup failed")
 
     def fin():
-        print("Clean up:")
-        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
-        delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
-        delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
-        delete_common_app(kube_apis, "grpc", test_namespace)
-        delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+            delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+            delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
+            delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
+            delete_common_app(kube_apis, "grpc", test_namespace)
+            delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                ingress_controller_prerequisites.config_map["metadata"]["name"],
+                ingress_controller_prerequisites.namespace,
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            )
 
     request.addfinalizer(fin)
 
