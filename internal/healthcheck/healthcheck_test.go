@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"testing"
@@ -66,55 +65,7 @@ func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
 	}
 }
 
-//nolint:gosec
-func generateStringOfLength(n int) string {
-	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return string(b)
-}
-
-func TestHealthCheckServer_Returns414OnTooLongHostname(t *testing.T) {
-	t.Parallel()
-
-	hs := newTestHealthServer(t)
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
-
-	hostname := generateStringOfLength(256)
-	resp, err := http.Get(hs.URL + "probe/" + hostname) //nolint:noctx
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	if resp.StatusCode != http.StatusRequestURITooLong {
-		t.Error(resp.StatusCode)
-	}
-}
-
-func TestHealthCheckServer_ReturnsCorrectHTTPForValidHostnameLength(t *testing.T) {
-	t.Parallel()
-
-	hs := newTestHealthServer(t)
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
-
-	hostname := generateStringOfLength(254)
-	resp, err := http.Get(hs.URL + "probe/" + hostname) //nolint:noctx
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	if resp.StatusCode != http.StatusNotFound {
-		t.Error(resp.StatusCode)
-	}
-}
-
-func TestHealthCheckServer_ReturnsCorrectStatsForHostnameForAllPeersUp(t *testing.T) {
+func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing.T) {
 	t.Parallel()
 
 	hs := newTestHealthServer(t)
@@ -145,7 +96,7 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameForAllPeersUp(t *testin
 	}
 }
 
-func TestHealthCheckServer_ReturnsCorrectStatsAndCorrectHTTPCodeForHostnameOnAllPeersDown(t *testing.T) {
+func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testing.T) {
 	t.Parallel()
 
 	hs := newTestHealthServer(t)
@@ -177,7 +128,7 @@ func TestHealthCheckServer_ReturnsCorrectStatsAndCorrectHTTPCodeForHostnameOnAll
 	}
 }
 
-func TestHealthCheckServer_ReturnsCorrectStatsAndCorrectHTTPCodeForHostnameOnPartOfPeersDown(t *testing.T) {
+func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(t *testing.T) {
 	t.Parallel()
 
 	hs := newTestHealthServer(t)
@@ -209,7 +160,7 @@ func TestHealthCheckServer_ReturnsCorrectStatsAndCorrectHTTPCodeForHostnameOnPar
 	}
 }
 
-func TestHealthCheckServer_RespondsWithHTTPErrCodeOnNotExistingHostname(t *testing.T) {
+func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
 	t.Parallel()
 
 	hs := newTestHealthServer(t)
@@ -227,7 +178,7 @@ func TestHealthCheckServer_RespondsWithHTTPErrCodeOnNotExistingHostname(t *testi
 	}
 }
 
-func TestHealthCheckServer_RespondsWithCorrectHTTPStatusCodeOnErrorFromNGINXAPI(t *testing.T) {
+func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
 	t.Parallel()
 
 	hs := newTestHealthServer(t)

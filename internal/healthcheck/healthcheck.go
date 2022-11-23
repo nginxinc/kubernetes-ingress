@@ -2,7 +2,6 @@
 package healthcheck
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -71,9 +70,7 @@ func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configura
 // ListenAndServe starts healthcheck server.
 func (hs *HealthServer) ListenAndServe() error {
 	mux := chi.NewRouter()
-	mux.Route("/probe", func(r chi.Router) {
-		r.With(hostnameLengthVerifier).Get("/{hostname}", hs.Retrieve)
-	})
+	mux.Get("/probe/{hostname}", hs.Retrieve)
 	hs.Server.Handler = mux
 	if hs.Server.TLSConfig != nil {
 		return hs.Server.ListenAndServeTLS("", "")
@@ -144,26 +141,6 @@ func makeCert(s *v1.Secret) (tls.Certificate, error) {
 		return tls.Certificate{}, errors.New("missing tls key")
 	}
 	return tls.X509KeyPair(cert, key)
-}
-
-// MaxHostnameLength is the max number of bytes
-// that the healthcheck service accepts for hostname.
-//
-// ref: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DomainNameFormat.html
-const MaxHostnameLength = 255
-
-// hostnameLengthVerifier is a middleware that checks max
-// length of the hostname param passed in the probe url.
-func hostnameLengthVerifier(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		name := chi.URLParam(r, "hostname")
-		length := bytes.NewReader([]byte(name)).Len()
-		if length > MaxHostnameLength {
-			w.WriteHeader(http.StatusRequestURITooLong)
-			return
-		}
-		h.ServeHTTP(w, r)
-	})
 }
 
 // HostStats holds information about total, up and
