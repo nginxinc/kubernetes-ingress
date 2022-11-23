@@ -253,23 +253,25 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		}
 	}
 
-	if input.WatchNamespaceLabel != "" {
+	isDynamicNs := input.WatchNamespaceLabel != ""
+
+	if isDynamicNs {
 		lbc.addNamespaceHandler(createNamespaceHandlers(lbc), input.WatchNamespaceLabel)
 	}
 
 	if input.CertManagerEnabled {
-		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient))
+		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient, isDynamicNs))
 	}
 
 	if input.ExternalDNSEnabled {
-		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod))
+		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
 	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
 	lbc.namespacedInformers = make(map[string]*namespacedInformer)
 	for _, ns := range lbc.namespaceList {
-		if input.WatchNamespaceLabel != "" && ns == "" {
+		if isDynamicNs && ns == "" {
 			// no initial namespaces with watched label - skip creating informers for now
 			break
 		}
@@ -1034,6 +1036,12 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 				lbc.removeNamespacedInformer(nsi, key)
 			}
 		}
+		if lbc.certManagerController != nil {
+			lbc.certManagerController.RemoveNamespacedInformer(key)
+		}
+		if lbc.externalDNSController != nil {
+			lbc.externalDNSController.RemoveNamespacedInformer(key)
+		}
 	} else {
 		// check if informer group already exists
 		// if not create new namespaced informer group
@@ -1044,6 +1052,12 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 		if nsi == nil {
 			nsi = lbc.newNamespacedInformer(key)
 			nsi.start()
+		}
+		if lbc.certManagerController != nil {
+			lbc.certManagerController.AddNewNamespacedInformer(key)
+		}
+		if lbc.externalDNSController != nil {
+			lbc.externalDNSController.AddNewNamespacedInformer(key)
 		}
 		if !cache.WaitForCacheSync(nsi.stopCh, nsi.cacheSyncs...) {
 			return
@@ -1061,7 +1075,7 @@ func (lbc *LoadBalancerController) removeNamespacedInformer(nsi *namespacedInfor
 
 func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *namespacedInformer) {
 	// if a namespace is not deleted but the label is removed: we see an update event, so we will stop watching that namespace,
-	// BUT we need to remove any resources deployed in that namespace and still watched by us
+	// BUT we need to remove any configuration for resources deployed in that namespace and still maintained by us
 	nsi.lock.Lock()
 	defer nsi.lock.Unlock()
 
