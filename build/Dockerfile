@@ -33,7 +33,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.16 as alpine-plus
+FROM alpine:3.17.0 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
