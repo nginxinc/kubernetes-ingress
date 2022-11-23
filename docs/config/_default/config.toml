@@ -17,6 +17,13 @@ canonifyURLs = true
 [[module.imports]]
   path="gitlab.com/f5/nginx/controller/poc/f5-hugo"
 
+[[module.imports]]
+  path="gitlab.com/f5/nginx/controller/product/platform"
+  
+  [[module.imports.mounts]]
+  source = "packaging/usr/share/nms/catalogs/metrics"
+  target = "data/catalogs/metrics"
+
 [markup]
   [markup.highlight]
     codeFences = true
