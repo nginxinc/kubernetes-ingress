@@ -13,6 +13,7 @@ canonifyURLs = true
     dir = "/tmp/hugo_cache/modules"
     maxAge = -1
 
+[module]
 [[module.imports]]
   path="gitlab.com/f5/nginx/controller/poc/f5-hugo"
 
