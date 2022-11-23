@@ -7,6 +7,7 @@ description = "Enterprise-grade Ingress load balancing on Kubernetes platforms."
 refLinksErrorLevel = "ERROR"
 enableRobotsTXT = "true"
 canonifyURLs = true
+noVendor = "github.com/nginxinc/kubernetes-ingress"
 
 [caches]
   [caches.modules]
@@ -15,6 +16,13 @@ canonifyURLs = true
 
 [[module.imports]]
   path="gitlab.com/f5/nginx/controller/poc/f5-hugo"
+
+[[module.imports]]
+  path = "github.com/nginxinc/kubernetes-ingress"
+
+  [[module.imports.mounts]]
+    source = "deployments/helm-chart/"
+    target = "content/remote/helm-chart/"
 
 [markup]
   [markup.highlight]
