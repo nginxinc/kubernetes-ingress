@@ -18,11 +18,11 @@ canonifyURLs = true
   path="gitlab.com/f5/nginx/controller/poc/f5-hugo"
 
 [[module.imports]]
-  path="gitlab.com/f5/nginx/controller/product/platform"
+  path = "github.com/nginxinc/kubernetes-ingress"
 
   [[module.imports.mounts]]
-  source = "packaging/usr/share/nms/catalogs/metrics"
-  target = "data/catalogs/metrics"
+    source = "deployments/helm-chart/"
+    target = "content/remote/helm-chart/"
 
 [markup]
   [markup.highlight]
