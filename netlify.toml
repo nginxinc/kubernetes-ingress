@@ -4,7 +4,7 @@
   command = "hugo --gc -b $DEPLOY_PRIME_URL/nginx-ingress-controller"
 
 [build.environment]
-  HUGO_VERSION = "0.80.0"
+  HUGO_VERSION = "0.91.0"
 
 [context.development]
   command = "hugo --gc -e development"
