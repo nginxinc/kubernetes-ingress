@@ -1,4 +1,3 @@
-[module]
 title = "NGINX Ingress Controller"
 baseURL = "/"
 enableGitInfo = false
