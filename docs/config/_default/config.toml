@@ -14,6 +14,7 @@ noVendor = "github.com/nginxinc/kubernetes-ingress"
     dir = "/tmp/hugo_cache/modules"
     maxAge = -1
 
+[module]
 [[module.imports]]
   path="gitlab.com/f5/nginx/controller/poc/f5-hugo"
 
@@ -21,8 +22,8 @@ noVendor = "github.com/nginxinc/kubernetes-ingress"
   path = "github.com/nginxinc/kubernetes-ingress"
 
   [[module.imports.mounts]]
-    source = "deployments/helm-chart/"
-    target = "content/remote/helm-chart/"
+  source = "deployments/helm-chart/"
+  target = "content/remote/helm-chart/"
 
 [markup]
   [markup.highlight]
