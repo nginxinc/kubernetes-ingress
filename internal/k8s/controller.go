@@ -1082,7 +1082,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 		}
 	}
 
-	if lbc.areCustomResourcesEnabled {
+	if nsi.areCustomResourcesEnabled {
 		var delVsList []string
 		for _, obj := range nsi.virtualServerLister.List() {
 			vs := obj.(*conf_v1.VirtualServer)
@@ -1114,9 +1114,12 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 			lbc.configuration.DeleteVirtualServerRoute(key)
 		}
 	}
-	// if lbc.appProtectEnabled {
-	// 	// do something
-	// }
+	if nsi.appProtectEnabled {
+		lbc.cleanupUnwatchedAppWafResources(nsi)
+	}
+	if nsi.appProtectDosEnabled {
+		lbc.cleanupUnwatchedAppDosResources(nsi)
+	}
 	for _, obj := range nsi.secretLister.List() {
 		sec := obj.(*api_v1.Secret)
 		key := getResourceKey(&sec.ObjectMeta)
@@ -1134,6 +1137,66 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 	}
 	glog.V(3).Infof("Finished cleaning up configuration for unwatched resources in namespace: %v", nsi.namespace)
 	nsi.stop()
+}
+
+func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespacedInformer) {
+	for _, obj := range nsi.appProtectPolicyLister.List() {
+		appPol := obj.((*unstructured.Unstructured))
+		namespace := appPol.GetNamespace()
+		name := appPol.GetName()
+
+		changes, problems := lbc.appProtectConfiguration.DeletePolicy(namespace + "/" + name)
+		lbc.processAppProtectChanges(changes)
+		lbc.processAppProtectProblems(problems)
+	}
+	for _, obj := range nsi.appProtectLogConfLister.List() {
+		appLogConf := obj.((*unstructured.Unstructured))
+		namespace := appLogConf.GetNamespace()
+		name := appLogConf.GetName()
+
+		changes, problems := lbc.appProtectConfiguration.DeleteLogConf(namespace + "/" + name)
+		lbc.processAppProtectChanges(changes)
+		lbc.processAppProtectProblems(problems)
+	}
+	for _, obj := range nsi.appProtectUserSigLister.List() {
+		appUserSig := obj.((*unstructured.Unstructured))
+		namespace := appUserSig.GetNamespace()
+		name := appUserSig.GetName()
+
+		changes, problems := lbc.appProtectConfiguration.DeleteUserSig(namespace + "/" + name)
+		lbc.processAppProtectUserSigChange(changes)
+		lbc.processAppProtectProblems(problems)
+	}
+}
+
+func (lbc *LoadBalancerController) cleanupUnwatchedAppDosResources(nsi *namespacedInformer) {
+	for _, obj := range nsi.appProtectDosPolicyLister.List() {
+		dosPol := obj.((*unstructured.Unstructured))
+		namespace := dosPol.GetNamespace()
+		name := dosPol.GetName()
+
+		changes, problems := lbc.dosConfiguration.DeletePolicy(namespace + "/" + name)
+		lbc.processAppProtectDosChanges(changes)
+		lbc.processAppProtectDosProblems(problems)
+	}
+	for _, obj := range nsi.appProtectDosProtectedLister.List() {
+		dosPol := obj.((*unstructured.Unstructured))
+		namespace := dosPol.GetNamespace()
+		name := dosPol.GetName()
+
+		changes, problems := lbc.dosConfiguration.DeleteProtectedResource(namespace + "/" + name)
+		lbc.processAppProtectDosChanges(changes)
+		lbc.processAppProtectDosProblems(problems)
+	}
+	for _, obj := range nsi.appProtectDosLogConfLister.List() {
+		dosPol := obj.((*unstructured.Unstructured))
+		namespace := dosPol.GetNamespace()
+		name := dosPol.GetName()
+
+		changes, problems := lbc.dosConfiguration.DeleteLogConf(namespace + "/" + name)
+		lbc.processAppProtectDosChanges(changes)
+		lbc.processAppProtectDosProblems(problems)
+	}
 }
 
 func (lbc *LoadBalancerController) syncIngressLink(task task) {
