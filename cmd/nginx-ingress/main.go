@@ -431,8 +431,8 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 		forbiddenListenerPorts[*prometheusMetricsListenPort] = true
 	}
 
-	if *enableHealthProbe {
-		forbiddenListenerPorts[*healthProbeListenPort] = true
+	if *enableServiceInsight {
+		forbiddenListenerPorts[*serviceInsightListenPort] = true
 	}
 
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
@@ -664,18 +664,18 @@ func createPlusAndLatencyCollectors(
 }
 
 func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) {
-	var healthProbeSecret *api_v1.Secret
+	var serviceInsightSecret *api_v1.Secret
 	var err error
 
-	if *healthProbeTLSSecretName != "" {
-		healthProbeSecret, err = getAndValidateSecret(kubeClient, *healthProbeTLSSecretName)
+	if *serviceInsightTLSSecretName != "" {
+		serviceInsightSecret, err = getAndValidateSecret(kubeClient, *serviceInsightTLSSecretName)
 		if err != nil {
-			glog.Fatalf("Error trying to get the health probe TLS secret %v: %v", *healthProbeTLSSecretName, err)
+			glog.Fatalf("Error trying to get the service insight TLS secret %v: %v", *serviceInsightTLSSecretName, err)
 		}
 	}
 
-	if *enableHealthProbe {
-		go healthcheck.RunHealthCheck(*healthProbeListenPort, plusClient, cnf, healthProbeSecret)
+	if *enableServiceInsight {
+		go healthcheck.RunHealthCheck(*serviceInsightListenPort, plusClient, cnf, serviceInsightSecret)
 	}
 }
 

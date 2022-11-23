@@ -135,14 +135,14 @@ var (
 	prometheusMetricsListenPort = flag.Int("prometheus-metrics-listen-port", 9113,
 		"Set the port where the Prometheus metrics are exposed. [1024 - 65535]")
 
-	enableHealthProbe = flag.Bool("enable-health-probe", false,
-		`Enable health probe for external load balancers. Requires -nginx-plus`)
+	enableServiceInsight = flag.Bool("enable-service-insight", false,
+		`Enable service insight for external load balancers. Requires -nginx-plus`)
 
-	healthProbeTLSSecretName = flag.String("health-probe-tls-secret", "",
-		`A Secret with a TLS certificate and key for TLS termination of the health probe.`)
+	serviceInsightTLSSecretName = flag.String("service-insight-tls-secret", "",
+		`A Secret with a TLS certificate and key for TLS termination of the service insight.`)
 
-	healthProbeListenPort = flag.Int("health-probe-listen-port", 9000,
-		"Enable health probe and set the port where the health probe endpoint are exposed. Requires -nginx-plus. [1024 - 65535]")
+	serviceInsightListenPort = flag.Int("service-insight-listen-port", 9114,
+		"Enable service insight and set the port where the service insight endpoint are exposed. Requires -nginx-plus. [1024 - 65535]")
 
 	enableCustomResources = flag.Bool("enable-custom-resources", true,
 		"Enable custom resources")
@@ -265,9 +265,9 @@ func parseFlags() {
 		*enableLatencyMetrics = false
 	}
 
-	if *enableHealthProbe && !*nginxPlus {
-		glog.Warning("enable-health-probe flag support is for NGINX Plus, health probe endpoint will not be exposed")
-		*enableHealthProbe = false
+	if *enableServiceInsight && !*nginxPlus {
+		glog.Warning("enable-service-insight flag support is for NGINX Plus, service insight endpoint will not be exposed")
+		*enableServiceInsight = false
 	}
 
 	if *enableCertManager && !*enableCustomResources {
@@ -346,9 +346,9 @@ func validationChecks() {
 		glog.Fatalf("Invalid value for ready-status-port: %v", readyStatusPortValidationError)
 	}
 
-	healthProbePortValidationError := validatePort(*healthProbeListenPort)
+	healthProbePortValidationError := validatePort(*serviceInsightListenPort)
 	if healthProbePortValidationError != nil {
-		glog.Fatalf("Invalid value for health-probe-listen-port: %v", metricsPortValidationError)
+		glog.Fatalf("Invalid value for service-insight-listen-port: %v", metricsPortValidationError)
 	}
 
 	var err error
