@@ -750,7 +750,7 @@ func GenerateCAFileContent(secret *api_v1.Secret) []byte {
 }
 
 // DeleteIngress deletes NGINX configuration for the Ingress resource.
-func (cnf *Configurator) DeleteIngress(key string) error {
+func (cnf *Configurator) DeleteIngress(key string, skipReload bool) error {
 	name := keyToFileName(key)
 	cnf.nginxManager.DeleteConfig(name)
 
@@ -761,15 +761,17 @@ func (cnf *Configurator) DeleteIngress(key string) error {
 		cnf.deleteIngressMetricsLabels(key)
 	}
 
-	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error when removing ingress %v: %w", key, err)
+	if !skipReload {
+		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+			return fmt.Errorf("error when removing ingress %v: %w", key, err)
+		}
 	}
 
 	return nil
 }
 
 // DeleteVirtualServer deletes NGINX configuration for the VirtualServer resource.
-func (cnf *Configurator) DeleteVirtualServer(key string) error {
+func (cnf *Configurator) DeleteVirtualServer(key string, skipReload bool) error {
 	name := getFileNameForVirtualServerFromKey(key)
 	cnf.nginxManager.DeleteConfig(name)
 
@@ -778,8 +780,10 @@ func (cnf *Configurator) DeleteVirtualServer(key string) error {
 		cnf.deleteVirtualServerMetricsLabels(key)
 	}
 
-	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error when removing VirtualServer %v: %w", key, err)
+	if !skipReload {
+		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+			return fmt.Errorf("error when removing VirtualServer %v: %w", key, err)
+		}
 	}
 
 	return nil
@@ -1152,26 +1156,61 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 }
 
 // UpdateTransportServers updates TransportServers.
-func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) error {
+func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) []error {
+	var errList []error
 	for _, tsEx := range updatedTSExes {
 		_, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
-			return fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
+			errList = append(errList, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err))
 		}
 	}
 
 	for _, key := range deletedKeys {
 		err := cnf.deleteTransportServer(key)
 		if err != nil {
-			return fmt.Errorf("error when removing TransportServer %v: %w", key, err)
+			errList = append(errList, fmt.Errorf("error when removing TransportServer %v: %w", key, err))
 		}
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error when updating TransportServers: %w", err)
+		errList = append(errList, fmt.Errorf("error when updating TransportServers: %w", err))
 	}
 
-	return nil
+	return errList
+}
+
+// BatchDeleteVirtualServers takes a list of VirtualServer resource keys, deletes their configuration, and reloads once
+func (cnf *Configurator) BatchDeleteVirtualServers(deletedKeys []string) []error {
+	var errList []error
+	for _, key := range deletedKeys {
+		err := cnf.DeleteVirtualServer(key, true)
+		if err != nil {
+			errList = append(errList, fmt.Errorf("error when removing VirtualServer %v: %w", key, err))
+		}
+	}
+
+	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+		errList = append(errList, fmt.Errorf("error when reloading NGINX for deleted VirtualServers: %w", err))
+	}
+
+	return errList
+}
+
+// BatchDeleteIngresses takes a list of Ingress resource keys, deletes their configuration, and reloads once
+func (cnf *Configurator) BatchDeleteIngresses(deletedKeys []string) []error {
+	var errList []error
+	for _, key := range deletedKeys {
+		err := cnf.DeleteIngress(key, true)
+		if err != nil {
+			errList = append(errList, fmt.Errorf("error when removing Ingress %v: %w", key, err))
+		}
+	}
+
+	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+		errList = append(errList, fmt.Errorf("error when reloading NGINX for deleted Ingresses: %w", err))
+	}
+
+	return errList
 }
 
 func keyToFileName(key string) string {
