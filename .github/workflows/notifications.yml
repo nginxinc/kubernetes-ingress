@@ -19,7 +19,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.repository.fork == false }}
     steps:
       - name: Data
-        uses: actions/github-script@v6
+        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # v6.3.3
         continue-on-error: true
         id: data
         with:
@@ -40,7 +40,7 @@ jobs:
             }
 
       - name: Send Notification
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@a189acbf0b7ea434558662ae25a0de71df69a435 # v3.14.0
         with:
           status: custom
           custom_payload: |
