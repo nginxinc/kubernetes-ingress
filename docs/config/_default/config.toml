@@ -25,7 +25,7 @@ canonifyURLs = true
 [[module.imports]]
   path="gitlab.com/f5/nginx/controller/poc/f5-hugo"
   noMounts = true
-  
+
 [markup]
   [markup.highlight]
     codeFences = true
