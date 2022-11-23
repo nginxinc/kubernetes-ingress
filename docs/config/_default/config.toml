@@ -13,8 +13,12 @@ canonifyURLs = true
     dir = "/tmp/hugo_cache/modules"
     maxAge = -1
 
+[module]
 [[module.imports]]
-  path="gitlab.com/f5/nginx/controller/poc/f5-hugo"
+  path="gitlab.com/f5/nginx/controller/poc/f5-hugo"  
+
+[[module.imports]]
+  path="github.com/nginxinc/kubernetes-ingress"
 
 [markup]
   [markup.highlight]
