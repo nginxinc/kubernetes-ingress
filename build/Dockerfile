@@ -2,7 +2,6 @@
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=R27
 ARG DOWNLOAD_TAG=edge
-ARG DEBIAN_VERSION=bullseye-slim
 
 
 ############################################# Base images containing libs for Opentracing #############################################
@@ -47,7 +46,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:${DEBIAN_VERSION} AS debian-plus
+FROM debian:11-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 ARG BUILD_OS

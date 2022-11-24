@@ -47,7 +47,7 @@ All images include NGINX 1.23.2.
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
 | ---| ---| ---| --- | --- |
 |Alpine-based image | ``nginx:1.23.2-alpine``, which is based on ``alpine:3.16`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.4.1-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image | ``nginx:1.23.2``, which is based on ``debian:bullseye-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.4.1`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.23.2``, which is based on ``debian:11-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.4.1`` | arm/v7, arm64, amd64, ppc64le, s390x |
 |Ubi-based image | ``nginxcontrib/nginx:1.23.2-ubi``, which is based on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:2.4.1-ubi`` | arm64, amd64, ppc64le, s390x |
 {{% /table %}}
 
@@ -61,10 +61,10 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 |Name | Base image | Third-party modules | F5 Container Registry Image | Architectures |
 | ---| ---| --- | --- | --- |
 |Alpine-based image | ``alpine:3.16`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:2.4.1-alpine` | arm64, amd64 |
-|Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:2.4.1` | arm64, amd64 |
-|Debian-based image with App Protect WAF | ``debian:buster-slim`` | NGINX Plus App Protect WAF, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-nap/nginx-plus-ingress:2.4.1` | amd64 |
-|Debian-based image with App Protect DoS | ``debian:bullseye-slim`` | NGINX Plus App Protect DoS, JavaScript module and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-dos/nginx-plus-ingress:2.4.1` | amd64 |
-|Debian-based image with App Protect WAF and DoS | ``debian:buster-slim`` | NGINX Plus App Protect WAF, DoS, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-nap-dos/nginx-plus-ingress:2.4.1` | amd64 |
+|Debian-based image | ``debian:11-slim`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:2.4.1` | arm64, amd64 |
+|Debian-based image with App Protect WAF | ``debian:11-slim`` | NGINX Plus App Protect WAF, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-nap/nginx-plus-ingress:2.4.1` | amd64 |
+|Debian-based image with App Protect DoS | ``debian:11-slim`` | NGINX Plus App Protect DoS, JavaScript module and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-dos/nginx-plus-ingress:2.4.1` | amd64 |
+|Debian-based image with App Protect WAF and DoS | ``debian:11-slim`` | NGINX Plus App Protect WAF, DoS, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-nap-dos/nginx-plus-ingress:2.4.1` | amd64 |
 |Ubi-based image | ``redhat/ubi8`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.4.1-ubi` | arm64, amd64, s390x |
 |Ubi-based image with App Protect WAF | ``redhat/ubi8`` | NGINX Plus App Protect WAF and JavaScript modules | `nginx-ic-nap/nginx-plus-ingress:2.4.1-ubi` | amd64 |
 |Ubi-based image with App Protect DoS | ``redhat/ubi8`` | NGINX Plus App Protect DoS and JavaScript modules | `nginx-ic-dos/nginx-plus-ingress:2.4.1-ubi` | amd64 |
@@ -76,8 +76,8 @@ We also provide NGINX Plus images through the AWS Marketplace. Please see [Using
 {{% table %}}
 |Name | Base image | Third-party modules | AWS Marketplace Link |
 | ---| ---| --- | --- |
-|Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [NGINX Ingress Controller](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau) |
-|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [NGINX Ingress Controller with NGINX App Protect](https://aws.amazon.com/marketplace/pp/prodview-vnrnxbf6u3nra) |
+|Debian-based image | ``debian:11-slim`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [NGINX Ingress Controller](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau) |
+|Debian-based image with App Protect | ``debian:11-slim`` | NGINX Plus App Protect, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [NGINX Ingress Controller with NGINX App Protect](https://aws.amazon.com/marketplace/pp/prodview-vnrnxbf6u3nra) |
 {{% /table %}}
 
 ### Custom Images
