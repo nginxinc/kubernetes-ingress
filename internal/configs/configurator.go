@@ -277,25 +277,23 @@ func (cnf *Configurator) GetVirtualServer(hostname string) *conf_v1.VirtualServe
 
 // GetUpstreamsforVirtualServer takes VS and returns a slice of upstreams.
 func (cnf *Configurator) GetUpstreamsforVirtualServer(vs *conf_v1.VirtualServer) []string {
-	glog.Infof("Get upstreamName for vs: %s", vs.Spec.Host)
-
+	glog.V(3).Infof("Get upstreamName for vs: %s", vs.Spec.Host)
 	upstreamNames := make([]string, 0, len(vs.Spec.Upstreams))
 
 	virtualServerUpstreamNamer := NewUpstreamNamerForVirtualServer(vs)
 
 	for _, u := range vs.Spec.Upstreams {
 		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
-		glog.Infof("upstream: %s, upstreamName: %s", u.Name, upstreamName)
+		glog.V(3).Infof("upstream: %s, upstreamName: %s", u.Name, upstreamName)
 		upstreamNames = append(upstreamNames, upstreamName)
 	}
-
 	return upstreamNames
 }
 
 // GetUpstreamsforHost takes a hostname and returns a slice of upstreams
 // for the given hostname.
 func (cnf *Configurator) GetUpstreamsforHost(hostname string) []string {
-	glog.Infof("Get upstream for host: %s", hostname)
+	glog.V(3).Infof("Get upstream for host: %s", hostname)
 	vs := cnf.GetVirtualServer(hostname)
 
 	if vs != nil {
