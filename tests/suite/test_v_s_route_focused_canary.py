@@ -139,9 +139,16 @@ class TestVSRFocusedCanaryRelease:
 
         counter_v1, counter_v2 = 0, 0
         for _ in range(100):
-            resp = requests.get(
-                vsr_canary_setup.backends_url, headers={"host": vsr_canary_setup.vs_host, "x-version": "canary"}
+            ensure_response_from_backend(
+                vsr_canary_setup.backends_url, vsr_canary_setup.vs_host, {"x-version": "canary"}, check404=True
             )
+            status_code = 502
+            while status_code == 502:
+                resp = requests.get(
+                    vsr_canary_setup.backends_url, headers={"host": vsr_canary_setup.vs_host, "x-version": "canary"}
+                )
+                status_code = resp.status_code
+
             if upstreams[0] in resp.text in resp.text:
                 counter_v1 = counter_v1 + 1
             elif upstreams[1] in resp.text in resp.text:
