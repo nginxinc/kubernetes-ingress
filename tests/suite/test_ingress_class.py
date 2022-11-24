@@ -60,11 +60,12 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     wait_before_test(2)
 
     def fin():
-        print("Clean up:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        for item in ingresses_under_test:
-            src_ing_yaml = f"{TEST_DATA}/ingress-class/{item}-ingress.yaml"
-            delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            for item in ingresses_under_test:
+                src_ing_yaml = f"{TEST_DATA}/ingress-class/{item}-ingress.yaml"
+                delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
     request.addfinalizer(fin)
 

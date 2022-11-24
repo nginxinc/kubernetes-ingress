@@ -37,6 +37,8 @@ type ConfigParams struct {
 	MainStreamLogFormat                    []string
 	MainStreamLogFormatEscaping            string
 	MainStreamSnippets                     []string
+	MainMapHashBucketSize                  string
+	MainMapHashMaxSize                     string
 	MainWorkerConnections                  string
 	MainWorkerCPUAffinity                  string
 	MainWorkerProcesses                    string
@@ -160,6 +162,8 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		SSLRedirect:                   true,
 		MainServerNamesHashBucketSize: "256",
 		MainServerNamesHashMaxSize:    "1024",
+		MainMapHashBucketSize:         "256",
+		MainMapHashMaxSize:            "2048",
 		ProxyBuffering:                true,
 		MainWorkerProcesses:           "auto",
 		MainWorkerConnections:         "1024",

@@ -78,6 +78,14 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.MainServerNamesHashMaxSize = serverNamesHashMaxSize
 	}
 
+	if mapHashBucketSize, exists := cfgm.Data["map-hash-bucket-size"]; exists {
+		cfgParams.MainMapHashBucketSize = mapHashBucketSize
+	}
+
+	if mapHashMaxSize, exists := cfgm.Data["map-hash-max-size"]; exists {
+		cfgParams.MainMapHashMaxSize = mapHashMaxSize
+	}
+
 	if HTTP2, exists, err := GetMapKeyAsBool(cfgm.Data, "http2", cfgm); exists {
 		if err != nil {
 			glog.Error(err)
@@ -533,6 +541,8 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		SetRealIPFrom:                      config.SetRealIPFrom,
 		ServerNamesHashBucketSize:          config.MainServerNamesHashBucketSize,
 		ServerNamesHashMaxSize:             config.MainServerNamesHashMaxSize,
+		MapHashBucketSize:                  config.MainMapHashBucketSize,
+		MapHashMaxSize:                     config.MainMapHashMaxSize,
 		ServerTokens:                       config.ServerTokens,
 		SSLCiphers:                         config.MainServerSSLCiphers,
 		SSLDHParam:                         config.MainServerSSLDHParam,

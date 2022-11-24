@@ -110,10 +110,11 @@ def ingress_setup(
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
 
     def fin():
-        print("Clean up the Disable IPV6 Application:")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
-        delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up the Disable IPV6 Application:")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
+            delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 

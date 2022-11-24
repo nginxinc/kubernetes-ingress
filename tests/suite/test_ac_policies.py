@@ -52,14 +52,15 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
     )
 
     def fin():
-        print(f"------------- Restore ConfigMap --------------")
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            std_cm_src,
-        )
-        write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print(f"------------- Restore ConfigMap --------------")
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                ingress_controller_prerequisites.config_map["metadata"]["name"],
+                ingress_controller_prerequisites.namespace,
+                std_cm_src,
+            )
+            write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
 
     request.addfinalizer(fin)
 

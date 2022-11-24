@@ -67,10 +67,11 @@ def appprotect_setup(request, kube_apis, test_namespace) -> None:
     ap_pol_name = create_ap_policy_from_yaml(kube_apis.custom_objects, src_pol_yaml, test_namespace)
 
     def fin():
-        print("Clean up:")
-        delete_ap_policy(kube_apis.custom_objects, ap_pol_name, test_namespace)
-        delete_ap_usersig(kube_apis.custom_objects, usersig_name, test_namespace)
-        delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_ap_policy(kube_apis.custom_objects, ap_pol_name, test_namespace)
+            delete_ap_usersig(kube_apis.custom_objects, usersig_name, test_namespace)
+            delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
 
     request.addfinalizer(fin)
 

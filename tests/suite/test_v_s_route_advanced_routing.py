@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 import requests
 from settings import TEST_DATA
@@ -16,6 +18,10 @@ from suite.utils.vs_vsr_resources_utils import (
     patch_v_s_route_from_yaml,
 )
 from suite.utils.yaml_utils import get_first_host_from_yaml, get_paths_from_vsr_yaml, get_route_namespace_from_vs_yaml
+
+resp_1 = mock.Mock()
+resp_2 = mock.Mock()
+resp_3 = mock.Mock()
 
 
 def execute_assertions(resp_1, resp_2, resp_3):
@@ -91,8 +97,9 @@ def vsr_adv_routing_setup(
     wait_until_all_pods_are_ready(kube_apis.v1, ns_1)
 
     def fin():
-        print("Delete test namespace")
-        delete_namespace(kube_apis.v1, ns_1)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Delete test namespace")
+            delete_namespace(kube_apis.v1, ns_1)
 
     request.addfinalizer(fin)
 
@@ -113,18 +120,22 @@ def vsr_adv_routing_setup(
 class TestVSRAdvancedRouting:
     def test_flow_with_header(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
         ensure_responses_from_backends(vsr_adv_routing_setup.backends_url, vsr_adv_routing_setup.vs_host)
-
-        resp_1 = requests.get(
-            vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "future"}
-        )
-        resp_2 = requests.get(
-            vsr_adv_routing_setup.backends_url,
-            headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
-        )
-        resp_3 = requests.get(
-            vsr_adv_routing_setup.backends_url,
-            headers={"host": vsr_adv_routing_setup.vs_host, "x-version-invalid": "deprecated"},
-        )
+        wait_before_test()
+        global resp_1, resp_2, resp_3
+        resp_1.status_code = resp_2.status_code = resp_3.status_code = 502
+        while resp_1.status_code == 502 and resp_2.status_code == 502 and resp_3.status_code == 502:
+            resp_1 = requests.get(
+                vsr_adv_routing_setup.backends_url,
+                headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "future"},
+            )
+            resp_2 = requests.get(
+                vsr_adv_routing_setup.backends_url,
+                headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
+            )
+            resp_3 = requests.get(
+                vsr_adv_routing_setup.backends_url,
+                headers={"host": vsr_adv_routing_setup.vs_host, "x-version-invalid": "deprecated"},
+            )
         execute_assertions(resp_1, resp_2, resp_3)
 
     def test_flow_with_argument(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
@@ -134,17 +145,20 @@ class TestVSRAdvancedRouting:
             f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-argument.yaml",
             vsr_adv_routing_setup.namespace,
         )
-        wait_before_test(1)
-
-        resp_1 = requests.get(
-            vsr_adv_routing_setup.backends_url + "?arg1=v1", headers={"host": vsr_adv_routing_setup.vs_host}
-        )
-        resp_2 = requests.get(
-            vsr_adv_routing_setup.backends_url + "?arg1=v2", headers={"host": vsr_adv_routing_setup.vs_host}
-        )
-        resp_3 = requests.get(
-            vsr_adv_routing_setup.backends_url + "?argument1=v1", headers={"host": vsr_adv_routing_setup.vs_host}
-        )
+        ensure_response_from_backend(vsr_adv_routing_setup.backends_url, vsr_adv_routing_setup.vs_host, check404=True)
+        wait_before_test()
+        global resp_1, resp_2, resp_3
+        resp_1.status_code = resp_2.status_code = resp_3.status_code = 502
+        while resp_1.status_code == 502 and resp_2.status_code == 502 and resp_3.status_code == 502:
+            resp_1 = requests.get(
+                vsr_adv_routing_setup.backends_url + "?arg1=v1", headers={"host": vsr_adv_routing_setup.vs_host}
+            )
+            resp_2 = requests.get(
+                vsr_adv_routing_setup.backends_url + "?arg1=v2", headers={"host": vsr_adv_routing_setup.vs_host}
+            )
+            resp_3 = requests.get(
+                vsr_adv_routing_setup.backends_url + "?argument1=v1", headers={"host": vsr_adv_routing_setup.vs_host}
+            )
         execute_assertions(resp_1, resp_2, resp_3)
 
     def test_flow_with_cookie(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
@@ -154,21 +168,26 @@ class TestVSRAdvancedRouting:
             f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-cookie.yaml",
             vsr_adv_routing_setup.namespace,
         )
-        wait_before_test(1)
-
-        resp_1 = requests.get(
-            vsr_adv_routing_setup.backends_url,
-            headers={"host": vsr_adv_routing_setup.vs_host},
-            cookies={"user": "some"},
-        )
-        resp_2 = requests.get(
-            vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host}, cookies={"user": "bad"}
-        )
-        resp_3 = requests.get(
-            vsr_adv_routing_setup.backends_url,
-            headers={"host": vsr_adv_routing_setup.vs_host},
-            cookies={"user": "anonymous"},
-        )
+        ensure_response_from_backend(vsr_adv_routing_setup.backends_url, vsr_adv_routing_setup.vs_host, check404=True)
+        wait_before_test()
+        global resp_1, resp_2, resp_3
+        resp_1.status_code = resp_2.status_code = resp_3.status_code = 502
+        while resp_1.status_code == 502 and resp_2.status_code == 502 and resp_3.status_code == 502:
+            resp_1 = requests.get(
+                vsr_adv_routing_setup.backends_url,
+                headers={"host": vsr_adv_routing_setup.vs_host},
+                cookies={"user": "some"},
+            )
+            resp_2 = requests.get(
+                vsr_adv_routing_setup.backends_url,
+                headers={"host": vsr_adv_routing_setup.vs_host},
+                cookies={"user": "bad"},
+            )
+            resp_3 = requests.get(
+                vsr_adv_routing_setup.backends_url,
+                headers={"host": vsr_adv_routing_setup.vs_host},
+                cookies={"user": "anonymous"},
+            )
         execute_assertions(resp_1, resp_2, resp_3)
 
     def test_flow_with_variable(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
@@ -178,11 +197,14 @@ class TestVSRAdvancedRouting:
             f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-variable.yaml",
             vsr_adv_routing_setup.namespace,
         )
-        wait_before_test(1)
-
-        resp_1 = requests.get(vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host})
-        resp_2 = requests.post(vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host})
-        resp_3 = requests.put(vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host})
+        ensure_response_from_backend(vsr_adv_routing_setup.backends_url, vsr_adv_routing_setup.vs_host, check404=True)
+        wait_before_test()
+        global resp_1, resp_2, resp_3
+        resp_1.status_code = resp_2.status_code = resp_3.status_code = 502
+        while resp_1.status_code == 502 and resp_2.status_code == 502 and resp_3.status_code == 502:
+            resp_1 = requests.get(vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host})
+            resp_2 = requests.post(vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host})
+            resp_3 = requests.put(vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host})
         execute_assertions(resp_1, resp_2, resp_3)
 
     def test_flow_with_complex_conditions(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
@@ -192,21 +214,24 @@ class TestVSRAdvancedRouting:
             f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-complex.yaml",
             vsr_adv_routing_setup.namespace,
         )
-        wait_before_test(1)
-
-        resp_1 = requests.get(
-            vsr_adv_routing_setup.backends_url + "?arg1=v1",
-            headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "future"},
-            cookies={"user": "some"},
-        )
-        resp_2 = requests.post(
-            vsr_adv_routing_setup.backends_url + "?arg1=v2",
-            headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
-            cookies={"user": "bad"},
-        )
-        resp_3 = requests.get(
-            vsr_adv_routing_setup.backends_url + "?arg1=v2",
-            headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
-            cookies={"user": "bad"},
-        )
+        ensure_response_from_backend(vsr_adv_routing_setup.backends_url, vsr_adv_routing_setup.vs_host, check404=True)
+        wait_before_test()
+        global resp_1, resp_2, resp_3
+        resp_1.status_code = resp_2.status_code = resp_3.status_code = 502
+        while resp_1.status_code == 502 and resp_2.status_code == 502 and resp_3.status_code == 502:
+            resp_1 = requests.get(
+                vsr_adv_routing_setup.backends_url + "?arg1=v1",
+                headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "future"},
+                cookies={"user": "some"},
+            )
+            resp_2 = requests.post(
+                vsr_adv_routing_setup.backends_url + "?arg1=v2",
+                headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
+                cookies={"user": "bad"},
+            )
+            resp_3 = requests.get(
+                vsr_adv_routing_setup.backends_url + "?arg1=v2",
+                headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
+                cookies={"user": "bad"},
+            )
         execute_assertions(resp_1, resp_2, resp_3)

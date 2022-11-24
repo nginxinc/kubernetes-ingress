@@ -139,17 +139,18 @@ def annotations_setup(
         upstream_names.append(f"{test_namespace}-{ingress_name}-{ingress_host}-backend2-svc-80")
 
     def fin():
-        print("Clean up Annotations Example:")
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
-        )
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml", test_namespace
-        )
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up Annotations Example:")
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                ingress_controller_prerequisites.config_map["metadata"]["name"],
+                ingress_controller_prerequisites.namespace,
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            )
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(
+                kube_apis, f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml", test_namespace
+            )
 
     request.addfinalizer(fin)
 
@@ -190,8 +191,9 @@ def annotations_grpc_setup(
     error_text = f"{event_text} ; but was not applied: Error reloading NGINX"
 
     def fin():
-        print("Clean up gRPC Annotations Example:")
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/annotations/grpc/annotations-ingress.yaml", test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up gRPC Annotations Example:")
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/annotations/grpc/annotations-ingress.yaml", test_namespace)
 
     request.addfinalizer(fin)
 
