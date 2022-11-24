@@ -707,6 +707,24 @@ def create_namespace_with_name_from_yaml(v1: CoreV1Api, name, yaml_manifest) -> 
         return dep["metadata"]["name"]
 
 
+def patch_namespace_with_label(v1: CoreV1Api, name, label, yaml_manifest) -> str:
+    """
+    Update a namespace with a specific label based on a yaml manifest.
+
+    :param v1: CoreV1Api
+    :param name: name
+    :param label: the name of the label
+    :param yaml_manifest: an absolute path to file
+    :return: str
+    """
+    print(f"Update namespace {name} with label app={label}")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+        dep["metadata"]["labels"]["app"] = label
+        v1.patch_namespace(name, dep)
+        print(f"Namespace {name} updated with label: {label}")
+
+
 def create_service_account(v1: CoreV1Api, namespace, body) -> None:
     """
     Create a ServiceAccount based on a dict.
