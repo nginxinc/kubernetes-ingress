@@ -142,7 +142,7 @@ var (
 		`A Secret with a TLS certificate and key for TLS termination of the service insight.`)
 
 	serviceInsightListenPort = flag.Int("service-insight-listen-port", 9114,
-		"Enable service insight and set the port where the service insight endpoint are exposed. Requires -nginx-plus. [1024 - 65535]")
+		"Set the port where the Service Insight stats are exposed. Requires -nginx-plus. [1024 - 65535]")
 
 	enableCustomResources = flag.Bool("enable-custom-resources", true,
 		"Enable custom resources")

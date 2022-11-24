@@ -23,10 +23,12 @@ import (
 
 // RunHealthCheck starts the deep healthcheck service.
 func RunHealthCheck(port int, plusClient *client.NginxClient, cnf *configs.Configurator, healthProbeTLSSecret *v1.Secret) {
-	hs, err := NewHealthServer(strconv.Itoa(port), plusClient, cnf, healthProbeTLSSecret)
+	healthport := fmt.Sprintf(":%s", strconv.Itoa(port))
+	hs, err := NewHealthServer(healthport, plusClient, cnf, healthProbeTLSSecret)
 	if err != nil {
 		glog.Fatal(err)
 	}
+	glog.Infof("Starting Service Insight listener on: %v%v", healthport, "/probe")
 	glog.Fatal(hs.ListenAndServe())
 }
 
