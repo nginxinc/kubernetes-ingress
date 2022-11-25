@@ -1155,6 +1155,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 
 func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespacedInformer) {
 	for _, obj := range nsi.appProtectPolicyLister.List() {
+		glog.V(3).Infof("Cleaning up unwatched appprotect policies in namespace: %v", nsi.namespace)
 		appPol := obj.((*unstructured.Unstructured))
 		namespace := appPol.GetNamespace()
 		name := appPol.GetName()
@@ -1164,6 +1165,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespac
 		lbc.processAppProtectProblems(problems)
 	}
 	for _, obj := range nsi.appProtectLogConfLister.List() {
+		glog.V(3).Infof("Cleaning up unwatched approtect logconfs in namespace: %v", nsi.namespace)
 		appLogConf := obj.((*unstructured.Unstructured))
 		namespace := appLogConf.GetNamespace()
 		name := appLogConf.GetName()
@@ -1173,6 +1175,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespac
 		lbc.processAppProtectProblems(problems)
 	}
 	for _, obj := range nsi.appProtectUserSigLister.List() {
+		glog.V(3).Infof("Cleaning up unwatched usersigs in namespace: %v", nsi.namespace)
 		appUserSig := obj.((*unstructured.Unstructured))
 		namespace := appUserSig.GetNamespace()
 		name := appUserSig.GetName()
