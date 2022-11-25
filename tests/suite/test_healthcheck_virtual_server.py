@@ -32,7 +32,9 @@ from suite.utils.yaml_utils import get_first_host_from_yaml, get_name_from_yaml,
     indirect=True,
 )
 class TestHealtcheckVS:
-    def test_responses_after_setup(self, request, kube_apis, crd_ingress_controller, virtual_server_setup, ingress_controller_endpoint):
+    def test_responses_after_setup(
+        self, request, kube_apis, crd_ingress_controller, virtual_server_setup, ingress_controller_endpoint
+    ):
         print("\nStep 1: initial check")
         wait_before_test(1)
         wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)

@@ -424,7 +424,7 @@ def create_service_with_name(v1: CoreV1Api, namespace, name) -> str:
         return create_service(v1, namespace, dep)
 
 
-def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, int,int, int, int):
+def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, int, int, int, int):
     """
     Get service allocated node_ports.
 

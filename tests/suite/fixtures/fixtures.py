@@ -97,7 +97,6 @@ class PublicEndpoint:
         self.service_insight_port = service_insight_port
 
 
-
 class IngressControllerPrerequisites:
     """
     Encapsulate shared items.
@@ -174,10 +173,18 @@ def ingress_controller_endpoint(cli_arguments, kube_apis, ingress_controller_pre
             namespace,
             f"{TEST_DATA}/common/service/nodeport-with-additional-ports.yaml",
         )
-        port, port_ssl, api_port, metrics_port, tcp_server_port, udp_server_port, service_insight_port = get_service_node_ports(
-            kube_apis.v1, service_name, namespace
+        (
+            port,
+            port_ssl,
+            api_port,
+            metrics_port,
+            tcp_server_port,
+            udp_server_port,
+            service_insight_port,
+        ) = get_service_node_ports(kube_apis.v1, service_name, namespace)
+        return PublicEndpoint(
+            public_ip, port, port_ssl, api_port, metrics_port, tcp_server_port, udp_server_port, service_insight_port
         )
-        return PublicEndpoint(public_ip, port, port_ssl, api_port, metrics_port, tcp_server_port, udp_server_port, service_insight_port)
     else:
         create_service_from_yaml(
             kube_apis.v1,
