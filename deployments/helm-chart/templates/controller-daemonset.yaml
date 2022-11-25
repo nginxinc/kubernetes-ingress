@@ -164,6 +164,9 @@ spec:
 {{- if .Values.controller.watchNamespace }}
           - -watch-namespace={{ .Values.controller.watchNamespace }}
 {{- end }}
+{{- if .Values.controller.watchNamespaceLabel }}
+          - -watch-namespace-label={{ .Values.controller.watchNamespaceLabel }}
+{{- end }}
 {{- if .Values.controller.watchSecretNamespace }}
           - -watch-secret-namespace={{ .Values.controller.watchSecretNamespace }}
 {{- end }}

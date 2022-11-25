@@ -248,7 +248,7 @@ func checkNamespaces(kubeClient kubernetes.Interface) {
 		var newWatchNamespaces []string
 		nsList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), meta_v1.ListOptions{LabelSelector: *watchNamespaceLabel})
 		if err != nil {
-			glog.Warningf("Error when getting Namespaces with the label selector %v: %v", watchNamespaceLabel, err)
+			glog.Errorf("error when getting Namespaces with the label selector %v: %v", watchNamespaceLabel, err)
 		}
 		for _, ns := range nsList.Items {
 			newWatchNamespaces = append(newWatchNamespaces, ns.Name)

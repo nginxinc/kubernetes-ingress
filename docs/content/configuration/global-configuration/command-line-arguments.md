@@ -302,7 +302,19 @@ A comma-separated list of pattern=N settings for file-filtered logging.
 
 ### -watch-namespace `<string>`
 
-Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces.
+Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces. Mutually exclusive with "watch-namespace-label".
+&nbsp;
+<a name="cmdoption-watch-namespace-label"></a>
+
+### -watch-namespace-label `<string>`
+
+Configures the Ingress Controller to watch only those namespaces with label foo=bar. By default the Ingress Controller watches all namespaces. Mutually exclusive with "watch-namespace".
+&nbsp;
+<a name="cmdoption-watch-secret-namespace"></a>
+
+### -watch-secret-namespace `<string>`
+
+Comma separated list of namespaces the Ingress Controller should watch for secrets. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See "watch-namespace" and "watch-namespace-label".
 &nbsp;
 <a name="cmdoption-enable-prometheus-metrics"></a>
 
