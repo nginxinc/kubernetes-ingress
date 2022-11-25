@@ -144,7 +144,9 @@ class TestAppProtectWatchNamespaceLabelEnabled:
         """
         Test file-block AppProtect policy with -watch-namespace-label
         """
-        patch_namespace_with_label(kube_apis.v1, backend_setup.test_namespace, "watch", f"{TEST_DATA}/common/ns-patch.yaml")
+        patch_namespace_with_label(
+            kube_apis.v1, backend_setup.test_namespace, "watch", f"{TEST_DATA}/common/ns-patch.yaml"
+        )
         wait_before_test()
         print("------------- Run test for AP policy: file-block not enforced --------------")
         # The policy namespace does not have the watched label, show the policy is not enforced
@@ -163,7 +165,9 @@ class TestAppProtectWatchNamespaceLabelEnabled:
         assert resp.status_code == 200
 
         # Add the label to the policy namespace, show the policy is now enforced
-        patch_namespace_with_label(kube_apis.v1, backend_setup.policy_namespace, "watch", f"{TEST_DATA}/common/ns-patch.yaml")
+        patch_namespace_with_label(
+            kube_apis.v1, backend_setup.policy_namespace, "watch", f"{TEST_DATA}/common/ns-patch.yaml"
+        )
         wait_before_test(15)
         print("------------- Run test for AP policy: file-block is enforced now --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
@@ -171,10 +175,14 @@ class TestAppProtectWatchNamespaceLabelEnabled:
         ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send request ----------------------")
-        resp = requests.get(f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False)
+        resp = requests.get(
+            f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False
+        )
         retry = 0
         while invalid_resp_body not in resp.text and retry <= 60:
-            resp = requests.get(f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False)
+            resp = requests.get(
+                f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False
+            )
             retry += 1
             wait_before_test(1)
             print(f"Policy not yet enforced, retrying... #{retry}")
@@ -183,7 +191,9 @@ class TestAppProtectWatchNamespaceLabelEnabled:
         assert resp.status_code == 200
 
         # Remove the label again fro the policy namespace, show the policy is not enforced again
-        patch_namespace_with_label(kube_apis.v1, backend_setup.policy_namespace, "nowatch", f"{TEST_DATA}/common/ns-patch.yaml")
+        patch_namespace_with_label(
+            kube_apis.v1, backend_setup.policy_namespace, "nowatch", f"{TEST_DATA}/common/ns-patch.yaml"
+        )
         wait_before_test(15)
         print("------------- Run test for AP policy: file-block not enforced again --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
@@ -191,10 +201,14 @@ class TestAppProtectWatchNamespaceLabelEnabled:
         ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send request ----------------------")
-        resp = requests.get(f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False)
+        resp = requests.get(
+            f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False
+        )
         retry = 0
         while valid_resp_body not in resp.text and retry <= 60:
-            resp = requests.get(f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False)
+            resp = requests.get(
+                f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False
+            )
             retry += 1
             wait_before_test(1)
             print(f"Policy not yet removed, retrying... #{retry}")
