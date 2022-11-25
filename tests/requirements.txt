@@ -13,4 +13,4 @@ pytest-html==3.2.0
 pytest-profiling==1.7.0
 PyYAML==6.0
 requests==2.28.1
-urllib3==1.26.12
+urllib3==1.26.13
