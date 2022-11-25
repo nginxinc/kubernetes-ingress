@@ -123,7 +123,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
 
 
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.cs
+@pytest.mark.appprotect
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [
