@@ -20,6 +20,7 @@ from suite.utils.yaml_utils import get_first_host_from_yaml, get_name_from_yaml,
 
 
 @pytest.mark.vs
+@pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -30,7 +31,7 @@ from suite.utils.yaml_utils import get_first_host_from_yaml, get_name_from_yaml,
     ],
     indirect=True,
 )
-class TestHealtcheckVS:
+class TestHealthCheckVs:
     def test_responses_after_setup(
         self, request, kube_apis, crd_ingress_controller, virtual_server_setup, ingress_controller_endpoint
     ):
