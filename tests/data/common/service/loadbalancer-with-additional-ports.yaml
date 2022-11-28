@@ -23,5 +23,9 @@ spec:
     targetPort: 9113
     protocol: TCP
     name: exporter
+  - port: 9114
+    targetPort: 9114
+    protocol: TCP
+    name: service-insight
   selector:
     app: nginx-ingress

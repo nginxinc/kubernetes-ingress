@@ -33,6 +33,6 @@ spec:
   - port: 9114
     targetPort: 9114
     protocol: TCP
-    name: service_insight
+    name: service-insight
   selector:
     app: nginx-ingress

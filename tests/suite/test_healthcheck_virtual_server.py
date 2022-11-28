@@ -20,7 +20,6 @@ from suite.utils.yaml_utils import get_first_host_from_yaml, get_name_from_yaml,
 
 
 @pytest.mark.vs
-@pytest.mark.test_jakub
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -36,14 +35,13 @@ class TestHealtcheckVS:
         self, request, kube_apis, crd_ingress_controller, virtual_server_setup, ingress_controller_endpoint
     ):
         print("\nStep 1: initial check")
-        wait_before_test(1)
+        wait_before_test()
         wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
-        vs_source = f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml"
+        vs_source = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
         host = get_first_host_from_yaml(vs_source)
-        req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.service_insight_port}/probe/{host}"
-
+        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.service_insight_port}/probe/{host}"
         resp = requests.get(req_url)
         assert resp.status_code == 200, f"Expected 200 code for /probe/{host} but got {resp.status_code}"
         print(resp.json())
