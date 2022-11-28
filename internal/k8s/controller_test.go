@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	discovery_v1 "k8s.io/api/discovery/v1"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
@@ -470,63 +472,66 @@ func TestFormatWarningsMessages(t *testing.T) {
 	}
 }
 
-func TestGetEndpointsBySubselectedPods(t *testing.T) {
-	boolPointer := func(b bool) *bool { return &b }
+func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsInOneEndpointSlice(t *testing.T) {
+	endpointPort := int32(8080)
+
+	lbc := LoadBalancerController{
+		isNginxPlus: true,
+	}
+
+	backendServicePort := networking.ServiceBackendPort{
+		Number: 8080,
+		Name:   "foo",
+	}
+
 	tests := []struct {
-		desc        string
-		targetPort  int32
-		svcEps      api_v1.Endpoints
-		expectedEps []podEndpoint
+		desc              string
+		svc               api_v1.Service
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		expectedEndpoints []podEndpoint
 	}{
 		{
-			desc:       "find one endpoint",
-			targetPort: 80,
-			expectedEps: []podEndpoint{
+			desc: "duplicate endpoints in an endpointslice",
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
+			expectedEndpoints: []podEndpoint{
 				{
-					Address: "1.2.3.4:80",
-					MeshPodOwner: configs.MeshPodOwner{
-						OwnerType: "deployment",
-						OwnerName: "deploy-1",
-					},
+					Address: "1.2.3.4:8080",
 				},
 			},
-		},
-		{
-			desc:        "targetPort mismatch",
-			targetPort:  21,
-			expectedEps: nil,
-		},
-	}
-
-	pods := []*api_v1.Pod{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				OwnerReferences: []meta_v1.OwnerReference{
-					{
-						Kind:       "Deployment",
-						Name:       "deploy-1",
-						Controller: boolPointer(true),
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
 					},
-				},
-			},
-			Status: api_v1.PodStatus{
-				PodIP: "1.2.3.4",
-			},
-		},
-	}
-
-	svcEps := api_v1.Endpoints{
-		Subsets: []api_v1.EndpointSubset{
-			{
-				Addresses: []api_v1.EndpointAddress{
-					{
-						IP:       "1.2.3.4",
-						Hostname: "asdf.com",
-					},
-				},
-				Ports: []api_v1.EndpointPort{
-					{
-						Port: 80,
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
 					},
 				},
 			},
@@ -535,12 +540,813 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotEndps := getEndpointsBySubselectedPods(test.targetPort, pods, svcEps)
-			if !reflect.DeepEqual(gotEndps, test.expectedEps) {
-				t.Errorf("getEndpointsBySubselectedPods() = %v, want %v", gotEndps, test.expectedEps)
+			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",
+					gotEndpoints, test.expectedEndpoints)
 			}
 		})
 	}
+}
+
+func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSlice(t *testing.T) {
+	endpointPort := int32(8080)
+
+	lbc := LoadBalancerController{
+		isNginxPlus: true,
+	}
+
+	backendServicePort := networking.ServiceBackendPort{
+		Number: 8080,
+		Name:   "foo",
+	}
+
+	tests := []struct {
+		desc              string
+		svc               api_v1.Service
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		expectedEndpoints []podEndpoint
+	}{
+		{
+			desc: "two different endpoints in one endpoint slice",
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
+			expectedEndpoints: []podEndpoint{
+				{
+					Address: "1.2.3.4:8080",
+				},
+				{
+					Address: "5.6.7.8:8080",
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"5.6.7.8",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",
+					gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlices(t *testing.T) {
+	endpointPort := int32(8080)
+
+	lbc := LoadBalancerController{
+		isNginxPlus: true,
+	}
+
+	backendServicePort := networking.ServiceBackendPort{
+		Number: 8080,
+		Name:   "foo",
+	}
+
+	tests := []struct {
+		desc              string
+		svc               api_v1.Service
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		expectedEndpoints []podEndpoint
+	}{
+		{
+			desc: "duplicate endpoints across two endpointslices",
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
+			expectedEndpoints: []podEndpoint{
+				{
+					Address: "1.2.3.4:8080",
+				},
+				{
+					Address: "5.6.7.8:8080",
+				},
+				{
+					Address: "10.0.0.1:8080",
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"5.6.7.8",
+							},
+						},
+					},
+				},
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"10.0.0.1",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("lbc.getEndpointsForPortFromEndpointSlices() got %v, want %v",
+					gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func TestGetEndpointsFromEndpointSlices_ErrorsOnInvalidTargetPort(t *testing.T) {
+	endpointPort := int32(8080)
+
+	lbc := LoadBalancerController{
+		isNginxPlus: true,
+	}
+
+	backendServicePort := networking.ServiceBackendPort{
+		Number: 8080,
+		Name:   "foo",
+	}
+
+	tests := []struct {
+		desc              string
+		svc               api_v1.Service
+		svcEndpointSlices []discovery_v1.EndpointSlice
+	}{
+		{
+			desc: "Target Port should be 0",
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       0,
+							TargetPort: intstr.FromInt(0),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"5.6.7.8",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			_, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
+			if err == nil {
+				t.Logf("%s but was %+v\n", test.desc, test.svc.Spec.Ports[0].TargetPort.IntVal)
+				t.Fatal("want error, got nil")
+			}
+		})
+	}
+}
+
+func TestGetEndpointsFromEndpointSlices_ErrorsOnNoEndpointSlicesFound(t *testing.T) {
+	lbc := LoadBalancerController{
+		isNginxPlus: true,
+	}
+
+	backendServicePort := networking.ServiceBackendPort{
+		Number: 8080,
+		Name:   "foo",
+	}
+
+	tests := []struct {
+		desc              string
+		svc               api_v1.Service
+		svcEndpointSlices []discovery_v1.EndpointSlice
+	}{
+		{
+			desc: "No EndpointSlices should be found",
+			svc: api_v1.Service{
+				TypeMeta: meta_v1.TypeMeta{},
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee-svc",
+					Namespace: "default",
+				},
+				Spec: api_v1.ServiceSpec{
+					Ports: []api_v1.ServicePort{
+						{
+							Name:       "foo",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						},
+					},
+				},
+				Status: api_v1.ServiceStatus{},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			_, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
+			if err == nil {
+				t.Logf("%s but got %+v\n", test.desc, test.svcEndpointSlices)
+				t.Fatal("want error, got nil")
+			}
+		})
+	}
+}
+
+func TestGetEndpointSlicesBySubselectedPods_FindOnePodInOneEndpointSlice(t *testing.T) {
+	endpointPort := int32(8080)
+
+	boolPointer := func(b bool) *bool { return &b }
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		pods              []*api_v1.Pod
+		expectedEndpoints []podEndpoint
+	}{
+		{
+			desc:       "find one pod in one endpointslice",
+			targetPort: 8080,
+			expectedEndpoints: []podEndpoint{
+				{
+					Address: "1.2.3.4:8080",
+					MeshPodOwner: configs.MeshPodOwner{
+						OwnerType: "deployment",
+						OwnerName: "deploy-1",
+					},
+				},
+			},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
+
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("getEndpointsFromEndpointSlicesForSubselectedPods() = got %v, want %v", gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDuplicateEndpoints(t *testing.T) {
+	endpointPort := int32(8080)
+
+	boolPointer := func(b bool) *bool { return &b }
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		pods              []*api_v1.Pod
+		expectedEndpoints []podEndpoint
+	}{
+		{
+			desc:       "find one pod in two endpointslices with duplicate endpoints",
+			targetPort: 8080,
+			expectedEndpoints: []podEndpoint{
+				{
+					Address: "1.2.3.4:8080",
+					MeshPodOwner: configs.MeshPodOwner{
+						OwnerType: "deployment",
+						OwnerName: "deploy-1",
+					},
+				},
+			},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+					},
+				},
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
+
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("getEndpointsFromEndpointSlicesForSubselectedPods() = got %v, want %v", gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInOneEndpointSlice(t *testing.T) {
+	endpointPort := int32(8080)
+
+	boolPointer := func(b bool) *bool { return &b }
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		pods              []*api_v1.Pod
+		expectedEndpoints []podEndpoint
+	}{
+		{
+			desc:       "find two pods in one endpointslice",
+			targetPort: 8080,
+			expectedEndpoints: []podEndpoint{
+				{
+					Address: "1.2.3.4:8080",
+					MeshPodOwner: configs.MeshPodOwner{
+						OwnerType: "deployment",
+						OwnerName: "deploy-1",
+					},
+				},
+				{
+					Address: "5.6.7.8:8080",
+					MeshPodOwner: configs.MeshPodOwner{
+						OwnerType: "deployment",
+						OwnerName: "deploy-1",
+					},
+				},
+			},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "5.6.7.8",
+					},
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+						{
+							Addresses: []string{
+								"5.6.7.8",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
+
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("getEndpointsFromEndpointSlicesForSubselectedPods() = got %v, want %v", gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlices(t *testing.T) {
+	endpointPort := int32(8080)
+
+	boolPointer := func(b bool) *bool { return &b }
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		pods              []*api_v1.Pod
+		expectedEndpoints []podEndpoint
+	}{
+		{
+			desc:       "find two pods in two endpointslices",
+			targetPort: 8080,
+			expectedEndpoints: []podEndpoint{
+				{
+					Address: "1.2.3.4:8080",
+					MeshPodOwner: configs.MeshPodOwner{
+						OwnerType: "deployment",
+						OwnerName: "deploy-1",
+					},
+				},
+				{
+					Address: "5.6.7.8:8080",
+					MeshPodOwner: configs.MeshPodOwner{
+						OwnerType: "deployment",
+						OwnerName: "deploy-1",
+					},
+				},
+			},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "5.6.7.8",
+					},
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+					},
+				},
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"5.6.7.8",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
+
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("getEndpointsFromEndpointSlicesForSubselectedPods() = got %v, want %v", gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func TestGetEndpointSlicesBySubselectedPods_FindNoPods(t *testing.T) {
+	endpointPort := int32(8080)
+
+	boolPointer := func(b bool) *bool { return &b }
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		pods              []*api_v1.Pod
+		expectedEndpoints []podEndpoint
+	}{
+		{
+			desc:              "find no pods",
+			targetPort:        8080,
+			expectedEndpoints: nil,
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"5.4.3.2",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
+
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("getEndpointsFromEndpointSlicesForSubselectedPods() = got %v, want %v", gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func TestGetEndpointSlicesBySubselectedPods_TargetPortMismatch(t *testing.T) {
+	endpointPort := int32(8080)
+
+	boolPointer := func(b bool) *bool { return &b }
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		pods              []*api_v1.Pod
+		expectedEndpoints []podEndpoint
+	}{
+		{
+			desc:       "targetPort mismatch",
+			targetPort: 21,
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+						},
+					},
+				},
+			},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+			},
+			expectedEndpoints: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndpoints := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
+
+			if result := unorderedEqual(gotEndpoints, test.expectedEndpoints); !result {
+				t.Errorf("getEndpointsFromEndpointSlicesForSubselectedPods() = got %v, want %v", gotEndpoints, test.expectedEndpoints)
+			}
+		})
+	}
+}
+
+func unorderedEqual(got, want []podEndpoint) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	exists := make(map[string]bool)
+	for _, value := range got {
+		exists[value.Address] = true
+	}
+	for _, value := range want {
+		if !exists[value.Address] {
+			return false
+		}
+	}
+	return true
 }
 
 func TestGetStatusFromEventTitle(t *testing.T) {

@@ -19,7 +19,7 @@ jobs:
     if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Repo Sync
-        uses: wei/git-sync@v3
+        uses: wei/git-sync@55c6b63b4f21607da0e9877ca9b4d11a29fc6d83 # v3.0.0
         with:
           source_repo: "nginxinc/kubernetes-ingress"
           source_branch: "main"
@@ -43,9 +43,9 @@ jobs:
     if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
       - name: Sync Labels
-        uses: micnncim/action-label-syncer@v1
+        uses: micnncim/action-label-syncer@3abd5ab72fda571e69fffd97bd4e0033dd5f495c # v1.3.0
         with:
           repository: ${{ matrix.repo }}
           token: ${{ secrets.NGINX_PAT }}

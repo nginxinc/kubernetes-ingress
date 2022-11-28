@@ -18,7 +18,7 @@ jobs:
           echo "::set-output name=text::$text"
       - name: Check if Issue author is Org member
         id: membercheck
-        uses: actions/github-script@v6
+        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # v6.3.3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -36,7 +36,7 @@ jobs:
             }
             return member
       - name: Send message
-        uses: actions/github-script@v6
+        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # v6.3.3
         if: steps.membercheck.outputs.result == 'false'
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}

@@ -54,14 +54,15 @@ def custom_annotations_setup(
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
 
     def fin():
-        print("Clean up Custom Annotations Example:")
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
-        )
-        delete_items_from_yaml(kube_apis, ing_src, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up Custom Annotations Example:")
+            replace_configmap_from_yaml(
+                kube_apis.v1,
+                ingress_controller_prerequisites.config_map["metadata"]["name"],
+                ingress_controller_prerequisites.namespace,
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            )
+            delete_items_from_yaml(kube_apis, ing_src, test_namespace)
 
     request.addfinalizer(fin)
 
