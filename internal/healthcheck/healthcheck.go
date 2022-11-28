@@ -60,11 +60,11 @@ func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configura
 	if secret != nil {
 		tlsCert, err := makeCert(secret)
 		if err != nil {
-			return nil, fmt.Errorf("creating tls sert: %w", err)
+			return nil, fmt.Errorf("unable to create TLS cert: %w", err)
 		}
 		hs.Server.TLSConfig = &tls.Config{
 			Certificates: []tls.Certificate{tlsCert},
-			MinVersion:   tls.VersionTLS10,
+			MinVersion:   tls.VersionTLS10, //nolint:gosec
 		}
 		hs.URL = fmt.Sprintf("https://%s/", addr)
 	}
