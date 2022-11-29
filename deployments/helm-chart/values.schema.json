@@ -7,6 +7,7 @@
     "controller",
     "rbac",
     "prometheus",
+    "serviceInsight",
     "nginxServiceMesh"
   ],
   "properties": {
@@ -1436,6 +1437,56 @@
         }
       ]
     },
+    "serviceInsight": {
+      "type": "object",
+      "default": {},
+      "title": "The Service Insight Schema",
+      "required": [
+        "create"
+      ],
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": false,
+          "title": "The create",
+          "examples": [
+            true
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "default": 9114,
+          "title": "The port",
+          "examples": [
+            9114
+          ]
+        },
+        "secret": {
+          "type": "string",
+          "default": "",
+          "title": "The secret",
+          "examples": [
+            ""
+          ]
+        },
+        "scheme": {
+          "type": "string",
+          "default": "http",
+          "title": "The scheme",
+          "examples": [
+            "http"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "create": true,
+          "port": 9114,
+          "secret": "",
+          "scheme": "http"
+        }
+      ]
+    },
     "nginxServiceMesh": {
       "type": "object",
       "default": {},
@@ -1619,6 +1670,12 @@
       "prometheus": {
         "create": true,
         "port": 9113,
+        "secret": "",
+        "scheme": "http"
+      },
+      "serviceInsight": {
+        "create": true,
+        "port": 9114,
         "secret": "",
         "scheme": "http"
       },

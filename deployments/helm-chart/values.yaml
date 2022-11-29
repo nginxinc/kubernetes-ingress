@@ -430,6 +430,19 @@ prometheus:
   ## Configures the HTTP scheme used.
   scheme: http
 
+serviceInsight:
+  ## Expose NGINX Plus Service Insight endpoint.
+  create: true
+
+  ## Configures the port to expose endpoint.
+  port: 9114
+
+  ## Specifies the namespace/name of a Kubernetes TLS Secret which will be used to protect the Service Insight endpoint.
+  secret: ""
+
+  ## Configures the HTTP scheme used.
+  scheme: http
+
 nginxServiceMesh:
   ## Enables integration with NGINX Service Mesh.
   ## Requires controller.nginxplus
