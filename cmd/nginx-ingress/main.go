@@ -123,7 +123,9 @@ func main() {
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager), cr_validation.IsExternalDNSEnabled(*enableExternalDNS))
 
-	createHealthProbeEndpoint(kubeClient, plusClient, cnf)
+	if *enableServiceInsight {
+		createHealthProbeEndpoint(kubeClient, plusClient, cnf)
+	}
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
@@ -664,6 +666,9 @@ func createPlusAndLatencyCollectors(
 }
 
 func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) {
+	if !*enableServiceInsight {
+		return
+	}
 	var serviceInsightSecret *api_v1.Secret
 	var err error
 
@@ -673,10 +678,7 @@ func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *cli
 			glog.Fatalf("Error trying to get the service insight TLS secret %v: %v", *serviceInsightTLSSecretName, err)
 		}
 	}
-
-	if *enableServiceInsight {
-		go healthcheck.RunHealthCheck(*serviceInsightListenPort, plusClient, cnf, serviceInsightSecret)
-	}
+	go healthcheck.RunHealthCheck(*serviceInsightListenPort, plusClient, cnf, serviceInsightSecret)
 }
 
 func processGlobalConfiguration() {

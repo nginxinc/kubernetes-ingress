@@ -265,8 +265,8 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) (Warnings, error) 
 	return warnings, nil
 }
 
-// GetVirtualServer takes a hostname and returns a VS for the given hostname.
-func (cnf *Configurator) GetVirtualServer(hostname string) *conf_v1.VirtualServer {
+// GetVirtualServerForHost takes a hostname and returns a VS for the given hostname.
+func (cnf *Configurator) GetVirtualServerForHost(hostname string) *conf_v1.VirtualServer {
 	for _, vsEx := range cnf.virtualServers {
 		if vsEx.VirtualServer.Spec.Host == hostname {
 			return vsEx.VirtualServer
@@ -294,7 +294,7 @@ func (cnf *Configurator) GetUpstreamsforVirtualServer(vs *conf_v1.VirtualServer)
 // for the given hostname.
 func (cnf *Configurator) GetUpstreamsforHost(hostname string) []string {
 	glog.V(3).Infof("Get upstream for host: %s", hostname)
-	vs := cnf.GetVirtualServer(hostname)
+	vs := cnf.GetVirtualServerForHost(hostname)
 
 	if vs != nil {
 		return cnf.GetUpstreamsforVirtualServer(vs)

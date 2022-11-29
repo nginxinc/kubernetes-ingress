@@ -43,8 +43,6 @@ type HealthServer struct {
 
 // NewHealthServer creates Health Server. If secret is provided,
 // the server is configured with TLS Config.
-//
-//nolint:gosec
 func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configurator, secret *v1.Secret) (*HealthServer, error) {
 	hs := HealthServer{
 		Server: &http.Server{
@@ -64,7 +62,7 @@ func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configura
 		}
 		hs.Server.TLSConfig = &tls.Config{
 			Certificates: []tls.Certificate{tlsCert},
-			MinVersion:   tls.VersionTLS10, //nolint:gosec
+			MinVersion:   tls.VersionTLS12,
 		}
 		hs.URL = fmt.Sprintf("https://%s/", addr)
 	}
