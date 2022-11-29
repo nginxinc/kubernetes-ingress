@@ -60,6 +60,12 @@ spec:
     nodePort: {{ .Values.controller.service.httpsPort.nodePort }}
   {{- end }}
 {{- end }}
+{{- if .Values.controller.serviceMonitor.create }}
+  - name: prometheus
+    protocol: TCP
+    port: {{ .Values.prometheus.port }}
+    targetPort: {{ .Values.prometheus.port }}
+{{- end }}
   selector:
     app: {{ include "nginx-ingress.appName" . }}
   {{- if .Values.controller.service.externalIPs }}
