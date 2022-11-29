@@ -1022,7 +1022,7 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 		if ns != nil && ns.Status.Phase == api_v1.NamespaceActive {
 			// namespace still exists
 			glog.Infof("Removing Configuration for Unwatched Namespace: %v", key)
-			// Watched label for namespace was removed 
+			// Watched label for namespace was removed
 			// delete any now unwatched namespaced informer groups if required
 			nsi := lbc.getNamespacedInformer(key)
 			if nsi != nil {
