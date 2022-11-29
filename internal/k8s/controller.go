@@ -1021,8 +1021,8 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 
 		if ns != nil && ns.Status.Phase == api_v1.NamespaceActive {
 			// namespace still exists
-			glog.V(3).Infof("Removing Configuration for Unwatched Namespace: %v", key)
-			// Namespace was removed (deleted or deleted label)
+			glog.Infof("Removing Configuration for Unwatched Namespace: %v", key)
+			// Watched label for namespace was removed 
 			// delete any now unwatched namespaced informer groups if required
 			nsi := lbc.getNamespacedInformer(key)
 			if nsi != nil {
@@ -1030,7 +1030,7 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 				delete(lbc.namespacedInformers, key)
 			}
 		} else {
-			glog.V(3).Infof("Deleting Watchers for Deleted Namespace: %v", key)
+			glog.Infof("Deleting Watchers for Deleted Namespace: %v", key)
 			nsi := lbc.getNamespacedInformer(key)
 			if nsi != nil {
 				lbc.removeNamespacedInformer(nsi, key)
@@ -1050,6 +1050,7 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 		glog.V(3).Infof("Adding or Updating Watched Namespace: %v", key)
 		nsi := lbc.getNamespacedInformer(key)
 		if nsi == nil {
+			glog.Infof("Adding New Watched Namespace: %v", key)
 			nsi = lbc.newNamespacedInformer(key)
 			nsi.start()
 		}
