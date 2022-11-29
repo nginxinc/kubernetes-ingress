@@ -15,6 +15,8 @@ FROM nginx:1.23.2 AS debian
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	# temp fix for CVE-2022-42898
+	&& apt-get install -y libgssapi-krb5-2 libk5crypto3 libkrb5-3 libkrb5support0 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
@@ -57,6 +59,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
+	# temp fix for CVE-2022-42898
+	&& apt-get install -y libgssapi-krb5-2 libk5crypto3 libkrb5-3 libkrb5support0 \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
@@ -118,8 +122,8 @@ LABEL name="NGINX Ingress Controller" \
 
 COPY --link --chown=101:0 LICENSE /licenses/
 
-# temp fix for CVE-2022-27404, CVE-2022-33099 and CVE-2022-37434
-RUN microdnf --nodocs upgrade -y freetype lua-libs zlib
+# temp fix for CVE-2022-27404, CVE-2022-33099 CVE-2022-37434 and CVE-2022-42898 
+RUN microdnf --nodocs upgrade -y freetype lua-libs zlib krb5-libs
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
@@ -130,8 +134,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	dnf --nodocs install -y shadow-utils ca-certificates \
-	# temp fix for CVE-2022-1304 and CVE-2016-3709
-	&& dnf --nodocs install -y libcom_err libxml2 \
+	# temp fix for CVE-2022-1304 CVE-2016-3709 and CVE-2022-42898
+	&& dnf --nodocs install -y libcom_err libxml2 krb5-libs \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
