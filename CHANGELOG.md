@@ -1,5 +1,11 @@
 # Changelog
 
+### 2.4.2
+
+An automatically generated list of changes can be found on GitHub at: [2.4.2 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.4.2)
+
+A curated list of changes can be found on the [Releases](http://docs.nginx.com/nginx-ingress-controller/releases/) page on the NGINX Documentation website.
+
 ### 2.4.1
 
 An automatically generated list of changes can be found on GitHub at: [2.4.1 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.4.1)
