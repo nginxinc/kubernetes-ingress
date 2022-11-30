@@ -122,7 +122,7 @@ LABEL name="NGINX Ingress Controller" \
 
 COPY --link --chown=101:0 LICENSE /licenses/
 
-# temp fix for CVE-2022-27404, CVE-2022-33099 CVE-2022-37434 and CVE-2022-42898 
+# temp fix for CVE-2022-27404, CVE-2022-33099 CVE-2022-37434 and CVE-2022-42898
 RUN microdnf --nodocs upgrade -y freetype lua-libs zlib krb5-libs
 
 
