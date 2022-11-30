@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1.4
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=R27
+ARG NGINX_PLUS_VERSION=R28
 ARG DOWNLOAD_TAG=edge
-ARG DEBIAN_VERSION=bullseye-slim
 
 
 ############################################# Base images containing libs for Opentracing #############################################
@@ -47,7 +46,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:${DEBIAN_VERSION} AS debian-plus
+FROM debian:11-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 ARG BUILD_OS
@@ -90,7 +89,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get purge --auto-remove -y curl; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
-	printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect-dos; \
 	fi \
@@ -161,7 +160,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-8.repo > /etc/yum.repos.d/app-protect-dos-8.repo; \
-	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-dos-8.repo; \
 	dnf --nodocs install -y app-protect-dos; \
 	fi \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
