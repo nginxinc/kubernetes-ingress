@@ -113,6 +113,7 @@ type LoadBalancerController struct {
 	configMapLister               storeToConfigMapLister
 	globalConfigurationLister     cache.Store
 	ingressLinkLister             cache.Store
+	namespaceLabeledLister        cache.Store
 	syncQueue                     *taskQueue
 	ctx                           context.Context
 	cancel                        context.CancelFunc
@@ -156,6 +157,7 @@ type LoadBalancerController struct {
 	externalDNSController         *ed_controller.ExtDNSController
 	batchSyncEnabled              bool
 	isIPV6Disabled                bool
+	namespaceWatcherController    cache.Controller
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -199,6 +201,7 @@ type NewLoadBalancerControllerInput struct {
 	CertManagerEnabled           bool
 	ExternalDNSEnabled           bool
 	IsIPV6Disabled               bool
+	WatchNamespaceLabel          string
 }
 
 // NewLoadBalancerController creates a controller
@@ -250,18 +253,28 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		}
 	}
 
+	isDynamicNs := input.WatchNamespaceLabel != ""
+
+	if isDynamicNs {
+		lbc.addNamespaceHandler(createNamespaceHandlers(lbc), input.WatchNamespaceLabel)
+	}
+
 	if input.CertManagerEnabled {
-		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient))
+		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient, isDynamicNs))
 	}
 
 	if input.ExternalDNSEnabled {
-		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod))
+		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
 	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
 	lbc.namespacedInformers = make(map[string]*namespacedInformer)
 	for _, ns := range lbc.namespaceList {
+		if isDynamicNs && ns == "" {
+			// no initial namespaces with watched label - skip creating informers for now
+			break
+		}
 		lbc.newNamespacedInformer(ns)
 	}
 
@@ -326,7 +339,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 }
 
 type namespacedInformer struct {
-	// namespace                    string
+	namespace                    string
 	sharedInformerFactory        informers.SharedInformerFactory
 	confSharedInformerFactory    k8s_nginx_informers.SharedInformerFactory
 	secretInformerFactory        informers.SharedInformerFactory
@@ -350,18 +363,22 @@ type namespacedInformer struct {
 	areCustomResourcesEnabled    bool
 	appProtectEnabled            bool
 	appProtectDosEnabled         bool
-	stopCh                       <-chan struct{}
+	stopCh                       chan struct{}
+	lock                         sync.RWMutex
+	cacheSyncs                   []cache.InformerSynced
 }
 
-func (lbc *LoadBalancerController) newNamespacedInformer(ns string) {
+func (lbc *LoadBalancerController) newNamespacedInformer(ns string) *namespacedInformer {
 	nsi := &namespacedInformer{}
+	nsi.stopCh = make(chan struct{})
+	nsi.namespace = ns
 	nsi.sharedInformerFactory = informers.NewSharedInformerFactoryWithOptions(lbc.client, lbc.resync, informers.WithNamespace(ns))
 
 	// create handlers for resources we care about
-	lbc.addIngressHandler(createIngressHandlers(lbc), nsi)
-	lbc.addServiceHandler(createServiceHandlers(lbc), nsi)
-	lbc.addEndpointSliceHandler(createEndpointSliceHandlers(lbc), nsi)
-	lbc.addPodHandler(nsi)
+	nsi.addIngressHandler(createIngressHandlers(lbc))
+	nsi.addServiceHandler(createServiceHandlers(lbc))
+	nsi.addEndpointSliceHandler(createEndpointSliceHandlers(lbc))
+	nsi.addPodHandler()
 
 	secretsTweakListOptionsFunc := func(options *meta_v1.ListOptions) {
 		// Filter for helm release secrets.
@@ -377,10 +394,10 @@ func (lbc *LoadBalancerController) newNamespacedInformer(ns string) {
 
 	// Check if secrets informer should be created for this namespace
 	for _, v := range lbc.secretNamespaceList {
-		if v == ns {
+		if v == "" || v == ns {
 			nsi.isSecretsEnabledNamespace = true
 			nsi.secretInformerFactory = informers.NewSharedInformerFactoryWithOptions(lbc.client, lbc.resync, informers.WithNamespace(ns), informers.WithTweakListOptions(secretsTweakListOptionsFunc))
-			lbc.addSecretHandler(createSecretHandlers(lbc), nsi)
+			nsi.addSecretHandler(createSecretHandlers(lbc))
 			break
 		}
 	}
@@ -389,33 +406,32 @@ func (lbc *LoadBalancerController) newNamespacedInformer(ns string) {
 		nsi.areCustomResourcesEnabled = true
 		nsi.confSharedInformerFactory = k8s_nginx_informers.NewSharedInformerFactoryWithOptions(lbc.confClient, lbc.resync, k8s_nginx_informers.WithNamespace(ns))
 
-		lbc.addVirtualServerHandler(createVirtualServerHandlers(lbc), nsi)
-		lbc.addVirtualServerRouteHandler(createVirtualServerRouteHandlers(lbc), nsi)
-		lbc.addTransportServerHandler(createTransportServerHandlers(lbc), nsi)
-		lbc.addPolicyHandler(createPolicyHandlers(lbc), nsi)
+		nsi.addVirtualServerHandler(createVirtualServerHandlers(lbc))
+		nsi.addVirtualServerRouteHandler(createVirtualServerRouteHandlers(lbc))
+		nsi.addTransportServerHandler(createTransportServerHandlers(lbc))
+		nsi.addPolicyHandler(createPolicyHandlers(lbc))
 
 	}
 
 	if lbc.appProtectEnabled || lbc.appProtectDosEnabled {
-		for _, ns := range lbc.namespaceList {
-			nsi.dynInformerFactory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(lbc.dynClient, 0, ns, nil)
-		}
+		nsi.dynInformerFactory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(lbc.dynClient, 0, ns, nil)
 		if lbc.appProtectEnabled {
 			nsi.appProtectEnabled = true
-			lbc.addAppProtectPolicyHandler(createAppProtectPolicyHandlers(lbc), nsi)
-			lbc.addAppProtectLogConfHandler(createAppProtectLogConfHandlers(lbc), nsi)
-			lbc.addAppProtectUserSigHandler(createAppProtectUserSigHandlers(lbc), nsi)
+			nsi.addAppProtectPolicyHandler(createAppProtectPolicyHandlers(lbc))
+			nsi.addAppProtectLogConfHandler(createAppProtectLogConfHandlers(lbc))
+			nsi.addAppProtectUserSigHandler(createAppProtectUserSigHandlers(lbc))
 		}
 
 		if lbc.appProtectDosEnabled {
 			nsi.appProtectDosEnabled = true
-			lbc.addAppProtectDosPolicyHandler(createAppProtectDosPolicyHandlers(lbc), nsi)
-			lbc.addAppProtectDosLogConfHandler(createAppProtectDosLogConfHandlers(lbc), nsi)
-			lbc.addAppProtectDosProtectedResourceHandler(createAppProtectDosProtectedResourceHandlers(lbc), nsi)
+			nsi.addAppProtectDosPolicyHandler(createAppProtectDosPolicyHandlers(lbc))
+			nsi.addAppProtectDosLogConfHandler(createAppProtectDosLogConfHandlers(lbc))
+			nsi.addAppProtectDosProtectedResourceHandler(createAppProtectDosProtectedResourceHandlers(lbc))
 		}
 	}
 
 	lbc.namespacedInformers[ns] = nsi
+	return nsi
 }
 
 // addLeaderHandler adds the handler for leader election to the controller
@@ -433,95 +449,95 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 }
 
 // addAppProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
-func (lbc *LoadBalancerController) addAppProtectPolicyHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addAppProtectPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.dynInformerFactory.ForResource(appprotect.PolicyGVR).Informer()
 	informer.AddEventHandler(handlers)
 	nsi.appProtectPolicyLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addAppProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
-func (lbc *LoadBalancerController) addAppProtectLogConfHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addAppProtectLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.dynInformerFactory.ForResource(appprotect.LogConfGVR).Informer()
 	informer.AddEventHandler(handlers)
 	nsi.appProtectLogConfLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addAppProtectUserSigHandler creates dynamic informer for custom appprotect user defined signature resource
-func (lbc *LoadBalancerController) addAppProtectUserSigHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addAppProtectUserSigHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.dynInformerFactory.ForResource(appprotect.UserSigGVR).Informer()
 	informer.AddEventHandler(handlers)
 	nsi.appProtectUserSigLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addAppProtectDosPolicyHandler creates dynamic informers for custom appprotectdos policy resource
-func (lbc *LoadBalancerController) addAppProtectDosPolicyHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addAppProtectDosPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.dynInformerFactory.ForResource(appprotectdos.DosPolicyGVR).Informer()
 	informer.AddEventHandler(handlers)
 	nsi.appProtectDosPolicyLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addAppProtectDosLogConfHandler creates dynamic informer for custom appprotectdos logging config resource
-func (lbc *LoadBalancerController) addAppProtectDosLogConfHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addAppProtectDosLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.dynInformerFactory.ForResource(appprotectdos.DosLogConfGVR).Informer()
 	informer.AddEventHandler(handlers)
 	nsi.appProtectDosLogConfLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addAppProtectDosLogConfHandler creates dynamic informers for custom appprotectdos logging config resource
-func (lbc *LoadBalancerController) addAppProtectDosProtectedResourceHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addAppProtectDosProtectedResourceHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.confSharedInformerFactory.Appprotectdos().V1beta1().DosProtectedResources().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.appProtectDosProtectedLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addSecretHandler adds the handler for secrets to the controller
-func (lbc *LoadBalancerController) addSecretHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.secretInformerFactory.Core().V1().Secrets().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.secretLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addServiceHandler adds the handler for services to the controller
-func (lbc *LoadBalancerController) addServiceHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.sharedInformerFactory.Core().V1().Services().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.svcLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addIngressHandler adds the handler for ingresses to the controller
-func (lbc *LoadBalancerController) addIngressHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.sharedInformerFactory.Networking().V1().Ingresses().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.ingressLister = storeToIngressLister{Store: informer.GetStore()}
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addEndpointSliceHandler adds the handler for EndpointSlices to the controller
-func (lbc *LoadBalancerController) addEndpointSliceHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addEndpointSliceHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.sharedInformerFactory.Discovery().V1().EndpointSlices().Informer()
 	informer.AddEventHandler(handlers)
 	var el storeToEndpointSliceLister
 	el.Store = informer.GetStore()
 	nsi.endpointSliceLister = el
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 // addConfigMapHandler adds the handler for config maps to the controller
@@ -539,35 +555,35 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.configMapController.HasSynced)
 }
 
-func (lbc *LoadBalancerController) addPodHandler(nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addPodHandler() {
 	informer := nsi.sharedInformerFactory.Core().V1().Pods().Informer()
 	nsi.podLister = indexerToPodLister{Indexer: informer.GetIndexer()}
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-func (lbc *LoadBalancerController) addVirtualServerHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addVirtualServerHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.confSharedInformerFactory.K8s().V1().VirtualServers().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.virtualServerLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-func (lbc *LoadBalancerController) addVirtualServerRouteHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addVirtualServerRouteHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.confSharedInformerFactory.K8s().V1().VirtualServerRoutes().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.virtualServerRouteLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-func (lbc *LoadBalancerController) addPolicyHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.confSharedInformerFactory.K8s().V1().Policies().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.policyLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.ResourceEventHandlerFuncs, namespace string, name string) {
@@ -584,12 +600,12 @@ func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.globalConfigurationController.HasSynced)
 }
 
-func (lbc *LoadBalancerController) addTransportServerHandler(handlers cache.ResourceEventHandlerFuncs, nsi *namespacedInformer) {
+func (nsi *namespacedInformer) addTransportServerHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.confSharedInformerFactory.K8s().V1alpha1().TransportServers().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.transportServerLister = informer.GetStore()
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
 func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.ResourceEventHandlerFuncs, name string) {
@@ -608,9 +624,25 @@ func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.Resource
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.ingressLinkInformer.HasSynced)
 }
 
+func (lbc *LoadBalancerController) addNamespaceHandler(handlers cache.ResourceEventHandlerFuncs, nsLabel string) {
+	optionsModifier := func(options *meta_v1.ListOptions) {
+		options.LabelSelector = nsLabel
+	}
+	nsInformer := informers.NewSharedInformerFactoryWithOptions(lbc.client, lbc.resync, informers.WithTweakListOptions(optionsModifier)).Core().V1().Namespaces().Informer()
+	nsInformer.AddEventHandler(handlers)
+	lbc.namespaceLabeledLister = nsInformer.GetStore()
+	lbc.namespaceWatcherController = nsInformer
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, nsInformer.HasSynced)
+}
+
 // Run starts the loadbalancer controller
 func (lbc *LoadBalancerController) Run() {
 	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
+
+	if lbc.namespaceWatcherController != nil {
+		go lbc.namespaceWatcherController.Run(lbc.ctx.Done())
+	}
 
 	if lbc.spiffeCertFetcher != nil {
 		err := lbc.spiffeCertFetcher.Start(lbc.ctx, lbc.addInternalRouteServer)
@@ -629,7 +661,6 @@ func (lbc *LoadBalancerController) Run() {
 	}
 
 	for _, nif := range lbc.namespacedInformers {
-		nif.stopCh = lbc.ctx.Done()
 		nif.start()
 	}
 
@@ -644,9 +675,15 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.ingressLinkInformer.Run(lbc.ctx.Done())
 	}
 
-	glog.V(3).Infof("Waiting for %d caches to sync", len(lbc.cacheSyncs))
+	totalCacheSyncs := lbc.cacheSyncs
 
-	if !cache.WaitForCacheSync(lbc.ctx.Done(), lbc.cacheSyncs...) {
+	for _, nif := range lbc.namespacedInformers {
+		totalCacheSyncs = append(totalCacheSyncs, nif.cacheSyncs...)
+	}
+
+	glog.V(3).Infof("Waiting for %d caches to sync", len(totalCacheSyncs))
+
+	if !cache.WaitForCacheSync(lbc.ctx.Done(), totalCacheSyncs...) {
 		return
 	}
 
@@ -661,6 +698,9 @@ func (lbc *LoadBalancerController) Run() {
 // Stop shutsdown the load balancer controller
 func (lbc *LoadBalancerController) Stop() {
 	lbc.cancel()
+	for _, nif := range lbc.namespacedInformers {
+		nif.stop()
+	}
 	lbc.syncQueue.Shutdown()
 }
 
@@ -678,6 +718,10 @@ func (nsi *namespacedInformer) start() {
 	if nsi.appProtectEnabled || nsi.appProtectDosEnabled {
 		go nsi.dynInformerFactory.Start(nsi.stopCh)
 	}
+}
+
+func (nsi *namespacedInformer) stop() {
+	close(nsi.stopCh)
 }
 
 func (lbc *LoadBalancerController) getNamespacedInformer(ns string) *namespacedInformer {
@@ -912,6 +956,8 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncSecret(task)
 	case service:
 		lbc.syncService(task)
+	case namespace:
+		lbc.syncNamespace(task)
 	case virtualserver:
 		lbc.syncVirtualServer(task)
 		lbc.updateVirtualServerMetrics()
@@ -957,6 +1003,217 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.updateAllConfigs()
 
 		glog.V(3).Infof("Batch sync completed")
+	}
+}
+
+func (lbc *LoadBalancerController) syncNamespace(task task) {
+	key := task.Key
+	// process namespace and add to / remove from watched namespace list
+	_, exists, err := lbc.namespaceLabeledLister.GetByKey(key)
+	if err != nil {
+		lbc.syncQueue.Requeue(task, err)
+		return
+	}
+
+	if !exists {
+		// Check if change is because of a new label, or because of a deleted namespace
+		ns, _ := lbc.client.CoreV1().Namespaces().Get(context.TODO(), key, meta_v1.GetOptions{})
+
+		if ns != nil && ns.Status.Phase == api_v1.NamespaceActive {
+			// namespace still exists
+			glog.Infof("Removing Configuration for Unwatched Namespace: %v", key)
+			// Watched label for namespace was removed
+			// delete any now unwatched namespaced informer groups if required
+			nsi := lbc.getNamespacedInformer(key)
+			if nsi != nil {
+				lbc.cleanupUnwatchedNamespacedResources(nsi)
+				delete(lbc.namespacedInformers, key)
+			}
+		} else {
+			glog.Infof("Deleting Watchers for Deleted Namespace: %v", key)
+			nsi := lbc.getNamespacedInformer(key)
+			if nsi != nil {
+				lbc.removeNamespacedInformer(nsi, key)
+			}
+		}
+		if lbc.certManagerController != nil {
+			lbc.certManagerController.RemoveNamespacedInformer(key)
+		}
+		if lbc.externalDNSController != nil {
+			lbc.externalDNSController.RemoveNamespacedInformer(key)
+		}
+	} else {
+		// check if informer group already exists
+		// if not create new namespaced informer group
+		// update cert-manager informer group if required
+		// update external-dns informer group if required
+		glog.V(3).Infof("Adding or Updating Watched Namespace: %v", key)
+		nsi := lbc.getNamespacedInformer(key)
+		if nsi == nil {
+			glog.Infof("Adding New Watched Namespace: %v", key)
+			nsi = lbc.newNamespacedInformer(key)
+			nsi.start()
+		}
+		if lbc.certManagerController != nil {
+			lbc.certManagerController.AddNewNamespacedInformer(key)
+		}
+		if lbc.externalDNSController != nil {
+			lbc.externalDNSController.AddNewNamespacedInformer(key)
+		}
+		if !cache.WaitForCacheSync(nsi.stopCh, nsi.cacheSyncs...) {
+			return
+		}
+	}
+}
+
+func (lbc *LoadBalancerController) removeNamespacedInformer(nsi *namespacedInformer, key string) {
+	nsi.lock.Lock()
+	defer nsi.lock.Unlock()
+	nsi.stop()
+	delete(lbc.namespacedInformers, key)
+	nsi = nil
+}
+
+func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *namespacedInformer) {
+	// if a namespace is not deleted but the label is removed: we see an update event, so we will stop watching that namespace,
+	// BUT we need to remove any configuration for resources deployed in that namespace and still maintained by us
+	nsi.lock.Lock()
+	defer nsi.lock.Unlock()
+
+	var delIngressList []string
+
+	il, err := nsi.ingressLister.List()
+	if err != nil {
+		glog.Warningf("unable to list Ingress resources for recently unwatched namespace %s", nsi.namespace)
+	} else {
+		for _, ing := range il.Items {
+			key := getResourceKey(&ing.ObjectMeta)
+			delIngressList = append(delIngressList, key)
+			lbc.configuration.DeleteIngress(key)
+		}
+		delIngErrs := lbc.configurator.BatchDeleteIngresses(delIngressList)
+		if len(delIngErrs) > 0 {
+			glog.Warningf("Received error(s) deleting Ingress configurations from unwatched namespace: %v", delIngErrs)
+		}
+	}
+
+	if nsi.areCustomResourcesEnabled {
+		var delVsList []string
+		for _, obj := range nsi.virtualServerLister.List() {
+			vs := obj.(*conf_v1.VirtualServer)
+			key := getResourceKey(&vs.ObjectMeta)
+			delVsList = append(delVsList, key)
+			lbc.configuration.DeleteVirtualServer(key)
+		}
+		delVsErrs := lbc.configurator.BatchDeleteVirtualServers(delVsList)
+		if len(delVsErrs) > 0 {
+			glog.Warningf("Received error(s) deleting VirtualServer configurations from unwatched namespace: %v", delVsErrs)
+		}
+
+		var delTsList []string
+		for _, obj := range nsi.transportServerLister.List() {
+			ts := obj.(*conf_v1alpha1.TransportServer)
+			key := getResourceKey(&ts.ObjectMeta)
+			delTsList = append(delTsList, key)
+			lbc.configuration.DeleteTransportServer(key)
+		}
+		var updatedTSExes []*configs.TransportServerEx
+		delTsErrs := lbc.configurator.UpdateTransportServers(updatedTSExes, delTsList)
+		if len(delTsErrs) > 0 {
+			glog.Warningf("Received error(s) deleting TransportServer configurations from unwatched namespace: %v", delVsErrs)
+		}
+
+		for _, obj := range nsi.virtualServerRouteLister.List() {
+			vsr := obj.(*conf_v1.VirtualServerRoute)
+			key := getResourceKey(&vsr.ObjectMeta)
+			lbc.configuration.DeleteVirtualServerRoute(key)
+		}
+	}
+	if nsi.appProtectEnabled {
+		lbc.cleanupUnwatchedAppWafResources(nsi)
+	}
+	if nsi.appProtectDosEnabled {
+		lbc.cleanupUnwatchedAppDosResources(nsi)
+	}
+	for _, obj := range nsi.secretLister.List() {
+		sec := obj.(*api_v1.Secret)
+		key := getResourceKey(&sec.ObjectMeta)
+		resources := lbc.configuration.FindResourcesForSecret(sec.Namespace, sec.Name)
+		lbc.secretStore.DeleteSecret(key)
+
+		glog.V(2).Infof("Deleting Secret: %v\n", key)
+
+		if len(resources) > 0 {
+			lbc.handleRegularSecretDeletion(resources)
+		}
+		if lbc.isSpecialSecret(key) {
+			glog.Warningf("A special TLS Secret %v was removed. Retaining the Secret.", key)
+		}
+	}
+	glog.V(3).Infof("Finished cleaning up configuration for unwatched resources in namespace: %v", nsi.namespace)
+	nsi.stop()
+}
+
+func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespacedInformer) {
+	for _, obj := range nsi.appProtectPolicyLister.List() {
+		glog.V(3).Infof("Cleaning up unwatched appprotect policies in namespace: %v", nsi.namespace)
+		appPol := obj.((*unstructured.Unstructured))
+		namespace := appPol.GetNamespace()
+		name := appPol.GetName()
+
+		changes, problems := lbc.appProtectConfiguration.DeletePolicy(namespace + "/" + name)
+		lbc.processAppProtectChanges(changes)
+		lbc.processAppProtectProblems(problems)
+	}
+	for _, obj := range nsi.appProtectLogConfLister.List() {
+		glog.V(3).Infof("Cleaning up unwatched approtect logconfs in namespace: %v", nsi.namespace)
+		appLogConf := obj.((*unstructured.Unstructured))
+		namespace := appLogConf.GetNamespace()
+		name := appLogConf.GetName()
+
+		changes, problems := lbc.appProtectConfiguration.DeleteLogConf(namespace + "/" + name)
+		lbc.processAppProtectChanges(changes)
+		lbc.processAppProtectProblems(problems)
+	}
+	for _, obj := range nsi.appProtectUserSigLister.List() {
+		glog.V(3).Infof("Cleaning up unwatched usersigs in namespace: %v", nsi.namespace)
+		appUserSig := obj.((*unstructured.Unstructured))
+		namespace := appUserSig.GetNamespace()
+		name := appUserSig.GetName()
+
+		changes, problems := lbc.appProtectConfiguration.DeleteUserSig(namespace + "/" + name)
+		lbc.processAppProtectUserSigChange(changes)
+		lbc.processAppProtectProblems(problems)
+	}
+}
+
+func (lbc *LoadBalancerController) cleanupUnwatchedAppDosResources(nsi *namespacedInformer) {
+	for _, obj := range nsi.appProtectDosPolicyLister.List() {
+		dosPol := obj.((*unstructured.Unstructured))
+		namespace := dosPol.GetNamespace()
+		name := dosPol.GetName()
+
+		changes, problems := lbc.dosConfiguration.DeletePolicy(namespace + "/" + name)
+		lbc.processAppProtectDosChanges(changes)
+		lbc.processAppProtectDosProblems(problems)
+	}
+	for _, obj := range nsi.appProtectDosProtectedLister.List() {
+		dosPol := obj.((*unstructured.Unstructured))
+		namespace := dosPol.GetNamespace()
+		name := dosPol.GetName()
+
+		changes, problems := lbc.dosConfiguration.DeleteProtectedResource(namespace + "/" + name)
+		lbc.processAppProtectDosChanges(changes)
+		lbc.processAppProtectDosProblems(problems)
+	}
+	for _, obj := range nsi.appProtectDosLogConfLister.List() {
+		dosPol := obj.((*unstructured.Unstructured))
+		namespace := dosPol.GetNamespace()
+		name := dosPol.GetName()
+
+		changes, problems := lbc.dosConfiguration.DeleteLogConf(namespace + "/" + name)
+		lbc.processAppProtectDosChanges(changes)
+		lbc.processAppProtectDosProblems(problems)
 	}
 }
 
@@ -1261,7 +1518,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 			case *VirtualServerConfiguration:
 				key := getResourceKey(&impl.VirtualServer.ObjectMeta)
 
-				deleteErr := lbc.configurator.DeleteVirtualServer(key)
+				deleteErr := lbc.configurator.DeleteVirtualServer(key, false)
 				if deleteErr != nil {
 					glog.Errorf("Error when deleting configuration for VirtualServer %v: %v", key, deleteErr)
 				}
@@ -1284,7 +1541,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 
 				glog.V(2).Infof("Deleting Ingress: %v\n", key)
 
-				deleteErr := lbc.configurator.DeleteIngress(key)
+				deleteErr := lbc.configurator.DeleteIngress(key, false)
 				if deleteErr != nil {
 					glog.Errorf("Error when deleting configuration for Ingress %v: %v", key, deleteErr)
 				}
@@ -1351,7 +1608,12 @@ func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes
 		}
 	}
 
-	updateErr := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedKeys)
+	var updateErr error
+	updateErrs := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedKeys)
+
+	if len(updateErrs) > 0 {
+		updateErr = fmt.Errorf("errors received from updating TransportServers after GlobalConfiguration change: %v", updateErrs)
+	}
 
 	lbc.updateResourcesStatusAndEvents(updatedResources, configs.Warnings{}, updateErr)
 

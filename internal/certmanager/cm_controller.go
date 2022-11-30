@@ -18,6 +18,7 @@ package certmanager
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -58,7 +59,6 @@ const (
 type CmController struct {
 	sync          SyncFn
 	ctx           context.Context
-	mustSync      []cache.InformerSynced
 	queue         workqueue.RateLimitingInterface
 	informerGroup map[string]*namespacedInformer
 	recorder      record.EventRecorder
@@ -75,14 +75,18 @@ type CmOpts struct {
 	namespace     []string
 	eventRecorder record.EventRecorder
 	vsClient      k8s_nginx.Interface
+	isDynamicNs   bool
 }
 
 type namespacedInformer struct {
+	mustSync                  []cache.InformerSynced
 	vsSharedInformerFactory   vsinformers.SharedInformerFactory
 	cmSharedInformerFactory   cm_informers.SharedInformerFactory
 	kubeSharedInformerFactory kubeinformers.SharedInformerFactory
 	vsLister                  listers_v1.VirtualServerLister
 	cmLister                  cmlisters.CertificateLister
+	stopCh                    chan struct{}
+	lock                      sync.RWMutex
 }
 
 func (c *CmController) register() workqueue.RateLimitingInterface {
@@ -90,8 +94,22 @@ func (c *CmController) register() workqueue.RateLimitingInterface {
 	return c.queue
 }
 
-func (c *CmController) newNamespacedInformer(ns string) {
+// BuildOpts builds a CmOpts from the given parameters
+func BuildOpts(ctx context.Context, kc *rest.Config, cl kubernetes.Interface, ns []string, er record.EventRecorder, vsc k8s_nginx.Interface, idn bool) *CmOpts {
+	return &CmOpts{
+		context:       ctx,
+		kubeClient:    cl,
+		kubeConfig:    kc,
+		namespace:     ns,
+		eventRecorder: er,
+		vsClient:      vsc,
+		isDynamicNs:   idn,
+	}
+}
+
+func (c *CmController) newNamespacedInformer(ns string) *namespacedInformer {
 	nsi := &namespacedInformer{}
+	nsi.stopCh = make(chan struct{})
 	nsi.cmSharedInformerFactory = cm_informers.NewSharedInformerFactoryWithOptions(c.cmClient, resyncPeriod, cm_informers.WithNamespace(ns))
 	nsi.kubeSharedInformerFactory = kubeinformers.NewSharedInformerFactoryWithOptions(c.kubeClient, resyncPeriod, kubeinformers.WithNamespace(ns))
 	nsi.vsSharedInformerFactory = vsinformers.NewSharedInformerFactoryWithOptions(c.vsClient, resyncPeriod, vsinformers.WithNamespace(ns))
@@ -99,6 +117,7 @@ func (c *CmController) newNamespacedInformer(ns string) {
 	c.addHandlers(nsi)
 
 	c.informerGroup[ns] = nsi
+	return nsi
 }
 
 func (c *CmController) addHandlers(nsi *namespacedInformer) {
@@ -106,13 +125,13 @@ func (c *CmController) addHandlers(nsi *namespacedInformer) {
 	nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(&controllerpkg.QueuingEventHandler{
 		Queue: c.queue,
 	})
-	c.mustSync = append(c.mustSync, nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().HasSynced)
+	nsi.mustSync = append(nsi.mustSync, nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().HasSynced)
 
 	nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().AddEventHandler(&controllerpkg.BlockingEventHandler{
 		WorkFunc: certificateHandler(c.queue),
 	})
 	nsi.cmLister = nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Lister()
-	c.mustSync = append(c.mustSync, nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().HasSynced)
+	nsi.mustSync = append(nsi.mustSync, nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().HasSynced)
 }
 
 func (c *CmController) processItem(ctx context.Context, key string) error {
@@ -192,6 +211,10 @@ func NewCmController(opts *CmOpts) *CmController {
 	}
 
 	for _, ns := range opts.namespace {
+		if opts.isDynamicNs && ns == "" {
+			// no initial namespaces with watched label - skip creating informers for now
+			break
+		}
 		cm.newNamespacedInformer(ns)
 	}
 
@@ -209,14 +232,15 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 
 	glog.Infof("Starting cert-manager control loop")
 
+	var mustSync []cache.InformerSynced
 	for _, ig := range c.informerGroup {
-		go ig.vsSharedInformerFactory.Start(c.ctx.Done())
-		go ig.cmSharedInformerFactory.Start(c.ctx.Done())
-		go ig.kubeSharedInformerFactory.Start(c.ctx.Done())
+		ig.start()
+		mustSync = append(mustSync, ig.mustSync...)
 	}
-	// // wait for all the informer caches we depend on are synced
-	glog.V(3).Infof("Waiting for %d caches to sync", len(c.mustSync))
-	if !cache.WaitForNamedCacheSync(ControllerName, stopCh, c.mustSync...) {
+	// wait for all the informer caches we depend on are synced
+
+	glog.V(3).Infof("Waiting for %d caches to sync", len(mustSync))
+	if !cache.WaitForNamedCacheSync(ControllerName, stopCh, mustSync...) {
 		glog.Fatal("error syncing cm queue")
 	}
 
@@ -226,7 +250,20 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 
 	<-stopCh
 	glog.V(3).Infof("shutting down queue as workqueue signaled shutdown")
+	for _, ig := range c.informerGroup {
+		ig.stop()
+	}
 	c.queue.ShutDown()
+}
+
+func (nsi *namespacedInformer) start() {
+	go nsi.vsSharedInformerFactory.Start(nsi.stopCh)
+	go nsi.cmSharedInformerFactory.Start(nsi.stopCh)
+	go nsi.kubeSharedInformerFactory.Start(nsi.stopCh)
+}
+
+func (nsi *namespacedInformer) stop() {
+	close(nsi.stopCh)
 }
 
 // runWorker is a long-running function that will continually call the
@@ -261,14 +298,28 @@ func (c *CmController) runWorker(ctx context.Context) {
 	}
 }
 
-// BuildOpts builds a CmOpts from the given parameters
-func BuildOpts(ctx context.Context, kc *rest.Config, cl kubernetes.Interface, ns []string, er record.EventRecorder, vsc k8s_nginx.Interface) *CmOpts {
-	return &CmOpts{
-		context:       ctx,
-		kubeClient:    cl,
-		kubeConfig:    kc,
-		namespace:     ns,
-		eventRecorder: er,
-		vsClient:      vsc,
+// AddNewNamespacedInformer adds watchers for a new namespace
+func (c *CmController) AddNewNamespacedInformer(ns string) {
+	glog.V(3).Infof("Adding or Updating cert-manager Watchers for Namespace: %v", ns)
+	nsi := getNamespacedInformer(ns, c.informerGroup)
+	if nsi == nil {
+		nsi = c.newNamespacedInformer(ns)
+		nsi.start()
+	}
+	if !cache.WaitForCacheSync(nsi.stopCh, nsi.mustSync...) {
+		return
+	}
+}
+
+// RemoveNamespacedInformer removes watchers for a namespace we are no longer watching
+func (c *CmController) RemoveNamespacedInformer(ns string) {
+	glog.V(3).Infof("Deleting cert-manager Watchers for Deleted Namespace: %v", ns)
+	nsi := getNamespacedInformer(ns, c.informerGroup)
+	if nsi != nil {
+		nsi.lock.Lock()
+		defer nsi.lock.Unlock()
+		nsi.stop()
+		delete(c.informerGroup, ns)
+		nsi = nil
 	}
 }

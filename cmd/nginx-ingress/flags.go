@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/glog"
 	api_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -27,14 +28,17 @@ var (
 	The Ingress Controller does not start NGINX and does not write any generated NGINX configuration files to disk`)
 
 	watchNamespace = flag.String("watch-namespace", api_v1.NamespaceAll,
-		`Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces`)
+		`Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces. Mutually exclusive with "watch-namespace-label".`)
 
 	watchNamespaces []string
 
 	watchSecretNamespace = flag.String("watch-secret-namespace", "",
-		`Comma separated list of namespaces the Ingress Controller should watch for secrets. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See "watch-namespace". `)
+		`Comma separated list of namespaces the Ingress Controller should watch for secrets. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See "watch-namespace" and "watch-namespace-label". `)
 
 	watchSecretNamespaces []string
+
+	watchNamespaceLabel = flag.String("watch-namespace-label", "",
+		`Configures the Ingress Controller to watch only those namespaces with label foo=bar. By default the Ingress Controller watches all namespaces. Mutually exclusive with "watch-namespace". `)
 
 	nginxConfigMaps = flag.String("nginx-configmaps", "",
 		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
@@ -201,17 +205,7 @@ func parseFlags() {
 
 	initialChecks()
 
-	watchNamespaces = strings.Split(*watchNamespace, ",")
-	glog.Infof("Namespaces watched: %v", watchNamespaces)
-
-	if len(*watchSecretNamespace) > 0 {
-		watchSecretNamespaces = strings.Split(*watchSecretNamespace, ",")
-	} else {
-		// empty => default to watched namespaces
-		watchSecretNamespaces = watchNamespaces
-	}
-
-	glog.Infof("Namespaces watched for secrets: %v", watchSecretNamespaces)
+	validateWatchedNamespaces()
 
 	validationChecks()
 
@@ -309,6 +303,42 @@ func initialChecks() {
 	}
 }
 
+func validateWatchedNamespaces() {
+	if *watchNamespace != "" && *watchNamespaceLabel != "" {
+		glog.Fatal("watch-namespace and -watch-namespace-label are mutually exclusive")
+	}
+
+	watchNamespaces = strings.Split(*watchNamespace, ",")
+
+	if *watchNamespace != "" {
+		glog.Infof("Namespaces watched: %v", watchNamespaces)
+		namespacesNameValidationError := validateNamespaceNames(watchNamespaces)
+		if namespacesNameValidationError != nil {
+			glog.Fatalf("Invalid values for namespaces: %v", namespacesNameValidationError)
+		}
+	}
+
+	if len(*watchSecretNamespace) > 0 {
+		watchSecretNamespaces = strings.Split(*watchSecretNamespace, ",")
+		glog.Infof("Namespaces watched for secrets: %v", watchSecretNamespaces)
+		namespacesNameValidationError := validateNamespaceNames(watchSecretNamespaces)
+		if namespacesNameValidationError != nil {
+			glog.Fatalf("Invalid values for secret namespaces: %v", namespacesNameValidationError)
+		}
+	} else {
+		// empty => default to watched namespaces
+		watchSecretNamespaces = watchNamespaces
+	}
+
+	if *watchNamespaceLabel != "" {
+		var err error
+		_, err = labels.Parse(*watchNamespaceLabel)
+		if err != nil {
+			glog.Fatalf("Unable to parse label %v for watch namespace label: %v", *watchNamespaceLabel, err)
+		}
+	}
+}
+
 // validationChecks checks the values for various flags
 func validationChecks() {
 	healthStatusURIValidationError := validateLocation(*healthStatusURI)
@@ -319,16 +349,6 @@ func validationChecks() {
 	statusLockNameValidationError := validateResourceName(*leaderElectionLockName)
 	if statusLockNameValidationError != nil {
 		glog.Fatalf("Invalid value for leader-election-lock-name: %v", statusLockNameValidationError)
-	}
-
-	namespacesNameValidationError := validateNamespaceNames(watchNamespaces)
-	if namespacesNameValidationError != nil {
-		glog.Fatalf("Invalid values for namespaces: %v", namespacesNameValidationError)
-	}
-
-	namespacesNameValidationError = validateNamespaceNames(watchSecretNamespaces)
-	if namespacesNameValidationError != nil {
-		glog.Fatalf("Invalid values for secret namespaces: %v", namespacesNameValidationError)
 	}
 
 	statusPortValidationError := validatePort(*nginxStatusPort)

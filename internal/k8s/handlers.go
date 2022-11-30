@@ -679,3 +679,37 @@ func createAppProtectDosProtectedResourceHandlers(lbc *LoadBalancerController) c
 	}
 	return handlers
 }
+
+// createNamespaceHandlers builds the handler funcs for namespaces
+func createNamespaceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			ns := obj.(*v1.Namespace)
+			glog.V(3).Infof("Adding Namespace to list of watched Namespaces: %v", ns.Name)
+			lbc.AddSyncQueue(obj)
+		},
+		DeleteFunc: func(obj interface{}) {
+			ns, isNs := obj.(*v1.Namespace)
+			if !isNs {
+				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					return
+				}
+				ns, ok = deletedState.Obj.(*v1.Namespace)
+				if !ok {
+					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Namespace object: %v", deletedState.Obj)
+					return
+				}
+			}
+			glog.V(3).Infof("Removing Namespace from list of watched Namespaces: %v", ns.Name)
+			lbc.AddSyncQueue(obj)
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			if !reflect.DeepEqual(old, cur) {
+				glog.V(3).Infof("Namespace %v changed, syncing", cur.(*v1.Namespace).Name)
+				lbc.AddSyncQueue(cur)
+			}
+		},
+	}
+}
