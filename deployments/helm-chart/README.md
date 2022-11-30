@@ -178,6 +178,7 @@ Parameter | Description | Default
 `controller.tolerations` | The tolerations of the Ingress Controller pods. | []
 `controller.affinity` | The affinity of the Ingress Controller pods. | {}
 `controller.topologySpreadConstraints` | The topology spread constraints of the Ingress controller pods. | {}
+`controller.env` | The additional environment variables to be set on the Ingress Controller pods. | []
 `controller.volumes` | The volumes of the Ingress Controller pods. | []
 `controller.volumeMounts` | The volumeMounts of the Ingress Controller pods. | []
 `controller.initContainers` | InitContainers for the Ingress Controller pods. | []
