@@ -19,7 +19,7 @@ docs: "DOCS-603"
     * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 2. Clone the Ingress Controller repo and change into the deployments folder:
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.4.1
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.4.2
     $ cd kubernetes-ingress/deployments
     ```
 
