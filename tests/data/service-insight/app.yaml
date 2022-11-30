@@ -17,4 +17,3 @@ spec:
         image: nginxdemos/nginx-hello:plain-text
         ports:
         - containerPort: 8080
-        

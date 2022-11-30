@@ -34,7 +34,8 @@ class TestHealthCheckVsHttp:
         ensure_response_from_backend(req_url, virtual_server_setup.vs_host)
         resp = requests.get(req_url)
         assert resp.status_code == 200, f"Expected 200 code for /probe/{host} but got {resp.status_code}"
-        assert resp.json() == {'Total': 3, 'Up': 3, 'Unhealthy': 0}
+        assert resp.json() == {"Total": 3, "Up": 3, "Unhealthy": 0}
+
 
 @pytest.fixture(scope="class")
 def https_secret_setup(request, kube_apis, test_namespace):
@@ -83,7 +84,7 @@ class TestHealthCheckVsHttps:
         ensure_response_from_backend(req_url, virtual_server_setup.vs_host)
         resp = requests.get(req_url, verify=False)
         assert resp.status_code == 200, f"Expected 200 code for /probe/{host} but got {resp.status_code}"
-        assert resp.json() == {'Total': 3, 'Up': 3, 'Unhealthy': 0} 
+        assert resp.json() == {"Total": 3, "Up": 3, "Unhealthy": 0}
 
     def test_responses_svc_insight_update_pods(
         self,
@@ -106,4 +107,4 @@ class TestHealthCheckVsHttps:
         wait_before_test()
         resp = requests.get(req_url, verify=False)
         assert resp.status_code == 200, f"Expected 200 code for /probe/{host} but got {resp.status_code}"
-        assert resp.json() == {'Total': 6, 'Up': 6, 'Unhealthy': 0}
+        assert resp.json() == {"Total": 6, "Up": 6, "Unhealthy": 0}
