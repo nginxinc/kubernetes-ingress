@@ -25,7 +25,7 @@ The service is healthy if at least one upstream is healthy. In this case, the en
 ## Enabling Service Insight Endpoint
 
 If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the Ingress Controller, to enable the Service Insight endpoint:
-1. Run the Ingress Controller with the `-enable-service-insight` [command-line argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments). As a result, the Ingress Controller will expose the enpoint via the path `/probe/{hostname}` on port `9114` (customizable via the `-service-insight-listen-port` command-line argument).
+1. Run the Ingress Controller with the `-enable-service-insight` [command-line argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments). This will expose the Ingress Controller endpoint via the path `/probe/{hostname}` on port `9114` (customizable with the `-service-insight-listen-port` command-line argument).
 1. To enable TLS for the Service Insight endpoint, configure the `-service-insight-tls-secret` cli argument with the namespace and name of a TLS Secret.
 1. Add the Service Insight port to the list of the ports of the Ingress Controller container in the template of the Ingress Controller pod:
     ```yaml
