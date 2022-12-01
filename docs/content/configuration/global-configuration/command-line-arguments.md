@@ -343,7 +343,7 @@ A Secret with a TLS certificate and key for TLS termination of the Prometheus me
 
 ### -enable-service-insight
 
-Enables exposing Service Insight enpoint for Ingress Controller.
+Exposes the Service Insight endpoint for Ingress Controller.
 &nbsp;
 <a name="cmdoption-service-insight-listen-port"></a>
 
