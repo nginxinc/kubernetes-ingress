@@ -43,7 +43,7 @@ The Service Insight provides the following statistics:
 * Number of VS in 'Down' state
 * Number of VS in 'Healthy' state
 
-The stats are returned as a JSON body:
+These statistics are returned as JSON:
 
 ```json
 { "Total": <int>, "Up": <int>, "Unhealthy": <int>  }
