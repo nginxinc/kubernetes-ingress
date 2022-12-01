@@ -7,7 +7,7 @@ doctypes: [""]
 aliases:
     - /service-insight/
 toc: true
-docs: ""
+docs: "DOCS-000"
 ---
 
 
