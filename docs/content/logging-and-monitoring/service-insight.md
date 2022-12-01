@@ -11,7 +11,7 @@ docs: "DOCS-000"
 ---
 
 
-The Ingress Controller exposes an endpoint and provides host statistics for Virtual Servers.
+The Ingress Controller exposes an endpoint and provides host statistics for Virtual Servers (VS).
 It exposes data in JSON format and returns HTTP status codes.
 The response body holds information about the total, down and the unhealthy number of
 upstreams associated with the hostname.
