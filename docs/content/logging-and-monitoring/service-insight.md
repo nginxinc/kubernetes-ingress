@@ -53,6 +53,6 @@ Response codes:
 
 * HTTP 200 OK - Service is healthy
 * HTTP 404 - No upstreams/VS found for the requested hostname
-* HTTP 503 Service Unavailable - the service is down (all upstreams/VS are "Unhealthy")
+* HTTP 503 Service Unavailable - The service is down (All upstreams/VS are "Unhealthy")
 
 **Note**: wildcards in hostnames are not supported at the moment.
