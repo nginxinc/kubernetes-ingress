@@ -435,7 +435,7 @@ prometheus:
 
 serviceInsight:
   ## Expose NGINX Plus Service Insight endpoint.
-  create: true
+  create: false
 
   ## Configures the port to expose endpoint.
   port: 9114
