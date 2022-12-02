@@ -104,7 +104,7 @@ class TestHealthCheckVsHttps:
         # patch backend1 deployment with 5 replicas
         patch_deployment_from_yaml(kube_apis.apps_v1_api, test_namespace, f"{TEST_DATA}/service-insight/app.yaml")
         ensure_response_from_backend(req_url, virtual_server_setup.vs_host)
-        wait_before_test()
+        wait_before_test(15)
         resp = requests.get(req_url, verify=False)
         assert resp.status_code == 200, f"Expected 200 code for /probe/{host} but got {resp.status_code}"
         assert resp.json() == {"Total": 6, "Up": 6, "Unhealthy": 0}
