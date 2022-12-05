@@ -262,6 +262,10 @@ Parameter | Description | Default
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
 `prometheus.scheme` | Configures the HTTP scheme to use for connections to the Prometheus endpoint. | http
 `prometheus.secret` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Prometheus endpoint with TLS connections. | ""
+`serviceInsight.create` | Expose NGINX Plus Service Insight endpoint. | false
+`serviceInsight.port` | Configures the port to expose endpoints. | 9114
+`serviceInsight.scheme` | Configures the HTTP scheme to use for connections to the Service Insight endpoint. | http
+`serviceInsight.secret` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Service Insight endpoint with TLS connections. | ""
 `nginxServiceMesh.enable` | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false
 `nginxServiceMesh.enableEgress` | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress Controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false
 

@@ -250,6 +250,10 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``prometheus.port`` | Configures the port to scrape the metrics. | 9113 |
 |``prometheus.scheme`` | Configures the HTTP scheme that requests must use to connect to the Prometheus endpoint. | http |
 |``prometheus.secret`` | Specifies the namespace/name of a Kubernetes TLS secret which can be used to establish a secure HTTPS connection with the Prometheus endpoint. | "" |
+|``serviceInsight.create`` | Expose NGINX Plus Service Insight endpoint. | false |
+|``serviceInsight.port`` | Configures the port to scrape the metrics. | 9114 |
+|``serviceInsight.scheme`` | Configures the HTTP scheme to use for connections to the Service Insight endpoint. | http |
+|``serviceInsight.secret`` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Service Insight endpoint with TLS connections. | "" |
 {{% /table %}}
 
 ## Notes
