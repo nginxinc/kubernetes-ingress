@@ -135,6 +135,8 @@ require (
 )
 
 replace (
+	// temp replace library due to CVE
+	github.com/emicklei/go-restful/v3 v3.8.0 => github.com/emicklei/go-restful/v3 v3.10.1
 	github.com/golang/glog => github.com/nginxinc/glog v1.1.2
 	// theses are needed until https://github.com/kubernetes/kubernetes/issues/106536 gets fixed
 	go.opentelemetry.io/contrib => go.opentelemetry.io/contrib v0.20.0
