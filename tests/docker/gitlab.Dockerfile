@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y curl git jq apache2-utils \
 WORKDIR /workspace/tests
 
 COPY --link tests/requirements.txt /workspace/tests/
-RUN pip install -r requirements.txt
+RUN pip install --require-hashes -r requirements.txt
 
 COPY --link tests /workspace/tests
 COPY --link deployments /workspace/deployments
