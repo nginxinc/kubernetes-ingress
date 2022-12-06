@@ -127,7 +127,7 @@ RUN microdnf --nodocs upgrade -y freetype lua-libs zlib krb5-libs
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
-FROM redhat/ubi8:8.6-990 AS ubi-plus
+FROM redhat/ubi8:8.7-1026 AS ubi-plus
 ARG NGINX_PLUS_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
