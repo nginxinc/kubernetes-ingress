@@ -90,7 +90,7 @@ jobs:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
       - name: Setup Golang Environment
-        uses: actions/setup-go@c4a742cab115ed795e34d4513e2cf7d472deb55f # v3.3.1
+        uses: actions/setup-go@d0a58c1c4d2b25278816e339b944508c875f3613 # v3.4.0
         with:
           go-version-file: go.mod
           cache: true
@@ -109,7 +109,7 @@ jobs:
         uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # v3.0.11
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
 
   test:
     name: Run tests
@@ -137,7 +137,7 @@ jobs:
         uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # v3.0.11
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Run Smoke Tests
         id: smoke-tests
@@ -164,7 +164,7 @@ jobs:
       tag: ${{ needs.variables.outputs.kic-tag }}
       sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
-    if: ${{ needs.check.outputs.needs-updating-debian }}
+    if: ${{ needs.check.outputs.needs-updating-debian == 'true' }}
 
   release-docker-alpine:
     name: Release Alpine Image
@@ -176,7 +176,7 @@ jobs:
       tag: ${{ needs.variables.outputs.kic-tag }}
       sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
-    if: ${{ needs.check.outputs.needs-updating-alpine }}
+    if: ${{ needs.check.outputs.needs-updating-alpine == 'true' }}
 
   release-docker-ubi:
     name: Release UBI Image
@@ -188,4 +188,4 @@ jobs:
       tag: ${{ needs.variables.outputs.kic-tag }}
       sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
-    if: ${{ needs.check.outputs.needs-updating-ubi }}
+    if: ${{ needs.check.outputs.needs-updating-ubi == 'true' }}

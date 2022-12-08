@@ -11,7 +11,7 @@ RUN apt-get update \
 WORKDIR /workspace/tests
 
 COPY --link tests/requirements.txt /workspace/tests/
-RUN pip install -r requirements.txt
+RUN pip install --require-hashes -r requirements.txt
 
 COPY --link deployments /workspace/deployments
 
