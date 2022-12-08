@@ -15,8 +15,6 @@ FROM nginx:1.23.2 AS debian
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temp fix for CVE-2022-42898
-	&& apt-get install -y libgssapi-krb5-2 libk5crypto3 libkrb5-3 libkrb5support0 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
@@ -59,8 +57,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temp fix for CVE-2022-42898
-	&& apt-get install -y libgssapi-krb5-2 libk5crypto3 libkrb5-3 libkrb5support0 \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
@@ -93,7 +89,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get purge --auto-remove -y curl; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
-	printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect-dos; \
 	fi \
@@ -122,12 +118,9 @@ LABEL name="NGINX Ingress Controller" \
 
 COPY --link --chown=101:0 LICENSE /licenses/
 
-# temp fix for CVE-2022-27404, CVE-2022-33099 CVE-2022-37434 and CVE-2022-42898
-RUN microdnf --nodocs upgrade -y freetype lua-libs zlib krb5-libs
-
 
 ############################################# Base image for UBI with NGINX Plus #############################################
-FROM redhat/ubi8:8.6-990 AS ubi-plus
+FROM redhat/ubi8:8.6 AS ubi-plus
 ARG NGINX_PLUS_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -164,6 +157,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-8.repo > /etc/yum.repos.d/app-protect-dos-8.repo; \
+	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-dos-8.repo; \
 	dnf --nodocs install -y app-protect-dos; \
 	fi \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
