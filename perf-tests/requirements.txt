@@ -1,4 +1,4 @@
-certifi==2022.9.24
+certifi==2022.12.7
 cffi==1.15.1
 kubernetes==25.3.0
 locust==2.13.1
