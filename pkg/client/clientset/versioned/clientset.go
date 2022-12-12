@@ -23,8 +23,7 @@ type Interface interface {
 	ExternaldnsV1() externaldnsv1.ExternaldnsV1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	k8sV1alpha1          *k8sv1alpha1.K8sV1alpha1Client
