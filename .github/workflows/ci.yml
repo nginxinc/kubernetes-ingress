@@ -217,7 +217,7 @@ jobs:
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
           else
-            echo "matrix={\"k8s\": [\"1.21.14\", \"1.22.15\", \"1.23.13\", \"1.24.7\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+            echo "matrix={\"k8s\": [\"1.21.14\", \"1.22.15\", \"1.23.13\", \"1.24.7\", \"1.25.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
                                              \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}" >> $GITHUB_OUTPUT
           fi
 
