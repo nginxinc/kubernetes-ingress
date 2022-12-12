@@ -210,6 +210,7 @@ ARG TARGETPLATFORM
 ARG NAP_MODULES=none
 
 # GRAAL: add modsecurity
+RUN apt-get update && apt-get install -y -q --fix-missing --no-install-recommends apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev
 RUN --mount=type=bind,from=modsecurity-lib,target=/tmp/ot/ \
     ls -all /tmp/ot/usr/local/modsecurity/ \
     && ls -all /tmp/ot/usr/lib/nginx/modules/ \
