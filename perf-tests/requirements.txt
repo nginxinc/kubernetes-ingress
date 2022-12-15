@@ -1,10 +1,10 @@
-certifi==2022.9.24
+certifi==2022.12.7
 cffi==1.15.1
 kubernetes==25.3.0
-locust==2.13.0
+locust==2.14.0
 pytest==7.2.0
 pytest-html==3.2.0
 pytest-repeat==0.9.1
 PyYAML==6.0
 requests==2.28.1
-urllib3==1.26.12
+urllib3==1.26.13

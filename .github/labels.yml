@@ -52,3 +52,6 @@
 - color: ffffff
   description: An issue that does not need to be fixed
   name: wontfix
+- color: 0e8a16
+  description: Pull requests that update the Helm Chart
+  name: helm_chart

@@ -47,7 +47,8 @@ def prometheus_secret_setup(request, kube_apis, test_namespace):
     )
 
     def fin():
-        delete_secret(kube_apis.v1, prometheus_secret_name, "nginx-ingress")
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_secret(kube_apis.v1, prometheus_secret_name, "nginx-ingress")
 
     request.addfinalizer(fin)
 
@@ -68,10 +69,11 @@ def ingress_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
 
     def fin():
-        print("Clean up simple app")
-        delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
-        delete_secret(kube_apis.v1, secret_name, test_namespace)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up simple app")
+            delete_common_app(kube_apis, "simple", test_namespace)
+            delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
+            delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 
@@ -210,7 +212,8 @@ def ts_setup(request, kube_apis, crd_ingress_controller):
     gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
 
     def fin():
-        delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
 
     request.addfinalizer(fin)
 

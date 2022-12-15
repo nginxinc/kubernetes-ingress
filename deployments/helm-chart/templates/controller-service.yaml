@@ -32,13 +32,11 @@ spec:
   {{- end }}
 {{- end }}
   type: {{ .Values.controller.service.type }}
-  {{- if semverCompare ">=1.21.0-0" .Capabilities.KubeVersion.Version }}
   {{- if .Values.controller.service.ipFamilyPolicy }}
   ipFamilyPolicy: {{ .Values.controller.service.ipFamilyPolicy }}
   {{- end }}
   {{- if .Values.controller.service.ipFamilies }}
   ipFamilies: {{ .Values.controller.service.ipFamilies }}
-  {{- end }}
   {{- end }}
   ports:
 {{- if .Values.controller.service.customPorts }}

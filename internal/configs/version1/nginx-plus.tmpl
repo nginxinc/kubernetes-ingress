@@ -295,6 +295,9 @@ stream {
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
     {{end}}
 
+    map_hash_max_size {{.MapHashMaxSize}};
+    {{if .MapHashBucketSize}}map_hash_bucket_size {{.MapHashBucketSize}};{{end}}
+
     {{if .TLSPassthrough}}
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;
@@ -304,6 +307,11 @@ stream {
     server {
         listen 443{{if .ProxyProtocol}} proxy_protocol{{end}};
         {{if not .DisableIPV6}}listen [::]:443{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+
+        {{if .ProxyProtocol}}
+        {{range $setRealIPFrom := .SetRealIPFrom}}
+        set_real_ip_from {{$setRealIPFrom}};{{end}}
+        {{end}}
 
         ssl_preread on;
 

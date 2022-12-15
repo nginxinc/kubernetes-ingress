@@ -6,6 +6,23 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## NGINX Ingress Controller 2.4.2
+
+30 Nov 2022
+
+CHANGES:
+* Update NGINX Plus version to R28.
+* Update NGINX App Protect WAF version to 4.0.
+* Update NGINX App Protect DoS version to 3.1.
+
+HELM CHART:
+* The version of the Helm chart is now 0.15.2.
+
+UPGRADE:
+* For NGINX, use the 2.4.2 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.4.2), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 2.4.2 images from the F5 Container registry or build your own image using the 2.4.2 source code.
+* For Helm, use version 0.15.2 of the chart.
+
 ## NGINX Ingress Controller 2.4.1
 
 19 October 2022

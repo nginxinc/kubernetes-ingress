@@ -192,6 +192,8 @@ type MainConfig struct {
 	SetRealIPFrom                      []string
 	ServerNamesHashBucketSize          string
 	ServerNamesHashMaxSize             string
+	MapHashBucketSize                  string
+	MapHashMaxSize                     string
 	ServerTokens                       string
 	SSLRejectHandshake                 bool
 	SSLCiphers                         string

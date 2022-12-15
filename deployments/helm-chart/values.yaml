@@ -55,7 +55,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image.
-    tag: "2.4.1"
+    tag: "2.4.2"
 
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
@@ -118,6 +118,21 @@ controller:
 
   ## The termination grace period of the Ingress Controller pod.
   terminationGracePeriodSeconds: 30
+
+  ## HorizontalPodAutoscaling (HPA)
+  autoscaling:
+    ## Enables HorizontalPodAutoscaling.
+    enabled: false
+    ## The annotations of the Ingress Controller HorizontalPodAutoscaler.
+    annotations: {}
+    ## Minimum number of replicas for the HPA.
+    minReplicas: 1
+    ## Maximum number of replicas for the HPA.
+    maxReplicas: 3
+    ## The target cpu utilization percentage.
+    targetCPUUtilizationPercentage: 50
+    ## The target memory utilization percentage.
+    targetMemoryUtilizationPercentage: 50
 
   ## The resources of the Ingress Controller pods.
   resources:
@@ -183,8 +198,11 @@ controller:
   ## New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`.
   setAsDefaultIngress: false
 
-  ## Comma separated list of namespaces to watch for Ingress resources. By default the Ingress Controller watches all namespaces.
+  ## Comma separated list of namespaces to watch for Ingress resources. By default the Ingress Controller watches all namespaces. Mutually exclusive with "controller.watchNamespaceLabel".
   watchNamespace: ""
+
+  ## Configures the Ingress Controller to watch only those namespaces with label foo=bar. By default the Ingress Controller watches all namespaces. Mutually exclusive with "controller.watchNamespace".
+  watchNamespaceLabel: ""
 
   ## Comma separated list of namespaces to watch for Secret resources. By default the Ingress Controller watches all namespaces.
   watchSecretNamespace: ""
@@ -410,6 +428,19 @@ prometheus:
   port: 9113
 
   ## Specifies the namespace/name of a Kubernetes TLS Secret which will be used to protect the Prometheus endpoint.
+  secret: ""
+
+  ## Configures the HTTP scheme used.
+  scheme: http
+
+serviceInsight:
+  ## Expose NGINX Plus Service Insight endpoint.
+  create: false
+
+  ## Configures the port to expose endpoint.
+  port: 9114
+
+  ## Specifies the namespace/name of a Kubernetes TLS Secret which will be used to protect the Service Insight endpoint.
   secret: ""
 
   ## Configures the HTTP scheme used.

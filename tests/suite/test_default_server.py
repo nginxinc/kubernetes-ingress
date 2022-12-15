@@ -45,11 +45,12 @@ def default_server_setup(ingress_controller_endpoint, ingress_controller):
 @pytest.fixture(scope="class")
 def secret_setup(request, kube_apis):
     def fin():
-        if is_secret_present(kube_apis.v1, secret_name, secret_namespace):
-            print("cleaning up secret!")
-            delete_secret(kube_apis.v1, secret_name, secret_namespace)
-            # restore the original secret created in ingress_controller_prerequisites fixture
-            create_secret_from_yaml(kube_apis.v1, secret_namespace, secret_path)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            if is_secret_present(kube_apis.v1, secret_name, secret_namespace):
+                print("cleaning up secret!")
+                delete_secret(kube_apis.v1, secret_name, secret_namespace)
+                # restore the original secret created in ingress_controller_prerequisites fixture
+                create_secret_from_yaml(kube_apis.v1, secret_namespace, secret_path)
 
     request.addfinalizer(fin)
 

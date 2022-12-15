@@ -3,7 +3,7 @@
 exclude: (^docs/_vendor/|.*pb2.*)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.4.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -29,27 +29,38 @@ repos:
       - id: no-commit-to-branch
       - id: requirements-txt-fixer
       - id: fix-byte-order-marker
+  - repo: local
+    hooks:
+      - id: golang-diff
+        name: create-go-diff
+        entry: bash -c 'git diff -p origin/main > /tmp/diff.patch'
+        language: system
+        types: [go]
+        pass_filenames: false
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.50.1
     hooks:
       - id: golangci-lint
+        args: [--new-from-patch=/tmp/diff.patch]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.2.0
+    rev: v3.3.1
     hooks:
       - id: pyupgrade
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.11.1
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 22.12.0
     hooks:
       - id: black
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.18.4
+    rev: 0.19.2
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
         files: deployments/helm-chart/values.yaml
         types: [yaml]
         args: ['--schemafile', 'deployments/helm-chart/values.schema.json']
+ci:
+  skip: [golang-diff, golangci-lint, check-jsonschema]

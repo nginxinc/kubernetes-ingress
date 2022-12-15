@@ -94,6 +94,10 @@ spec:
         - name: prometheus
           containerPort: {{ .Values.prometheus.port }}
 {{- end }}
+{{- if .Values.serviceInsight.create }}
+        - name: service-insight
+          containerPort: {{ .Values.serviceInsight.port }}
+{{- end }}
 {{- if .Values.controller.readyStatus.enable }}
         - name: readiness-port
           containerPort: {{ .Values.controller.readyStatus.port }}
@@ -164,6 +168,9 @@ spec:
 {{- if .Values.controller.watchNamespace }}
           - -watch-namespace={{ .Values.controller.watchNamespace }}
 {{- end }}
+{{- if .Values.controller.watchNamespaceLabel }}
+          - -watch-namespace-label={{ .Values.controller.watchNamespaceLabel }}
+{{- end }}
 {{- if .Values.controller.watchSecretNamespace }}
           - -watch-secret-namespace={{ .Values.controller.watchSecretNamespace }}
 {{- end }}
@@ -196,6 +203,9 @@ spec:
           - -enable-prometheus-metrics={{ .Values.prometheus.create }}
           - -prometheus-metrics-listen-port={{ .Values.prometheus.port }}
           - -prometheus-tls-secret={{ .Values.prometheus.secret }}
+          - -enable-service-insight={{ .Values.serviceInsight.create }}
+          - -service-insight-listen-port={{ .Values.serviceInsight.port }}
+          - -service-insight-tls-secret={{ .Values.serviceInsight.secret }}
           - -enable-custom-resources={{ .Values.controller.enableCustomResources }}
           - -enable-snippets={{ .Values.controller.enableSnippets }}
           - -include-year={{ .Values.controller.includeYear }}

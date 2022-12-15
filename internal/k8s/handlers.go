@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"sort"
 
+	discovery_v1 "k8s.io/api/discovery/v1"
+
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"github.com/golang/glog"
@@ -60,34 +62,33 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 	}
 }
 
-// createEndpointHandlers builds the handler funcs for endpoints
-func createEndpointHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+// createEndpointSliceHandlers builds the handler funcs for EndpointSlices
+func createEndpointSliceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			endpoint := obj.(*v1.Endpoints)
-			glog.V(3).Infof("Adding endpoints: %v", endpoint.Name)
+			endpointSlice := obj.(*discovery_v1.EndpointSlice)
+			glog.V(3).Infof("Adding EndpointSlice: %v", endpointSlice.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
-			endpoint, isEndpoint := obj.(*v1.Endpoints)
-			if !isEndpoint {
+			endpointSlice, isEndpointSlice := obj.(*discovery_v1.EndpointSlice)
+			if !isEndpointSlice {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
 					glog.V(3).Infof("Error received unexpected object: %v", obj)
 					return
 				}
-				endpoint, ok = deletedState.Obj.(*v1.Endpoints)
+				endpointSlice, ok = deletedState.Obj.(*discovery_v1.EndpointSlice)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Endpoints object: %v", deletedState.Obj)
+					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-EndpointSlice object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing endpoints: %v", endpoint.Name)
+			glog.V(3).Infof("Removing EndpointSlice: %v", endpointSlice.Name)
 			lbc.AddSyncQueue(obj)
-		},
-		UpdateFunc: func(old, cur interface{}) {
+		}, UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Endpoints %v changed, syncing", cur.(*v1.Endpoints).Name)
+				glog.V(3).Infof("EndpointSlice %v changed, syncing", cur.(*discovery_v1.EndpointSlice).Name)
 				lbc.AddSyncQueue(cur)
 			}
 		},
@@ -677,4 +678,38 @@ func createAppProtectDosProtectedResourceHandlers(lbc *LoadBalancerController) c
 		},
 	}
 	return handlers
+}
+
+// createNamespaceHandlers builds the handler funcs for namespaces
+func createNamespaceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			ns := obj.(*v1.Namespace)
+			glog.V(3).Infof("Adding Namespace to list of watched Namespaces: %v", ns.Name)
+			lbc.AddSyncQueue(obj)
+		},
+		DeleteFunc: func(obj interface{}) {
+			ns, isNs := obj.(*v1.Namespace)
+			if !isNs {
+				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					return
+				}
+				ns, ok = deletedState.Obj.(*v1.Namespace)
+				if !ok {
+					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Namespace object: %v", deletedState.Obj)
+					return
+				}
+			}
+			glog.V(3).Infof("Removing Namespace from list of watched Namespaces: %v", ns.Name)
+			lbc.AddSyncQueue(obj)
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			if !reflect.DeepEqual(old, cur) {
+				glog.V(3).Infof("Namespace %v changed, syncing", cur.(*v1.Namespace).Name)
+				lbc.AddSyncQueue(cur)
+			}
+		},
+	}
 }

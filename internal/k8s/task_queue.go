@@ -12,6 +12,7 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	discovery_v1 "k8s.io/api/discovery/v1"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -109,10 +110,11 @@ type kind int
 // resources
 const (
 	ingress = iota
-	endpoints
+	endpointslice
 	configMap
 	secret
 	service
+	namespace
 	virtualserver
 	virtualServerRoute
 	globalConfiguration
@@ -139,14 +141,16 @@ func newTask(key string, obj interface{}) (task, error) {
 	switch t := obj.(type) {
 	case *networking.Ingress:
 		k = ingress
-	case *v1.Endpoints:
-		k = endpoints
+	case *discovery_v1.EndpointSlice:
+		k = endpointslice
 	case *v1.ConfigMap:
 		k = configMap
 	case *v1.Secret:
 		k = secret
 	case *v1.Service:
 		k = service
+	case *v1.Namespace:
+		k = namespace
 	case *conf_v1.VirtualServer:
 		k = virtualserver
 	case *conf_v1.VirtualServerRoute:

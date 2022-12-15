@@ -16,6 +16,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
@@ -53,9 +54,7 @@ func main() {
 
 	validateIngressClass(kubeClient)
 
-	checkNamespaceExists(kubeClient, watchNamespaces)
-
-	checkNamespaceExists(kubeClient, watchSecretNamespaces)
+	checkNamespaces(kubeClient)
 
 	dynClient, confClient := createCustomClients(config)
 
@@ -122,6 +121,10 @@ func main() {
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager), cr_validation.IsExternalDNSEnabled(*enableExternalDNS))
 
+	if *enableServiceInsight {
+		createHealthProbeEndpoint(kubeClient, plusClient, cnf)
+	}
+
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
 		ConfClient:                   confClient,
@@ -160,6 +163,7 @@ func main() {
 		CertManagerEnabled:           *enableCertManager,
 		ExternalDNSEnabled:           *enableExternalDNS,
 		IsIPV6Disabled:               *disableIPV6,
+		WatchNamespaceLabel:          *watchNamespaceLabel,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
@@ -222,7 +226,7 @@ func kubernetesVersionInfo(kubeClient kubernetes.Interface) {
 	}
 	glog.Infof("Kubernetes version: %v", k8sVersion)
 
-	minK8sVersion, err := util_version.ParseGeneric("1.19.0")
+	minK8sVersion, err := util_version.ParseGeneric("1.21.0")
 	if err != nil {
 		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
 	}
@@ -241,6 +245,25 @@ func validateIngressClass(kubeClient kubernetes.Interface) {
 	if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
 		glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v; expected %v", ingressClassRes.Name, ingressClassRes.Spec.Controller, k8s.IngressControllerName)
 	}
+}
+
+func checkNamespaces(kubeClient kubernetes.Interface) {
+	if *watchNamespaceLabel != "" {
+		// bootstrap the watched namespace list
+		var newWatchNamespaces []string
+		nsList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), meta_v1.ListOptions{LabelSelector: *watchNamespaceLabel})
+		if err != nil {
+			glog.Errorf("error when getting Namespaces with the label selector %v: %v", watchNamespaceLabel, err)
+		}
+		for _, ns := range nsList.Items {
+			newWatchNamespaces = append(newWatchNamespaces, ns.Name)
+		}
+		watchNamespaces = newWatchNamespaces
+		glog.Infof("Namespaces watched using label %v: %v", *watchNamespaceLabel, watchNamespaces)
+	} else {
+		checkNamespaceExists(kubeClient, watchNamespaces)
+	}
+	checkNamespaceExists(kubeClient, watchSecretNamespaces)
 }
 
 func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) {
@@ -426,6 +449,10 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 	}
 	if *enablePrometheusMetrics {
 		forbiddenListenerPorts[*prometheusMetricsListenPort] = true
+	}
+
+	if *enableServiceInsight {
+		forbiddenListenerPorts[*serviceInsightListenPort] = true
 	}
 
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
@@ -654,6 +681,22 @@ func createPlusAndLatencyCollectors(
 	}
 
 	return plusCollector, syslogListener, lc
+}
+
+func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) {
+	if !*enableServiceInsight {
+		return
+	}
+	var serviceInsightSecret *api_v1.Secret
+	var err error
+
+	if *serviceInsightTLSSecretName != "" {
+		serviceInsightSecret, err = getAndValidateSecret(kubeClient, *serviceInsightTLSSecretName)
+		if err != nil {
+			glog.Fatalf("Error trying to get the service insight TLS secret %v: %v", *serviceInsightTLSSecretName, err)
+		}
+	}
+	go healthcheck.RunHealthCheck(*serviceInsightListenPort, plusClient, cnf, serviceInsightSecret)
 }
 
 func processGlobalConfiguration() {

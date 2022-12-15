@@ -265,6 +265,43 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) (Warnings, error) 
 	return warnings, nil
 }
 
+// GetVirtualServerForHost takes a hostname and returns a VS for the given hostname.
+func (cnf *Configurator) GetVirtualServerForHost(hostname string) *conf_v1.VirtualServer {
+	for _, vsEx := range cnf.virtualServers {
+		if vsEx.VirtualServer.Spec.Host == hostname {
+			return vsEx.VirtualServer
+		}
+	}
+	return nil
+}
+
+// GetUpstreamsforVirtualServer takes VS and returns a slice of upstreams.
+func (cnf *Configurator) GetUpstreamsforVirtualServer(vs *conf_v1.VirtualServer) []string {
+	glog.V(3).Infof("Get upstreamName for vs: %s", vs.Spec.Host)
+	upstreamNames := make([]string, 0, len(vs.Spec.Upstreams))
+
+	virtualServerUpstreamNamer := NewUpstreamNamerForVirtualServer(vs)
+
+	for _, u := range vs.Spec.Upstreams {
+		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
+		glog.V(3).Infof("upstream: %s, upstreamName: %s", u.Name, upstreamName)
+		upstreamNames = append(upstreamNames, upstreamName)
+	}
+	return upstreamNames
+}
+
+// GetUpstreamsforHost takes a hostname and returns a slice of upstreams
+// for the given hostname.
+func (cnf *Configurator) GetUpstreamsforHost(hostname string) []string {
+	glog.V(3).Infof("Get upstream for host: %s", hostname)
+	vs := cnf.GetVirtualServerForHost(hostname)
+
+	if vs != nil {
+		return cnf.GetUpstreamsforVirtualServer(vs)
+	}
+	return nil
+}
+
 func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (Warnings, error) {
 	apResources := cnf.updateApResources(ingEx)
 
@@ -750,7 +787,7 @@ func GenerateCAFileContent(secret *api_v1.Secret) []byte {
 }
 
 // DeleteIngress deletes NGINX configuration for the Ingress resource.
-func (cnf *Configurator) DeleteIngress(key string) error {
+func (cnf *Configurator) DeleteIngress(key string, skipReload bool) error {
 	name := keyToFileName(key)
 	cnf.nginxManager.DeleteConfig(name)
 
@@ -761,15 +798,17 @@ func (cnf *Configurator) DeleteIngress(key string) error {
 		cnf.deleteIngressMetricsLabels(key)
 	}
 
-	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error when removing ingress %v: %w", key, err)
+	if !skipReload {
+		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+			return fmt.Errorf("error when removing ingress %v: %w", key, err)
+		}
 	}
 
 	return nil
 }
 
 // DeleteVirtualServer deletes NGINX configuration for the VirtualServer resource.
-func (cnf *Configurator) DeleteVirtualServer(key string) error {
+func (cnf *Configurator) DeleteVirtualServer(key string, skipReload bool) error {
 	name := getFileNameForVirtualServerFromKey(key)
 	cnf.nginxManager.DeleteConfig(name)
 
@@ -778,8 +817,10 @@ func (cnf *Configurator) DeleteVirtualServer(key string) error {
 		cnf.deleteVirtualServerMetricsLabels(key)
 	}
 
-	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error when removing VirtualServer %v: %w", key, err)
+	if !skipReload {
+		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+			return fmt.Errorf("error when removing VirtualServer %v: %w", key, err)
+		}
 	}
 
 	return nil
@@ -1152,26 +1193,61 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 }
 
 // UpdateTransportServers updates TransportServers.
-func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) error {
+func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) []error {
+	var errList []error
 	for _, tsEx := range updatedTSExes {
 		_, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
-			return fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
+			errList = append(errList, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err))
 		}
 	}
 
 	for _, key := range deletedKeys {
 		err := cnf.deleteTransportServer(key)
 		if err != nil {
-			return fmt.Errorf("error when removing TransportServer %v: %w", key, err)
+			errList = append(errList, fmt.Errorf("error when removing TransportServer %v: %w", key, err))
 		}
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error when updating TransportServers: %w", err)
+		errList = append(errList, fmt.Errorf("error when updating TransportServers: %w", err))
 	}
 
-	return nil
+	return errList
+}
+
+// BatchDeleteVirtualServers takes a list of VirtualServer resource keys, deletes their configuration, and reloads once
+func (cnf *Configurator) BatchDeleteVirtualServers(deletedKeys []string) []error {
+	var errList []error
+	for _, key := range deletedKeys {
+		err := cnf.DeleteVirtualServer(key, true)
+		if err != nil {
+			errList = append(errList, fmt.Errorf("error when removing VirtualServer %v: %w", key, err))
+		}
+	}
+
+	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+		errList = append(errList, fmt.Errorf("error when reloading NGINX for deleted VirtualServers: %w", err))
+	}
+
+	return errList
+}
+
+// BatchDeleteIngresses takes a list of Ingress resource keys, deletes their configuration, and reloads once
+func (cnf *Configurator) BatchDeleteIngresses(deletedKeys []string) []error {
+	var errList []error
+	for _, key := range deletedKeys {
+		err := cnf.DeleteIngress(key, true)
+		if err != nil {
+			errList = append(errList, fmt.Errorf("error when removing Ingress %v: %w", key, err))
+		}
+	}
+
+	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+		errList = append(errList, fmt.Errorf("error when reloading NGINX for deleted Ingresses: %w", err))
+	}
+
+	return errList
 }
 
 func keyToFileName(key string) string {
@@ -1437,20 +1513,24 @@ func (cnf *Configurator) addOrUpdateIngressesAndVirtualServers(ingExes []*Ingres
 
 // DeleteAppProtectPolicy updates Ingresses and VirtualServers that use AP Policy after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectPolicy(resource *unstructured.Unstructured, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
+	warnings := newWarnings()
+	var err error
 	if len(ingExes)+len(mergeableIngresses)+len(vsExes) > 0 {
-		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectPolicyFileNameFromUnstruct(resource))
+		warnings, err = cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes)
 	}
-
-	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes)
+	cnf.nginxManager.DeleteAppProtectResourceFile(appProtectPolicyFileNameFromUnstruct(resource))
+	return warnings, err
 }
 
 // DeleteAppProtectLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectLogConf(resource *unstructured.Unstructured, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
+	warnings := newWarnings()
+	var err error
 	if len(ingExes)+len(mergeableIngresses)+len(vsExes) > 0 {
-		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectLogConfFileNameFromUnstruct(resource))
+		warnings, err = cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes)
 	}
-
-	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes)
+	cnf.nginxManager.DeleteAppProtectResourceFile(appProtectLogConfFileNameFromUnstruct(resource))
+	return warnings, err
 }
 
 // RefreshAppProtectUserSigs writes all valid UDS files to fs and reloads NGINX

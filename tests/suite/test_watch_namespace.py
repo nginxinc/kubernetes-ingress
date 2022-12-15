@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 import requests
 from settings import TEST_DATA
@@ -8,6 +10,7 @@ from suite.utils.resources_utils import (
     delete_namespace,
     ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
+    wait_before_test,
     wait_until_all_pods_are_ready,
 )
 from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
@@ -60,10 +63,11 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
         )
 
     def fin():
-        print("Clean up:")
-        delete_namespace(kube_apis.v1, watched_namespace)
-        delete_namespace(kube_apis.v1, foreign_namespace)
-        delete_namespace(kube_apis.v1, watched_namespace2)
+        if request.config.getoption("--skip-fixture-teardown") == "no":
+            print("Clean up:")
+            delete_namespace(kube_apis.v1, watched_namespace)
+            delete_namespace(kube_apis.v1, foreign_namespace)
+            delete_namespace(kube_apis.v1, watched_namespace2)
 
     request.addfinalizer(fin)
 
@@ -105,7 +109,13 @@ class TestWatchMultipleNamespaces:
     def test_response_codes(self, ingress_controller, backend_setup, expected_responses):
         for ing in ["watched-ns-ingress", "watched-ns2-ingress", "foreign-ns-ingress"]:
             ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_hosts[ing])
-            resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[ing]})
+            resp = mock.Mock()
+            resp.status_code = "None"
+            retry = 0
+            while resp.status_code != expected_responses[ing] and retry < 3:
+                resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[ing]})
+                retry = +1
+                wait_before_test()
             assert (
                 resp.status_code == expected_responses[ing]
             ), f"Expected: {expected_responses[ing]} response code for {backend_setup.ingress_hosts[ing]}"

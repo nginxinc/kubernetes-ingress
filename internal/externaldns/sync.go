@@ -36,7 +36,7 @@ var vsGVK = vsapi.SchemeGroupVersion.WithKind("VirtualServer")
 type SyncFn func(context.Context, *vsapi.VirtualServer) error
 
 // SyncFnFor knows how to reconcile VirtualServer DNSEndpoint object.
-func SyncFnFor(rec record.EventRecorder, client clientset.Interface, extdnsLister []extdnslisters.DNSEndpointLister) SyncFn {
+func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[string]*namespacedInformer) SyncFn {
 	return func(ctx context.Context, vs *vsapi.VirtualServer) error {
 		// Do nothing if ExternalDNS is not present (nil) in VS or is not enabled.
 		if !vs.Spec.ExternalDNS.Enable {
@@ -56,7 +56,9 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, extdnsListe
 			return err
 		}
 
-		newDNSEndpoint, updateDNSEndpoint, err := buildDNSEndpoint(extdnsLister, vs, targets, recordType)
+		nsi := getNamespacedInformer(vs.Namespace, ig)
+
+		newDNSEndpoint, updateDNSEndpoint, err := buildDNSEndpoint(nsi.extdnslister, vs, targets, recordType)
 		if err != nil {
 			glog.Errorf("error message here %s", err)
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Incorrect DNSEndpoint config for VirtualServer resource: %s", err)
@@ -136,17 +138,14 @@ func getValidTargets(endpoints []vsapi.ExternalEndpoint) (extdnsapi.Targets, str
 	return targets, recordType, err
 }
 
-func buildDNSEndpoint(extdnsLister []extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer, targets extdnsapi.Targets, recordType string) (*extdnsapi.DNSEndpoint, *extdnsapi.DNSEndpoint, error) {
+func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer, targets extdnsapi.Targets, recordType string) (*extdnsapi.DNSEndpoint, *extdnsapi.DNSEndpoint, error) {
 	var updateDNSEndpoint *extdnsapi.DNSEndpoint
 	var newDNSEndpoint *extdnsapi.DNSEndpoint
 	var existingDNSEndpoint *extdnsapi.DNSEndpoint
 	var err error
-	for _, el := range extdnsLister {
-		existingDNSEndpoint, err = el.DNSEndpoints(vs.Namespace).Get(vs.ObjectMeta.Name)
-		if err == nil {
-			break
-		}
-	}
+
+	existingDNSEndpoint, err = extdnsLister.DNSEndpoints(vs.Namespace).Get(vs.ObjectMeta.Name)
+
 	if !apierrors.IsNotFound(err) && err != nil {
 		return nil, nil, err
 	}

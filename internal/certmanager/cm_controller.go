@@ -18,6 +18,7 @@ package certmanager
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -56,16 +57,14 @@ const (
 // and creates/ updates certificates for VS resources as required,
 // and VS resources when certificate objects are created/ updated
 type CmController struct {
-	vsLister                  []listers_v1.VirtualServerLister
-	sync                      SyncFn
-	ctx                       context.Context
-	mustSync                  []cache.InformerSynced
-	queue                     workqueue.RateLimitingInterface
-	vsSharedInformerFactory   []vsinformers.SharedInformerFactory
-	cmSharedInformerFactory   []cm_informers.SharedInformerFactory
-	kubeSharedInformerFactory []kubeinformers.SharedInformerFactory
-	recorder                  record.EventRecorder
-	cmClient                  *cm_clientset.Clientset
+	sync          SyncFn
+	ctx           context.Context
+	queue         workqueue.RateLimitingInterface
+	informerGroup map[string]*namespacedInformer
+	recorder      record.EventRecorder
+	cmClient      *cm_clientset.Clientset
+	kubeClient    kubernetes.Interface
+	vsClient      k8s_nginx.Interface
 }
 
 // CmOpts is the options required for building the CmController
@@ -76,29 +75,63 @@ type CmOpts struct {
 	namespace     []string
 	eventRecorder record.EventRecorder
 	vsClient      k8s_nginx.Interface
+	isDynamicNs   bool
+}
+
+type namespacedInformer struct {
+	mustSync                  []cache.InformerSynced
+	vsSharedInformerFactory   vsinformers.SharedInformerFactory
+	cmSharedInformerFactory   cm_informers.SharedInformerFactory
+	kubeSharedInformerFactory kubeinformers.SharedInformerFactory
+	vsLister                  listers_v1.VirtualServerLister
+	cmLister                  cmlisters.CertificateLister
+	stopCh                    chan struct{}
+	lock                      sync.RWMutex
 }
 
 func (c *CmController) register() workqueue.RateLimitingInterface {
-	var cmLister []cmlisters.CertificateLister
-	for _, sif := range c.vsSharedInformerFactory {
-		c.vsLister = append(c.vsLister, sif.K8s().V1().VirtualServers().Lister())
-		sif.K8s().V1().VirtualServers().Informer().AddEventHandler(&controllerpkg.QueuingEventHandler{
-			Queue: c.queue,
-		})
-		c.mustSync = append(c.mustSync, sif.K8s().V1().VirtualServers().Informer().HasSynced)
-	}
-
-	for _, cif := range c.cmSharedInformerFactory {
-		cif.Certmanager().V1().Certificates().Informer().AddEventHandler(&controllerpkg.BlockingEventHandler{
-			WorkFunc: certificateHandler(c.queue),
-		})
-		cmLister = append(cmLister, cif.Certmanager().V1().Certificates().Lister())
-		c.mustSync = append(c.mustSync, cif.Certmanager().V1().Certificates().Informer().HasSynced)
-	}
-
-	c.sync = SyncFnFor(c.recorder, c.cmClient, cmLister)
-
+	c.sync = SyncFnFor(c.recorder, c.cmClient, c.informerGroup)
 	return c.queue
+}
+
+// BuildOpts builds a CmOpts from the given parameters
+func BuildOpts(ctx context.Context, kc *rest.Config, cl kubernetes.Interface, ns []string, er record.EventRecorder, vsc k8s_nginx.Interface, idn bool) *CmOpts {
+	return &CmOpts{
+		context:       ctx,
+		kubeClient:    cl,
+		kubeConfig:    kc,
+		namespace:     ns,
+		eventRecorder: er,
+		vsClient:      vsc,
+		isDynamicNs:   idn,
+	}
+}
+
+func (c *CmController) newNamespacedInformer(ns string) *namespacedInformer {
+	nsi := &namespacedInformer{}
+	nsi.stopCh = make(chan struct{})
+	nsi.cmSharedInformerFactory = cm_informers.NewSharedInformerFactoryWithOptions(c.cmClient, resyncPeriod, cm_informers.WithNamespace(ns))
+	nsi.kubeSharedInformerFactory = kubeinformers.NewSharedInformerFactoryWithOptions(c.kubeClient, resyncPeriod, kubeinformers.WithNamespace(ns))
+	nsi.vsSharedInformerFactory = vsinformers.NewSharedInformerFactoryWithOptions(c.vsClient, resyncPeriod, vsinformers.WithNamespace(ns))
+
+	c.addHandlers(nsi)
+
+	c.informerGroup[ns] = nsi
+	return nsi
+}
+
+func (c *CmController) addHandlers(nsi *namespacedInformer) {
+	nsi.vsLister = nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Lister()
+	nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(&controllerpkg.QueuingEventHandler{
+		Queue: c.queue,
+	})
+	nsi.mustSync = append(nsi.mustSync, nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().HasSynced)
+
+	nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().AddEventHandler(&controllerpkg.BlockingEventHandler{
+		WorkFunc: certificateHandler(c.queue),
+	})
+	nsi.cmLister = nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Lister()
+	nsi.mustSync = append(nsi.mustSync, nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().HasSynced)
 }
 
 func (c *CmController) processItem(ctx context.Context, key string) error {
@@ -108,14 +141,11 @@ func (c *CmController) processItem(ctx context.Context, key string) error {
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return err
 	}
+	nsi := getNamespacedInformer(namespace, c.informerGroup)
 
 	var vs *conf_v1.VirtualServer
-	for _, vl := range c.vsLister {
-		vs, err = vl.VirtualServers(namespace).Get(name)
-		if err == nil {
-			break
-		}
-	}
+	vs, err = nsi.vsLister.VirtualServers(namespace).Get(name)
+
 	if err != nil {
 		return err
 	}
@@ -168,25 +198,26 @@ func NewCmController(opts *CmOpts) *CmController {
 	// Create a cert-manager api client
 	intcl, _ := cm_clientset.NewForConfig(opts.kubeConfig)
 
-	var vsSharedInformerFactory []vsinformers.SharedInformerFactory
-	var cmSharedInformerFactory []cm_informers.SharedInformerFactory
-	var kubeSharedInformerFactory []kubeinformers.SharedInformerFactory
-
-	for _, ns := range opts.namespace {
-		cmSharedInformerFactory = append(cmSharedInformerFactory, cm_informers.NewSharedInformerFactoryWithOptions(intcl, resyncPeriod, cm_informers.WithNamespace(ns)))
-		kubeSharedInformerFactory = append(kubeSharedInformerFactory, kubeinformers.NewSharedInformerFactoryWithOptions(opts.kubeClient, resyncPeriod, kubeinformers.WithNamespace(ns)))
-		vsSharedInformerFactory = append(vsSharedInformerFactory, vsinformers.NewSharedInformerFactoryWithOptions(opts.vsClient, resyncPeriod, vsinformers.WithNamespace(ns)))
-	}
+	ig := make(map[string]*namespacedInformer)
 
 	cm := &CmController{
-		ctx:                       opts.context,
-		queue:                     workqueue.NewNamedRateLimitingQueue(controllerpkg.DefaultItemBasedRateLimiter(), ControllerName),
-		cmSharedInformerFactory:   cmSharedInformerFactory,
-		kubeSharedInformerFactory: kubeSharedInformerFactory,
-		recorder:                  opts.eventRecorder,
-		cmClient:                  intcl,
-		vsSharedInformerFactory:   vsSharedInformerFactory,
+		ctx:           opts.context,
+		queue:         workqueue.NewNamedRateLimitingQueue(controllerpkg.DefaultItemBasedRateLimiter(), ControllerName),
+		informerGroup: ig,
+		recorder:      opts.eventRecorder,
+		cmClient:      intcl,
+		kubeClient:    opts.kubeClient,
+		vsClient:      opts.vsClient,
 	}
+
+	for _, ns := range opts.namespace {
+		if opts.isDynamicNs && ns == "" {
+			// no initial namespaces with watched label - skip creating informers for now
+			break
+		}
+		cm.newNamespacedInformer(ns)
+	}
+
 	cm.register()
 	return cm
 }
@@ -201,18 +232,15 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 
 	glog.Infof("Starting cert-manager control loop")
 
-	for _, vif := range c.vsSharedInformerFactory {
-		go vif.Start(c.ctx.Done())
+	var mustSync []cache.InformerSynced
+	for _, ig := range c.informerGroup {
+		ig.start()
+		mustSync = append(mustSync, ig.mustSync...)
 	}
-	for _, cif := range c.cmSharedInformerFactory {
-		go cif.Start(c.ctx.Done())
-	}
-	for _, kif := range c.kubeSharedInformerFactory {
-		go kif.Start(c.ctx.Done())
-	}
-	// // wait for all the informer caches we depend on are synced
-	glog.V(3).Infof("Waiting for %d caches to sync", len(c.mustSync))
-	if !cache.WaitForNamedCacheSync(ControllerName, stopCh, c.mustSync...) {
+	// wait for all the informer caches we depend on are synced
+
+	glog.V(3).Infof("Waiting for %d caches to sync", len(mustSync))
+	if !cache.WaitForNamedCacheSync(ControllerName, stopCh, mustSync...) {
 		glog.Fatal("error syncing cm queue")
 	}
 
@@ -222,7 +250,20 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 
 	<-stopCh
 	glog.V(3).Infof("shutting down queue as workqueue signaled shutdown")
+	for _, ig := range c.informerGroup {
+		ig.stop()
+	}
 	c.queue.ShutDown()
+}
+
+func (nsi *namespacedInformer) start() {
+	go nsi.vsSharedInformerFactory.Start(nsi.stopCh)
+	go nsi.cmSharedInformerFactory.Start(nsi.stopCh)
+	go nsi.kubeSharedInformerFactory.Start(nsi.stopCh)
+}
+
+func (nsi *namespacedInformer) stop() {
+	close(nsi.stopCh)
 }
 
 // runWorker is a long-running function that will continually call the
@@ -257,14 +298,28 @@ func (c *CmController) runWorker(ctx context.Context) {
 	}
 }
 
-// BuildOpts builds a CmOpts from the given parameters
-func BuildOpts(ctx context.Context, kc *rest.Config, cl kubernetes.Interface, ns []string, er record.EventRecorder, vsc k8s_nginx.Interface) *CmOpts {
-	return &CmOpts{
-		context:       ctx,
-		kubeClient:    cl,
-		kubeConfig:    kc,
-		namespace:     ns,
-		eventRecorder: er,
-		vsClient:      vsc,
+// AddNewNamespacedInformer adds watchers for a new namespace
+func (c *CmController) AddNewNamespacedInformer(ns string) {
+	glog.V(3).Infof("Adding or Updating cert-manager Watchers for Namespace: %v", ns)
+	nsi := getNamespacedInformer(ns, c.informerGroup)
+	if nsi == nil {
+		nsi = c.newNamespacedInformer(ns)
+		nsi.start()
+	}
+	if !cache.WaitForCacheSync(nsi.stopCh, nsi.mustSync...) {
+		return
+	}
+}
+
+// RemoveNamespacedInformer removes watchers for a namespace we are no longer watching
+func (c *CmController) RemoveNamespacedInformer(ns string) {
+	glog.V(3).Infof("Deleting cert-manager Watchers for Deleted Namespace: %v", ns)
+	nsi := getNamespacedInformer(ns, c.informerGroup)
+	if nsi != nil {
+		nsi.lock.Lock()
+		defer nsi.lock.Unlock()
+		nsi.stop()
+		delete(c.informerGroup, ns)
+		nsi = nil
 	}
 }

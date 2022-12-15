@@ -85,6 +85,12 @@ def pytest_addoption(parser) -> None:
         help="Show IC logs in stdout on test failure",
     )
     parser.addoption(
+        "--skip-fixture-teardown",
+        action="store",
+        default="no",
+        help="Skips teardown of test fixtures for debugging purposes",
+    )
+    parser.addoption(
         "--batch-start",
         action="store",
         default=BATCH_START,
@@ -139,7 +145,7 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "skip_for_loadbalancer" in item.keywords:
                 item.add_marker(skip_for_loadbalancer)
-    if "-ap" not in config.getoption("--image"):
+    if "-nap" not in config.getoption("--image"):
         appprotect = pytest.mark.skip(reason="Skip AppProtect test in non-AP image")
         for item in items:
             if "appprotect" in item.keywords:
@@ -184,3 +190,7 @@ def pytest_runtest_makereport(item) -> None:
         print("\n===================== IC Logs Start =====================")
         print(item.funcargs["kube_apis"].v1.read_namespaced_pod_log(pod_name, pod_namespace))
         print("\n===================== IC Logs End =====================")
+
+    if rep.when == "call" and item.config.getoption("--skip-fixture-teardown") == "yes":
+        print("\n===================== WARNING =====================")
+        print("Make sure to remove resources from this test run manually using kubectl utility\n")

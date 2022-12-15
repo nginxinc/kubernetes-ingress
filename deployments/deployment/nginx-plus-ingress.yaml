@@ -20,7 +20,7 @@ spec:
       serviceAccountName: nginx-ingress
       automountServiceAccountToken: true
       containers:
-      - image: nginx-plus-ingress:2.4.1
+      - image: nginx-plus-ingress:2.4.2
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -32,6 +32,8 @@ spec:
           containerPort: 8081
         - name: prometheus
           containerPort: 9113
+        - name: service-insight
+          containerPort: 9114
         readinessProbe:
           httpGet:
             path: /nginx-ready
@@ -75,4 +77,5 @@ spec:
          #- -report-ingress-status
          #- -external-service=nginx-ingress
          #- -enable-prometheus-metrics
+         #- -enable-service-insight
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
