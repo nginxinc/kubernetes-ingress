@@ -108,8 +108,8 @@ require (
 	golang.org/x/net v0.3.1-0.20221206200815-1e63c2f08a10 // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
 	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	golang.org/x/tools v0.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -150,8 +150,6 @@ replace (
 	go.opentelemetry.io/otel/sdk/metric => go.opentelemetry.io/otel/sdk/metric v0.20.0
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v0.20.0
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
-	// temporary fix for CVE-2022-27664
-	golang.org/x/net => golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
-	// temporary fix for CVE-2022-32149
-	golang.org/x/text v0.3.7 => golang.org/x/text v0.3.8
+	// temporary fix for CVE-2022-41717
+	golang.org/x/net => golang.org/x/net v0.4.0
 )
