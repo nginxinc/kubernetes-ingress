@@ -124,7 +124,7 @@ COPY --link --chown=101:0 LICENSE /licenses/
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
-FROM redhat/ubi8:8.6 AS ubi-plus
+FROM redhat/ubi8:8.7 AS ubi-plus
 ARG NGINX_PLUS_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
