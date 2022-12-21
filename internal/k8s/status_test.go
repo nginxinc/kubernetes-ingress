@@ -193,8 +193,8 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 			Namespace: "namespace",
 		},
 		Status: networking.IngressStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{
+			LoadBalancer: networking.IngressLoadBalancerStatus{
+				Ingress: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "1.2.3.4",
 					},
@@ -299,8 +299,8 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 			Namespace: "namespace",
 		},
 		Status: networking.IngressStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{
+			LoadBalancer: networking.IngressLoadBalancerStatus{
+				Ingress: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "1.2.3.4",
 					},
@@ -409,7 +409,7 @@ func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
 	}{
 		{
 			su: statusUpdater{
-				status: []v1.LoadBalancerIngress{
+				status: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "8.8.8.8",
 					},
@@ -421,7 +421,7 @@ func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
 		},
 		{
 			su: statusUpdater{
-				status: []v1.LoadBalancerIngress{
+				status: []networking.IngressLoadBalancerIngress{
 					{
 						Hostname: "my-loadbalancer.example.com",
 					},
