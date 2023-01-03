@@ -45,7 +45,7 @@ class TestHealthCheckTransportServer:
         ingress_controller_prerequisites,
         ingress_controller_endpoint,
     ):
-        """Test responses from service insight enpoint with http"""
+        """Test responses from service insight endpoint with http"""
         retry = 0
         resp = mock.Mock()
         resp.json.return_value = {}
