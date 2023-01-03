@@ -52,7 +52,7 @@ These statistics are returned as JSON:
 Response codes:
 
 * HTTP 200 OK - Service is healthy
-* HTTP 404 - No upstreams/VS/TS found for the requested hostname/name
-* HTTP 503 Service Unavailable - The service is down (All upstreams/VS/TS are "Unhealthy")
+* HTTP 404 Not Found - No upstreams/VS/TS found for the requested hostname/name
+* HTTP 418 I'm a teapot - The service is down (All upstreams/VS/TS are "Unhealthy")
 
 **Note**: wildcards in hostnames are not supported at the moment.

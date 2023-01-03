@@ -119,7 +119,7 @@ func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch stats.Up {
 	case 0:
-		w.WriteHeader(http.StatusServiceUnavailable)
+		w.WriteHeader(http.StatusTeapot)
 	default:
 		w.WriteHeader(http.StatusOK)
 	}
@@ -156,7 +156,7 @@ func (hs *HealthServer) StreamStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch stats.Up {
 	case 0:
-		w.WriteHeader(http.StatusServiceUnavailable)
+		w.WriteHeader(http.StatusTeapot)
 	default:
 		w.WriteHeader(http.StatusOK)
 	}

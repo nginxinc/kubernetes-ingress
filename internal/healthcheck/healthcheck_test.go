@@ -109,7 +109,7 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testi
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
-	if resp.StatusCode != http.StatusServiceUnavailable {
+	if resp.StatusCode != http.StatusTeapot {
 		t.Fatal(resp.StatusCode)
 	}
 
@@ -307,7 +307,7 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersDo
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
-	if resp.StatusCode != http.StatusServiceUnavailable {
+	if resp.StatusCode != http.StatusTeapot {
 		t.Fatal(resp.StatusCode)
 	}
 
