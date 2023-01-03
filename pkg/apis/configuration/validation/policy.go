@@ -250,8 +250,8 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*oidc.ZoneSyncLeeway, fieldPath.Child("zoneSyncLeeway"))...)
 	}
 
-	if oidc.AuthExtraArgs != "" {
-		allErrs = append(allErrs, validateQueryString(oidc.AuthExtraArgs, fieldPath.Child("authExtraArgs"))...)
+	if oidc.AuthExtraArgs != nil {
+		allErrs = append(allErrs, validateQueryString(strings.Join(oidc.AuthExtraArgs, "&"), fieldPath.Child("authExtraArgs"))...)
 	}
 
 	allErrs = append(allErrs, validateURL(oidc.AuthEndpoint, fieldPath.Child("authEndpoint"))...)

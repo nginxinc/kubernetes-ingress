@@ -47,7 +47,7 @@ func TestValidatePolicy(t *testing.T) {
 				Spec: v1.PolicySpec{
 					OIDC: &v1.OIDC{
 						AuthEndpoint:   "https://foo.bar/auth",
-						AuthExtraArgs:  "foo=bar",
+						AuthExtraArgs:  []string{"foo=bar"},
 						TokenEndpoint:  "https://foo.bar/token",
 						JWKSURI:        "https://foo.bar/certs",
 						ClientID:       "random-string",
@@ -216,7 +216,7 @@ func TestValidatePolicyFails(t *testing.T) {
 				Spec: v1.PolicySpec{
 					OIDC: &v1.OIDC{
 						AuthEndpoint:  "https://foo.bar/auth",
-						AuthExtraArgs: "foo;bar",
+						AuthExtraArgs: []string{"foo;bar"},
 						TokenEndpoint: "https://foo.bar/token",
 						JWKSURI:       "https://foo.bar/certs",
 						ClientID:      "random-string",
@@ -891,7 +891,7 @@ func TestValidateOIDCValid(t *testing.T) {
 		{
 			oidc: &v1.OIDC{
 				AuthEndpoint:   "https://accounts.google.com/o/oauth2/v2/auth",
-				AuthExtraArgs:  "foo=bar",
+				AuthExtraArgs:  []string{"foo=bar", "baz=zot"},
 				TokenEndpoint:  "https://oauth2.googleapis.com/token",
 				JWKSURI:        "https://www.googleapis.com/oauth2/v3/certs",
 				ClientID:       "random-string",
@@ -917,7 +917,7 @@ func TestValidateOIDCValid(t *testing.T) {
 		{
 			oidc: &v1.OIDC{
 				AuthEndpoint:  "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/auth",
-				AuthExtraArgs: "kc_idp_hint=foo",
+				AuthExtraArgs: []string{"kc_idp_hint=foo"},
 				TokenEndpoint: "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/token",
 				JWKSURI:       "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/certs",
 				ClientID:      "bar",
@@ -1036,7 +1036,7 @@ func TestValidateOIDCInvalid(t *testing.T) {
 		{
 			oidc: &v1.OIDC{
 				AuthEndpoint:  "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/auth",
-				AuthExtraArgs: "foo;bar",
+				AuthExtraArgs: []string{"foo;bar"},
 				TokenEndpoint: "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/token",
 				JWKSURI:       "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/certs",
 				ClientID:      "foobar",

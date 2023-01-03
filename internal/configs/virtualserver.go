@@ -1032,10 +1032,14 @@ func (p *policiesCfg) addOIDCConfig(
 		if scope == "" {
 			scope = "openid"
 		}
+		authExtraArgs := ""
+		if oidc.AuthExtraArgs != nil {
+			authExtraArgs = strings.Join(oidc.AuthExtraArgs, "&")
+		}
 
 		oidcPolCfg.oidc = &version2.OIDC{
 			AuthEndpoint:   oidc.AuthEndpoint,
-			AuthExtraArgs:  oidc.AuthExtraArgs,
+			AuthExtraArgs:  authExtraArgs,
 			TokenEndpoint:  oidc.TokenEndpoint,
 			JwksURI:        oidc.JWKSURI,
 			ClientID:       oidc.ClientID,

@@ -113,7 +113,9 @@ spec:
                     authEndpoint:
                       type: string
                     authExtraArgs:
-                      type: string
+                      type: array
+                      items:
+                        type: string
                     clientID:
                       type: string
                     clientSecret:
