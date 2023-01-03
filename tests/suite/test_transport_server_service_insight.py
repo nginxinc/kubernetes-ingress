@@ -178,8 +178,8 @@ class TestTransportServerTSServiceInsightHTTPS:
     def test_ts_service_insight_https(
         self,
         kube_apis,
-        crd_ingress_controller,
         https_secret_setup,
+        crd_ingress_controller,
         transport_server_tls_passthrough_setup,
         test_namespace,
         ingress_controller_endpoint,
