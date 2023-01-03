@@ -84,6 +84,7 @@ def transport_server_tls_passthrough_setup(
 
 
 @pytest.mark.ts
+@pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller, transport_server_tls_passthrough_setup",
     [
@@ -155,6 +156,7 @@ def https_secret_setup(request, kube_apis, test_namespace):
 
 
 @pytest.mark.ts
+@pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller, transport_server_tls_passthrough_setup",
     [
