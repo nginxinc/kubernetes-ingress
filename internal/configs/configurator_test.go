@@ -1281,3 +1281,121 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 		}
 	}
 }
+
+func TestUpstreamsForHost_ReturnsNilForNoVirtualServers(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+	tcnf.virtualServers = map[string]*VirtualServerEx{
+		"vs": invalidVirtualServerEx,
+	}
+
+	got := tcnf.UpstreamsForHost("tea.example.com")
+	if got != nil {
+		t.Errorf("want nil, got %+v", got)
+	}
+}
+
+func TestUpstreamsForHost_DoesNotReturnUpstreamsOnBogusHostname(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+	tcnf.virtualServers = map[string]*VirtualServerEx{
+		"vs": validVirtualServerExWithUpstreams,
+	}
+
+	got := tcnf.UpstreamsForHost("bogus.host.org")
+	if got != nil {
+		t.Errorf("want nil, got %+v", got)
+	}
+}
+
+func TestUpstreamsForHost_ReturnsUpstreamsNamesForValidHostname(t *testing.T) {
+	t.Parallel()
+	tcnf := createTestConfigurator(t)
+	tcnf.virtualServers = map[string]*VirtualServerEx{
+		"vs": validVirtualServerExWithUpstreams,
+	}
+
+	want := []string{"vs_default_test-vs_tea-app"}
+	got := tcnf.UpstreamsForHost("tea.example.com")
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestStreamUpstreamsForName_DoesNotReturnUpstreamsForBogusName(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+	tcnf.transportServers = map[string]*TransportServerEx{
+		"ts": validTransportServerExWithUpstreams,
+	}
+
+	got := tcnf.StreamUpstreamsForName("bogus-service-name")
+	if got != nil {
+		t.Errorf("want nil, got %+v", got)
+	}
+}
+
+func TestStreamUpstreamsForName_ReturnsStreamUpstreamsNamesOnValidServiceName(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+	tcnf.transportServers = map[string]*TransportServerEx{
+		"ts": validTransportServerExWithUpstreams,
+	}
+
+	want := []string{"ts_default_secure-app_secure-app"}
+	got := tcnf.StreamUpstreamsForName("secure-app")
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+var (
+	invalidVirtualServerEx = &VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{},
+	}
+	validVirtualServerExWithUpstreams = &VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "test-vs",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "tea.example.com",
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name: "tea-app",
+					},
+				},
+			},
+		},
+	}
+	validTransportServerExWithUpstreams = &TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "secure-app",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name:     "tls-passthrough",
+					Protocol: "TLS_PASSTHROUGH",
+				},
+				Host: "example.com",
+				Upstreams: []conf_v1alpha1.Upstream{
+					{
+						Name:    "secure-app",
+						Service: "secure-app",
+						Port:    8443,
+					},
+				},
+				Action: &conf_v1alpha1.Action{
+					Pass: "secure-app",
+				},
+			},
+		},
+	}
+)

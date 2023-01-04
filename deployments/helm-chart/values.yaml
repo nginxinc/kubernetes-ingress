@@ -448,7 +448,6 @@ serviceInsight:
 
 nginxServiceMesh:
   ## Enables integration with NGINX Service Mesh.
-  ## Requires controller.nginxplus
   enable: false
 
   ## Enables NGINX Service Mesh workload to route egress traffic through the Ingress Controller.

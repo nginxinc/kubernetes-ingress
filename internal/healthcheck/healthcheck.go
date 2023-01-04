@@ -14,7 +14,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/nginx-plus-go-client/client"
@@ -35,10 +35,12 @@ func RunHealthCheck(port int, plusClient *client.NginxClient, cnf *configs.Confi
 // HealthServer holds data required for running
 // the healthcheck server.
 type HealthServer struct {
-	Server           *http.Server
-	URL              string
-	UpstreamsForHost func(host string) []string
-	NginxUpstreams   func() (*client.Upstreams, error)
+	Server                 *http.Server
+	URL                    string
+	UpstreamsForHost       func(host string) []string
+	NginxUpstreams         func() (*client.Upstreams, error)
+	StreamUpstreamsForName func(host string) []string
+	NginxStreamUpstreams   func() (*client.StreamUpstreams, error)
 }
 
 // NewHealthServer creates Health Server. If secret is provided,
@@ -50,9 +52,11 @@ func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configura
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 		},
-		URL:              fmt.Sprintf("http://%s/", addr),
-		UpstreamsForHost: cnf.GetUpstreamsforHost,
-		NginxUpstreams:   nc.GetUpstreams,
+		URL:                    fmt.Sprintf("http://%s/", addr),
+		UpstreamsForHost:       cnf.UpstreamsForHost,
+		NginxUpstreams:         nc.GetUpstreams,
+		StreamUpstreamsForName: cnf.StreamUpstreamsForName,
+		NginxStreamUpstreams:   nc.GetStreamUpstreams,
 	}
 
 	if secret != nil {
@@ -72,7 +76,8 @@ func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configura
 // ListenAndServe starts healthcheck server.
 func (hs *HealthServer) ListenAndServe() error {
 	mux := chi.NewRouter()
-	mux.Get("/probe/{hostname}", hs.Retrieve)
+	mux.Get("/probe/{hostname}", hs.UpstreamStats)
+	mux.Get("/probe/ts/{name}", hs.StreamStats)
 	hs.Server.Handler = mux
 	if hs.Server.TLSConfig != nil {
 		return hs.Server.ListenAndServeTLS("", "")
@@ -85,8 +90,8 @@ func (hs *HealthServer) Shutdown(ctx context.Context) error {
 	return hs.Server.Shutdown(ctx)
 }
 
-// Retrieve finds health stats for the host identified by a hostname in the request URL.
-func (hs *HealthServer) Retrieve(w http.ResponseWriter, r *http.Request) {
+// UpstreamStats calculates health stats for the host identified by the hostname in the request URL.
+func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
 	hostname := chi.URLParam(r, "hostname")
 	host := sanitize(hostname)
 
@@ -114,11 +119,48 @@ func (hs *HealthServer) Retrieve(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch stats.Up {
 	case 0:
-		w.WriteHeader(http.StatusServiceUnavailable)
+		w.WriteHeader(http.StatusTeapot)
 	default:
 		w.WriteHeader(http.StatusOK)
 	}
 	if _, err = w.Write(data); err != nil {
+		glog.Error("error writing result", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+	}
+}
+
+// StreamStats calculates health stats for the TransportServer(s)
+// identified by the service (action) name in the request URL.
+func (hs *HealthServer) StreamStats(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	n := sanitize(name)
+	streamUpstreamNames := hs.StreamUpstreamsForName(n)
+	if len(streamUpstreamNames) == 0 {
+		glog.Errorf("no stream upstreams for requested name '%s' or name does not exist", n)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	streams, err := hs.NginxStreamUpstreams()
+	if err != nil {
+		glog.Errorf("error retrieving stream upstreams for requested name: %s", n)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	stats := countStreamStats(streams, streamUpstreamNames)
+	data, err := json.Marshal(stats)
+	if err != nil {
+		glog.Error("error marshaling result", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	switch stats.Up {
+	case 0:
+		w.WriteHeader(http.StatusTeapot)
+	default:
+		w.WriteHeader(http.StatusOK)
+	}
+	if _, err := w.Write(data); err != nil {
 		glog.Error("error writing result", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
@@ -169,11 +211,30 @@ func countStats(upstreams *client.Upstreams, upstreamNames []string) HostStats {
 			up++
 		}
 	}
-
-	unhealthy := total - up
 	return HostStats{
 		Total:     total,
 		Up:        up,
-		Unhealthy: unhealthy,
+		Unhealthy: total - up,
+	}
+}
+
+func countStreamStats(streams *client.StreamUpstreams, streamUpstreamNames []string) HostStats {
+	total, up := 0, 0
+	for name, s := range *streams {
+		if !slices.Contains(streamUpstreamNames, name) {
+			continue
+		}
+		for _, p := range s.Peers {
+			total++
+			if strings.ToLower(p.State) != "up" {
+				continue
+			}
+			up++
+		}
+	}
+	return HostStats{
+		Total:     total,
+		Up:        up,
+		Unhealthy: total - up,
 	}
 }

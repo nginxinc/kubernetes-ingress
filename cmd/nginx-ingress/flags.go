@@ -246,10 +246,6 @@ func parseFlags() {
 		glog.Fatal("NGINX App Protect Dos memory support is for NGINX Plus and App Protect Dos is enable")
 	}
 
-	if *spireAgentAddress != "" && !*nginxPlus {
-		glog.Fatal("spire-agent-address support is for NGINX Plus only")
-	}
-
 	if *enableInternalRoutes && *spireAgentAddress == "" {
 		glog.Fatal("enable-internal-routes flag requires spire-agent-address")
 	}
