@@ -2969,7 +2969,7 @@ func TestGeneratePolicies(t *testing.T) {
 					Spec: conf_v1.PolicySpec{
 						JWTAuth: &conf_v1.JWTAuth{
 							Realm:    "My Test API",
-							JwksURI:  "http://idp.example.com:8080/keys",
+							JwksURI:  "https://idp.example.com:443/keys",
 							KeyCache: "1h",
 						},
 					},
@@ -2979,9 +2979,9 @@ func TestGeneratePolicies(t *testing.T) {
 				JWTAuth: &version2.JWTAuth{
 					Realm: "My Test API",
 					JwksURI: version2.JwksURI{
-						JwksScheme: "http",
+						JwksScheme: "https",
 						JwksHost:   "idp.example.com",
-						JwksPort:   "8080",
+						JwksPort:   "443",
 						JwksPath:   "/keys",
 					},
 					KeyCache: "1h",
@@ -3005,7 +3005,7 @@ func TestGeneratePolicies(t *testing.T) {
 					Spec: conf_v1.PolicySpec{
 						JWTAuth: &conf_v1.JWTAuth{
 							Realm:    "My Test API",
-							JwksURI:  "http://idp.example.com/keys",
+							JwksURI:  "https://idp.example.com/keys",
 							KeyCache: "1h",
 						},
 					},
@@ -3015,7 +3015,7 @@ func TestGeneratePolicies(t *testing.T) {
 				JWTAuth: &version2.JWTAuth{
 					Realm: "My Test API",
 					JwksURI: version2.JwksURI{
-						JwksScheme: "http",
+						JwksScheme: "https",
 						JwksHost:   "idp.example.com",
 						JwksPort:   "",
 						JwksPath:   "/keys",
