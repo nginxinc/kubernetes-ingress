@@ -848,9 +848,10 @@ func (p *policiesCfg) addJWTAuthConfig(
 		uri, _ := url.Parse(jwtAuth.JwksURI)
 
 		JwksURI := &version2.JwksURI{
-			JwksHost: uri.Hostname(),
-			JwksPort: uri.Port(),
-			JwksPath: uri.Path,
+			JwksScheme: uri.Scheme,
+			JwksHost:   uri.Hostname(),
+			JwksPort:   uri.Port(),
+			JwksPath:   uri.Path,
 		}
 
 		p.JWTAuth = &version2.JWTAuth{

@@ -67,7 +67,6 @@ match {{ $m.Name }} {
 {{ end }}
 {{ end }}
 
-
 server {
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
@@ -190,7 +189,7 @@ server {
         {{ with $s.JWTAuth.JwksURI }}
         proxy_set_header Host {{ .JwksHost }};
         set $idp_backend {{ .JwksHost }};
-        proxy_pass http://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
+        proxy_pass {{ .JwksScheme}}://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
         {{ end }}
     }
 
@@ -387,7 +386,7 @@ server {
             {{ with $l.JWTAuth.JwksURI }}
             proxy_set_header Host {{ .JwksHost }};
             set $idp_backend {{ .JwksHost }};
-            proxy_pass http://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
+            proxy_pass {{ .JwksScheme}}://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
             {{ end }}
         }
         {{ end }}

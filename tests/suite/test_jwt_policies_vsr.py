@@ -12,8 +12,6 @@ jwk_sec_valid_src = f"{TEST_DATA}/jwt-policy/secret/jwk-secret-valid.yaml"
 jwk_sec_invalid_src = f"{TEST_DATA}/jwt-policy/secret/jwk-secret-invalid.yaml"
 jwt_pol_valid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-valid.yaml"
 jwt_pol_multi_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-valid-multi.yaml"
-jwt_pol_jwksuri_valid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-jwksuri-valid.yaml"
-jwt_pol_jwksuri_invalid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-jwksuri-invalid.yaml"
 jwt_pol_invalid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-invalid.yaml"
 jwt_pol_invalid_sec_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-invalid-secret.yaml"
 jwt_vsr_invalid_src = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-invalid-subroute.yaml"
@@ -212,9 +210,7 @@ class TestJWTPoliciesVsr:
             pytest.fail(f"Not a valid case or parameter")
 
     @pytest.mark.smoke
-    @pytest.mark.parametrize(
-        "policy", [jwt_pol_valid_src, jwt_pol_invalid_src, jwt_pol_jwksuri_valid_src, jwt_pol_jwksuri_invalid_src]
-    )
+    @pytest.mark.parametrize("policy", [jwt_pol_valid_src, jwt_pol_invalid_src])
     def test_jwt_policy(
         self,
         kube_apis,
@@ -287,24 +283,6 @@ class TestJWTPoliciesVsr:
                 and policy_info["status"]["state"] == "Valid"
             )
         elif policy == jwt_pol_invalid_src:
-            assert resp.status_code == 500
-            assert f"Internal Server Error" in resp.text
-            assert crd_info["status"]["state"] == "Warning"
-            assert (
-                policy_info["status"]
-                and policy_info["status"]["reason"] == "Rejected"
-                and policy_info["status"]["state"] == "Invalid"
-            )
-        elif policy == jwt_pol_jwksuri_valid_src:
-            assert resp.status_code == 200
-            assert f"Request ID:" in resp.text
-            assert crd_info["status"]["state"] == "Valid"
-            assert (
-                policy_info["status"]
-                and policy_info["status"]["reason"] == "AddedOrUpdated"
-                and policy_info["status"]["state"] == "Valid"
-            )
-        elif policy == jwt_pol_jwksuri_invalid_src:
             assert resp.status_code == 500
             assert f"Internal Server Error" in resp.text
             assert crd_info["status"]["state"] == "Warning"

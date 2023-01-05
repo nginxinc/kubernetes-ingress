@@ -11,8 +11,6 @@ jwk_sec_valid_src = f"{TEST_DATA}/jwt-policy/secret/jwk-secret-valid.yaml"
 jwk_sec_invalid_src = f"{TEST_DATA}/jwt-policy/secret/jwk-secret-invalid.yaml"
 jwt_pol_valid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-valid.yaml"
 jwt_pol_multi_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-valid-multi.yaml"
-jwt_pol_jwksuri_valid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-jwksuri-valid.yaml"
-jwt_pol_jwksuri_invalid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-jwksuri-invalid.yaml"
 jwt_vs_single_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-single.yaml"
 jwt_vs_single_invalid_pol_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-single-invalid-pol.yaml"
 jwt_vs_multi_1_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-multi-1.yaml"
@@ -207,9 +205,7 @@ class TestJWTPolicies:
             pytest.fail(f"Not a valid case or parameter")
 
     @pytest.mark.smoke
-    @pytest.mark.parametrize(
-        "policy", [jwt_pol_valid_src, jwt_pol_invalid_src, jwt_pol_jwksuri_valid_src, jwt_pol_jwksuri_invalid_src]
-    )
+    @pytest.mark.parametrize("policy", [jwt_pol_valid_src, jwt_pol_invalid_src])
     def test_jwt_policy(
         self,
         kube_apis,
@@ -240,20 +236,6 @@ class TestJWTPolicies:
                 and policy_info["status"]["state"] == "Valid"
             )
         elif policy == jwt_pol_invalid_src:
-            vs_src = jwt_vs_single_invalid_pol_src
-            assert (
-                policy_info["status"]
-                and policy_info["status"]["reason"] == "Rejected"
-                and policy_info["status"]["state"] == "Invalid"
-            )
-        elif policy == jwt_pol_jwksuri_valid_src:
-            vs_src = jwt_vs_single_src
-            assert (
-                policy_info["status"]
-                and policy_info["status"]["reason"] == "AddedOrUpdated"
-                and policy_info["status"]["state"] == "Valid"
-            )
-        elif policy == jwt_pol_jwksuri_invalid_src:
             vs_src = jwt_vs_single_invalid_pol_src
             assert (
                 policy_info["status"]

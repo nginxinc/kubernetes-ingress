@@ -1,10 +1,10 @@
 apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
-  name: jwt-policy
+  name: jwks-policy
 spec:
   jwt:
     realm: MyProductAPI
     token: $http_token
-    jwksURI: https://keycloak.default.svc.cluster.local:8080/realms/jwks-example/protocol/openid-connect/certs
+    jwksURI: http://keycloak.default.svc.cluster.local:8080/realms/jwks-example/protocol/openid-connect/certs
     keyCache: 1h
