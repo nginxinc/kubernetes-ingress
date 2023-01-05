@@ -48,12 +48,12 @@ $ kubectl apply -f webapp.yaml
 To set up Keycloak:
 1. To connect to Keycloak, use `https://keycloak.example.com`.
 
-2. Create a new Realm. We will use `jwks-example` for this example. This can be done by selecting the dropdown menu on the left and selecting Create Realm
+2. Create a new Realm. We will use `jwks-example` for this example. This can be done by selecting the dropdown menu on the left and selecting `Create Realm`
 
-3. Create a new Client called `jwks-client`. This can be done by selecting the Clients tab on the left and then selecting Create client.
-   - When creating the Client, ensure both Client authentication and Authorization are enabled.
+3. Create a new Client called `jwks-client`. This can be done by selecting the `Client`s tab on the left and then selecting `Create client`.
+   - When creating the Client, ensure both `Client authentication` and `Authorization` are enabled.
 
-4. Once the client is created, navigate to the Credentials tab for that client and copy the Client secret.
+4. Once the client is created, navigate to the `Credentials` tab for that client and copy the client secret.
    - This can be saved in the `SECRET` shell variable for later:
       ```
       export SECRET=<client secret>
@@ -61,10 +61,10 @@ To set up Keycloak:
 
 5. Create a new User called `jwks-user`. This can be done by selecting the Users tab on the left and then selecting Create client.
 
-6. Once the user is created, navigate to the Credentials tab for that user and select Set password. For this example the password can be whatever you want.
-   - This can be saved in the `CREDENTIAL` shell variable for later:
+6. Once the user is created, navigate to the `Credentials` tab for that user and select `Set password`. For this example the password can be whatever you want.
+   - This can be saved in the `PASSWORD` shell variable for later:
      ```
-     export CREDENTIAL=<user credentials>
+     export PASSWORD=<user password>
      ```
 
 ## Step 5 - Deploy the JWT Policy
@@ -101,9 +101,14 @@ metadata:
   name: nginx-config
   namespace: nginx-ingress
 data:
-  resolver-addresses: <resolver-ip>
+  resolver-addresses: <resolver-address>
 ```
 
+In this example, we create a config map using Kubernetes' default DNS `kube-dns.kube-system.svc.cluster.local` for the resolver address.
+
+```
+$ kubectl apply -f nginx-config.yaml
+```
 
 ## Step 7 - Configure Load Balancing
 
@@ -126,7 +131,7 @@ $ export TOKEN=$(curl -k -L -X POST 'https://keycloak.example.com/realms/jwks-ex
 --data-urlencode client_id=jwks-client \
 --data-urlencode client_secret=$SECRET \
 --data-urlencode username=jwks-user \
---data-urlencode password=$CREDENTIAL \
+--data-urlencode password=$PASSWORD \
 | jq -r .access_token)
 ```
 
