@@ -163,7 +163,7 @@ policies:
 ```
 In this example the Ingress Controller will use the configuration from the first policy reference `basic-auth-policy-one`, and ignores `basic-auth-policy-two`.
 
-### JWT
+### JWT using local Kubernates secret
 
 > Note: This feature is only available in NGINX Plus.
 
@@ -207,6 +207,42 @@ The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For 
 #### JWT Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+```yaml
+policies:
+- name: jwt-policy-one
+- name: jwt-policy-two
+```
+In this example the Ingress Controller will use the configuration from the first policy reference `jwt-policy-one`, and ignores `jwt-policy-two`.
+
+### JWT using JWKS from remote location
+
+> Note: This feature is only available in NGINX Plus.
+
+The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens, this particular method allows import of the keys (JWKS) for JWT policy by means of a URL (for a remote server or an identity provider) so they don't have to be copied and updated to the IC pod.
+
+For example, the following policy will reject all requests that do not include a valid JWT in the HTTP header fetched from the identity provider:
+```yaml
+jwt:
+  realm: MyProductAPI
+  token: $http_token
+  jwksURI: <uri_to_remote_server_or_idp>
+  keyCache: 1h
+```
+
+> Note: The feature is implemented using the NGINX Plus directive [auth_jwt_key_request](http://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html#auth_jwt_key_request) under [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``jwksURI`` | The remote URI where the request will be sent to retrieve JSON Web Key set| ``string`` | Yes |
+|``keyCache`` | Enables the caching of keys that are obtained from the ``jwksURI`` and sets a valid time for expiration | ``string`` | Yes |
+|``realm`` | The realm of the JWT. | ``string`` | Yes |
+|``token`` | The token specifies a variable that contains the JSON Web Token. By default the JWT is passed in the ``Authorization`` header as a Bearer Token. JWT may be also passed as a cookie or a part of a query string, for example: ``$cookie_auth_token``. Accepted variables are ``$http_``, ``$arg_``, ``$cookie_``. | ``string`` | No |
+{{% /table %}}
+
+#### JWT Merging Behavior
+
+This behaviour is similar when using a local kubernates secret where a VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
 ```yaml
 policies:
 - name: jwt-policy-one
