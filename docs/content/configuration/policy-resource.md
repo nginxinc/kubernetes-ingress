@@ -163,7 +163,7 @@ policies:
 ```
 In this example the Ingress Controller will use the configuration from the first policy reference `basic-auth-policy-one`, and ignores `basic-auth-policy-two`.
 
-### JWT using local Kubernates secret
+### JWT Using Local Kubernetes Secret
 
 > Note: This feature is only available in NGINX Plus.
 
