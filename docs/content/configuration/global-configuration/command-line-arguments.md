@@ -370,8 +370,6 @@ Format: `<namespace>/<name>`
 
 Specifies the address of a running Spire agent. **For use with NGINX Service Mesh only**.
 
-Requires [-nginx-plus](#cmdoption-nginx-plus).
-
 * If the argument is set, but the Ingress Controller is unable to connect to the Spire Agent, the Ingress Controller will fail to start.
 
 &nbsp;
@@ -381,9 +379,9 @@ Requires [-nginx-plus](#cmdoption-nginx-plus).
 
 Enable support for internal routes with NGINX Service Mesh. **For use with NGINX Service Mesh only**.
 
-Requires [-nginx-plus](#cmdoption-nginx-plus) and [-spire-agent-address](#cmdoption-spire-agent-address).
+Requires [-spire-agent-address](#cmdoption-spire-agent-address).
 
-* If the argument is set, but `nginx-plus` is set to false, or the `spire-agent-address` is not provided, the Ingress Controller will fail to start.
+* If the argument is set, but `spire-agent-address` is not provided, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-enable-latency-metrics"></a>
