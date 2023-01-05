@@ -25,7 +25,7 @@ from suite.utils.yaml_utils import get_first_host_from_yaml
     ],
     indirect=True,
 )
-class TestHealthCheckVsHttp:
+class TestVirtualServerServiceInsightHTTP:
     def test_responses_svc_insight_http(
         self, request, kube_apis, crd_ingress_controller, virtual_server_setup, ingress_controller_endpoint
     ):
@@ -77,7 +77,7 @@ def https_secret_setup(request, kube_apis, test_namespace):
     ],
     indirect=True,
 )
-class TestHealthCheckVsHttps:
+class TestVirtualServerServiceInsightHTTPS:
     def test_responses_svc_insight_https(
         self,
         request,
