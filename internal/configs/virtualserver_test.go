@@ -2979,9 +2979,10 @@ func TestGeneratePolicies(t *testing.T) {
 				JWTAuth: &version2.JWTAuth{
 					Realm: "My Test API",
 					JwksURI: version2.JwksURI{
-						JwksHost: "idp.example.com",
-						JwksPort: "8080",
-						JwksPath: "/keys",
+						JwksScheme: "http",
+						JwksHost:   "idp.example.com",
+						JwksPort:   "8080",
+						JwksPath:   "/keys",
 					},
 					KeyCache: "1h",
 				},
@@ -3014,9 +3015,10 @@ func TestGeneratePolicies(t *testing.T) {
 				JWTAuth: &version2.JWTAuth{
 					Realm: "My Test API",
 					JwksURI: version2.JwksURI{
-						JwksHost: "idp.example.com",
-						JwksPort: "",
-						JwksPath: "/keys",
+						JwksScheme: "http",
+						JwksHost:   "idp.example.com",
+						JwksPort:   "",
+						JwksPath:   "/keys",
 					},
 					KeyCache: "1h",
 				},
