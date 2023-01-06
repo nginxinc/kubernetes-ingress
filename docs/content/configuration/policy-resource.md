@@ -169,7 +169,7 @@ In this example the Ingress Controller will use the configuration from the first
 
 The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens.
 
-For example, the following policy will reject all requests that do not include a valid JWT in the HTTP header `token`:
+The following example policy will reject all requests that do not include a valid JWT in the HTTP header `token`:
 ```yaml
 jwt:
   secret: jwk-secret
@@ -194,7 +194,7 @@ We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/conf
 The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a period (`.`) are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header.
 
 
-> Note: The feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
+> Note: This feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -206,7 +206,7 @@ The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For 
 
 #### JWT Merging Behavior
 
-A VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+A VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied: every subsequent reference will be ignored. For example, here we reference two policies:
 ```yaml
 policies:
 - name: jwt-policy-one
@@ -214,13 +214,13 @@ policies:
 ```
 In this example the Ingress Controller will use the configuration from the first policy reference `jwt-policy-one`, and ignores `jwt-policy-two`.
 
-### JWT using JWKS from remote location
+### JWT Using JWKS From Remote Location
 
 > Note: This feature is only available in NGINX Plus.
 
-The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens, this particular method allows import of the keys (JWKS) for JWT policy by means of a URL (for a remote server or an identity provider) so they don't have to be copied and updated to the IC pod.
+The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens, allowing import of the keys (JWKS) for JWT policy by means of a URL (for a remote server or an identity provider) as a result they don't have to be copied and updated to the IC pod.
 
-For example, the following policy will reject all requests that do not include a valid JWT in the HTTP header fetched from the identity provider:
+The following example policy will reject all requests that do not include a valid JWT in the HTTP header fetched from the identity provider:
 ```yaml
 jwt:
   realm: MyProductAPI
@@ -229,7 +229,7 @@ jwt:
   keyCache: 1h
 ```
 
-> Note: The feature is implemented using the NGINX Plus directive [auth_jwt_key_request](http://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html#auth_jwt_key_request) under [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
+> Note: This feature is implemented using the NGINX Plus directive [auth_jwt_key_request](http://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html#auth_jwt_key_request) under [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -242,7 +242,7 @@ jwt:
 
 #### JWT Merging Behavior
 
-This behaviour is similar when using a local kubernates secret where a VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+This behaviour is similar to using a local Kubernetes secret where a VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied: every subsequent reference will be ignored. For example, here we reference two policies:
 ```yaml
 policies:
 - name: jwt-policy-one

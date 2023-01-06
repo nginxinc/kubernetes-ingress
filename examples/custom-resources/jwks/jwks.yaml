@@ -1,7 +1,7 @@
 apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
-  name: jwks-policy
+  name: jwt-policy
 spec:
   jwt:
     realm: MyProductAPI

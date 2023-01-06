@@ -5,7 +5,7 @@ metadata:
 spec:
   host: webapp.example.com
   policies:
-  - name: jwks-policy
+  - name: jwt-policy
   upstreams:
   - name: webapp
     service: webapp-svc
