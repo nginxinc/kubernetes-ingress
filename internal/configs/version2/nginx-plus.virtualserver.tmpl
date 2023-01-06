@@ -184,7 +184,7 @@ server {
         proxy_method GET;
         {{ if .KeyCache }}
         proxy_cache jwk;
-        proxy_cache_valid 200 {{ .KeyCache }};
+        proxy_cache_valid 200 12h;
         {{ end }}
         {{ with $s.JWTAuth.JwksURI }}
         proxy_set_header Host {{ .JwksHost }};
@@ -381,7 +381,7 @@ server {
             proxy_method GET;
             {{ if .KeyCache }}
             proxy_cache {{ $l.Path }}_jwks_uri;
-            proxy_cache_valid 200 {{ .KeyCache }};
+            proxy_cache_valid 200 12h;
             {{ end }}
             {{ with $l.JWTAuth.JwksURI }}
             proxy_set_header Host {{ .JwksHost }};
