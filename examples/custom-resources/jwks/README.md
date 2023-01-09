@@ -82,7 +82,7 @@ spec:
   jwt:
     realm: MyProductAPI
     token: $http_token
-    jwksURI: https://keycloak.example.com/realms/<your_realm>/protocol/openid-connect/certs
+    jwksURI: http://keycloak.default.svc.cluster.local:8080/realms/<your_realm>/protocol/openid-connect/certs
     keyCache: 1h
 ```
 
@@ -105,7 +105,7 @@ data:
   resolver-addresses: <resolver-address>
 ```
 
-In this example, we create a config map using Kubernetes' default DNS `kube-dns.kube-system.svc.cluster.local` for the resolver address.
+In this example, we create a ConfigMap using Kubernetes' default DNS `kube-dns.kube-system.svc.cluster.local` for the resolver address. For more information on `resolver-addresses` and other related ConfigMap keys, please refer to our documentation [ConfigMap Resource](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#summary-of-configmap-keys) and our blog post [Using DNS for Service Discovery with NGINX and NGINX Plus](https://www.nginx.com/blog/dns-service-discovery-nginx-plus)
 
 ```
 $ kubectl apply -f nginx-config.yaml
