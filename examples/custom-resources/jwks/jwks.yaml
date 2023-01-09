@@ -6,5 +6,5 @@ spec:
   jwt:
     realm: MyProductAPI
     token: $http_token
-    jwksURI: http://keycloak.default.svc.cluster.local:8080/realms/jwks-example/protocol/openid-connect/certs
+    jwksURI: <https://replace_with_your_jwks_uri>
     keyCache: 1h

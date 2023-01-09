@@ -4,4 +4,4 @@ metadata:
   name: nginx-config
   namespace: nginx-ingress
 data:
-  resolver-addresses: "kube-dns.kube-system.svc.cluster.local"
+  resolver-addresses: "<your_resolver_address>"

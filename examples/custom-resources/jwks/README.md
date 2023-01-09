@@ -4,6 +4,7 @@ In this example we deploy a web application, configure load balancing with a Vir
 Instead of using a local secret to verify the client request such as in the [jwt](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/jwt) example, we will define an external Identity Provider (IdP) using the `JwksURI` field.
 
 We will be using a deployment of [KeyCloak](https://www.keycloak.org/) to work as our IdP in this example.
+In this example, KeyCloak is deployed as a single container for the purpose of exposing it with an Ingress controller.
 
 ## Prerequisites
 
