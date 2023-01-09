@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3.2.0
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - name: Setup Golang Environment
         uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
         with:
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3.2.0
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - uses: reviewdog/action-actionlint@326cc761d95c903f29a111a44888be707f912684 # v1.35.0
         with:
           actionlint_flags: -shellcheck ""
