@@ -429,6 +429,11 @@ server {
         {{ $proxyOrGRPC }}_set_header username $jwt_claim_sub;
         {{ end }}
 
+        {{ if $s.OIDC.AccessTokenEnable }}
+        {{ $proxyOrGRPC }}_set_header Authorization "Bearer $access_token";
+        {{ $proxyOrGRPC }}_intercept_errors on;
+        {{ end }}
+
         {{ with $l.WAF }}
         app_protect_enable {{ .Enable }};
             {{ if .ApPolicy }}
