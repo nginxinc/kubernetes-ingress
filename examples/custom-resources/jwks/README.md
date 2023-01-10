@@ -106,7 +106,7 @@ data:
 ```
 In this example, we create a ConfigMap using Kubernetes' default DNS `kube-dns.kube-system.svc.cluster.local` for the resolver address. For more information on `resolver-addresses` and other related ConfigMap keys, please refer to our documentation [ConfigMap Resource](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#summary-of-configmap-keys) and our blog post [Using DNS for Service Discovery with NGINX and NGINX Plus](https://www.nginx.com/blog/dns-service-discovery-nginx-plus)
 
-NOTE: When setting the value of jwksURI in Step 5, the response will differ depending on the IDP used. In some cases the response will be too large for NGINX to properly handle.
+NOTE: When setting the value of `jwksURI` in Step 5, the response will differ depending on the IDP used. In some cases the response will be too large for NGINX to properly handle.
 If this occurs you will need to configure the [subrequest_output_buffer_size](https://nginx.org/en/docs/http/ngx_http_core_module.html#subrequest_output_buffer_size) directive in the http context.
 This can currently be done using `http-snippets`. Please refer to our document on [snippets and custom templates](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#snippets-and-custom-templates) for details on how to configure this directive.
 
