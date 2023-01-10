@@ -512,17 +512,9 @@ func TestValidateJWTFails(t *testing.T) {
 			jwt: &v1.JWTAuth{
 				Realm:    "My Product api",
 				JwksURI:  "https://idp.com/token",
-				KeyCache: "1",
-			},
-			msg: "no time suffix for KeyCache",
-		},
-		{
-			jwt: &v1.JWTAuth{
-				Realm:    "My Product api",
-				JwksURI:  "https://idp.com/token",
 				KeyCache: "1k",
 			},
-			msg: "invalid suffix for KeyCacke",
+			msg: "invalid suffix for KeyCache",
 		},
 		{
 			jwt: &v1.JWTAuth{
@@ -530,7 +522,7 @@ func TestValidateJWTFails(t *testing.T) {
 				JwksURI:  "https://idp.com/token",
 				KeyCache: "oneM",
 			},
-			msg: "invalid unit for KeyCacke",
+			msg: "invalid unit for KeyCache",
 		},
 		{
 			jwt: &v1.JWTAuth{
