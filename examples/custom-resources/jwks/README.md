@@ -111,6 +111,7 @@ If this occurs you will need to configure the [subrequest_output_buffer_size](ht
 This can currently be done using `http-snippets`. Please refer to our document on [snippets and custom templates](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#snippets-and-custom-templates) for details on how to configure this directive.
 
 The code block below is an example of the updated configmap which adds `subrequest_output_buffer_size` under the http context in the nginx.conf.
+
 NOTE: The value of `subrequest_output_buffer_size` is only an example value and should be changed to suite your environment.
 ```
 kind: ConfigMap
