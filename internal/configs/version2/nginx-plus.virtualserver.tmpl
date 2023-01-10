@@ -175,7 +175,6 @@ server {
     auth_jwt "{{ .Realm }}"{{ if .Token }} token={{ .Token }}{{ end }};
     {{ if .Secret}}auth_jwt_key_file {{ .Secret }};{{ end }}
     {{ if .JwksURI.JwksHost }}
-    auth_jwt_type signed; ## signed is default. Others are `encrypted`, `nested`
     {{ if .KeyCache }}auth_jwt_key_cache {{ .KeyCache }};{{ end }}
     auth_jwt_key_request /_jwks_uri_server;
 
@@ -372,7 +371,6 @@ server {
         auth_jwt "{{ .Realm }}"{{ if .Token }} token={{ .Token }}{{ end }};
         {{ if .Secret}}auth_jwt_key_file {{ .Secret }};{{ end }}
         {{ if .JwksURI.JwksHost }}
-        auth_jwt_type signed; ## signed is default. Others are `encrypted`, `nested`
         {{ if .KeyCache }}auth_jwt_key_cache {{ .KeyCache }};{{ end }}
         auth_jwt_key_request {{ $l.Path }}_jwks_uri;
 

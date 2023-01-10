@@ -242,7 +242,7 @@ jwt:
 
 #### JWT Merging Behavior
 
-This behaviour is similar to using a local Kubernetes secret where a VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied: every subsequent reference will be ignored. For example, here we reference two policies:
+This behavior is similar to using a local Kubernetes secret where a VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied: every subsequent reference will be ignored. For example, here we reference two policies:
 ```yaml
 policies:
 - name: jwt-policy-one
