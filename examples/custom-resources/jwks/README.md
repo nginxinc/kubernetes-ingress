@@ -72,7 +72,7 @@ To set up Keycloak:
 
 1. Create a policy with the name `jwt-policy` and configure the `JwksURI` field so that it only permits requests to our web application that contain a valid JWT.
 In the example policy below, replace `<your_realm>` with the realm created in Step 4. We used `jwks-example` as our realm name.
-NOTE: the value of `spec.jwt.token` is set to `$http_token` in this example as we are sending the client token in an HTTP header.
+The value of `spec.jwt.token` is set to `$http_token` in this example as we are sending the client token in an HTTP header.
 ```
 apiVersion: k8s.nginx.org/v1
 kind: Policy
@@ -104,8 +104,25 @@ metadata:
 data:
   resolver-addresses: <resolver-address>
 ```
-
 In this example, we create a ConfigMap using Kubernetes' default DNS `kube-dns.kube-system.svc.cluster.local` for the resolver address. For more information on `resolver-addresses` and other related ConfigMap keys, please refer to our documentation [ConfigMap Resource](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#summary-of-configmap-keys) and our blog post [Using DNS for Service Discovery with NGINX and NGINX Plus](https://www.nginx.com/blog/dns-service-discovery-nginx-plus)
+
+NOTE: When setting the value of jwksURI in Step 5, the response will differ depending on the IDP used. In some cases the response will be too large for NGINX to properly handle.
+If this occurs you will need to configure the [subrequest_output_buffer_size](https://nginx.org/en/docs/http/ngx_http_core_module.html#subrequest_output_buffer_size) directive in the http context.
+This can currently be done using `http-snippets`. Please refer to our document on [snippets and custom templates](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#snippets-and-custom-templates) for details on how to configure this directive.
+
+The code block below is an example of the updated configmap which adds `subrequest_output_buffer_size` under the http context in the nginx.conf.
+NOTE: The value of `subrequest_output_buffer_size` is only an example value and should be changed to suite your environment.
+```
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  resolver-addresses: <resolver-address>
+  http-snippets: |
+    subrequest_output_buffer_size 64k; 
+```
 
 ```
 $ kubectl apply -f nginx-config.yaml
