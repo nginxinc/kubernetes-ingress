@@ -121,7 +121,7 @@ metadata:
 data:
   resolver-addresses: <resolver-address>
   http-snippets: |
-    subrequest_output_buffer_size 64k; 
+    subrequest_output_buffer_size 64k;
 ```
 
 ```
