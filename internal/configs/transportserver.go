@@ -24,12 +24,16 @@ func (tsEx *TransportServerEx) String() string {
 	if tsEx == nil {
 		return "<nil>"
 	}
-
 	if tsEx.TransportServer == nil {
 		return "TransportServerEx has no TransportServer"
 	}
-
 	return fmt.Sprintf("%s/%s", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name)
+}
+
+func newUpstreamNamerForTransportServer(transportServer *conf_v1alpha1.TransportServer) *upstreamNamer {
+	return &upstreamNamer{
+		prefix: fmt.Sprintf("ts_%s_%s", transportServer.Namespace, transportServer.Name),
+	}
 }
 
 // generateTransportServerConfig generates a full configuration for a TransportServer.
@@ -105,7 +109,6 @@ func generateUnixSocket(transportServerEx *TransportServerEx) string {
 	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName {
 		return fmt.Sprintf("unix:/var/lib/nginx/passthrough-%s_%s.sock", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name)
 	}
-
 	return ""
 }
 
@@ -172,7 +175,6 @@ func generateTransportServerHealthCheck(upstreamName string, generatedUpstreamNa
 			break
 		}
 	}
-
 	return hc, match
 }
 

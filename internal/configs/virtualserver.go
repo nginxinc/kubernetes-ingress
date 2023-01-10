@@ -8,7 +8,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -155,12 +154,6 @@ func NewUpstreamNamerForVirtualServerRoute(virtualServer *conf_v1.VirtualServer,
 			virtualServerRoute.Name,
 		),
 		namespace: virtualServerRoute.Namespace,
-	}
-}
-
-func newUpstreamNamerForTransportServer(transportServer *conf_v1alpha1.TransportServer) *upstreamNamer {
-	return &upstreamNamer{
-		prefix: fmt.Sprintf("ts_%s_%s", transportServer.Namespace, transportServer.Name),
 	}
 }
 
