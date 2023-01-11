@@ -55,7 +55,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image.
-    tag: "2.4.2"
+    tag: "3.0.0"
 
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
