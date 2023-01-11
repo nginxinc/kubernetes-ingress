@@ -57,7 +57,7 @@ Using `kubectl`, we can see that the namespace for our demo (nginx-ingress) now 
 
 ```bash
 
-kubectl get namespacess -A --show-labels
+kubectl get namespaces -A --show-labels
 
 
 default                Active   28h   <none>

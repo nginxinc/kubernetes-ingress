@@ -757,7 +757,7 @@ Supported NGINX variables: `$args`, `$http2`, `$https`, `$remote_addr`, `$remote
 The value supports two kinds of matching:
 * *Case-insensitive string comparison*. For example:
   * `john` -- case-insensitive matching that succeeds for strings, such as `john`, `John`, `JOHN`.
-  * `!john` -- negation of the case-incentive matching for john that succeeds for strings, such as `bob`, `anything`, `''` (empty string).
+  * `!john` -- negation of the case-insensitive matching for john that succeeds for strings, such as `bob`, `anything`, `''` (empty string).
 * *Matching with a regular expression*. Note that NGINX supports regular expressions compatible with those used by the Perl programming language (PCRE). For example:
   * `~^yes` -- a case-sensitive regular expression that matches any string that starts with `yes`. For example: `yes`, `yes123`.
   * `!~^yes` -- negation of the previous regular expression that succeeds for strings like `YES`, `Yes123`, `noyes`. (The negation mechanism is not part of the PCRE syntax).
