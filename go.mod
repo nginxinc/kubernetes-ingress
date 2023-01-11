@@ -17,7 +17,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.2
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20230105000112-eab7a2c85304
-	google.golang.org/grpc v1.51.0
+	google.golang.org/grpc v1.52.0
 	k8s.io/api v0.25.4
 	k8s.io/apimachinery v0.25.4
 	k8s.io/client-go v0.25.4
@@ -107,7 +107,7 @@ require (
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
-	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
+	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect
