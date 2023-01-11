@@ -7,4 +7,4 @@ pytest-html==3.2.0
 pytest-repeat==0.9.1
 PyYAML==6.0
 requests==2.28.1
-urllib3==1.26.13
+urllib3==1.26.14
