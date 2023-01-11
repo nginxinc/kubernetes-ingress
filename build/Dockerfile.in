@@ -5,12 +5,12 @@ ARG DOWNLOAD_TAG=edge
 
 
 ############################################# Base images containing libs for Opentracing #############################################
-FROM opentracing/nginx-opentracing:nginx-1.23.3 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.23.3-alpine as alpine-opentracing-lib
+FROM docker.io/opentracing/nginx-opentracing:nginx-1.23.3 as opentracing-lib
+FROM docker.io/opentracing/nginx-opentracing:nginx-1.23.3-alpine as alpine-opentracing-lib
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.23.3 AS debian
+FROM docker.io/nginx:1.23.3 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
@@ -19,7 +19,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.23.3-alpine AS alpine
+FROM docker.io/nginx:1.23.3-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libstdc++ \
@@ -31,7 +31,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.17 as alpine-plus
+FROM docker.io/alpine:3.17 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
@@ -45,7 +45,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:11-slim AS debian-plus
+FROM docker.io/debian:11-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 ARG BUILD_OS
@@ -103,7 +103,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI #############################################
-FROM nginxcontrib/nginx:1.23.3-ubi AS ubi
+FROM docker.io/nginxcontrib/nginx:1.23.3-ubi AS ubi
 ARG IC_VERSION
 
 LABEL name="NGINX Ingress Controller" \
@@ -116,14 +116,14 @@ LABEL name="NGINX Ingress Controller" \
 	io.k8s.description="The NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
-COPY --link --chown=101:0 LICENSE /licenses/
+COPY %% COPY_FLAGS %% --chown=101:0 LICENSE /licenses/
 
 # temp fix for CVE-2023-0361 and CVE-2021-46822
 RUN microdnf --nodocs upgrade -y gnutls libjpeg-turbo
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
-FROM redhat/ubi9-minimal AS ubi-plus
+FROM docker.io/redhat/ubi9-minimal AS ubi-plus
 ARG NGINX_PLUS_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -195,10 +195,10 @@ ARG TARGETPLATFORM
 ARG NAP_MODULES=none
 
 # copy oidc files on plus build
-RUN --mount=type=bind,target=/tmp [ -n "${BUILD_OS##*plus*}" ] && exit 0; mkdir -p /etc/nginx/oidc/ && cp -a /tmp/internal/configs/oidc/* /etc/nginx/oidc/
+RUN --mount=type=bind,source=internal,target=/tmp%% MOUNT_FLAGS %% [ -n "${BUILD_OS##*plus*}" ] && exit 0; mkdir -p /etc/nginx/oidc/ && cp -a /tmp/configs/oidc/* /etc/nginx/oidc/
 
 # run only on nap waf build
-RUN --mount=type=bind,target=/tmp [ -n "${NAP_MODULES##*waf*}" ] && exit 0; mkdir -p /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
+RUN --mount=type=bind,target=/tmp%% MOUNT_FLAGS %% [ -n "${NAP_MODULES##*waf*}" ] && exit 0; mkdir -p /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
 	&& chown -R 101:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ /var/log/nginx/ \
 	&& touch /etc/nginx/waf/nac-usersigs/index.conf \
 	&& cp -a /tmp/build/log-default.json /etc/nginx
@@ -207,9 +207,9 @@ RUN --mount=type=bind,target=/tmp [ -n "${NAP_MODULES##*waf*}" ] && exit 0; mkdi
 RUN [ -n "${NAP_MODULES##*dos*}" ] && exit 0; mkdir -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm \
 	&& chmod 777 /shared/cores /var/log/adm /var/run/adm /etc/app_protect_dos
 
-RUN --mount=type=bind,target=/tmp mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
-	&& [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
-	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
+RUN --mount=type=bind,source=internal,target=/tmp%% MOUNT_FLAGS %% mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
+	&& [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/configs/version1/nginx$PLUS.ingress.tmpl /tmp/configs/version1/nginx$PLUS.tmpl \
+	/tmp/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/configs/version2/nginx$PLUS.transportserver.tmpl / \
 	&& chown -R 101:0 /etc/nginx /var/cache/nginx /var/lib/nginx /*.tmpl \
 	&& rm -f /etc/nginx/conf.d/* /etc/apt/apt.conf.d/90pkgs-nginx /etc/apt/sources.list.d/nginx-plus.list
 
@@ -232,15 +232,15 @@ LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERS
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.20-alpine AS builder
+FROM docker.io/golang:1.20-alpine AS builder
 ARG IC_VERSION
 ARG TARGETARCH
 
 WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/
 RUN apk add --no-cache git
-RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/%% MOUNT_FLAGS %% --mount=type=cache,target=/root/.cache/go-build \
 	go mod download
-RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/%% MOUNT_FLAGS %% --mount=type=cache,target=/root/.cache/go-build \
 	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION}" -o /nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 
 
@@ -249,7 +249,7 @@ FROM common AS container
 
 LABEL org.nginx.kic.image.build.version="container"
 
-COPY --link --from=builder --chown=101:0 /nginx-ingress /
+COPY %% COPY_FLAGS %% --from=builder --chown=101:0 /nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built locally #############################################
@@ -257,7 +257,7 @@ FROM common AS local
 
 LABEL org.nginx.kic.image.build.version="local"
 
-COPY --link --chown=101:0 nginx-ingress /
+COPY %% COPY_FLAGS %% --chown=101:0 nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
@@ -266,7 +266,7 @@ ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
+COPY %% COPY_FLAGS %% --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
@@ -276,7 +276,7 @@ ARG NAP_MODULES_AWS
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
+COPY %% COPY_FLAGS %% --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
@@ -286,4 +286,4 @@ FROM common as download
 
 LABEL org.nginx.kic.image.build.version="binaries"
 
-COPY --link --from=kic --chown=101:0 /nginx-ingress /
+COPY %% COPY_FLAGS %% --from=kic --chown=101:0 /nginx-ingress /

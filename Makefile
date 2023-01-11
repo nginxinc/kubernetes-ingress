@@ -5,6 +5,9 @@ GIT_TAG = $(shell git describe --tags --abbrev=0 || echo untagged)
 VERSION = $(GIT_TAG)-SNAPSHOT-$(GIT_COMMIT_SHORT)
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
+SELF := $(abspath $(lastword $(MAKEFILE_LIST)))
+include Makefile.containers
+
 # variables that can be overridden by the user
 PREFIX ?= nginx/nginx-ingress## The name of the image. For example, nginx/nginx-ingress
 TAG ?= $(VERSION:v%=%)## The tag of the image. For example, 2.0.0
@@ -13,15 +16,13 @@ override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg G
 ARCH ?= amd64## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets.
 
 # final docker build command
-DOCKER_CMD = docker build --platform linux/$(ARCH) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
-
-export DOCKER_BUILDKIT = 1
+DOCKER_CMD = $(CONTAINER_BUILDENV) $(CONTAINER_CLITOOL) build --platform linux/$(ARCH) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
 
 .DEFAULT_GOAL:=help
 
 .PHONY: help
 help: Makefile ## Display this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "; printf "Usage:\n\n    make \033[36m<target>\033[0m [VARIABLE=value...]\n\nTargets:\n\n"}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(SELF) | sort | awk 'BEGIN {FS = ":.*?## "; printf "Usage:\n\n    make \033[36m<target>\033[0m [VARIABLE=value...]\n\nTargets:\n\n"}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@grep -E '^(override )?[a-zA-Z_-]+ \??\+?= .*?## .*$$' $< | sort | awk 'BEGIN {FS = " \\??\\+?= .*?## "; printf "\nVariables:\n\n"}; {gsub(/override /, "", $$1); printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: all
@@ -30,7 +31,7 @@ all: test lint verify-codegen update-crds debian-image
 .PHONY: lint
 lint: ## Run linter
 	@git fetch
-	docker run --pull always --rm -v $(shell pwd):/kubernetes-ingress -w /kubernetes-ingress -v $(shell go env GOCACHE):/cache/go -e GOCACHE=/cache/go -e GOLANGCI_LINT_CACHE=/cache/go -v $(shell go env GOPATH)/pkg:/go/pkg golangci/golangci-lint:latest git diff -p origin/main > /tmp/diff.patch && golangci-lint --color always run -v --new-from-patch=/tmp/diff.patch
+	$(CONTAINER_CLITOOL) run --pull always --rm -v $(shell pwd):/kubernetes-ingress -w /kubernetes-ingress -v $(shell go env GOCACHE):/cache/go -e GOCACHE=/cache/go -e GOLANGCI_LINT_CACHE=/cache/go -v $(shell go env GOPATH)/pkg:/go/pkg golangci/golangci-lint:latest git diff -p origin/main > /tmp/diff.patch && golangci-lint --color always run -v --new-from-patch=/tmp/diff.patch
 
 .PHONY: lint-python
 lint-python: ## Run linter for python tests
@@ -74,7 +75,7 @@ certificate-and-key: ## Create default cert and key
 
 .PHONY: build
 build: ## Build Ingress Controller binary
-	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
+	@$(CONTAINER_CLITOOL) -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
 ifeq (${TARGET},local)
 	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container or TARGET=download\n"; exit $$code)
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
@@ -97,52 +98,59 @@ build-goreleaser: ## Build Ingress Controller binary using GoReleaser
 	@goreleaser -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with GoReleaser. Follow the docs to install it https://goreleaser.com/install\n"; exit $$code)
 	GOOS=linux GOPATH=$(shell go env GOPATH) GOARCH=$(ARCH) goreleaser build --rm-dist --debug --snapshot --id kubernetes-ingress --single-target
 
+.PHONY: build/Dockerfile
+build/Dockerfile: build/Dockerfile.in
+	cat build/Dockerfile.in | sed \
+		-e "s/%% MOUNT_FLAGS %%/$(CONTAINER_MOUNT_FLAGS)/g" \
+		-e "s/%% COPY_FLAGS %%/$(CONTAINER_COPY_FLAGS)/g" \
+		> build/Dockerfile
+
 .PHONY: debian-image
-debian-image: build ## Create Docker image for Ingress Controller (Debian)
+debian-image: build build/Dockerfile ## Create Docker image for Ingress Controller (Debian)
 	$(DOCKER_CMD) --build-arg BUILD_OS=debian
 
 .PHONY: alpine-image
-alpine-image: build ## Create Docker image for Ingress Controller (Alpine)
+alpine-image: build build/Dockerfile ## Create Docker image for Ingress Controller (Alpine)
 	$(DOCKER_CMD) --build-arg BUILD_OS=alpine
 
 .PHONY: alpine-image-plus
-alpine-image-plus: build ## Create Docker image for Ingress Controller (Alpine with NGINX Plus)
+alpine-image-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (Alpine with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus
 
 .PHONY: debian-image-plus
-debian-image-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
+debian-image-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus
 
 .PHONY: debian-image-nap-plus
-debian-image-nap-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect WAF)
+debian-image-nap-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect WAF)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=waf
 
 .PHONY: debian-image-dos-plus
-debian-image-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect DoS)
+debian-image-dos-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=dos
 
 .PHONY: debian-image-nap-dos-plus
-debian-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus, App Protect WAF and DoS)
+debian-image-nap-dos-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (Debian with NGINX Plus, App Protect WAF and DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=waf,dos
 
 .PHONY: ubi-image
-ubi-image: build ## Create Docker image for Ingress Controller (UBI)
+ubi-image: build build/Dockerfile ## Create Docker image for Ingress Controller (UBI)
 	$(DOCKER_CMD) --build-arg BUILD_OS=ubi
 
 .PHONY: ubi-image-plus
-ubi-image-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus)
+ubi-image-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (UBI with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=ubi-plus
 
 .PHONY: ubi-image-nap-plus
-ubi-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect WAF)
+ubi-image-nap-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect WAF)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf
 
 .PHONY: ubi-image-dos-plus
-ubi-image-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect DoS)
+ubi-image-dos-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=dos
 
 .PHONY: ubi-image-nap-dos-plus
-ubi-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus, App Protect WAF and DoS)
+ubi-image-nap-dos-plus: build build/Dockerfile ## Create Docker image for Ingress Controller (UBI with NGINX Plus, App Protect WAF and DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf,dos
 
 .PHONY: openshift-image openshift-image-plus openshift-image-nap-plus openshift-image-dos-plus openshift-image-nap-dos-plus
@@ -163,12 +171,12 @@ all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian
 
 .PHONY: push
 push: ## Docker push to PREFIX and TAG
-	docker push $(PREFIX):$(TAG)
+	$(CONTAINER_CLITOOL) push $(PREFIX):$(TAG)
 
 .PHONY: clean
 clean:  ## Remove nginx-ingress binary
-	-rm nginx-ingress
-	-rm -r dist
+	rm -f nginx-ingress build/Dockerfile
+	rm -rf dist
 
 .PHONY: deps
 deps: ## Add missing and remove unused modules, verify deps and download them to local cache

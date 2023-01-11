@@ -1,0 +1,39 @@
+#!/usr/bin/make -f
+
+ifndef CONTAINER_CLITOOL
+ifeq ($(shell docker -v >/dev/null 2>&1 || echo FAIL),)
+CONTAINER_CLITOOL = docker
+else ifeq ($(shell podman -v >/dev/null 2>&1 || echo FAIL),)
+CONTAINER_CLITOOL = podman
+endif
+endif
+
+ifeq ($(CONTAINER_CLITOOL), docker)
+CONTAINER_BUILDENV ?= DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain
+# https://github.com/containers/buildah/issues/4325
+CONTAINER_COPY_FLAGS ?= --link
+ifeq ($(shell docker-compose -v >/dev/null 2>&1 || echo FAIL),)
+CONTAINER_COMPOSE = docker-compose
+endif
+else ifeq ($(CONTAINER_CLITOOL), podman)
+# https://github.com/containers/podman/issues/17032
+CONTAINER_MOUNT_FLAGS ?= ,shared,z
+ifeq ($(shell podman-compose -v >/dev/null 2>&1 || echo FAIL),)
+CONTAINER_COMPOSE = podman-compose --podman-rm-args=--depend
+endif
+else ifdef CONTAINER_CLITOOL
+CONTAINER_COMPOSE = $(error Invalid CONTAINER_CLITOOL: $(CONTAINER_CLITOOL) (supported values: docker, podman))
+endif
+
+ifdef CONTAINER_COMPOSE
+CONTAINER_COMPOSETOOL = $(CONTAINER_COMPOSE)
+ifeq ($(OS), linux)
+CONTAINER_VOLUME_FLAGS = :z
+else
+CONTAINER_VOLUME_FLAGS =
+endif
+else
+CONTAINER_COMPOSETOOL = $(error Neither docker-compose nor podman-compose found)
+endif
+
+CONTAINER_VARS = CONTAINER_CLITOOL CONTAINER_COMPOSE CONTAINER_BUILDENV
