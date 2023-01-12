@@ -50,7 +50,6 @@ FIXES:
 * [3139](https://github.com/nginxinc/kubernetes-ingress/pull/3139) Remove all IPV6 listeners in ingress resources with `-disable-ipv6` command line.
 * [3237](https://github.com/nginxinc/kubernetes-ingress/pull/3237) Update script logic for validating tag.
 * [3239](https://github.com/nginxinc/kubernetes-ingress/pull/3239) Fix git command to retrieve commit matching the tag.
-* [3322](https://github.com/nginxinc/kubernetes-ingress/pull/3322) Fix for CVE-2022-42898.
 
 
 HELM CHART:
