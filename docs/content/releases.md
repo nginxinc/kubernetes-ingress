@@ -14,10 +14,10 @@ docs: "DOCS-616"
 OVERVIEW:
 
 * Added support for [Deep Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight) for VirtualServer and TransportServer using the [-enable-service-insight](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-service-insight) cli argument.
-* *The minimum supported version of Kubernetes is now 1.21*. NGINX Ingress Controller 3.0.0 removes support for `k8s.io/v1/Endpoints` API in favor of `discovery.k8s.io/v1/EndpointSlices`. This now means that the minimum supported version of Kubernetes is now 1.21. For older Kubernetes versions, use the 2.4.x release of the Ingress Controller. For details see [add support for EndpointSlices](https://github.com/nginxinc/kubernetes-ingress/pull/3260).
+* *The minimum supported version of Kubernetes is now 1.21*. NGINX Ingress Controller 3.0.0 removes support for `k8s.io/v1/Endpoints` API in favor of `discovery.k8s.io/v1/EndpointSlices`. For older Kubernetes versions, use the 2.4.x release of the Ingress Controller.
 * Added support for [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/).
 * Added support to dynamically reconfigure namespace watchers using labels  [-watch-namespace-label](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-label-string) and watching secrets using the [-watch-secret-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-secret-namespace-string) cli arguments.
-* Allow configuration of [map-hash-bucket-size and map-hash-max-size](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource#general-customization) using the configmap resource.
+* Allow configuration of NGINX directives `map-hash-bucket-size` and `map-hash-max-size` using the [ConfigMap resource](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource#general-customization) .
 * Added support for [fetching JWKs from a remote URL](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource#jwt-using-jwks-from-remote-location
 ) to dynamically validate JWT tokens and optimize performance through caching.
 * NGINX Service Mesh now supports the open source (free) version of NGINX Ingress Controller.
@@ -26,7 +26,6 @@ OVERVIEW:
 
 FEATURES:
 
-* [3143](https://github.com/nginxinc/kubernetes-ingress/pull/3143) Add annotations for deployment and daemonset.
 * [3260](https://github.com/nginxinc/kubernetes-ingress/pull/3260) Add support for EndpointSlices.
 * [3299](https://github.com/nginxinc/kubernetes-ingress/pull/3299) Support Dynamic namespaces using Labels.
 * [3261](https://github.com/nginxinc/kubernetes-ingress/pull/3261) Deep service insight endpoint for virtual server.
@@ -41,19 +40,19 @@ IMPROVEMENTS:
 * [3170](https://github.com/nginxinc/kubernetes-ingress/pull/3170) Watch subset of namespaces for secrets. Thanks to [Hans Feldt](https://github.com/hafe).
 * [3341](https://github.com/nginxinc/kubernetes-ingress/pull/3341) Set value of `$remote_addr` to client IP when TLSPassthrough and Proxy Protocol are enabled.
 * [3131](https://github.com/nginxinc/kubernetes-ingress/pull/3131) NAP DoS images are now available in the AWS Marketplace.
-* [3231](https://github.com/nginxinc/kubernetes-ingress/pull/3231) Always print build info at the start.
+* [3231](https://github.com/nginxinc/kubernetes-ingress/pull/3231) Always print build info and flags used at the start.
 * [2735](https://github.com/nginxinc/kubernetes-ingress/pull/2735) Support default client proxy headers to be overwritten in VirtualServer. Thanks to [Alex Wied](https://github.com/centromere)
+* [3133](https://github.com/nginxinc/kubernetes-ingress/pull/3133) Add caseSensitiveHttpHeaders to appolicy crd. Thanks to [Pavel Galitskiy](https://github.com/galitskiy).
 
 
 FIXES:
 
 * [3139](https://github.com/nginxinc/kubernetes-ingress/pull/3139) Remove all IPV6 listeners in ingress resources with `-disable-ipv6` command line.
-* [3239](https://github.com/nginxinc/kubernetes-ingress/pull/3239) Fix git command to retrieve commit matching the tag.
 
 
 HELM CHART:
 
-* [2113](https://github.com/nginxinc/kubernetes-ingress/pull/3113) Add JSON Schema.
+* [3113](https://github.com/nginxinc/kubernetes-ingress/pull/3113) Add JSON Schema.
 * [3143](https://github.com/nginxinc/kubernetes-ingress/pull/3143) Add annotations for deployment and daemonset.
 * [3136](https://github.com/nginxinc/kubernetes-ingress/pull/3136) Add controller.dnsPolicy. Thanks to [Dong Wang](https://github.com/wd).
 * [3065](https://github.com/nginxinc/kubernetes-ingress/pull/3065) Add annotations to the service account. Thanks to [0m1xa](https://github.com/0m1xa).
@@ -61,6 +60,7 @@ HELM CHART:
 
 
 UPGRADE:
+* Make sure the Kubernetes version is in the supported platforms listed below.
 * For NGINX, use the 3.0.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.0.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
 * For NGINX Plus, use the 3.0.0 images from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the 3.0.0 source code.
 * For Helm, use version 0.16.0 of the chart. If you're using custom resources like VirtualServer and TransportServer (`controller.enableCustomResources` is set to `true`), after you run the `helm upgrade` command, the CRDs will not be upgraded. After running the `helm upgrade` command, run `kubectl apply -f deployments/helm-chart/crds` to upgrade the CRDs.
