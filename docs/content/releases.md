@@ -32,7 +32,7 @@ FEATURES:
 * [3361](https://github.com/nginxinc/kubernetes-ingress/pull/3361) Add healthcheck for transport server.
 * [3347](https://github.com/nginxinc/kubernetes-ingress/pull/3347) Import JWKS from URL on JWT policy.
 * [3274](https://github.com/nginxinc/kubernetes-ingress/pull/3274) Allow configuration of map-hash-bucket-size and map-hash-max-size directives.
-* [3376](https://github.com/nginxinc/kubernetes-ingress/pull/3376) NSM OSS integration.
+* [3376](https://github.com/nginxinc/kubernetes-ingress/pull/3376) NGINX Service Mesh now supports the open source (free) version of NGINX Ingress Controller.
 
 
 IMPROVEMENTS:
