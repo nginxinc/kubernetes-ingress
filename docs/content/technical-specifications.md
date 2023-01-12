@@ -12,7 +12,7 @@ docs: "DOCS-617"
 
 We advise users to run the most recent release of the NGINX Ingress Controller, and we issue software updates to the most recent release. We provide technical support for F5 customers who are using the most recent version of the NGINX Ingress Controller, and any version released within two years of the current release.
 
-The current release version is 3.x supports the discovery.k8s.io/v1 API version of EndpointSlice, available from Kubernetes 1.21 and later.
+The current release version 3.x supports `discovery.k8s.io/v1` API version of EndpointSlice, available from Kubernetes 1.21 onwards.
 The 2.4.2 release is compatible with the Kubernetes Ingress v1 API. Therefore Kubernetes 1.19 and later.
 The 1.12 release supports the Ingress v1beta1 API and continues to receive security fixes to support those unable to upgrade to Kubernetes 1.19 or later. The v1beta1 Ingress API was deprecated with Kubernetes release 1.19 and removed with the Kubernetes 1.22 release.
 
