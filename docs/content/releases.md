@@ -13,15 +13,15 @@ docs: "DOCS-616"
 
 OVERVIEW:
 
-* Add support for [Deep Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight) for VitualServer and TransportServer using the [-enable-service-insight](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-service-insight) cli argument.
+* Added support for [Deep Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight) for VirtualServer and TransportServer using the [-enable-service-insight](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-service-insight) cli argument.
 * *The minimum supported version of Kubernetes is now 1.21*. NGINX Ingress Controller 3.0.0 removes support for `k8s.io/v1/Endpoints` API in favor of `discovery.k8s.io/v1/EndpointSlices`. This now means that the minimum supported version of Kubernetes is now 1.21. For older Kubernetes versions, use the 2.4.x release of the Ingress Controller. For details see [add support for EndpointSlices](https://github.com/nginxinc/kubernetes-ingress/pull/3260).
-* Add support for [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/).
+* Added support for [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/).
 * Added support to dynamically reconfigure namespace watchers using labels  [-watch-namespace-label](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-label-string) and watching secrets using the [-watch-secret-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-secret-namespace-string) cli arguments.
-* Allow configuration of [map-hash-bucket-size and map-hash-max-size](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource#general-customization) config map keys.
-* Add support for [fetching JWKs from a remote URL](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource#jwt-using-jwks-from-remote-location
-) and store it in the cache.
-* Allow OSS NGINX Ingress Controller integration with NGINX Service Mesh.
-* NAP DoS images are now available in the AWS Marketplace.
+* Allow configuration of [map-hash-bucket-size and map-hash-max-size](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource#general-customization) using the configmap resource.
+* Added support for [fetching JWKs from a remote URL](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource#jwt-using-jwks-from-remote-location
+) to dynamically validate JWT tokens and optimize performance through caching.
+* NGINX Service Mesh now supports the open source (free) version of NGINX Ingress Controller.
+* NGINX Ingress Controller + NGINX App Protect Denial of Service is now available through the AWS Marketplace.
 
 
 FEATURES:

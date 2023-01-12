@@ -12,7 +12,8 @@ docs: "DOCS-617"
 
 We advise users to run the most recent release of the NGINX Ingress Controller, and we issue software updates to the most recent release. We provide technical support for F5 customers who are using the most recent version of the NGINX Ingress Controller, and any version released within two years of the current release.
 
-Additionally, the current release version is 2.x which is compatible with the Kubernetes Ingress v1 API. Therefore Kubernetes 1.19 and later.
+The current release version is 3.x supports the discovery.k8s.io/v1 API version of EndpointSlice, available from Kubernetes 1.21 and later.
+The 2.4.2 release is compatible with the Kubernetes Ingress v1 API. Therefore Kubernetes 1.19 and later.
 The 1.12 release supports the Ingress v1beta1 API and continues to receive security fixes to support those unable to upgrade to Kubernetes 1.19 or later. The v1beta1 Ingress API was deprecated with Kubernetes release 1.19 and removed with the Kubernetes 1.22 release.
 
 ## Supported Kubernetes Versions
@@ -22,7 +23,8 @@ We explicitly test the NGINX Ingress Controller (NIC) on a range of Kubernetes p
 {{% table %}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| 3.0.0 | 1.25 - 1.19 | 0.15.2 | 1.2.1 | 1.23.2 / R28 |
+| 3.0.0 | 1.26 - 1.21 | 0.16.0 | 1.3.0 | 1.23.3 / R28 |
+| 2.4.2 | 1.25 - 1.19 | 0.15.2 | 1.2.1 | 1.23.2 / R28 |
 | 2.3.1 | 1.24 - 1.19 | 0.14.1 | 1.1.0 | 1.23.1 / R27 |
 | 2.2.2 | 1.23 - 1.19 | 0.13.2 | 1.0.0 | 1.21.6 / R26 |
 | 2.1.2 | 1.23 - 1.19 | 0.12.1 | 0.5.1 | 1.21.6 / R26 |
