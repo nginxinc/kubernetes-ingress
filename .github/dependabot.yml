@@ -1,38 +1,38 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "gomod"
-    directory: "/"
+  - package-ecosystem: gomod
+    directory: /
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "docker"
-    directory: "/build"
+  - package-ecosystem: docker
+    directory: /build
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "docker"
-    directory: "/tests/docker"
+  - package-ecosystem: docker
+    directory: /tests/docker
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "pip"
-    directory: "/tests"
+  - package-ecosystem: pip
+    directory: /tests
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "pip"
-    directory: "/perf-tests"
+  - package-ecosystem: pip
+    directory: /perf-tests
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
+
+# update go dependencies for release branch
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    target-branch: release-3.0
+    ignore:
+      - dependency-name: "*"
+        update-types:
+        - version-update:semver-minor
+        - version-update:semver-major
