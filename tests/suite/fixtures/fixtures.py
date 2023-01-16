@@ -224,9 +224,7 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
     with open(config_map_yaml) as f:
         config_map = yaml.safe_load(f)
-    create_secret_from_yaml(
-        kube_apis.v1, namespace, f"{BASEDIR}/examples/shared-examples/default-server-secret/default-server-secret.yaml"
-    )
+    create_secret_from_yaml(kube_apis.v1, namespace, f"{TEST_DATA}/common/default-server-secret.yaml")
 
     def fin():
         if request.config.getoption("--skip-fixture-teardown") == "no":
