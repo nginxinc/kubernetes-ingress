@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@4723a57e26efda3a62cbde1812113b730952852d # v3.2.2
+        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -68,7 +68,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea # v4.1.1
+        uses: docker/metadata-action@05d22bf31770de02e20c67c70365453e00227f61 # v4.2.0
         with:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
@@ -153,7 +153,7 @@ jobs:
           ignore-unfixed: 'true'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@959cbb7472c4d4ad70cdfe6f4976053fe48ab394 # v2.1.37
+        uses: github/codeql-action/upload-sarif@515828d97454b8354517688ddc5b48402b723750 # v2.1.38
         continue-on-error: true
         with:
           sarif_file: 'trivy-results-${{ inputs.image }}.sarif'

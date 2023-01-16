@@ -268,6 +268,10 @@ function getAuthZArgs(r) {
     var nonceHash = h.digest('base64url');
     var authZArgs = "?response_type=code&scope=" + r.variables.oidc_scopes + "&client_id=" + r.variables.oidc_client + "&redirect_uri=" + r.variables.redirect_base + r.variables.redir_location + "&nonce=" + nonceHash;
 
+    if (r.variables.oidc_authz_extra_args) {
+        authZArgs += "&" + r.variables.oidc_authz_extra_args;
+    }
+
     r.headersOut['Set-Cookie'] = [
         "auth_redir=" + r.variables.request_uri + "; " + r.variables.oidc_cookie_flags,
         "auth_nonce=" + noncePlain + "; " + r.variables.oidc_cookie_flags

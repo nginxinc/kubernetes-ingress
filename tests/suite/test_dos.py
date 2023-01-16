@@ -32,6 +32,7 @@ from suite.utils.resources_utils import (
     ensure_response_from_backend,
     get_file_contents,
     get_ingress_nginx_template_conf,
+    get_nginx_template_conf,
     get_pods_amount_with_name,
     get_test_file_name,
     nginx_reload,
@@ -178,6 +179,8 @@ class TestDos:
             f"app_protect_dos_security_log /etc/nginx/dos/logconfs/{test_namespace}_{dos_setup.log_name}.json syslog:server=syslog-svc.{ingress_controller_prerequisites.namespace}.svc.cluster.local:514;",
         ]
 
+        conf_nginx_directive = ["app_protect_dos_api on;", "location = /dashboard-dos.html"]
+
         create_ingress_with_dos_annotations(
             kube_apis,
             src_ing_yaml,
@@ -194,10 +197,15 @@ class TestDos:
             kube_apis.v1, test_namespace, "dos-ingress", pod_name, "nginx-ingress"
         )
 
+        nginx_config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace, pod_name)
+
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
         for _ in conf_directive:
             assert _ in result_conf
+
+        for _ in conf_nginx_directive:
+            assert _ in nginx_config
 
     def test_dos_sec_logs_on(
         self,

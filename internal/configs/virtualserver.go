@@ -2,6 +2,7 @@ package configs
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -813,27 +814,46 @@ func (p *policiesCfg) addJWTAuthConfig(
 		res.addWarningf("Multiple jwt policies in the same context is not valid. JWT policy %s will be ignored", polKey)
 		return res
 	}
+	if jwtAuth.Secret != "" {
+		jwtSecretKey := fmt.Sprintf("%v/%v", polNamespace, jwtAuth.Secret)
+		secretRef := secretRefs[jwtSecretKey]
+		var secretType api_v1.SecretType
+		if secretRef.Secret != nil {
+			secretType = secretRef.Secret.Type
+		}
+		if secretType != "" && secretType != secrets.SecretTypeJWK {
+			res.addWarningf("JWT policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, jwtSecretKey, secretType, secrets.SecretTypeJWK)
+			res.isError = true
+			return res
+		} else if secretRef.Error != nil {
+			res.addWarningf("JWT policy %s references an invalid secret %s: %v", polKey, jwtSecretKey, secretRef.Error)
+			res.isError = true
+			return res
+		}
 
-	jwtSecretKey := fmt.Sprintf("%v/%v", polNamespace, jwtAuth.Secret)
-	secretRef := secretRefs[jwtSecretKey]
-	var secretType api_v1.SecretType
-	if secretRef.Secret != nil {
-		secretType = secretRef.Secret.Type
-	}
-	if secretType != "" && secretType != secrets.SecretTypeJWK {
-		res.addWarningf("JWT policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, jwtSecretKey, secretType, secrets.SecretTypeJWK)
-		res.isError = true
+		p.JWTAuth = &version2.JWTAuth{
+			Secret: secretRef.Path,
+			Realm:  jwtAuth.Realm,
+			Token:  jwtAuth.Token,
+		}
 		return res
-	} else if secretRef.Error != nil {
-		res.addWarningf("JWT policy %s references an invalid secret %s: %v", polKey, jwtSecretKey, secretRef.Error)
-		res.isError = true
-		return res
-	}
+	} else if jwtAuth.JwksURI != "" {
+		uri, _ := url.Parse(jwtAuth.JwksURI)
 
-	p.JWTAuth = &version2.JWTAuth{
-		Secret: secretRef.Path,
-		Realm:  jwtAuth.Realm,
-		Token:  jwtAuth.Token,
+		JwksURI := &version2.JwksURI{
+			JwksScheme: uri.Scheme,
+			JwksHost:   uri.Hostname(),
+			JwksPort:   uri.Port(),
+			JwksPath:   uri.Path,
+		}
+
+		p.JWTAuth = &version2.JWTAuth{
+			JwksURI:  *JwksURI,
+			Realm:    jwtAuth.Realm,
+			Token:    jwtAuth.Token,
+			KeyCache: jwtAuth.KeyCache,
+		}
+		return res
 	}
 	return res
 }
@@ -1025,9 +1045,14 @@ func (p *policiesCfg) addOIDCConfig(
 		if scope == "" {
 			scope = "openid"
 		}
+		authExtraArgs := ""
+		if oidc.AuthExtraArgs != nil {
+			authExtraArgs = strings.Join(oidc.AuthExtraArgs, "&")
+		}
 
 		oidcPolCfg.oidc = &version2.OIDC{
 			AuthEndpoint:   oidc.AuthEndpoint,
+			AuthExtraArgs:  authExtraArgs,
 			TokenEndpoint:  oidc.TokenEndpoint,
 			JwksURI:        oidc.JWKSURI,
 			ClientID:       oidc.ClientID,

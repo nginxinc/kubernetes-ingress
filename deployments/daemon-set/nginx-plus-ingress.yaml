@@ -19,7 +19,7 @@ spec:
       serviceAccountName: nginx-ingress
       automountServiceAccountToken: true
       containers:
-      - image: nginx-plus-ingress:2.4.2
+      - image: nginx-plus-ingress:3.0.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:

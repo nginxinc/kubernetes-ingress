@@ -43,7 +43,7 @@ jobs:
         run: |
           nginx=library/$(grep -m1 "FROM nginx:" < build/Dockerfile | awk -F" " '{print $2}')
           nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx:.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
-          nginx_ubi=$(grep "FROM redhat" < build/Dockerfile | awk -F" " '{print $2}')
+          nginx_ubi=$(grep -m1 "FROM nginxcontrib/nginx:" < build/Dockerfile | awk -F" " '{print $2}')
           echo "matrix=[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]" >> $GITHUB_OUTPUT
       - name: Set other variables
         id: vars
@@ -106,7 +106,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ steps.go.outputs.go_path }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@4723a57e26efda3a62cbde1812113b730952852d # v3.2.2
+        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -134,7 +134,7 @@ jobs:
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Fetch Cached Artifacts
-        uses: actions/cache@4723a57e26efda3a62cbde1812113b730952852d # v3.2.2
+        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -183,7 +183,7 @@ jobs:
     needs: [binary, check, variables]
     uses: ./.github/workflows/build-oss.yml
     with:
-      platforms: linux/arm64,linux/amd64,linux/s390x
+      platforms: linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
       image: ubi
       tag: ${{ needs.variables.outputs.kic-tag }}
       sha_long: ${{ needs.variables.outputs.sha_long }}

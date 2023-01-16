@@ -159,16 +159,32 @@ func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, validateRealm(jwt.Realm, fieldPath.Child("realm"))...)
 	}
 
-	if jwt.Secret == "" {
-		return append(allErrs, field.Required(fieldPath.Child("secret"), ""))
+	if jwt.Secret == "" && jwt.JwksURI == "" {
+		return append(allErrs, field.Required(fieldPath.Child("secret"), "either Secret or JwksURI must be present"))
 	}
+
+	if jwt.Secret != "" && jwt.JwksURI != "" {
+		return append(allErrs, field.Forbidden(fieldPath.Child("secret"), "only either of Secret or JwksURI can be used"))
+	}
+
+	if jwt.KeyCache != "" && jwt.JwksURI == "" {
+		return append(allErrs, field.Required(fieldPath.Child("jwksURI"), "jwksURI must be present when keyCache is used."))
+	}
+
 	allErrs = append(allErrs, validateSecretName(jwt.Secret, fieldPath.Child("secret"))...)
 
 	allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
 
+	if jwt.JwksURI != "" {
+		allErrs = append(allErrs, validateURL(jwt.JwksURI, fieldPath.Child("jwksURI"))...)
+	}
+
+	if jwt.KeyCache != "" {
+		allErrs = append(allErrs, validateTime(jwt.KeyCache, fieldPath.Child("keyCache"))...)
+	}
+
 	return allErrs
 }
-
 func validateBasic(basic *v1.BasicAuth, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -248,6 +264,10 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 
 	if oidc.ZoneSyncLeeway != nil {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*oidc.ZoneSyncLeeway, fieldPath.Child("zoneSyncLeeway"))...)
+	}
+
+	if oidc.AuthExtraArgs != nil {
+		allErrs = append(allErrs, validateQueryString(strings.Join(oidc.AuthExtraArgs, "&"), fieldPath.Child("authExtraArgs"))...)
 	}
 
 	allErrs = append(allErrs, validateURL(oidc.AuthEndpoint, fieldPath.Child("authEndpoint"))...)
@@ -362,6 +382,17 @@ func validateURL(name string, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateSSLName(host, fieldPath)...)
 	if port != "" {
 		allErrs = append(allErrs, validatePortNumber(port, fieldPath)...)
+	}
+
+	return allErrs
+}
+
+func validateQueryString(queryString string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	_, err := url.ParseQuery(queryString)
+	if err != nil {
+		return append(allErrs, field.Invalid(fieldPath, queryString, err.Error()))
 	}
 
 	return allErrs

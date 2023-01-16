@@ -454,6 +454,11 @@ func (in *OIDC) DeepCopyInto(out *OIDC) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.AuthExtraArgs != nil {
+		in, out := &in.AuthExtraArgs, &out.AuthExtraArgs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

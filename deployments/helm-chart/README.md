@@ -23,7 +23,7 @@ This step is required if you're installing the chart using its sources. Addition
 
 1. Clone the Ingress Controller repo:
     ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress --branch v2.4.2
+    $ git clone https://github.com/nginxinc/kubernetes-ingress --branch v3.0.0
     ```
     **Note**: If you want to use the experimental repository (`edge`), remove the `--branch` flag and value.
 
@@ -159,7 +159,7 @@ Parameter | Description | Default
 `controller.logLevel` | The log level of the Ingress Controller. | 1
 `controller.image.digest ` | The image digest of the Ingress Controller. | None
 `controller.image.repository` | The image repository of the Ingress Controller. | nginx/nginx-ingress
-`controller.image.tag` | The tag of the Ingress Controller image. | 2.4.2
+`controller.image.tag` | The tag of the Ingress Controller image. | 3.0.0
 `controller.image.pullPolicy` | The pull policy for the Ingress Controller image. | IfNotPresent
 `controller.lifecycle` | The lifecycle of the Ingress Controller pods. | {}
 `controller.customConfigMap` | The name of the custom ConfigMap used by the Ingress Controller. If set, then the default config is ignored. | ""

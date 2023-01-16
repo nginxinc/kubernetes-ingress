@@ -10,9 +10,9 @@ attrs==22.2.0 \
     # via
     #   -r requirements.txt
     #   pytest
-cachetools==5.2.0 \
-    --hash=sha256:6a94c6402995a99c3970cc7e4884bb60b4a8639938157eeed436098bf9831757 \
-    --hash=sha256:f9f17d2aec496a9aa6b76f53e3b614c965223c061982d434d160f930c698a9db
+cachetools==5.2.1 \
+    --hash=sha256:5991bc0e08a1319bb618d3195ca5b6bc76646a49c21d55962977197b301cc1fe \
+    --hash=sha256:8462eebf3a6c15d25430a8c27c56ac61340b2ecf60c9ce57afc2b97e450e47da
     # via
     #   -r requirements.txt
     #   google-auth
@@ -131,9 +131,9 @@ flaky==3.7.0 \
 forcediphttpsadapter==1.0.2 \
     --hash=sha256:f7582b34aaa6ab6b17f69ab1abbfe67097b952ed0682b758b5e01e18fe24433e
     # via -r requirements.txt
-google-auth==2.15.0 \
-    --hash=sha256:6897b93556d8d807ad70701bb89f000183aea366ca7ed94680828b37437a4994 \
-    --hash=sha256:72f12a6cfc968d754d7bdab369c5c5c16032106e52d32c6dfd8484e4c01a6d1f
+google-auth==2.16.0 \
+    --hash=sha256:5045648c821fb72384cdc0e82cc326df195f113a33049d9b62b74589243d2acc \
+    --hash=sha256:ed7057a101af1146f0554a769930ac9de506aeca4fd5af6543ebe791851a9fbd
     # via
     #   -r requirements.txt
     #   kubernetes
@@ -245,9 +245,9 @@ idna==3.4 \
     # via
     #   -r requirements.txt
     #   requests
-iniconfig==1.1.1 \
-    --hash=sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3 \
-    --hash=sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32
+iniconfig==2.0.0 \
+    --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
+    --hash=sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
     # via
     #   -r requirements.txt
     #   pytest
@@ -255,9 +255,9 @@ kubernetes==25.3.0 \
     --hash=sha256:213befbb4e5aed95f94950c7eed0c2322fc5a2f8f40932e58d28fdd42d90836c \
     --hash=sha256:eb42333dad0bb5caf4e66460c6a4a1a36f0f057a040f35018f6c05a699baed86
     # via -r requirements.txt
-mock==5.0.0 \
-    --hash=sha256:335ef0bf9bcd27505c0c1720d4eac2783f18d07d6f45ac49542b57885a1996dd \
-    --hash=sha256:fd552787228eb2ab8352f270470fa93c9ad8b9cbc565c5558ee3faed8edb3853
+mock==5.0.1 \
+    --hash=sha256:c41cfb1e99ba5d341fbcc5308836e7d7c9786d302f995b2c271ce2144dece9eb \
+    --hash=sha256:e3ea505c03babf7977fd21674a69ad328053d414f05e6433c30d8fa14a534a6b
     # via -r requirements.txt
 more-itertools==9.0.0 \
     --hash=sha256:250e83d7e81d0c87ca6bd942e6aeab8cc9daa6096d12c5308f3f92fa5e5c1f41 \
@@ -269,9 +269,9 @@ oauthlib==3.2.2 \
     # via
     #   -r requirements.txt
     #   requests-oauthlib
-packaging==22.0 \
-    --hash=sha256:2198ec20bd4c017b8f9717e00f0c8714076fc2fd93816750ab48e2c41de2cfd3 \
-    --hash=sha256:957e2148ba0e1a3b282772e791ef1d8083648bc131c8ab0c1feba110ce1146c3
+packaging==23.0 \
+    --hash=sha256:714ac14496c3e68c99c29b00845f7a2b85f3bb6f1078fd9f72fd20f0570002b2 \
+    --hash=sha256:b6ad297f8907de0fa2fe1ccbd26fdaf387f5f47c7275fedf8cce89f99446cf97
     # via
     #   -r requirements.txt
     #   pytest
@@ -404,9 +404,9 @@ pyyaml==6.0 \
     # via
     #   -r requirements.txt
     #   kubernetes
-requests==2.28.1 \
-    --hash=sha256:7c5599b102feddaa661c826c56ab4fee28bfd17f5abca1ebbe3e7f19d7c97983 \
-    --hash=sha256:8fefa2a1a1365bf5520aac41836fbee479da67864514bdb821f31ce07ce65349
+requests==2.28.2 \
+    --hash=sha256:64299f4909223da747622c030b781c0d7811e359c37124b4bd368fb8c6518baa \
+    --hash=sha256:98b1b2782e3c6c4904938b84c0eb932721069dfdb9134313beff7c83c2df24bf
     # via
     #   -r requirements.txt
     #   forcediphttpsadapter
@@ -433,9 +433,9 @@ six==1.16.0 \
     #   kubernetes
     #   pytest-profiling
     #   python-dateutil
-urllib3==1.26.13 \
-    --hash=sha256:47cc05d99aaa09c9e72ed5809b60e7ba354e64b59c9c173ac3018642d8bb41fc \
-    --hash=sha256:c083dd0dce68dbfbe1129d5271cb90f9447dea7d52097c6e0126120c521ddea8
+urllib3==1.26.14 \
+    --hash=sha256:076907bf8fd355cde77728471316625a4d2f7e713c125f51953bb5b3eecf4f72 \
+    --hash=sha256:75edcdc2f7d85b137124a6c3c9fc3933cdeaa12ecb9a6a959f22797a0feca7e1
     # via
     #   -r requirements.txt
     #   kubernetes

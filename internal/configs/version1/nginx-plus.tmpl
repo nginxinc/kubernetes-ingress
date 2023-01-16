@@ -214,11 +214,18 @@ http {
 
         location  = /dashboard.html {
         }
+        {{if .AppProtectDosLoadModule}}
+        location = /dashboard-dos.html {
+        }
+        {{end}}
         {{range $value := .NginxStatusAllowCIDRs}}
         allow {{$value}};{{end}}
 
         deny all;
         location /api {
+            {{if .AppProtectDosLoadModule}}
+            app_protect_dos_api on;
+            {{end}}
             api write=off;
         }
     }
