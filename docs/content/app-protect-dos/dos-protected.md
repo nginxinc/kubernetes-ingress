@@ -35,7 +35,7 @@ spec:
 |``enable`` | Enables NGINX App Protect DoS. | ``bool`` | No |
 |``name`` | Name of the protected object, max of 63 characters. | ``string`` | No |
 |``apDosMonitor.uri`` | The destination to the desired protected object. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port. | ``string`` | No |
-|``apDosMonitor.protocol`` | Determines if the server listens on http1 / http2 / grpc. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: http1. | ``enum`` | No |
+|``apDosMonitor.protocol`` | Determines if the server listens on http1 / http2 / grpc / websocket. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: http1. | ``enum`` | No |
 |``apDosMonitor.timeout`` | Determines how long (in seconds) should NGINX App Protect DoS wait for a response. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: 10 seconds for http1/http2 and 5 seconds for grpc. | ``int64`` | No |
 |``apDosPolicy`` | The [App Protect DoS policy](#dosprotectedresourceapdospolicy) of the dos. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
