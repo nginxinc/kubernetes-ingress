@@ -185,7 +185,7 @@ jobs:
         run: |
           counter=0
           max_attempts=5
-          until [ $(curl --write-out %{http_code} -ks --output /dev/null https://localhost:8443) -eq 404 ]; do
+          until [ $(curl --write-out %{http_code} -ks --output /dev/null https://localhost:8443) -eq 000 ]; do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
