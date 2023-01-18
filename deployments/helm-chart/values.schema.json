@@ -425,7 +425,7 @@
           "type": "object",
           "default": {},
           "title": "The nodeSelector Schema",
-          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.NodeSelector"
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/nodeSelector"
         },
         "terminationGracePeriodSeconds": {
           "type": "integer",
