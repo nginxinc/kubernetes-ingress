@@ -140,7 +140,7 @@ $ kubectl delete -f crds/
 
 If you are running multiple Ingress Controller releases in your cluster with enabled custom resources, the releases will share a single version of the CRDs. As a result, make sure that the Ingress Controller versions match the version of the CRDs. Additionally, when uninstalling a release, ensure that you don’t remove the CRDs until there are no other Ingress Controller releases running in the cluster.
 
-See [running multiple Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/installation/running-multiple-ingress-controllers/) for more details.
+See [running multiple Ingress Controllers](https://docs.nginx.com/nginx-ingress-controller/installation/running-multiple-ingress-controllers/) for more details.
 
 ## Configuration
 

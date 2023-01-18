@@ -10,7 +10,7 @@ docs: "DOCS-889"
 
 ## Using NGINX Ingress Controller with Istio service mesh
 
-NGINX Ingress Controller can now be used as the ingress controller for applications running inside an Istio service mesh. This allows you to continue using the advanced capabilities that NGINX IC provides on Istio-based environments without resorting to any workarounds.
+NGINX Ingress Controller can now be used as the Ingress Controller for applications running inside an Istio service mesh. This allows you to continue using the advanced capabilities that NGINX IC provides on Istio-based environments without resorting to any workarounds.
 This is accomplished using the special setting [use-cluster-ip](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream) for the backend.
 
 
