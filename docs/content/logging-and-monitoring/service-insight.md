@@ -20,7 +20,7 @@ Returned HTTP codes indicate the health of the service.
 The service is indicated as not healthy (HTTP response code different than 200 OK) if all upstreams (pods) are determined unhealthy by NGINX Plus.
 The service is healthy if at least one upstream pod is healthy as determined by NGINX Plus. In this case, the endpoint returns HTTP code 200 OK.
 
-NGINX Plus determination of healthy can be tuned using advanced health checks, and also dynamically relate to pods responses and responsiveness.  See Upstream Healthcheck https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream 
+NGINX Plus determination of healthy can be tuned using advanced health checks, and also dynamically relate to pods responses and responsiveness.  See Upstream Healthcheck https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream
 
 ## Enabling Service Insight Endpoint
 
