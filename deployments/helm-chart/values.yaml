@@ -47,7 +47,7 @@ controller:
   ## The log level of the Ingress Controller.
   logLevel: 1
 
-  ## A list of custom ports to expose on the NGINX ingress controller pod. Follows the conventional Kubernetes yaml syntax for container ports.
+  ## A list of custom ports to expose on the NGINX Ingress Controller pod. Follows the conventional Kubernetes yaml syntax for container ports.
   customPorts: []
 
   image:
@@ -397,8 +397,8 @@ controller:
     ## The additional extra labels of the Ingress Controller pod.
     extraLabels: {}
 
-  ## The PriorityClass of the ingress controller pods.
-  priorityClassName:
+  ## The PriorityClass of the Ingress Controller pods.
+  # priorityClassName: ""
 
   readyStatus:
     ## Enables readiness endpoint "/nginx-ready". The endpoint returns a success code when NGINX has loaded all the config after startup.
