@@ -111,7 +111,7 @@ func isFullyQualifiedDomainName(name string) error {
 var (
 	// validRecords represents allowed DNS record names
 	//
-	// NGINX ingress controller at the moment supports
+	// NGINX Ingress Controller at the moment supports
 	// a subset of DNS record types listed in the external-dns project.
 	validRecords = []string{"A", "CNAME", "AAAA"}
 

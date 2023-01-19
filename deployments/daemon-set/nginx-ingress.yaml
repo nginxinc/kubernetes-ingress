@@ -64,7 +64,7 @@ spec:
               fieldPath: metadata.name
         args:
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
-          - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
+         #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
          #- -include-year
          #- -v=3 # Enables extensive logging. Useful for troubleshooting.
          #- -report-ingress-status

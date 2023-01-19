@@ -3850,7 +3850,7 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *networki
 	return nil, fmt.Errorf("service %s doesn't exist", svcKey)
 }
 
-// HasCorrectIngressClass checks if resource ingress class annotation (if exists) or ingressClass string for VS/VSR is matching with ingress controller class
+// HasCorrectIngressClass checks if resource ingress class annotation (if exists) or ingressClass string for VS/VSR is matching with Ingress Controller class
 func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool {
 	var class string
 	switch obj := obj.(type) {

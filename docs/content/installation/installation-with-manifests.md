@@ -50,9 +50,12 @@ docs: "DOCS-603"
 ## 2. Create Common Resources
 
 In this section, we create resources common for most of the Ingress Controller installations:
+**NOTE**: Installing the `default-server-secret.yaml` is optional and is required only if you are using the  [default server TLS secret](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-default-server-tls-secret) command line argument. It is recommended that users provide their own certificate.
+Otherwise, step 1 can be ignored.
+
 1. Create a secret with a TLS certificate and a key for the default server in NGINX:
     ```
-    $ kubectl apply -f common/default-server-secret.yaml
+    $ kubectl apply -f examples/default-server-secret/default-server-secret.yaml
     ```
 
     **Note**: The default server returns the Not Found page with the 404 status code for all requests for domains for which there are no Ingress rules defined. For testing purposes we include a self-signed certificate and key that we generated. However, we recommend that you use your own certificate and key.
