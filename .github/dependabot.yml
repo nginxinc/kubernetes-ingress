@@ -20,7 +20,7 @@ updates:
     schedule:
       interval: daily
 
-  - package-ecosystem: pip-compile
+  - package-ecosystem: pip
     directory: /tests
     schedule:
       interval: weekly
