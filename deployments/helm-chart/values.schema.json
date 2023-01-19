@@ -1177,12 +1177,12 @@
             "enabled": {
               "type": "boolean"
             },
-			"annotations": {
+            "annotations": {
               "type": "object",
               "default": {},
               "title": "The annotations Schema",
               "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
-			},
+            },
             "minAvailable": {
               "type": "integer"
             },
