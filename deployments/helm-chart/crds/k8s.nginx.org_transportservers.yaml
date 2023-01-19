@@ -73,6 +73,12 @@ spec:
                       type: string
                 streamSnippets:
                   type: string
+                tls:
+                  description: TLS defines TLS configuration for a TransportServer.
+                  type: object
+                  properties:
+                    secret:
+                      type: string
                 upstreamParameters:
                   description: UpstreamParameters defines parameters for an upstream.
                   type: object

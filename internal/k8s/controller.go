@@ -3499,6 +3499,19 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		}
 	}
 
+	secretRefs := make(map[string]*secrets.SecretReference)
+
+	if transportServer.Spec.TLS != nil && transportServer.Spec.TLS.Secret != "" {
+		secretKey := transportServer.Namespace + "/" + transportServer.Spec.TLS.Secret
+
+		secretRef := lbc.secretStore.GetSecret(secretKey)
+		if secretRef.Error != nil {
+			glog.Warningf("Error trying to get the secret %v for TransportServer %v: %v", secretKey, transportServer.Name, secretRef.Error)
+		}
+
+		secretRefs[secretKey] = secretRef
+	}
+
 	return &configs.TransportServerEx{
 		ListenerPort:     listenerPort,
 		TransportServer:  transportServer,
@@ -3506,6 +3519,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		PodsByIP:         podsByIP,
 		ExternalNameSvcs: externalNameSvcs,
 		DisableIPV6:      disableIPV6,
+		SecretRefs:       secretRefs,
 	}
 }
 

@@ -59,7 +59,27 @@ func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.
 
 	allErrs = append(allErrs, validateSnippets(spec.StreamSnippets, fieldPath.Child("streamSnippets"), tsv.snippetsEnabled)...)
 
+	allErrs = append(allErrs, validateTLS(spec.TLS, isTLSPassthroughListener, fieldPath.Child("tls"))...)
+
 	return allErrs
+}
+
+func validateTLS(tls *v1alpha1.TLS, isTLSPassthrough bool, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if tls == nil {
+		return allErrs
+	}
+
+	if isTLSPassthrough {
+		return append(allErrs, field.Forbidden(fieldPath, "cannot specify secret for tls passthrough"))
+	}
+
+	if tls.Secret == "" {
+		return append(allErrs, field.Required(fieldPath, "must specify secret for tls"))
+	}
+
+	return append(allErrs, validateSecretName(tls.Secret, fieldPath.Child("secret"))...)
 }
 
 func validateSnippets(serverSnippet string, fieldPath *field.Path, snippetsEnabled bool) field.ErrorList {
