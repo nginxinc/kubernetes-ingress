@@ -1,6 +1,6 @@
 # Issue Lifecycle
 
-In an effort to ensure a balance between work carried out internally by the NGINX engineering team, while simultaneously encouraging community involvement on this project, we use the following issue lifecycle. (Note: The issue creator refers to the community member that created the issue. The issue owner refers to the NGINX team member that is responsible for managing the issue lifecycle.)
+In an effort to ensure a balance between work carried out internally by the NGINX engineering team, while simultaneously encouraging community involvement on this project, we use the following issue lifecycle. (Note: The issue *creator* refers to the community member that created the issue. The issue *owner* refers to the NGINX team member that is responsible for managing the issue lifecycle.)
 
 1. New issue created by community member
 
