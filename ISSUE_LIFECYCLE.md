@@ -15,7 +15,7 @@ In an effort to ensure a balance between work carried out internally by the NGIN
    `bug`: The implementation of a feature is not correct.
 
    `proposal`: Request for a change. This can be a new feature, tackling technical debt, documentation changes, or improving existing features.
-   
+
    `question`: The owner converts the issue to a github discussion and engages the creator.
 
 
