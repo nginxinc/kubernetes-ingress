@@ -416,6 +416,11 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 			Protocol: "grpc",
 			Timeout:  10,
 		},
+		{
+			URI:      "https://example.com/good_path",
+			Protocol: "websocket",
+			Timeout:  10,
+		},
 	}
 	negDstAntns := []struct {
 		apDosMonitor v1beta1.ApDosMonitor

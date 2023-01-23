@@ -71,12 +71,12 @@ func TestValidateTransportServerFails(t *testing.T) {
 func TestValidateTransportServerUpstreams(t *testing.T) {
 	tests := []struct {
 		upstreams             []v1alpha1.Upstream
-		expectedUpstreamNames sets.String
+		expectedUpstreamNames sets.Set[string]
 		msg                   string
 	}{
 		{
 			upstreams:             []v1alpha1.Upstream{},
-			expectedUpstreamNames: sets.String{},
+			expectedUpstreamNames: sets.Set[string]{},
 			msg:                   "no upstreams",
 		},
 		{
@@ -114,7 +114,7 @@ func TestValidateTransportServerUpstreams(t *testing.T) {
 func TestValidateTransportServerUpstreamsFails(t *testing.T) {
 	tests := []struct {
 		upstreams             []v1alpha1.Upstream
-		expectedUpstreamNames sets.String
+		expectedUpstreamNames sets.Set[string]
 		msg                   string
 	}{
 		{
@@ -125,7 +125,7 @@ func TestValidateTransportServerUpstreamsFails(t *testing.T) {
 					Port:    80,
 				},
 			},
-			expectedUpstreamNames: sets.String{},
+			expectedUpstreamNames: sets.Set[string]{},
 			msg:                   "invalid upstream name",
 		},
 		{

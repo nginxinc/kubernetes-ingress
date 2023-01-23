@@ -152,9 +152,10 @@ func validateAppProtectDosName(name string) error {
 }
 
 var validMonitorProtocol = map[string]bool{
-	"http1": true,
-	"http2": true,
-	"grpc":  true,
+	"http1":     true,
+	"http2":     true,
+	"grpc":      true,
+	"websocket": true,
 }
 
 func validateAppProtectDosMonitor(apDosMonitor v1beta1.ApDosMonitor) error {

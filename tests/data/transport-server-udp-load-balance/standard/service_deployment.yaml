@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: udp-service
-          image: nginxkic/udp-server:1.2
+          image: ghcr.io/nginxinc/kic-test-udp-server:0.1.2
           ports:
             - containerPort: 3334
               name: udp-server

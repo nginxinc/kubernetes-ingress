@@ -39,12 +39,13 @@ spec:
                   type: object
                   properties:
                     protocol:
-                      description: Protocol determines if the server listens on http1 / http2 / grpc. The default is http1.
+                      description: Protocol determines if the server listens on http1 / http2 / grpc / websocket. The default is http1.
                       type: string
                       enum:
                         - http1
                         - http2
                         - grpc
+                        - websocket
                     timeout:
                       description: Timeout determines how long (in seconds) should NGINX App Protect DoS wait for a response. Default is 10 seconds for http1/http2 and 5 seconds for grpc.
                       type: integer
