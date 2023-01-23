@@ -185,6 +185,7 @@ func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 
 	return allErrs
 }
+
 func validateBasic(basic *v1.BasicAuth, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
