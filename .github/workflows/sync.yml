@@ -13,24 +13,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # This job sync this repo to our internal repo
-  repo-sync:
-    runs-on: ubuntu-22.04
-    if: ${{ github.event.repository.fork == false }}
-    steps:
-      - name: Repo Sync
-        uses: wei/git-sync@55c6b63b4f21607da0e9877ca9b4d11a29fc6d83 # v3.0.0
-        with:
-          source_repo: "nginxinc/kubernetes-ingress"
-          source_branch: "main"
-          destination_repo: ${{ secrets.SYNC_DEST_REPO_URL }}
-          destination_branch: "main"
-          ssh_private_key: ${{ secrets.SYNC_SSH_PRIVATE_KEY }}
-
   # This job sync the labels across the various repos
   labels-sync:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.repository.fork == false }}
     strategy:
-      # don't break another job if one is failed
       fail-fast: false
       matrix:
         repo:
@@ -39,8 +26,6 @@ jobs:
           - nginxinc/nginx-prometheus-exporter
           - nginxinc/nginx-plus-go-client
           - nginxinc/nginx-asg-sync
-    runs-on: ubuntu-22.04
-    if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Checkout
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
