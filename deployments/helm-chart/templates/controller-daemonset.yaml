@@ -194,7 +194,9 @@ spec:
 {{- end }}
 {{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
+  {{ -if .Values.controller.reportIngressStatus.enableLeaderElection }}
           - -leader-election-lock-name={{ include "nginx-ingress.leaderElectionName" . }}
+  {{- end}}
 {{- if .Values.controller.wildcardTLS.secret }}
           - -wildcard-tls-secret={{ .Values.controller.wildcardTLS.secret }}
 {{- else if and .Values.controller.wildcardTLS.cert .Values.controller.wildcardTLS.key }}
