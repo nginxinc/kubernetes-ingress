@@ -18,7 +18,7 @@ The following is a set of guidelines for contributing to the NGINX Ingress Contr
 
 ## Ask a Question
 
-To ask a question please use the [Github Discussions](https://github.com/nginxinc/kubernetes-ingress/discussions) feature.
+To ask a question please use [Github Discussions](https://github.com/nginxinc/kubernetes-ingress/discussions).
 
 You can also join our [Community Slack channel](https://community.nginx.org/joinslack) which has a wider NGINX audience.
 
