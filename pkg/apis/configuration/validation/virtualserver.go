@@ -343,6 +343,7 @@ func validateUpstreamHealthCheck(hc *v1.HealthCheck, typeName string, fieldPath 
 	allErrs = append(allErrs, validateTime(hc.ReadTimeout, fieldPath.Child("read-timeout"))...)
 	allErrs = append(allErrs, validateTime(hc.SendTimeout, fieldPath.Child("send-timeout"))...)
 	allErrs = append(allErrs, validateStatusMatch(hc.StatusMatch, fieldPath.Child("statusMatch"))...)
+	allErrs = append(allErrs, validateTime(hc.KeepaliveTime, fieldPath.Child("keepalive-time"))...)
 
 	for i, header := range hc.Headers {
 		idxPath := fieldPath.Child("headers").Index(i)
