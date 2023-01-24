@@ -1299,11 +1299,11 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 		var resource *IngressConfiguration
 
 		if val := c.isChallengeIngress(ing); val {
-			// if using cert-manager with Ingress, the challenge Ingress must be Minion
-			// and this code won't be reached. With VS, the challenge Ingress must not be Minion.
 			vsr := c.convertIngressToVSR(ing)
-			challengesVSR = append(challengesVSR, vsr)
-			continue
+			if vsr != nil {
+				challengesVSR = append(challengesVSR, vsr)
+				continue
+			}
 		}
 
 		if isMaster(ing) {
@@ -1407,6 +1407,10 @@ func (c *Configuration) isChallengeIngress(ing *networking.Ingress) bool {
 func (c *Configuration) convertIngressToVSR(ing *networking.Ingress) *conf_v1.VirtualServerRoute {
 	rule := ing.Spec.Rules[0]
 
+	if !c.isChallengeIngressOwnerVs(rule.Host) {
+		return nil
+	}
+
 	vs := &conf_v1.VirtualServerRoute{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ing.Namespace,
@@ -1433,6 +1437,16 @@ func (c *Configuration) convertIngressToVSR(ing *networking.Ingress) *conf_v1.Vi
 	}
 
 	return vs
+}
+
+func (c *Configuration) isChallengeIngressOwnerVs(host string) bool {
+	for _, key := range getSortedVirtualServerKeys(c.virtualServers) {
+		vs := c.virtualServers[key]
+		if host == vs.Spec.Host {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Configuration) buildMinionConfigs(masterHost string) ([]*MinionConfiguration, map[string][]string) {

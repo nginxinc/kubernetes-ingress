@@ -2761,6 +2761,36 @@ func TestChallengeIngressToVSR(t *testing.T) {
 	}
 }
 
+func TestChallengeIngressNoVSR(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	var expectedProblems []ConfigurationProblem
+
+	vs := createTestVirtualServer("virtualserver", "bar.example.com")
+	ing := createTestChallengeIngress("challenge", "foo.example.com", "/.well-known/acme-challenge/test", "cm-acme-http-solver-test")
+	configuration.AddOrUpdateVirtualServer(vs)
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &IngressConfiguration{
+				Ingress: ing,
+				ValidHosts: map[string]bool{
+					"foo.example.com": true,
+				},
+				ChildWarnings: map[string][]string{},
+			},
+		},
+	}
+
+	changes, problems := configuration.AddOrUpdateIngress(ing)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+}
+
 func mustInitGlobalConfiguration(c *Configuration, gc *conf_v1alpha1.GlobalConfiguration) {
 	changes, problems, err := c.AddOrUpdateGlobalConfiguration(gc)
 

@@ -515,6 +515,8 @@ spec:
                             type: string
                           jitter:
                             type: string
+                          keepalive-time:
+                            type: string
                           mandatory:
                             type: boolean
                           passes:

@@ -141,6 +141,7 @@ type HealthCheck struct {
 	GRPCService    string       `json:"grpcService"`
 	Mandatory      bool         `json:"mandatory"`
 	Persistent     bool         `json:"persistent"`
+	KeepaliveTime  string       `json:"keepalive-time"`
 }
 
 // Header defines an HTTP Header.
