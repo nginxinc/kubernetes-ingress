@@ -411,6 +411,7 @@ healthCheck:
   statusMatch: "! 500"
   mandatory: true
   persistent: true
+  keepalive-time: 60s
 ```
 
 Note: This feature is supported only in NGINX Plus.
@@ -435,6 +436,7 @@ Note: This feature is supported only in NGINX Plus.
 |``grpcService`` | The gRPC service to be monitored on the upstream server. Only valid on gRPC type upstreams. | ``string`` | No |
 |``mandatory`` | Require every newly added server to pass all configured health checks before NGINX Plus sends traffic to it. If this is not specified, or is set to false, the server will be initially considered healthy. When combined with [slow-start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start), it gives a new server more time to connect to databases and “warm up” before being asked to handle their full share of traffic. | ``bool`` | No |
 |``persistent`` | Set the initial “up” state for a server after reload if the server was considered healthy before reload. Enabling persistent requires that the mandatory parameter is also set to `true`. | ``bool`` | No |
+|``keepalive-time`` | Enables [keepalive](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive) connections for health checks and specifies the time during which requests can be processed through one keepalive connection. The default is ``60s``. | ``string`` | No |
 {{% /table %}}
 
 ### Upstream.SessionCookie

@@ -26,6 +26,7 @@ spec:
       path: /healthz
       interval: 20s
       jitter: 3s
+      keep_alive: 120s
       fails: 5
       passes: 5
       port: 8080

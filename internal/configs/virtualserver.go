@@ -211,6 +211,7 @@ func newHealthCheckWithDefaults(upstream conf_v1.Upstream, upstreamName string, 
 		URI:                 uri,
 		Interval:            "5s",
 		Jitter:              "0s",
+		KeepaliveTime:       "60s",
 		Fails:               1,
 		Passes:              1,
 		ProxyPass:           fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream.TLS.Enable), upstreamName),
@@ -1394,6 +1395,10 @@ func generateHealthCheck(
 
 	if upstream.HealthCheck.Jitter != "" {
 		hc.Jitter = generateTime(upstream.HealthCheck.Jitter)
+	}
+
+	if upstream.HealthCheck.KeepaliveTime != "" {
+		hc.KeepaliveTime = generateTime(upstream.HealthCheck.KeepaliveTime)
 	}
 
 	if upstream.HealthCheck.Fails > 0 {
