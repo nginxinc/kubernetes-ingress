@@ -22,6 +22,7 @@ FILES_TO_UPDATE_IC_VERSION=(
     deployments/helm-chart/values-nsm.yaml
     deployments/helm-chart/values-plus.yaml
     deployments/helm-chart/values.yaml
+    deployments/helm-chart-dos-arbitrator/Chart.yaml
     deployments/helm-chart-dos-arbitrator/README.md
 )
 
