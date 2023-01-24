@@ -34,8 +34,8 @@ func (gcv *GlobalConfigurationValidator) validateGlobalConfigurationSpec(spec *v
 func (gcv *GlobalConfigurationValidator) validateListeners(listeners []v1alpha1.Listener, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	listenerNames := sets.String{}
-	portProtocolCombinations := sets.String{}
+	listenerNames := sets.Set[string]{}
+	portProtocolCombinations := sets.Set[string]{}
 
 	for i, l := range listeners {
 		idxPath := fieldPath.Index(i)
