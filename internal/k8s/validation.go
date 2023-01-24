@@ -830,7 +830,7 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 		allErrs = append(allErrs, validateBackend(spec.DefaultBackend, fieldPath.Child("defaultBackend"))...)
 	}
 
-	allHosts := sets.String{}
+	allHosts := sets.Set[string]{}
 
 	if len(spec.Rules) == 0 {
 		return append(allErrs, field.Required(fieldPath.Child("rules"), ""))

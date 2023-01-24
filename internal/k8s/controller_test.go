@@ -2007,6 +2007,26 @@ func TestAddJWTSecrets(t *testing.T) {
 			msg:     "test getting valid secret",
 		},
 		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "jwt-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
+							Realm:    "My API",
+							JwksURI:  "https://idp.com/token",
+							KeyCache: "1h",
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{},
+			wantErr:            false,
+			msg:                "test getting valid policy using JwksUri",
+		},
+		{
 			policies:           []*conf_v1.Policy{},
 			expectedSecretRefs: map[string]*secrets.SecretReference{},
 			wantErr:            false,

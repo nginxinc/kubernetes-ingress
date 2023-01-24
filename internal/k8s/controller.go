@@ -3223,6 +3223,10 @@ func (lbc *LoadBalancerController) addJWTSecretRefs(secretRefs map[string]*secre
 			continue
 		}
 
+		if pol.Spec.JWTAuth.JwksURI != "" {
+			continue
+		}
+
 		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.JWTAuth.Secret)
 		secretRef := lbc.secretStore.GetSecret(secretKey)
 
@@ -3846,7 +3850,7 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *networki
 	return nil, fmt.Errorf("service %s doesn't exist", svcKey)
 }
 
-// HasCorrectIngressClass checks if resource ingress class annotation (if exists) or ingressClass string for VS/VSR is matching with ingress controller class
+// HasCorrectIngressClass checks if resource ingress class annotation (if exists) or ingressClass string for VS/VSR is matching with Ingress Controller class
 func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool {
 	var class string
 	switch obj := obj.(type) {

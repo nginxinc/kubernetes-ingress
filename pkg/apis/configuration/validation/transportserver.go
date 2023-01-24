@@ -151,9 +151,9 @@ func validateListenerProtocol(protocol string, fieldPath *field.Path) field.Erro
 	return allErrs
 }
 
-func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.String) {
+func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.Set[string]) {
 	allErrs = field.ErrorList{}
-	upstreamNames = sets.String{}
+	upstreamNames = sets.Set[string]{}
 
 	for i, u := range upstreams {
 		idxPath := fieldPath.Index(i)
@@ -399,7 +399,7 @@ func validateUDPUpstreamParameter(parameter *int, fieldPath *field.Path, protoco
 	return validatePositiveIntOrZeroFromPointer(parameter, fieldPath)
 }
 
-func validateTransportServerAction(action *v1alpha1.Action, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateTransportServerAction(action *v1alpha1.Action, fieldPath *field.Path, upstreamNames sets.Set[string]) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if action.Pass == "" {

@@ -109,7 +109,7 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testi
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
-	if resp.StatusCode != http.StatusServiceUnavailable {
+	if resp.StatusCode != http.StatusTeapot {
 		t.Fatal(resp.StatusCode)
 	}
 
@@ -193,6 +193,135 @@ func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
 
 	if resp.StatusCode != http.StatusInternalServerError {
 		t.Error(resp.StatusCode)
+	}
+}
+
+func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testing.T) {
+	t.Parallel()
+
+	hs := newTestHealthServer(t)
+	hs.StreamUpstreamsForName = streamUpstreamsForName
+	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+
+	resp, err := http.Get(hs.URL + "probe/ts/") //nolint:noctx
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Error(resp.StatusCode)
+	}
+}
+
+func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing.T) {
+	t.Parallel()
+
+	hs := newTestHealthServer(t)
+	hs.StreamUpstreamsForName = streamUpstreamsForName
+	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+
+	resp, err := http.Get(hs.URL + "probe/ts/bogusname") //nolint:noctx
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Error(resp.StatusCode)
+	}
+}
+
+func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp(t *testing.T) {
+	t.Parallel()
+
+	hs := newTestHealthServer(t)
+	hs.StreamUpstreamsForName = streamUpstreamsForName
+	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+
+	resp, err := http.Get(hs.URL + "probe/ts/foo-app") //nolint:noctx
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal(resp.StatusCode)
+	}
+
+	want := healthcheck.HostStats{
+		Total:     6,
+		Up:        6,
+		Unhealthy: 0,
+	}
+	var got healthcheck.HostStats
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersUpSomeDown(t *testing.T) {
+	t.Parallel()
+
+	hs := newTestHealthServer(t)
+	hs.StreamUpstreamsForName = streamUpstreamsForName
+	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXPartiallyUp
+
+	resp, err := http.Get(hs.URL + "probe/ts/foo-app") //nolint:noctx
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal(resp.StatusCode)
+	}
+
+	want := healthcheck.HostStats{
+		Total:     6,
+		Up:        4,
+		Unhealthy: 2,
+	}
+	var got healthcheck.HostStats
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersDown(t *testing.T) {
+	t.Parallel()
+
+	hs := newTestHealthServer(t)
+	hs.StreamUpstreamsForName = streamUpstreamsForName
+	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllPeersDown
+
+	resp, err := http.Get(hs.URL + "probe/ts/foo-app") //nolint:noctx
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+
+	if resp.StatusCode != http.StatusTeapot {
+		t.Fatal(resp.StatusCode)
+	}
+
+	want := healthcheck.HostStats{
+		Total:     6,
+		Up:        0,
+		Unhealthy: 6,
+	}
+	var got healthcheck.HostStats
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
 
@@ -324,4 +453,89 @@ func getUpstreamsFromNGINXNotExistingHost() (*client.Upstreams, error) {
 // for faking err response from NGINX API client.
 func getUpstreamsFromNGINXErrorFromAPI() (*client.Upstreams, error) {
 	return nil, errors.New("nginx api error")
+}
+
+// streamUpstreamsForName is a helper func faking response from IC.
+func streamUpstreamsForName(name string) []string {
+	upstreams := map[string][]string{
+		"foo-app": {"streamUpstream1", "streamUpstream2"},
+		"bar-app": {"streamUpstream1"},
+	}
+	u, ok := upstreams[name]
+	if !ok {
+		return []string{}
+	}
+	return u
+}
+
+// streamUpstreamsFromNGINXAllUp is a helper func
+// for faking response from NGINX Plus client.
+//
+//nolint:unparam
+func streamUpstreamsFromNGINXAllUp() (*client.StreamUpstreams, error) {
+	streamUpstreams := client.StreamUpstreams{
+		"streamUpstream1": client.StreamUpstream{
+			Peers: []client.StreamPeer{
+				{State: "Up"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+		"streamUpstream2": client.StreamUpstream{
+			Peers: []client.StreamPeer{
+				{State: "Up"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+	}
+	return &streamUpstreams, nil
+}
+
+// streamUpstreamsFromNGINXPartiallyUp is a helper func
+// for faking response from NGINX Plus client.
+//
+//nolint:unparam
+func streamUpstreamsFromNGINXPartiallyUp() (*client.StreamUpstreams, error) {
+	streamUpstreams := client.StreamUpstreams{
+		"streamUpstream1": client.StreamUpstream{
+			Peers: []client.StreamPeer{
+				{State: "Up"},
+				{State: "Down"},
+				{State: "Up"},
+			},
+		},
+		"streamUpstream2": client.StreamUpstream{
+			Peers: []client.StreamPeer{
+				{State: "Down"},
+				{State: "Up"},
+				{State: "Up"},
+			},
+		},
+	}
+	return &streamUpstreams, nil
+}
+
+// streamUpstreamsFromNGINXAllPeersDown is a helper func
+// for faking response from NGINX Plus client.
+//
+//nolint:unparam
+func streamUpstreamsFromNGINXAllPeersDown() (*client.StreamUpstreams, error) {
+	streamUpstreams := client.StreamUpstreams{
+		"streamUpstream1": client.StreamUpstream{
+			Peers: []client.StreamPeer{
+				{State: "Down"},
+				{State: "Down"},
+				{State: "Down"},
+			},
+		},
+		"streamUpstream2": client.StreamUpstream{
+			Peers: []client.StreamPeer{
+				{State: "Down"},
+				{State: "Down"},
+				{State: "Down"},
+			},
+		},
+	}
+	return &streamUpstreams, nil
 }

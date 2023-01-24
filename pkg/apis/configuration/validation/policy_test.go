@@ -47,6 +47,7 @@ func TestValidatePolicy(t *testing.T) {
 				Spec: v1.PolicySpec{
 					OIDC: &v1.OIDC{
 						AuthEndpoint:   "https://foo.bar/auth",
+						AuthExtraArgs:  []string{"foo=bar"},
 						TokenEndpoint:  "https://foo.bar/token",
 						JWKSURI:        "https://foo.bar/certs",
 						ClientID:       "random-string",
@@ -209,6 +210,24 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:     true,
 			enableOIDC: true,
 			msg:        "OIDC policy with invalid ZoneSyncLeeway",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					OIDC: &v1.OIDC{
+						AuthEndpoint:  "https://foo.bar/auth",
+						AuthExtraArgs: []string{"foo;bar"},
+						TokenEndpoint: "https://foo.bar/token",
+						JWKSURI:       "https://foo.bar/certs",
+						ClientID:      "random-string",
+						ClientSecret:  "random-secret",
+						Scope:         "openid",
+					},
+				},
+			},
+			isPlus:     true,
+			enableOIDC: true,
+			msg:        "OIDC policy with invalid AuthExtraArgs",
 		},
 	}
 	for _, test := range tests {
@@ -420,6 +439,15 @@ func TestValidateJWT(t *testing.T) {
 			},
 			msg: "jwt with token",
 		},
+		{
+			jwt: &v1.JWTAuth{
+				Realm:    "My Product API",
+				Token:    "$cookie_auth_token",
+				JwksURI:  "https://idp.com/token",
+				KeyCache: "1h",
+			},
+			msg: "jwt with jwksURI",
+		},
 	}
 	for _, test := range tests {
 		allErrs := validateJWT(test.jwt, field.NewPath("jwt"))
@@ -439,7 +467,15 @@ func TestValidateJWTFails(t *testing.T) {
 			jwt: &v1.JWTAuth{
 				Realm: "My Product API",
 			},
-			msg: "missing secret",
+			msg: "missing secret and jwksURI",
+		},
+		{
+			jwt: &v1.JWTAuth{
+				Realm:   "My Product API",
+				Secret:  "my-jwk",
+				JwksURI: "https://idp.com/token",
+			},
+			msg: "both secret and jwksURI present",
 		},
 		{
 			jwt: &v1.JWTAuth{
@@ -482,6 +518,38 @@ func TestValidateJWTFails(t *testing.T) {
 				Secret: "my-jwk",
 			},
 			msg: "invalid variable use in realm without curly braces",
+		},
+		{
+			jwt: &v1.JWTAuth{
+				Realm:    "My Product api",
+				Secret:   "my-jwk",
+				KeyCache: "1h",
+			},
+			msg: "using KeyCache with Secret",
+		},
+		{
+			jwt: &v1.JWTAuth{
+				Realm:    "My Product api",
+				JwksURI:  "https://idp.com/token",
+				KeyCache: "1k",
+			},
+			msg: "invalid suffix for KeyCache",
+		},
+		{
+			jwt: &v1.JWTAuth{
+				Realm:    "My Product api",
+				JwksURI:  "https://idp.com/token",
+				KeyCache: "oneM",
+			},
+			msg: "invalid unit for KeyCache",
+		},
+		{
+			jwt: &v1.JWTAuth{
+				Realm:    "My Product api",
+				JwksURI:  "myidp",
+				KeyCache: "1h",
+			},
+			msg: "invalid JwksURI",
 		},
 	}
 	for _, test := range tests {
@@ -872,6 +940,7 @@ func TestValidateOIDCValid(t *testing.T) {
 		{
 			oidc: &v1.OIDC{
 				AuthEndpoint:   "https://accounts.google.com/o/oauth2/v2/auth",
+				AuthExtraArgs:  []string{"foo=bar", "baz=zot"},
 				TokenEndpoint:  "https://oauth2.googleapis.com/token",
 				JWKSURI:        "https://www.googleapis.com/oauth2/v3/certs",
 				ClientID:       "random-string",
@@ -897,6 +966,7 @@ func TestValidateOIDCValid(t *testing.T) {
 		{
 			oidc: &v1.OIDC{
 				AuthEndpoint:  "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/auth",
+				AuthExtraArgs: []string{"kc_idp_hint=foo"},
 				TokenEndpoint: "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/token",
 				JWKSURI:       "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/certs",
 				ClientID:      "bar",
@@ -1014,6 +1084,18 @@ func TestValidateOIDCInvalid(t *testing.T) {
 		},
 		{
 			oidc: &v1.OIDC{
+				AuthEndpoint:  "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/auth",
+				AuthExtraArgs: []string{"foo;bar"},
+				TokenEndpoint: "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/token",
+				JWKSURI:       "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/certs",
+				ClientID:      "foobar",
+				ClientSecret:  "secret",
+				Scope:         "openid",
+			},
+			msg: "invalid chars in authExtraArgs",
+		},
+		{
+			oidc: &v1.OIDC{
 				AuthEndpoint:   "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/auth",
 				TokenEndpoint:  "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/token",
 				JWKSURI:        "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/certs",
@@ -1093,6 +1175,27 @@ func TestValidateURL(t *testing.T) {
 		allErrs := validateURL(test, field.NewPath("authEndpoint"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateURL(%q) didn't return error for invalid input", test)
+		}
+	}
+}
+
+func TestValidateQueryStringt(t *testing.T) {
+	t.Parallel()
+	validInput := []string{"foo=bar", "foo", "foo=bar&baz=zot", "foo=bar&foo=baz", "foo=bar%3Bbaz"}
+
+	for _, test := range validInput {
+		allErrs := validateQueryString(test, field.NewPath("authExtraArgs"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateQueryString(%q) returned errors %v for valid input", allErrs, test)
+		}
+	}
+
+	invalidInput := []string{"foo=bar;baz"}
+
+	for _, test := range invalidInput {
+		allErrs := validateQueryString(test, field.NewPath("authExtraArgs"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateQueryString(%q) didn't return error for invalid input", test)
 		}
 	}
 }

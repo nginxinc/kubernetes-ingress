@@ -1132,6 +1132,9 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     dep["spec"]["replicas"] = int(cli_arguments["replicas"])
     dep["spec"]["template"]["spec"]["containers"][0]["image"] = cli_arguments["image"]
     dep["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = cli_arguments["image-pull-policy"]
+    dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(
+        ["-default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret"]
+    )
     if args is not None:
         dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(args)
     if cli_arguments["deployment-type"] == "deployment":

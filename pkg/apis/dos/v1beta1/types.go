@@ -33,8 +33,8 @@ type DosProtectedResourceSpec struct {
 type ApDosMonitor struct {
 	// URI is the destination to the desired protected object in the nginx.conf:
 	URI string `json:"uri"`
-	// +kubebuilder:validation:Enum=http1;http2;grpc
-	// Protocol determines if the server listens on http1 / http2 / grpc. The default is http1.
+	// +kubebuilder:validation:Enum=http1;http2;grpc;websocket
+	// Protocol determines if the server listens on http1 / http2 / grpc / websocket. The default is http1.
 	Protocol string `json:"protocol"`
 	// Timeout determines how long (in seconds) should NGINX App Protect DoS wait for a response. Default is 10 seconds for http1/http2 and 5 seconds for grpc.
 	Timeout uint64 `json:"timeout"`

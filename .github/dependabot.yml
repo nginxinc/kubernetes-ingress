@@ -1,38 +1,31 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "gomod"
-    directory: "/"
+
+  - package-ecosystem: gomod
+    directory: /
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "docker"
-    directory: "/build"
+
+  - package-ecosystem: docker
+    directory: /build
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "docker"
-    directory: "/tests/docker"
+
+  - package-ecosystem: docker
+    directory: /tests/docker
     schedule:
       interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "pip"
-    directory: "/tests"
+
+  - package-ecosystem: pip
+    directory: /tests
     schedule:
-      interval: daily
-    reviewers:
-      - "nginxinc/kic"
-  - package-ecosystem: "pip"
-    directory: "/perf-tests"
+      interval: weekly
+
+  - package-ecosystem: pip
+    directory: /perf-tests
     schedule:
-      interval: daily
-    reviewers:
-      - "nginxinc/kic"
+      interval: weekly

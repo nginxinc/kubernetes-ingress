@@ -16,7 +16,7 @@ from kubernetes.client import (
     RbacAuthorizationV1Api,
 )
 from kubernetes.client.rest import ApiException
-from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, DEPLOYMENTS, TEST_DATA
+from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, BASEDIR, DEPLOYMENTS, TEST_DATA
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.utils.resources_utils import (
@@ -224,7 +224,7 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
     with open(config_map_yaml) as f:
         config_map = yaml.safe_load(f)
-    create_secret_from_yaml(kube_apis.v1, namespace, f"{DEPLOYMENTS}/common/default-server-secret.yaml")
+    create_secret_from_yaml(kube_apis.v1, namespace, f"{TEST_DATA}/common/default-server-secret.yaml")
 
     def fin():
         if request.config.getoption("--skip-fixture-teardown") == "no":
