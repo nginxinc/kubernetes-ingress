@@ -18,11 +18,11 @@ The following is a set of guidelines for contributing to the NGINX Ingress Contr
 
 ## Ask a Question
 
-To ask the core development team a question please use the [Github Discussions](https://github.com/nginxinc/kubernetes-ingress/discussions) feature.
+To ask a question please use the [Github Discussions](https://github.com/nginxinc/kubernetes-ingress/discussions) feature.
 
 You can also join our [Community Slack channel](https://community.nginx.org/joinslack) which has a wider NGINX audience.
 
-Please reserve Github issues for specific feature requests and bugs rather than general questions.
+Please reserve Github issues for feature requests and bugs rather than general questions.
 
 
 ## Getting Started
@@ -53,11 +53,11 @@ To suggest an new feature or other improvement, create an issue on Github and ch
 
 ### Open a Pull Request
 
-* Before working on a possible pull request, you should first open an associated issue (feature request or bug report) describing the proposed change. This gives an opportunity for the core development team to discuss the potential pull request with you before you do the work.
+* Before working on a possible pull request, first open an associated issue describing the proposed change. This allows the core development team to discuss the potential pull request with you before you do the work.
 * Fork the repo, create a branch, submit a PR when your changes are tested and ready for review
 * Fill in [our pull request template](https://github.com/nginxinc/kubernetes-ingress/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
 
-**Note**: Don't forget to create a feature request / bug report issue first to start a discussion about the proposed change.
+**Note**: Remember to create a feature request / bug report issue first to start a discussion about the proposed change.
 
 ## Style Guides
 
