@@ -35,6 +35,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	"github.com/nginxinc/nginx-service-mesh/pkg/spiffe"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 
 	"k8s.io/apimachinery/pkg/fields"
@@ -142,7 +143,7 @@ type LoadBalancerController struct {
 	metricsCollector              collectors.ControllerCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
-	spiffeCertFetcher             *SpiffeCertFetcher
+	spiffeCertFetcher             *spiffe.X509CertFetcher
 	internalRoutesEnabled         bool
 	syncLock                      sync.Mutex
 	isNginxReady                  bool
@@ -246,11 +247,14 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	lbc.syncQueue = newTaskQueue(lbc.sync)
 	if input.SpireAgentAddress != "" {
-		var err error
-		lbc.spiffeCertFetcher, err = NewSpiffeCertFetcher(lbc.syncSVIDRotation, input.SpireAgentAddress)
+		client, err := workloadapi.New(lbc.ctx, workloadapi.WithAddr("unix://"+input.SpireAgentAddress))
 		if err != nil {
 			glog.Fatalf("failed to create Spiffe Controller: %v", err)
 		}
+		lbc.spiffeCertFetcher = spiffe.NewX509CertFetcher(
+			input.SpireAgentAddress,
+			client,
+		)
 	}
 
 	isDynamicNs := input.WatchNamespaceLabel != ""
@@ -645,10 +649,27 @@ func (lbc *LoadBalancerController) Run() {
 	}
 
 	if lbc.spiffeCertFetcher != nil {
-		err := lbc.spiffeCertFetcher.Start(lbc.ctx, lbc.addInternalRouteServer)
+		_, _, err := lbc.spiffeCertFetcher.Start(lbc.ctx)
+		lbc.addInternalRouteServer()
 		if err != nil {
 			glog.Fatal(err)
 		}
+
+		// wait for initial bundle
+		cert := <-lbc.spiffeCertFetcher.CertCh
+		lbc.syncSVIDRotation(cert)
+
+		go func() {
+			for {
+				select {
+				case err := <-lbc.spiffeCertFetcher.WatchErrCh:
+					glog.Errorf("error watching for SVID rotations: %v", err)
+					return
+				case cert := <-lbc.spiffeCertFetcher.CertCh:
+					lbc.syncSVIDRotation(cert)
+				}
+			}
+		}()
 	}
 	if lbc.certManagerController != nil {
 		go lbc.certManagerController.Run(lbc.ctx.Done())
