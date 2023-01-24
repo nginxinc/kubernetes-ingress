@@ -18,7 +18,11 @@ The following is a set of guidelines for contributing to the NGINX Ingress Contr
 
 ## Ask a Question
 
-We will have a public forum soon where you can come and ask questions and have a discussion. For now please open an Issue on GitHub with the label `question`.
+To ask a question please use [Github Discussions](https://github.com/nginxinc/kubernetes-ingress/discussions).
+
+You can also join our [Community Slack channel](https://community.nginx.org/joinslack) which has a wider NGINX audience.
+
+Please reserve Github issues for feature requests and bugs rather than general questions.
 
 
 ## Getting Started
@@ -41,18 +45,19 @@ Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/mai
 
 ### Report a Bug
 
-To report a bug, open an issue on GitHub with the label `bug` using the available bug report issue template. Please ensure the issue has not already been reported.
+To report a bug, open an issue on GitHub and choose the type 'Bug report'. Please ensure the issue has not already been reported, and that you fill in the template as provided, as this can reduce turnaround time.
 
-### Suggest an Enhancement
+### Suggest a new feature or other improvement
 
-To suggest an enhancement, please create an issue on GitHub with the label `enhancement` using the available feature issue template.
+To suggest an new feature or other improvement, create an issue on Github and choose the type 'Feature request'. Please fill in the template as provided.
 
 ### Open a Pull Request
 
+* Before working on a possible pull request, first open an associated issue describing the proposed change. This allows the core development team to discuss the potential pull request with you before you do the work.
 * Fork the repo, create a branch, submit a PR when your changes are tested and ready for review
 * Fill in [our pull request template](https://github.com/nginxinc/kubernetes-ingress/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
 
-Note: if you’d like to implement a new feature, please consider creating a feature request issue first to start a discussion about the feature.
+**Note**: Remember to create a feature request / bug report issue first to start a discussion about the proposed change.
 
 ## Style Guides
 
