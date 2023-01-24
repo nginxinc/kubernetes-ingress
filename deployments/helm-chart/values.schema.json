@@ -460,6 +460,15 @@
           "title": "The topologySpreadConstraints Schema",
           "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.TopologySpreadConstraint"
         },
+        "env": {
+          "type": "array",
+          "default": [],
+          "title": "The env Schema",
+          "items": {
+            "type": "object",
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.EnvVar"
+          }
+        },
         "volumes": {
           "type": "array",
           "default": [],
@@ -1274,6 +1283,7 @@
           "tolerations": [],
           "affinity": {},
           "topologySpreadConstraints": {},
+          "env": [],
           "volumes": [],
           "volumeMounts": [],
           "initContainers": [],
@@ -1574,6 +1584,7 @@
         "tolerations": [],
         "affinity": {},
         "topologySpreadConstraints": {},
+        "env": [],
         "volumes": [],
         "volumeMounts": [],
         "initContainers": [],
