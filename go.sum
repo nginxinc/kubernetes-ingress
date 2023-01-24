@@ -63,8 +63,8 @@ github.com/aws/aws-sdk-go-v2/internal/ini v1.3.28 h1:KeTxcGdNnQudb46oOl4d90f2I33
 github.com/aws/aws-sdk-go-v2/internal/ini v1.3.28/go.mod h1:yRZVr/iT0AqyHeep00SZ4YfBAKojXz08w3XMBscdi0c=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.21 h1:5C6XgTViSb0bunmU57b3CT+MhxULqHH2721FVA+/kDM=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.21/go.mod h1:lRToEJsn+DRA9lW4O9L9+/3hjTkUzlzyzHqn8MTds5k=
-github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.14.0 h1:zhGJVqFAHNmnYFGfPXqUgG+yHkmlsDb5R56B6rCNuRw=
-github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.14.0/go.mod h1:DSuypbY6jb7WZSxrLuCgd7ouB5uRQ+Hg5wbt0GmgRcc=
+github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.14.1 h1:IOjpqwEHMYPVfiqnH/auHvhz69/SGHYo/tFBkax5O0o=
+github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.14.1/go.mod h1:DSuypbY6jb7WZSxrLuCgd7ouB5uRQ+Hg5wbt0GmgRcc=
 github.com/aws/aws-sdk-go-v2/service/sso v1.12.0 h1:/2gzjhQowRLarkkBOGPXSRnb8sQ2RVsjdG1C/UliK/c=
 github.com/aws/aws-sdk-go-v2/service/sso v1.12.0/go.mod h1:wo/B7uUm/7zw/dWhBJ4FXuw1sySU5lyIhVg1Bu2yL9A=
 github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.0 h1:Jfly6mRxk2ZOSlbCvZfKNS7TukSx1mIzhSsqZ/IGSZI=
