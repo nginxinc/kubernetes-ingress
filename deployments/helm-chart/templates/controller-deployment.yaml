@@ -141,6 +141,9 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+{{- if .Values.controller.env }}
+{{ toYaml .Values.controller.env | indent 8 }}
+{{- end }}
 {{- if .Values.nginxServiceMesh.enable }}
         - name: POD_SERVICEACCOUNT
           valueFrom:
@@ -195,7 +198,9 @@ spec:
 {{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
           - -external-service={{ include "nginx-ingress.serviceName" . }}
 {{- end }}
+{{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
+{{- if .Values.controller.reportIngressStatus.enableLeaderElection }}
           - -leader-election-lock-name={{ include "nginx-ingress.leaderElectionName" . }}
 {{- end }}
 {{- if .Values.controller.wildcardTLS.secret }}

@@ -177,6 +177,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.terminationGracePeriodSeconds`` | The termination grace period of the Ingress Controller pod. | 30 |
 |``controller.tolerations`` | The tolerations of the Ingress Controller pods. | [] |
 |``controller.affinity`` | The affinity of the Ingress Controller pods. | {} |
+|``controller.env`` | The additional environment variables to be set on the Ingress Controller pods. | []
 |``controller.volumes`` | The volumes of the Ingress Controller pods. | [] |
 |``controller.volumeMounts`` | The volumeMounts of the Ingress Controller pods. | [] |
 |``controller.initContainers`` | InitContainers for the Ingress Controller pods. | []

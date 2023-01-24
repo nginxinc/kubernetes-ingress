@@ -153,6 +153,11 @@ controller:
   ## The topology spread constraints of the Ingress controller pods.
   # topologySpreadConstraints: {}
 
+  ## The additional environment variables to be set on the Ingress Controller pods.
+  env: []
+  # - name: MY_VAR
+  #   value: myvalue
+
   ## The volumes of the Ingress Controller pods.
   volumes: []
   # - name: extra-conf

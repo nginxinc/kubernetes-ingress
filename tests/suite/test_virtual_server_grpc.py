@@ -295,7 +295,7 @@ class TestVirtualServerGrpcHealthCheck:
         param_list = [
             "health_check port=50051 interval=1s jitter=2s",
             "type=grpc grpc_status=12",
-            "grpc_service=helloworld.Greeter;",
+            "grpc_service=helloworld.Greeter keepalive_time=60s;",
         ]
         for p in param_list:
             assert p in config

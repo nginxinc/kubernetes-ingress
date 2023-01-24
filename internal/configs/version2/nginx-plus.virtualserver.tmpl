@@ -292,7 +292,7 @@ server {
             fails={{ $hc.Fails }} passes={{ $hc.Passes }}{{ if $hc.Match }} match={{ $hc.Match }}{{ end }}
             {{ if $hc.Mandatory }} mandatory{{ if $hc.Persistent }} persistent{{ end }}{{ end }}
             {{ if $hc.GRPCPass }} type=grpc{{ if $hc.GRPCStatus }} grpc_status={{ $hc.GRPCStatus }}{{ end }}
-            {{ if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{ end }}{{ end }};
+            {{ if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{ end }}{{ end }} keepalive_time={{ $hc.KeepaliveTime }};
     }
     {{ end }}
 

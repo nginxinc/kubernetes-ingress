@@ -2506,6 +2506,7 @@ func TestValidateUpstreamHealthCheck(t *testing.T) {
 		StatusMatch: "! 500",
 		Mandatory:   true,
 		Persistent:  true,
+		KeepaliveTime: "120s",
 	}
 
 	allErrs := validateUpstreamHealthCheck(hc, "", field.NewPath("healthCheck"))

@@ -20,6 +20,7 @@ spec:
       path: 200
       interval: 1.5
       jitter: 2.0
+      keepalive-time: 2.0
       fails: "one"
       passes: "one"
       port: "80"
@@ -49,6 +50,7 @@ spec:
       path: 200
       interval: 1.5
       jitter: 2.0
+      keepalive-time: 2.0
       fails: "one"
       passes: "one"
       port: "80"
