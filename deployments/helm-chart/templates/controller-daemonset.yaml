@@ -192,9 +192,9 @@ spec:
 {{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
           - -external-service={{ include "nginx-ingress.serviceName" . }}
 {{- end }}
+{{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
           - -leader-election-lock-name={{ include "nginx-ingress.leaderElectionName" . }}
-{{- end }}
 {{- if .Values.controller.wildcardTLS.secret }}
           - -wildcard-tls-secret={{ .Values.controller.wildcardTLS.secret }}
 {{- else if and .Values.controller.wildcardTLS.cert .Values.controller.wildcardTLS.key }}
