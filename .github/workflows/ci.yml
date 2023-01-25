@@ -306,7 +306,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@06e109483e6aa305a2b2395eabae554e51530e1d # v0.13.1
+        uses: anchore/sbom-action/download-syft@54e36e45f34bc64728f51adb8044404daca492a6 # v0.13.2
 
       - name: Build binaries
         uses: goreleaser/goreleaser-action@8f67e590f2d095516493f017008adc464e63adb1 # v4.1.0
