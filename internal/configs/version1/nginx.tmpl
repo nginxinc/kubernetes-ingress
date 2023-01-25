@@ -213,6 +213,7 @@ http {
     {{if .InternalRouteServer}}
     server {
         listen 443 ssl;
+        {{if not .DisableIPV6}}listen [::]:443 ssl;{{end}}
         server_name {{.InternalRouteServerName}};
         ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
         ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
