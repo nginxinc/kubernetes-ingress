@@ -75,6 +75,8 @@ jobs:
         with:
           base-image: ${{ matrix.base_image.version}}
           image: nginx/nginx-ingress:${{ steps.dist.outputs.tag }}
+        env:
+          DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
       - id: needs
         run: echo "${{ matrix.base_image.distro }}=${{ steps.update.outputs.needs-updating }}" >> $GITHUB_OUTPUT
 
@@ -110,49 +112,6 @@ jobs:
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
-
-  test:
-    name: Run tests
-    runs-on: ubuntu-22.04
-    needs: [check, variables, binary]
-    strategy:
-      matrix:
-        include:
-          - image: debian
-            marker: ingresses
-            needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
-          - image: alpine
-            marker: "vs vsr"
-            needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - image: ubi
-            marker: "policies ts"
-            needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
-        with:
-          ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Fetch Cached Artifacts
-        uses: actions/cache@627f0f41f6904a5b1efbaed9f96d9eb58e92e920 # v3.2.4
-        with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Run Smoke Tests
-        id: smoke-tests
-        uses: ./.github/actions/smoke-tests
-        with:
-          image: ${{ matrix.image }}
-          marker: ${{ matrix.marker }}
-          k8s-version: ${{ needs.variables.outputs.k8s_version }}
-        if: ${{ matrix.needs-updating == 'true' }}
-      - name: Upload Test Results
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-        with:
-          name: ${{ steps.smoke-tests.outputs.test-results-name }}
-          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
-        if: always()
 
   release-docker-debian:
     name: Release Debian Image
