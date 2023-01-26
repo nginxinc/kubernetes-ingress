@@ -233,6 +233,7 @@ type virtualServerConfigurator struct {
 	enableSnippets       bool
 	warnings             Warnings
 	spiffeCerts          bool
+	enableInternalRoutes bool
 	oidcPolCfg           *oidcPolicyCfg
 	isIPV6Disabled       bool
 }
@@ -273,6 +274,7 @@ func newVirtualServerConfigurator(
 		enableSnippets:       staticParams.EnableSnippets,
 		warnings:             make(map[runtime.Object][]string),
 		spiffeCerts:          staticParams.NginxServiceMesh,
+		enableInternalRoutes: staticParams.EnableInternalRoutes,
 		oidcPolCfg:           &oidcPolicyCfg{},
 		isIPV6Disabled:       staticParams.DisableIPV6,
 	}
@@ -356,7 +358,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		ups := vsc.generateUpstream(vsEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
 		upstreams = append(upstreams, ups)
 
-		u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
+		u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts, vsEx.VirtualServer.Spec.InternalRoute)
 		crUpstreams[upstreamName] = u
 
 		if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
@@ -385,7 +387,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
 			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
 			upstreams = append(upstreams, ups)
-			u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
+			u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts, vsEx.VirtualServer.Spec.InternalRoute)
 			crUpstreams[upstreamName] = u
 
 			if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
@@ -677,7 +679,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			VSName:                    vsEx.VirtualServer.Name,
 			DisableIPV6:               vsc.isIPV6Disabled,
 		},
-		SpiffeCerts: vsc.spiffeCerts,
+		SpiffeCerts:         vsc.spiffeCerts,
+		InternalRouteServer: vsEx.VirtualServer.Spec.InternalRoute,
 	}
 
 	return vsCfg, vsc.warnings
@@ -2448,7 +2451,11 @@ func generateProxySSLName(svcName, ns string) string {
 	return fmt.Sprintf("%s.%s.svc", svcName, ns)
 }
 
-func isTLSEnabled(u conf_v1.Upstream, spiffeCerts bool) bool {
+func isTLSEnabled(u conf_v1.Upstream, spiffeCerts, spiffeEgress bool) bool {
+	if spiffeEgress {
+		return false
+	}
+
 	return u.TLS.Enable || spiffeCerts
 }
 

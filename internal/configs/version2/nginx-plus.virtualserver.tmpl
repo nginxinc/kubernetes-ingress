@@ -68,8 +68,17 @@ match {{ $m.Name }} {
 {{ end }}
 
 server {
+
+    {{ if $.InternalRouteServer }}
+    listen 443 ssl;
+    {{if not $s.DisableIPV6}}listen [::]:443 ssl;{{end}}
+    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+
+    {{ else }}
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+    {{ end }}
 
     server_name {{ $s.ServerName }};
     status_zone {{ $s.StatusZone }};

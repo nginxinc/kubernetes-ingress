@@ -46,6 +46,7 @@ type VirtualServerSpec struct {
 	ServerSnippets string            `json:"server-snippets"`
 	Dos            string            `json:"dos"`
 	ExternalDNS    ExternalDNS       `json:"externalDNS"`
+	InternalRoute  bool              `json:"internalRoute"`
 }
 
 // ExternalDNS defines externaldns sub-resource of a virtual server.

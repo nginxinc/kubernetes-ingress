@@ -59,6 +59,7 @@ spec:
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
 |``routes`` | A list of routes. | [[]route](#virtualserverroute) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServer resource. | ``string`` | No |
+|``internalRoute`` | Specifies if the VirtualServer resource is an internal route or not. | ``boolean`` | No |
 |``http-snippets`` | Sets a custom snippet in the http context. | ``string`` | No |
 |``server-snippets`` | Sets a custom snippet in server context. Overrides the ``server-snippets`` ConfigMap key. | ``string`` | No |
 {{% /table %}}

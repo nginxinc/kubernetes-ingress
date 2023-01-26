@@ -93,6 +93,9 @@ spec:
                   type: string
                 ingressClassName:
                   type: string
+                internalRoute:
+                  description: internalRoute is used to toggle internal routing used for specific types of traffic egress.
+                  type: boolean
                 policies:
                   type: array
                   items:
