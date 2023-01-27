@@ -17,7 +17,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.2
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20230105000112-eab7a2c85304
-	google.golang.org/grpc v1.52.1
+	google.golang.org/grpc v1.52.3
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
