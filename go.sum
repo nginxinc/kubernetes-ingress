@@ -47,8 +47,8 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
-github.com/avahahn/nginx-service-mesh v0.0.0-20230125183036-dc9e68f961b8 h1:ZKl+Q8EYYtE0OKGrIvZzS6kr+DwdIGSTt7U+NqrIoxA=
-github.com/avahahn/nginx-service-mesh v0.0.0-20230125183036-dc9e68f961b8/go.mod h1:vC/WJhsqcs8urWmy3ox1IbMJgIFS5QKN8PfHzIbHWBk=
+github.com/avahahn/nginx-service-mesh v0.0.0-20230127072031-0e61dd1526e0 h1:f5sHxM5DRdhdeTPpNE8G5yT+zYm3831r85JCfFuEKtw=
+github.com/avahahn/nginx-service-mesh v0.0.0-20230127072031-0e61dd1526e0/go.mod h1:vC/WJhsqcs8urWmy3ox1IbMJgIFS5QKN8PfHzIbHWBk=
 github.com/aws/aws-sdk-go-v2 v1.17.4 h1:wyC6p9Yfq6V2y98wfDsj6OnNQa4w2BLGCLIxzNhwOGY=
 github.com/aws/aws-sdk-go-v2 v1.17.4/go.mod h1:uzbQtefpm44goOPmdKyAlXSNcwlRgF3ePWVW6EtJvvw=
 github.com/aws/aws-sdk-go-v2/config v1.18.12 h1:fKs/I4wccmfrNRO9rdrbMO1NgLxct6H9rNMiPdBxHWw=

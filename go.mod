@@ -2,7 +2,7 @@ module github.com/nginxinc/kubernetes-ingress
 
 go 1.20
 
-replace github.com/nginxinc/nginx-service-mesh => github.com/avahahn/nginx-service-mesh v0.0.0-20230125183036-dc9e68f961b8
+replace github.com/nginxinc/nginx-service-mesh => github.com/avahahn/nginx-service-mesh v0.0.0-20230127072031-0e61dd1526e0
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.12
@@ -20,7 +20,6 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.2
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20230105000112-eab7a2c85304
-	google.golang.org/grpc v1.53.0
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
@@ -118,6 +117,7 @@ require (
 	golang.org/x/tools v0.5.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
+	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect

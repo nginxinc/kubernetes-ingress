@@ -246,15 +246,15 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
 
 	lbc.syncQueue = newTaskQueue(lbc.sync)
+	var err error
 	if input.SpireAgentAddress != "" {
-		client, err := workloadapi.New(lbc.ctx, workloadapi.WithAddr("unix://"+input.SpireAgentAddress))
-		if err != nil {
-			glog.Fatalf("failed to create Spiffe Controller: %v", err)
-		}
-		lbc.spiffeCertFetcher = spiffe.NewX509CertFetcher(
+		lbc.spiffeCertFetcher, err = spiffe.NewX509CertFetcherFromAddr(
+			lbc.ctx,
 			input.SpireAgentAddress,
-			client,
 		)
+		if err != nil {
+			glog.Fatalf("failed to initialize certfetcher: %v", err)
+		}
 	}
 
 	isDynamicNs := input.WatchNamespaceLabel != ""
@@ -657,7 +657,7 @@ func (lbc *LoadBalancerController) Run() {
 
 		// wait for initial bundle
 		timeoutch := make(chan bool, 1)
-		go func() { time.sleep(time.seconds * 30); timeoutch <- true }()
+		go func() { time.Sleep(time.Second * 30); timeoutch <- true }()
 		select {
 		case cert := <-lbc.spiffeCertFetcher.CertCh:
 			lbc.syncSVIDRotation(cert)
