@@ -656,8 +656,14 @@ func (lbc *LoadBalancerController) Run() {
 		}
 
 		// wait for initial bundle
-		cert := <-lbc.spiffeCertFetcher.CertCh
-		lbc.syncSVIDRotation(cert)
+		timeoutch := make(chan bool, 1)
+		go func() { time.sleep(time.seconds * 30); timeoutch <- true }()
+		select {
+		case cert := <-lbc.spiffeCertFetcher.CertCh:
+			lbc.syncSVIDRotation(cert)
+		case <-timeoutch:
+			glog.Fatal("Failed to download initial trust bundle")
+		}
 
 		go func() {
 			for {
