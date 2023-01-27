@@ -1,12 +1,9 @@
-name: Sync
+name: Sync labels
 
 on:
-  workflow_run:
-    branches: main
-    workflows:
-      - "CI"
-    types:
-      - completed
+  schedule:
+    - cron: '8 0 * * 1' # run every Monday at 00:08 UTC
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.ref_name }}-sync

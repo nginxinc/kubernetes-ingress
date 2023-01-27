@@ -15,7 +15,7 @@ on:
       - reopened
       - synchronize
   schedule:
-    - cron:  '0 4 * * *'
+    - cron: '0 4 * * *' # run every day at 04:00 UTC
 
 defaults:
   run:

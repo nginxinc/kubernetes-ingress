@@ -2,7 +2,7 @@ name: Update Docker Images
 
 on:
   schedule:
-    - cron:  '0 1 * * *'
+    - cron: '0 1 * * *' # run every day at 01:00 UTC
   workflow_dispatch:
 
 defaults:
