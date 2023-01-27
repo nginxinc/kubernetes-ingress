@@ -71,7 +71,7 @@ jobs:
           echo "tag=${{ needs.variables.outputs.kic-tag }}${dist}" >> $GITHUB_OUTPUT
       - name: Check if update available for ${{ matrix.base_image.version }}
         id: update
-        uses: lucacome/docker-image-update-checker@93aeebde51b01e63284197bae89f9a1d6dd1921f # v1.1.1
+        uses: lucacome/docker-image-update-checker@312448ddbde14d783bdf3d9374e27b02b53c34f2 # v1.2.0
         with:
           base-image: ${{ matrix.base_image.version}}
           image: nginx/nginx-ingress:${{ steps.dist.outputs.tag }}

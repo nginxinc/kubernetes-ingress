@@ -357,6 +357,15 @@ server {
             {{ range $h := $l.AddHeaders }}
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
             {{ end }}
+            {{ if $.SpiffeCerts }}
+        {{ $proxyOrGRPC }}_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+        {{ $proxyOrGRPC }}_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+        {{ $proxyOrGRPC }}_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
+        {{ $proxyOrGRPC }}_ssl_server_name on;
+        {{ $proxyOrGRPC }}_ssl_verify on;
+        {{ $proxyOrGRPC }}_ssl_verify_depth 25;
+        {{ $proxyOrGRPC }}_ssl_name {{ $l.ProxySSLName }};
+            {{ end }}
             {{if $l.GRPCPass}}
         grpc_pass {{ $l.GRPCPass }};
             {{ else }}

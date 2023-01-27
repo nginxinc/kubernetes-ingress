@@ -19,7 +19,7 @@ This step is required if you're installing the chart using its sources. Addition
 
 1. Clone the Ingress Controller repo:
     ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.0.0
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.0.1
     ```
 2. Change your working directory to /deployments/helm-chart-dos-arbitrator:
     ```console
