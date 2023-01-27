@@ -253,7 +253,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			input.SpireAgentAddress,
 		)
 		if err != nil {
-			glog.Fatalf("failed to initialize certfetcher: %v", err)
+			glog.Fatalf("failed to initialize spiffe certfetcher: %v", err)
 		}
 	}
 
@@ -662,7 +662,7 @@ func (lbc *LoadBalancerController) Run() {
 		case cert := <-lbc.spiffeCertFetcher.CertCh:
 			lbc.syncSVIDRotation(cert)
 		case <-timeoutch:
-			glog.Fatal("Failed to download initial trust bundle")
+			glog.Fatal("Failed to download initial spiffe trust bundle")
 		}
 
 		go func() {
