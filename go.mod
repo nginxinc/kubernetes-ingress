@@ -2,7 +2,7 @@ module github.com/nginxinc/kubernetes-ingress
 
 go 1.20
 
-replace github.com/nginxinc/nginx-service-mesh => github.com/avahahn/nginx-service-mesh v0.0.0-20230127072031-0e61dd1526e0
+replace github.com/nginxinc/nginx-service-mesh => github.com/avahahn/nginx-service-mesh v0.0.0-20230130190955-f7f76e10ff71
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.12

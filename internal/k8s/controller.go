@@ -248,10 +248,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.syncQueue = newTaskQueue(lbc.sync)
 	var err error
 	if input.SpireAgentAddress != "" {
-		lbc.spiffeCertFetcher, err = spiffe.NewX509CertFetcherFromAddr(
-			lbc.ctx,
-			input.SpireAgentAddress,
-		)
+		lbc.spiffeCertFetcher, err = spiffe.NewX509CertFetcher(input.SpireAgentAddress, nil)
 		if err != nil {
 			glog.Fatalf("failed to initialize spiffe certfetcher: %v", err)
 		}

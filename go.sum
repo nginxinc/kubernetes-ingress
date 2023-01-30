@@ -47,8 +47,8 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
-github.com/avahahn/nginx-service-mesh v0.0.0-20230127072031-0e61dd1526e0 h1:f5sHxM5DRdhdeTPpNE8G5yT+zYm3831r85JCfFuEKtw=
-github.com/avahahn/nginx-service-mesh v0.0.0-20230127072031-0e61dd1526e0/go.mod h1:vC/WJhsqcs8urWmy3ox1IbMJgIFS5QKN8PfHzIbHWBk=
+github.com/avahahn/nginx-service-mesh v0.0.0-20230130190955-f7f76e10ff71 h1:YPJ7voWX8SqlYfyZ8JoFaI15uRP2oUvsISFyJVC2ymQ=
+github.com/avahahn/nginx-service-mesh v0.0.0-20230130190955-f7f76e10ff71/go.mod h1:TWZyRtiM04w87lDtf4ul6P2UaNd1cnYiGOQ/oVztFac=
 github.com/aws/aws-sdk-go-v2 v1.17.4 h1:wyC6p9Yfq6V2y98wfDsj6OnNQa4w2BLGCLIxzNhwOGY=
 github.com/aws/aws-sdk-go-v2 v1.17.4/go.mod h1:uzbQtefpm44goOPmdKyAlXSNcwlRgF3ePWVW6EtJvvw=
 github.com/aws/aws-sdk-go-v2/config v1.18.12 h1:fKs/I4wccmfrNRO9rdrbMO1NgLxct6H9rNMiPdBxHWw=
@@ -319,7 +319,7 @@ github.com/nginxinc/nginx-prometheus-exporter v0.11.0 h1:21xjnqNgxtni2jDgAQ90bl1
 github.com/nginxinc/nginx-prometheus-exporter v0.11.0/go.mod h1:GdyHnWAb8q8OW1Pssrrqbcqra0SH0Vn6UXICMmyWkw8=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=
-github.com/onsi/ginkgo/v2 v2.6.1 h1:1xQPCjcqYw/J5LchOcp4/2q/jzJFjiAOc25chhnDw+Q=
+github.com/onsi/ginkgo/v2 v2.7.1 h1:YgLPk+gpqDtAPeRCWEmfO8oxE6ru3xcVSXAM7wn8w9I=
 github.com/onsi/gomega v1.26.0 h1:03cDLK28U6hWvCAns6NeydX3zIm4SF3ci69ulidS32Q=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
