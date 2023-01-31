@@ -2,8 +2,6 @@ module github.com/nginxinc/kubernetes-ingress
 
 go 1.20
 
-replace github.com/nginxinc/nginx-service-mesh => github.com/avahahn/nginx-service-mesh v0.0.0-20230130190955-f7f76e10ff71
-
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.12
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.14.2
@@ -15,7 +13,7 @@ require (
 	github.com/kr/pretty v0.3.1
 	github.com/nginxinc/nginx-plus-go-client v0.10.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.11.0
-	github.com/nginxinc/nginx-service-mesh v0.0.0-00010101000000-000000000000
+	github.com/nginxinc/nginx-service-mesh v1.6.1-0.20230130223442-cef16f77e1c1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/spiffe/go-spiffe/v2 v2.1.2
 	github.com/stretchr/testify v1.8.1
