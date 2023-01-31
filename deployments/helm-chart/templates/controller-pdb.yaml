@@ -14,10 +14,10 @@ spec:
   selector:
     matchLabels:
       app:  {{ include "nginx-ingress.appName" . }}
-{{- if .Values.controller.podDisruptionBudget.minAvailable -}}
-  minAvailable: {{ .Values.controller.pbd.minAvailable }}
+{{- if .Values.controller.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.controller.podDisruptionBudget.minAvailable }}
 {{- end }}
-{{- if .Values.controller.podDisruptionBudget.maxUnavailable -}}
+{{- if .Values.controller.podDisruptionBudget.maxUnavailable }}
   maxUnavailable: {{ .Values.controller.podDisruptionBudget.maxUnavailable }}
 {{- end }}
 {{- end }}
