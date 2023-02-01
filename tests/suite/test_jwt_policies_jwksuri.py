@@ -24,7 +24,10 @@ def get_token(request):
         "client_secret": request.config.getoption("--ad-secret"),
         "grant_type": "client_credentials",
     }
+    print(data)
     ad_response = requests.post(f"https://login.microsoftonline.com/{ad_tenant}/oauth2/token", data=data)
+    print(ad_response.status_code)
+    print(ad_response.json())
     if ad_response.status_code == 200:
         return ad_response.json()["access_token"]
     else:
