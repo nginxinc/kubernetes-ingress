@@ -25,7 +25,10 @@ def get_token(request):
         "grant_type": "client_credentials",
     }
     ad_response = requests.post(f"https://login.microsoftonline.com/{ad_tenant}/oauth2/token", data=data)
-    return ad_response.json()["access_token"]
+    if ad_response.status_code == 200:
+        return ad_response.json()["access_token"]
+    else:
+        pytest.fail("Unable to request Azure token endpoint")
 
 
 @pytest.mark.skip_for_nginx_oss
