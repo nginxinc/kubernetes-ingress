@@ -24,10 +24,8 @@ def get_token(request):
         "client_secret": request.config.getoption("--ad-secret"),
         "grant_type": "client_credentials",
     }
-    print(data)
     ad_response = requests.post(f"https://login.microsoftonline.com/{ad_tenant}/oauth2/token", data=data)
-    print(ad_response.status_code)
-    print(ad_response.json())
+    
     if ad_response.status_code == 200:
         return ad_response.json()["access_token"]
     else:
@@ -70,6 +68,12 @@ class TestJWTPoliciesVsJwksuri:
         """
         Test jwt-policy in Virtual Server (spec and route) with keys fetched form Azure
         """
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            jwt_cm_src,
+        )
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, jwt_pol_valid_src, test_namespace)
         wait_before_test()
 
@@ -81,12 +85,7 @@ class TestJWTPoliciesVsJwksuri:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            ingress_controller_prerequisites.config_map["metadata"]["name"],
-            ingress_controller_prerequisites.namespace,
-            jwt_cm_src,
-        )
+        
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host},
