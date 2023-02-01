@@ -60,7 +60,7 @@ Here is a breakdown of what this Ingress resource definition means:
 Starting from Kubernetes 1.18, you can use the following new features:
 
 * The host field supports wildcard domain names, such as `*.example.com`.
-* The path supports different matching rules with the new field `PathType`, which takes the following values: `Prefix` for prefix-based matching, `Exact` for exact matching and `ImplementationSpecific`, which is the default type and is the same as `Prefix`. For example:
+* The path supports different matching rules with the new field `pathType`, which takes the following values: `Prefix` for prefix-based matching, `Exact` for exact matching and `ImplementationSpecific`, which is the default type and is the same as `Prefix`. For example:
   ```yaml
     - path: /tea
       pathType: Prefix
@@ -105,7 +105,8 @@ Starting from Kubernetes 1.18, you can use the following new features:
 The NGINX Ingress Controller imposes the following restrictions on Ingress resources:
 * When defining an Ingress resource, the `host` field is required.
 * The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions).
-* The `path` field in `spec.rules[].http.paths[]` is required.
+* The `path` field in `spec.rules[].http.paths[]` is required for `Exact` and `Prefix` `pathTypes`.
+* The ImplementationSpecific `pathType` is treated as equivilent to `Prefix` `pathType`, with the exception that when this `pathType` is configured, the `path` field in `spec.rules[].http.paths[]` is not mandatory. `path` defaults to `/` if not set but the `pathType` is set to ImplementationSpecific.
 
 ## Advanced Configuration
 

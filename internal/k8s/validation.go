@@ -854,7 +854,7 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 		for _, path := range r.HTTP.Paths {
 			idxPath := idxRule.Child("http").Child("path").Index(i)
 
-			allErrs = append(allErrs, validatePath(path.Path, idxPath.Child("path"))...)
+			allErrs = append(allErrs, validatePath(path.Path, path.PathType, idxPath.Child("path"))...)
 			allErrs = append(allErrs, validateBackend(&path.Backend, idxPath.Child("backend"))...)
 		}
 	}
@@ -879,11 +879,17 @@ const (
 
 var pathRegexp = regexp.MustCompile("^" + pathFmt + "$")
 
-func validatePath(path string, fieldPath *field.Path) field.ErrorList {
+func validatePath(path string, pathType *networking.PathType, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	if path == "" && pathType != nil && *pathType == networking.PathTypeImplementationSpecific {
+		// No path defined - no further validation needed.
+		// Path is not required for ImplementationSpecific PathType - it will default to /.
+		return allErrs
+	}
+
 	if path == "" {
-		return append(allErrs, field.Required(fieldPath, ""))
+		return append(allErrs, field.Required(fieldPath, "path is required for Exact and Prefix PathTypes"))
 	}
 
 	if !pathRegexp.MatchString(path) {

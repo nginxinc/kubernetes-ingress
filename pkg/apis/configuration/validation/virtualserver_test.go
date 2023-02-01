@@ -2503,9 +2503,9 @@ func TestValidateUpstreamHealthCheck(t *testing.T) {
 				Value: "my.service",
 			},
 		},
-		StatusMatch: "! 500",
-		Mandatory:   true,
-		Persistent:  true,
+		StatusMatch:   "! 500",
+		Mandatory:     true,
+		Persistent:    true,
 		KeepaliveTime: "120s",
 	}
 

@@ -44,7 +44,7 @@ class SmokeSetup:
         self.ingress_host = ingress_host
 
 
-@pytest.fixture(scope="class", params=["standard", "mergeable"])
+@pytest.fixture(scope="class", params=["standard", "mergeable", "implementation-specific-pathtype"])
 def smoke_setup(request, kube_apis, ingress_controller_endpoint, ingress_controller, test_namespace) -> SmokeSetup:
     print("------------------------- Deploy Smoke Example -----------------------------------")
     secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml")

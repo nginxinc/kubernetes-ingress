@@ -3420,8 +3420,10 @@ func TestValidatePath(t *testing.T) {
 		"/abc}{abc",
 	}
 
+	pathType := networking.PathTypeExact
+
 	for _, path := range validPaths {
-		allErrs := validatePath(path, field.NewPath("path"))
+		allErrs := validatePath(path, &pathType, field.NewPath("path"))
 		if len(allErrs) > 0 {
 			t.Errorf("validatePath(%q) returned errors %v for valid input", path, allErrs)
 		}
@@ -3440,10 +3442,17 @@ func TestValidatePath(t *testing.T) {
 	}
 
 	for _, path := range invalidPaths {
-		allErrs := validatePath(path, field.NewPath("path"))
+		allErrs := validatePath(path, &pathType, field.NewPath("path"))
 		if len(allErrs) == 0 {
 			t.Errorf("validatePath(%q) returned no errors for invalid input", path)
 		}
+	}
+
+	pathType = networking.PathTypeImplementationSpecific
+
+	allErrs := validatePath("", &pathType, field.NewPath("path"))
+	if len(allErrs) > 0 {
+		t.Errorf("validatePath with empty path and type ImplementationSpecific returned errors %v for valid input", allErrs)
 	}
 }
 
