@@ -25,7 +25,7 @@ def get_token(request):
         "grant_type": "client_credentials",
     }
     ad_response = requests.post(f"https://login.microsoftonline.com/{ad_tenant}/oauth2/token", data=data)
-    
+
     if ad_response.status_code == 200:
         return ad_response.json()["access_token"]
     else:
@@ -85,7 +85,7 @@ class TestJWTPoliciesVsJwksuri:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        
+
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host},
