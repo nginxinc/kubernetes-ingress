@@ -118,6 +118,6 @@ runs:
         --durations=10 \
         --show-ic-logs=yes \
         --ad-secret=${{ inputs.azure-ad-secret }}
-        -m test
+        -m ${{ inputs.marker != '' && inputs.marker || '""' }}
       working-directory: ./tests
       shell: bash
