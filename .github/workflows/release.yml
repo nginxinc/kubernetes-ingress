@@ -1,0 +1,57 @@
+name: Publish Release
+
+on:
+  workflow_call:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+      - run: npm install js-yaml
+        continue-on-error: true
+
+      - name: Publish release on tag
+        uses: actions/github-script@98814c53be79b1d30f795b907e553d8679345975 # v6.4.0
+        continue-on-error: true
+        with:
+          retries: 3
+          script: |
+              const ref = context.ref.split("/")[2]
+              const yaml = require('js-yaml');
+
+              const releases = (await github.rest.repos.listReleases({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                per_page: 100,
+              })).data
+
+              const draft_release = releases.find(release => release.draft && release.tag_name === ref)
+
+              const helm_file = (await github.rest.repos.getContent({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                path: "deployments/helm-chart/Chart.yaml",
+                ref: ref,
+              })).data.content
+
+              const helm_yaml = yaml.load(Buffer.from(helm_file, 'base64').toString())
+              const helm_version = helm_yaml.version
+              console.log(`Helm version: ${helm_version}`)
+
+              const update = await github.rest.repos.updateRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                release_id: draft_release.id,
+                body: draft_release.body.replace("%HELM_CHART_VERSION%", helm_version),
+                draft: false
+              });
+              console.log(`Release published: ${update.data.html_url}`)
+              console.log(`Release notes: ${update.data.body}`)

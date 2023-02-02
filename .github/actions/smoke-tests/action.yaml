@@ -36,7 +36,7 @@ runs:
       uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/dist
-        key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
+        key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
     - name: Ingress type
       id: ingress-type
@@ -55,7 +55,6 @@ runs:
         file: build/Dockerfile
         context: '.'
         cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
-        cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }},mode=max
         target: goreleaser
         tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
         load: true
