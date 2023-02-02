@@ -182,14 +182,13 @@ controller:
   ## Pod disruption budget for the Ingress Controller pods.
   podDisruptionBudget:
     ## Enables PodDisruptionBudget.
-    enabled: false
+    enabled: true
     ## The annotations of the Ingress Controller pod disruption budget.
     annotations: {}
-    ## Only one of the two can be specified at once.
-    ## The number of controller pods that should be available.
-    #minAvailable: 1
-    ## The number of controller pods that can be unavailable.
-    #maxUnavailable: 1
+    ## The number of Ingress Controller pods that should be available. This is a mutually exclusive setting with "maxUnavailable".
+    # minAvailable: 1
+    ## The number of Ingress Controller pods that can be unavailable. This is a mutually exclusive setting with "minAvailable".
+    # maxUnavailable: 1
 
     ## Strategy used to replace old Pods by new ones. .spec.strategy.type can be "Recreate" or "RollingUpdate". "RollingUpdate" is the default value.
   strategy: {}
