@@ -1193,10 +1193,10 @@
               "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
             },
             "minAvailable": {
-				"$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.policy.v1.PodDisruptionBudgetSpec/properties/minAvailable"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.policy.v1.PodDisruptionBudgetSpec/properties/minAvailable"
             },
             "maxUnavailable": {
-				"$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.policy.v1.PodDisruptionBudgetSpec/properties/maxUnavailable"
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.policy.v1.PodDisruptionBudgetSpec/properties/maxUnavailable"
             }
           },
           "examples": [
