@@ -151,7 +151,7 @@ controller:
   affinity: {}
 
   ## The topology spread constraints of the Ingress controller pods.
-  #topologySpreadConstraints: {}
+  # topologySpreadConstraints: {}
 
   ## The volumes of the Ingress Controller pods.
   volumes: []
