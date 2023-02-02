@@ -182,7 +182,7 @@ controller:
   ## Pod disruption budget for the Ingress Controller pods.
   podDisruptionBudget:
     ## Enables PodDisruptionBudget.
-    enabled: true
+    enabled: false
     ## The annotations of the Ingress Controller pod disruption budget.
     annotations: {}
     ## The number of Ingress Controller pods that should be available. This is a mutually exclusive setting with "maxUnavailable".
