@@ -23,6 +23,9 @@ inputs:
   nginx-crt:
     description: Nginx cert to use
     required: false
+  azure-ad-secret:
+    description: Azure Active Directory secret for JWKs
+    required: false
 
 outputs:
   test-results-name:
@@ -113,6 +116,7 @@ runs:
         --self-contained-html \
         --durations=10 \
         --show-ic-logs=yes \
+        --ad-secret=${{ inputs.azure-ad-secret }} \
         -m ${{ inputs.marker != '' && inputs.marker || '""' }}
       working-directory: ./tests
       shell: bash
