@@ -259,7 +259,7 @@ Parameter | Description | Default
 `controller.podDisruptionBudget.enabled` | Enables PodDisruptionBudget. | false
 `controller.podDisruptionBudget.annotations` | The annotations of the Ingress Controller pod disruption budget | {}
 `controller.podDisruptionBudget.minAvailable` | The number of Ingress Controller pods that should be available. This is a mutually exclusive setting with "maxUnavailable". | 0
-`controller.podDisruptionBudget.maxUnavailable` | The number of Ingress Controller pods that can be unavailable. | 0
+`controller.podDisruptionBudget.maxUnavailable` | The number of Ingress Controller pods that can be unavailable. This is a mutually exclusive setting with "minAvailable". | 0
 `controller.strategy` | Specifies the strategy used to replace old Pods by new ones. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) | {}
 `controller.disableIPV6` | Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack. | false
 `rbac.create` | Configures RBAC. | true
