@@ -1,3 +1,6 @@
+import time
+from unittest import mock
+
 import pytest
 import requests
 from settings import TEST_DATA
@@ -84,12 +87,17 @@ class TestJWTPoliciesVsJwksuri:
             jwt_virtual_server,
             virtual_server_setup.namespace,
         )
-        wait_before_test()
+        resp1 = mock.Mock()
+        resp1.status_code == 502
+        counter = 0
 
-        resp1 = requests.get(
-            virtual_server_setup.backend_1_url,
-            headers={"host": virtual_server_setup.vs_host},
-        )
+        while resp1.status_code != 401 and counter < 3:
+            resp1 = requests.get(
+                virtual_server_setup.backend_1_url,
+                headers={"host": virtual_server_setup.vs_host},
+            )
+            wait_before_test()
+            counter = +1
 
         token = get_token(request)
 
