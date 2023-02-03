@@ -1,0 +1,110 @@
+
+name: Run Smoke Tests
+
+on:
+  workflow_call:
+    inputs:
+      k8s-version:
+        description: Kubernetes version to use
+        required: false
+        type: string
+      image:
+        description: Docker image to use
+        default: debian
+        required: false
+        type: string
+      marker:
+        description: Marker to use
+        required: false
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@627f0f41f6904a5b1efbaed9f96d9eb58e92e920 # v3.2.4
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+
+      - name: Ingress type
+        id: ingress-type
+        run: |
+          echo "name=nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress" >> $GITHUB_OUTPUT
+          echo "tag=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "modules=${{ contains(inputs.marker, 'appprotect') && 'waf' || '' }}${{ contains(inputs.marker, 'dos') && 'dos' || '' }}" >> $GITHUB_OUTPUT
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@15c905b16b06416d2086efa066dd8e3a35cc7f98 # v2.4.0
+
+      - name: Build ${{ inputs.image }} Container
+        uses: docker/build-push-action@37abcedcc1da61a57767b7588cb9d03eb57e28b3 # v3.3.0
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
+          target: goreleaser
+          tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
+          load: true
+          pull: true
+          build-args: |
+            BUILD_OS=${{ inputs.image }}
+            IC_VERSION=CI
+            ${{ steps.ingress-type.outputs.modules != '' && format('NAP_MODULES={0}', steps.ingress-type.outputs.modules) || '' }}
+          secrets: |
+            ${{ endsWith(inputs.image, 'plus') && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
+            ${{ endsWith(inputs.image, 'plus') && format('"nginx-repo.key={0}"', secrets.NGINX_KEY) || '' }}
+            ${{ endsWith(inputs.image, 'nap') && format('"nginx-repo.crt={0}"', secrets.NGINX_AP_CRT) || '' }}
+            ${{ endsWith(inputs.image, 'nap') && format('"nginx-repo.key={0}"', secrets.NGINX_AP_KEY) || '' }}
+
+      - name: Deploy Kubernetes
+        id: k8s
+        run: |
+          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait 75s
+          kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} --name ${{ github.run_id }}
+          marker="${{ inputs.marker }}"
+          sanitized_marker="${marker// /_}"
+          name="${sanitized_marker:-${{ inputs.k8s-version }}}"
+          echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
+          echo "cluster=$(echo nginx-${{ inputs.image }}-$name)" >> $GITHUB_OUTPUT
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+        working-directory: ./tests
+
+      - name: Run Smoke Tests
+        run: |
+          touch tests-${{ steps.k8s.outputs.cluster }}.html
+          python -m pytest \
+          --kubeconfig=${{ github.workspace }}/kube-${{ github.run_id }}
+          --context=kind-${{ github.run_id }} \
+          --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} \
+          --image-pull-policy=Never \
+          --ic-type=${{ steps.ingress-type.outputs.name }} \
+          --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
+          --service=nodeport \
+          --html=tests-${{ steps.k8s.outputs.cluster }}.html \
+          --self-contained-html \
+          --durations=10 \
+          --show-ic-logs=yes \
+          --ad-secret=${{ secrets.AZURE_AD_AUTOMATION }} \
+          -m ${{ inputs.marker != '' && inputs.marker || '""' }}
+        working-directory: ./tests
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: tests-${{ steps.k8s.outputs.cluster }}.html
+          path: ${{ github.workspace }}/tests/${{ steps.k8s.outputs.cluster }}.html
+        if: always()

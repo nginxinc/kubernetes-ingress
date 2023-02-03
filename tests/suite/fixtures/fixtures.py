@@ -312,10 +312,11 @@ def cli_arguments(request) -> {}:
     assert result["service"] in ALLOWED_SERVICE_TYPES, f"Service {result['service']} is not allowed"
     print(f"Tests will use Service of this type: {result['service']}")
     if result["service"] == "nodeport":
-        node_ip = request.config.getoption("--node-ip", None)
-        assert node_ip is not None and node_ip != "", f"Service 'nodeport' requires a node-ip"
+        node_ip = request.config.getoption("--node-ip")
+        assert node_ip != "", "Service 'nodeport' requires a node-ip"
         result["node-ip"] = node_ip
         print(f"Tests will use the node-ip: {result['node-ip']}")
+
     result["skip-fixture-teardown"] = request.config.getoption("--skip-fixture-teardown")
     assert result["skip-fixture-teardown"] == "yes" or result["skip-fixture-teardown"] == "no"
     print(
