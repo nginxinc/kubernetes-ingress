@@ -256,7 +256,7 @@ Parameter | Description | Default
 `controller.autoscaling.maxReplicas` | Maximum number of replicas for the HPA. | 3
 `controller.autoscaling.targetCPUUtilizationPercentage` | The target CPU utilization percentage. | 50
 `controller.autoscaling.targetMemoryUtilizationPercentage` | The target memory utilization percentage. | 50
-`controller.strategy` | Specifies the strategy used to replace old Pods by new ones. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) | {}
+`controller.strategy` | Specifies the strategy used to replace old Pods with new ones. Docs for [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) and [Daemonset update strategy](https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/#daemonset-update-strategy) | {}
 `controller.disableIPV6` | Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack. | false
 `rbac.create` | Configures RBAC. | true
 `prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true
