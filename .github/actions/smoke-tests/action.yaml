@@ -77,7 +77,6 @@ runs:
         file: tests/docker/Dockerfile
         context: '.'
         cache-from: type=gha,scope=test-runner
-        cache-to: type=gha,scope=test-runner,mode=max
         tags: test-runner:${{ github.sha }}
         pull: true
         load: true
