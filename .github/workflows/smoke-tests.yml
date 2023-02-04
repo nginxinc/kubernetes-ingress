@@ -23,7 +23,7 @@ defaults:
     shell: bash
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
@@ -68,7 +68,7 @@ jobs:
       - name: Deploy Kubernetes
         id: k8s
         run: |
-          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait 75s
+          kind create cluster -v7 --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait 75s
           kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} --name ${{ github.run_id }}
           marker="${{ inputs.marker }}"
           sanitized_marker="${marker// /_}"
@@ -101,6 +101,18 @@ jobs:
           --ad-secret=${{ secrets.AZURE_AD_AUTOMATION }} \
           -m ${{ inputs.marker != '' && inputs.marker || '""' }}
         working-directory: ./tests
+
+      - name: Save Kind logs
+        run: |
+          kind export logs ${{ github.workspace }}/kind-${{ github.run_id }} --name ${{ github.run_id }}
+        if: always()
+
+      - name: Upload Kind logs
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: kind-${{ steps.k8s.outputs.cluster }}
+          path: ${{ github.workspace }}/kind-${{ github.run_id }}
+        if: always()
 
       - name: Upload Test Results
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2

@@ -70,7 +70,7 @@ def pytest_addoption(parser) -> None:
     parser.addoption(
         "--node-ip",
         action="store",
-        default="172.18.0.2",
+        default="",
         help="The public IP of a cluster node. Not required if you use the loadbalancer service (see --service argument).",
     )
     parser.addoption(
