@@ -76,6 +76,20 @@ jobs:
           echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kind-control-plane)" >> $GITHUB_OUTPUT
           echo "cluster=$(echo nginx-${{ inputs.image }}-$name)" >> $GITHUB_OUTPUT
 
+      - name: Check Kind API
+        continue-on-error: true
+        run: |
+          curl -k https://${{ steps.k8s.outputs.cluster_ip }}:6443/version
+
+      - name: Setup Kubeconfig
+        run: |
+          sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
+
+      - name: Check Docker
+        continue-on-error: true
+        run: |
+          docker ps -a
+
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
