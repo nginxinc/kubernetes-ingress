@@ -68,12 +68,12 @@ jobs:
       - name: Deploy Kubernetes
         id: k8s
         run: |
-          kind create cluster -v7 --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait 75s
-          kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} --name ${{ github.run_id }}
+          kind create cluster -v7 --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait 75s
+          kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}
           marker="${{ inputs.marker }}"
           sanitized_marker="${marker// /_}"
           name="${sanitized_marker:-${{ inputs.k8s-version }}}"
-          echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
+          echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kind-control-plane)" >> $GITHUB_OUTPUT
           echo "cluster=$(echo nginx-${{ inputs.image }}-$name)" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-python@v4
@@ -88,7 +88,7 @@ jobs:
           touch tests-${{ steps.k8s.outputs.cluster }}.html
           python -m pytest \
           --kubeconfig=${{ github.workspace }}/kube-${{ github.run_id }}
-          --context=kind-${{ github.run_id }} \
+          --context=kind-kind \
           --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} \
           --image-pull-policy=Never \
           --ic-type=${{ steps.ingress-type.outputs.name }} \
@@ -104,7 +104,7 @@ jobs:
 
       - name: Save Kind logs
         run: |
-          kind export logs ${{ github.workspace }}/kind-${{ github.run_id }} --name ${{ github.run_id }}
+          kind export logs ${{ github.workspace }}/kind-${{ github.run_id }}
         if: always()
 
       - name: Upload Kind logs
