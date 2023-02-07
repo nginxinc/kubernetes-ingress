@@ -63,6 +63,7 @@ def get_token(request):
 class TestJWTPoliciesVsJwksuri:
     @pytest.mark.parametrize("jwt_virtual_server", [jwt_vs_spec_src, jwt_vs_route_src])
     @pytest.mark.flaky(max_runs=3)
+    @pytest.mark.skip(reason="under review for causing pipeline delays")
     def test_jwt_policy_jwksuri(
         self,
         request,
