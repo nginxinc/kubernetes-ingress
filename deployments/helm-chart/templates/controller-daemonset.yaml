@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: {{ include "nginx-ingress.appName" . }}
+        app.kubernetes.io/name: nginx-ingress
 {{- if .Values.nginxServiceMesh.enable }}
         nsm.nginx.com/daemonset: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
         spiffe.io/spiffeid: "true"

@@ -5,6 +5,7 @@ metadata:
   name: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
   namespace: {{ .Release.Namespace }}
   labels:
+    app.kubernetes.io/name: nginx-ingress
     {{- include "nginx-ingress.labels" . | nindent 4 }}
 {{- if .Values.controller.annotations }}
   annotations: {{ toYaml .Values.controller.annotations | nindent 4 }}
@@ -18,6 +19,7 @@ spec:
     metadata:
       labels:
         app: {{ include "nginx-ingress.appName" . }}
+        app.kubernetes.io/name: nginx-ingress
 {{- if .Values.nginxServiceMesh.enable }}
         nsm.nginx.com/deployment: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
         spiffe.io/spiffeid: "true"
