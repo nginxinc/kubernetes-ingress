@@ -46,7 +46,7 @@ jobs:
         if: github.event_name != 'pull_request'
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@15c905b16b06416d2086efa066dd8e3a35cc7f98 # v2.4.0
+        uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2.4.1
       - name: DockerHub Login
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
@@ -138,7 +138,7 @@ jobs:
             IC_VERSION=${{ github.event_name == 'pull_request' && 'CI' || steps.meta.outputs.version }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5 # 0.8.0
+        uses: aquasecurity/trivy-action@cff3e9a7f62c41dd51975266d0ae235709e39c41 # 0.9.0
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}

@@ -62,7 +62,6 @@ class AppProtectSetup:
 def enable_prometheus_port(
     cli_arguments, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_ap
 ) -> None:
-
     namespace = ingress_controller_prerequisites.namespace
     port = V1ContainerPort(9113, None, None, "prometheus", "TCP")
     print("------------------------- Enable 9113 port in IC ----------------------------")
