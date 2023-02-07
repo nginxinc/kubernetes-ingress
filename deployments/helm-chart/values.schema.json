@@ -455,8 +455,8 @@
           "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.Affinity"
         },
         "topologySpreadConstraints": {
-          "type": "array",
-          "default": [],
+          "type": "object",
+          "default": {},
           "title": "The topologySpreadConstraints Schema",
           "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.4/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/topologySpreadConstraints"
         },
