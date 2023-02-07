@@ -47,7 +47,6 @@ def setup_policy(kube_apis, test_namespace, mtls_secret, tls_secret, policy):
 
 
 def teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret):
-
     print("Delete policy and related secrets")
     delete_secret(kube_apis.v1, tls_secret, test_namespace)
     delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
