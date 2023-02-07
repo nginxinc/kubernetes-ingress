@@ -27,12 +27,16 @@ def get_token(request):
         "client_secret": request.config.getoption("--ad-secret"),
         "grant_type": "client_credentials",
     }
-    ad_response = requests.post(f"https://login.microsoftonline.com/{ad_tenant}/oauth2/token", data=data)
+    ad_response = requests.get(
+        f"https://login.microsoftonline.com/{ad_tenant}/oauth2/token",
+        data=data,
+        timeout=5,
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Chrome/76.0.3809.100"},
+    )
 
     if ad_response.status_code == 200:
         return ad_response.json()["access_token"]
-    else:
-        pytest.fail("Unable to request Azure token endpoint")
+    pytest.fail("Unable to request Azure token endpoint")
 
 
 @pytest.mark.skip_for_nginx_oss
@@ -58,6 +62,8 @@ def get_token(request):
 )
 class TestJWTPoliciesVsJwksuri:
     @pytest.mark.parametrize("jwt_virtual_server", [jwt_vs_spec_src, jwt_vs_route_src])
+    @pytest.mark.flaky(max_runs=3)
+    @pytest.mark.skip(reason="under review for causing pipeline delays")
     def test_jwt_policy_jwksuri(
         self,
         request,

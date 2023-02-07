@@ -179,7 +179,7 @@ controller:
   ## The minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available.
   minReadySeconds: 0
 
-    ## Strategy used to replace old Pods by new ones. .spec.strategy.type can be "Recreate" or "RollingUpdate". "RollingUpdate" is the default value.
+    ## Strategy used to replace old Pods by new ones. .spec.strategy.type can be "Recreate" or "RollingUpdate" for Deployments, and "OnDelete" or "RollingUpdate" for Daemonsets. "RollingUpdate" is the default value.
   strategy: {}
 
   ## Extra containers for the Ingress Controller pods.
