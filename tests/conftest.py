@@ -114,6 +114,12 @@ def pytest_addoption(parser) -> None:
         default=NS_COUNT,
         help="Number for namespaces to deploy for use in test_multiple_ns_perf.py",
     )
+    parser.addoption(
+        "--ad-secret",
+        action="store",
+        default=os.environ.get("AZURE_AD_AUTOMATION"),
+        help="Azure active directory secret for JWKs",
+    )
 
 
 # import fixtures into pytest global namespace
