@@ -151,7 +151,7 @@ controller:
   affinity: {}
 
   ## The topology spread constraints of the Ingress controller pods.
-  # topologySpreadConstraints: []
+  # topologySpreadConstraints: {}
 
   ## The additional environment variables to be set on the Ingress Controller pods.
   env: []
