@@ -3567,6 +3567,9 @@ func getEndpointsFromEndpointSlicesForSubselectedPods(targetPort int32, pods []*
 					continue
 				}
 				for _, endpoint := range endpointSlice.Endpoints {
+					if !*endpoint.Conditions.Ready {
+						continue
+					}
 					for _, address := range endpoint.Addresses {
 						if pod.Status.PodIP == address {
 							addr := ipv6SafeAddrPort(pod.Status.PodIP, targetPort)
@@ -3718,6 +3721,9 @@ func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpoin
 		for _, endpointSlicePort := range endpointSlice.Ports {
 			if *endpointSlicePort.Port == targetPort {
 				for _, endpoint := range endpointSlice.Endpoints {
+					if !*endpoint.Conditions.Ready {
+						continue
+					}
 					for _, endpointAddress := range endpoint.Addresses {
 						address := ipv6SafeAddrPort(endpointAddress, *endpointSlicePort.Port)
 						podEndpoint := podEndpoint{
