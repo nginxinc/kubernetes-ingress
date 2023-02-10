@@ -484,7 +484,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsInOneEndpointSlice(t *
 		Name:   "foo",
 	}
 
-	podReady := true
+	endpointReady := true
 
 	tests := []struct {
 		desc              string
@@ -529,7 +529,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsInOneEndpointSlice(t *
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 						{
@@ -537,7 +537,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsInOneEndpointSlice(t *
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -571,7 +571,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSlice(t
 		Number: 8080,
 		Name:   "foo",
 	}
-	podReady := true
+	endpointReady := true
 
 	tests := []struct {
 		desc              string
@@ -619,7 +619,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSlice(t
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 						{
@@ -627,7 +627,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSlice(t
 								"5.6.7.8",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -662,7 +662,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlice
 		Name:   "foo",
 	}
 
-	podReady := true
+	endpointReady := true
 
 	tests := []struct {
 		desc              string
@@ -713,7 +713,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlice
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 						{
@@ -721,7 +721,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlice
 								"5.6.7.8",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -738,7 +738,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlice
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 						{
@@ -746,7 +746,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlice
 								"10.0.0.1",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -780,8 +780,8 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSliceOn
 		Number: 8080,
 		Name:   "foo",
 	}
-	podReadyTrue := true
-	podReadyFalse := false
+	endpointReadyTrue := true
+	endpointReadyFalse := false
 
 	tests := []struct {
 		desc              string
@@ -826,7 +826,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSliceOn
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReadyTrue,
+								Ready: &endpointReadyTrue,
 							},
 						},
 						{
@@ -834,7 +834,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSliceOn
 								"5.6.7.8",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReadyFalse,
+								Ready: &endpointReadyFalse,
 							},
 						},
 					},
@@ -869,8 +869,8 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsAcrossTwoEndpointSl
 		Name:   "foo",
 	}
 
-	podReadyTrue := true
-	podReadyFalse := false
+	endpointReadyTrue := true
+	endpointReadyFalse := false
 
 	tests := []struct {
 		desc              string
@@ -915,7 +915,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsAcrossTwoEndpointSl
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReadyTrue,
+								Ready: &endpointReadyTrue,
 							},
 						},
 					},
@@ -932,7 +932,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsAcrossTwoEndpointSl
 								"10.0.0.1",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReadyFalse,
+								Ready: &endpointReadyFalse,
 							},
 						},
 					},
@@ -1077,7 +1077,7 @@ func TestGetEndpointsFromEndpointSlices_ErrorsOnNoEndpointSlicesFound(t *testing
 
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodInOneEndpointSlice(t *testing.T) {
 	endpointPort := int32(8080)
-	podReady := true
+	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {
 		desc              string
@@ -1127,7 +1127,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodInOneEndpointSlice(t *test
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -1149,7 +1149,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodInOneEndpointSlice(t *test
 
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDuplicateEndpoints(t *testing.T) {
 	endpointPort := int32(8080)
-	podReady := true
+	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {
 		desc              string
@@ -1199,7 +1199,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDup
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -1216,7 +1216,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDup
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -1238,7 +1238,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDup
 
 func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInOneEndpointSlice(t *testing.T) {
 	endpointPort := int32(8080)
-	podReady := true
+	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {
 		desc              string
@@ -1309,7 +1309,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInOneEndpointSlice(t *tes
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 						{
@@ -1317,7 +1317,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInOneEndpointSlice(t *tes
 								"5.6.7.8",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -1339,7 +1339,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInOneEndpointSlice(t *tes
 
 func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlices(t *testing.T) {
 	endpointPort := int32(8080)
-	podReady := true
+	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {
 		desc              string
@@ -1410,7 +1410,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlices(t *te
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -1427,7 +1427,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlices(t *te
 								"5.6.7.8",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
@@ -1449,8 +1449,8 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlices(t *te
 
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInOneEndpointSliceWithOneEndpointNotReady(t *testing.T) {
 	endpointPort := int32(8080)
-	podReadyTrue := true
-	podReadyFalse := false
+	endpointReadyTrue := true
+	endpointReadyFalse := false
 	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {
 		desc              string
@@ -1514,7 +1514,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInOneEndpointSlice
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReadyTrue,
+								Ready: &endpointReadyTrue,
 							},
 						},
 						{
@@ -1522,7 +1522,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInOneEndpointSlice
 								"5.6.7.8",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReadyFalse,
+								Ready: &endpointReadyFalse,
 							},
 						},
 					},
@@ -1544,8 +1544,8 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInOneEndpointSlice
 
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInTwoEndpointSlicesWithOneEndpointNotReady(t *testing.T) {
 	endpointPort := int32(8080)
-	podReadyTrue := true
-	podReadyFalse := false
+	endpointReadyTrue := true
+	endpointReadyFalse := false
 	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {
 		desc              string
@@ -1609,7 +1609,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInTwoEndpointSlice
 								"1.2.3.4",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReadyTrue,
+								Ready: &endpointReadyTrue,
 							},
 						},
 					},
@@ -1626,7 +1626,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInTwoEndpointSlice
 								"5.6.7.8",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReadyFalse,
+								Ready: &endpointReadyFalse,
 							},
 						},
 					},
@@ -1648,7 +1648,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInTwoEndpointSlice
 
 func TestGetEndpointSlicesBySubselectedPods_FindNoPods(t *testing.T) {
 	endpointPort := int32(8080)
-	podReady := true
+	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {
 		desc              string
@@ -1690,7 +1690,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindNoPods(t *testing.T) {
 								"5.4.3.2",
 							},
 							Conditions: discovery_v1.EndpointConditions{
-								Ready: &podReady,
+								Ready: &endpointReady,
 							},
 						},
 					},
