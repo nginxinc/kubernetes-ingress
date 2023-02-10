@@ -67,7 +67,7 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 |Debian-based image with App Protect WAF | ``debian:11-slim`` | NGINX Plus App Protect WAF, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-nap/nginx-plus-ingress:3.0.1` | amd64 |
 |Debian-based image with App Protect DoS | ``debian:11-slim`` | NGINX Plus App Protect DoS, JavaScript module and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-dos/nginx-plus-ingress:3.0.1` | amd64 |
 |Debian-based image with App Protect WAF and DoS | ``debian:11-slim`` | NGINX Plus App Protect WAF, DoS, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-nap-dos/nginx-plus-ingress:3.0.1` | amd64 |
-|Ubi-based image | ``redhat/ubi8`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:3.0.1-ubi` | arm64, amd64, s390x |
+|Ubi-based image | ``redhat/ubi9-minimal`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:3.0.1-ubi` | arm64, amd64, s390x |
 |Ubi-based image with App Protect WAF | ``redhat/ubi8`` | NGINX Plus App Protect WAF and JavaScript modules | `nginx-ic-nap/nginx-plus-ingress:3.0.1-ubi` | amd64 |
 |Ubi-based image with App Protect DoS | ``redhat/ubi8`` | NGINX Plus App Protect DoS and JavaScript modules | `nginx-ic-dos/nginx-plus-ingress:3.0.1-ubi` | amd64 |
 |Ubi-based image with App Protect WAF and DoS | ``redhat/ubi8`` | NGINX Plus App Protect WAF, DoS and JavaScript modules | `nginx-ic-nap-dos/nginx-plus-ingress:3.0.1-ubi` | amd64 |

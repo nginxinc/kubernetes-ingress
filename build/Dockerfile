@@ -26,8 +26,8 @@ FROM nginx:1.23.3-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
-	# temp fix for CVE-2022-44617
-	&& apk upgrade --no-cache libxpm \
+	# temp fix for CVE-2022-44617 and CVE-2023-0286
+	&& apk upgrade --no-cache libxpm libssl3 libcrypto3 \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
 	&& ldconfig /usr/local/lib/
@@ -43,6 +43,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
 	&& apk add --no-cache libcap nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcurl \
+	# temp fix for CVE-2023-0286
+	&& apk upgrade --no-cache libssl3 libcrypto3 \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/
 
@@ -122,25 +124,24 @@ COPY --link --chown=101:0 LICENSE /licenses/
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
-FROM redhat/ubi8:8.6 AS ubi-plus
+FROM redhat/ubi9-minimal AS ubi-plus
 ARG NGINX_PLUS_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-	dnf --nodocs install -y shadow-utils ca-certificates \
-	# temp fix for CVE-2022-1304 CVE-2016-3709, CVE-2022-42898, CVE-2022-42010, CVE-2022-43680, CVE-2022-3821, CVE-2021-46848 and CVE-2022-35737
-	&& dnf --nodocs upgrade -y libcom_err libxml2 krb5-libs dbus expat systemd libtasn1 sqlite-libs \
+	microdnf --nodocs install -y shadow-utils \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
-	&& curl -fsSL "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
+	&& curl -fsSL "https://cs.nginx.com/static/files/plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
 	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
-	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs
-
+	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs \
+	&& microdnf remove -y shadow-utils \
+	&& microdnf clean all
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF/DoS #############################################
-FROM ubi-plus as ubi-plus-nap
+FROM redhat/ubi8:8.6 as ubi-plus-nap
 ARG NGINX_PLUS_VERSION
 ARG NAP_MODULES
 
@@ -148,6 +149,17 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
 	source /tmp/rhel_license \
+	## the code below is duplicated from the ubi-plus image because NAP doesn't support UBI versions newer than 8.6
+	dnf --nodocs install -y shadow-utils ca-certificates \
+	# temp fix for CVE-2022-1304 CVE-2016-3709, CVE-2022-42898, CVE-2022-42010, CVE-2022-43680, CVE-2022-3821, CVE-2021-46848, CVE-2022-35737 and CVE-2022-47629
+	&& dnf --nodocs upgrade -y libcom_err libxml2 krb5-libs dbus expat systemd libtasn1 sqlite-libs libksba \
+	&& groupadd --system --gid 101 nginx \
+	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
+	&& rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
+	&& curl -fsSL "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
+	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
+	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs \
+	## end of duplicated code
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
 	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
