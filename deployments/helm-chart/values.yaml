@@ -422,6 +422,9 @@ controller:
   ## Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack.
   disableIPV6: false
 
+  ## Configure root filesystem as read-only and add volumes for temporary data.
+  readOnlyRootFilesystem: false
+
 rbac:
   ## Configures RBAC.
   create: true

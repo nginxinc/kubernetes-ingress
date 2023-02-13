@@ -22,9 +22,19 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+#        fsGroup: 101 #nginx
         sysctls:
           - name: "net.ipv4.ip_unprivileged_port_start"
             value: "0"
+#      volumes:
+#      - name: nginx-etc
+#        emptyDir: {}
+#      - name: nginx-cache
+#        emptyDir: {}
+#      - name: nginx-lib
+#        emptyDir: {}
+#      - name: nginx-log
+#        emptyDir: {}
       containers:
       - image: nginx-plus-ingress:3.0.2
         imagePullPolicy: IfNotPresent
@@ -54,10 +64,20 @@ spec:
          #  memory: "1Gi"
         securityContext:
           allowPrivilegeEscalation: false
+#          readOnlyRootFilesystem: true
           runAsUser: 101 #nginx
           capabilities:
             drop:
             - ALL
+#        volumeMounts:
+#        - mountPath: /etc/nginx
+#          name: nginx-etc
+#        - mountPath: /var/cache/nginx
+#          name: nginx-cache
+#        - mountPath: /var/lib/nginx
+#          name: nginx-lib
+#        - mountPath: /var/log/nginx
+#          name: nginx-log
         env:
         - name: POD_NAMESPACE
           valueFrom:
@@ -79,3 +99,19 @@ spec:
          #- -external-service=nginx-ingress
          #- -enable-prometheus-metrics
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
+#      initContainers:
+#      - image: nginx/nginx-ingress:3.0.2
+#        imagePullPolicy: IfNotPresent
+#        name: init-nginx-ingress
+#        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
+#        securityContext:
+#          allowPrivilegeEscalation: false
+#          readOnlyRootFilesystem: true
+#          runAsUser: 101 #nginx
+#          runAsNonRoot: true
+#          capabilities:
+#            drop:
+#            - ALL
+#        volumeMounts:
+#        - mountPath: /mnt/etc
+#          name: nginx-etc
