@@ -21,7 +21,6 @@ from suite.utils.vs_vsr_resources_utils import create_virtual_server_from_yaml, 
 )
 class TestVirtualServerWildcard:
     def test_vs_status(self, kube_apis, crd_ingress_controller, virtual_server_setup):
-
         wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(404, virtual_server_setup.backend_1_url, "test.example.com")
