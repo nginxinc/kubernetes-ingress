@@ -141,42 +141,38 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& microdnf clean all
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF/DoS #############################################
-FROM redhat/ubi8:8.6 as ubi-plus-nap
+FROM redhat/ubi8-minimal as ubi-plus-nap
 ARG NGINX_PLUS_VERSION
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
-	source /tmp/rhel_license \
+	--mount=type=bind,src=rhel/entitlement,dst=/etc/pki/entitlement \
+	--mount=type=bind,src=rhel/rhsm,dst=/etc/rhsm \
+	rm /etc/rhsm-host \
 	## the code below is duplicated from the ubi-plus image because NAP doesn't support UBI versions newer than 8.6
-	dnf --nodocs install -y shadow-utils ca-certificates \
-	# temp fix for CVE-2022-1304 CVE-2016-3709, CVE-2022-42898, CVE-2022-42010, CVE-2022-43680, CVE-2022-3821, CVE-2021-46848, CVE-2022-35737 and CVE-2022-47629
-	&& dnf --nodocs upgrade -y libcom_err libxml2 krb5-libs dbus expat systemd libtasn1 sqlite-libs libksba \
+	&& microdnf --nodocs install -y shadow-utils \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
 	&& curl -fsSL "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
 	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
-	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs \
+	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs \
 	## end of duplicated code
-	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
-	&& subscription-manager attach \
-	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
-	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
+	&& rpm --excludedocs -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	curl -fsSL https://cs.nginx.com/static/files/app-protect-8.repo > /etc/yum.repos.d/app-protect-8.repo; \
 	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-8.repo; \
-	dnf --nodocs install -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
+	microdnf --nodocs install -y --enablerepo codeready-builder-for-rhel-8-x86_64-rpms app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-8.repo > /etc/yum.repos.d/app-protect-dos-8.repo; \
 	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-dos-8.repo; \
-	dnf --nodocs install -y app-protect-dos; \
+	microdnf --nodocs install -y --enablerepo codeready-builder-for-rhel-8-x86_64-rpms app-protect-dos; \
 	fi \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
-	&& subscription-manager unregister \
-	&& dnf clean all && rm -rf /var/cache/dnf
+	&& microdnf remove -y shadow-utils \
+	&& microdnf clean all
 
 # Uncomment the lines below if you want to install a custom CA certificate
 # COPY build/*.crt  /etc/pki/ca-trust/source/anchors/
