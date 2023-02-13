@@ -6,6 +6,36 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## NGINX Ingress Controller 3.0.2
+
+13 Feb 2023
+
+CHANGES:
+* Update NGINX version to X.Y.Z.
+* Update NGINX Plus version to RX.
+
+HELM CHART:
+* The version of the Helm chart is now 0.16.2.
+
+UPGRADE:
+* For NGINX, use the 3.0.2 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.0.2), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.0.2 images from the F5 Container registry or build your own image using the 3.0.2 source code.
+* For Helm, use version 0.16.2 of the chart.
+## NGINX Ingress Controller ic-version
+
+13 Feb 2023
+
+CHANGES:
+* Update NGINX version to X.Y.Z.
+* Update NGINX Plus version to RX.
+
+HELM CHART:
+* The version of the Helm chart is now helm-chart-version.
+
+UPGRADE:
+* For NGINX, use the ic-version images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=ic-version), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the ic-version images from the F5 Container registry or build your own image using the ic-version source code.
+* For Helm, use version helm-chart-version of the chart.
 ## NGINX Ingress Controller 3.0.1
 
 25 Jan 2023
