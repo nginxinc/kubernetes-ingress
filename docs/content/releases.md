@@ -13,6 +13,7 @@ docs: "DOCS-616"
 FIXES:
 * [3519](https://github.com/nginxinc/kubernetes-ingress/pull/3519) Add OnDelete to allowed strategy values
 * [3541](https://github.com/nginxinc/kubernetes-ingress/pull/3541) Ensure non-ready endpoints are not added to upstreams
+* [3527](https://github.com/nginxinc/kubernetes-ingress/pull/3527) Fix controller.topologySpreadConstraints schema, thanks to [Marco Londero](https://github.com/marcuz)
 
 HELM CHART:
 * The version of the Helm chart is now 0.16.2.
