@@ -31,6 +31,8 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
     listener:
       name: dns-tcp
       protocol: TCP
+    tls:
+      secret: cafe-secret
     upstreams:
     - name: dns-app
       service: dns-service
@@ -82,6 +84,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 | ---| ---| ---| --- |
 |``listener`` | The listener on NGINX that will accept incoming connections/datagrams. | [listener](#listener) | Yes |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed. Required for TLS Passthrough load balancing. | ``string`` | No |
+|``tls`` | The TLS termination configuration. Not supported for TLS Passthrough load balancing. | [tls](#tls) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | Yes |
 |``upstreamParameters`` | The upstream parameters. | [upstreamParameters](#upstreamparameters) | No |
 |``action`` | The action to perform for a client connection/datagram. | [action](#action) | Yes |
@@ -108,6 +111,19 @@ listener:
 | ---| ---| ---| --- |
 |``name`` | The name of the listener. | ``string`` | Yes |
 |``protocol`` | The protocol of the listener. | ``string`` | Yes |
+{{% /table %}}
+
+### TLS
+
+The tls field defines TLS configuration for a TransportServer. Please note the current implementation supports TLS termination on multiple ports, where each application owns a dedicated port - the Ingress Controller terminates TLS connections on each port, where each application uses its own cert/key, and routes connections to appropriate application (service) based on that incoming port (any TLS connection regardless of the SNI on a port will be routed to the application that corresponds to that port). An example configuration is shown below:
+```yaml
+secret: cafe-secret
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``secret`` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the TransportServer. The secret must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). | ``string`` | No |
 {{% /table %}}
 
 ### Upstream
