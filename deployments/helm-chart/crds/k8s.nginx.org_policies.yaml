@@ -160,6 +160,8 @@ spec:
                   description: WAF defines an WAF policy.
                   type: object
                   properties:
+                    apBundle:
+                      type: string
                     apPolicy:
                       type: string
                     enable:
