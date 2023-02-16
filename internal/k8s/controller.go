@@ -35,6 +35,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	"github.com/nginxinc/nginx-service-mesh/pkg/spiffe"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 
 	"k8s.io/apimachinery/pkg/fields"
@@ -142,7 +143,7 @@ type LoadBalancerController struct {
 	metricsCollector              collectors.ControllerCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
-	spiffeCertFetcher             *SpiffeCertFetcher
+	spiffeCertFetcher             *spiffe.X509CertFetcher
 	internalRoutesEnabled         bool
 	syncLock                      sync.Mutex
 	isNginxReady                  bool
@@ -245,11 +246,11 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
 
 	lbc.syncQueue = newTaskQueue(lbc.sync)
+	var err error
 	if input.SpireAgentAddress != "" {
-		var err error
-		lbc.spiffeCertFetcher, err = NewSpiffeCertFetcher(lbc.syncSVIDRotation, input.SpireAgentAddress)
+		lbc.spiffeCertFetcher, err = spiffe.NewX509CertFetcher(input.SpireAgentAddress, nil)
 		if err != nil {
-			glog.Fatalf("failed to create Spiffe Controller: %v", err)
+			glog.Fatalf("failed to initialize spiffe certfetcher: %v", err)
 		}
 	}
 
@@ -645,10 +646,33 @@ func (lbc *LoadBalancerController) Run() {
 	}
 
 	if lbc.spiffeCertFetcher != nil {
-		err := lbc.spiffeCertFetcher.Start(lbc.ctx, lbc.addInternalRouteServer)
+		_, _, err := lbc.spiffeCertFetcher.Start(lbc.ctx)
+		lbc.addInternalRouteServer()
 		if err != nil {
 			glog.Fatal(err)
 		}
+
+		// wait for initial bundle
+		timeoutch := make(chan bool, 1)
+		go func() { time.Sleep(time.Second * 30); timeoutch <- true }()
+		select {
+		case cert := <-lbc.spiffeCertFetcher.CertCh:
+			lbc.syncSVIDRotation(cert)
+		case <-timeoutch:
+			glog.Fatal("Failed to download initial spiffe trust bundle")
+		}
+
+		go func() {
+			for {
+				select {
+				case err := <-lbc.spiffeCertFetcher.WatchErrCh:
+					glog.Errorf("error watching for SVID rotations: %v", err)
+					return
+				case cert := <-lbc.spiffeCertFetcher.CertCh:
+					lbc.syncSVIDRotation(cert)
+				}
+			}
+		}()
 	}
 	if lbc.certManagerController != nil {
 		go lbc.certManagerController.Run(lbc.ctx.Done())
@@ -3567,6 +3591,9 @@ func getEndpointsFromEndpointSlicesForSubselectedPods(targetPort int32, pods []*
 					continue
 				}
 				for _, endpoint := range endpointSlice.Endpoints {
+					if !*endpoint.Conditions.Ready {
+						continue
+					}
 					for _, address := range endpoint.Addresses {
 						if pod.Status.PodIP == address {
 							addr := ipv6SafeAddrPort(pod.Status.PodIP, targetPort)
@@ -3718,6 +3745,9 @@ func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpoin
 		for _, endpointSlicePort := range endpointSlice.Ports {
 			if *endpointSlicePort.Port == targetPort {
 				for _, endpoint := range endpointSlice.Endpoints {
+					if !*endpoint.Conditions.Ready {
+						continue
+					}
 					for _, endpointAddress := range endpoint.Addresses {
 						address := ipv6SafeAddrPort(endpointAddress, *endpointSlicePort.Port)
 						podEndpoint := podEndpoint{

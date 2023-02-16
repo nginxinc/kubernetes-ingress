@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@627f0f41f6904a5b1efbaed9f96d9eb58e92e920 # v3.2.4
+        uses: actions/cache@6998d139ddd3e68c71e9e398d8e40b71a2f39812 # v3.2.5
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -144,7 +144,7 @@ jobs:
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@cff3e9a7f62c41dd51975266d0ae235709e39c41 # 0.9.0
+        uses: aquasecurity/trivy-action@8bd2f9fbda2109502356ff8a6a89da55b1ead252 # 0.9.1
         continue-on-error: true
         with:
           image-ref: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
@@ -153,7 +153,7 @@ jobs:
           ignore-unfixed: 'true'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@39d8d7e78f59cf6b40ac3b9fbebef0c753d7c9e5 # v2.2.2
+        uses: github/codeql-action/upload-sarif@8775e868027fa230df8586bdf502bbd9b618a477 # v2.2.3
         continue-on-error: true
         with:
           sarif_file: 'trivy-results-${{ inputs.image }}.sarif'

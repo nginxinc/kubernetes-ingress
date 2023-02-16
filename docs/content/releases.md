@@ -6,6 +6,23 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## NGINX Ingress Controller 3.0.2
+
+13 Feb 2023
+
+FIXES:
+* [3519](https://github.com/nginxinc/kubernetes-ingress/pull/3519) Add OnDelete to allowed strategy values
+* [3541](https://github.com/nginxinc/kubernetes-ingress/pull/3541) Ensure non-ready endpoints are not added to upstreams
+* [3527](https://github.com/nginxinc/kubernetes-ingress/pull/3527) Fix controller.topologySpreadConstraints schema, thanks to [Marco Londero](https://github.com/marcuz)
+
+HELM CHART:
+* The version of the Helm chart is now 0.16.2.
+
+UPGRADE:
+* For NGINX, use the 3.0.2 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.0.2), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.0.2 images from the F5 Container registry or build your own image using the 3.0.2 source code.
+* For Helm, use version 0.16.2 of the chart.
+
 ## NGINX Ingress Controller 3.0.1
 
 25 Jan 2023

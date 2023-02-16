@@ -1,3 +1,9 @@
+- color: 77BC7C
+  description: Pull requests/issues that are backlog items
+  name: backlog
+- color: A90EA3
+  description: Pull requests/issues that are candidates to be backlog items
+  name: backlog candidate
 - color: fc2929
   description: An issue reporting a potential bug
   name: bug
@@ -25,9 +31,24 @@
 - color: 16e2e2
   description: Pull requests that update Go code
   name: go
+- color: 5319E7
+  description: Issues identified as good for first-time contributors
+  name: good first issue
+- color: 0e8a16
+  description: Pull requests that update the Helm Chart
+  name: helm_chart
+- color: FBCA04
+  description: Issues identified as good community contribution opportunities
+  name: help wanted
 - color: c5def5
   description: Gathering information
-  name: in_review
+  name: in review
+- color: 68E39B
+  description: Issues that require more information
+  name: needs more info
+- color: F345AD
+  description: Issues that are not in scope
+  name: out of scope
 - color: db754c
   description: An issue that proposes a feature request
   name: proposal
@@ -39,7 +60,7 @@
   name: question
 - color: FEF2C0
   description: Pull requests that don't need to be added to the changelog
-  name: skip-changelog
+  name: skip changelog
 - color: 8E7888
   description: Pull requests/issues with no activity
   name: stale
@@ -52,6 +73,3 @@
 - color: ffffff
   description: An issue that does not need to be fixed
   name: wontfix
-- color: 0e8a16
-  description: Pull requests that update the Helm Chart
-  name: helm_chart
