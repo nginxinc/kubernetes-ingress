@@ -4,14 +4,14 @@ description: "This document will walk you through the steps needed to deploy the
 weight: 2400
 doctypes: [""]
 toc: true
-docs: "DOCS-608"
+docs: "DOCS-000"
 ---
 
 This document will walk you through the steps needed to deploy and configure the NGINX Ingress Controller through the GCP Marketplace.
 
 ## Product overview.
 
-The NGINX Ingress Controller an implementation of a Kubernetes Ingress Controller for NGINX and NGINX Plus.
+The F5 NGINX Ingress Controller an implementation of a Kubernetes Ingress Controller for NGINX and NGINX Plus.
 
 Basic features include:
 * Host-based routing. For example, routing requests with the host header foo.example.com to one group of services and the host header bar.example.com to another group.
@@ -34,9 +34,9 @@ This details how to locally build an image of the NGINX Ingress Controller as we
 2. Click on **DEPLOY FROM MARKETPLACE**, and search for *NGINX Ingress Controller*
 
    <!-- TODO Add an image of KIC options in marketplace once listing are approved -->
-   > **NOTE**: Please verify that you select a *Premium Edition* controller package that has been published by *NGINX, Inc.*, and not a third-party.
+   > **NOTE**: Please verify that you select a *Premium Edition* controller image that has been published by *NGINX, Inc.*, and not a third-party.
 
-   Choose the appropriate *NGINX Ingress Controller* package, and click **CONFIGURE**
+   Choose the appropriate *NGINX Ingress Controller* image, and click **CONFIGURE**
 
 3. Install to an existing cluster
 
@@ -67,9 +67,9 @@ As an alternative to using an existing GKE cluster, GCP Marketplace can create a
    Open [Google Cloud Console](https://console.cloud.google.com/) and navigate to **Marketplace**, then search for *NGINX Ingress Controller*
 
    <!-- TODO Add an image of KIC options in marketplace once listing are approved -->
-   > **NOTE**: Please verify that you select a *Premium Edition* controller package that has been published by *NGINX, Inc.*, and not a third-party.
+   > **NOTE**: Please verify that you select a *Premium Edition* controller image that has been published by *NGINX, Inc.*, and not a third-party.
 
-   Choose the appropriate *NGINX Ingress Controller* package, and click **CONFIGURE**
+   Choose the appropriate *NGINX Ingress Controller* image, and click **CONFIGURE**
 
 2. Configure the new GKE cluster
 
