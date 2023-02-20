@@ -11,7 +11,7 @@ This document will walk you through the steps needed to deploy and configure the
 
 ## Product overview.
 
-The F5 NGINX Ingress Controller an implementation of a Kubernetes Ingress Controller for NGINX and NGINX Plus.
+The F5 NGINX Ingress Controller is an implementation of a Kubernetes Ingress Controller for NGINX and NGINX Plus.
 
 Basic features include:
 * Host-based routing. For example, routing requests with the host header foo.example.com to one group of services and the host header bar.example.com to another group.
