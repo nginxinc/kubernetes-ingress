@@ -1,10 +1,18 @@
 import re
 import socket
+import ssl
 
 import pytest
 from settings import TEST_DATA
 from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, patch_ts_from_yaml, read_ts
-from suite.utils.resources_utils import get_ts_nginx_template_conf, scale_deployment, wait_before_test
+from suite.utils.resources_utils import (
+    create_secret_from_yaml,
+    delete_items_from_yaml,
+    get_ts_nginx_template_conf,
+    scale_deployment,
+    wait_before_test,
+)
+from suite.utils.yaml_utils import get_secret_name_from_vs_or_ts_yaml
 
 
 @pytest.mark.ts
@@ -560,3 +568,52 @@ class TestTransportServerTcpLoadBalance:
         # Step 3 - restore
 
         self.restore_ts(kube_apis, transport_server_setup)
+
+    def test_secure_tcp_request_load_balanced(
+        self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+    ):
+        """
+        Sends requests to a TLS enabled load balanced TCP service.
+        """
+        src_sec_yaml = f"{TEST_DATA}/transport-server-tcp-load-balance/tcp-tls-secret.yaml"
+        create_secret_from_yaml(kube_apis.v1, transport_server_setup.namespace, src_sec_yaml)
+        patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/transport-server-tls.yaml"
+        patch_ts_from_yaml(
+            kube_apis.custom_objects,
+            transport_server_setup.name,
+            patch_src,
+            transport_server_setup.namespace,
+        )
+        wait_before_test()
+
+        result_conf = get_ts_nginx_template_conf(
+            kube_apis.v1,
+            transport_server_setup.namespace,
+            transport_server_setup.name,
+            transport_server_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
+
+        port = transport_server_setup.public_endpoint.tcp_server_port
+        host = transport_server_setup.public_endpoint.public_ip
+
+        sec_name = get_secret_name_from_vs_or_ts_yaml(patch_src)
+        cert_name = f"{transport_server_setup.namespace}-{sec_name}"
+
+        assert f"listen 3333 ssl;" in result_conf
+        assert f"ssl_certificate /etc/nginx/secrets/{cert_name};" in result_conf
+        assert f"ssl_certificate_key /etc/nginx/secrets/{cert_name};" in result_conf
+
+        print(f"sending tcp requests to: {host}:{port}")
+
+        host = host.strip("[]")
+        with socket.create_connection((host, port)) as sock:
+            with ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLS) as ssock:
+                print(ssock.version())
+                ssock.sendall(b"connect")
+                response = ssock.recv(4096)
+                endpoint = response.decode()
+                print(f"Connected securely to: {endpoint}")
+
+        self.restore_ts(kube_apis, transport_server_setup)
+        delete_items_from_yaml(kube_apis, src_sec_yaml, transport_server_setup.namespace)

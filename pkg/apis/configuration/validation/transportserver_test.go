@@ -924,3 +924,57 @@ func TestValidateMatchExpect(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateTsTLS(t *testing.T) {
+	t.Parallel()
+	validTLSes := []*v1alpha1.TLS{
+		nil,
+		{
+			Secret: "my-secret",
+		},
+	}
+
+	for _, tls := range validTLSes {
+		allErrs := validateTLS(tls, false, field.NewPath("tls"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateTLS() returned errors %v for valid input %v", allErrs, tls)
+		}
+	}
+
+	tests := []struct {
+		tls              *v1alpha1.TLS
+		isTLSPassthrough bool
+	}{
+		{
+			tls: &v1alpha1.TLS{
+				Secret: "-",
+			},
+			isTLSPassthrough: false,
+		},
+		{
+			tls: &v1alpha1.TLS{
+				Secret: "a/b",
+			},
+			isTLSPassthrough: false,
+		},
+		{
+			tls: &v1alpha1.TLS{
+				Secret: "my-secret",
+			},
+			isTLSPassthrough: true,
+		},
+		{
+			tls: &v1alpha1.TLS{
+				Secret: "",
+			},
+			isTLSPassthrough: false,
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateTLS(test.tls, test.isTLSPassthrough, field.NewPath("tls"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateTLS() returned no errors for invalid input %v", test)
+		}
+	}
+}
