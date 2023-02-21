@@ -3241,7 +3241,7 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 	want := policiesCfg{
 		WAF: &version2.WAF{
 			Enable:   "on",
-			ApBundle: "/etc/nginx/waf/nac-bundles/testWAFPolicyBundle.tgz",
+			ApBundle: "/waf/bundles/testWAFPolicyBundle.tgz",
 		},
 	}
 	got := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOptions{})

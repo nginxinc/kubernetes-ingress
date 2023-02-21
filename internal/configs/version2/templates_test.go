@@ -493,7 +493,7 @@ var virtualServerCfgWithWAFApBundle = VirtualServerConfig{
 			VerifyDepth:  2,
 		},
 		WAF: &WAF{
-			ApBundle:            "/etc/nginx/waf/nac-bundles/NginxDefaultPolicy.tgz",
+			ApBundle:            "/waf/bundles/NginxDefaultPolicy.tgz",
 			ApSecurityLogEnable: true,
 			ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 		},
