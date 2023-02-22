@@ -54,8 +54,8 @@ controller:
     ## The image repository of the Ingress Controller.
     repository: nginx/nginx-ingress
 
-    ## The tag of the Ingress Controller image.
-    tag: "3.0.2"
+    ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
+    # tag: "3.0.2"
 
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
