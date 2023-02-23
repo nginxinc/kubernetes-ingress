@@ -283,9 +283,24 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	// WAF Policy references either apPolicy or apBundle.
+	if waf.ApPolicy != "" && waf.ApBundle != "" {
+		msg := "apPolicy and apBundle fields in the WAF policy are mutually exclusive"
+		allErrs = append(allErrs,
+			field.Invalid(fieldPath.Child("apPolicy"), waf.ApPolicy, msg),
+			field.Invalid(fieldPath.Child("apBundle"), waf.ApBundle, msg),
+		)
+	}
+
 	if waf.ApPolicy != "" {
 		for _, msg := range validation.IsQualifiedName(waf.ApPolicy) {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apPolicy"), waf.ApPolicy, msg))
+		}
+	}
+
+	if waf.ApBundle != "" {
+		for _, msg := range validation.IsQualifiedName(waf.ApBundle) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apBundle"), waf.ApBundle, msg))
 		}
 	}
 

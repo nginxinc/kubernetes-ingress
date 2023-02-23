@@ -3201,6 +3201,55 @@ func TestGeneratePolicies(t *testing.T) {
 	}
 }
 
+func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
+	t.Parallel()
+
+	ownerDetails := policyOwnerDetails{
+		owner:          nil, // nil is OK for the unit test
+		ownerNamespace: "default",
+		vsNamespace:    "default",
+		vsName:         "test",
+	}
+
+	test := struct {
+		policyRefs []conf_v1.PolicyReference
+		policies   map[string]*conf_v1.Policy
+		policyOpts policyOptions
+		context    string
+		want       policiesCfg
+	}{
+		policyRefs: []conf_v1.PolicyReference{
+			{
+				Name:      "waf-bundle",
+				Namespace: "default",
+			},
+		},
+		policies: map[string]*conf_v1.Policy{
+			"default/waf-bundle": {
+				Spec: conf_v1.PolicySpec{
+					WAF: &conf_v1.WAF{
+						Enable:   true,
+						ApBundle: "testWAFPolicyBundle.tgz",
+					},
+				},
+			},
+		},
+		context: "route",
+	}
+
+	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
+	want := policiesCfg{
+		WAF: &version2.WAF{
+			Enable:   "on",
+			ApBundle: "/etc/nginx/waf/bundles/testWAFPolicyBundle.tgz",
+		},
+	}
+	got := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOptions{})
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
 func TestGeneratePoliciesFails(t *testing.T) {
 	t.Parallel()
 	ownerDetails := policyOwnerDetails{
