@@ -58,7 +58,7 @@ match {{ $m.Name }} {
 
 {{ $s := .Server }}
 {{ with $s.JWTAuth }}
-{{ if .KeyCache }}proxy_cache_path /var/cache/nginx/jwk levels=1 keys_zone=jwk:1m max_size=10m; {{ end }}
+{{ if .KeyCache }}proxy_cache_path /var/cache/nginx/jwks_uri levels=1 keys_zone=jwks_uri:1m max_size=10m; {{ end }}
 {{ end }}
 
 {{ range $l := $s.Locations }}
