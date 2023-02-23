@@ -1104,6 +1104,10 @@ func (p *policiesCfg) addWAFConfig(
 		}
 	}
 
+	if waf.ApBundle != "" {
+		p.WAF.ApBundle = appProtectBundleFolder + waf.ApBundle
+	}
+
 	if waf.SecurityLog != nil && waf.SecurityLogs == nil {
 		glog.V(2).Info("the field securityLog is deprecated nad will be removed in future releases. Use field securityLogs instead")
 		p.WAF.ApSecurityLogEnable = true

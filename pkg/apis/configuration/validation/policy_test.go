@@ -1239,7 +1239,66 @@ func TestValidateWAF(t *testing.T) {
 	}
 }
 
-func TestValidateWAFInvalid(t *testing.T) {
+func TestValidateWAF_FailsOnPresentBothApBundleAndApPolicy(t *testing.T) {
+	t.Parallel()
+
+	waf := &v1.WAF{
+		Enable:   true,
+		ApBundle: "bundle.tgz",
+		ApPolicy: "default/policy_name",
+	}
+
+	allErrs := validateWAF(waf, field.NewPath("waf"))
+	if len(allErrs) == 0 {
+		t.Errorf("want error, got %v", allErrs)
+	}
+}
+
+func TestValidateWAF_FailsOnInvalidApBundlePath(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		waf *v1.WAF
+	}{
+		{
+			waf: &v1.WAF{
+				ApBundle: ".",
+			},
+		},
+		{
+			waf: &v1.WAF{
+				ApBundle: "../bundle.tgz",
+			},
+		},
+		{
+			waf: &v1.WAF{
+				ApBundle: "/bundle.tgz",
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		allErrs := validateWAF(tc.waf, field.NewPath("waf"))
+		if len(allErrs) == 0 {
+			t.Errorf("want error, got %v", allErrs)
+		}
+	}
+}
+
+func TestValidateWAF_PassesOnValidBundleName(t *testing.T) {
+	t.Parallel()
+
+	waf := &v1.WAF{
+		Enable:   true,
+		ApBundle: "ap-bundle.tgz",
+	}
+	gotErrors := validateWAF(waf, field.NewPath("waf"))
+	if len(gotErrors) != 0 {
+		t.Errorf("want no errors, got %v", gotErrors)
+	}
+}
+
+func TestValidateWAF_FailsOnInvalidApPolicy(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		waf *v1.WAF

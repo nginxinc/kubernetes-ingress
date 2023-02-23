@@ -490,6 +490,7 @@ type OIDC struct {
 type WAF struct {
 	Enable       bool           `json:"enable"`
 	ApPolicy     string         `json:"apPolicy"`
+	ApBundle     string         `json:"apBundle"`
 	SecurityLog  *SecurityLog   `json:"securityLog"`
 	SecurityLogs []*SecurityLog `json:"securityLogs"`
 }
