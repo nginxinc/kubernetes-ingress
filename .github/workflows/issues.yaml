@@ -15,7 +15,7 @@ jobs:
         if: contains(github.event.issue.body, 'nginx.ingress.kubernetes.io')
         run: |
           text="\n\n I\'ve parsed the text of your issue and it looks like you might be mixing up the two Ingress Controllers, please take a look at this [page](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-ingress-controllers) to see the differences between \`nginxinc/kubernetes-ingress\` (this repo) and \`kubernetes/ingress-nginx\`."
-          echo "::set-output name=text::$text"
+          echo "text=$text" >> $GITHUB_OUTPUT
       - name: Check if Issue author is Org member
         id: membercheck
         uses: actions/github-script@98814c53be79b1d30f795b907e553d8679345975 # v6.4.0
