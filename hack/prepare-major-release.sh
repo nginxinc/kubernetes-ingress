@@ -10,8 +10,7 @@
 
 DOCS_TO_UPDATE_FOLDER=docs/content
 
-if [ $# != 4 ];
-then
+if [ $# != 4 ]; then
     echo "Invalid number of arguments" 1>&2
     echo "Usage: $0 prev_ic_version ic-version prev_helm_chart_version helm-chart-version" 1>&2
     exit 1
