@@ -16,7 +16,7 @@ require (
 	github.com/nginxinc/nginx-service-mesh v1.7.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/spiffe/go-spiffe/v2 v2.1.2
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	golang.org/x/exp v0.0.0-20230105000112-eab7a2c85304
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1
