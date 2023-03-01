@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/usr/bin/env bash
 
 git_commit=$1
 git_tag=$2

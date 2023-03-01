@@ -15,8 +15,8 @@ FROM nginx:1.23.3 AS debian
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temp fix for CVE-2023-0361
-	&& apt-get install -y libgnutls30 \
+	# temp fix for CVE-2023-0361, CVE-2023-0795 and CVE-2023-23916
+	&& apt-get install -y libgnutls30 libtiff5 curl \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
@@ -92,6 +92,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	"deb https://pkgs.nginx.com/app-protect-security-updates/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect app-protect-attack-signatures app-protect-threat-campaigns \
+	# NAP DoS depends on curl so we can't remove it a the end
 	&& apt-get purge --auto-remove -y curl; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
@@ -153,8 +154,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	source /tmp/rhel_license \
 	## the code below is duplicated from the ubi-plus image because NAP doesn't support UBI versions newer than 8.6
 	dnf --nodocs install -y shadow-utils ca-certificates \
-	# temp fix for CVE-2022-1304 CVE-2016-3709, CVE-2022-42898, CVE-2022-42010, CVE-2022-43680, CVE-2022-3821, CVE-2021-46848, CVE-2022-35737 and CVE-2022-47629
-	&& dnf --nodocs upgrade -y libcom_err libxml2 krb5-libs dbus expat systemd libtasn1 sqlite-libs libksba \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
@@ -176,6 +175,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-dos-8.repo; \
 	dnf --nodocs install -y app-protect-dos; \
 	fi \
+	# fix for CVEs
+	&& dnf --nodocs upgrade -y libcom_err libxml2 krb5-libs dbus expat systemd libtasn1 sqlite-libs libksba platform-python platform-python-setuptools python3-setuptools-wheel tar \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
 	&& dnf clean all && rm -rf /var/cache/dnf
