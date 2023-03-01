@@ -183,7 +183,7 @@ server {
         internal;
         proxy_method GET;
         {{ if .KeyCache }}
-        proxy_cache jwk;
+        proxy_cache jwks_uri;
         proxy_cache_valid 200 12h;
         {{ end }}
         {{ with $s.JWTAuth.JwksURI }}
