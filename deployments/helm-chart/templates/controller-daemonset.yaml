@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
+  name: {{ include "nginx-ingress.controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
@@ -12,14 +12,13 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ include "nginx-ingress.appName" . }}
+      {{- include "nginx-ingress.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ include "nginx-ingress.appName" . }}
-        app.kubernetes.io/name: nginx-ingress
+        {{- include "nginx-ingress.selectorLabels" . | nindent 8 }}
 {{- if .Values.nginxServiceMesh.enable }}
-        nsm.nginx.com/daemonset: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
+        nsm.nginx.com/daemonset: {{ include "nginx-ingress.controller.fullname" . }}
         spiffe.io/spiffeid: "true"
 {{- end }}
 {{- if .Values.controller.pod.extraLabels }}
@@ -198,7 +197,7 @@ spec:
 {{- else if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
-          - -external-service={{ include "nginx-ingress.serviceName" . }}
+          - -external-service={{ include "nginx-ingress.controller.fullname" . }}
 {{- end }}
 {{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}

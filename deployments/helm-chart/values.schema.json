@@ -16,6 +16,7 @@
       "default": {},
       "title": "The Ingress Controller Helm Schema",
       "required": [
+        "name",
         "kind",
         "image"
       ],
@@ -25,7 +26,7 @@
           "default": "",
           "title": "The name of the Ingress Controller",
           "examples": [
-            "nginx-ingress"
+            "controller"
           ]
         },
         "kind": {
@@ -826,14 +827,6 @@
                 []
               ]
             },
-            "name": {
-              "type": "string",
-              "default": "",
-              "title": "The name",
-              "examples": [
-                ""
-              ]
-            },
             "allocateLoadBalancerNodePorts": {
               "type": "boolean",
               "default": false,
@@ -1039,14 +1032,6 @@
                 false
               ]
             },
-            "name": {
-              "type": "string",
-              "default": "",
-              "title": "The name",
-              "examples": [
-                ""
-              ]
-            },
             "labels": {
               "type": "object",
               "default": {},
@@ -1070,7 +1055,6 @@
           "examples": [
             {
               "create": false,
-              "name": "",
               "labels": {},
               "selectorMatchLabels": {},
               "endpoints": []
@@ -1357,7 +1341,6 @@
             "loadBalancerIP": "",
             "externalIPs": [],
             "loadBalancerSourceRanges": [],
-            "name": "",
             "allocateLoadBalancerNodePorts": false,
             "ipFamilyPolicy": "",
             "ipFamilies": [],
@@ -1379,7 +1362,6 @@
           },
           "serviceMonitor": {
             "create": false,
-            "name": "",
             "labels": {},
             "selectorMatchLabels": {},
             "endpoints": {}
@@ -1658,7 +1640,6 @@
           "loadBalancerIP": "",
           "externalIPs": [],
           "loadBalancerSourceRanges": [],
-          "name": "",
           "allocateLoadBalancerNodePorts": false,
           "ipFamilyPolicy": "",
           "ipFamilies": [],
@@ -1688,7 +1669,6 @@
         },
         "serviceMonitor": {
           "create": false,
-          "name": "",
           "labels": {},
           "selectorMatchLabels": {},
           "endpoints": {}

@@ -2,10 +2,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
+  name: {{ include "nginx-ingress.controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: nginx-ingress
     {{- include "nginx-ingress.labels" . | nindent 4 }}
 {{- if .Values.controller.annotations }}
   annotations: {{ toYaml .Values.controller.annotations | nindent 4 }}
@@ -14,14 +13,13 @@ spec:
   replicas: {{ .Values.controller.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "nginx-ingress.appName" . }}
+      {{- include "nginx-ingress.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ include "nginx-ingress.appName" . }}
-        app.kubernetes.io/name: nginx-ingress
+        {{- include "nginx-ingress.selectorLabels" . | nindent 8 }}
 {{- if .Values.nginxServiceMesh.enable }}
-        nsm.nginx.com/deployment: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
+        nsm.nginx.com/deployment: {{ include "nginx-ingress.controller.fullname" . }}
         spiffe.io/spiffeid: "true"
 {{- end }}
 {{- if .Values.controller.pod.extraLabels }}
@@ -98,9 +96,9 @@ spec:
           containerPort: 80
         - name: https
           containerPort: 443
-{{ if .Values.controller.customPorts }}
+{{- if .Values.controller.customPorts }}
 {{ toYaml .Values.controller.customPorts | indent 8 }}
-{{ end }}
+{{- end }}
 {{- if .Values.prometheus.create }}
         - name: prometheus
           containerPort: {{ .Values.prometheus.port }}
@@ -202,7 +200,7 @@ spec:
 {{- else if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
-          - -external-service={{ include "nginx-ingress.serviceName" . }}
+          - -external-service={{ include "nginx-ingress.controller.fullname" . }}
 {{- end }}
 {{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
