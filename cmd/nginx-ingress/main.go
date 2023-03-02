@@ -233,7 +233,7 @@ func kubernetesVersionInfo(kubeClient kubernetes.Interface) {
 	}
 	glog.Infof("Kubernetes version: %v", k8sVersion)
 
-	minK8sVersion, err := util_version.ParseGeneric("1.21.0")
+	minK8sVersion, err := util_version.ParseGeneric("1.22.0")
 	if err != nil {
 		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
 	}
