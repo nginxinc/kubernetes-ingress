@@ -74,7 +74,12 @@ func runServer(port string, registry prometheus.Gatherer, prometheusSecret *api_
 }
 
 func writeTempFile(data []byte, name string) (*os.File, error) {
-	f, err := os.CreateTemp("", name)
+	_, err := os.Stat(nginx.NginxSecretPath)
+	if err != nil {
+		return nil, fmt.Errorf("Directory %s does not exist %w\n", nginx.NginxSecretPath, err)
+	}
+
+	f, err := os.CreateTemp(nginx.NginxSecretPath, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
