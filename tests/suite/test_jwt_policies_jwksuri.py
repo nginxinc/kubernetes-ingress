@@ -41,6 +41,7 @@ def get_token(request):
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.policies
+@pytest.mark.skip(reason="issues with ingressClass")
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -62,8 +63,6 @@ def get_token(request):
 )
 class TestJWTPoliciesVsJwksuri:
     @pytest.mark.parametrize("jwt_virtual_server", [jwt_vs_spec_src, jwt_vs_route_src])
-    @pytest.mark.flaky(max_runs=3)
-    @pytest.mark.skip(reason="under review for causing pipeline delays")
     def test_jwt_policy_jwksuri(
         self,
         request,
@@ -110,6 +109,7 @@ class TestJWTPoliciesVsJwksuri:
         resp2 = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host, "token": token},
+            timeout=5,
         )
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
