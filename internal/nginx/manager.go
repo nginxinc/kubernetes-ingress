@@ -28,7 +28,6 @@ const (
 	JWKSecretFileMode = 0o644
 	// HtpasswdSecretFileMode defines the default filemode for HTTP basic auth user files.
 	HtpasswdSecretFileMode = 0o644
-	NginxSecretPath        = "/etc/nginx/secrets"
 
 	configFileMode               = 0o644
 	jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
