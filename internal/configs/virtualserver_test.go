@@ -8213,6 +8213,16 @@ func TestIsTLSEnabled(t *testing.T) {
 			spiffeCert: false,
 			expected:   true,
 		},
+		{
+			upstream: conf_v1.Upstream{
+				TLS: conf_v1.UpstreamTLS{
+					Enable: true,
+				},
+			},
+			nsmEgress:  true,
+			spiffeCert: false,
+			expected:   false,
+		},
 	}
 
 	for _, test := range tests {
