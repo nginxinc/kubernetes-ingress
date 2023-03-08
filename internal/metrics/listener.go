@@ -76,8 +76,8 @@ func runServer(port string, registry prometheus.Gatherer, prometheusSecret *api_
 
 func writeToSecretsPath(data []byte, name string) (*os.File, error) {
 	_, err := os.Stat(config.DefaultSecretPath)
-	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("directory %s does not exist %w", config.DefaultSecretPath, err)
+	if err != nil {
+		return nil, fmt.Errorf("got error %w when attempting access %s", err, config.DefaultSecretPath)
 	}
 
 	f, err := os.CreateTemp(config.DefaultSecretPath, name)
