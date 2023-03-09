@@ -48,3 +48,12 @@ jobs:
       - uses: reviewdog/action-actionlint@b6feb003955cad286985c42e7047f4567a798f3f # v1.36.0
         with:
           actionlint_flags: -shellcheck ""
+
+  chart-lint:
+    name: Chart Lint
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - name: Lint chart
+        run: helm lint deployments/helm-chart

@@ -15,16 +15,11 @@ on:
       - reopened
       - synchronize
   schedule:
-    - cron:  '0 4 * * *'
+    - cron: '0 4 * * *' # run every day at 04:00 UTC
 
 defaults:
   run:
     shell: bash
-
-env:
-  HELM_CHART_DIR: deployments/helm-chart
-  GIT_NAME: NGINX Kubernetes Team
-  GIT_MAIL: kubernetes@nginx.com
 
 concurrency:
   group: ${{ github.ref_name }}-ci
@@ -65,35 +60,6 @@ jobs:
           make update-codegen && git diff --name-only --exit-code pkg/**
           cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
 
-  binary:
-    name: Build binary
-    runs-on: ubuntu-22.04
-    needs: checks
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
-        with:
-          fetch-depth: 0
-      - name: Setup Golang Environment
-        uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
-        with:
-          go-version-file: go.mod
-          cache: true
-      - name: Build binary
-        uses: goreleaser/goreleaser-action@8f67e590f2d095516493f017008adc464e63adb1 # v4.1.0
-        with:
-          version: latest
-          args: build --snapshot --rm-dist --single-target --id kubernetes-ingress
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ needs.checks.outputs.go_path }}
-
-      - name: Store Artifacts in Cache
-        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
-        with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
-
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-22.04
@@ -113,10 +79,118 @@ jobs:
         with:
           files: ./coverage.txt
 
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/')
+    uses: ./.github/workflows/release.yml
+    secrets: inherit
+
+  binaries:
+    name: Build Binaries
+    runs-on: ubuntu-22.04
+    needs: [checks, unit-tests]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download Syft
+        uses: anchore/sbom-action/download-syft@07978da4bdb4faa726e52dfc6b1bed63d4b56479 # v0.13.3
+        if: startsWith(github.ref, 'refs/tags/')
+
+      - name: Build binaries
+        uses: goreleaser/goreleaser-action@f82d6c1c344bcacabba2c841718984797f664a6b # v4.2.0
+        with:
+          version: latest
+          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: ${{ needs.checks.outputs.go_path }}
+          AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
+          AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
+          AWS_NAP_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_DOS_PRODUCT_CODE }}
+          AWS_NAP_DOS_PUB_KEY: ${{ secrets.AWS_NAP_DOS_PUB_KEY }}
+          AWS_NAP_WAF_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_PRODUCT_CODE }}
+          AWS_NAP_WAF_PUB_KEY: ${{ secrets.AWS_NAP_WAF_PUB_KEY }}
+          AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
+          AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_COMMUNITY }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+          AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
+
+      - name: Store Artifacts in Cache
+        uses: actions/cache@69d9d449aced6a2ede0bc19182fadc3a0a42d2b0 # v3.2.6
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+
+  build-docker:
+    name: Build Docker OSS
+    needs: binaries
+    strategy:
+        fail-fast: false
+        matrix:
+          image: [debian, alpine]
+          platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+          include:
+            - image: ubi
+              platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+    secrets: inherit
+
+  build-docker-plus:
+    name: Build Docker Plus
+    needs: build-docker
+    strategy:
+        fail-fast: false
+        matrix:
+          image: [debian-plus, alpine-plus]
+          platforms: ["linux/arm64, linux/amd64"]
+          target: [goreleaser, aws]
+          include:
+            - image: ubi-plus
+              platforms: "linux/arm64, linux/amd64, linux/s390x"
+              target: goreleaser
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+    secrets: inherit
+
+  build-docker-nap:
+    name: Build Docker NAP
+    needs: build-docker-plus
+    strategy:
+        fail-fast: false
+        matrix:
+          image: [debian-plus-nap, ubi-plus-nap]
+          platforms: ["linux/amd64"]
+          target: [goreleaser, aws]
+          nap_modules: [dos, waf, "waf,dos"]
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      nap_modules: ${{ matrix.nap_modules }}
+    secrets: inherit
+
   helm-tests:
     name: Helm Tests
     runs-on: ubuntu-22.04
-    needs: [binary, unit-tests, checks]
+    needs: [build-docker-plus, checks]
     strategy:
       matrix:
         include:
@@ -128,19 +202,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - name: Fetch Cached Artifacts
-        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
+        uses: actions/cache@69d9d449aced6a2ede0bc19182fadc3a0a42d2b0 # v3.2.6
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325 # v2.2.1
+        uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2.4.1
       - name: Build Docker Image ${{ matrix.image }}
-        uses: docker/build-push-action@37abcedcc1da61a57767b7588cb9d03eb57e28b3 # v3.3.0
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
         with:
           file: build/Dockerfile
           context: '.'
           cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,scope=${{ matrix.image }},mode=max
           target: goreleaser
           tags: ${{ matrix.type }}:${{ github.sha }}
           pull: true
@@ -195,7 +268,8 @@ jobs:
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
-    needs: [checks, unit-tests]
+    needs: [checks, build-docker-nap]
+    if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -217,9 +291,24 @@ jobs:
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
           else
-            echo "matrix={\"k8s\": [\"1.21.14\", \"1.22.15\", \"1.23.13\", \"1.24.7\", \"1.25.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+            echo "matrix={\"k8s\": [\"1.22.15\", \"1.23.13\", \"1.24.7\", \"1.25.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
                                              \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}" >> $GITHUB_OUTPUT
           fi
+
+      - name: Checkout Repository
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2.4.1
+      - name: Build Test-Runner Container
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
+        with:
+          file: tests/docker/Dockerfile
+          context: '.'
+          cache-from: type=gha,scope=test-runner
+          cache-to: type=gha,scope=test-runner,mode=max
+          tags: test-runner:${{ github.sha }}
+          pull: true
+          load: true
 
   smoke-tests:
     name: Smoke Tests
@@ -240,6 +329,7 @@ jobs:
           k8s-version: ${{ matrix.k8s }}
           nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
           nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
+          azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
       - name: Upload Test Results
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
@@ -247,205 +337,67 @@ jobs:
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
         if: always()
 
-  build-binaries:
-    name: Build Binaries
+  publish-helm:
+    name: Package and Publish Helm Chart
     runs-on: ubuntu-22.04
-    needs: [checks, smoke-tests, helm-tests]
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
-        with:
-          fetch-depth: 0
-      - name: Setup Golang Environment
-        uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
-      - run: npm install js-yaml
-        continue-on-error: true
-        if: startsWith(github.ref, 'refs/tags/')
-      - name: Publish release on tag
-        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # v6.3.3
-        continue-on-error: true
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-              const ref = context.ref.split("/")[2]
-              const yaml = require('js-yaml');
-
-              const releases = (await github.rest.repos.listReleases({
-                owner: context.payload.repository.owner.login,
-                repo: context.payload.repository.name,
-                per_page: 100,
-              })).data
-
-              const draft_release = releases.find(release => release.draft && release.tag_name === ref)
-
-              const helm_file = (await github.rest.repos.getContent({
-                owner: context.payload.repository.owner.login,
-                repo: context.payload.repository.name,
-                path: "deployments/helm-chart/Chart.yaml",
-                ref: ref,
-              })).data.content
-
-              const helm_yaml = yaml.load(Buffer.from(helm_file, 'base64').toString())
-              const helm_version = helm_yaml.version
-              console.log(`Helm version: ${helm_version}`)
-
-              const update = await github.rest.repos.updateRelease({
-                owner: context.payload.repository.owner.login,
-                repo: context.payload.repository.name,
-                release_id: draft_release.id,
-                body: draft_release.body.replace("%HELM_CHART_VERSION%", helm_version),
-                draft: false
-              });
-              console.log(`Release published: ${update.data.html_url}`)
-              console.log(`Release notes: ${update.data.body}`)
-        if: startsWith(github.ref, 'refs/tags/')
-
-      - name: Download Syft
-        uses: anchore/sbom-action/download-syft@06e109483e6aa305a2b2395eabae554e51530e1d # v0.13.1
-
-      - name: Build binaries
-        uses: goreleaser/goreleaser-action@8f67e590f2d095516493f017008adc464e63adb1 # v4.1.0
-        with:
-          version: latest
-          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ needs.checks.outputs.go_path }}
-          AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
-          AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
-          AWS_NAP_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_DOS_PRODUCT_CODE }}
-          AWS_NAP_DOS_PUB_KEY: ${{ secrets.AWS_NAP_DOS_PUB_KEY }}
-          AWS_NAP_WAF_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_PRODUCT_CODE }}
-          AWS_NAP_WAF_PUB_KEY: ${{ secrets.AWS_NAP_WAF_PUB_KEY }}
-          AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
-          AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_COMMUNITY }}
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
-          AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
-
-      - name: Store Artifacts in Cache
-        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
-        with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
-
-  build-docker:
-    name: Build Docker OSS
-    needs: build-binaries
-    strategy:
-        fail-fast: false
-        matrix:
-          image: [debian, alpine]
-          platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
-          include:
-            - image: ubi
-              platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
-    uses: ./.github/workflows/build-oss.yml
-    with:
-      platforms: ${{ matrix.platforms }}
-      image: ${{ matrix.image }}
-    secrets: inherit
-
-  build-docker-plus:
-    name: Build Docker Plus
-    needs: build-binaries
-    strategy:
-        fail-fast: false
-        matrix:
-          image: [debian-plus, alpine-plus]
-          platforms: ["linux/arm64, linux/amd64"]
-          target: [goreleaser, aws]
-          include:
-            - image: ubi-plus
-              platforms: "linux/arm64, linux/amd64, linux/s390x"
-              target: goreleaser
-    uses: ./.github/workflows/build-plus.yml
-    with:
-      platforms: ${{ matrix.platforms }}
-      image: ${{ matrix.image }}
-      target: ${{ matrix.target }}
-    secrets: inherit
-
-  build-docker-nap:
-    name: Build Docker NAP
-    needs: build-binaries
-    strategy:
-        fail-fast: false
-        matrix:
-          image: [debian-plus-nap, ubi-plus-nap]
-          platforms: ["linux/amd64"]
-          target: [goreleaser, aws]
-          nap_modules: [dos, waf, "waf,dos"]
-    uses: ./.github/workflows/build-plus.yml
-    with:
-      platforms: ${{ matrix.platforms }}
-      image: ${{ matrix.image }}
-      target: ${{ matrix.target }}
-      nap_modules: ${{ matrix.nap_modules }}
-    secrets: inherit
-
-  package-helm:
-    name: Package Helm Chart
-    runs-on: ubuntu-22.04
-    needs: build-docker
-    outputs:
-      version: ${{ steps.var.outputs.helm_version }}
-      type: ${{ steps.var.outputs.helm_type }}
+    needs: helm-tests
     if: ${{ github.event_name == 'push' }}
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
-      - name: Output Variables
-        id: var
-        run: |
-          if ${{ startsWith(github.ref, 'refs/tags/') }}; then
-              helm_version="$(helm show chart ${{ env.HELM_CHART_DIR }} | grep 'version:' | cut -d ' ' -f 2)"
-              helm_type="stable"
-          else
-              helm_version="0.0.0-edge"
-              helm_type="edge"
-          fi
-          echo "helm_version=$helm_version" >> $GITHUB_OUTPUT
-          echo "helm_type=$helm_type" >> $GITHUB_OUTPUT
-      - name: Lint
-        run: helm lint ${{ env.HELM_CHART_DIR }}
+        with:
+          path: kic
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: DockerHub Login
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Package
-        run: helm package --version ${{ steps.var.outputs.helm_version }} ${{ env.HELM_CHART_DIR }}
-      - name: Upload Chart
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-        with:
-          name: helm-chart
-          path: ${{ github.workspace }}/nginx-ingress-${{ steps.var.outputs.helm_version }}.tgz
+        id: package
+        run: |
+          output=$(helm package ${{ ! startsWith(github.ref, 'refs/tags/') && '--app-version edge --version 0.0.0-edge' || '' }} kic/deployments/helm-chart)
+          echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
 
-  release-helm:
-    name: Release Helm Chart
-    runs-on: ubuntu-22.04
-    needs: package-helm
-    if: ${{ github.event_name == 'push' }}
-    steps:
+      - name: Push to OCI registries
+        run: |
+          helm push ${{ steps.package.outputs.path }} oci://ghcr.io/nginxinc/charts
+          helm push ${{ steps.package.outputs.path }} oci://registry-1.docker.io/nginxcharts
+
       - name: Checkout Repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
         with:
           repository: nginxinc/helm-charts
           fetch-depth: 1
           token: ${{ secrets.NGINX_PAT }}
-      - name: Remove previous Chart
-        run: rm -f ${{ github.workspace }}/${{ needs.package-helm.outputs.type }}/nginx-ingress-${{ needs.package-helm.outputs.version }}.tgz
-      - name: Retrieve latest Helm Chart
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-        with:
-          name: helm-chart
-          path: ${{ github.workspace }}/${{ needs.package-helm.outputs.type }}
-      - name: Push Helm Chart
+          path: helm-charts
+
+      - name: Get Chart type
+        id: package-helm
         run: |
+          echo "type=${{ contains(steps.package.outputs.path, 'edge') && 'edge' || 'stable' }}" >> $GITHUB_OUTPUT
+
+      - name: Remove previous Chart
+        if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
+        run: rm -f ${{ github.workspace }}/helm-charts/edge/nginx-ingress-0.0.0-edge.tgz
+
+      - name: Push Helm Chart to Helm Charts Repository
+        run: |
+          mv ${{ steps.package.outputs.path }} ${{ github.workspace }}/helm-charts/${{ steps.package-helm.outputs.type }}/
+          cd ${{ github.workspace }}/helm-charts
           helm repo index ${{ needs.package-helm.outputs.type }} --url https://helm.nginx.com/${{ needs.package-helm.outputs.type }}
           git add -A
-          git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' \
+          git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
           commit -m "NGINX Ingress Controller - Release ${{ needs.package-helm.outputs.type }} ${{ needs.package-helm.outputs.version }}"
           git push -u origin master

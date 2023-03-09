@@ -3,7 +3,7 @@ on:
   # Only the default branch is supported.
   branch_protection_rule:
   schedule:
-    - cron: '43 20 * * 0'
+    - cron: '43 20 * * 0' # run every Sunday at 20:43 UTC
   push:
     branches: [ "main" ]
 
@@ -53,6 +53,6 @@ jobs:
 
       # Upload the results to GitHub's code scanning dashboard.
       - name: "Upload to code-scanning"
-        uses: github/codeql-action/upload-sarif@a34ca99b4610d924e04c68db79e503e1f79f9f02 # v2.1.39
+        uses: github/codeql-action/upload-sarif@32dc499307d133bb5085bae78498c0ac2cf762d5 # v2.2.5
         with:
           sarif_file: results.sarif

@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: {{ include "nginx-ingress.appName" . }}
+        app.kubernetes.io/name: nginx-ingress
 {{- if .Values.nginxServiceMesh.enable }}
         nsm.nginx.com/daemonset: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
         spiffe.io/spiffeid: "true"
@@ -42,6 +43,10 @@ spec:
     spec:
       serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
       automountServiceAccountToken: true
+      securityContext:
+        sysctls:
+          - name: "net.ipv4.ip_unprivileged_port_start"
+            value: "0"
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
@@ -109,14 +114,12 @@ spec:
           initialDelaySeconds: {{ .Values.controller.readyStatus.initialDelaySeconds }}
 {{- end }}
         securityContext:
-          allowPrivilegeEscalation: true
+          allowPrivilegeEscalation: false
           runAsUser: 101 #nginx
           runAsNonRoot: true
           capabilities:
             drop:
             - ALL
-            add:
-            - NET_BIND_SERVICE
 {{- if or .Values.controller.volumeMounts .Values.nginxServiceMesh.enable }}
         volumeMounts:
 {{- end }}

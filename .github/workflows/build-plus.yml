@@ -36,10 +36,10 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
+        uses: actions/cache@69d9d449aced6a2ede0bc19182fadc3a0a42d2b0 # v3.2.6
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
@@ -48,7 +48,7 @@ jobs:
         if: github.event_name != 'pull_request'
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325 # v2.2.1
+        uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2.4.1
 
       - name: GCR Login
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
@@ -100,7 +100,7 @@ jobs:
         if: ${{ inputs.nap_modules != '' }}
 
       - name: Build Plus Docker image
-        uses: docker/build-push-action@37abcedcc1da61a57767b7588cb9d03eb57e28b3 # v3.3.0
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
         with:
           file: build/Dockerfile
           context: '.'
@@ -125,7 +125,7 @@ jobs:
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
       - name: Load image for Trivy
-        uses: docker/build-push-action@37abcedcc1da61a57767b7588cb9d03eb57e28b3 # v3.3.0
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
         with:
           file: build/Dockerfile
           context: '.'
@@ -144,7 +144,7 @@ jobs:
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5 # 0.8.0
+        uses: aquasecurity/trivy-action@8bd2f9fbda2109502356ff8a6a89da55b1ead252 # 0.9.1
         continue-on-error: true
         with:
           image-ref: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
@@ -153,7 +153,7 @@ jobs:
           ignore-unfixed: 'true'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@a34ca99b4610d924e04c68db79e503e1f79f9f02 # v2.1.39
+        uses: github/codeql-action/upload-sarif@32dc499307d133bb5085bae78498c0ac2cf762d5 # v2.2.5
         continue-on-error: true
         with:
           sarif_file: 'trivy-results-${{ inputs.image }}.sarif'

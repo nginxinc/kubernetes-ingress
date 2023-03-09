@@ -23,6 +23,9 @@ inputs:
   nginx-crt:
     description: Nginx cert to use
     required: false
+  azure-ad-secret:
+    description: Azure Active Directory secret for JWKs
+    required: false
 
 outputs:
   test-results-name:
@@ -36,7 +39,7 @@ runs:
       uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/dist
-        key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
+        key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
     - name: Ingress type
       id: ingress-type
@@ -55,7 +58,6 @@ runs:
         file: build/Dockerfile
         context: '.'
         cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
-        cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }},mode=max
         target: goreleaser
         tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
         load: true
@@ -75,7 +77,6 @@ runs:
         file: tests/docker/Dockerfile
         context: '.'
         cache-from: type=gha,scope=test-runner
-        cache-to: type=gha,scope=test-runner,mode=max
         tags: test-runner:${{ github.sha }}
         pull: true
         load: true
@@ -114,6 +115,7 @@ runs:
         --self-contained-html \
         --durations=10 \
         --show-ic-logs=yes \
+        --ad-secret=${{ inputs.azure-ad-secret }} \
         -m ${{ inputs.marker != '' && inputs.marker || '""' }}
       working-directory: ./tests
       shell: bash

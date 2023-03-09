@@ -54,8 +54,8 @@ controller:
     ## The image repository of the Ingress Controller.
     repository: nginx/nginx-ingress
 
-    ## The tag of the Ingress Controller image.
-    tag: "3.0.0"
+    ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
+    # tag: "3.0.2"
 
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
@@ -179,7 +179,18 @@ controller:
   ## The minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available.
   minReadySeconds: 0
 
-    ## Strategy used to replace old Pods by new ones. .spec.strategy.type can be "Recreate" or "RollingUpdate". "RollingUpdate" is the default value.
+  ## Pod disruption budget for the Ingress Controller pods.
+  podDisruptionBudget:
+    ## Enables PodDisruptionBudget.
+    enabled: false
+    ## The annotations of the Ingress Controller pod disruption budget.
+    annotations: {}
+    ## The number of Ingress Controller pods that should be available. This is a mutually exclusive setting with "maxUnavailable".
+    # minAvailable: 1
+    ## The number of Ingress Controller pods that can be unavailable. This is a mutually exclusive setting with "minAvailable".
+    # maxUnavailable: 1
+
+    ## Strategy used to replace old Pods by new ones. .spec.strategy.type can be "Recreate" or "RollingUpdate" for Deployments, and "OnDelete" or "RollingUpdate" for Daemonsets. "RollingUpdate" is the default value.
   strategy: {}
 
   ## Extra containers for the Ingress Controller pods.

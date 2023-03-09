@@ -42,6 +42,11 @@ import (
 // Injected during build
 var version string
 
+const (
+	nginxVersionAnnotation = "app.nginx.org/version"
+	versionAnnotation      = "app.kubernetes.io/version"
+)
+
 func main() {
 	commitHash, commitTime, dirtyBuild := getBuildInfo()
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
@@ -64,7 +69,9 @@ func main() {
 
 	nginxManager, useFakeNginxManager := createNginxManager(managerCollector)
 
-	getNginxVersionInfo(nginxManager)
+	nginxVersion := getNginxVersionInfo(nginxManager)
+
+	updateSelfWithVersionInfo(kubeClient, version, nginxVersion)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
@@ -226,7 +233,7 @@ func kubernetesVersionInfo(kubeClient kubernetes.Interface) {
 	}
 	glog.Infof("Kubernetes version: %v", k8sVersion)
 
-	minK8sVersion, err := util_version.ParseGeneric("1.21.0")
+	minK8sVersion, err := util_version.ParseGeneric("1.22.0")
 	if err != nil {
 		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
 	}
@@ -367,7 +374,7 @@ func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Man
 	return nginxManager, useFakeNginxManager
 }
 
-func getNginxVersionInfo(nginxManager nginx.Manager) {
+func getNginxVersionInfo(nginxManager nginx.Manager) string {
 	nginxVersion := nginxManager.Version()
 	isPlus := strings.Contains(nginxVersion, "plus")
 	glog.Infof("Using %s", nginxVersion)
@@ -377,6 +384,7 @@ func getNginxVersionInfo(nginxManager nginx.Manager) {
 	} else if !*nginxPlus && isPlus {
 		glog.Fatal("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
 	}
+	return nginxVersion
 }
 
 func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error, chan error) {
@@ -745,4 +753,30 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 		}
 	}
 	return cfgParams
+}
+
+func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string, nginxVersion string) {
+	pod, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), os.Getenv("POD_NAME"), meta_v1.GetOptions{})
+	if err != nil {
+		glog.Errorf("Error getting pod: %v", err)
+		return
+	}
+
+	// Copy pod and update the annotations.
+	newPod := pod.DeepCopy()
+	ann := newPod.ObjectMeta.Annotations
+	if ann == nil {
+		ann = make(map[string]string)
+	}
+	ann[nginxVersionAnnotation] = strings.Split(nginxVersion, "/")[1]
+	ann[versionAnnotation] = version
+	newPod.ObjectMeta.Annotations = ann
+
+	_, err = kubeClient.CoreV1().Pods(newPod.ObjectMeta.Namespace).Update(context.TODO(), newPod, meta_v1.UpdateOptions{})
+	if err != nil {
+		glog.Errorf("Error updating pod with annotations: %v", err)
+		return
+	}
+
+	glog.Infof("Pod annotation updated: %s", pod.ObjectMeta.Name)
 }

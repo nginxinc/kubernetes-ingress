@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	api_v1 "k8s.io/api/core/v1"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 )
 
@@ -18,6 +21,7 @@ type TransportServerEx struct {
 	PodsByIP         map[string]string
 	ExternalNameSvcs map[string]bool
 	DisableIPV6      bool
+	SecretRefs       map[string]*secrets.SecretReference
 }
 
 func (tsEx *TransportServerEx) String() string {
@@ -38,13 +42,19 @@ func newUpstreamNamerForTransportServer(transportServer *conf_v1alpha1.Transport
 
 // generateTransportServerConfig generates a full configuration for a TransportServer.
 func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool, isResolverConfigured bool) (*version2.TransportServerConfig, Warnings) {
+	warnings := newWarnings()
+
 	upstreamNamer := newUpstreamNamerForTransportServer(transportServerEx.TransportServer)
 
-	upstreams, warnings := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus, isResolverConfigured)
+	upstreams, w := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus, isResolverConfigured)
+	warnings.Add(w)
 
 	healthCheck, match := generateTransportServerHealthCheck(transportServerEx.TransportServer.Spec.Action.Pass,
 		upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
 		transportServerEx.TransportServer.Spec.Upstreams)
+
+	sslConfig, w := generateSSLConfig(transportServerEx.TransportServer, transportServerEx.TransportServer.Spec.TLS, transportServerEx.TransportServer.Namespace, transportServerEx.SecretRefs)
+	warnings.Add(w)
 
 	var proxyRequests, proxyResponses *int
 	var connectTimeout, nextUpstreamTimeout string
@@ -97,6 +107,7 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			HealthCheck:              healthCheck,
 			ServerSnippets:           serverSnippets,
 			DisableIPV6:              transportServerEx.DisableIPV6,
+			SSL:                      sslConfig,
 		},
 		Match:          match,
 		Upstreams:      upstreams,
@@ -110,6 +121,39 @@ func generateUnixSocket(transportServerEx *TransportServerEx) string {
 		return fmt.Sprintf("unix:/var/lib/nginx/passthrough-%s_%s.sock", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name)
 	}
 	return ""
+}
+
+func generateSSLConfig(ts *conf_v1alpha1.TransportServer, tls *conf_v1alpha1.TLS, namespace string, secretRefs map[string]*secrets.SecretReference) (*version2.StreamSSL, Warnings) {
+	if tls == nil {
+		return &version2.StreamSSL{Enabled: false}, nil
+	}
+
+	warnings := newWarnings()
+	sslEnabled := true
+
+	secretRef := secretRefs[fmt.Sprintf("%s/%s", namespace, tls.Secret)]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
+	name := secretRef.Path
+	if secretType != "" && secretType != api_v1.SecretTypeTLS {
+		errMsg := fmt.Sprintf("TLS secret %s is of a wrong type '%s', must be '%s'. SSL termination will not be enabled for this server.", tls.Secret, secretType, api_v1.SecretTypeTLS)
+		warnings.AddWarning(ts, errMsg)
+		sslEnabled = false
+	} else if secretRef.Error != nil {
+		errMsg := fmt.Sprintf("TLS secret %s is invalid: %v. SSL termination will not be enabled for this server.", tls.Secret, secretRef.Error)
+		warnings.AddWarning(ts, errMsg)
+		sslEnabled = false
+	}
+
+	ssl := version2.StreamSSL{
+		Enabled:        sslEnabled,
+		Certificate:    name,
+		CertificateKey: name,
+	}
+
+	return &ssl, warnings
 }
 
 func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool, isResolverConfigured bool) ([]version2.StreamUpstream, Warnings) {

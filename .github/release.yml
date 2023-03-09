@@ -1,7 +1,7 @@
 changelog:
   exclude:
     labels:
-      - skip-changelog
+      - skip changelog
   categories:
     - title: 🚀 Features
       labels:

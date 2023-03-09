@@ -67,6 +67,7 @@ type TransportServer struct {
 // TransportServerSpec is the spec of the TransportServer resource.
 type TransportServerSpec struct {
 	IngressClass       string                  `json:"ingressClassName"`
+	TLS                *TLS                    `json:"tls"`
 	Listener           TransportServerListener `json:"listener"`
 	ServerSnippets     string                  `json:"serverSnippets"`
 	StreamSnippets     string                  `json:"streamSnippets"`
@@ -75,6 +76,11 @@ type TransportServerSpec struct {
 	UpstreamParameters *UpstreamParameters     `json:"upstreamParameters"`
 	SessionParameters  *SessionParameters      `json:"sessionParameters"`
 	Action             *Action                 `json:"action"`
+}
+
+// TLS defines TLS configuration for a TransportServer.
+type TLS struct {
+	Secret string `json:"secret"`
 }
 
 // TransportServerListener defines a listener for a TransportServer.

@@ -11,7 +11,7 @@ Expand the name of the chart.
 Create labels
 */}}
 {{- define "nginx-ingress.labels" -}}
-app.kubernetes.io/name: {{ include "nginx-ingress.name" . }}
+app.kubernetes.io/name: {{ .Chart.Name }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/instance: {{ .Release.Name }}
@@ -81,6 +81,10 @@ Expand app name.
 {{- default (include "nginx-ingress.name" .) .Values.controller.name -}}
 {{- end -}}
 
+{{- define "nginx-ingress.tag" -}}
+{{- default .Chart.AppVersion .Values.controller.image.tag -}}
+{{- end -}}
+
 {{/*
 Expand image name.
 */}}
@@ -88,6 +92,6 @@ Expand image name.
 {{- if .Values.controller.image.digest -}}
 {{- printf "%s@%s" .Values.controller.image.repository .Values.controller.image.digest -}}
 {{- else -}}
-{{- printf "%s:%s" .Values.controller.image.repository .Values.controller.image.tag -}}
+{{- printf "%s:%s" .Values.controller.image.repository (include "nginx-ingress.tag" .) -}}
 {{- end -}}
 {{- end -}}

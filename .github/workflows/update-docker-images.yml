@@ -2,7 +2,7 @@ name: Update Docker Images
 
 on:
   schedule:
-    - cron:  '0 1 * * *'
+    - cron: '0 1 * * *' # run every day at 01:00 UTC
   workflow_dispatch:
 
 defaults:
@@ -71,10 +71,12 @@ jobs:
           echo "tag=${{ needs.variables.outputs.kic-tag }}${dist}" >> $GITHUB_OUTPUT
       - name: Check if update available for ${{ matrix.base_image.version }}
         id: update
-        uses: lucacome/docker-image-update-checker@93aeebde51b01e63284197bae89f9a1d6dd1921f # v1.1.1
+        uses: lucacome/docker-image-update-checker@f50d56412b948cfdbb842c5419372681e0db3df1 # v1.2.1
         with:
           base-image: ${{ matrix.base_image.version}}
           image: nginx/nginx-ingress:${{ steps.dist.outputs.tag }}
+        env:
+          DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
       - id: needs
         run: echo "${{ matrix.base_image.distro }}=${{ steps.update.outputs.needs-updating }}" >> $GITHUB_OUTPUT
 
@@ -98,7 +100,7 @@ jobs:
         id: go
         run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@8f67e590f2d095516493f017008adc464e63adb1 # v4.1.0
+        uses: goreleaser/goreleaser-action@f82d6c1c344bcacabba2c841718984797f664a6b # v4.2.0
         with:
           version: latest
           args: build --rm-dist --id kubernetes-ingress
@@ -106,10 +108,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ steps.go.outputs.go_path }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
+        uses: actions/cache@69d9d449aced6a2ede0bc19182fadc3a0a42d2b0 # v3.2.6
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
   test:
     name: Run tests
@@ -134,10 +136,10 @@ jobs:
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Fetch Cached Artifacts
-        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.2.3
+        uses: actions/cache@69d9d449aced6a2ede0bc19182fadc3a0a42d2b0 # v3.2.6
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Run Smoke Tests
         id: smoke-tests

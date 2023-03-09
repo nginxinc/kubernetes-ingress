@@ -127,6 +127,7 @@ type OIDC struct {
 type WAF struct {
 	Enable              string
 	ApPolicy            string
+	ApBundle            string
 	ApSecurityLogEnable bool
 	ApLogConf           []string
 }
