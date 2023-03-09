@@ -2,7 +2,7 @@ certifi==2022.12.7
 cffi==1.15.1
 kubernetes==26.1.0
 locust==2.15.0
-pytest==7.2.1
+pytest==7.2.2
 pytest-html==3.2.0
 pytest-repeat==0.9.1
 PyYAML==6.0
