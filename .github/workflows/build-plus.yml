@@ -114,6 +114,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           pull: true
           no-cache: ${{ github.event_name != 'pull_request' }}
+          sbom: ${{ github.event_name != 'pull_request' }}
+          provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
             IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.meta.outputs.version || 'CI' }}

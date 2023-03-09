@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4
+# syntax=docker/dockerfile:1.5
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=R28
 ARG DOWNLOAD_TAG=edge

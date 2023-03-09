@@ -48,7 +48,6 @@ Read [this doc](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-plus
 1. See additional configuration [examples](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples).
 1. Learn more about all available configuration and customization in the [docs](https://docs.nginx.com/nginx-ingress-controller/).
 
-
 ## NGINX Ingress Controller Releases
 
 We publish Ingress Controller releases on GitHub. See our [releases page](https://github.com/nginxinc/kubernetes-ingress/releases).
@@ -70,6 +69,23 @@ The table below summarizes the options regarding the images, manifests, helm cha
 | ------- | ----------- | --------------- | -------------------- | ---------------------------------------| -------------------------- |
 | Latest stable release | For production use | Use the 3.0.2 images from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress) or [build your own image](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image/). | Use the 3.0.2 images from the [F5 Container Registry](https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/) or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or [Build your own image](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image/). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/v3.0.2/deployments). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/v3.0.2/deployments/helm-chart). | [Documentation](https://docs.nginx.com/nginx-ingress-controller/). [Examples](https://docs.nginx.com/nginx-ingress-controller/configuration/configuration-examples/). |
 | Edge/Nightly | For testing and experimenting | Use the edge or nightly images from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress) or [build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/main/docs/content/installation/building-ingress-controller-image.md). | [Build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/main/docs/content/installation/building-ingress-controller-image.md). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/main/deployments). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/main/deployments/helm-chart). | [Documentation](https://github.com/nginxinc/kubernetes-ingress/tree/main/docs/content). [Examples](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples). |
+
+## SBOM (Software Bill of Materials)
+
+We generate SBOMs for the binaries and the Docker images.
+
+### Binaries
+
+The SBOMs for the binaries are available in the releases page. The SBOMs are generated using [syft](https://github.com/anchore/syft) and are available in SPDX format.
+
+### Docker Images
+
+The SBOMs for the Docker images are available in the [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress) repositories. The SBOMs are generated using [syft](https://github.com/anchore/syft) and stored as an attestation in the image manifest.
+
+For example to retrieve the SBOM for `linux/amd64` from Docker Hub and analyze it using [grype](https://github.com/anchore/grype) you can run the following command:
+```
+$ docker buildx imagetools inspect nginx/nginx-ingress:edge --format '{{ json (index .SBOM "linux/amd64").SPDX }}' | grype
+```
 
 ## Contacts
 
