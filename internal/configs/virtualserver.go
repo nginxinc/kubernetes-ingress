@@ -2457,7 +2457,7 @@ func generateProxySSLName(svcName, ns string) string {
 
 // isTLSEnabled checks whether TLS is enabled for the given upstream, taking into account the configuration
 // of the NGINX Service Mesh and the presence of SPIFFE certificates.
-func isTLSEnabled(upstream conf_v1.Upstream, isInternalRoute, hasSpiffeCerts bool) bool {
+func isTLSEnabled(upstream conf_v1.Upstream, hasSpiffeCerts, isInternalRoute bool) bool {
 	if isInternalRoute {
 		// Internal routes in the NGINX Service Mesh do not require TLS.
 		return false
