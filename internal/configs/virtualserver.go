@@ -2455,12 +2455,16 @@ func generateProxySSLName(svcName, ns string) string {
 	return fmt.Sprintf("%s.%s.svc", svcName, ns)
 }
 
-func isTLSEnabled(u conf_v1.Upstream, spiffeCerts, spiffeEgress bool) bool {
-	if spiffeEgress {
+// isTLSEnabled checks whether TLS is enabled for the given upstream, taking into account the configuration
+// of the NGINX Service Mesh and the presence of SPIFFE certificates.
+func isTLSEnabled(upstream conf_v1.Upstream, isInternalRoute, hasSpiffeCerts bool) bool {
+	if isInternalRoute {
+		// Internal routes in the NGINX Service Mesh do not require TLS.
 		return false
 	}
 
-	return u.TLS.Enable || spiffeCerts
+	// TLS is enabled if explicitly configured for the upstream or if SPIFFE certificates are present.
+	return upstream.TLS.Enable || hasSpiffeCerts
 }
 
 func isGRPC(protocolType string) bool {
