@@ -136,6 +136,8 @@ spec:
                       type: integer
                     accessTokenEnable:
                       type: boolean
+                    interceptErrorEnable:
+                      type: boolean
                 rateLimit:
                   description: RateLimit defines a rate limit policy.
                   type: object

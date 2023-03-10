@@ -429,9 +429,13 @@ server {
         {{ $proxyOrGRPC }}_set_header username $jwt_claim_sub;
         {{ end }}
 
-        {{ if $s.OIDC.AccessTokenEnable }}
+        {{ with $oidc := $s.OIDC }}
+            {{ if $oidc.AccessTokenEnable }}
         {{ $proxyOrGRPC }}_set_header Authorization "Bearer $access_token";
+            {{ end }}
+            {{ if $oidc.InterceptErrorEnable }}
         {{ $proxyOrGRPC }}_intercept_errors on;
+            {{ end }}
         {{ end }}
 
         {{ with $l.WAF }}

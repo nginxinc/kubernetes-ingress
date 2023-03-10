@@ -101,7 +101,7 @@ function auth(r, afterSyncCheck) {
                             return;
                         }
 
-                        // Update ID token and access token in the key-value store
+                        // ID Token is valid, update keyval
                         r.log("OIDC refresh success, updating id_token for " + r.variables.cookie_auth_token);
                         r.variables.session_jwt = tokenset.id_token;
                         if (tokenset.access_token) {

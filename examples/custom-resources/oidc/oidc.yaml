@@ -11,3 +11,4 @@ spec:
     jwksURI: http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/certs
     scope: openid+profile+email
     accessTokenEnable: true
+    interceptErrorEnable: false

@@ -357,6 +357,7 @@ spec:
     tokenEndpoint: https://idp.example.com/openid-connect/token
     jwksURI: https://idp.example.com/openid-connect/certs
     accessTokenEnable: true
+    interceptErrorEnable: false
 ```
 
 NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP header `username`.
@@ -387,6 +388,8 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 |``redirectURI`` | Allows overriding the default redirect URI. The default is ``/_codexch``. | ``string`` | No |
 |``zoneSyncLeeway`` | Specifies the maximum timeout in milliseconds for synchronizing ID/access tokens and shared values between Ingress Controller pods. The default is ``200``. | ``int`` | No |
 |``accessTokenEnable`` | Option of whether Bearer token is used to authorize NGINX to access protected backend. | ``boolean`` | No |
+{{% /table %}}
+|``interceptErrorEnable`` | Option to intercept and redirect "401 Unauthorized" proxied responses to nginx for processing with the `error_page` directive to restart `@do_oidc_flow` if an access token can expire before ID token. | ``boolean`` | No |
 {{% /table %}}
 
 > **Note**: Only one OIDC policy can be referenced in a VirtualServer and its VirtualServerRoutes. However, the same policy can still be applied to different routes in the VirtualServer and VirtualServerRoutes.

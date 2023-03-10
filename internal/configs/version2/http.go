@@ -111,16 +111,17 @@ type EgressMTLS struct {
 
 // OIDC holds OIDC configuration data.
 type OIDC struct {
-	AuthEndpoint      string
-	ClientID          string
-	ClientSecret      string
-	JwksURI           string
-	Scope             string
-	TokenEndpoint     string
-	RedirectURI       string
-	ZoneSyncLeeway    int
-	AuthExtraArgs     string
-	AccessTokenEnable bool
+	AuthEndpoint         string
+	ClientID             string
+	ClientSecret         string
+	JwksURI              string
+	Scope                string
+	TokenEndpoint        string
+	RedirectURI          string
+	ZoneSyncLeeway       int
+	AuthExtraArgs        string
+	AccessTokenEnable    bool
+	InterceptErrorEnable bool
 }
 
 // WAF defines WAF configuration.
