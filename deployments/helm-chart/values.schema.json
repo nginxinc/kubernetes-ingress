@@ -247,8 +247,7 @@
           "default": {},
           "title": "The image Schema",
           "required": [
-            "repository",
-            "tag"
+            "repository"
           ],
           "properties": {
             "repository": {

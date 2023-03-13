@@ -118,6 +118,9 @@ LABEL name="NGINX Ingress Controller" \
 
 COPY --link --chown=101:0 LICENSE /licenses/
 
+# temp fix for CVE-2023-0361 and CVE-2021-46822
+RUN microdnf --nodocs upgrade -y gnutls libjpeg-turbo
+
 
 ############################################# Base image for UBI with NGINX Plus #############################################
 FROM redhat/ubi9-minimal AS ubi-plus
@@ -133,6 +136,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& curl -fsSL "https://cs.nginx.com/static/files/plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
 	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
 	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs \
+	# temp fix for CVE-2023-0361
+	&& microdnf --nodocs upgrade -y gnutls \
 	&& microdnf remove -y shadow-utils \
 	&& microdnf clean all
 
@@ -169,7 +174,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	dnf --nodocs install -y app-protect-dos; \
 	fi \
 	# fix for CVEs
-	&& dnf --nodocs upgrade -y libcom_err libxml2 krb5-libs dbus expat systemd libtasn1 sqlite-libs libksba platform-python platform-python-setuptools python3-setuptools-wheel tar \
+	&& dnf --nodocs upgrade -y libcom_err libxml2 krb5-libs dbus expat systemd libtasn1 sqlite-libs libksba platform-python platform-python-setuptools python3-setuptools-wheel tar curl \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
 	&& dnf clean all && rm -rf /var/cache/dnf
