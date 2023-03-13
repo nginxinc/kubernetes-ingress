@@ -44,6 +44,9 @@ const (
 // DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server. #nosec G101
 const DefaultServerSecretPath = "/etc/nginx/secrets/default"
 
+// DefaultSecretPath is the full default path to where secrets are stored and accessed.
+const DefaultSecretPath = "/etc/nginx/secrets" // #nosec G101
+
 // DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server.
 const DefaultServerSecretName = "default"
 
