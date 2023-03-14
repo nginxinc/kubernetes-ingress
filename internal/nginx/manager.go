@@ -35,7 +35,6 @@ const (
 	nginxBinaryPathDebug         = "/usr/sbin/nginx-debug"
 
 	appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
-	appProtectAgentStartCmd  = "/opt/app_protect/bin/bd_agent"
 	appProtectLogLevelCmd    = "/opt/app_protect/bin/set_log_level"
 
 	// appPluginParams is the configuration of App-Protect plugin
@@ -80,8 +79,6 @@ type Manager interface {
 	UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error
 	UpdateStreamServersInPlus(upstream string, servers []string) error
 	SetOpenTracing(openTracing bool)
-	AppProtectAgentStart(apaDone chan error, logLevel string)
-	AppProtectAgentQuit()
 	AppProtectPluginStart(appDone chan error)
 	AppProtectPluginQuit()
 	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
@@ -107,7 +104,6 @@ type LocalManager struct {
 	metricsCollector             collectors.ManagerCollector
 	OpenTracing                  bool
 	appProtectPluginPid          int
-	appProtectAgentPid           int
 	appProtectDosAgentPid        int
 }
 
@@ -460,35 +456,6 @@ func verifyConfigVersion(httpClient *http.Client, configVersion int, timeout tim
 // SetOpenTracing sets the value of OpenTracing for the Manager
 func (lm *LocalManager) SetOpenTracing(openTracing bool) {
 	lm.OpenTracing = openTracing
-}
-
-// AppProtectAgentStart starts the AppProtect agent
-func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, logLevel string) {
-	glog.V(3).Info("Setting log level for App Protect - ", logLevel)
-	appProtectLogLevelCmdfull := fmt.Sprintf("%v %v", appProtectLogLevelCmd, logLevel)
-	logLevelCmd := exec.Command("sh", "-c", appProtectLogLevelCmdfull) // #nosec G204
-	if err := logLevelCmd.Run(); err != nil {
-		glog.Fatalf("Failed to set log level for AppProtect: %v", err)
-	}
-
-	glog.V(3).Info("Starting AppProtect Agent")
-	cmd := exec.Command(appProtectAgentStartCmd)
-	if err := cmd.Start(); err != nil {
-		glog.Fatalf("Failed to start AppProtect Agent: %v", err)
-	}
-	lm.appProtectAgentPid = cmd.Process.Pid
-	go func() {
-		apaDone <- cmd.Wait()
-	}()
-}
-
-// AppProtectAgentQuit gracefully ends AppProtect Agent.
-func (lm *LocalManager) AppProtectAgentQuit() {
-	glog.V(3).Info("Quitting AppProtect Agent")
-	killcmd := fmt.Sprintf("kill %d", lm.appProtectAgentPid)
-	if err := shellOut(killcmd); err != nil {
-		glog.Fatalf("Failed to quit AppProtect Agent: %v", err)
-	}
 }
 
 // AppProtectPluginStart starts the AppProtect plugin.
