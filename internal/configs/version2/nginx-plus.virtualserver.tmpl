@@ -433,9 +433,6 @@ server {
             {{ if $oidc.AccessTokenEnable }}
         {{ $proxyOrGRPC }}_set_header Authorization "Bearer $access_token";
             {{ end }}
-            {{ if $oidc.InterceptErrorEnable }}
-        {{ $proxyOrGRPC }}_intercept_errors on;
-            {{ end }}
         {{ end }}
 
         {{ with $l.WAF }}
