@@ -342,9 +342,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs: helm-tests
     if: ${{ github.event_name == 'push' }}
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
