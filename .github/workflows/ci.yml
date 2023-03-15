@@ -242,8 +242,7 @@ jobs:
         working-directory: ${{ github.workspace }}/deployments/helm-chart
       - name: Expose Test Ingresses
         run: |
-          kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8080:80 &
-          kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8443:443 &
+          kubectl port-forward service/${{ matrix.type }}-nginx-ingress-controller 8080:80 8443:443 &
       - name: Test HTTP
         run: |
           counter=0
@@ -342,9 +341,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs: helm-tests
     if: ${{ github.event_name == 'push' }}
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
@@ -396,8 +392,8 @@ jobs:
         run: |
           mv ${{ steps.package.outputs.path }} ${{ github.workspace }}/helm-charts/${{ steps.package-helm.outputs.type }}/
           cd ${{ github.workspace }}/helm-charts
-          helm repo index ${{ needs.package-helm.outputs.type }} --url https://helm.nginx.com/${{ needs.package-helm.outputs.type }}
+          helm repo index ${{ steps.package-helm.outputs.type }} --url https://helm.nginx.com/${{ steps.package-helm.outputs.type }}
           git add -A
           git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
-          commit -m "NGINX Ingress Controller - Release ${{ needs.package-helm.outputs.type }} ${{ needs.package-helm.outputs.version }}"
+          commit -m "NGINX Ingress Controller - Release ${{ steps.package-helm.outputs.type }} ${{ steps.package-helm.outputs.version }}"
           git push -u origin master

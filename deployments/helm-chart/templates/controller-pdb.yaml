@@ -1,8 +1,8 @@
-{{- if .Values.controller.podDisruptionBudget -}}
+{{- if .Values.controller.podDisruptionBudget.enabled -}}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "nginx-ingress.serviceName" . }}
+  name: {{ include "nginx-ingress.controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
@@ -13,7 +13,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app:  {{ include "nginx-ingress.appName" . }}
+      {{- include "nginx-ingress.selectorLabels" . | nindent 6 }}
 {{- if .Values.controller.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.controller.podDisruptionBudget.minAvailable }}
 {{- end }}
