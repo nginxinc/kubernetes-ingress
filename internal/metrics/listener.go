@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/golang/glog"
+	config "github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
@@ -59,12 +60,12 @@ func runServer(port string, registry prometheus.Gatherer, prometheusSecret *api_
 		// Write the cert and key to a temporary file. We create a unique file name to prevent collisions.
 		certFileName := "nginx-prometheus.cert"
 		keyFileName := "nginx-prometheus.key"
-		certFile, err := writeTempFile(prometheusSecret.Data[api_v1.TLSCertKey], certFileName)
+		certFile, err := createTLSFile(prometheusSecret.Data[api_v1.TLSCertKey], certFileName)
 		if err != nil {
 			glog.Fatal("failed to create cert file for prometheus: %w", err)
 		}
 
-		keyFile, err := writeTempFile(prometheusSecret.Data[api_v1.TLSPrivateKeyKey], keyFileName)
+		keyFile, err := createTLSFile(prometheusSecret.Data[api_v1.TLSPrivateKeyKey], keyFileName)
 		if err != nil {
 			glog.Fatal("failed to create key file for prometheus: %w", err)
 		}
@@ -73,8 +74,13 @@ func runServer(port string, registry prometheus.Gatherer, prometheusSecret *api_
 	}
 }
 
-func writeTempFile(data []byte, name string) (*os.File, error) {
-	f, err := os.CreateTemp("", name)
+func createTLSFile(data []byte, name string) (*os.File, error) {
+	_, err := os.Stat(config.DefaultSecretPath)
+	if err != nil {
+		return nil, fmt.Errorf("got error %w when attempting access %s", err, config.DefaultSecretPath)
+	}
+
+	f, err := os.CreateTemp(config.DefaultSecretPath, name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}

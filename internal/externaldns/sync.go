@@ -44,7 +44,7 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 		}
 
 		if vs.Status.ExternalEndpoints == nil {
-			// It can take time for the external endpoints to sync
+			// It can take time for the external endpoints to sync - kick it back to the queue
 			glog.V(3).Info("Failed to determine external endpoints - retrying")
 			return fmt.Errorf("failed to determine external endpoints")
 		}
@@ -60,7 +60,7 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 
 		newDNSEndpoint, updateDNSEndpoint, err := buildDNSEndpoint(nsi.extdnslister, vs, targets, recordType)
 		if err != nil {
-			glog.Errorf("error message here %s", err)
+			glog.Errorf("incorrect DNSEndpoint config for VirtualServer resource: %s", err)
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Incorrect DNSEndpoint config for VirtualServer resource: %s", err)
 			return err
 		}
@@ -72,6 +72,11 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, ig map[stri
 			glog.V(3).Infof("Creating DNSEndpoint for VirtualServer resource: %v", vs.Name)
 			dep, err = client.ExternaldnsV1().DNSEndpoints(newDNSEndpoint.Namespace).Create(ctx, newDNSEndpoint, metav1.CreateOptions{})
 			if err != nil {
+				if apierrors.IsAlreadyExists(err) {
+					// Another replica likely created the DNSEndpoint since we last checked - kick it back to the queue
+					glog.V(3).Info("DNSEndpoint has been created since we last checked - retrying")
+					return fmt.Errorf("DNSEndpoint has already been created")
+				}
 				glog.Errorf("Error creating DNSEndpoint for VirtualServer resource: %v", err)
 				rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Error creating DNSEndpoint for VirtualServer resource %s", err)
 				return err
@@ -175,7 +180,7 @@ func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.Vi
 	vs = vs.DeepCopy()
 
 	if existingDNSEndpoint != nil {
-		glog.V(3).Infof("DNDEndpoint already exist for this object, ensuring it is up to date")
+		glog.V(3).Infof("DNSEndpoint already exists for this object, ensuring it is up to date")
 		if metav1.GetControllerOf(existingDNSEndpoint) == nil {
 			glog.V(3).Infof("DNSEndpoint has no owner. refusing to update non-owned resource")
 			return nil, nil, nil

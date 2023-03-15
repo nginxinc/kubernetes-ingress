@@ -182,6 +182,7 @@ server {
     location = /_jwks_uri_server {
         internal;
         proxy_method GET;
+        proxy_set_header Content-Length "";
         {{ if .KeyCache }}
         proxy_cache jwks_uri;
         proxy_cache_valid 200 12h;
@@ -382,6 +383,7 @@ server {
         location = {{ $l.Path }}_jwks_uri {
             internal;
             proxy_method GET;
+            proxy_set_header Content-Length "";
             {{ if .KeyCache }}
             proxy_cache {{ $l.Path }}_jwks_uri;
             proxy_cache_valid 200 12h;

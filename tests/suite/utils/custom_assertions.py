@@ -143,6 +143,19 @@ def assert_event(event_text, events_list) -> None:
     pytest.fail(f'Failed to find the event "{event_text}" in the list. Exiting...')
 
 
+def assert_event_not_present(event_text, events_list) -> None:
+    """
+    Search for the event in the list.
+
+    :param event_text: event text
+    :param events_list: list of events
+    :return:
+    """
+    for i in range(len(events_list) - 1, -1, -1):
+        if event_text in events_list[i].message:
+            pytest.fail(f'Event "{event_text}" exists in the list. Exiting...')
+
+
 def assert_event_starts_with_text_and_contains_errors(event_text, events_list, fields_list) -> None:
     """
     Search for the event starting with the expected text in the list and check its message.
