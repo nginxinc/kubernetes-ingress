@@ -34,7 +34,7 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@940f3d7cf195ba83374c77632d1e2cbb2f24ae68 # v3.3.0
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -46,7 +46,7 @@ jobs:
         if: github.event_name != 'pull_request'
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2.4.1
+        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2.5.0
 
       - name: DockerHub Login
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
@@ -134,6 +134,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           pull: true
           no-cache: ${{ github.event_name != 'pull_request' }}
+          sbom: ${{ github.event_name != 'pull_request' }}
+          provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
             IC_VERSION=${{ github.event_name == 'pull_request' && 'CI' || steps.meta.outputs.version }}
@@ -148,7 +150,7 @@ jobs:
           ignore-unfixed: 'true'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@32dc499307d133bb5085bae78498c0ac2cf762d5 # v2.2.5
+        uses: github/codeql-action/upload-sarif@16964e90ba004cdf0cd845b866b5df21038b7723 # v2.2.6
         continue-on-error: true
         with:
           sarif_file: 'trivy-results-${{ inputs.image }}.sarif'

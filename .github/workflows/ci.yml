@@ -127,7 +127,7 @@ jobs:
           AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
 
       - name: Store Artifacts in Cache
-        uses: actions/cache@940f3d7cf195ba83374c77632d1e2cbb2f24ae68 # v3.3.0
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -202,12 +202,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - name: Fetch Cached Artifacts
-        uses: actions/cache@940f3d7cf195ba83374c77632d1e2cbb2f24ae68 # v3.3.0
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2.4.1
+        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2.5.0
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
         with:
@@ -242,8 +242,7 @@ jobs:
         working-directory: ${{ github.workspace }}/deployments/helm-chart
       - name: Expose Test Ingresses
         run: |
-          kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8080:80 &
-          kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8443:443 &
+          kubectl port-forward service/${{ matrix.type }}-nginx-ingress-controller 8080:80 8443:443 &
       - name: Test HTTP
         run: |
           counter=0
@@ -298,7 +297,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7 # v2.4.1
+        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2.5.0
       - name: Build Test-Runner Container
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
         with:
@@ -342,9 +341,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs: helm-tests
     if: ${{ github.event_name == 'push' }}
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
@@ -396,8 +392,8 @@ jobs:
         run: |
           mv ${{ steps.package.outputs.path }} ${{ github.workspace }}/helm-charts/${{ steps.package-helm.outputs.type }}/
           cd ${{ github.workspace }}/helm-charts
-          helm repo index ${{ needs.package-helm.outputs.type }} --url https://helm.nginx.com/${{ needs.package-helm.outputs.type }}
+          helm repo index ${{ steps.package-helm.outputs.type }} --url https://helm.nginx.com/${{ steps.package-helm.outputs.type }}
           git add -A
           git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
-          commit -m "NGINX Ingress Controller - Release ${{ needs.package-helm.outputs.type }} ${{ needs.package-helm.outputs.version }}"
+          commit -m "NGINX Ingress Controller - Release ${{ steps.package-helm.outputs.type }} ${{ steps.package-helm.outputs.version }}"
           git push -u origin master

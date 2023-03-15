@@ -43,8 +43,8 @@ import (
 var version string
 
 const (
-	nginxVersionAnnotation = "app.nginx.org/version"
-	versionAnnotation      = "app.kubernetes.io/version"
+	nginxVersionLabel = "app.nginx.org/version"
+	versionLabel      = "app.kubernetes.io/version"
 )
 
 func main() {
@@ -762,21 +762,21 @@ func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string,
 		return
 	}
 
-	// Copy pod and update the annotations.
+	// Copy pod and update the labels.
 	newPod := pod.DeepCopy()
-	ann := newPod.ObjectMeta.Annotations
-	if ann == nil {
-		ann = make(map[string]string)
+	labels := newPod.ObjectMeta.Labels
+	if labels == nil {
+		labels = make(map[string]string)
 	}
-	ann[nginxVersionAnnotation] = strings.Split(nginxVersion, "/")[1]
-	ann[versionAnnotation] = version
-	newPod.ObjectMeta.Annotations = ann
+	labels[nginxVersionLabel] = strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
+	labels[versionLabel] = strings.TrimPrefix(version, "v")
+	newPod.ObjectMeta.Labels = labels
 
 	_, err = kubeClient.CoreV1().Pods(newPod.ObjectMeta.Namespace).Update(context.TODO(), newPod, meta_v1.UpdateOptions{})
 	if err != nil {
-		glog.Errorf("Error updating pod with annotations: %v", err)
+		glog.Errorf("Error updating pod with labels: %v", err)
 		return
 	}
 
-	glog.Infof("Pod annotation updated: %s", pod.ObjectMeta.Name)
+	glog.Infof("Pod label updated: %s", pod.ObjectMeta.Name)
 }
