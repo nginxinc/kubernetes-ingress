@@ -44,7 +44,6 @@ jobs:
         uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
         with:
           go-version-file: go.mod
-          cache: true
       - name: Determine GOPATH
         id: go
         run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
@@ -71,7 +70,6 @@ jobs:
         uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
         with:
           go-version-file: go.mod
-          cache: true
       - name: Run Tests
         run: make cover
       - name: Upload coverage to Codecov
@@ -99,7 +97,6 @@ jobs:
         uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
         with:
           go-version-file: go.mod
-          cache: true
 
       - name: Download Syft
         uses: anchore/sbom-action/download-syft@07978da4bdb4faa726e52dfc6b1bed63d4b56479 # v0.13.3
