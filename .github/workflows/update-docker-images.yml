@@ -92,10 +92,9 @@ jobs:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
       - name: Setup Golang Environment
-        uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
+        uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
         with:
           go-version-file: go.mod
-          cache: true
       - name: Determine GOPATH
         id: go
         run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
