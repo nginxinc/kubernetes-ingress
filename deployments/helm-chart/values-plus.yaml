@@ -1,4 +1,5 @@
 controller:
+  name: controller
   nginxplus: true
   image:
     repository: nginx-plus-ingress

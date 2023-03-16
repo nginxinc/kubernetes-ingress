@@ -2,6 +2,8 @@ apiVersion: networking.k8s.io/v1
 kind: IngressClass
 metadata:
   name: {{ .Values.controller.ingressClass }}
+  labels:
+  {{- include "nginx-ingress.labels" . | nindent 4 }}
 {{- if .Values.controller.setAsDefaultIngress }}
   annotations:
     ingressclass.kubernetes.io/is-default-class: "true"

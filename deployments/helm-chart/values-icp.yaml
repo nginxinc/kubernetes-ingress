@@ -1,4 +1,5 @@
 controller:
+  name: controller
   kind: daemonset
   nginxplus: true
   image:
