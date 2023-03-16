@@ -1245,6 +1245,14 @@
           "examples": [
             false
           ]
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "default": false,
+          "title": "The readOnlyRootFilesystem",
+          "examples": [
+            false
+          ]
         }
       },
       "examples": [
@@ -1385,7 +1393,8 @@
             "initialDelaySeconds": 0
           },
           "enableLatencyMetrics": false,
-          "disableIPV6": false
+          "disableIPV6": false,
+          "readOnlyRootFilesystem": false
         }
       ]
     },
@@ -1692,7 +1701,8 @@
           "initialDelaySeconds": 0
         },
         "enableLatencyMetrics": false,
-        "disableIPV6": false
+        "disableIPV6": false,
+        "readOnlyRootFilesystem": false
       },
       "rbac": {
         "create": true

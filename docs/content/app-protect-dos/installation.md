@@ -1,13 +1,13 @@
 ---
-title: Installation with NGINX App Protect Dos
-description: "This document provides an overview of the steps required to use NGINX App Protect Dos with your NGINX Ingress Controller deployment."
+title: Installation with NGINX App Protect DoS
+description: "This document provides an overview of the steps required to use NGINX App Protect DoS with your NGINX Ingress Controller deployment."
 weight: 1800
 doctypes: [""]
 toc: true
 docs: "DOCS-583"
 ---
 
-> **Note**: The NGINX Kubernetes Ingress Controller integration with NGINX App Protect DoS requires the use of NGINX Plus.
+> **Note**: The F5 NGINX Kubernetes Ingress Controller integration with F5 NGINX App Protect DoS requires the use of F5 NGINX Plus.
 
 This document provides an overview of the steps required to use NGINX App Protect DoS with your NGINX Ingress Controller deployment. You can visit the linked documents to find additional information and instructions.
 
@@ -20,7 +20,7 @@ This document provides an overview of the steps required to use NGINX App Protec
 2. Clone the Ingress Controller repo:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.0.2
-    $ cd kubernetes-ingress
+    $ cd kubernetes-ingress/deployments
     ```
 
 ## Create the namespace and service account
