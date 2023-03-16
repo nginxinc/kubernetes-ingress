@@ -35,7 +35,7 @@ If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the 
       containerPort: 9114
     ```
 
-If you're using *Helm* to install the Ingress Controller, to enable Service Insight endpoint, configure the `serviceinsight.*` parameters of the Helm chart. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
+If you're using *Helm* to install the Ingress Controller, to enable Service Insight endpoint, configure the `serviceInsight.*` parameters of the Helm chart. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
 
 ## Available Statistics and HTTP Response Codes
 
