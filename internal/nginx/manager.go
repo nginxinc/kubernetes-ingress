@@ -79,7 +79,7 @@ type Manager interface {
 	UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error
 	UpdateStreamServersInPlus(upstream string, servers []string) error
 	SetOpenTracing(openTracing bool)
-	AppProtectPluginStart(appDone chan error)
+	AppProtectPluginStart(appDone chan error, logLevel string)
 	AppProtectPluginQuit()
 	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
 	AppProtectDosAgentQuit()
@@ -458,8 +458,15 @@ func (lm *LocalManager) SetOpenTracing(openTracing bool) {
 	lm.OpenTracing = openTracing
 }
 
-// AppProtectPluginStart starts the AppProtect plugin.
-func (lm *LocalManager) AppProtectPluginStart(appDone chan error) {
+// AppProtectPluginStart starts the AppProtect plugin and sets AppProtect log level.
+func (lm *LocalManager) AppProtectPluginStart(appDone chan error, logLevel string) {
+	glog.V(3).Info("Setting log level for App Protect - ", logLevel)
+	appProtectLogLevelCmdfull := fmt.Sprintf("%v %v", appProtectLogLevelCmd, logLevel)
+	logLevelCmd := exec.Command("sh", "-c", appProtectLogLevelCmdfull) // #nosec G204
+	if err := logLevelCmd.Run(); err != nil {
+		glog.Fatalf("Failed to set log level for AppProtect: %v", err)
+	}
+
 	glog.V(3).Info("Starting AppProtect Plugin")
 	startupParams := strings.Fields(appPluginParams)
 	cmd := exec.Command(appProtectPluginStartCmd, startupParams...)
