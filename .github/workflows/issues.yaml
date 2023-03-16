@@ -45,5 +45,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Hi @${{github.event.issue.user.login}} thanks for reporting! \n\n Be sure to check out the [docs](https://docs.nginx.com/nginx-ingress-controller) while you wait for a human to take a look at this :slightly_smiling_face:${{ steps.controller.outputs.text }}\n\n Cheers!'
+              body: 'Hi @${{github.event.issue.user.login}} thanks for reporting! \n\n Be sure to check out the [docs](https://docs.nginx.com/nginx-ingress-controller) and the [Contributing Guidelines](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md) while you wait for a human to take a look at this :slightly_smiling_face:${{ steps.controller.outputs.text }}\n\n Cheers!'
             })
