@@ -250,6 +250,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.podDisruptionBudget.maxUnavailable`` | The number of Ingress Controller pods that can be unavailable. | 0 |
 |``controller.strategy`` | Specifies the strategy used to replace old Pods with new ones. Docs for [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) and [Daemonset update strategy](https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/#daemonset-update-strategy). | {} |
 | `controller.disableIPV6` | Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack. | false |
+|``controller.readOnlyRootFilesystem`` | Configure root filesystem as read-only and add volumes for temporary data. | false |
 |``rbac.create`` | Configures RBAC. | true |
 |``prometheus.create`` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | false |
 |``prometheus.port`` | Configures the port to scrape the metrics. | 9113 |
