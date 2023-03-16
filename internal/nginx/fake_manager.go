@@ -151,7 +151,7 @@ func (*FakeManager) SetOpenTracing(_ bool) {
 }
 
 // AppProtectPluginStart is a fake implementation AppProtectPluginStart
-func (*FakeManager) AppProtectPluginStart(_ chan error, logLevel string) {
+func (*FakeManager) AppProtectPluginStart(_ chan error, _ string) {
 	glog.V(3).Infof("Starting FakeAppProtectPlugin")
 }
 
