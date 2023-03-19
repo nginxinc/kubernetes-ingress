@@ -176,7 +176,6 @@ controller:
   securityContext: {} # Remove curly brackets before adding values
     # allowPrivilegeEscalation: true
     # readOnlyRootFilesystem: true
-    # runAsUser: 101 #nginx
     # runAsNonRoot: true
     # capabilities:
     #   drop:
