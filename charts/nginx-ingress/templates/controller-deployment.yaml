@@ -109,7 +109,6 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: {{ .Values.controller.readOnlyRootFilesystem }}
-          runAsUser: 101 #nginx
           runAsNonRoot: true
           capabilities:
             drop:
@@ -160,7 +159,6 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-          runAsUser: 101 #nginx
           runAsNonRoot: true
           capabilities:
             drop:
