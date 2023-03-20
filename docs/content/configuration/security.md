@@ -57,7 +57,7 @@ When using manifests instead of Helm, uncomment the following sections of the de
  * The entire `volumeMounts` section,
  * The entire `initContiners` section,
  * For `initContainers:image:`, use exact same image used for regular NIC installation.
-Refer below code-block for guidance:
+Refer to the below code-block for guidance:
 
 ```
 #        fsGroup: 101 #nginx
