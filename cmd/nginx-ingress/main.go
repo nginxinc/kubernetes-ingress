@@ -760,7 +760,10 @@ func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string,
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[nginxVersionLabel] = strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
+	nginxVer := strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
+	replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
+	nginxVer = replacer.Replace(nginxVer)
+	labels[nginxVersionLabel] = nginxVer
 	labels[versionLabel] = strings.TrimPrefix(version, "v")
 	newPod.ObjectMeta.Labels = labels
 
