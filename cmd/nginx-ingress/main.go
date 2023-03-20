@@ -75,7 +75,7 @@ func main() {
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
-	aPPluginDone, aPAgentDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
+	aPPluginDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
 
 	sslRejectHandshake := processDefaultServerSecret(kubeClient, nginxManager)
 
@@ -185,7 +185,7 @@ func main() {
 	}
 
 	if *appProtect || *appProtectDos {
-		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPAgentDone, aPPluginDone, aPPDosAgentDone, *appProtect, *appProtectDos)
+		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPPluginDone, aPPDosAgentDone, *appProtect, *appProtectDos)
 	} else {
 		go handleTermination(lbc, nginxManager, syslogListener, nginxDone)
 	}
@@ -387,16 +387,12 @@ func getNginxVersionInfo(nginxManager nginx.Manager) string {
 	return nginxVersion
 }
 
-func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error, chan error) {
+func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error) {
 	var aPPluginDone chan error
-	var aPAgentDone chan error
 
 	if *appProtect {
 		aPPluginDone = make(chan error, 1)
-		aPAgentDone = make(chan error, 1)
-
-		nginxManager.AppProtectAgentStart(aPAgentDone, *appProtectLogLevel)
-		nginxManager.AppProtectPluginStart(aPPluginDone)
+		nginxManager.AppProtectPluginStart(aPPluginDone, *appProtectLogLevel)
 	}
 
 	var aPPDosAgentDone chan error
@@ -405,7 +401,7 @@ func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error
 		aPPDosAgentDone = make(chan error, 1)
 		nginxManager.AppProtectDosAgentStart(aPPDosAgentDone, *appProtectDosDebug, *appProtectDosMaxDaemons, *appProtectDosMaxWorkers, *appProtectDosMemory)
 	}
-	return aPPluginDone, aPAgentDone, aPPDosAgentDone
+	return aPPluginDone, aPPDosAgentDone
 }
 
 func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
@@ -548,7 +544,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	return secret, nil
 }
 
-func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, agentDone, pluginDone, agentDosDone chan error, appProtectEnabled, appProtectDosEnabled bool) {
+func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, pluginDone, agentDosDone chan error, appProtectEnabled, appProtectDosEnabled bool) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
@@ -557,8 +553,6 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 		glog.Fatalf("nginx command exited unexpectedly with status: %v", err)
 	case err := <-pluginDone:
 		glog.Fatalf("AppProtectPlugin command exited unexpectedly with status: %v", err)
-	case err := <-agentDone:
-		glog.Fatalf("AppProtectAgent command exited unexpectedly with status: %v", err)
 	case err := <-agentDosDone:
 		glog.Fatalf("AppProtectDosAgent command exited unexpectedly with status: %v", err)
 	case <-signalChan:
@@ -569,8 +563,6 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 		if appProtectEnabled {
 			nginxManager.AppProtectPluginQuit()
 			<-pluginDone
-			nginxManager.AppProtectAgentQuit()
-			<-agentDone
 		}
 		if appProtectDosEnabled {
 			nginxManager.AppProtectDosAgentQuit()
