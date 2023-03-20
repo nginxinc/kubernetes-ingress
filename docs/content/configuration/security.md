@@ -47,9 +47,17 @@ Snippets allow you to insert raw NGINX config into different contexts of NGINX c
 Snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument. Note that for the ConfigMap resource, snippets are always enabled.
 
 ### Configure root filesystem as read-only
+> **Note**: This feature is available for both the NGINX and NGINX Plus editions. NGINX AppProtect WAF and NGINX AppProtect DoS are not yet supported by this feature.
+
 The F5 Nginx Ingress Controller (NIC) has various protections against attacks, such as running the service as non-root to avoid changes to files. An additional industry best practice is having root filesystems set as read-only so that the attack surface is further reduced by limiting changes to binaries and libraries.
 
-As of now we do not set read-only root filesystem as default. Instead, this is an opt-in feature available on the [helm-chart](/nginx-ingress-controller/installation-with-helm/#configuration) via `controller.readOnlyRootFilesystem`. Users of non-Helm YAML manifests need to manually uncomment the argument, volumes and initContainers required for read-only root filesystem correctly. Refer below code-block for guidance:
+Currently we do not set read-only root filesystem as default. Instead, this is an opt-in feature available on the [helm-chart](/nginx-ingress-controller/installation-with-helm/#configuration) via `controller.readOnlyRootFilesystem`.
+When using manifests instead of Helm, uncomment the following sections of the deployment:
+ * `readOnlyRootFilesystem: true`,
+ * The entire `volumeMounts` section,
+ * The entire `initContiners` section, 
+ * For `initContainers:image:`, use exact same image used for regular NIC installation.
+Refer below code-block for guidance:
 
 ```
 #        fsGroup: 101 #nginx
@@ -101,6 +109,3 @@ As of now we do not set read-only root filesystem as default. Instead, this is a
 #        - mountPath: /mnt/etc
 #          name: nginx-etc
 ```
-For `initContainer:image:`, use exact same image used for regular NIC installation.
-
-Note: This feature is available for both NGINX and NGINX Plus (excluding NGINX AppProtect WAF and AppProtect DoS) users.
