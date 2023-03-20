@@ -60,41 +60,39 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
     > **Important**: You must have an admin role to configure RBAC in your Kubernetes cluster.
 
 2. [Create the common Kubernetes resources](/nginx-ingress-controller/installation/installation-with-manifests/#2-create-common-resources).
+
 3. Enable the App Protect WAF module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
-4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
 
-Take the steps below to setup and deploy the NGINX Ingress Controller and App Protect WAF module if you want to use App Portect policy bundles in your Kubernetes cluster.
+If you intend to use NGINX Ingress Controller with AppProtect WAF module and policy bundles follow these additional steps:
 
-1. [Configure role-based access control (RBAC)](/nginx-ingress-controller/installation/installation-with-manifests/#1-configure-rbac).
+- Skip configuring custom resource definition for `APPolicy` `APLogConf` and `APUserSig`.
 
-    > **Important**: You must have an admin role to configure RBAC in your Kubernetes cluster.
+- Create and configure [Persistent Volume and Persistent Volume Claim](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) in your Kubernetes cluster.
 
-2. [Create the common Kubernetes resources](/nginx-ingress-controller/installation/installation-with-manifests/#2-create-common-resources).
+- Modify NGINX Ingress Controller Deployment or DaemonSet file to include volumes and volume mounts.
 
-3. Create and configure [Persistent Volume and Persistent Volume Claim](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) in your Kubernetes cluster.
-
-4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
-
-    > **Important**: You must configure Ingress Controller deployment to mount the volume.
-
-    Following snippets illustrate changes that must be applied to deployment file:
+    Following snippets illustrate changes that must be applied:
 
     Add `volumes` section to deployment template spec:
     ```yaml
     ...
     volumes:
-    - name: <your volume name>
+    - name: <volume_name>
       persistentVolumeClaim:
-        claimName: <your claim name>
+        claimName: <claim_name>
     ...
     ```
     Add volume mounts to `containers` section:
     ```yaml
     ...
     volumeMounts:
-      - name: blob
-        mountPath: <your mount path>
+      - name: <volume_mount_name>
+        mountPath: <mount_path>
     ...
     ```
+
+4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
+
+
 
 For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.0.2/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.0.2/examples/ingress-resources/app-protect-waf).

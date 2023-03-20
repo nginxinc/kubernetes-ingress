@@ -101,6 +101,7 @@ Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:
    $ kubectl apply -f common/crds/appprotect.f5.com_appolicies.yaml
    $ kubectl apply -f common/crds/appprotect.f5.com_apusersigs.yaml
    ```
+> Skip steps above if you are using `AppProtect` with policy bundles.
 
 4. If you would like to use the App Protect DoS module, create the following additional resources:
 
@@ -148,6 +149,7 @@ If you would like to use the App Protect DoS module, you will need to deploy the
 
     **Note**: Update the `nginx-plus-ingress.yaml` with the chosen image from the F5 Container registry; or the container image that you have built.
 
+<<<<<<< HEAD
     **Note**: Update the `nginx-plus-ingress.yaml` with the chosen persistent volume and persitent volume claim if you run the `NGINX Ingress Controller` with [`AppProtect`](../app-protect/waf/installation#install-the-ingress-controller) and use WAF Policy bundles:
 
     Add `volumes` section to deployment template spec:
@@ -168,6 +170,8 @@ If you would like to use the App Protect DoS module, you will need to deploy the
     ...
     ```
 
+=======
+>>>>>>> 83375d17 (Update AppProtect docs, apply PR review)
 * *Use a DaemonSet*:
     When you run the Ingress Controller by using a DaemonSet, Kubernetes will create an Ingress Controller pod on every node of the cluster.
 

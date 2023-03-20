@@ -24,25 +24,6 @@ To configure NGINX App Protect WAF on a VirtualServer resource, you would create
 To configure NGINX App Protect WAF on an Ingress resource, you would apply the [App Protect annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect) to each desired resource.
 
 
-## App Proptect WAF Bundles
-
-You can define App Protect WAF bundles for VirtualServers by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
-
-For example, you can configure a policy by referencing generated WAF Policy Bundle:
-
-```yaml
-apiVersion: k8s.nginx.org/v1
-kind: Policy
-metadata:
-  name: <your-policy-name>
-spec:
-  waf:
-    enable: true
-    apBundle: "<your-bundle-name>.tgz"
-```
-
-> **Note**: Before applying policy, WAF Policy bundle must be created and put on the volume.
-
 ## App Protect WAF Policies
 
 You can define App Protect WAF policies for your VirtualServer, VirtualServerRoute, or Ingress resources by creating an `APPolicy` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
@@ -227,6 +208,29 @@ spec:
   softwareVersion: 15.1.0
   tag: Fruits
 ```
+
+## App Proptect WAF Bundles
+
+You can define App Protect WAF bundles for VirtualServers by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
+
+
+For example, you can configure a policy by referencing generated WAF Policy Bundle:
+
+> **Note**: Currently we do not support `securityLogs` for policy bundles.
+
+```yaml
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  name: <policy_name>
+spec:
+  waf:
+    enable: true
+    apBundle: "<policy_bundle_name>.tgz"
+```
+
+> **Note**: Before applying policy, WAF Policy bundle must be created and put on the volume.
+
 
 ## OpenAPI Specification in NGINX Ingress Controller
 
