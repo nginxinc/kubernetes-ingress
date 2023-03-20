@@ -209,7 +209,7 @@ spec:
   tag: Fruits
 ```
 
-## App Proptect WAF Bundles
+## App Protect WAF Bundles
 
 You can define App Protect WAF bundles for VirtualServers by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
 
@@ -229,7 +229,7 @@ spec:
     apBundle: "<policy_bundle_name>.tgz"
 ```
 
-> **Note**: Before applying policy, WAF Policy bundle must be created and put on the volume.
+> **Note**: Before applying policy, WAF Policy bundle must be created, copied to a volume,  and the volume must be mounted to `/etc/nginx/waf/bundles`.
 
 
 ## OpenAPI Specification in NGINX Ingress Controller

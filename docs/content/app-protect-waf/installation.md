@@ -87,12 +87,12 @@ If you intend to use NGINX Ingress Controller with AppProtect WAF module and pol
     ...
     volumeMounts:
       - name: <volume_mount_name>
-        mountPath: <mount_path>
+        mountPath: /etc/nginx/waf/bundles
     ...
     ```
 
+    > **Important**: NGINX Ingress Controller requires the volume mount path to be `/etc/nginx/waf/bundles`
+
 4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
-
-
 
 For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.0.2/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.0.2/examples/ingress-resources/app-protect-waf).
