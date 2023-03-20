@@ -55,7 +55,7 @@ Currently we do not set read-only root filesystem as default. Instead, this is a
 When using manifests instead of Helm, uncomment the following sections of the deployment:
  * `readOnlyRootFilesystem: true`,
  * The entire `volumeMounts` section,
- * The entire `initContiners` section, 
+ * The entire `initContiners` section,
  * For `initContainers:image:`, use exact same image used for regular NIC installation.
 Refer below code-block for guidance:
 
