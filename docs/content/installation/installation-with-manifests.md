@@ -149,7 +149,7 @@ If you would like to use the App Protect DoS module, you will need to deploy the
     **Note**: Update the `nginx-plus-ingress.yaml` with the chosen image from the F5 Container registry; or the container image that you have built.
 
     **Note**: Update the `nginx-plus-ingress.yaml` with the chosen persistent volume and persitent volume claim if you run the `NGINX Ingress Controller` with [`AppProtect`](../app-protect/waf/installation#install-the-ingress-controller) and use WAF Policy bundles:
-    
+
     Add `volumes` section to deployment template spec:
     ```yaml
     ...
