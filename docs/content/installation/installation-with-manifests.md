@@ -149,29 +149,6 @@ If you would like to use the App Protect DoS module, you will need to deploy the
 
     **Note**: Update the `nginx-plus-ingress.yaml` with the chosen image from the F5 Container registry; or the container image that you have built.
 
-<<<<<<< HEAD
-    **Note**: Update the `nginx-plus-ingress.yaml` with the chosen persistent volume and persitent volume claim if you run the `NGINX Ingress Controller` with [`AppProtect`](../app-protect/waf/installation#install-the-ingress-controller) and use WAF Policy bundles:
-
-    Add `volumes` section to deployment template spec:
-    ```yaml
-    ...
-    volumes:
-    - name: <your volume name>
-      persistentVolumeClaim:
-        claimName: <your claim name>
-    ...
-    ```
-    Add volume mounts to `containers` section:
-    ```yaml
-    ...
-    volumeMounts:
-      - name: blob
-        mountPath: <your mount path>
-    ...
-    ```
-
-=======
->>>>>>> 83375d17 (Update AppProtect docs, apply PR review)
 * *Use a DaemonSet*:
     When you run the Ingress Controller by using a DaemonSet, Kubernetes will create an Ingress Controller pod on every node of the cluster.
 
