@@ -427,6 +427,9 @@ server {
         error_page 401 = @do_oidc_flow;
         auth_jwt_key_request /_jwks_uri;
         {{ $proxyOrGRPC }}_set_header username $jwt_claim_sub;
+            {{- if $s.OIDC.AccessTokenEnable }}
+        {{ $proxyOrGRPC }}_set_header Authorization "Bearer $access_token";
+            {{- end }}
         {{ end }}
 
         {{ with $l.WAF }}

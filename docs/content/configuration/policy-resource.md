@@ -356,6 +356,7 @@ spec:
     authEndpoint: https://idp.example.com/openid-connect/auth
     tokenEndpoint: https://idp.example.com/openid-connect/token
     jwksURI: https://idp.example.com/openid-connect/certs
+    accessTokenEnable: true
 ```
 
 NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP header `username`.
@@ -384,7 +385,8 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 |``jwksURI`` | URL for the JSON Web Key Set (JWK) document provided by your OpenID Connect provider. | ``string`` | Yes |
 |``scope`` | List of OpenID Connect scopes. Possible values are ``openid``, ``profile``, ``email``, ``address`` and ``phone``. The scope ``openid`` always needs to be present and others can be added concatenating them with a ``+`` sign, for example ``openid+profile+email``. The default is ``openid``. | ``string`` | No |
 |``redirectURI`` | Allows overriding the default redirect URI. The default is ``/_codexch``. | ``string`` | No |
-|``zoneSyncLeeway`` | Specifies the maximum timeout in milliseconds for synchronizing ID tokens and shared values between Ingress Controller pods. The default is ``200``. | ``int`` | No |
+|``zoneSyncLeeway`` | Specifies the maximum timeout in milliseconds for synchronizing ID/access tokens and shared values between Ingress Controller pods. The default is ``200``. | ``int`` | No |
+|``accessTokenEnable`` | Option of whether Bearer token is used to authorize NGINX to access protected backend. | ``boolean`` | No |
 {{% /table %}}
 
 > **Note**: Only one OIDC policy can be referenced in a VirtualServer and its VirtualServerRoutes. However, the same policy can still be applied to different routes in the VirtualServer and VirtualServerRoutes.

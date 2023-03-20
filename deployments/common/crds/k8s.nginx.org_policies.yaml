@@ -114,6 +114,8 @@ spec:
                   description: OIDC defines an Open ID Connect policy.
                   type: object
                   properties:
+                    accessTokenEnable:
+                      type: boolean
                     authEndpoint:
                       type: string
                     authExtraArgs:
