@@ -262,6 +262,17 @@ ingressMTLS:
   verifyDepth: 1
 ```
 
+Below is an example of the `ingress-mtls-secret` using the secret type `nginx.org/ca`
+```yaml
+kind: Secret
+metadata:
+  name: ingress-mtls-secret
+apiVersion: v1
+type: nginx.org/ca
+data:
+  ca.crt: <base64encoded-certificate>
+```
+
 A VirtualServer that references an IngressMTLS policy must:
 * Enable [TLS termination](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualservertls).
 * Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route `](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroutesubroute).
@@ -284,12 +295,58 @@ We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/conf
 
 > Note: The feature is implemented using the NGINX [ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
+#### Using a Certificate Revocation List
+The IngressMTLS policy supports configuring at CRL for your policy.
+This can be done in one of two ways.
+
+> Note: Only one of these configurations options can be used at a time.
+
+1. Adding the `ca.crl` field to the `nginx.org/ca` secret type, which accepts a base64 encoded certificate revocation list (crl).
+   Example YAML:
+```yaml
+kind: Secret
+metadata:
+  name: ingress-mtls-secret
+apiVersion: v1
+type: nginx.org/ca
+data:
+  ca.crt: <base64encoded-certificate>
+  ca.crl: <base64encoded-crl>
+```
+
+2. Adding the `crlFileName` field to your IngressMTLS policy spec with the name of the CRL file.
+
+> Note: This configuration option should only be used when using a CRL that is larger than 1MiB
+> Otherwise we recommend using the `nginx.org/ca` secret type for managing your CRL.
+
+Example YAML:
+```yaml
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  name: ingress-mtls-policy
+spec:
+ingressMTLS:
+    clientCertSecret: ingress-mtls-secret
+    crlFileName: webapp.crl
+    verifyClient: "on"
+    verifyDepth: 1
+```
+
+**IMPORTANT NOTE**
+When configuring a CRL with the `ingressMTLS.crlFileName` field, there is additional context to keep in mind:
+1. The Ingress Controller will expect the CRL, in this case `webapp.crl`, will be in `/etc/nginx/secrets`. A volume mount will need to be added to the Ingress Controller deployment add your CRL to `/etc/nginx/secrets`
+2. When updating the content of your CRL (e.g a new certificate has been revoked), NGINX will need to be reloaded to pick up the latest changes. Depending on your environment this may require updating the name of your CRL and applying this update to your `ingress-mtls.yaml` policy to ensure NGINX picks up the latest CRL.
+
+Please refer to the Kubernetes documentation on [volumes](https://kubernetes.io/docs/concepts/storage/volumes/) to find the best implementation for your environment.
+
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``clientCertSecret`` | The name of the Kubernetes secret that stores the CA certificate. It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/ca``, and the certificate must be stored in the secret under the key ``ca.crt``, otherwise the secret will be rejected as invalid. | ``string`` | Yes |
 |``verifyClient`` | Verification for the client. Possible values are ``"on"``, ``"off"``, ``"optional"``, ``"optional_no_ca"``. The default is ``"on"``. | ``string`` | No |
 |``verifyDepth`` | Sets the verification depth in the client certificates chain. The default is ``1``. | ``int`` | No |
+|``crlFileName`` | The file name of the Certificate Revocation List. The Ingress Controller will look for this file in `/etc/nginx/secrets` | ``string`` | No |
 {{% /table %}}
 
 #### IngressMTLS Merging Behavior

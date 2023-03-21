@@ -23,13 +23,26 @@ This document provides an overview of the steps required to use NGINX App Protec
     $ cd kubernetes-ingress/deployments
     ```
 
-## Create the namespace and service account
+## Install the App Protect DoS Arbitrator
+
+### Helm Chart
+
+The App Protect DoS Arbitrator can be installed using the [NGINX App Protect DoS Helm Chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart).
+If you have the NGINX Helm Repository already added, you can install the App Protect DoS Arbitrator by running the following command:
+
+```bash
+helm install my-release-dos nginx-stable/nginx-appprotect-dos-arbitrator
+```
+
+### YAML Manifests
+
+Alternatively, you can install the App Protect DoS Arbitrator using the YAML manifests provided in the Ingress Controller repo.
+
+- Create the namespace and service account
 
 ```bash
   kubectl apply -f common/ns-and-sa.yaml
 ```
-
-## Install the App Protect DoS Arbitrator
 
 - Deploy the app protect dos arbitrator
     ```bash
