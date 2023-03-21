@@ -71,7 +71,7 @@ If you intend to use NGINX Ingress Controller with AppProtect WAF module and pol
 
 - Modify NGINX Ingress Controller Deployment or DaemonSet file to include volumes and volume mounts.
 
-    Following snippets illustrate changes that must be applied:
+    The following snippets illustrate the changes that must be applied:
 
     Add `volumes` section to deployment template spec:
     ```yaml
