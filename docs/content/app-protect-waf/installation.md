@@ -60,39 +60,7 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
     > **Important**: You must have an admin role to configure RBAC in your Kubernetes cluster.
 
 2. [Create the common Kubernetes resources](/nginx-ingress-controller/installation/installation-with-manifests/#2-create-common-resources).
-
 3. Enable the App Protect WAF module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
-
-If you intend to use the NGINX Ingress Controller with the AppProtect WAF module and policy bundles, follow these additional steps:
-
-- Skip configuring custom resource definition for `APPolicy` `APLogConf` and `APUserSig`.
-
-- Create and configure [Persistent Volume and Persistent Volume Claim](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) in your Kubernetes cluster.
-
-- Modify NGINX Ingress Controller Deployment or DaemonSet file to include volumes and volume mounts.
-
-    Make the following changes:
-
-    Add `volumes` section to deployment template spec:
-    ```yaml
-    ...
-    volumes:
-    - name: <volume_name>
-      persistentVolumeClaim:
-        claimName: <claim_name>
-    ...
-    ```
-    Add volume mounts to `containers` section:
-    ```yaml
-    ...
-    volumeMounts:
-      - name: <volume_mount_name>
-        mountPath: /etc/nginx/waf/bundles
-    ...
-    ```
-
-    > **Important**: NGINX Ingress Controller requires the volume mount path to be `/etc/nginx/waf/bundles`
-
 4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
 
 For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.0.2/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.0.2/examples/ingress-resources/app-protect-waf).

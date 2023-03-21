@@ -94,9 +94,6 @@ Create a custom resource definition for [GlobalConfiguration](/nginx-ingress-con
 
 3. If you would like to use the App Protect WAF module, create the following additional resources:
 
-    > **Note** This step can be skipped if you are using App Protect WAF module with policy bundles.
-
-
 Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:
 
    ```
