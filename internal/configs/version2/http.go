@@ -91,6 +91,7 @@ type SSL struct {
 // IngressMTLS defines TLS configuration for a server. This is a subset of TLS specifically for clients auth.
 type IngressMTLS struct {
 	ClientCert   string
+	ClientCrl    string
 	VerifyClient string
 	VerifyDepth  int
 }
