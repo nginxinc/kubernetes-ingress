@@ -302,7 +302,7 @@ This can be done in one of two ways.
 > Note: Only one of these configurations options can be used at a time.
 
 1. Adding the `ca.crl` field to the `nginx.org/ca` secret type, which accepts a base64 encoded certificate revocation list (crl).
-   Example Yaml:
+   Example YAML:
 ```yaml
 kind: Secret
 metadata:
@@ -314,12 +314,12 @@ data:
   ca.crl: <base64encoded-crl>
 ```
 
-2. Adding the `crlFileName` field to your IngressMTLS policy spec with the name of the CRL.
+2. Adding the `crlFileName` field to your IngressMTLS policy spec with the name of the CRL file.
 
 > Note: This configuration option should only be used when using a CRL that is larger than 1MiB
 > Otherwise we recommend using the `nginx.org/ca` secret type for managing your CRL.
 
-Example Yaml:
+Example YAML:
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: Policy
@@ -334,7 +334,7 @@ ingressMTLS:
 ```
 
 **IMPORTANT NOTE**
-When configuring a CRL with the `ingressMTLS.crlFileName` field, there are additional steps to consider and limitations to understand.
+When configuring a CRL with the `ingressMTLS.crlFileName` field, there is additional context to keep in mind:
 1. The Ingress Controller will expect the CRL, in this case `webapp.crl`, will be in `/etc/nginx/secrets`. A volume mount will need to be added to the Ingress Controller deployment add your CRL to `/etc/nginx/secrets`
 2. When updating the content of your CRL (e.g a new certificate has been revoked), NGINX will need to be reloaded to pick up the latest changes. Depending on your environment this may require updating the name of your CRL and applying this update to your `ingress-mtls.yaml` policy to ensure NGINX picks up the latest CRL.
 
