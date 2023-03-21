@@ -63,7 +63,7 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
 
 3. Enable the App Protect WAF module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
 
-If you intend to use the F5 NGINX Ingress Controller with the AppProtect WAF module and policy bundles, follow these additional steps:
+If you intend to use the NGINX Ingress Controller with the AppProtect WAF module and policy bundles, follow these additional steps:
 
 - Skip configuring custom resource definition for `APPolicy` `APLogConf` and `APUserSig`.
 
@@ -71,7 +71,7 @@ If you intend to use the F5 NGINX Ingress Controller with the AppProtect WAF mod
 
 - Modify NGINX Ingress Controller Deployment or DaemonSet file to include volumes and volume mounts.
 
-    The following snippets illustrate the changes that must be applied:
+    Make the following changes:
 
     Add `volumes` section to deployment template spec:
     ```yaml

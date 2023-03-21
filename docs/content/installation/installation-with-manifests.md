@@ -94,6 +94,9 @@ Create a custom resource definition for [GlobalConfiguration](/nginx-ingress-con
 
 3. If you would like to use the App Protect WAF module, create the following additional resources:
 
+    > **Note** This step can be skipped if you are using App Protect WAF module with policy bundles.
+
+
 Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:
 
    ```
@@ -101,7 +104,6 @@ Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:
    $ kubectl apply -f common/crds/appprotect.f5.com_appolicies.yaml
    $ kubectl apply -f common/crds/appprotect.f5.com_apusersigs.yaml
    ```
-> **Note** This step can be skipped if you are using App Protect WAF module with policy bundles.
 
 4. If you would like to use the App Protect DoS module, create the following additional resources:
 

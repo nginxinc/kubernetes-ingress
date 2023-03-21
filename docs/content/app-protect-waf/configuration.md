@@ -19,7 +19,7 @@ The NGINX Ingress Controller has a set of global configuration parameters that a
 
 You can enable and configure NGINX App Protect WAF on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis.
 
-To configure NGINX App Protect WAF on a VirtualServer resource, you would create a Policy Custom Resource referencing the APPolicy Custom Resource or APPolicy Bundle, and add this to the VirtualServer definition. See the documentation on the [App Protect WAF Policy](/nginx-ingress-controller/configuration/policy-resource/#waf).
+To configure NGINX App Protect WAF on a VirtualServer resource, you would create a Policy Custom Resource referencing the `APPolicy` Custom Resource or `APPolicy` Bundle, and add this to the VirtualServer definition. Additional information can be found in the [police resource documentation](/nginx-ingress-controller/configuration/policy-resource/#waf).
 
 To configure NGINX App Protect WAF on an Ingress resource, you would apply the [App Protect annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect) to each desired resource.
 
