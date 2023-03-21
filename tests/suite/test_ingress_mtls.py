@@ -7,6 +7,7 @@ from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_p
 from suite.utils.resources_utils import create_secret_from_yaml, delete_secret, wait_before_test
 from suite.utils.ssl_utils import create_sni_session
 from suite.utils.vs_vsr_resources_utils import (
+    delete_and_create_vs_from_yaml,
     patch_v_s_route_from_yaml,
     patch_virtual_server_from_yaml,
     read_vs,
@@ -32,6 +33,14 @@ crt = f"{TEST_DATA}/ingress-mtls/client-auth/valid/client-cert.pem"
 key = f"{TEST_DATA}/ingress-mtls/client-auth/valid/client-key.pem"
 invalid_crt = f"{TEST_DATA}/ingress-mtls/client-auth/invalid/client-cert.pem"
 invalid_key = f"{TEST_DATA}/ingress-mtls/client-auth/invalid/client-cert.pem"
+
+mtls_secret_crl = f"{TEST_DATA}/ingress-mtls/secret/ingress-mtls-secret-crl.yaml"
+mtls_pol_crl = f"{TEST_DATA}/ingress-mtls/policies/ingress-mtls-crl.yaml"
+
+crt_not_revoked = f"{TEST_DATA}/ingress-mtls/client-auth/not-revoked/client-cert.pem"
+key_not_revoked = f"{TEST_DATA}/ingress-mtls/client-auth/not-revoked/client-key.pem"
+crt_revoked = f"{TEST_DATA}/ingress-mtls/client-auth/revoked/client-cert.pem"
+key_revoked = f"{TEST_DATA}/ingress-mtls/client-auth/revoked/client-key.pem"
 
 
 def setup_policy(kube_apis, test_namespace, mtls_secret, tls_secret, policy):
@@ -186,6 +195,158 @@ class TestIngressMtlsPolicyVS:
             kube_apis,
             test_namespace,
             mtls_sec_valid_src,
+            tls_sec_valid_src,
+            mtls_pol_valid_src,
+        )
+
+        print(f"Patch vs with policy: {mtls_pol_valid_src}")
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            mtls_vs_spec_src,
+            virtual_server_setup.namespace,
+        )
+        wait_before_test()
+        ssl_exception = ""
+        resp = ""
+        try:
+            resp = session.get(
+                virtual_server_setup.backend_1_url_ssl,
+                cert=certificate,
+                headers={"host": virtual_server_setup.vs_host},
+                allow_redirects=False,
+                verify=False,
+            )
+        except requests.exceptions.SSLError as e:
+            print(f"SSL certificate exception: {e}")
+            ssl_exception = str(e)
+            resp = mock.Mock()
+            resp.status_code = "None"
+            resp.text = "None"
+
+        teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
+
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            std_vs_src,
+            virtual_server_setup.namespace,
+        )
+        assert resp.status_code == expected_code and expected_text in resp.text and exception in ssl_exception
+
+    @pytest.mark.smoke
+    @pytest.mark.parametrize(
+        "policy_src, vs_src, mtls_secret_in, expected_code, expected_text, vs_message, vs_state",
+        [
+            (
+                mtls_pol_valid_src,
+                mtls_vs_spec_src,
+                mtls_secret_crl,
+                200,
+                "Server address:",
+                "added or updated",
+                "Valid",
+            ),
+            (
+                mtls_pol_crl,
+                mtls_vs_spec_src,
+                mtls_sec_valid_src,
+                404,
+                "Not Found",
+                "added or updated",
+                "Invalid",
+            ),
+            (
+                mtls_pol_crl,
+                mtls_vs_spec_src,
+                mtls_secret_crl,
+                404,
+                "Not Found",
+                "added or updated ; with warning(s)",
+                "Invalid",
+            ),
+        ],
+    )
+    def test_ingress_mtls_polciy_crl(
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        policy_src,
+        mtls_secret_in,
+        vs_src,
+        expected_code,
+        expected_text,
+        vs_message,
+        vs_state,
+    ):
+        session = create_sni_session()
+        mtls_secret, tls_secret, pol_name = setup_policy(
+            kube_apis,
+            test_namespace,
+            mtls_secret_in,
+            tls_sec_valid_src,
+            policy_src,
+        )
+
+        delete_and_create_vs_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            vs_src,
+            virtual_server_setup.namespace,
+        )
+        wait_before_test()
+        resp = session.get(
+            virtual_server_setup.backend_1_url_ssl,
+            cert=(crt_not_revoked, key_not_revoked),
+            headers={"host": virtual_server_setup.vs_host},
+            allow_redirects=False,
+            verify=False,
+        )
+        vs_res = read_vs(kube_apis.custom_objects, test_namespace, virtual_server_setup.vs_name)
+        teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
+
+        delete_and_create_vs_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            std_vs_src,
+            virtual_server_setup.namespace,
+        )
+        assert (
+            resp.status_code == expected_code
+            and expected_text in resp.text
+            and vs_message in vs_res["status"]["message"]
+            and vs_res["status"]["state"] == vs_state
+        )
+
+    @pytest.mark.parametrize(
+        "certificate, expected_code, expected_text, exception",
+        [
+            ((crt_not_revoked, key_not_revoked), 200, "Server address:", ""),
+            ("", 400, "No required SSL certificate was sent", ""),
+            ((crt_revoked, key_revoked), 400, "The SSL certificate error", ""),
+        ],
+    )
+    def test_ingress_mtls_policy_cert_crl(
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        certificate,
+        expected_code,
+        expected_text,
+        exception,
+    ):
+        """
+        Test ingress-mtls with valid and invalid policy
+        """
+        session = create_sni_session()
+        mtls_secret, tls_secret, pol_name = setup_policy(
+            kube_apis,
+            test_namespace,
+            mtls_secret_crl,
             tls_sec_valid_src,
             mtls_pol_valid_src,
         )

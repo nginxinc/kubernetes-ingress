@@ -92,6 +92,8 @@ spec:
                   properties:
                     clientCertSecret:
                       type: string
+                    crlFileName:
+                      type: string
                     verifyClient:
                       type: string
                     verifyDepth:
