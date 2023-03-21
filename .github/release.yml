@@ -3,12 +3,12 @@ changelog:
     labels:
       - skip changelog
   categories:
-    - title: 🚀 Features
-      labels:
-        - enhancement
     - title: 💣 Breaking Changes
       labels:
         - change
+    - title: 🚀 Features
+      labels:
+        - enhancement
     - title: 🐛 Bug Fixes
       labels:
         - bug
@@ -21,12 +21,12 @@ changelog:
     - title: 🔨 Maintenance
       labels:
         - chore
-    - title: ⬆️ Dependencies
-      labels:
-        - dependencies
     - title: 📝 Documentation
       labels:
         - documentation
+    - title: ⬆️ Dependencies
+      labels:
+        - dependencies
     - title: Other Changes
       labels:
         - "*"
