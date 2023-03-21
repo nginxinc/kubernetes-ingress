@@ -314,7 +314,7 @@ data:
   ca.crl: <base64encoded-crl>
 ```
 
-2. Adding the `crl` field to your IngressMTLS policy spec with the name of the CRL.
+2. Adding the `crlFileName` field to your IngressMTLS policy spec with the name of the CRL.
 
 > Note: This configuration option should only be used when using a CRL that is larger than 1MiB
 > Otherwise we recommend using the `nginx.org/ca` secret type for managing your CRL.
