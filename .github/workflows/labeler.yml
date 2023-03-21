@@ -12,6 +12,6 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: joshdales/labeler@7b1327b4c44a8794dfc7573d60637cd60ce4b697 # if https://github.com/actions/labeler/pull/203 is merged, use the official action actions/labeler
+    - uses: joshdales/labeler@1c9c27e128ed99ff80daecc98205c6292ea29a5b # if https://github.com/actions/labeler/pull/203 is merged, use the official action actions/labeler
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
