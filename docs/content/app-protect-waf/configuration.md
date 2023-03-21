@@ -229,7 +229,7 @@ spec:
     apBundle: "<policy_bundle_name>.tgz"
 ```
 
-> **Note**: Before applying policy, WAF Policy bundle must be created, copied to a volume,  and the volume must be mounted to `/etc/nginx/waf/bundles`.
+> **Note**: Before applying the policy, a WAF Policy Bundle must be created, copied to a volume, and the volume must be mounted to `/etc/nginx/waf/bundles`.
 
 
 ## OpenAPI Specification in NGINX Ingress Controller
