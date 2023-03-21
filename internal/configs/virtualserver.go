@@ -330,6 +330,13 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 
 	dosCfg := generateDosCfg(dosResources[""])
 
+	// enabledInternalRoutes controls if a virtual server is configured as an internal route.
+	enabledInternalRoutes := vsEx.VirtualServer.Spec.InternalRoute
+	if vsEx.VirtualServer.Spec.InternalRoute && !vsc.enableInternalRoutes {
+		vsc.addWarningf(vsEx.VirtualServer, "Internal Route cannot be configured for virtual server %s. Internal Routes can be enabled by setting the enable-internal-routes flag", vsEx.VirtualServer.Name)
+		enabledInternalRoutes = false
+	}
+
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
 	crUpstreams := make(map[string]conf_v1.Upstream)
@@ -679,8 +686,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			VSName:                    vsEx.VirtualServer.Name,
 			DisableIPV6:               vsc.isIPV6Disabled,
 		},
-		SpiffeCerts:         vsc.spiffeCerts,
-		InternalRouteServer: vsEx.VirtualServer.Spec.InternalRoute,
+		SpiffeCerts:       enabledInternalRoutes,
+		SpiffeClientCerts: vsc.spiffeCerts,
 	}
 
 	return vsCfg, vsc.warnings
