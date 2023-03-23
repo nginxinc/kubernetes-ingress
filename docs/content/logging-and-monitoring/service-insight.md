@@ -11,7 +11,7 @@ docs: "DOCS-000"
 ---
 
 
-The Ingress Controller exposes an endpoint and provides host statistics for services exposed using the  VirtualServer (VS) and TransportServer (TS) resource objects.
+The Service Insight is available only for NGINX Plus. The Ingress Controller exposes an endpoint and provides host statistics for services exposed using the  VirtualServer (VS) and TransportServer (TS) resource objects.
 It exposes data in JSON format and returns HTTP status codes.
 The response body holds information about the total, down and the unhealthy number of
 upstream pods associated with the configured hostname.
