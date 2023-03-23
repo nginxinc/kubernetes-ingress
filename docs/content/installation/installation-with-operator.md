@@ -12,9 +12,6 @@ docs: "DOCS-604"
 An NGINX Ingress Operator version compatible with the 3.1.0 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.
 {{< /note >}}
 
-{{< note >}}
-An NGINX Ingress Operator version compatible with the 3.0.1 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.
-{{< /note >}}
 
 This document describes how to install the F5 NGINX Ingress Controller in your Kubernetes cluster using the NGINX Ingress Operator.
 
