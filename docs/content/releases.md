@@ -10,6 +10,7 @@ docs: "DOCS-616"
 29 Mar 2023
 
 OVERVIEW:
+* *The minimum supported version of Kubernetes is now 1.22* The NGINX Ingress Controller now uses `sysctls` to [bind to ports without needing escalated privileges](https://github.com/nginxinc/kubernetes-ingress/pull/3573/) Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
 * Added support for loading pre-compiled [AppProtect Policy Bundles](https://github.com/nginxinc/kubernetes-ingress/pull/3560) when using the `-enable-app-protect` cli argument. This feature removes the need for the Ingress Controller to re-compile App Protect when NGINX reloads, and will instead use a pre-compile policy bundle. See [App Protect WAF Bundles](https://docs.nginx.com/nginx-ingress-controller/app-protect-waf/configuration/#app-protect-waf-bundles) for examples and configuration details.
 * IngressMTLS policy now supports configuring a Certificate Revocation Lists(CRL). When using this feature requests made using a revoked certificate will be rejected. See [Using a Certificate Revocation List](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#using-a-certificate-revocation-list) for details on configuring this option.
 * The NGINX Ingress Controller now supports [running with a Read-only Root Filesystem](https://github.com/nginxinc/kubernetes-ingress/pull/3548). This hardens the overall security of the Ingress Controller. See [Configure root filesystem as read-only](https://docs.nginx.com/nginx-ingress-controller/configuration/security/#configure-root-filesystem-as-read-only) for details on configuring this option with both HELM and Manifest. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
@@ -58,9 +59,14 @@ HELM CHART:
 
 
 UPGRADE:
+* Make sure the Kubernetes version is in the supported platforms listed below.
 * For NGINX, use the 3.1.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.1.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 * For NGINX Plus, use the 3.1.0 images from the F5 Container registry or build your own image using the 3.1.0 source code.
 * For Helm, use version 0.17.0 of the chart.
+
+SUPPORTED PLATFORMS:
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.22-1.26.
 
 ## NGINX Ingress Controller 3.0.2
 
