@@ -31,7 +31,6 @@ FEATURES:
 * [3632](https://github.com/nginxinc/kubernetes-ingress/pull/3632) Update nginx.org/ca secret type & crl field to IngressMTLS to support CRL.
 
 IMPROVEMENTS:
-* [3576](https://github.com/nginxinc/kubernetes-ingress/pull/3576) Replace deprecated github action command with environment variable. Thanks to [Jongwoo Han](https://github.com/jongwooo)
 * [3629](https://github.com/nginxinc/kubernetes-ingress/pull/3629) Use the "runtime default" seccomp profile. Thanks to [Valters Jansons](https://github.com/sigv).
 * [3573](https://github.com/nginxinc/kubernetes-ingress/pull/3573) Rework port binding logic without privileges. Thanks to [Valters Jansons](https://github.com/sigv).
 * [3646](https://github.com/nginxinc/kubernetes-ingress/pull/3646) Remove app protect agent.
