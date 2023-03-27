@@ -63,18 +63,119 @@ spec:
 
 ## Configuration
 
+Check nginx-ingress pod id:
+```bash
+kubectl get pods -n nginx-ingress
+```
+```
+NAME                             READY   STATUS    RESTARTS   AGE
+nginx-ingress-5b99f485fb-vflb8   1/1     Running   0          72m
+```
 
+Enable port forwarding
+```bash
+kubectl port-forward -n nginx-ingress nginx-ingress-5b99f485fb-vflb8 9114:9114 &
+```
 
-# Virtual Servers
+### Virtual Servers
 
-## Deployment
+### Deployment
 
-## Testing
+Follow the [basic configuration example](../basic-configuration/) to deploy `cafe` app and `cafe virtual server`. 
 
+### Testing
 
+Verify that the virtual server is up and running and verify the hostname:
+```bash
+kubectl get vs cafe
+NAME   STATE   HOST               IP    PORTS   AGE
+cafe   Valid   cafe.example.com                 16m
+```
 
-# Transport Servers
+Scale down `tea` and `caffee` deployments:
 
-## Deployment
+```bash
+kubectl scale deployment tea --replicas=1
+```
 
-## Testing
+```bash
+kubectl scale deployment coffee --replicas=1
+```
+
+Verify `tea` deployment:
+
+```bash
+kubectl get deployments.apps tea
+```
+
+```bash
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+tea    1/1     1            1           19m
+```
+
+Verify `coffee` deployment:
+
+```bash
+kubectl get deployments.apps coffee
+```
+
+```bash
+NAME     READY   UP-TO-DATE   AVAILABLE   AGE
+coffee   1/1     1            1           20m
+```
+
+Send `GET` request to the service insight endpoint to check statistics:
+
+Request:
+
+```bash
+curl http://localhost:9114/probe/cafe.example.com
+```
+
+Response:
+
+```json
+{"Total":2,"Up":2,"Unhealthy":0}
+```
+
+Scale up deployments:
+
+```bash
+kubectl scale deployment tea --replicas=3
+```
+
+```bash
+kubectl scale deployment coffee --replicas=3
+```
+
+Verify deployments:
+
+```bash
+kubectl get deployments.apps tea
+```
+
+```bash
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+tea    3/3     3            3           31m
+```
+
+```bash
+kubectl get deployments.apps coffee
+```
+
+```bash
+NAME     READY   UP-TO-DATE   AVAILABLE   AGE
+coffee   3/3     3            3           31m
+```
+
+Send `GET` HTTP request to the service insight endpoint to check statistics:
+
+```bash
+curl http://localhost:9114/probe/cafe.example.com
+```
+
+Response:
+
+```json
+{"Total":6,"Up":6,"Unhealthy":0}
+```
