@@ -129,65 +129,10 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
-  build-docker:
-    name: Build Docker OSS
-    needs: binaries
-    strategy:
-        fail-fast: false
-        matrix:
-          image: [debian, alpine]
-          platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
-          include:
-            - image: ubi
-              platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
-    uses: ./.github/workflows/build-oss.yml
-    with:
-      platforms: ${{ matrix.platforms }}
-      image: ${{ matrix.image }}
-    secrets: inherit
-
-  build-docker-plus:
-    name: Build Docker Plus
-    needs: build-docker
-    strategy:
-        fail-fast: false
-        matrix:
-          image: [debian-plus, alpine-plus]
-          platforms: ["linux/arm64, linux/amd64"]
-          target: [goreleaser, aws]
-          include:
-            - image: ubi-plus
-              platforms: "linux/arm64, linux/amd64, linux/s390x"
-              target: goreleaser
-    uses: ./.github/workflows/build-plus.yml
-    with:
-      platforms: ${{ matrix.platforms }}
-      image: ${{ matrix.image }}
-      target: ${{ matrix.target }}
-    secrets: inherit
-
-  build-docker-nap:
-    name: Build Docker NAP
-    needs: build-docker-plus
-    strategy:
-        fail-fast: false
-        matrix:
-          image: [debian-plus-nap, ubi-plus-nap]
-          platforms: ["linux/amd64"]
-          target: [goreleaser, aws]
-          nap_modules: [dos, waf, "waf,dos"]
-    uses: ./.github/workflows/build-plus.yml
-    with:
-      platforms: ${{ matrix.platforms }}
-      image: ${{ matrix.image }}
-      target: ${{ matrix.target }}
-      nap_modules: ${{ matrix.nap_modules }}
-    secrets: inherit
-
   helm-tests:
     name: Helm Tests
     runs-on: ubuntu-22.04
-    needs: [build-docker-plus, checks]
+    needs: [checks, binaries]
     strategy:
       matrix:
         include:
@@ -264,7 +209,7 @@ jobs:
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
-    needs: [checks, build-docker-nap]
+    needs: [checks, binaries]
     if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -332,6 +277,61 @@ jobs:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
         if: always()
+
+  build-docker:
+    name: Build Docker OSS
+    needs: smoke-tests
+    strategy:
+        fail-fast: false
+        matrix:
+          image: [debian, alpine]
+          platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+          include:
+            - image: ubi
+              platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+    secrets: inherit
+
+  build-docker-plus:
+    name: Build Docker Plus
+    needs: build-docker
+    strategy:
+        fail-fast: false
+        matrix:
+          image: [debian-plus, alpine-plus]
+          platforms: ["linux/arm64, linux/amd64"]
+          target: [goreleaser, aws]
+          include:
+            - image: ubi-plus
+              platforms: "linux/arm64, linux/amd64, linux/s390x"
+              target: goreleaser
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+    secrets: inherit
+
+  build-docker-nap:
+    name: Build Docker NAP
+    needs: build-docker-plus
+    strategy:
+        fail-fast: false
+        matrix:
+          image: [debian-plus-nap, ubi-plus-nap]
+          platforms: ["linux/amd64"]
+          target: [goreleaser, aws]
+          nap_modules: [dos, waf, "waf,dos"]
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      nap_modules: ${{ matrix.nap_modules }}
+    secrets: inherit
 
   publish-helm:
     name: Package and Publish Helm Chart
