@@ -32,7 +32,7 @@ jobs:
       - name: Get variables for Slack
         id: slack
         run: |
-          echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+          echo "message=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
           echo "date=$(date +%s)" >> $GITHUB_OUTPUT
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Send Notification
