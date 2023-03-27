@@ -81,7 +81,7 @@ kubectl port-forward -n nginx-ingress nginx-ingress-5b99f485fb-vflb8 9114:9114 &
 
 ### Deployment
 
-Follow the [basic configuration example](../basic-configuration/) to deploy `cafe` app and `cafe virtual server`. 
+Follow the [basic configuration example](../basic-configuration/) to deploy `cafe` app and `cafe virtual server`.
 
 ### Testing
 
