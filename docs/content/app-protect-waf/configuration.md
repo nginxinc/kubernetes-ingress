@@ -333,7 +333,7 @@ apiVersion: appprotect.f5.com/v1beta1
 Content of the referenced file `myapi.yaml`:
 
 ~~~yaml
-openapi: 3.1.0
+openapi: 3.0.1
 info:
   title: 'Primitive data types'
   description: 'Primitive data types.'
