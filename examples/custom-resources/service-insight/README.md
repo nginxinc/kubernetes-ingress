@@ -1,10 +1,10 @@
 # Support for Service Insight
 
-NGINX Plus supports [Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/). To use the service in the Ingress Controller:
+  > The Service Insight feature is available only for F5 NGINX Plus.
 
-1. [Enable service insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/#enabling-service-insight-endpoint) in the Ingress Controller in the deployment file.
+NGINX Plus provides the [Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/) feature. To use the feature in the Ingress Controller you must enable it in the [deployment file](../../../deployments/deployment/nginx-plus-ingress.yaml).
 
-In the following example we enable service insight in the NGINX Ingress Controller [deployment file](../../../deployments/deployment/nginx-plus-ingress.yaml):
+In the following example we enable the service insight in the NGINX Ingress Controller [deployment file](../../../deployments/deployment/nginx-plus-ingress.yaml):
 
 ```yaml
 apiVersion: apps/v1
@@ -61,23 +61,31 @@ spec:
 
 ```
 
+## Deployment
+
+[Install NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/). Remember to uncomment the `-enable-service-insight` option.
+
+Enable access to the Ingress Controller. Examples below use the `nodeport` service.
+
 ## Configuration
 
 Check nginx-ingress pod id:
+
 ```bash
 kubectl get pods -n nginx-ingress
 ```
+
 ```
 NAME                             READY   STATUS    RESTARTS   AGE
 nginx-ingress-5b99f485fb-vflb8   1/1     Running   0          72m
 ```
 
-Enable port forwarding
+Forward service insight port 9114 to localhost port 9114:
 ```bash
 kubectl port-forward -n nginx-ingress nginx-ingress-5b99f485fb-vflb8 9114:9114 &
 ```
 
-### Virtual Servers
+## Virtual Servers
 
 ### Deployment
 
