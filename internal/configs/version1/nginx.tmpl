@@ -236,7 +236,11 @@ stream {
                       '$session_time "$ssl_preread_server_name"';
     {{- end}}
 
+    {{if .AccessLogOff}}
+    access_log off;
+    {{else}}
     access_log  /dev/stdout  stream-main;
+    {{end}}
 
     {{range $value := .StreamSnippets}}
     {{$value}}{{end}}
