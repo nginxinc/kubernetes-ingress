@@ -4,7 +4,7 @@
 
 To use the [Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/) feature provided by NGINX Ingress Controller you must enable it by either setting `serviceInsight.create=true` in your `helm install/upgrade...` command OR  [manifest](../../../deployments/deployment/nginx-plus-ingress.yaml) depending on your preferred installation method.
 
-In the following example we enable the service insight in the NGINX Ingress Controller [deployment file](../../../deployments/deployment/nginx-plus-ingress.yaml):
+In the following example we'll enable the Service Insight in the NGINX Ingress Controller using [manifests (Deployment)](../../../deployments/deployment/nginx-plus-ingress.yaml):
 
 ```yaml
 apiVersion: apps/v1
