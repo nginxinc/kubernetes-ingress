@@ -80,7 +80,7 @@ NAME                             READY   STATUS    RESTARTS   AGE
 nginx-ingress-5b99f485fb-vflb8   1/1     Running   0          72m
 ```
 
-Forward service insight port 9114 to localhost port 9114:
+Using the id, forward the service insight port (9114) to localhost port 9114:
 ```bash
 kubectl port-forward -n nginx-ingress nginx-ingress-5b99f485fb-vflb8 9114:9114 &
 ```
