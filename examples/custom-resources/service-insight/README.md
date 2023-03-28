@@ -187,3 +187,98 @@ Response:
 ```json
 {"Total":6,"Up":6,"Unhealthy":0}
 ```
+
+## Transport Servers
+
+[Install NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), and uncomment the `-enable-service-insight`, `-enable-custom-resources`, and `-enable-tls-passthrough` options.
+
+The examples below use the `nodeport` service.
+
+First, get the nginx-ingress pod id:
+
+```bash
+kubectl get pods -n nginx-ingress
+```
+
+```
+NAME                             READY   STATUS    RESTARTS   AGE
+nginx-ingress-67978954cc-l6gvq   1/1     Running   0          72m
+```
+
+Using the id, forward the service insight port (9114) to localhost port 9114:
+```bash
+kubectl port-forward -n nginx-ingress nginx-ingress-67978954cc-l6gvq 9114:9114 &
+```
+
+### Deployment
+
+Follow the [tls passthrough example](../tls-passthrough/) to deploy the `secure-app` and configure load balancing.
+
+### Testing
+
+Verify that the transport server is running, and check the app name:
+
+```bash
+kubectl get ts secure-app
+NAME         STATE   REASON           AGE
+secure-app   Valid   AddedOrUpdated   5h37m
+```
+
+Scale down the `secure-app` deployment:
+
+```bash
+kubectl scale deployment secure-app --replicas=1
+```
+
+Verify `secure-app` deployment:
+
+```bash
+kubectl get deployments.apps secure-app
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+secure-app   1/1     1            1           5h41m
+```
+
+Send a `GET` request to the service insight endpoint to check statistics:
+
+Request:
+
+```bash
+curl http://localhost:9114/probe/ts/secure-app
+```
+
+Response:
+
+```json
+{"Total":1,"Up":1,"Unhealthy":0}
+```
+
+Scale up deployments:
+
+```bash
+kubectl scale deployment secure-app --replicas=3
+```
+
+Verify deployments:
+
+```bash
+kubectl get deployments.apps secure-app
+```
+
+```bash
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+secure-app   3/3     3            3           5h53m
+```
+
+Send a `GET` HTTP request to the service insight endpoint to check statistics:
+
+Request:
+
+```bash
+curl http://localhost:9114/probe/ts/secure-app
+```
+
+Response:
+
+```json
+{"Total":3,"Up":3,"Unhealthy":0}
+```
