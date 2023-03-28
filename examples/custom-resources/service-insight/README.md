@@ -69,7 +69,7 @@ The examples below use the `nodeport` service.
 
 ## Configuration
 
-Check nginx-ingress pod id:
+First, get the nginx-ingress pod id:
 
 ```bash
 kubectl get pods -n nginx-ingress
