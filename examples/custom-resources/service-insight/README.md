@@ -100,7 +100,7 @@ NAME   STATE   HOST               IP    PORTS   AGE
 cafe   Valid   cafe.example.com                 16m
 ```
 
-Scale down `tea` and `caffee` deployments:
+Scale down the `tea` and `coffee` deployments:
 
 ```bash
 kubectl scale deployment tea --replicas=1
