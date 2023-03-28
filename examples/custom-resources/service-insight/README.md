@@ -93,7 +93,7 @@ Follow the [basic configuration example](../basic-configuration/) to deploy `caf
 
 ### Testing
 
-Verify that the virtual server is up and running and verify the hostname:
+Verify that the virtual server is running, and check the hostname:
 ```bash
 kubectl get vs cafe
 NAME   STATE   HOST               IP    PORTS   AGE
