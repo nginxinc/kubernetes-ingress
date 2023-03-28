@@ -109,7 +109,7 @@ server {
     ssl_reject_handshake on;
         {{ else if $.SpiffeCerts }}
     ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
-    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;         
+    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
         {{ else }}
     ssl_certificate {{ $ssl.Certificate }};
     ssl_certificate_key {{ $ssl.CertificateKey }};
