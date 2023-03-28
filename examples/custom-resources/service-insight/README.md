@@ -132,7 +132,7 @@ NAME     READY   UP-TO-DATE   AVAILABLE   AGE
 coffee   1/1     1            1           20m
 ```
 
-Send `GET` request to the service insight endpoint to check statistics:
+Send a `GET` request to the service insight endpoint to check statistics:
 
 Request:
 
