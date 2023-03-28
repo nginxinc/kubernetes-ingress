@@ -176,7 +176,7 @@ NAME     READY   UP-TO-DATE   AVAILABLE   AGE
 coffee   3/3     3            3           31m
 ```
 
-Send `GET` HTTP request to the service insight endpoint to check statistics:
+Send a `GET` HTTP request to the service insight endpoint to check statistics:
 
 ```bash
 curl http://localhost:9114/probe/cafe.example.com
