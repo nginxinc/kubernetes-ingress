@@ -63,9 +63,9 @@ spec:
 
 ## Deployment
 
-[Install NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/). Remember to uncomment the `-enable-service-insight` option.
+[Install NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), and uncomment the `-enable-service-insight` option: this will allow Service Insight to interact with it.
 
-Enable access to the Ingress Controller. Examples below use the `nodeport` service.
+The examples below use the `nodeport` service.
 
 ## Configuration
 
