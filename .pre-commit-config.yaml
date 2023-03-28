@@ -40,7 +40,7 @@ repos:
         types: [go]
         pass_filenames: false
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.52.0
+    rev: v1.52.2
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
