@@ -25,7 +25,7 @@ from suite.utils.yaml_utils import get_secret_name_from_vs_or_ts_yaml
                 "type": "complete",
                 "extra_args": [
                     "-global-configuration=nginx-ingress/nginx-configuration",
-                    "-enable-leader-election=false",
+                    "-enable-leader-election=true",
                 ],
             },
             {"example": "transport-server-tcp-load-balance"},

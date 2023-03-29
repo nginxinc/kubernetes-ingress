@@ -1,7 +1,7 @@
 import pytest
 from settings import TEST_DATA
 from suite.utils.custom_assertions import assert_event, assert_event_not_present
-from suite.utils.custom_resources_utils import is_dnsendpoint_present, read_custom_resource
+from suite.utils.custom_resources_utils import is_dnsendpoint_present, read_custom_resource_status
 from suite.utils.resources_utils import get_events, patch_namespace_with_label, wait_before_test
 from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
 from suite.utils.yaml_utils import get_name_from_yaml, get_namespace_from_yaml
@@ -52,7 +52,7 @@ class TestExternalDNSVirtualServer:
         events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         vs_bad_config_event = "Error creating DNSEndpoint for VirtualServer resource"
         assert_event_not_present(vs_bad_config_event, events)
-        response = read_custom_resource(
+        response = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -81,7 +81,7 @@ class TestExternalDNSVirtualServer:
         events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event(vs_event_update_text, events)
         print("\nStep 3: Verify VS status is Valid")
-        response = read_custom_resource(
+        response = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -153,7 +153,7 @@ class TestExternalDNSVirtualServerWatchLabel:
         events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         vs_bad_config_event = "Error creating DNSEndpoint for VirtualServer resource"
         assert_event_not_present(vs_bad_config_event, events)
-        response = read_custom_resource(
+        response = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",

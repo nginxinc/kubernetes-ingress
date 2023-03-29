@@ -7,7 +7,7 @@ import pytest
 import yaml
 from kubernetes.client import ApiextensionsV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
-from suite.utils.resources_utils import ensure_item_removal
+from suite.utils.resources_utils import ensure_item_removal, wait_before_test
 
 
 def create_crd(api_extensions_v1: ApiextensionsV1Api, body) -> None:
@@ -82,6 +82,35 @@ def read_custom_resource(
         raise
 
 
+def read_custom_resource_status(
+    custom_objects: CustomObjectsApi, namespace, plural, name, api_group="k8s.nginx.org"
+) -> object:
+    """
+    Get CRD information (kubectl describe output)
+
+    :param custom_objects: CustomObjectsApi
+    :param namespace: The custom resource's namespace
+    :param plural: the custom resource's plural name
+    :param name: the custom object's name
+    :return: object
+    """
+    print(f"Getting info for {name} in namespace {namespace}")
+    try:
+        response = {}
+        retry = 0
+        while ("status" not in response) and retry < 30:
+            response = custom_objects.get_namespaced_custom_object(api_group, "v1", namespace, plural, name)
+            pprint(response)
+            retry += 1
+            wait_before_test()
+        wait_before_test()
+        return response
+
+    except ApiException:
+        logging.exception(f"Exception occurred while reading CRD")
+        raise
+
+
 def is_dnsendpoint_present(custom_objects: CustomObjectsApi, name, namespace) -> bool:
     """
     Check if a namespace has a dnsendpoint.
@@ -112,8 +141,14 @@ def read_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, namespace, p
     """
     print(f"Getting info for v1alpha1 crd {name} in namespace {namespace}")
     try:
-        response = custom_objects.get_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, plural, name)
-        pprint(response)
+        response = {}
+        retry = 0
+        while ("status" not in response) and retry < 30:
+            response = custom_objects.get_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, plural, name)
+            pprint(response)
+            retry += 1
+            wait_before_test()
+        wait_before_test()
         return response
 
     except ApiException:

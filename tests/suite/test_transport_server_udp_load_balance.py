@@ -51,7 +51,7 @@ def ipfamily_from_host(host):
                 "type": "complete",
                 "extra_args": [
                     "-global-configuration=nginx-ingress/nginx-configuration",
-                    "-enable-leader-election=false",
+                    "-enable-leader-election=true",
                 ],
             },
             {"example": "transport-server-udp-load-balance"},

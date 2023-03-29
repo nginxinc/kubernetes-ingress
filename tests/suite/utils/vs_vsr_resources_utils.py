@@ -5,7 +5,7 @@ import logging
 import yaml
 from kubernetes.client import CoreV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.resources_utils import ensure_item_removal, get_file_contents
 
 
@@ -13,14 +13,14 @@ def read_vs(custom_objects: CustomObjectsApi, namespace, name) -> object:
     """
     Read VirtualServer resource.
     """
-    return read_custom_resource(custom_objects, namespace, "virtualservers", name)
+    return read_custom_resource_status(custom_objects, namespace, "virtualservers", name)
 
 
 def read_vsr(custom_objects: CustomObjectsApi, namespace, name) -> object:
     """
     Read VirtualServerRoute resource.
     """
-    return read_custom_resource(custom_objects, namespace, "virtualserverroutes", name)
+    return read_custom_resource_status(custom_objects, namespace, "virtualserverroutes", name)
 
 
 def create_virtual_server_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:

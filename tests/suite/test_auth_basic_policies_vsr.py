@@ -3,7 +3,7 @@ from base64 import b64encode
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import create_secret_from_yaml, delete_secret, wait_before_test
 from suite.utils.vs_vsr_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml
@@ -50,7 +50,7 @@ def to_base64(b64_string):
                 "extra_args": [
                     f"-enable-custom-resources",
                     f"-enable-preview-policies",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                 ],
             },
             {"example": "virtual-server-route"},
@@ -196,7 +196,7 @@ class TestAuthBasicPoliciesVsr:
         )
         print(resp.status_code)
 
-        crd_info = read_custom_resource(
+        crd_info = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
@@ -265,10 +265,10 @@ class TestAuthBasicPoliciesVsr:
 
         resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers)
         print(resp.status_code)
-        policy_info = read_custom_resource(
+        policy_info = read_custom_resource_status(
             kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
         )
-        crd_info = read_custom_resource(
+        crd_info = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
@@ -347,7 +347,7 @@ class TestAuthBasicPoliciesVsr:
             headers=headers,
         )
         print(resp2.status_code)
-        crd_info = read_custom_resource(
+        crd_info = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
@@ -413,7 +413,7 @@ class TestAuthBasicPoliciesVsr:
             headers=headers,
         )
         print(resp2.status_code)
-        crd_info = read_custom_resource(
+        crd_info = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
@@ -469,7 +469,7 @@ class TestAuthBasicPoliciesVsr:
         resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers)
         print(resp.status_code)
 
-        crd_info = read_custom_resource(
+        crd_info = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",

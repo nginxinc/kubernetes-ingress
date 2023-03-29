@@ -82,7 +82,7 @@ def ts_externalname_setup(
                 "type": "complete",
                 "extra_args": [
                     "-global-configuration=nginx-ingress/nginx-configuration",
-                    "-enable-leader-election=false",
+                    "-enable-leader-election=true",
                 ],
             },
             {"example": "transport-server-externalname", "app_type": "simple"},

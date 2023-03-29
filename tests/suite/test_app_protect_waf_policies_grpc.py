@@ -215,7 +215,7 @@ def grpc_waf_allow(kube_apis, test_namespace, public_ip, vs_host, port_ssl):
             "type": "complete",
             "extra_args": [
                 f"-enable-custom-resources",
-                f"-enable-leader-election=false",
+                f"-enable-leader-election=true",
                 f"-enable-app-protect",
             ],
         },
@@ -309,7 +309,7 @@ class TestAppProtectVSGrpc:
             "type": "complete",
             "extra_args": [
                 f"-enable-custom-resources",
-                f"-enable-leader-election=false",
+                f"-enable-leader-election=true",
                 f"-enable-app-protect",
             ],
         },

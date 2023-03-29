@@ -13,7 +13,7 @@ from suite.utils.resources_utils import get_ts_nginx_template_conf, wait_before_
                 "type": "complete",
                 "extra_args": [
                     "-global-configuration=nginx-ingress/nginx-configuration",
-                    "-enable-leader-election=false",
+                    "-enable-leader-election=true",
                     "-enable-snippets",
                 ],
             },

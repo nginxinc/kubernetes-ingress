@@ -3,7 +3,7 @@ import time
 import pytest
 from settings import TEST_DATA
 from suite.utils.custom_assertions import wait_and_assert_status_code
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.resources_utils import wait_before_test
 from suite.utils.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server
 
@@ -36,9 +36,9 @@ class TestVirtualServerWildcard:
         response = {}
         while ("status" not in response) and (retry <= 60):
             print("Waiting for VS status update...")
-            time.sleep(1)
+            wait_before_test()
             retry += 1
-            response = read_custom_resource(
+            response = read_custom_resource_status(
                 kube_apis.custom_objects,
                 virtual_server_setup.namespace,
                 "virtualservers",

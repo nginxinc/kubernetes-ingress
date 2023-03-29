@@ -3,7 +3,7 @@ import time
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import wait_before_test
 from suite.utils.vs_vsr_resources_utils import (
@@ -33,7 +33,7 @@ rl_vs_override_spec_route = f"{TEST_DATA}/rate-limit/route-subroute/virtual-serv
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                 ],
             },
             {
@@ -77,7 +77,7 @@ class TestRateLimitingPolicies:
         )
 
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource_status(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         occur = []
         t_end = time.perf_counter() + 1
         resp = requests.get(
@@ -125,7 +125,7 @@ class TestRateLimitingPolicies:
         )
 
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource_status(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         occur = []
         t_end = time.perf_counter() + 1
         resp = requests.get(
@@ -171,7 +171,9 @@ class TestRateLimitingPolicies:
         )
 
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", invalid_pol_name)
+        policy_info = read_custom_resource_status(
+            kube_apis.custom_objects, test_namespace, "policies", invalid_pol_name
+        )
         resp = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host},

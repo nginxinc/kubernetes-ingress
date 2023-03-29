@@ -1,7 +1,7 @@
 import pytest
 import requests
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import (
     ensure_response_from_backend,
@@ -74,7 +74,7 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                     f"-enable-prometheus-metrics",
                 ],
             },
@@ -131,7 +131,7 @@ class TestAccessControlPoliciesVs:
         )
         wait_before_test()
 
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource_status(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         print(f"\nUse IP listed in deny block: 10.0.0.1")
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
@@ -199,7 +199,7 @@ class TestAccessControlPoliciesVs:
         )
         wait_before_test()
 
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource_status(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         print(f"\nUse IP listed in allow block: 10.0.0.1")
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
@@ -316,13 +316,15 @@ class TestAccessControlPoliciesVs:
         )
         print(f"Response: {resp.status_code}\n{resp.text}")
 
-        vs_info = read_custom_resource(
+        vs_info = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
             virtual_server_setup.vs_name,
         )
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", invalid_pol_name)
+        policy_info = read_custom_resource_status(
+            kube_apis.custom_objects, test_namespace, "policies", invalid_pol_name
+        )
         delete_policy(kube_apis.custom_objects, invalid_pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
 
@@ -367,7 +369,7 @@ class TestAccessControlPoliciesVs:
         )
 
         wait_before_test()
-        vs_info = read_custom_resource(
+        vs_info = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -383,7 +385,7 @@ class TestAccessControlPoliciesVs:
         )
         print(f"Response: {resp.status_code}\n{resp.text}")
 
-        vs_info = read_custom_resource(
+        vs_info = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",

@@ -387,7 +387,7 @@ def appprotect_waf_setup(request, kube_apis, test_namespace) -> None:
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                     f"-enable-app-protect",
                     f"-enable-prometheus-metrics",
                 ],
@@ -538,7 +538,7 @@ def vs_vsr_setup(
                 "extra_args": [
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
-                    "-enable-leader-election=false",
+                    "-enable-leader-election=true",
                 ],
             },
         )

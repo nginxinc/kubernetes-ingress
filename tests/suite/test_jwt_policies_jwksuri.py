@@ -41,7 +41,6 @@ def get_token(request):
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.policies
-@pytest.mark.skip(reason="issues with ingressClass")
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -50,7 +49,7 @@ def get_token(request):
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                 ],
             },
             {
@@ -102,7 +101,7 @@ class TestJWTPoliciesVsJwksuri:
                 headers={"host": virtual_server_setup.vs_host},
             )
             wait_before_test()
-            counter = +1
+            counter += 1
 
         token = get_token(request)
 

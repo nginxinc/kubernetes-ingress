@@ -1,6 +1,6 @@
 import pytest
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import wait_before_test
 from suite.utils.vs_vsr_resources_utils import (
@@ -26,7 +26,7 @@ policy_other_ingress_class_src = f"{TEST_DATA}/policy-ingress-class/policy-other
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                 ],
             },
             {
@@ -62,7 +62,7 @@ class TestRateLimitingPolicies:
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy_src, test_namespace)
 
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource_status(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         assert (
             policy_info["status"]
             and policy_info["status"]["reason"] == "AddedOrUpdated"
@@ -78,7 +78,7 @@ class TestRateLimitingPolicies:
         )
         wait_before_test()
 
-        vs_info = read_custom_resource(
+        vs_info = read_custom_resource_status(
             kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name
         )
         assert (
@@ -106,7 +106,7 @@ class TestRateLimitingPolicies:
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy_ingress_class_src, test_namespace)
 
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource_status(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         assert (
             policy_info["status"]
             and policy_info["status"]["reason"] == "AddedOrUpdated"
@@ -122,7 +122,7 @@ class TestRateLimitingPolicies:
         )
         wait_before_test()
 
-        vs_info = read_custom_resource(
+        vs_info = read_custom_resource_status(
             kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name
         )
         assert (
@@ -150,7 +150,7 @@ class TestRateLimitingPolicies:
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy_other_ingress_class_src, test_namespace)
 
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource_status(kube_apis.custom_objects, test_namespace, "policies", pol_name)
 
         assert "status" not in policy_info, "the policy is not managed by the IC, therefore the status is not updated"
 
@@ -163,7 +163,7 @@ class TestRateLimitingPolicies:
         )
         wait_before_test()
 
-        vs_info = read_custom_resource(
+        vs_info = read_custom_resource_status(
             kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name
         )
         assert (

@@ -3,7 +3,7 @@ import time
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import wait_before_test
 from suite.utils.vs_vsr_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml
@@ -29,7 +29,7 @@ rl_vsr_override_vs_route_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-s
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                 ],
             },
             {"example": "virtual-server-route"},
@@ -78,7 +78,7 @@ class TestRateLimitingPoliciesVsr:
         )
 
         wait_before_test()
-        policy_info = read_custom_resource(
+        policy_info = read_custom_resource_status(
             kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
         )
         occur = []
@@ -130,7 +130,7 @@ class TestRateLimitingPoliciesVsr:
         )
 
         wait_before_test()
-        policy_info = read_custom_resource(
+        policy_info = read_custom_resource_status(
             kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
         )
         occur = []
@@ -272,7 +272,7 @@ class TestRateLimitingPoliciesVsr:
         )
 
         wait_before_test()
-        policy_info = read_custom_resource(
+        policy_info = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "policies",

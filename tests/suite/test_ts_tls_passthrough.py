@@ -87,7 +87,7 @@ def transport_server_tls_passthrough_setup(
             {
                 "type": "complete",
                 "extra_args": [
-                    "-enable-leader-election=false",
+                    "-enable-leader-election=true",
                     "-enable-tls-passthrough=true",
                 ],
             },
@@ -212,7 +212,7 @@ class TestTransportServerTlsPassthrough:
         print("Step 1: Create VirtualServer with same host")
         vs_src_same_host = f"{TEST_DATA}/transport-server-tls-passthrough/virtual-server-same-host.yaml"
         vs_same_host_name = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_src_same_host, test_namespace)
-        wait_before_test(1)
+        wait_before_test()
         response = read_vs(kube_apis.custom_objects, test_namespace, vs_same_host_name)
         delete_virtual_server(kube_apis.custom_objects, vs_same_host_name, test_namespace)
 

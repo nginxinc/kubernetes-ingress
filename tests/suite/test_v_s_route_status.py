@@ -1,6 +1,6 @@
 import pytest
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.resources_utils import wait_before_test
 from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
@@ -17,7 +17,7 @@ from suite.utils.vs_vsr_resources_utils import (
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],
+                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=true"],
             },
             {"example": "virtual-server-route-status"},
         )
@@ -64,13 +64,13 @@ class TestVirtualServerRouteStatus:
         """
         Test VirtualServerRoute status with a valid fields in yaml
         """
-        response_m = read_custom_resource(
+        response_m = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_custom_resource(
+        response_s = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
@@ -111,13 +111,13 @@ class TestVirtualServerRouteStatus:
         )
         wait_before_test()
 
-        response_m = read_custom_resource(
+        response_m = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_custom_resource(
+        response_s = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
@@ -161,13 +161,13 @@ class TestVirtualServerRouteStatus:
         )
         wait_before_test()
 
-        response_m = read_custom_resource(
+        response_m = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_custom_resource(
+        response_s = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
@@ -203,13 +203,13 @@ class TestVirtualServerRouteStatus:
         )
         wait_before_test()
 
-        response_m = read_custom_resource(
+        response_m = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_custom_resource(
+        response_s = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
@@ -240,13 +240,13 @@ class TestVirtualServerRouteStatus:
             v_s_route_setup.namespace,
         )
 
-        response_m = read_custom_resource(
+        response_m = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_custom_resource(
+        response_s = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",

@@ -1,7 +1,7 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import create_secret_from_yaml, delete_secret, wait_before_test
 from suite.utils.vs_vsr_resources_utils import delete_and_create_vs_from_yaml
@@ -35,7 +35,7 @@ invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                 ],
             },
             {
@@ -177,7 +177,7 @@ class TestJWTPolicies:
         resp = requests.get(virtual_server_setup.backend_1_url, headers=headers)
         print(resp.status_code)
 
-        crd_info = read_custom_resource(
+        crd_info = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -227,7 +227,7 @@ class TestJWTPolicies:
         )
 
         print(f"Patch vs with policy: {policy}")
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource_status(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         if policy == jwt_pol_valid_src:
             vs_src = jwt_vs_single_src
             assert (
@@ -254,7 +254,7 @@ class TestJWTPolicies:
         wait_before_test()
         resp = requests.get(virtual_server_setup.backend_1_url, headers=headers)
         print(resp.status_code)
-        crd_info = read_custom_resource(
+        crd_info = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",

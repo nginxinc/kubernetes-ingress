@@ -1,6 +1,6 @@
 import pytest
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.resources_utils import wait_before_test
 from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
 
@@ -12,7 +12,7 @@ from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],
+                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=true"],
             },
             {
                 "example": "virtual-server-status",
@@ -45,7 +45,7 @@ class TestVirtualServerStatus:
         """
         Test VirtualServer status with a valid fields in yaml
         """
-        response = read_custom_resource(
+        response = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -74,7 +74,7 @@ class TestVirtualServerStatus:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        response = read_custom_resource(
+        response = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -106,7 +106,7 @@ class TestVirtualServerStatus:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        response = read_custom_resource(
+        response = read_custom_resource_status(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",

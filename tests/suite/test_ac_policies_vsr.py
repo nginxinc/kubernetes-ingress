@@ -1,7 +1,7 @@
 import pytest
 import requests
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import replace_configmap_from_yaml, wait_before_test
 from suite.utils.vs_vsr_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml
@@ -56,7 +56,7 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],
+                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=true"],
             },
             {"example": "virtual-server-route"},
         )
@@ -106,7 +106,7 @@ class TestAccessControlPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         wait_before_test()
-        policy_info = read_custom_resource(
+        policy_info = read_custom_resource_status(
             kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
         )
 
@@ -166,7 +166,7 @@ class TestAccessControlPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         wait_before_test()
-        policy_info = read_custom_resource(
+        policy_info = read_custom_resource_status(
             kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
         )
 
@@ -285,7 +285,7 @@ class TestAccessControlPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         wait_before_test()
-        policy_info = read_custom_resource(
+        policy_info = read_custom_resource_status(
             kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
         )
 
@@ -295,7 +295,7 @@ class TestAccessControlPoliciesVsr:
             headers={"host": v_s_route_setup.vs_host, "X-Real-IP": "10.0.0.1"},
         )
         print(f"Response: {resp.status_code}\n{resp.text}")
-        vsr_info = read_custom_resource(
+        vsr_info = read_custom_resource_status(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",

@@ -118,7 +118,7 @@ def assert_valid_responses(response) -> None:
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                     f"-enable-app-protect",
                 ],
             },
@@ -377,7 +377,7 @@ class TestAppProtectWAFPolicyVS:
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
+                    f"-enable-leader-election=true",
                     f"-enable-app-protect",
                 ],
             },

@@ -13,7 +13,7 @@ from suite.utils.resources_utils import wait_before_test
                 "type": "complete",
                 "extra_args": [
                     "-global-configuration=nginx-ingress/nginx-configuration",
-                    "-enable-leader-election=false",
+                    "-enable-leader-election=true",
                 ],
             },
             {"example": "transport-server-status", "app_type": "simple"},

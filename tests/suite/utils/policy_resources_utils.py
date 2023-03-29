@@ -5,7 +5,7 @@ import logging
 import yaml
 from kubernetes.client import CustomObjectsApi
 from kubernetes.client.rest import ApiException
-from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.custom_resources_utils import read_custom_resource_status
 from suite.utils.resources_utils import ensure_item_removal
 
 
@@ -13,7 +13,7 @@ def read_policy(custom_objects: CustomObjectsApi, namespace, name) -> object:
     """
     Read Policy resource.
     """
-    return read_custom_resource(custom_objects, namespace, "policies", name)
+    return read_custom_resource_status(custom_objects, namespace, "policies", name)
 
 
 def create_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
