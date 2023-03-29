@@ -61,6 +61,7 @@ def virtual_server_setup_dos(request, kube_apis, ingress_controller_endpoint, te
     vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_source, test_namespace)
     vs_host = get_first_host_from_yaml(vs_source)
     vs_paths = get_paths_from_vs_yaml(vs_source)
+    vs_paths[0] += f"good_path.html"
     if request.param["app_type"]:
         create_example_app(kube_apis, request.param["app_type"], test_namespace)
         wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)

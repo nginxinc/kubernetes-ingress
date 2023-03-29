@@ -51,7 +51,7 @@ Snippets are disabled by default. To use snippets, set the [`enable-snippets`](/
 
 The F5 Nginx Ingress Controller (NIC) has various protections against attacks, such as running the service as non-root to avoid changes to files. An additional industry best practice is having root filesystems set as read-only so that the attack surface is further reduced by limiting changes to binaries and libraries.
 
-Currently we do not set read-only root filesystem as default. Instead, this is an opt-in feature available on the [helm-chart](/nginx-ingress-controller/installation-with-helm/#configuration) via `controller.readOnlyRootFilesystem`.
+Currently, we do not set read-only root filesystem as default. Instead, this is an opt-in feature available on the [helm-chart](/nginx-ingress-controller/installation/installation-with-helm/#configuration) via `controller.readOnlyRootFilesystem`.
 When using manifests instead of Helm, uncomment the following sections of the deployment:
  * `readOnlyRootFilesystem: true`,
  * The entire `volumeMounts` section,

@@ -323,6 +323,7 @@ def are_all_pods_in_ready_state(v1: CoreV1Api, namespace) -> bool:
         return False
     pod_ready_amount = 0
     for pod in pods.items:
+        print(f"Pod {pod.metadata.name} has image {pod.spec.containers[0].image}")
         if pod.status.conditions is None:
             return False
         for condition in pod.status.conditions:

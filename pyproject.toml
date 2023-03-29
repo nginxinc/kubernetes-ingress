@@ -23,15 +23,16 @@ pythonpath = [
 addopts = "--tb=native -ra --disable-warnings -x -l --profile -v"
 log_cli = true
 markers =[
-    "smoke",
-    "vsr",
-    "policies",
-    "vs",
-    "ts",
-    "ingresses",
     "appprotect",
+    "dos",
+    "ingresses",
+    "policies",
     "rewrite",
     "skip_for_nginx_oss",
+    "smoke",
+    "ts",
+    "vs",
+    "vsr",
 ]
 testpaths = [
     "tests",
