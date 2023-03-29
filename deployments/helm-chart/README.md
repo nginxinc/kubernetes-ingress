@@ -86,7 +86,7 @@ Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Unin
 
 ### Edge Version
 
-To test the latest changes in the Ingress Controller before a new release, you can install the `edge` version. This version is built from the `main` branch of the Ingress Controller repository.
+To test the latest changes in NGINX Ingress Controller before a new release, you can install the `edge` version. This version is built from the `main` branch of the NGINX Ingress Controller repository.
 You can install the `edge` version by specifying the `--version` flag with the value `0.0.0-edge`:
 
 ```console
