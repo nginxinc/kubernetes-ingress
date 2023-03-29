@@ -92,6 +92,8 @@ spec:
                   properties:
                     clientCertSecret:
                       type: string
+                    crlFileName:
+                      type: string
                     verifyClient:
                       type: string
                     verifyDepth:
@@ -114,6 +116,8 @@ spec:
                   description: OIDC defines an Open ID Connect policy.
                   type: object
                   properties:
+                    accessTokenEnable:
+                      type: boolean
                     authEndpoint:
                       type: string
                     authExtraArgs:

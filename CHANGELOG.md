@@ -1,5 +1,11 @@
 # Changelog
 
+### 3.1.0
+
+An automatically generated list of changes can be found on GitHub at: [3.1.0 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v3.1.0)
+
+A curated list of changes can be found on the [Releases](http://docs.nginx.com/nginx-ingress-controller/releases/) page on the NGINX Documentation website.
+
 ### 3.0.2
 
 An automatically generated list of changes can be found on GitHub at: [3.0.2 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v3.0.2)

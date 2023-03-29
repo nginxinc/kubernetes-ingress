@@ -26,7 +26,7 @@ This step is required if you're installing the chart using its sources. Addition
 
 1. Clone the Ingress Controller repo:
     ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.0.2
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.1.0
     ```
 2. Change your working directory to /deployments/helm-chart:
     ```console
@@ -159,7 +159,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.logLevel`` | The log level of the Ingress Controller. | 1 |
 |``controller.image.repository`` | The image repository of the Ingress Controller. | nginx/nginx-ingress |
 |``controller.image.digest`` | The digest of the Ingress Controller image. Digest has precedence over tag | None |
-|``controller.image.tag`` | The tag of the Ingress Controller image. | 3.0.2 |
+|``controller.image.tag`` | The tag of the Ingress Controller image. | 3.1.0 |
 |``controller.image.pullPolicy`` | The pull policy for the Ingress Controller image. | IfNotPresent |
 |``controller.lifecycle`` | The lifecycle of the Ingress Controller pods. | {} |
 |``controller.customConfigMap`` | The name of the custom ConfigMap used by the Ingress Controller. If set, then the default config is ignored. | "" |
@@ -250,6 +250,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.podDisruptionBudget.maxUnavailable`` | The number of Ingress Controller pods that can be unavailable. | 0 |
 |``controller.strategy`` | Specifies the strategy used to replace old Pods with new ones. Docs for [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) and [Daemonset update strategy](https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/#daemonset-update-strategy). | {} |
 | `controller.disableIPV6` | Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack. | false |
+|``controller.readOnlyRootFilesystem`` | Configure root filesystem as read-only and add volumes for temporary data. | false |
 |``rbac.create`` | Configures RBAC. | true |
 |``prometheus.create`` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | false |
 |``prometheus.port`` | Configures the port to scrape the metrics. | 9113 |

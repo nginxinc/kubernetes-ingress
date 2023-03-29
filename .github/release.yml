@@ -3,18 +3,15 @@ changelog:
     labels:
       - skip changelog
   categories:
-    - title: 🚀 Features
-      labels:
-        - enhancement
     - title: 💣 Breaking Changes
       labels:
         - change
+    - title: 🚀 Features
+      labels:
+        - enhancement
     - title: 🐛 Bug Fixes
       labels:
         - bug
-    - title: 📝 Documentation
-      labels:
-        - documentation
     - title: 📦 Helm Chart
       labels:
         - helm_chart
@@ -24,6 +21,9 @@ changelog:
     - title: 🔨 Maintenance
       labels:
         - chore
+    - title: 📝 Documentation
+      labels:
+        - documentation
     - title: ⬆️ Dependencies
       labels:
         - dependencies

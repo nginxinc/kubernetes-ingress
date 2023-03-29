@@ -2917,7 +2917,9 @@ func TestGeneratePolicies(t *testing.T) {
 		vsNamespace:    "default",
 		vsName:         "test",
 	}
-	ingressMTLSCertPath := "/etc/nginx/secrets/default-ingress-mtls-secret"
+	ingressMTLSCertPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crt"
+	ingressMTLSCrlPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crl"
+	ingressMTLSCertAndCrlPath := fmt.Sprintf("%s %s", ingressMTLSCertPath, ingressMTLSCrlPath)
 	policyOpts := policyOptions{
 		tls: true,
 		secretRefs: map[string]*secrets.SecretReference{
@@ -2926,6 +2928,15 @@ func TestGeneratePolicies(t *testing.T) {
 					Type: secrets.SecretTypeCA,
 				},
 				Path: ingressMTLSCertPath,
+			},
+			"default/ingress-mtls-secret-crl": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeCA,
+					Data: map[string][]byte{
+						"ca.crl": []byte("base64crl"),
+					},
+				},
+				Path: ingressMTLSCertAndCrlPath,
 			},
 			"default/egress-mtls-secret": {
 				Secret: &api_v1.Secret{
@@ -3314,6 +3325,71 @@ func TestGeneratePolicies(t *testing.T) {
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
+					Name:      "ingress-mtls-policy-crl",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/ingress-mtls-policy-crl": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy-crl",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
+							ClientCertSecret: "ingress-mtls-secret-crl",
+							VerifyClient:     "off",
+						},
+					},
+				},
+			},
+			context: "spec",
+			expected: policiesCfg{
+				IngressMTLS: &version2.IngressMTLS{
+					ClientCert:   ingressMTLSCertPath,
+					ClientCrl:    ingressMTLSCrlPath,
+					VerifyClient: "off",
+					VerifyDepth:  1,
+				},
+			},
+			msg: "ingressMTLS reference with ca.crl field in secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "ingress-mtls-policy-crl",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/ingress-mtls-policy-crl": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy-crl",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
+							ClientCertSecret: "ingress-mtls-secret",
+							CrlFileName:      "default-ingress-mtls-secret-ca.crl",
+							VerifyClient:     "off",
+						},
+					},
+				},
+			},
+			context: "spec",
+			expected: policiesCfg{
+				IngressMTLS: &version2.IngressMTLS{
+					ClientCert:   ingressMTLSCertPath,
+					ClientCrl:    ingressMTLSCrlPath,
+					VerifyClient: "off",
+					VerifyDepth:  1,
+				},
+			},
+			msg: "ingressMTLS reference with crl field in policy",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
 					Name:      "egress-mtls-policy",
 					Namespace: "default",
 				},
@@ -3362,14 +3438,15 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							AuthEndpoint:   "http://example.com/auth",
-							TokenEndpoint:  "http://example.com/token",
-							JWKSURI:        "http://example.com/jwks",
-							ClientID:       "client-id",
-							ClientSecret:   "oidc-secret",
-							Scope:          "scope",
-							RedirectURI:    "/redirect",
-							ZoneSyncLeeway: createPointerFromInt(20),
+							AuthEndpoint:      "http://example.com/auth",
+							TokenEndpoint:     "http://example.com/token",
+							JWKSURI:           "http://example.com/jwks",
+							ClientID:          "client-id",
+							ClientSecret:      "oidc-secret",
+							Scope:             "scope",
+							RedirectURI:       "/redirect",
+							ZoneSyncLeeway:    createPointerFromInt(20),
+							AccessTokenEnable: true,
 						},
 					},
 				},
@@ -3487,6 +3564,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 
 	dryRunOverride := true
 	rejectCodeOverride := 505
+
+	ingressMTLSCertPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crt"
+	ingressMTLSCrlPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crl"
 
 	tests := []struct {
 		policyRefs        []conf_v1.PolicyReference
@@ -4065,14 +4145,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 						Secret: &api_v1.Secret{
 							Type: secrets.SecretTypeCA,
 						},
-						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
+						Path: ingressMTLSCertPath,
 					},
 				},
 			},
 			context: "spec",
 			expected: policiesCfg{
 				IngressMTLS: &version2.IngressMTLS{
-					ClientCert:   "/etc/nginx/secrets/default-ingress-mtls-secret",
+					ClientCert:   ingressMTLSCertPath,
 					VerifyClient: "on",
 					VerifyDepth:  1,
 				},
@@ -4112,7 +4192,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 						Secret: &api_v1.Secret{
 							Type: secrets.SecretTypeCA,
 						},
-						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
+						Path: ingressMTLSCertPath,
 					},
 				},
 			},
@@ -4157,7 +4237,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 						Secret: &api_v1.Secret{
 							Type: secrets.SecretTypeCA,
 						},
-						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
+						Path: ingressMTLSCertPath,
 					},
 				},
 			},
@@ -4174,6 +4254,59 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{},
 			msg:          "ingress mtls missing TLS config",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "ingress-mtls-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/ingress-mtls-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
+							ClientCertSecret: "ingress-mtls-secret",
+							CrlFileName:      "default-ingress-mtls-secret-ca.crl",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				tls: true,
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/ingress-mtls-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+							Data: map[string][]byte{
+								"ca.crl": []byte("base64crl"),
+							},
+						},
+						Path: ingressMTLSCertPath,
+					},
+				},
+			},
+			context: "spec",
+			expected: policiesCfg{
+				IngressMTLS: &version2.IngressMTLS{
+					ClientCert:   ingressMTLSCertPath,
+					ClientCrl:    ingressMTLSCrlPath,
+					VerifyClient: "on",
+					VerifyDepth:  1,
+				},
+				ErrorReturn: nil,
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Both ca.crl in the Secret and ingressMTLS.crlFileName fields cannot be used. ca.crl in default/ingress-mtls-secret will be ignored and default/ingress-mtls-policy will be applied`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "ingress mtls ca.crl and ingressMTLS.Crl set",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -4478,10 +4611,11 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "http://foo.com/bar",
-							TokenEndpoint: "http://foo.com/bar",
-							JWKSURI:       "http://foo.com/bar",
+							ClientSecret:      "oidc-secret",
+							AuthEndpoint:      "http://foo.com/bar",
+							TokenEndpoint:     "http://foo.com/bar",
+							JWKSURI:           "http://foo.com/bar",
+							AccessTokenEnable: true,
 						},
 					},
 				},
@@ -4524,11 +4658,12 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientID:      "foo",
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "https://foo.com/auth",
-							TokenEndpoint: "https://foo.com/token",
-							JWKSURI:       "https://foo.com/certs",
+							ClientID:          "foo",
+							ClientSecret:      "oidc-secret",
+							AuthEndpoint:      "https://foo.com/auth",
+							TokenEndpoint:     "https://foo.com/token",
+							JWKSURI:           "https://foo.com/certs",
+							AccessTokenEnable: true,
 						},
 					},
 				},
@@ -4539,11 +4674,12 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientID:      "foo",
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "https://bar.com/auth",
-							TokenEndpoint: "https://bar.com/token",
-							JWKSURI:       "https://bar.com/certs",
+							ClientID:          "foo",
+							ClientSecret:      "oidc-secret",
+							AuthEndpoint:      "https://bar.com/auth",
+							TokenEndpoint:     "https://bar.com/token",
+							JWKSURI:           "https://bar.com/certs",
+							AccessTokenEnable: true,
 						},
 					},
 				},
@@ -4563,14 +4699,15 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			context: "route",
 			oidcPolCfg: &oidcPolicyCfg{
 				oidc: &version2.OIDC{
-					AuthEndpoint:   "https://foo.com/auth",
-					TokenEndpoint:  "https://foo.com/token",
-					JwksURI:        "https://foo.com/certs",
-					ClientID:       "foo",
-					ClientSecret:   "super_secret_123",
-					RedirectURI:    "/_codexch",
-					Scope:          "openid",
-					ZoneSyncLeeway: 0,
+					AuthEndpoint:      "https://foo.com/auth",
+					TokenEndpoint:     "https://foo.com/token",
+					JwksURI:           "https://foo.com/certs",
+					ClientID:          "foo",
+					ClientSecret:      "super_secret_123",
+					RedirectURI:       "/_codexch",
+					Scope:             "openid",
+					ZoneSyncLeeway:    0,
+					AccessTokenEnable: true,
 				},
 				key: "default/oidc-policy-1",
 			},
@@ -4586,13 +4723,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{
 				oidc: &version2.OIDC{
-					AuthEndpoint:  "https://foo.com/auth",
-					TokenEndpoint: "https://foo.com/token",
-					JwksURI:       "https://foo.com/certs",
-					ClientID:      "foo",
-					ClientSecret:  "super_secret_123",
-					RedirectURI:   "/_codexch",
-					Scope:         "openid",
+					AuthEndpoint:      "https://foo.com/auth",
+					TokenEndpoint:     "https://foo.com/token",
+					JwksURI:           "https://foo.com/certs",
+					ClientID:          "foo",
+					ClientSecret:      "super_secret_123",
+					RedirectURI:       "/_codexch",
+					Scope:             "openid",
+					AccessTokenEnable: true,
 				},
 				key: "default/oidc-policy-1",
 			},
@@ -4617,11 +4755,12 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "https://foo.com/auth",
-							TokenEndpoint: "https://foo.com/token",
-							JWKSURI:       "https://foo.com/certs",
-							ClientID:      "foo",
+							ClientSecret:      "oidc-secret",
+							AuthEndpoint:      "https://foo.com/auth",
+							TokenEndpoint:     "https://foo.com/token",
+							JWKSURI:           "https://foo.com/certs",
+							ClientID:          "foo",
+							AccessTokenEnable: true,
 						},
 					},
 				},
@@ -4632,11 +4771,12 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientSecret:  "oidc-secret",
-							AuthEndpoint:  "https://bar.com/auth",
-							TokenEndpoint: "https://bar.com/token",
-							JWKSURI:       "https://bar.com/certs",
-							ClientID:      "bar",
+							ClientSecret:      "oidc-secret",
+							AuthEndpoint:      "https://bar.com/auth",
+							TokenEndpoint:     "https://bar.com/token",
+							JWKSURI:           "https://bar.com/certs",
+							ClientID:          "bar",
+							AccessTokenEnable: true,
 						},
 					},
 				},
@@ -4664,14 +4804,15 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{
 				&version2.OIDC{
-					AuthEndpoint:   "https://foo.com/auth",
-					TokenEndpoint:  "https://foo.com/token",
-					JwksURI:        "https://foo.com/certs",
-					ClientID:       "foo",
-					ClientSecret:   "super_secret_123",
-					RedirectURI:    "/_codexch",
-					Scope:          "openid",
-					ZoneSyncLeeway: 200,
+					AuthEndpoint:      "https://foo.com/auth",
+					TokenEndpoint:     "https://foo.com/token",
+					JwksURI:           "https://foo.com/certs",
+					ClientID:          "foo",
+					ClientSecret:      "super_secret_123",
+					RedirectURI:       "/_codexch",
+					Scope:             "openid",
+					ZoneSyncLeeway:    200,
+					AccessTokenEnable: true,
 				},
 				"default/oidc-policy",
 			},

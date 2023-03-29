@@ -92,6 +92,7 @@ type SSL struct {
 // IngressMTLS defines TLS configuration for a server. This is a subset of TLS specifically for clients auth.
 type IngressMTLS struct {
 	ClientCert   string
+	ClientCrl    string
 	VerifyClient string
 	VerifyDepth  int
 }
@@ -112,15 +113,16 @@ type EgressMTLS struct {
 
 // OIDC holds OIDC configuration data.
 type OIDC struct {
-	AuthEndpoint   string
-	ClientID       string
-	ClientSecret   string
-	JwksURI        string
-	Scope          string
-	TokenEndpoint  string
-	RedirectURI    string
-	ZoneSyncLeeway int
-	AuthExtraArgs  string
+	AuthEndpoint      string
+	ClientID          string
+	ClientSecret      string
+	JwksURI           string
+	Scope             string
+	TokenEndpoint     string
+	RedirectURI       string
+	ZoneSyncLeeway    int
+	AuthExtraArgs     string
+	AccessTokenEnable bool
 }
 
 // WAF defines WAF configuration.
