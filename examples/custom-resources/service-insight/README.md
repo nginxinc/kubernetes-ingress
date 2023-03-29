@@ -75,12 +75,13 @@ First, get the pod name in namespace `nginx-ingress`:
 kubectl get pods -n nginx-ingress
 ```
 
-```
+```bash
 NAME                             READY   STATUS    RESTARTS   AGE
 nginx-ingress-5b99f485fb-vflb8   1/1     Running   0          72m
 ```
 
 Using the id, forward the service insight port (9114) to localhost port 9114:
+
 ```bash
 kubectl port-forward -n nginx-ingress nginx-ingress-5b99f485fb-vflb8 9114:9114 &
 ```
@@ -94,6 +95,7 @@ Follow the [basic configuration example](../basic-configuration/) to deploy `caf
 ### Testing
 
 Verify that the virtual server is running, and check the hostname:
+
 ```bash
 kubectl get vs cafe
 NAME   STATE   HOST               IP    PORTS   AGE
@@ -281,4 +283,142 @@ Response:
 
 ```json
 {"Total":3,"Up":3,"Unhealthy":0}
+```
+
+## Service Insight with TLS
+
+The following example demonstrates how to enable the Service Insight for NGINX Ingress Controller with **TLS** using [manifests (Deployment)](../../../deployments/deployment/nginx-plus-ingress.yaml):
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+    metadata:
+      labels:
+        app: nginx-ingress
+        app.kubernetes.io/name: nginx-ingress
+    spec:
+      serviceAccountName: nginx-ingress
+      automountServiceAccountToken: true
+      securityContext:
+      ...
+      containers:
+      - image: nginx-plus-ingress:3.0.2
+        imagePullPolicy: IfNotPresent
+        name: nginx-plus-ingress
+        ports:
+        - name: http
+          containerPort: 80
+        - name: https
+          containerPort: 443
+        - name: readiness-port
+          containerPort: 8081
+        - name: prometheus
+          containerPort: 9113
+        - name: service-insight
+          containerPort: 9114
+        readinessProbe:
+          httpGet:
+            path: /nginx-ready
+            port: readiness-port
+          periodSeconds: 1
+        resources:
+        ...
+        securityContext:
+        ...
+        env:
+        ...
+        args:
+          - -nginx-plus
+          - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+        ...
+          - -enable-service-insight
+          - -service-insight-tls-secret=default/service-insight-secret
+```
+
+The example below uses the `nodeport` service.
+
+
+First, create and verify the secret:
+
+```bash
+kubectl apply -f service-insight-secret.yaml
+```
+
+```bash
+kubectl get secrets service-insight-secret
+```
+
+```bash
+NAME                     TYPE                DATA   AGE
+service-insight-secret   kubernetes.io/tls   2      55s
+```
+
+
+Get the nginx-ingress pod id:
+
+```bash
+kubectl get pods -n nginx-ingress
+```
+
+```bash
+NAME                             READY   STATUS    RESTARTS   AGE
+nginx-ingress-687d9c6764-g6vwx   1/1     Running   0          2m8s
+```
+
+Verify the nginx-ingress configuration parameters:
+
+```bash
+kubectl describe pods -n nginx-ingress nginx-ingress-687d9c6764-g6vwx
+```
+
+```bash
+...
+Containers:
+  nginx-plus-ingress:
+    Container ID:  containerd://fdff9038d747cada877cd547d88aa4a94af3d243e43956445d81f1e9d641be86
+    Image:         nginx-plus-ingress:jjplus
+    Image ID:      docker.io/library/import-2023-03-27@sha256:85120b9f157bd6bb8e4469fa4aee3bbeac62c0a494d2707b47daab66b6b0b199
+    Ports:         80/TCP, 443/TCP, 8081/TCP, 9113/TCP, 9114/TCP
+    Host Ports:    0/TCP, 0/TCP, 0/TCP, 0/TCP, 0/TCP
+    Args:
+      -nginx-plus
+      -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+      ...
+      -enable-service-insight
+      -service-insight-tls-secret=default/service-insight-secret
+      ...
+    State:          Running
+      Started:      Wed, 29 Mar 2023 14:32:25 +0100
+...
+```
+
+Using the nginx-ingress pod id, forward the service insight port (9114) to localhost port 9114:
+
+```bash
+kubectl port-forward -n nginx-ingress nginx-ingress-687d9c6764-g6vwx 9114:9114 &
+```
+
+Follow the [basic configuration example](../basic-configuration/) to deploy `cafe` app and `cafe virtual server`.
+
+Send a `GET` request to the service insight (TLS) endpoint to check statistics:
+
+Request:
+
+```bash
+curl https://localhost:9114/probe/cafe.example.com --insecure
+```
+
+Response:
+
+```json
+{"Total":2,"Up":2,"Unhealthy":0}
 ```
