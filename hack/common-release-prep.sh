@@ -24,7 +24,10 @@ FILES_TO_UPDATE_IC_VERSION=(
     deployments/helm-chart/values.yaml
 )
 
-FILE_TO_UPDATE_HELM_CHART_VERSION=(deployments/helm-chart/Chart.yaml)
+FILE_TO_UPDATE_HELM_CHART_VERSION=(
+    deployments/helm-chart/Chart.yaml
+    deployments/helm-chart/README.md
+)
 
 DOCS_TO_UPDATE_FOLDER=docs/content
 
@@ -35,6 +38,22 @@ helm_chart_version=$4
 
 sed -i "" "s/$prev_ic_version/$ic_version/g" ${FILES_TO_UPDATE_IC_VERSION[*]}
 sed -i "" "s/$prev_helm_chart_version/$helm_chart_version/g" ${FILE_TO_UPDATE_HELM_CHART_VERSION[*]}
+
+# copy the helm chart README to the docs
+{
+    sed -n '1,10p' docs/content/installation/installation-with-helm.md
+    sed -n '3,$p' deployments/helm-chart/README.md
+} >file2.new && mv file2.new docs/content/installation/installation-with-helm.md
+
+sed -i '' '/^|Parameter | Description | Default |/i\
+{{% table %}}\
+' docs/content/installation/installation-with-helm.md
+
+line_number=$(grep -n -e "|" docs/content/installation/installation-with-helm.md | tail -n 1 | cut -d : -f 1)
+
+sed -i '' "${line_number}a\\
+{{% /table %}}
+" docs/content/installation/installation-with-helm.md
 
 # update repo CHANGELOG
 sed -i "" "1r hack/repo-changelog-template.txt" CHANGELOG.md

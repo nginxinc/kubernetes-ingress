@@ -5,8 +5,8 @@ ARG DOWNLOAD_TAG=edge
 
 
 ############################################# Base images containing libs for Opentracing #############################################
-FROM opentracing/nginx-opentracing:nginx-1.23.3 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.23.3-alpine as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.23.4 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.23.4-alpine as alpine-opentracing-lib
 
 
 ############################################# Base image for Debian #############################################
