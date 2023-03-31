@@ -55,7 +55,7 @@ Otherwise, step 1 can be ignored.
 
 1. Create a secret with a TLS certificate and a key for the default server in NGINX:
     ```
-    $ kubectl apply -f examples/default-server-secret/default-server-secret.yaml
+    $ kubectl apply -f examples/shared-examples/default-server-secret/default-server-secret.yaml
     ```
 
     **Note**: The default server returns the Not Found page with the 404 status code for all requests for domains for which there are no Ingress rules defined. For testing purposes we include a self-signed certificate and key that we generated. However, we recommend that you use your own certificate and key.
