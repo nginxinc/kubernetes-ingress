@@ -53,7 +53,7 @@ In this section, we create resources common for most of the Ingress Controller i
 **NOTE**: Installing the `default-server-secret.yaml` is optional and is required only if you are using the  [default server TLS secret](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-default-server-tls-secret) command line argument. It is recommended that users provide their own certificate.
 Otherwise, step 1 can be ignored.
 
-1. Create a secret with a TLS certificate and a key for the default server in NGINX (below assumes you are in the `deployment` directory):
+1. Create a secret with a TLS certificate and a key for the default server in NGINX (below assumes you are in the `kubernetes-ingress/deployment` directory):
     ```
     $ kubectl apply -f ../examples/shared-examples/default-server-secret/default-server-secret.yaml
     ```
