@@ -57,19 +57,6 @@ match {{ $m.Name }} {
 {{ end }}
 
 {{ $s := .Server }}
-{{ if $s.JWKSAuthEnabled }}
-
-map $request_uri $idp_backend {
-    {{ range $l := $s.Locations }}
-    {{ with $l.JWTAuth }}
-    {{ $l.Path }} {{ .JwksURI.JwksScheme }}://{{ .JwksURI.JwksHost }}{{ if .JwksURI.JwksPort }}:{{ .JwksURI.JwksPort }}{{ end }}{{ .JwksURI.JwksPath }};
-    {{ end }}
-    {{ end }}
-    {{ with $s.JWTAuth }}
-    default {{ .JwksURI.JwksScheme }}://{{ .JwksURI.JwksHost }}{{ if .JwksURI.JwksPort }}:{{ .JwksURI.JwksPort }}{{ end }}{{ .JwksURI.JwksPath }};
-    {{ end }}
-}
-{{ end }}
 
 server {
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
@@ -185,18 +172,23 @@ server {
     {{ if .JwksURI.JwksHost }}
     {{ if .KeyCache }}auth_jwt_key_cache {{ .KeyCache }};{{ end }}
     auth_jwt_key_request /_jwks_uri_server;
-    {{ end }}
-    {{ end }}
 
-    {{ if $s.JWKSAuthEnabled }}
     location = /_jwks_uri_server {
         internal;
         proxy_method GET;
         proxy_set_header Content-Length "";
+        {{ if .KeyCache }}
         proxy_cache jwks_uri;
         proxy_cache_valid 200 12h;
-        proxy_pass $idp_backend;
+        {{ end }}
+        {{ with $s.JWTAuth.JwksURI }}
+        proxy_set_header Host {{ .JwksHost }};
+        set $idp_backend {{ .JwksHost }};
+        proxy_pass {{ .JwksScheme}}://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
+        {{ end }}
     }
+
+    {{ end }}
     {{ end }}
 
     {{ with $s.BasicAuth }}
@@ -378,9 +370,24 @@ server {
         {{ with $l.JWTAuth }}
         auth_jwt "{{ .Realm }}"{{ if .Token }} token={{ .Token }}{{ end }};
         {{ if .Secret}}auth_jwt_key_file {{ .Secret }};{{ end }}
-        {{ if .KeyCache }}auth_jwt_key_cache {{ .KeyCache }};{{ end }}
         {{ if .JwksURI.JwksHost }}
-        auth_jwt_key_request /_jwks_uri_server;
+        {{ if .KeyCache }}auth_jwt_key_cache {{ .KeyCache }};{{ end }}
+        auth_jwt_key_request {{ $l.Path }}_jwks_uri;
+
+        location = {{ $l.Path }}_jwks_uri {
+            internal;
+            proxy_method GET;
+            proxy_set_header Content-Length "";
+            {{ if .KeyCache }}
+            proxy_cache jwks_uri;
+            proxy_cache_valid 200 12h;
+            {{ end }}
+            {{ with $l.JWTAuth.JwksURI }}
+            proxy_set_header Host {{ .JwksHost }};
+            set $idp_backend {{ .JwksHost }};
+            proxy_pass {{ .JwksScheme}}://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
+            {{ end }}
+        }
         {{ end }}
         {{ end }}
 
