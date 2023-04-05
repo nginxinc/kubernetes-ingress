@@ -460,7 +460,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		if policiesCfg.OIDC {
 			routePoliciesCfg.OIDC = policiesCfg.OIDC
 		}
-
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -571,7 +570,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			if policiesCfg.OIDC {
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
-
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 			dosRouteCfg := generateDosCfg(dosResources[r.Path])
