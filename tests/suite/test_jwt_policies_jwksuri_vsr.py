@@ -12,10 +12,13 @@ std_vsr_src = f"{TEST_DATA}/virtual-server-route/route-multiple.yaml"
 jwt_pol_valid_src = f"{TEST_DATA}/jwt-policy-jwksuri/policies/jwt-policy-valid.yaml"
 jwt_pol_invalid_src = f"{TEST_DATA}/jwt-policy-jwksuri/policies/jwt-policy-invalid.yaml"
 jwt_vsr_subroute_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server-route/virtual-server-route-policy-subroute.yaml"
-jwt_vsr_invalid_pol_subroute_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server-route/virtual-server-route-invalid-policy-subroute.yaml"
+jwt_vsr_invalid_pol_subroute_src = (
+    f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server-route/virtual-server-route-invalid-policy-subroute.yaml"
+)
 jwt_cm_src = f"{TEST_DATA}/jwt-policy-jwksuri/configmap/nginx-config.yaml"
 ad_tenant = "dd3dfd2f-6a3b-40d1-9be0-bf8327d81c50"
 client_id = "8a172a83-a630-41a4-9ca6-1e5ef03cd7e7"
+
 
 def get_token(request):
     """
@@ -83,7 +86,9 @@ class TestJWTPoliciesVSRJwksuri:
             ingress_controller_prerequisites.namespace,
             jwt_cm_src,
         )
-        pol_name = create_policy_from_yaml(kube_apis.custom_objects, jwt_pol_valid_src, v_s_route_setup.route_m.namespace)
+        pol_name = create_policy_from_yaml(
+            kube_apis.custom_objects, jwt_pol_valid_src, v_s_route_setup.route_m.namespace
+        )
         wait_before_test()
 
         print(f"Patch vsr with policy: {jwt_virtual_server_route}")
@@ -153,7 +158,9 @@ class TestJWTPoliciesVSRJwksuri:
             ingress_controller_prerequisites.namespace,
             jwt_cm_src,
         )
-        pol_name = create_policy_from_yaml(kube_apis.custom_objects, jwt_pol_invalid_src, v_s_route_setup.route_m.namespace)
+        pol_name = create_policy_from_yaml(
+            kube_apis.custom_objects, jwt_pol_invalid_src, v_s_route_setup.route_m.namespace
+        )
         wait_before_test()
 
         print(f"Patch vsr with policy: {jwt_virtual_server_route}")

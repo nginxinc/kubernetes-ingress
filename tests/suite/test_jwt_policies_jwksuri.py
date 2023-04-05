@@ -6,7 +6,12 @@ import requests
 from settings import TEST_DATA
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import replace_configmap_from_yaml, wait_before_test
-from suite.utils.vs_vsr_resources_utils import delete_and_create_vs_from_yaml, patch_v_s_route_from_yaml, create_virtual_server_from_yaml, delete_virtual_server
+from suite.utils.vs_vsr_resources_utils import (
+    create_virtual_server_from_yaml,
+    delete_and_create_vs_from_yaml,
+    delete_virtual_server,
+    patch_v_s_route_from_yaml,
+)
 
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
 jwt_pol_valid_src = f"{TEST_DATA}/jwt-policy-jwksuri/policies/jwt-policy-valid.yaml"
@@ -14,10 +19,14 @@ jwt_pol_invalid_src = f"{TEST_DATA}/jwt-policy-jwksuri/policies/jwt-policy-inval
 jwt_vs_spec_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-spec.yaml"
 jwt_vs_route_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route.yaml"
 jwt_vs_route_subpath_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath.yaml"
-jwt_vs_route_subpath_diff_host_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath-diff-host.yaml"
+jwt_vs_route_subpath_diff_host_src = (
+    f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath-diff-host.yaml"
+)
 jwt_vs_invalid_pol_spec_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-spec.yaml"
 jwt_vs_invalid_pol_route_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route.yaml"
-jwt_vs_invalid_pol_route_subpath_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route-subpath.yaml"
+jwt_vs_invalid_pol_route_subpath_src = (
+    f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route-subpath.yaml"
+)
 jwt_cm_src = f"{TEST_DATA}/jwt-policy-jwksuri/configmap/nginx-config.yaml"
 ad_tenant = "dd3dfd2f-6a3b-40d1-9be0-bf8327d81c50"
 client_id = "8a172a83-a630-41a4-9ca6-1e5ef03cd7e7"
