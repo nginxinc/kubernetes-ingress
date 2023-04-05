@@ -44,7 +44,6 @@ def get_token(request):
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.policies
-@pytest.mark.skip(reason="issues with ingressClass")
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
