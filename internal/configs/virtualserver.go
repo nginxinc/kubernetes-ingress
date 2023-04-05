@@ -686,7 +686,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			DisableIPV6:               vsc.isIPV6Disabled,
 		},
 		SpiffeCerts:       enabledInternalRoutes,
-		SpiffeClientCerts: vsc.spiffeCerts,
+		SpiffeClientCerts: vsc.spiffeCerts && !enabledInternalRoutes,
 	}
 
 	return vsCfg, vsc.warnings
