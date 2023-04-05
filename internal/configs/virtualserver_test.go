@@ -1369,7 +1369,7 @@ func TestGenerateVirtualServerConfigWithInternalRoutes(t *testing.T) {
 			},
 		},
 		SpiffeCerts:       true,
-		SpiffeClientCerts: true,
+		SpiffeClientCerts: false,
 	}
 
 	isPlus := false
