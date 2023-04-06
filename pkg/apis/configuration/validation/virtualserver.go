@@ -8,6 +8,7 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -77,6 +78,7 @@ func (vsv *VirtualServerValidator) validateVirtualServerSpec(spec *v1.VirtualSer
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateHost(spec.Host, fieldPath.Child("host"))...)
+	allErrs = append(allErrs, validateGunzip(spec.Gunzip, fieldPath.Child("gunzip"))...)
 	allErrs = append(allErrs, vsv.validateTLS(spec.TLS, fieldPath.Child("tls"))...)
 	allErrs = append(allErrs, validatePolicies(spec.Policies, fieldPath.Child("policies"), namespace)...)
 
@@ -112,6 +114,19 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 	}
 
 	return allErrs
+}
+
+func validateGunzip(fieldValue *string, fl *field.Path) field.ErrorList {
+	allErr := field.ErrorList{}
+	if fieldValue == nil {
+		return allErr
+	}
+	v := *fieldValue
+	if !slices.Contains([]string{"on", "off"}, v) {
+		allErr = append(allErr, field.NotSupported(fl, v, []string{"on", "off"}))
+		return allErr
+	}
+	return allErr
 }
 
 func validatePolicies(policies []v1.PolicyReference, fieldPath *field.Path, namespace string) field.ErrorList {

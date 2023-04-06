@@ -68,6 +68,219 @@ func TestValidateVirtualServer(t *testing.T) {
 	}
 }
 
+func TestValidateVirtualServer_PassesOnValidGunzipOn(t *testing.T) {
+	t.Parallel()
+
+	vsv := &VirtualServerValidator{isPlus: false, isDosEnabled: false}
+	err := vsv.ValidateVirtualServer(&virtualServerWithValidGunzipOn)
+	if err != nil {
+		t.Errorf("ValidateVirtualServer() returned error %v for valid input %+v", err, virtualServerWithValidGunzipOn)
+	}
+}
+
+func TestValidateVirtualServer_PassesOnValidGunzipOff(t *testing.T) {
+	t.Parallel()
+
+	vsv := &VirtualServerValidator{isPlus: false, isDosEnabled: false}
+	err := vsv.ValidateVirtualServer(&virtualServerWithValidGunzipOff)
+	if err != nil {
+		t.Errorf("ValidateVirtualServer() returned error %v for valid input %+v", err, virtualServerWithValidGunzipOff)
+	}
+}
+
+func TestValidateVirtualServer_PassesOnNoGunzip(t *testing.T) {
+	t.Parallel()
+
+	vsv := &VirtualServerValidator{isPlus: false, isDosEnabled: false}
+	err := vsv.ValidateVirtualServer(&virtualServerWithNoGunzip)
+	if err != nil {
+		t.Errorf("ValidateVirtualServer() returned error %v for valid input %+v", err, virtualServerWithNoGunzip)
+	}
+}
+
+func TestValidateVirtualServer_FailsOnBogusGunzipValue(t *testing.T) {
+	t.Parallel()
+
+	vsv := &VirtualServerValidator{isPlus: false, isDosEnabled: false}
+	err := vsv.ValidateVirtualServer(&virtualServerWithBogusGunzipValue)
+	if err == nil {
+		t.Error("ValidateVirtualServer() returned no error on bogus gunzip value")
+	}
+}
+
+var (
+	gunzipOn    = "on"
+	gunzipOff   = "off"
+	gunzipBogus = "bogus"
+
+	virtualServerWithValidGunzipOn = v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+		Spec: v1.VirtualServerSpec{
+			Host:   "example.com",
+			Gunzip: &gunzipOn,
+			Upstreams: []v1.Upstream{
+				{
+					Name:      "first",
+					Service:   "service-1",
+					LBMethod:  "random",
+					Port:      80,
+					MaxFails:  createPointerFromInt(8),
+					MaxConns:  createPointerFromInt(16),
+					Keepalive: createPointerFromInt(32),
+					Type:      "grpc",
+				},
+				{
+					Name:    "second",
+					Service: "service-2",
+					Port:    80,
+				},
+			},
+			Routes: []v1.Route{
+				{
+					Path: "/first",
+					Action: &v1.Action{
+						Pass: "first",
+					},
+				},
+				{
+					Path: "/second",
+					Action: &v1.Action{
+						Pass: "second",
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerWithValidGunzipOff = v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+		Spec: v1.VirtualServerSpec{
+			Host:   "example.com",
+			Gunzip: &gunzipOff,
+			Upstreams: []v1.Upstream{
+				{
+					Name:      "first",
+					Service:   "service-1",
+					LBMethod:  "random",
+					Port:      80,
+					MaxFails:  createPointerFromInt(8),
+					MaxConns:  createPointerFromInt(16),
+					Keepalive: createPointerFromInt(32),
+					Type:      "grpc",
+				},
+				{
+					Name:    "second",
+					Service: "service-2",
+					Port:    80,
+				},
+			},
+			Routes: []v1.Route{
+				{
+					Path: "/first",
+					Action: &v1.Action{
+						Pass: "first",
+					},
+				},
+				{
+					Path: "/second",
+					Action: &v1.Action{
+						Pass: "second",
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerWithNoGunzip = v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+		Spec: v1.VirtualServerSpec{
+			Host: "example.com",
+			Upstreams: []v1.Upstream{
+				{
+					Name:      "first",
+					Service:   "service-1",
+					LBMethod:  "random",
+					Port:      80,
+					MaxFails:  createPointerFromInt(8),
+					MaxConns:  createPointerFromInt(16),
+					Keepalive: createPointerFromInt(32),
+					Type:      "grpc",
+				},
+				{
+					Name:    "second",
+					Service: "service-2",
+					Port:    80,
+				},
+			},
+			Routes: []v1.Route{
+				{
+					Path: "/first",
+					Action: &v1.Action{
+						Pass: "first",
+					},
+				},
+				{
+					Path: "/second",
+					Action: &v1.Action{
+						Pass: "second",
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerWithBogusGunzipValue = v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+		Spec: v1.VirtualServerSpec{
+			Host:   "example.com",
+			Gunzip: &gunzipBogus,
+			Upstreams: []v1.Upstream{
+				{
+					Name:      "first",
+					Service:   "service-1",
+					LBMethod:  "random",
+					Port:      80,
+					MaxFails:  createPointerFromInt(8),
+					MaxConns:  createPointerFromInt(16),
+					Keepalive: createPointerFromInt(32),
+					Type:      "grpc",
+				},
+				{
+					Name:    "second",
+					Service: "service-2",
+					Port:    80,
+				},
+			},
+			Routes: []v1.Route{
+				{
+					Path: "/first",
+					Action: &v1.Action{
+						Pass: "first",
+					},
+				},
+				{
+					Path: "/second",
+					Action: &v1.Action{
+						Pass: "second",
+					},
+				},
+			},
+		},
+	}
+)
+
 func TestValidateHost(t *testing.T) {
 	t.Parallel()
 	validHosts := []string{
@@ -98,6 +311,43 @@ func TestValidateHost(t *testing.T) {
 		if len(allErrs) == 0 {
 			t.Errorf("validateHost(%q) returned no errors for invalid input", h)
 		}
+	}
+}
+
+func TestValidateGunzip_FailsOnBogusGunzipValue(t *testing.T) {
+	t.Parallel()
+
+	bogus, empty := "bogus", ""
+	tt := []*string{&bogus, &empty}
+	for _, g := range tt {
+		allErr := validateGunzip(g, field.NewPath("gunzip"))
+		if len(allErr) == 0 {
+			val := *g
+			t.Errorf("validateGunzip(%q) did not return error on invalid input.", val)
+		}
+	}
+}
+
+func TestValidateGunzip_PassesOnValidGunzipValue(t *testing.T) {
+	t.Parallel()
+
+	on, off := "on", "off"
+	tt := []*string{&on, &off}
+	for _, g := range tt {
+		allErr := validateGunzip(g, field.NewPath("gunzip"))
+		if len(allErr) > 0 {
+			val := *g
+			t.Errorf("validateGunzip(%q) returned errors %v for valid input", val, allErr)
+		}
+	}
+}
+
+func TestValidateGunzip_PassesOnNotProvidedGunzipEntry(t *testing.T) {
+	t.Parallel()
+
+	allErr := validateGunzip(nil, field.NewPath("gunzip"))
+	if len(allErr) != 0 {
+		t.Errorf("validateGunzip(nil) want no error, got %v", allErr)
 	}
 }
 
