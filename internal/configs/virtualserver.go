@@ -998,6 +998,8 @@ func (p *policiesCfg) addEgressMTLSConfig(
 		trustedSecretPath = secretRef.Path
 	}
 
+	caFields := strings.Fields(trustedSecretPath)
+
 	p.EgressMTLS = &version2.EgressMTLS{
 		Certificate:    tlsSecretPath,
 		CertificateKey: tlsSecretPath,
@@ -1007,7 +1009,7 @@ func (p *policiesCfg) addEgressMTLSConfig(
 		VerifyDepth:    generateIntFromPointer(egressMTLS.VerifyDepth, 1),
 		SessionReuse:   generateBool(egressMTLS.SessionReuse, true),
 		ServerName:     egressMTLS.ServerName,
-		TrustedCert:    trustedSecretPath,
+		TrustedCert:    caFields[0],
 		SSLName:        generateString(egressMTLS.SSLName, "$proxy_host"),
 	}
 	return res

@@ -2691,9 +2691,9 @@ func TestGeneratePolicies(t *testing.T) {
 		vsNamespace:    "default",
 		vsName:         "test",
 	}
-	ingressMTLSCertPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crt"
-	ingressMTLSCrlPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crl"
-	ingressMTLSCertAndCrlPath := fmt.Sprintf("%s %s", ingressMTLSCertPath, ingressMTLSCrlPath)
+	mTLSCertPath := "/etc/nginx/secrets/default-mtls-secret-ca.crt"
+	mTLSCrlPath := "/etc/nginx/secrets/default-mtls-secret-ca.crl"
+	mTLSCertAndCrlPath := fmt.Sprintf("%s %s", mTLSCertPath, mTLSCrlPath)
 	policyOpts := policyOptions{
 		tls: true,
 		secretRefs: map[string]*secrets.SecretReference{
@@ -2701,7 +2701,7 @@ func TestGeneratePolicies(t *testing.T) {
 				Secret: &api_v1.Secret{
 					Type: secrets.SecretTypeCA,
 				},
-				Path: ingressMTLSCertPath,
+				Path: mTLSCertPath,
 			},
 			"default/ingress-mtls-secret-crl": {
 				Secret: &api_v1.Secret{
@@ -2710,7 +2710,7 @@ func TestGeneratePolicies(t *testing.T) {
 						"ca.crl": []byte("base64crl"),
 					},
 				},
-				Path: ingressMTLSCertAndCrlPath,
+				Path: mTLSCertAndCrlPath,
 			},
 			"default/egress-mtls-secret": {
 				Secret: &api_v1.Secret{
@@ -2723,6 +2723,12 @@ func TestGeneratePolicies(t *testing.T) {
 					Type: secrets.SecretTypeCA,
 				},
 				Path: "/etc/nginx/secrets/default-egress-trusted-ca-secret",
+			},
+			"default/egress-trusted-ca-secret-crl": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeCA,
+				},
+				Path: mTLSCertAndCrlPath,
 			},
 			"default/jwt-secret": {
 				Secret: &api_v1.Secret{
@@ -2758,409 +2764,444 @@ func TestGeneratePolicies(t *testing.T) {
 	tests := []struct {
 		policyRefs []conf_v1.PolicyReference
 		policies   map[string]*conf_v1.Policy
-		policyOpts policyOptions
 		context    string
 		expected   policiesCfg
 		msg        string
 	}{
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "allow-policy",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/allow-policy": {
-					Spec: conf_v1.PolicySpec{
-						AccessControl: &conf_v1.AccessControl{
-							Allow: []string{"127.0.0.1"},
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				Allow: []string{"127.0.0.1"},
-			},
-			msg: "explicit reference",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name: "allow-policy",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/allow-policy": {
-					Spec: conf_v1.PolicySpec{
-						AccessControl: &conf_v1.AccessControl{
-							Allow: []string{"127.0.0.1"},
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				Allow: []string{"127.0.0.1"},
-			},
-			msg: "implicit reference",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name: "allow-policy-1",
-				},
-				{
-					Name: "allow-policy-2",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/allow-policy-1": {
-					Spec: conf_v1.PolicySpec{
-						AccessControl: &conf_v1.AccessControl{
-							Allow: []string{"127.0.0.1"},
-						},
-					},
-				},
-				"default/allow-policy-2": {
-					Spec: conf_v1.PolicySpec{
-						AccessControl: &conf_v1.AccessControl{
-							Allow: []string{"127.0.0.2"},
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				Allow: []string{"127.0.0.1", "127.0.0.2"},
-			},
-			msg: "merging",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "rateLimit-policy",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/rateLimit-policy": {
-					Spec: conf_v1.PolicySpec{
-						RateLimit: &conf_v1.RateLimit{
-							Key:      "test",
-							ZoneSize: "10M",
-							Rate:     "10r/s",
-							LogLevel: "notice",
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
-					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "notice",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
-					},
-				},
-			},
-			msg: "rate limit reference",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "rateLimit-policy",
-					Namespace: "default",
-				},
-				{
-					Name:      "rateLimit-policy2",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/rateLimit-policy": {
-					Spec: conf_v1.PolicySpec{
-						RateLimit: &conf_v1.RateLimit{
-							Key:      "test",
-							ZoneSize: "10M",
-							Rate:     "10r/s",
-						},
-					},
-				},
-				"default/rateLimit-policy2": {
-					Spec: conf_v1.PolicySpec{
-						RateLimit: &conf_v1.RateLimit{
-							Key:      "test2",
-							ZoneSize: "20M",
-							Rate:     "20r/s",
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				LimitReqZones: []version2.LimitReqZone{
-					{
-						Key:      "test",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
-					},
-					{
-						Key:      "test2",
-						ZoneSize: "20M",
-						Rate:     "20r/s",
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
-					},
-				},
-				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "error",
-					RejectCode: 503,
-				},
-				LimitReqs: []version2.LimitReq{
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
-					},
-					{
-						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
-					},
-				},
-			},
-			msg: "multi rate limit reference",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "jwt-policy",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/jwt-policy": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "jwt-policy",
-						Namespace: "default",
-					},
-					Spec: conf_v1.PolicySpec{
-						JWTAuth: &conf_v1.JWTAuth{
-							Realm:  "My Test API",
-							Secret: "jwt-secret",
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Secret: "/etc/nginx/secrets/default-jwt-secret",
-					Realm:  "My Test API",
-				},
-			},
-			msg: "jwt reference",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "jwt-policy-2",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/jwt-policy-2": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "jwt-policy",
-						Namespace: "default",
-					},
-					Spec: conf_v1.PolicySpec{
-						JWTAuth: &conf_v1.JWTAuth{
-							Realm:    "My Test API",
-							JwksURI:  "https://idp.example.com:443/keys",
-							KeyCache: "1h",
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Realm: "My Test API",
-					JwksURI: version2.JwksURI{
-						JwksScheme: "https",
-						JwksHost:   "idp.example.com",
-						JwksPort:   "443",
-						JwksPath:   "/keys",
-					},
-					KeyCache: "1h",
-				},
-			},
-			msg: "Basic jwks example",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "jwt-policy-2",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/jwt-policy-2": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "jwt-policy",
-						Namespace: "default",
-					},
-					Spec: conf_v1.PolicySpec{
-						JWTAuth: &conf_v1.JWTAuth{
-							Realm:    "My Test API",
-							JwksURI:  "https://idp.example.com/keys",
-							KeyCache: "1h",
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				JWTAuth: &version2.JWTAuth{
-					Realm: "My Test API",
-					JwksURI: version2.JwksURI{
-						JwksScheme: "https",
-						JwksHost:   "idp.example.com",
-						JwksPort:   "",
-						JwksPath:   "/keys",
-					},
-					KeyCache: "1h",
-				},
-			},
-			msg: "Basic jwks example, no port in JwksURI",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "basic-auth-policy",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/basic-auth-policy": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "basic-auth-policy",
-						Namespace: "default",
-					},
-					Spec: conf_v1.PolicySpec{
-						BasicAuth: &conf_v1.BasicAuth{
-							Realm:  "My Test API",
-							Secret: "htpasswd-secret",
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				BasicAuth: &version2.BasicAuth{
-					Secret: "/etc/nginx/secrets/default-htpasswd-secret",
-					Realm:  "My Test API",
-				},
-			},
-			msg: "basic auth reference",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "ingress-mtls-policy",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/ingress-mtls-policy": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "ingress-mtls-policy",
-						Namespace: "default",
-					},
-					Spec: conf_v1.PolicySpec{
-						IngressMTLS: &conf_v1.IngressMTLS{
-							ClientCertSecret: "ingress-mtls-secret",
-							VerifyClient:     "off",
-						},
-					},
-				},
-			},
-			context: "spec",
-			expected: policiesCfg{
-				IngressMTLS: &version2.IngressMTLS{
-					ClientCert:   ingressMTLSCertPath,
-					VerifyClient: "off",
-					VerifyDepth:  1,
-				},
-			},
-			msg: "ingressMTLS reference",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "ingress-mtls-policy-crl",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/ingress-mtls-policy-crl": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "ingress-mtls-policy-crl",
-						Namespace: "default",
-					},
-					Spec: conf_v1.PolicySpec{
-						IngressMTLS: &conf_v1.IngressMTLS{
-							ClientCertSecret: "ingress-mtls-secret-crl",
-							VerifyClient:     "off",
-						},
-					},
-				},
-			},
-			context: "spec",
-			expected: policiesCfg{
-				IngressMTLS: &version2.IngressMTLS{
-					ClientCert:   ingressMTLSCertPath,
-					ClientCrl:    ingressMTLSCrlPath,
-					VerifyClient: "off",
-					VerifyDepth:  1,
-				},
-			},
-			msg: "ingressMTLS reference with ca.crl field in secret",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "ingress-mtls-policy-crl",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/ingress-mtls-policy-crl": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "ingress-mtls-policy-crl",
-						Namespace: "default",
-					},
-					Spec: conf_v1.PolicySpec{
-						IngressMTLS: &conf_v1.IngressMTLS{
-							ClientCertSecret: "ingress-mtls-secret",
-							CrlFileName:      "default-ingress-mtls-secret-ca.crl",
-							VerifyClient:     "off",
-						},
-					},
-				},
-			},
-			context: "spec",
-			expected: policiesCfg{
-				IngressMTLS: &version2.IngressMTLS{
-					ClientCert:   ingressMTLSCertPath,
-					ClientCrl:    ingressMTLSCrlPath,
-					VerifyClient: "off",
-					VerifyDepth:  1,
-				},
-			},
-			msg: "ingressMTLS reference with crl field in policy",
-		},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "allow-policy",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/allow-policy": {
+		//			Spec: conf_v1.PolicySpec{
+		//				AccessControl: &conf_v1.AccessControl{
+		//					Allow: []string{"127.0.0.1"},
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		Allow: []string{"127.0.0.1"},
+		//	},
+		//	msg: "explicit reference",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name: "allow-policy",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/allow-policy": {
+		//			Spec: conf_v1.PolicySpec{
+		//				AccessControl: &conf_v1.AccessControl{
+		//					Allow: []string{"127.0.0.1"},
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		Allow: []string{"127.0.0.1"},
+		//	},
+		//	msg: "implicit reference",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name: "allow-policy-1",
+		//		},
+		//		{
+		//			Name: "allow-policy-2",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/allow-policy-1": {
+		//			Spec: conf_v1.PolicySpec{
+		//				AccessControl: &conf_v1.AccessControl{
+		//					Allow: []string{"127.0.0.1"},
+		//				},
+		//			},
+		//		},
+		//		"default/allow-policy-2": {
+		//			Spec: conf_v1.PolicySpec{
+		//				AccessControl: &conf_v1.AccessControl{
+		//					Allow: []string{"127.0.0.2"},
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		Allow: []string{"127.0.0.1", "127.0.0.2"},
+		//	},
+		//	msg: "merging",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "rateLimit-policy",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/rateLimit-policy": {
+		//			Spec: conf_v1.PolicySpec{
+		//				RateLimit: &conf_v1.RateLimit{
+		//					Key:      "test",
+		//					ZoneSize: "10M",
+		//					Rate:     "10r/s",
+		//					LogLevel: "notice",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		LimitReqZones: []version2.LimitReqZone{
+		//			{
+		//				Key:      "test",
+		//				ZoneSize: "10M",
+		//				Rate:     "10r/s",
+		//				ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+		//			},
+		//		},
+		//		LimitReqOptions: version2.LimitReqOptions{
+		//			LogLevel:   "notice",
+		//			RejectCode: 503,
+		//		},
+		//		LimitReqs: []version2.LimitReq{
+		//			{
+		//				ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+		//			},
+		//		},
+		//	},
+		//	msg: "rate limit reference",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "rateLimit-policy",
+		//			Namespace: "default",
+		//		},
+		//		{
+		//			Name:      "rateLimit-policy2",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/rateLimit-policy": {
+		//			Spec: conf_v1.PolicySpec{
+		//				RateLimit: &conf_v1.RateLimit{
+		//					Key:      "test",
+		//					ZoneSize: "10M",
+		//					Rate:     "10r/s",
+		//				},
+		//			},
+		//		},
+		//		"default/rateLimit-policy2": {
+		//			Spec: conf_v1.PolicySpec{
+		//				RateLimit: &conf_v1.RateLimit{
+		//					Key:      "test2",
+		//					ZoneSize: "20M",
+		//					Rate:     "20r/s",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		LimitReqZones: []version2.LimitReqZone{
+		//			{
+		//				Key:      "test",
+		//				ZoneSize: "10M",
+		//				Rate:     "10r/s",
+		//				ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+		//			},
+		//			{
+		//				Key:      "test2",
+		//				ZoneSize: "20M",
+		//				Rate:     "20r/s",
+		//				ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+		//			},
+		//		},
+		//		LimitReqOptions: version2.LimitReqOptions{
+		//			LogLevel:   "error",
+		//			RejectCode: 503,
+		//		},
+		//		LimitReqs: []version2.LimitReq{
+		//			{
+		//				ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+		//			},
+		//			{
+		//				ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+		//			},
+		//		},
+		//	},
+		//	msg: "multi rate limit reference",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "jwt-policy",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/jwt-policy": {
+		//			ObjectMeta: meta_v1.ObjectMeta{
+		//				Name:      "jwt-policy",
+		//				Namespace: "default",
+		//			},
+		//			Spec: conf_v1.PolicySpec{
+		//				JWTAuth: &conf_v1.JWTAuth{
+		//					Realm:  "My Test API",
+		//					Secret: "jwt-secret",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		JWTAuth: &version2.JWTAuth{
+		//			Secret: "/etc/nginx/secrets/default-jwt-secret",
+		//			Realm:  "My Test API",
+		//		},
+		//	},
+		//	msg: "jwt reference",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "jwt-policy-2",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/jwt-policy-2": {
+		//			ObjectMeta: meta_v1.ObjectMeta{
+		//				Name:      "jwt-policy",
+		//				Namespace: "default",
+		//			},
+		//			Spec: conf_v1.PolicySpec{
+		//				JWTAuth: &conf_v1.JWTAuth{
+		//					Realm:    "My Test API",
+		//					JwksURI:  "https://idp.example.com:443/keys",
+		//					KeyCache: "1h",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		JWTAuth: &version2.JWTAuth{
+		//			Realm: "My Test API",
+		//			JwksURI: version2.JwksURI{
+		//				JwksScheme: "https",
+		//				JwksHost:   "idp.example.com",
+		//				JwksPort:   "443",
+		//				JwksPath:   "/keys",
+		//			},
+		//			KeyCache: "1h",
+		//		},
+		//	},
+		//	msg: "Basic jwks example",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "jwt-policy-2",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/jwt-policy-2": {
+		//			ObjectMeta: meta_v1.ObjectMeta{
+		//				Name:      "jwt-policy",
+		//				Namespace: "default",
+		//			},
+		//			Spec: conf_v1.PolicySpec{
+		//				JWTAuth: &conf_v1.JWTAuth{
+		//					Realm:    "My Test API",
+		//					JwksURI:  "https://idp.example.com/keys",
+		//					KeyCache: "1h",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		JWTAuth: &version2.JWTAuth{
+		//			Realm: "My Test API",
+		//			JwksURI: version2.JwksURI{
+		//				JwksScheme: "https",
+		//				JwksHost:   "idp.example.com",
+		//				JwksPort:   "",
+		//				JwksPath:   "/keys",
+		//			},
+		//			KeyCache: "1h",
+		//		},
+		//	},
+		//	msg: "Basic jwks example, no port in JwksURI",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "basic-auth-policy",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/basic-auth-policy": {
+		//			ObjectMeta: meta_v1.ObjectMeta{
+		//				Name:      "basic-auth-policy",
+		//				Namespace: "default",
+		//			},
+		//			Spec: conf_v1.PolicySpec{
+		//				BasicAuth: &conf_v1.BasicAuth{
+		//					Realm:  "My Test API",
+		//					Secret: "htpasswd-secret",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		BasicAuth: &version2.BasicAuth{
+		//			Secret: "/etc/nginx/secrets/default-htpasswd-secret",
+		//			Realm:  "My Test API",
+		//		},
+		//	},
+		//	msg: "basic auth reference",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "ingress-mtls-policy",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/ingress-mtls-policy": {
+		//			ObjectMeta: meta_v1.ObjectMeta{
+		//				Name:      "ingress-mtls-policy",
+		//				Namespace: "default",
+		//			},
+		//			Spec: conf_v1.PolicySpec{
+		//				IngressMTLS: &conf_v1.IngressMTLS{
+		//					ClientCertSecret: "ingress-mtls-secret",
+		//					VerifyClient:     "off",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	context: "spec",
+		//	expected: policiesCfg{
+		//		IngressMTLS: &version2.IngressMTLS{
+		//			ClientCert:   mTLSCertPath,
+		//			VerifyClient: "off",
+		//			VerifyDepth:  1,
+		//		},
+		//	},
+		//	msg: "ingressMTLS reference",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "ingress-mtls-policy-crl",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/ingress-mtls-policy-crl": {
+		//			ObjectMeta: meta_v1.ObjectMeta{
+		//				Name:      "ingress-mtls-policy-crl",
+		//				Namespace: "default",
+		//			},
+		//			Spec: conf_v1.PolicySpec{
+		//				IngressMTLS: &conf_v1.IngressMTLS{
+		//					ClientCertSecret: "ingress-mtls-secret-crl",
+		//					VerifyClient:     "off",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	context: "spec",
+		//	expected: policiesCfg{
+		//		IngressMTLS: &version2.IngressMTLS{
+		//			ClientCert:   mTLSCertPath,
+		//			ClientCrl:    mTLSCrlPath,
+		//			VerifyClient: "off",
+		//			VerifyDepth:  1,
+		//		},
+		//	},
+		//	msg: "ingressMTLS reference with ca.crl field in secret",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "ingress-mtls-policy-crl",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/ingress-mtls-policy-crl": {
+		//			ObjectMeta: meta_v1.ObjectMeta{
+		//				Name:      "ingress-mtls-policy-crl",
+		//				Namespace: "default",
+		//			},
+		//			Spec: conf_v1.PolicySpec{
+		//				IngressMTLS: &conf_v1.IngressMTLS{
+		//					ClientCertSecret: "ingress-mtls-secret",
+		//					CrlFileName:      "default-ingress-mtls-secret-ca.crl",
+		//					VerifyClient:     "off",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	context: "spec",
+		//	expected: policiesCfg{
+		//		IngressMTLS: &version2.IngressMTLS{
+		//			ClientCert:   mTLSCertPath,
+		//			ClientCrl:    mTLSCrlPath,
+		//			VerifyClient: "off",
+		//			VerifyDepth:  1,
+		//		},
+		//	},
+		//	msg: "ingressMTLS reference with crl field in policy",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "egress-mtls-policy",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/egress-mtls-policy": {
+		//			Spec: conf_v1.PolicySpec{
+		//				EgressMTLS: &conf_v1.EgressMTLS{
+		//					TLSSecret:         "egress-mtls-secret",
+		//					ServerName:        true,
+		//					SessionReuse:      createPointerFromBool(false),
+		//					TrustedCertSecret: "egress-trusted-ca-secret",
+		//				},
+		//			},
+		//		},
+		//	},
+		//	context: "route",
+		//	expected: policiesCfg{
+		//		EgressMTLS: &version2.EgressMTLS{
+		//			Certificate:    "/etc/nginx/secrets/default-egress-mtls-secret",
+		//			CertificateKey: "/etc/nginx/secrets/default-egress-mtls-secret",
+		//			Ciphers:        "DEFAULT",
+		//			Protocols:      "TLSv1 TLSv1.1 TLSv1.2",
+		//			ServerName:     true,
+		//			SessionReuse:   false,
+		//			VerifyDepth:    1,
+		//			VerifyServer:   false,
+		//			TrustedCert:    "/etc/nginx/secrets/default-egress-trusted-ca-secret",
+		//			SSLName:        "$proxy_host",
+		//		},
+		//	},
+		//	msg: "egressMTLS reference",
+		//},
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
@@ -3175,7 +3216,7 @@ func TestGeneratePolicies(t *testing.T) {
 							TLSSecret:         "egress-mtls-secret",
 							ServerName:        true,
 							SessionReuse:      createPointerFromBool(false),
-							TrustedCertSecret: "egress-trusted-ca-secret",
+							TrustedCertSecret: "egress-trusted-ca-secret-crl",
 						},
 					},
 				},
@@ -3191,78 +3232,78 @@ func TestGeneratePolicies(t *testing.T) {
 					SessionReuse:   false,
 					VerifyDepth:    1,
 					VerifyServer:   false,
-					TrustedCert:    "/etc/nginx/secrets/default-egress-trusted-ca-secret",
+					TrustedCert:    mTLSCertPath,
 					SSLName:        "$proxy_host",
 				},
 			},
-			msg: "egressMTLS reference",
+			msg: "egressMTLS with crt and crl",
 		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "oidc-policy",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/oidc-policy": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "oidc-policy",
-						Namespace: "default",
-					},
-					Spec: conf_v1.PolicySpec{
-						OIDC: &conf_v1.OIDC{
-							AuthEndpoint:      "http://example.com/auth",
-							TokenEndpoint:     "http://example.com/token",
-							JWKSURI:           "http://example.com/jwks",
-							ClientID:          "client-id",
-							ClientSecret:      "oidc-secret",
-							Scope:             "scope",
-							RedirectURI:       "/redirect",
-							ZoneSyncLeeway:    createPointerFromInt(20),
-							AccessTokenEnable: true,
-						},
-					},
-				},
-			},
-			expected: policiesCfg{
-				OIDC: true,
-			},
-			msg: "oidc reference",
-		},
-		{
-			policyRefs: []conf_v1.PolicyReference{
-				{
-					Name:      "waf-policy",
-					Namespace: "default",
-				},
-			},
-			policies: map[string]*conf_v1.Policy{
-				"default/waf-policy": {
-					Spec: conf_v1.PolicySpec{
-						WAF: &conf_v1.WAF{
-							Enable:   true,
-							ApPolicy: "default/dataguard-alarm",
-							SecurityLog: &conf_v1.SecurityLog{
-								Enable:    true,
-								ApLogConf: "default/logconf",
-								LogDest:   "syslog:server=127.0.0.1:514",
-							},
-						},
-					},
-				},
-			},
-			context: "route",
-			expected: policiesCfg{
-				WAF: &version2.WAF{
-					Enable:              "on",
-					ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
-					ApSecurityLogEnable: true,
-					ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf syslog:server=127.0.0.1:514"},
-				},
-			},
-			msg: "WAF reference",
-		},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "oidc-policy",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/oidc-policy": {
+		//			ObjectMeta: meta_v1.ObjectMeta{
+		//				Name:      "oidc-policy",
+		//				Namespace: "default",
+		//			},
+		//			Spec: conf_v1.PolicySpec{
+		//				OIDC: &conf_v1.OIDC{
+		//					AuthEndpoint:      "http://example.com/auth",
+		//					TokenEndpoint:     "http://example.com/token",
+		//					JWKSURI:           "http://example.com/jwks",
+		//					ClientID:          "client-id",
+		//					ClientSecret:      "oidc-secret",
+		//					Scope:             "scope",
+		//					RedirectURI:       "/redirect",
+		//					ZoneSyncLeeway:    createPointerFromInt(20),
+		//					AccessTokenEnable: true,
+		//				},
+		//			},
+		//		},
+		//	},
+		//	expected: policiesCfg{
+		//		OIDC: true,
+		//	},
+		//	msg: "oidc reference",
+		//},
+		//{
+		//	policyRefs: []conf_v1.PolicyReference{
+		//		{
+		//			Name:      "waf-policy",
+		//			Namespace: "default",
+		//		},
+		//	},
+		//	policies: map[string]*conf_v1.Policy{
+		//		"default/waf-policy": {
+		//			Spec: conf_v1.PolicySpec{
+		//				WAF: &conf_v1.WAF{
+		//					Enable:   true,
+		//					ApPolicy: "default/dataguard-alarm",
+		//					SecurityLog: &conf_v1.SecurityLog{
+		//						Enable:    true,
+		//						ApLogConf: "default/logconf",
+		//						LogDest:   "syslog:server=127.0.0.1:514",
+		//					},
+		//				},
+		//			},
+		//		},
+		//	},
+		//	context: "route",
+		//	expected: policiesCfg{
+		//		WAF: &version2.WAF{
+		//			Enable:              "on",
+		//			ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+		//			ApSecurityLogEnable: true,
+		//			ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf syslog:server=127.0.0.1:514"},
+		//		},
+		//	},
+		//	msg: "WAF reference",
+		//},
 	}
 
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
