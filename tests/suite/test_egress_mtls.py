@@ -28,6 +28,7 @@ mtls_vs_route_src = f"{TEST_DATA}/egress-mtls/route-subroute/virtual-server-mtls
 mtls_vsr_subroute_src = f"{TEST_DATA}/egress-mtls/route-subroute/virtual-server-route-mtls.yaml"
 mtls_vs_vsr_src = f"{TEST_DATA}/egress-mtls/route-subroute/virtual-server-vsr.yaml"
 
+
 def setup_policy(kube_apis, test_namespace, mtls_secret, tls_secret, policy):
     print(f"Create egress-mtls secret")
     mtls_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, mtls_secret)
@@ -40,11 +41,13 @@ def setup_policy(kube_apis, test_namespace, mtls_secret, tls_secret, policy):
 
     return mtls_secret_name, tls_secret_name, pol_name
 
+
 def teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret):
     print("Delete policy and related secrets")
     delete_secret(kube_apis.v1, tls_secret, test_namespace)
     delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
     delete_secret(kube_apis.v1, mtls_secret, test_namespace)
+
 
 @pytest.mark.policies
 @pytest.mark.parametrize(
@@ -109,7 +112,7 @@ class TestEgressMtlsPolicyVS:
                 "Warning",
                 "Test invalid EgressMTLS policy applied to a VirtualServer",
             ),
-        ]
+        ],
     )
     def test_egress_mtls_policy(
         self,
@@ -227,7 +230,7 @@ class TestEgressMtlsPolicyVSR:
                 "Warning",
                 "Test invalid EgressMTLS policy applied to VirtualServerRoute",
             ),
-        ]
+        ],
     )
     def test_egress_mtls_policy(
         self,
