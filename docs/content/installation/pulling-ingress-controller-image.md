@@ -1,6 +1,6 @@
 ---
-title: Pulling the Ingress Controller Image
-description: "This document explains how to pull an NGINX Plus Ingress Controller image from the F5 Docker registry."
+title: Pulling the NGINX Ingress Controller Image
+description: "This document explains how to pull a F5 NGINX Plus Ingress Controller image from the F5 Docker registry."
 weight: 1700
 doctypes: [""]
 toc: true
@@ -25,7 +25,7 @@ Before you can pull the image, make sure that the following software is installe
    To do so in a Linux based environment, create a `private-registry.nginx.com` directory under `/etc/docker/certs.d` and create a certificate `client.cert` (using `nginx-repo.crt` - please note that the certificate MUST have the `.cert` suffix, not `.crt`) and a key `client.key` (using `nginx-repo.key`). See  the [Docker Engine Security documentation](https://docs.docker.com/engine/security/certificates/) for more details.
 
    ```
-   # mkdir /etc/docker/certs.d/private-registry.nginx.com
+   # mkdir -p /etc/docker/certs.d/private-registry.nginx.com
    # cp nginx-repo.crt /etc/docker/certs.d/private-registry.nginx.com/client.cert
    # cp nginx-repo.key /etc/docker/certs.d/private-registry.nginx.com/client.key
    ```
