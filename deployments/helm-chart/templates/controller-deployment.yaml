@@ -19,22 +19,19 @@ spec:
       labels:
         {{- include "nginx-ingress.selectorLabels" . | nindent 8 }}
 {{- if .Values.nginxServiceMesh.enable }}
+        nsm.nginx.com/enable-ingress: "true"
+        nsm.nginx.com/enable-egress: "{{ .Values.nginxServiceMesh.enableEgress }}"
         nsm.nginx.com/deployment: {{ include "nginx-ingress.controller.fullname" . }}
-        spiffe.io/spiffeid: "true"
 {{- end }}
 {{- if .Values.controller.pod.extraLabels }}
 {{ toYaml .Values.controller.pod.extraLabels | indent 8 }}
 {{- end }}
-{{- if or .Values.prometheus.create (or .Values.controller.pod.annotations .Values.nginxServiceMesh.enable) }}
+{{- if or .Values.prometheus.create .Values.controller.pod.annotations }}
       annotations:
 {{- if .Values.prometheus.create }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ .Values.prometheus.port }}"
         prometheus.io/scheme: "{{ .Values.prometheus.scheme }}"
-{{- end }}
-{{- if .Values.nginxServiceMesh.enable }}
-        nsm.nginx.com/enable-ingress: "true"
-        nsm.nginx.com/enable-egress: "{{ .Values.nginxServiceMesh.enableEgress }}"
 {{- end }}
 {{- if .Values.controller.pod.annotations }}
 {{ toYaml .Values.controller.pod.annotations | indent 8 }}
@@ -57,7 +54,7 @@ spec:
       topologySpreadConstraints:
 {{ toYaml .Values.controller.topologySpreadConstraints | indent 8 }}
 {{- end }}
-{{- if or .Values.controller.readOnlyRootFilesystem .Values.nginxServiceMesh.enable .Values.controller.volumes }}
+{{- if or .Values.controller.readOnlyRootFilesystem .Values.controller.volumes }}
       volumes:
 {{- end }}
 {{- if .Values.controller.readOnlyRootFilesystem }}
@@ -69,12 +66,6 @@ spec:
         emptyDir: {}
       - name: nginx-log
         emptyDir: {}
-{{- end }}
-{{- if .Values.nginxServiceMesh.enable }}
-      - hostPath:
-          path: /run/spire/sockets
-          type: DirectoryOrCreate
-        name: spire-agent-socket
 {{- end }}
 {{- if .Values.controller.volumes }}
 {{ toYaml .Values.controller.volumes | indent 6 }}
@@ -140,7 +131,7 @@ spec:
           capabilities:
             drop:
             - ALL
-{{- if or .Values.controller.readOnlyRootFilesystem .Values.nginxServiceMesh.enable .Values.controller.volumeMounts }}
+{{- if or .Values.controller.readOnlyRootFilesystem .Values.controller.volumeMounts }}
         volumeMounts:
 {{- end }}
 {{- if .Values.controller.readOnlyRootFilesystem }}
@@ -152,10 +143,6 @@ spec:
           name: nginx-lib
         - mountPath: /var/log/nginx
           name: nginx-log
-{{- end }}
-{{- if .Values.nginxServiceMesh.enable }}
-        - mountPath: /run/spire/sockets
-          name: spire-agent-socket
 {{- end }}
 {{- if .Values.controller.volumeMounts}}
 {{ toYaml .Values.controller.volumeMounts | indent 8 }}
@@ -259,10 +246,6 @@ spec:
           - -ready-status={{ .Values.controller.readyStatus.enable }}
           - -ready-status-port={{ .Values.controller.readyStatus.port }}
           - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
-{{- if .Values.nginxServiceMesh.enable }}
-          - -spire-agent-address=/run/spire/sockets/agent.sock
-          - -enable-internal-routes={{ .Values.nginxServiceMesh.enableEgress }}
-{{- end }}
 {{- if .Values.controller.extraContainers }}
       {{ toYaml .Values.controller.extraContainers | nindent 6 }}
 {{- end }}
