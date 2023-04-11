@@ -2691,8 +2691,8 @@ func TestGeneratePolicies(t *testing.T) {
 		vsNamespace:    "default",
 		vsName:         "test",
 	}
-	mTLSCertPath := "/etc/nginx/secrets/default-mtls-secret-ca.crt"
-	mTLSCrlPath := "/etc/nginx/secrets/default-mtls-secret-ca.crl"
+	mTLSCertPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crt"
+	mTLSCrlPath := "/etc/nginx/secrets/default-ingress-mtls-secret-ca.crl"
 	mTLSCertAndCrlPath := fmt.Sprintf("%s %s", mTLSCertPath, mTLSCrlPath)
 	policyOpts := policyOptions{
 		tls: true,
