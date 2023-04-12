@@ -21,7 +21,7 @@ hugo-mod:
 # For deploys to docs.nginx.com only
 build-production:
 	hugo --gc -e production
-	
+
 # Builds using the Hugo "staging" environment
 # For deploys to docs-staging.nginx.com only
 build-staging:
@@ -42,8 +42,8 @@ docs-drafts:
 docs:
 	hugo server --disableFastRender
 
-# Can be used to deploy to netlify from your local 
+# Can be used to deploy to netlify from your local
 # development environment.
 # Requires a netlify login.
 netlify: clean
-	netlify deploy --build -d public --alias $(shell git branch --show-current)-branch 
+	netlify deploy --build -d public --alias $(shell git branch --show-current)-branch
