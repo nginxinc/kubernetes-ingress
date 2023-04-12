@@ -17,7 +17,7 @@ clean:
 hugo-mod:
 	hugo mod get $(THEME_MODULE)@v$(THEME_VERSION)
 
-# Builds using the Hugo "staging" environment
+# Builds using the Hugo "production" environment
 # For deploys to docs.nginx.com only
 build-production:
 	hugo --gc -e production
