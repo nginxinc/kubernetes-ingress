@@ -28,6 +28,7 @@ jobs:
       permissions:
         contents: read  # for docker/build-push-action to read repo content
         security-events: write  # for github/codeql-action/upload-sarif to upload SARIF results
+        id-token: write # for OIDC login to AWS
       runs-on: ubuntu-22.04
       steps:
       - name: Checkout Repository
@@ -58,13 +59,18 @@ jobs:
           password: ${{ secrets.GCR_JSON_KEY }}
         if: github.event_name != 'pull_request'
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e1e17a757e536f70e52b5a12b2e8d1d1c60e04ef # v2.0.0
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
+        if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
+
       - name: Login to ECR
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
-          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
 
       - name: Docker meta
         id: meta
@@ -155,7 +161,7 @@ jobs:
           ignore-unfixed: 'true'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@04df1262e6247151b5ac09cd2c303ac36ad3f62b # v2.2.9
+        uses: github/codeql-action/upload-sarif@d186a2a36cc67bfa1b860e6170d37fb9634742c7 # v2.2.11
         continue-on-error: true
         with:
           sarif_file: 'trivy-results-${{ inputs.image }}.sarif'

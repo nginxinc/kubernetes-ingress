@@ -99,7 +99,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@448520c4f19577ffce70a8317e619089054687e3 # v0.13.4
+        uses: anchore/sbom-action/download-syft@422cb34a0f8b599678c41b21163ea6088edb2624 # v0.14.1
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Build binaries

@@ -23,6 +23,11 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read # for docker/build-push-action to read repo content
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      id-token: write # for OIDC login to AWS ECR
+      packages: write # for docker/build-push-action to push to GHCR
     outputs:
       version: ${{ steps.meta.outputs.version }}
       image_digest: ${{ steps.build-push.outputs.digest }}
@@ -63,12 +68,17 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
         if: github.event_name != 'pull_request'
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e1e17a757e536f70e52b5a12b2e8d1d1c60e04ef # v2.0.0
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_PUBLIC_ECR }}
+        if: github.event_name != 'pull_request'
+
       - name: Login to Public ECR
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: public.ecr.aws
-          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         if: github.event_name != 'pull_request'
 
       - name: Login to Quay.io
@@ -123,7 +133,7 @@ jobs:
         id: build-push
         with:
           file: build/Dockerfile
-          context: '.'
+          context: "."
           cache-from: type=gha,scope=${{ inputs.image }}
           cache-to: type=gha,scope=${{ inputs.image }},mode=max
           target: goreleaser
@@ -145,32 +155,32 @@ jobs:
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
-          format: 'sarif'
-          output: 'trivy-results-${{ inputs.image }}.sarif'
-          ignore-unfixed: 'true'
+          format: "sarif"
+          output: "trivy-results-${{ inputs.image }}.sarif"
+          ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@04df1262e6247151b5ac09cd2c303ac36ad3f62b # v2.2.9
+        uses: github/codeql-action/upload-sarif@d186a2a36cc67bfa1b860e6170d37fb9634742c7 # v2.2.11
         continue-on-error: true
         with:
-          sarif_file: 'trivy-results-${{ inputs.image }}.sarif'
+          sarif_file: "trivy-results-${{ inputs.image }}.sarif"
 
       - name: Upload Scan Results
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         continue-on-error: true
         with:
-          name: 'trivy-results-${{ inputs.image }}.sarif'
-          path: 'trivy-results-${{ inputs.image }}.sarif'
+          name: "trivy-results-${{ inputs.image }}.sarif"
+          path: "trivy-results-${{ inputs.image }}.sarif"
         if: always()
 
   send-notification:
-        name: Send Notification
-        needs: build
-        uses: ./.github/workflows/updates-notification.yml
-        with:
-          sha_long: ${{ inputs.sha_long }}
-          tag: ${{ inputs.tag }}
-          version: ${{ needs.build.outputs.version }}
-          image_digest: ${{ needs.build.outputs.image_digest }}
-        secrets: inherit
-        if: ${{ inputs.tag != '' }}
+    name: Send Notification
+    needs: build
+    uses: ./.github/workflows/updates-notification.yml
+    with:
+      sha_long: ${{ inputs.sha_long }}
+      tag: ${{ inputs.tag }}
+      version: ${{ needs.build.outputs.version }}
+      image_digest: ${{ needs.build.outputs.image_digest }}
+    secrets: inherit
+    if: ${{ inputs.tag != '' }}
