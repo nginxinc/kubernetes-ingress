@@ -201,6 +201,7 @@ class TestJWTPoliciesVsJwksuri:
 
         assert resp1.status_code == 500 and f"Internal Server Error" in resp1.text
         assert resp2.status_code == 500 and f"Internal Server Error" in resp2.text
+
     @pytest.mark.jwks
     @pytest.mark.parametrize("jwt_virtual_server", [jwt_vs_route_subpath_src])
     def test_jwt_policy_subroute_jwksuri(
