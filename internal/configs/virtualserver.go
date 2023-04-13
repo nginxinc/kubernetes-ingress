@@ -460,6 +460,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		if policiesCfg.OIDC {
 			routePoliciesCfg.OIDC = policiesCfg.OIDC
 		}
+		if routePoliciesCfg.JWKSAuthEnabled {
+			policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -570,6 +573,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			if policiesCfg.OIDC {
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
+			if routePoliciesCfg.JWKSAuthEnabled {
+				policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 			dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -665,6 +671,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			LimitReqOptions:           policiesCfg.LimitReqOptions,
 			LimitReqs:                 policiesCfg.LimitReqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
+			JWKSAuthEnabled:           policiesCfg.JWKSAuthEnabled,
 			BasicAuth:                 policiesCfg.BasicAuth,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
@@ -689,6 +696,7 @@ type policiesCfg struct {
 	LimitReqZones   []version2.LimitReqZone
 	LimitReqs       []version2.LimitReq
 	JWTAuth         *version2.JWTAuth
+	JWKSAuthEnabled bool
 	BasicAuth       *version2.BasicAuth
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
@@ -853,6 +861,7 @@ func (p *policiesCfg) addJWTAuthConfig(
 			Token:    jwtAuth.Token,
 			KeyCache: jwtAuth.KeyCache,
 		}
+		p.JWKSAuthEnabled = true
 		return res
 	}
 	return res
