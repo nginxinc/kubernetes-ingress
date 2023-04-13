@@ -38,8 +38,6 @@ http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
 
-    proxy_cache_path /var/cache/nginx/jwks_uri levels=1 keys_zone=jwks_uri:1m max_size=10m;
-
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}
     {{$value}}{{end}}

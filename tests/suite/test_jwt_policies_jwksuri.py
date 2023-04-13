@@ -201,7 +201,7 @@ class TestJWTPoliciesVsJwksuri:
 
         assert resp1.status_code == 500 and f"Internal Server Error" in resp1.text
         assert resp2.status_code == 500 and f"Internal Server Error" in resp2.text
-
+    @pytest.mark.jwks
     @pytest.mark.parametrize("jwt_virtual_server", [jwt_vs_route_subpath_src])
     def test_jwt_policy_subroute_jwksuri(
         self,
@@ -235,6 +235,9 @@ class TestJWTPoliciesVsJwksuri:
         resp_no_token = mock.Mock()
         resp_no_token.status_code == 502
         counter = 0
+
+        print("== WAITING ==")
+        wait_before_test(480)
 
         while resp_no_token.status_code != 401 and counter < 3:
             resp_no_token = requests.get(

@@ -58,6 +58,10 @@ match {{ $m.Name }} {
 
 {{ $s := .Server }}
 
+{{ with $s.JWTAuth }}
+proxy_cache_path /var/cache/nginx/jwks_uri_{{$s.VSName}} levels=1 keys_zone=jwks_uri_{{$s.VSName}}:1m max_size=10m;
+{{ end }}
+
 server {
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
@@ -178,7 +182,7 @@ server {
         proxy_method GET;
         proxy_set_header Content-Length "";
         {{ if .KeyCache }}
-        proxy_cache jwks_uri;
+        proxy_cache jwks_uri_{{$s.VSName}};
         proxy_cache_valid 200 12h;
         {{ end }}
         {{ with $s.JWTAuth.JwksURI }}
@@ -379,7 +383,7 @@ server {
             proxy_method GET;
             proxy_set_header Content-Length "";
             {{ if .KeyCache }}
-            proxy_cache jwks_uri;
+            proxy_cache jwks_uri_{{$s.VSName}};
             proxy_cache_valid 200 12h;
             {{ end }}
             {{ with $l.JWTAuth.JwksURI }}
