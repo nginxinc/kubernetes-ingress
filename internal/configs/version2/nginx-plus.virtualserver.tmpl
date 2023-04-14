@@ -107,11 +107,21 @@ server {
 
         {{ if $ssl.RejectHandshake }}
     ssl_reject_handshake on;
+        {{ else if $.SpiffeCerts }}
+    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
         {{ else }}
     ssl_certificate {{ $ssl.Certificate }};
     ssl_certificate_key {{ $ssl.CertificateKey }};
         {{ end }}
-    {{ end }}
+    {{ else }}
+      {{ if $.SpiffeCerts }}
+    listen 443 ssl;
+    {{if not $s.DisableIPV6}}listen [::]:443 ssl;{{end}}
+    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+      {{ end }}
+    {{ end  }}
 
     {{ with $s.IngressMTLS }}
     ssl_client_certificate {{ .ClientCert }};
@@ -584,7 +594,7 @@ server {
             {{ range $h := $l.AddHeaders }}
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
             {{ end }}
-            {{ if $.SpiffeCerts }}
+            {{ if $.SpiffeClientCerts }}
         {{ $proxyOrGRPC }}_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
         {{ $proxyOrGRPC }}_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
         {{ $proxyOrGRPC }}_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
