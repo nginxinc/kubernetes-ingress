@@ -1,6 +1,0 @@
-{{ if not ( in .Params.doctype "devportal" ) }}
-    {{ .Render "docs" }}
-{{ else }}
-
-  {{ partial "api" . }}    
-{{ end }}
