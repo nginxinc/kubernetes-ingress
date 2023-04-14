@@ -2998,7 +2998,7 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 					KeyCache: "1h",
 				},
-				JWKSAuthEnabled: false,
+				JWKSAuthEnabled: true,
 			},
 			msg: "Basic jwks example",
 		},
