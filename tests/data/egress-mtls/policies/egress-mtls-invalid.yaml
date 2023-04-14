@@ -4,7 +4,7 @@ metadata:
   name: egress-mtls-policy
 spec:
   egress_MTLS:
-    tlsSecret: egress-tks-secret
+    tlsSecret: egress-tls-secret
     trustedCertSecret: egress-mtls-secret
     verifyServer: on
     verifyDepth: 2

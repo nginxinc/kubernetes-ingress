@@ -62,13 +62,14 @@ def teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret
             },
             {
                 "example": "virtual-server",
-                "app_type": "simple",
+                "app_type": "secure-ca",
             },
         )
     ],
     indirect=True,
 )
 class TestEgressMtlsPolicyVS:
+    @pytest.mark.egressmtls
     @pytest.mark.parametrize(
         "policy_src, vs_src, mtls_ca_secret, expected_code, expected_text, vs_message, vs_state, test_description",
         [
@@ -77,7 +78,7 @@ class TestEgressMtlsPolicyVS:
                 mtls_vs_spec_src,
                 mtls_sec_valid_src,
                 200,
-                "Server address:",
+                "hello from pod secure-app",
                 "was added or updated",
                 "Valid",
                 "Test valid EgressMTLS policy applied to a VirtualServer spec",
@@ -87,7 +88,7 @@ class TestEgressMtlsPolicyVS:
                 mtls_vs_route_src,
                 mtls_sec_valid_src,
                 200,
-                "Server address:",
+                "hello from pod secure-app",
                 "was added or updated",
                 "Valid",
                 "Test valid EgressMTLS policy applied to a VirtualServer path",
@@ -97,7 +98,7 @@ class TestEgressMtlsPolicyVS:
                 mtls_vs_spec_src,
                 mtls_sec_valid_crl_src,
                 200,
-                "Server address:",
+                "hello from pod secure-app",
                 "was added or updated",
                 "Valid",
                 "Test valid EgressMTLS policy applied to a VirtualServer with a CRL",

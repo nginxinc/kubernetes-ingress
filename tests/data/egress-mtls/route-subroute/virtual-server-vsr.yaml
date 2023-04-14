@@ -7,5 +7,3 @@ spec:
   routes:
   - path: "/backends"
     route: backends # implicit namespace
-  - path: "/backend2"
-    route: backend2-namespace/backend2
