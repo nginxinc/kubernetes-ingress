@@ -248,7 +248,6 @@ class TestJWTPoliciesVsJwksuri:
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         wait_before_test()
 
-
         delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
