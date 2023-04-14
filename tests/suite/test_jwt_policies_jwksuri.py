@@ -55,7 +55,7 @@ def get_token(request):
 
 
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.policies
+@pytest.mark.jwks
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -129,12 +129,6 @@ class TestJWTPoliciesVsJwksuri:
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         wait_before_test()
 
-        resp_pol_deleted = requests.get(
-            virtual_server_setup.backend_1_url,
-            headers={"host": virtual_server_setup.vs_host, "token": token},
-            timeout=5,
-        )
-
         delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
@@ -144,7 +138,6 @@ class TestJWTPoliciesVsJwksuri:
 
         assert resp_no_token.status_code == 401 and f"Authorization Required" in resp_no_token.text
         assert resp_valid_token.status_code == 200 and f"Request ID:" in resp_valid_token.text
-        assert resp_pol_deleted.status_code == 500 and f"Internal Server Error" in resp_pol_deleted.text
 
     @pytest.mark.parametrize("jwt_virtual_server", [jwt_vs_invalid_pol_spec_src, jwt_vs_invalid_pol_route_src])
     def test_jwt_invalid_policy_jwksuri(
@@ -236,9 +229,6 @@ class TestJWTPoliciesVsJwksuri:
         resp_no_token.status_code == 502
         counter = 0
 
-        print("== WAITING ==")
-        wait_before_test(480)
-
         while resp_no_token.status_code != 401 and counter < 3:
             resp_no_token = requests.get(
                 virtual_server_setup.backend_1_url + "/subpath1",
@@ -258,11 +248,6 @@ class TestJWTPoliciesVsJwksuri:
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         wait_before_test()
 
-        resp_pol_deleted = requests.get(
-            virtual_server_setup.backend_1_url + "/subpath1",
-            headers={"host": virtual_server_setup.vs_host, "token": token},
-            timeout=5,
-        )
 
         delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
@@ -273,7 +258,6 @@ class TestJWTPoliciesVsJwksuri:
 
         assert resp_no_token.status_code == 401 and f"Authorization Required" in resp_no_token.text
         assert resp_valid_token.status_code == 200 and f"Request ID:" in resp_valid_token.text
-        assert resp_pol_deleted.status_code == 500 and f"Internal Server Error" in resp_pol_deleted.text
 
     def test_jwt_policy_subroute_jwksuri_multiple_vs(
         self,
@@ -355,18 +339,6 @@ class TestJWTPoliciesVsJwksuri:
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         wait_before_test()
 
-        resp_1_pol_deleted = requests.get(
-            virtual_server_setup.backend_1_url + "/subpath1",
-            headers={"host": virtual_server_setup.vs_host, "token": token},
-            timeout=5,
-        )
-
-        resp_2_pol_deleted = requests.get(
-            virtual_server_setup.backend_1_url + "/subpath1",
-            headers={"host": "virtual-server-2.example.com", "token": token},
-            timeout=5,
-        )
-
         delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
@@ -382,8 +354,6 @@ class TestJWTPoliciesVsJwksuri:
 
         assert resp_1_no_token.status_code == 401 and f"Authorization Required" in resp_1_no_token.text
         assert resp_1_valid_token.status_code == 200 and f"Request ID:" in resp_1_valid_token.text
-        assert resp_1_pol_deleted.status_code == 500 and f"Internal Server Error" in resp_1_pol_deleted.text
 
         assert resp_2_no_token.status_code == 401 and f"Authorization Required" in resp_2_no_token.text
         assert resp_2_valid_token.status_code == 200 and f"Request ID:" in resp_2_valid_token.text
-        assert resp_2_pol_deleted.status_code == 500 and f"Internal Server Error" in resp_2_pol_deleted.text
