@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
-FROM python:3.9
+FROM python:3.11
 
-ARG GCLOUD_VERSION=364.0.0
+ARG GCLOUD_VERSION=425.0.0
 ARG HELM_VERSION=3.5.4
 
 RUN apt-get update && apt-get install -y curl git jq apache2-utils \
@@ -13,11 +13,13 @@ RUN apt-get update && apt-get install -y curl git jq apache2-utils \
 	&& mv google-cloud-sdk /usr/lib/ \
 	&& curl -LO https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz \
 	&& tar -zxvf helm-v${HELM_VERSION}-linux-amd64.tar.gz \
-	&& mv linux-amd64/helm /usr/local/bin/helm
+	&& mv linux-amd64/helm /usr/local/bin/helm \
+	&& apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 
 WORKDIR /workspace/tests
 
 COPY --link tests/requirements.txt /workspace/tests/
+RUN python -m ensurepip --upgrade
 RUN pip install --require-hashes -r requirements.txt
 
 COPY --link tests /workspace/tests
