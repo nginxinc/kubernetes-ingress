@@ -13,8 +13,7 @@ RUN apt-get update && apt-get install -y curl git jq apache2-utils \
 	&& mv google-cloud-sdk /usr/lib/ \
 	&& curl -LO https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz \
 	&& tar -zxvf helm-v${HELM_VERSION}-linux-amd64.tar.gz \
-	&& mv linux-amd64/helm /usr/local/bin/helm \
-	&& apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+	&& mv linux-amd64/helm /usr/local/bin/helm
 
 WORKDIR /workspace/tests
 
@@ -26,5 +25,5 @@ COPY --link tests /workspace/tests
 COPY --link deployments /workspace/deployments
 
 ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
-
+RUN apt-get update && apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
 ENTRYPOINT ["python3", "-m", "pytest"]
