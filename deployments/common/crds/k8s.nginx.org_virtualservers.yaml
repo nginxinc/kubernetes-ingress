@@ -93,6 +93,9 @@ spec:
                   type: string
                 ingressClassName:
                   type: string
+                internalRoute:
+                  description: InternalRoute allows for the configuration of internal routing.
+                  type: boolean
                 policies:
                   type: array
                   items:
