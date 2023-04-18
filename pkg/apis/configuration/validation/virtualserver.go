@@ -116,14 +116,10 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateGunzip(fieldValue *string, fl *field.Path) field.ErrorList {
+func validateGunzip(fieldValue string, fl *field.Path) field.ErrorList {
 	allErr := field.ErrorList{}
-	if fieldValue == nil {
-		return allErr
-	}
-	v := *fieldValue
-	if !slices.Contains([]string{"on", "off"}, v) {
-		allErr = append(allErr, field.NotSupported(fl, v, []string{"on", "off"}))
+	if !slices.Contains([]string{"on", "off", ""}, fieldValue) {
+		allErr = append(allErr, field.NotSupported(fl, fieldValue, []string{"on", "off"}))
 		return allErr
 	}
 	return allErr

@@ -12,6 +12,7 @@ import (
 
 func TestValidateVirtualServer(t *testing.T) {
 	t.Parallel()
+
 	virtualServer := v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -109,10 +110,6 @@ func TestValidateVirtualServer_FailsOnBogusGunzipValue(t *testing.T) {
 }
 
 var (
-	gunzipOn    = "on"
-	gunzipOff   = "off"
-	gunzipBogus = "bogus"
-
 	virtualServerWithValidGunzipOn = v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -120,7 +117,7 @@ var (
 		},
 		Spec: v1.VirtualServerSpec{
 			Host:   "example.com",
-			Gunzip: &gunzipOn,
+			Gunzip: "on",
 			Upstreams: []v1.Upstream{
 				{
 					Name:      "first",
@@ -162,7 +159,7 @@ var (
 		},
 		Spec: v1.VirtualServerSpec{
 			Host:   "example.com",
-			Gunzip: &gunzipOff,
+			Gunzip: "off",
 			Upstreams: []v1.Upstream{
 				{
 					Name:      "first",
@@ -245,7 +242,7 @@ var (
 		},
 		Spec: v1.VirtualServerSpec{
 			Host:   "example.com",
-			Gunzip: &gunzipBogus,
+			Gunzip: "bogus",
 			Upstreams: []v1.Upstream{
 				{
 					Name:      "first",
@@ -316,38 +313,21 @@ func TestValidateHost(t *testing.T) {
 
 func TestValidateGunzip_FailsOnBogusGunzipValue(t *testing.T) {
 	t.Parallel()
-
-	bogus, empty := "bogus", ""
-	tt := []*string{&bogus, &empty}
-	for _, g := range tt {
-		allErr := validateGunzip(g, field.NewPath("gunzip"))
-		if len(allErr) == 0 {
-			val := *g
-			t.Errorf("validateGunzip(%q) did not return error on invalid input.", val)
-		}
+	bogusGunzipValue := "bogus"
+	allErr := validateGunzip(bogusGunzipValue, field.NewPath("gunzip"))
+	if len(allErr) == 0 {
+		t.Errorf("validateGunzip(%q) did not return error on invalid input.", bogusGunzipValue)
 	}
 }
 
-func TestValidateGunzip_PassesOnValidGunzipValue(t *testing.T) {
+func TestValidateGunzip_PassesOnValidGunzipValues(t *testing.T) {
 	t.Parallel()
-
-	on, off := "on", "off"
-	tt := []*string{&on, &off}
-	for _, g := range tt {
-		allErr := validateGunzip(g, field.NewPath("gunzip"))
+	tt := []string{"on", "off", ""}
+	for _, v := range tt {
+		allErr := validateGunzip(v, field.NewPath("gunzip"))
 		if len(allErr) > 0 {
-			val := *g
-			t.Errorf("validateGunzip(%q) returned errors %v for valid input", val, allErr)
+			t.Errorf("validateGunzip(%q) returned errors %v for valid input", v, allErr)
 		}
-	}
-}
-
-func TestValidateGunzip_PassesOnNotProvidedGunzipEntry(t *testing.T) {
-	t.Parallel()
-
-	allErr := validateGunzip(nil, field.NewPath("gunzip"))
-	if len(allErr) != 0 {
-		t.Errorf("validateGunzip(nil) want no error, got %v", allErr)
 	}
 }
 

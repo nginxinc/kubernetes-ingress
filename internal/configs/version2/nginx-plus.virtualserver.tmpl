@@ -68,6 +68,7 @@ match {{ $m.Name }} {
 {{ end }}
 
 server {
+    {{ if (eq $s.Gunzip "on") }}gunzip {{ $s.Gunzip }};{{end}}
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
 
