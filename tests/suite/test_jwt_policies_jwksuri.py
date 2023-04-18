@@ -18,15 +18,12 @@ jwt_pol_valid_src = f"{TEST_DATA}/jwt-policy-jwksuri/policies/jwt-policy-valid.y
 jwt_pol_invalid_src = f"{TEST_DATA}/jwt-policy-jwksuri/policies/jwt-policy-invalid.yaml"
 jwt_vs_spec_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-spec.yaml"
 jwt_vs_route_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route.yaml"
+jwt_spec_and_route_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-spec-and-route.yaml"
 jwt_vs_route_subpath_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath.yaml"
-jwt_vs_route_subpath_diff_host_src = (
-    f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath-diff-host.yaml"
-)
+jwt_vs_route_subpath_diff_host_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath-diff-host.yaml"
 jwt_vs_invalid_pol_spec_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-spec.yaml"
 jwt_vs_invalid_pol_route_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route.yaml"
-jwt_vs_invalid_pol_route_subpath_src = (
-    f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route-subpath.yaml"
-)
+jwt_vs_invalid_pol_route_subpath_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route-subpath.yaml"
 jwt_cm_src = f"{TEST_DATA}/jwt-policy-jwksuri/configmap/nginx-config.yaml"
 ad_tenant = "dd3dfd2f-6a3b-40d1-9be0-bf8327d81c50"
 client_id = "8a172a83-a630-41a4-9ca6-1e5ef03cd7e7"
@@ -55,7 +52,7 @@ def get_token(request):
 
 
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.jwks
+@pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -76,7 +73,7 @@ def get_token(request):
     indirect=True,
 )
 class TestJWTPoliciesVsJwksuri:
-    @pytest.mark.parametrize("jwt_virtual_server", [jwt_vs_spec_src, jwt_vs_route_src])
+    @pytest.mark.parametrize("jwt_virtual_server", [jwt_vs_spec_src, jwt_vs_route_src, jwt_spec_and_route_src])
     def test_jwt_policy_jwksuri(
         self,
         request,
@@ -88,7 +85,7 @@ class TestJWTPoliciesVsJwksuri:
         jwt_virtual_server,
     ):
         """
-        Test jwt-policy in Virtual Server (spec and route) with keys fetched form Azure
+        Test jwt-policy in Virtual Server (spec, route and both at the same time) with keys fetched form Azure
         """
         replace_configmap_from_yaml(
             kube_apis.v1,
@@ -151,7 +148,7 @@ class TestJWTPoliciesVsJwksuri:
         jwt_virtual_server,
     ):
         """
-        Test invalid jwt-policy in Virtual Server (spec, and route) with keys fetched form Azure
+        Test invalid jwt-policy in Virtual Server (spec and route) with keys fetched form Azure
         """
         replace_configmap_from_yaml(
             kube_apis.v1,

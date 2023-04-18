@@ -325,6 +325,12 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	}
 	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
 
+	if policiesCfg.JWKSAuthEnabled {
+		jwtAuthKey := policiesCfg.JWTAuth.Key
+		policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+		policiesCfg.JWTAuthList[jwtAuthKey] = policiesCfg.JWTAuth
+	}
+
 	dosCfg := generateDosCfg(dosResources[""])
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
@@ -462,6 +468,15 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		}
 		if routePoliciesCfg.JWKSAuthEnabled {
 			policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+
+			if policiesCfg.JWTAuthList == nil {
+				policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+			}
+
+			jwtAuthKey := routePoliciesCfg.JWTAuth.Key
+			if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
+				policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+			}
 		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
@@ -575,6 +590,15 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			}
 			if routePoliciesCfg.JWKSAuthEnabled {
 				policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+
+				if policiesCfg.JWTAuthList == nil {
+					policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+				}
+
+				jwtAuthKey := routePoliciesCfg.JWTAuth.Key
+				if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
+					policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+				}
 			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
@@ -671,6 +695,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			LimitReqOptions:           policiesCfg.LimitReqOptions,
 			LimitReqs:                 policiesCfg.LimitReqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
+			JWTAuthList:               policiesCfg.JWTAuthList,
 			JWKSAuthEnabled:           policiesCfg.JWKSAuthEnabled,
 			BasicAuth:                 policiesCfg.BasicAuth,
 			IngressMTLS:               policiesCfg.IngressMTLS,
@@ -696,6 +721,7 @@ type policiesCfg struct {
 	LimitReqZones   []version2.LimitReqZone
 	LimitReqs       []version2.LimitReq
 	JWTAuth         *version2.JWTAuth
+	JWTAuthList     map[string]*version2.JWTAuth
 	JWKSAuthEnabled bool
 	BasicAuth       *version2.BasicAuth
 	IngressMTLS     *version2.IngressMTLS
@@ -860,6 +886,7 @@ func (p *policiesCfg) addJWTAuthConfig(
 			Realm:    jwtAuth.Realm,
 			Token:    jwtAuth.Token,
 			KeyCache: jwtAuth.KeyCache,
+			Key:      polKey,
 		}
 		p.JWKSAuthEnabled = true
 		return res

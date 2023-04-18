@@ -68,6 +68,7 @@ type Server struct {
 	LimitReqOptions           LimitReqOptions
 	LimitReqs                 []LimitReq
 	JWTAuth                   *JWTAuth
+	JWTAuthList               map[string]*JWTAuth
 	JWKSAuthEnabled           bool
 	BasicAuth                 *BasicAuth
 	IngressMTLS               *IngressMTLS
@@ -356,6 +357,7 @@ func (rl LimitReqOptions) String() string {
 
 // JWTAuth holds JWT authentication configuration.
 type JWTAuth struct {
+	Key      string
 	Secret   string
 	Realm    string
 	Token    string
