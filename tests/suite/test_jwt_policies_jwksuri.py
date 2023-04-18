@@ -20,10 +20,14 @@ jwt_vs_spec_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server
 jwt_vs_route_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route.yaml"
 jwt_spec_and_route_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-spec-and-route.yaml"
 jwt_vs_route_subpath_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath.yaml"
-jwt_vs_route_subpath_diff_host_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath-diff-host.yaml"
+jwt_vs_route_subpath_diff_host_src = (
+    f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-policy-route-subpath-diff-host.yaml"
+)
 jwt_vs_invalid_pol_spec_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-spec.yaml"
 jwt_vs_invalid_pol_route_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route.yaml"
-jwt_vs_invalid_pol_route_subpath_src = f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route-subpath.yaml"
+jwt_vs_invalid_pol_route_subpath_src = (
+    f"{TEST_DATA}/jwt-policy-jwksuri/virtual-server/virtual-server-invalid-policy-route-subpath.yaml"
+)
 jwt_cm_src = f"{TEST_DATA}/jwt-policy-jwksuri/configmap/nginx-config.yaml"
 ad_tenant = "dd3dfd2f-6a3b-40d1-9be0-bf8327d81c50"
 client_id = "8a172a83-a630-41a4-9ca6-1e5ef03cd7e7"
