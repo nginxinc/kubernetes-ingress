@@ -24,7 +24,6 @@ func TestVirtualServerForNginxPlus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create template executor: %v", err)
 	}
-
 	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -42,7 +41,6 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOn(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	want, err := os.ReadFile("testdata/nginx.conf.gunzip_on")
 	if err != nil {
 		t.Fatal(err)
