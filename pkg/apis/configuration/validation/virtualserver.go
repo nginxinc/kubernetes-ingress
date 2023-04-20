@@ -8,7 +8,6 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -118,10 +117,11 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 
 func validateGunzip(fieldValue string, fl *field.Path) field.ErrorList {
 	allErr := field.ErrorList{}
-	if !slices.Contains([]string{"on", "off", ""}, fieldValue) {
-		allErr = append(allErr, field.NotSupported(fl, fieldValue, []string{"on", "off"}))
+	switch fieldValue {
+	case "on", "off", "":
 		return allErr
 	}
+	allErr = append(allErr, field.NotSupported(fl, fieldValue, []string{"on", "off"}))
 	return allErr
 }
 
