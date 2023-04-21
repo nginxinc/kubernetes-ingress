@@ -116,13 +116,12 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 }
 
 func validateGunzip(fieldValue string, fl *field.Path) field.ErrorList {
-	allErr := field.ErrorList{}
 	switch fieldValue {
 	case "on", "off", "":
-		return allErr
+		return nil
+	default:
+		return field.ErrorList{field.NotSupported(fl, fieldValue, []string{"on", "off"})}
 	}
-	allErr = append(allErr, field.NotSupported(fl, fieldValue, []string{"on", "off"}))
-	return allErr
 }
 
 func validatePolicies(policies []v1.PolicyReference, fieldPath *field.Path, namespace string) field.ErrorList {
