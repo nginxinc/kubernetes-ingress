@@ -1,0 +1,18 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  upstreams:
+  - name: secure-app
+    service: secure-app
+    port: 8443
+    tls:
+      enable: true
+  routes:
+  - path: "/backend1"
+    policies:
+    - name: egress-mtls-policy
+    action:
+      pass: secure-app
