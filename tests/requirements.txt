@@ -373,16 +373,16 @@ py==1.11.0 \
     # via
     #   -r requirements.txt
     #   pytest-html
-pyasn1==0.4.8 \
-    --hash=sha256:39c7e2ec30515947ff4e87fb6f456dfc6e84857d34be479c9d4a4ba4bf46aa5d \
-    --hash=sha256:aef77c9fb94a3ac588e87841208bdec464471d9871bd5050a287cc9a475cd0ba
+pyasn1==0.5.0 \
+    --hash=sha256:87a2121042a1ac9358cabcaf1d07680ff97ee6404333bacca15f76aa8ad01a57 \
+    --hash=sha256:97b7290ca68e62a832558ec3976f15cbf911bf5d7c7039d8b861c2a0ece69fde
     # via
     #   -r requirements.txt
     #   pyasn1-modules
     #   rsa
-pyasn1-modules==0.2.8 \
-    --hash=sha256:905f84c712230b2c592c19470d3ca8d552de726050d1d1716282a1f6146be65e \
-    --hash=sha256:a50b808ffeb97cb3601dd25981f6b016cbb3d31fbf57a8b8a87428e6158d0c74
+pyasn1-modules==0.3.0 \
+    --hash=sha256:5bd01446b736eb9d31512a30d46c1ac3395d676c6f3cafa4c03eb54b9925631c \
+    --hash=sha256:d3ccd6ed470d9ffbc716be08bd90efbd44d0734bc9303818f7336070984a162d
     # via
     #   -r requirements.txt
     #   google-auth
