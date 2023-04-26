@@ -86,6 +86,8 @@ spec:
                       format: int64
                     recordType:
                       type: string
+                gunzip:
+                  type: string
                 host:
                   type: string
                 http-snippets:
