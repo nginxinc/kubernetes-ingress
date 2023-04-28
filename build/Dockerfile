@@ -13,7 +13,10 @@ FROM opentracing/nginx-opentracing:nginx-1.23.3-alpine as alpine-opentracing-lib
 FROM nginx:1.23.3 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
-	cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	apt-get update \
+	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
 	&& ldconfig
 
@@ -22,7 +25,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 FROM nginx:1.23.3-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
-	apk add --no-cache libstdc++ \
+	apk add --no-cache libcap libstdc++ \
 	# temp fix for CVE-2023-23916
 	&& apk upgrade --no-cache curl libcurl \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
@@ -39,7 +42,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	&& apk add --no-cache nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcurl \
+	&& apk add --no-cache nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcap libcurl \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/
 
@@ -62,7 +65,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent \"k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
 	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcurl4 \
+	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcap2-bin libcurl4 \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig \
@@ -185,7 +188,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # RUN update-ca-trust extract
 
 
-############################################# Create common files and permissions #############################################
+############################################# Create common files, permissions and setcap #############################################
 FROM ${BUILD_OS} as common
 
 ARG BUILD_OS
@@ -208,6 +211,8 @@ RUN [ -n "${NAP_MODULES##*dos*}" ] && exit 0; mkdir -p /root/app_protect_dos /et
 	&& chmod 777 /shared/cores /var/log/adm /var/run/adm /etc/app_protect_dos
 
 RUN --mount=type=bind,target=/tmp mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
+	&& setcap 'cap_net_bind_service=+eip' /usr/sbin/nginx 'cap_net_bind_service=+eip' /usr/sbin/nginx-debug \
+	&& setcap -v 'cap_net_bind_service=+eip' /usr/sbin/nginx 'cap_net_bind_service=+eip' /usr/sbin/nginx-debug \
 	&& [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
 	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
 	&& chown -R 101:0 /etc/nginx /var/cache/nginx /var/lib/nginx /*.tmpl \
@@ -250,6 +255,11 @@ FROM common AS container
 LABEL org.nginx.kic.image.build.version="container"
 
 COPY --link --from=builder --chown=101:0 /nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
 
 
 ############################################# Create image with nginx-ingress built locally #############################################
@@ -258,6 +268,11 @@ FROM common AS local
 LABEL org.nginx.kic.image.build.version="local"
 
 COPY --link --chown=101:0 nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
@@ -267,6 +282,11 @@ ARG TARGETARCH
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
 COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
@@ -277,6 +297,11 @@ ARG NAP_MODULES_AWS
 LABEL org.nginx.kic.image.build.version="aws"
 
 COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
