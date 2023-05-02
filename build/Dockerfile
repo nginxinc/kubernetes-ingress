@@ -15,6 +15,8 @@ FROM nginx:1.23.4 AS debian
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	# temp fix for CVE-2022-3821, CVE-2022-29458, CVE-2023-28484 and CVE-2022-44617
+	&& apt-get install ncurses-base ncurses-bin libudev1 libsystemd0 libtinfo6 libxml2 libxpm4 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
@@ -26,8 +28,8 @@ FROM nginx:1.23.4-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
-	# temp fix for CVE-2023-23916
-	&& apk upgrade --no-cache curl libcurl \
+	# temp fix for CVE-2023-1255 and CVE-2023-28484
+	&& apk upgrade --no-cache libcrypto3 libssl3 libxml2 \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
 	&& ldconfig /usr/local/lib/
@@ -43,6 +45,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
 	&& apk add --no-cache nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcap libcurl \
+	# temp fix for CVE-2023-1255
+	&& apk upgrade --no-cache libcrypto3 libssl3 \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/
 
@@ -66,6 +70,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcap2-bin libcurl4 \
+	# temp fix for CVE-2022-3821 and CVE-2022-29458
+	&& apt-get install ncurses-base ncurses-bin libudev1 libsystemd0 \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig \
@@ -101,7 +107,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& rm /etc/apt/sources.list.d/nginx-app-protect*.list
 
 # Uncomment the lines below if you want to install a custom CA certificate
-# COPY build/*.crt  /usr/local/share/ca-certificates/
+# COPY build/*.crt /usr/local/share/ca-certificates/
 # RUN update-ca-certificates
 
 
@@ -121,9 +127,6 @@ LABEL name="NGINX Ingress Controller" \
 
 COPY --link --chown=101:0 LICENSE /licenses/
 
-# temp fix for CVE-2023-0361 and CVE-2021-46822
-RUN microdnf --nodocs upgrade -y gnutls libjpeg-turbo
-
 
 ############################################# Base image for UBI with NGINX Plus #############################################
 FROM redhat/ubi9-minimal AS ubi-plus
@@ -139,10 +142,9 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& curl -fsSL "https://cs.nginx.com/static/files/plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
 	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
 	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs \
-	# temp fix for CVE-2023-0361
-	&& microdnf --nodocs upgrade -y gnutls \
 	&& microdnf remove -y shadow-utils \
 	&& microdnf clean all
+
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF/DoS #############################################
 FROM redhat/ubi8 as ubi-plus-nap
@@ -177,14 +179,12 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-dos-8.repo; \
 	dnf --nodocs install -y app-protect-dos; \
 	fi \
-	# temp fix for CVE-2023-23916
-	&& dnf --nodocs upgrade -y curl \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
 	&& dnf clean all && rm -rf /var/cache/dnf
 
 # Uncomment the lines below if you want to install a custom CA certificate
-# COPY build/*.crt  /etc/pki/ca-trust/source/anchors/
+# COPY build/*.crt /etc/pki/ca-trust/source/anchors/
 # RUN update-ca-trust extract
 
 
