@@ -9,9 +9,6 @@ on:
       version:
         required: true
         type: string
-      sha_long:
-        required: true
-        type: string
       image_digest:
         required: true
         type: string
@@ -26,15 +23,16 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
-          ref: ${{ inputs.sha_long }}
+          ref: ${{ inputs.tag }}
       - name: Get variables for Slack
         id: slack
         run: |
           echo "message=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
           echo "date=$(date +%s)" >> $GITHUB_OUTPUT
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "sha_long=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
       - name: Send Notification
         uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8 # v3.15.1
         with:
@@ -64,7 +62,7 @@ jobs:
                 },
                 {
                   title: "Commit Hash",
-                  value: `<https://github.com/${{ github.repository }}/commit/${{ inputs.sha_long }}|${{ steps.slack.outputs.sha_short }}>`,
+                  value: `<https://github.com/${{ github.repository }}/commit/${{ steps.slack.outputs.sha_long }}|${{ steps.slack.outputs.sha_short }}>`,
                   short: true
                 }],
                 footer: "Update DockerHub Image",

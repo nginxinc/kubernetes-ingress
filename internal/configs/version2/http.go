@@ -12,14 +12,15 @@ type UpstreamLabels struct {
 
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
-	HTTPSnippets  []string
-	LimitReqZones []LimitReqZone
-	Maps          []Map
-	Server        Server
-	SpiffeCerts   bool
-	SplitClients  []SplitClient
-	StatusMatches []StatusMatch
-	Upstreams     []Upstream
+	HTTPSnippets      []string
+	LimitReqZones     []LimitReqZone
+	Maps              []Map
+	Server            Server
+	SpiffeCerts       bool
+	SpiffeClientCerts bool
+	SplitClients      []SplitClient
+	StatusMatches     []StatusMatch
+	Upstreams         []Upstream
 }
 
 // Upstream defines an upstream.
@@ -78,6 +79,7 @@ type Server struct {
 	VSNamespace               string
 	VSName                    string
 	DisableIPV6               bool
+	Gunzip                    string
 }
 
 // SSL defines SSL configuration for a server.

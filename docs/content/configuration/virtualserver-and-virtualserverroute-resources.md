@@ -26,6 +26,7 @@ spec:
   host: cafe.example.com
   tls:
     secret: cafe-secret
+  gunzip: on
   upstreams:
   - name: tea
     service: tea-svc
@@ -53,12 +54,14 @@ spec:
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
 |``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
+|``gunzip`` | Enables or disables [decompression](https://docs.nginx.com/nginx/admin-guide/web-server/compression/) of gzipped responses for clients. Allowed values are: "on" or "off". If the ``gunzip`` value is not set, it defaults to ``off``.   | ``string`` | No |
 |``externalDNS`` | The externalDNS configuration for a VirtualServer. | [externalDNS](#virtualserverexternaldns) | No |
 |``dos`` | A reference to a DosProtectedResource, setting this enables DOS protection of the VirtualServer. | ``string`` | No |
 |``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
 |``routes`` | A list of routes. | [[]route](#virtualserverroute) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServer resource. | ``string`` | No |
+|``internalRoute`` | Specifies if the VirtualServer resource is an internal route or not. | ``boolean`` | No |
 |``http-snippets`` | Sets a custom snippet in the http context. | ``string`` | No |
 |``server-snippets`` | Sets a custom snippet in server context. Overrides the ``server-snippets`` ConfigMap key. | ``string`` | No |
 {{% /table %}}
