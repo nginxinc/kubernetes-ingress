@@ -6,7 +6,7 @@ import yaml
 from kubernetes.client import CoreV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
 from suite.utils.custom_resources_utils import read_custom_resource
-from suite.utils.resources_utils import ensure_item_removal, get_file_contents
+from suite.utils.resources_utils import ensure_item_removal, get_file_contents, wait_before_test
 
 
 def read_vs(custom_objects: CustomObjectsApi, namespace, name) -> object:
@@ -144,6 +144,7 @@ def delete_and_create_vs_from_yaml(custom_objects: CustomObjectsApi, name, yaml_
     try:
         delete_virtual_server(custom_objects, name, namespace)
         create_virtual_server_from_yaml(custom_objects, yaml_manifest, namespace)
+        wait_before_test()
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServer: {name}")
         raise
@@ -183,6 +184,7 @@ def patch_v_s_route_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manif
         custom_objects.patch_namespaced_custom_object(
             "k8s.nginx.org", "v1", namespace, "virtualserverroutes", name, dep
         )
+        wait_before_test()
         print(f"VirtualServerRoute updated with name '{dep['metadata']['name']}'")
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServerRoute: {name}")
