@@ -208,7 +208,6 @@ class TestVirtualServer:
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
 
-
 @pytest.mark.vs
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
