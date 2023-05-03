@@ -39,7 +39,7 @@ type VirtualServerSpec struct {
 	IngressClass   string            `json:"ingressClassName"`
 	Host           string            `json:"host"`
 	TLS            *TLS              `json:"tls"`
-	Gunzip         string            `json:"gunzip"`
+	Gunzip         bool              `json:"gunzip"`
 	Policies       []PolicyReference `json:"policies"`
 	Upstreams      []Upstream        `json:"upstreams"`
 	Routes         []Route           `json:"routes"`

@@ -1,6 +1,7 @@
 package version2
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -38,6 +39,9 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOn(t *testi
 	if err != nil {
 		t.Error(err)
 	}
+	if !bytes.Contains(got, []byte("gunzip on;")) {
+		t.Error("want `gunzip on` directive, got no directive")
+	}
 	t.Log(string(got))
 }
 
@@ -51,31 +55,24 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOff(t *test
 	if err != nil {
 		t.Error(err)
 	}
+	if bytes.Contains(got, []byte("gunzip on;")) {
+		t.Error("want no directive, got `gunzip on`")
+	}
 	t.Log(string(got))
 }
 
-func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipEmpty(t *testing.T) {
+func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *testing.T) {
 	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithEmptyGunzip)
+	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithGunzipNotSet)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(string(got))
-}
-
-func TestExecuteVirtualServerTemplate_RendersTemplateWithoutServerGunzip(t *testing.T) {
-	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
-	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
-	if err != nil {
-		t.Error(err)
+	if bytes.Contains(got, []byte("gunzip on;")) {
+		t.Error("want no directive, got `gunzip on` directive")
 	}
 	t.Log(string(got))
 }
@@ -853,7 +850,7 @@ var (
 					},
 				},
 			},
-			Gunzip: "on",
+			Gunzip: true,
 		},
 	}
 
@@ -1199,11 +1196,11 @@ var (
 					},
 				},
 			},
-			Gunzip: "off",
+			Gunzip: false,
 		},
 	}
 
-	virtualServerCfgWithEmptyGunzip = VirtualServerConfig{
+	virtualServerCfgWithGunzipNotSet = VirtualServerConfig{
 		LimitReqZones: []LimitReqZone{
 			{
 				ZoneName: "pol_rl_test_test_test", Rate: "10r/s", ZoneSize: "10m", Key: "$url",
@@ -1545,7 +1542,6 @@ var (
 					},
 				},
 			},
-			Gunzip: "",
 		},
 	}
 
