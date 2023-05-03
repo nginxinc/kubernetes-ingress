@@ -135,9 +135,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace (
-	github.com/golang/glog => github.com/nginxinc/glog v1.1.2
-
-	// temp fix for CVE-2022-41723
-	golang.org/x/net v0.5.0 => golang.org/x/net v0.7.0
-)
+replace github.com/golang/glog => github.com/nginxinc/glog v1.1.2

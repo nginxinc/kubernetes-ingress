@@ -1,0 +1,10 @@
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  name: jwt-policy-invalid
+spec:
+  jwt:
+    realm: MyProductAPI
+    token: $$http_token
+    jwksURI: https://login.microsoftonline.com/dd3dfd2f-6a3b-40d1-9be0-bf8327d81c50/discovery/v2.0/keys
+    keyCache: 1h

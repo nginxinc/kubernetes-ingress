@@ -12,11 +12,11 @@ spec:
     service: backend1-svc
     port: 80
   routes:
-  - path: "/backend1"
+  - path: "/backend1/subpath1"
     action:
       pass: backend1
     policies:
-    - name: jwt-policy-valid
-  - path: "/backend2"
+    - name: jwt-policy-invalid
+  - path: "/backend2/subpath2"
     action:
       pass: backend2
