@@ -47,6 +47,25 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	&& ldconfig /usr/local/lib/
 
 
+############################################# Base image for Alpine with NGINX Plus and App Protect WAF #############################################
+FROM alpine:3.16 as alpine-plus-nap
+ARG NGINX_PLUS_VERSION
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
+        --mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
+        --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
+        wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
+        && printf "%s\n" "https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+        && apk add --no-cache nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcurl \
+        && cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
+        && ldconfig /usr/local/lib/ \
+        && wget -O /etc/apk/keys/app-protect-security-updates.rsa.pub https://cs.nginx.com/static/keys/app-protect-security-updates.rsa.pub \
+        && printf "https://pkgs.nginx.com/app-protect/alpine/v`egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release`/main\n" | tee -a /etc/apk/repositories \
+        && printf "https://pkgs.nginx.com/app-protect-security-updates/alpine/v`egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release`/main\n" | tee -a /etc/apk/repositories \
+        && apk update \
+        && apk add app-protect
+
+
 ############################################# Base image for Debian with NGINX Plus #############################################
 FROM debian:11-slim AS debian-plus
 ARG IC_VERSION

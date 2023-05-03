@@ -109,6 +109,10 @@ alpine-image: build ## Create Docker image for Ingress Controller (Alpine)
 alpine-image-plus: build ## Create Docker image for Ingress Controller (Alpine with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus
 
+.PHONY: alpine-image-plus-nap
+alpine-image-plus-nap: build ## Create Docker image for Ingress Controller (Alpine with NGINX Plus and App Protect WAF)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus-nap
+
 .PHONY: debian-image-plus
 debian-image-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus
