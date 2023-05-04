@@ -1050,6 +1050,30 @@ func TestValidateOIDC_PassesOnValidOIDC(t *testing.T) {
 	}
 }
 
+func TestValidateOIDCScope_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
+
+	scopes := []string{"", " ", "mycustomscope"}
+	for _, v := range scopes {
+		allErrs := validateOIDCScope(v, field.NewPath("scope"))
+		if len(allErrs) == 0 {
+			t.Error("want err on missing `openid` scope")
+		}
+	}
+}
+
+func TestValidateOIDCScope_PassesOnValidScopes(t *testing.T) {
+	t.Parallel()
+
+	scopes := []string{"openid", "validScope+openid", "SecondScope+openid+CustomScope"}
+	for _, v := range scopes {
+		allErrs := validateOIDCScope(v, field.NewPath("scope"))
+		if len(allErrs) != 0 {
+			t.Errorf("want no err, got %v", allErrs)
+		}
+	}
+}
+
 func TestValidateOIDC_FailsOnInvalidOIDC(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -1224,19 +1248,6 @@ func TestValidateOIDCScope_PassesOnValidInput(t *testing.T) {
 		allErrs := validateOIDCScope(test, field.NewPath("scope"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateOIDCScope(%q) returned errors %v for valid input", allErrs, test)
-		}
-	}
-}
-
-func TestValidateOIDCScope_FailsOnInvalidInput(t *testing.T) {
-	t.Parallel()
-
-	invalidInput := []string{"profile", "openid+web", `openid+foobar.com`}
-
-	for _, test := range invalidInput {
-		allErrs := validateOIDCScope(test, field.NewPath("scope"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateOIDCScope(%q) didn't return error for invalid input", test)
 		}
 	}
 }

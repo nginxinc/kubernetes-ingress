@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -328,18 +327,8 @@ func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
 	if !strings.Contains(scope, "openid") {
 		return field.ErrorList{field.Required(fieldPath, "openid scope")}
 	}
-
-	validScopes := []string{"openid", "profile", "email", "address", "phone", "offline_access"}
-	msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", strings.Join(validScopes, ", "))
-
-	allErrs := field.ErrorList{}
-	s := strings.Split(scope, "+")
-	for _, v := range s {
-		if !slices.Contains(validScopes, v) {
-			allErrs = append(allErrs, field.Invalid(fieldPath, v, msg))
-		}
-	}
-	return allErrs
+	// todo: Add scope values validation (characters) described in the rfc6749 doc
+	return nil
 }
 
 func validateURL(name string, fieldPath *field.Path) field.ErrorList {
