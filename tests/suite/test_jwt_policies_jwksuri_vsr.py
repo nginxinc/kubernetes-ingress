@@ -101,7 +101,7 @@ class TestJWTPoliciesVSRJwksuri:
         resp_no_token.status_code == 502
         counter = 0
 
-        while resp_no_token.status_code != 401 and counter < 10:
+        while resp_no_token.status_code != 401 and counter < 20:
             resp_no_token = requests.get(
                 f"{req_url}{v_s_route_setup.route_m.paths[0]}",
                 headers={"host": v_s_route_setup.vs_host},

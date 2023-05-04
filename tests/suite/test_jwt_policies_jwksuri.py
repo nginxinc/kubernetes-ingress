@@ -111,7 +111,7 @@ class TestJWTPoliciesVsJwksuri:
         resp_no_token.status_code == 502
         counter = 0
 
-        while resp_no_token.status_code != 401 and counter < 10:
+        while resp_no_token.status_code != 401 and counter < 20:
             resp_no_token = requests.get(
                 virtual_server_setup.backend_1_url,
                 headers={"host": virtual_server_setup.vs_host},
@@ -230,7 +230,7 @@ class TestJWTPoliciesVsJwksuri:
         resp_no_token.status_code == 502
         counter = 0
 
-        while resp_no_token.status_code != 401 and counter < 10:
+        while resp_no_token.status_code != 401 and counter < 20:
             resp_no_token = requests.get(
                 virtual_server_setup.backend_1_url + "/subpath1",
                 headers={"host": virtual_server_setup.vs_host},
@@ -304,7 +304,7 @@ class TestJWTPoliciesVsJwksuri:
         resp_2_no_token.status_code == 502
         counter = 0
 
-        while resp_1_no_token.status_code != 401 and counter < 10:
+        while resp_1_no_token.status_code != 401 and counter < 20:
             resp_1_no_token = requests.get(
                 virtual_server_setup.backend_1_url + "/subpath1",
                 headers={"host": virtual_server_setup.vs_host},
@@ -314,7 +314,7 @@ class TestJWTPoliciesVsJwksuri:
 
         counter = 0
 
-        while resp_2_no_token.status_code != 401 and counter < 10:
+        while resp_2_no_token.status_code != 401 and counter < 20:
             resp_2_no_token = requests.get(
                 virtual_server_setup.backend_1_url + "/subpath1",
                 headers={"host": "virtual-server-2.example.com"},

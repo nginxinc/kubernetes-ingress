@@ -77,7 +77,6 @@ func (vsv *VirtualServerValidator) validateVirtualServerSpec(spec *v1.VirtualSer
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateHost(spec.Host, fieldPath.Child("host"))...)
-	allErrs = append(allErrs, validateGunzip(spec.Gunzip, fieldPath.Child("gunzip"))...)
 	allErrs = append(allErrs, vsv.validateTLS(spec.TLS, fieldPath.Child("tls"))...)
 	allErrs = append(allErrs, validatePolicies(spec.Policies, fieldPath.Child("policies"), namespace)...)
 
@@ -113,15 +112,6 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 	}
 
 	return allErrs
-}
-
-func validateGunzip(fieldValue string, fl *field.Path) field.ErrorList {
-	switch fieldValue {
-	case "on", "off", "":
-		return nil
-	default:
-		return field.ErrorList{field.NotSupported(fl, fieldValue, []string{"on", "off"})}
-	}
 }
 
 func validatePolicies(policies []v1.PolicyReference, fieldPath *field.Path, namespace string) field.ErrorList {

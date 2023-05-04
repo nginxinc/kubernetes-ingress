@@ -5,6 +5,7 @@ from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.resources_utils import (
     create_service_from_yaml,
     delete_service,
+    get_first_pod_name,
     patch_rbac,
     read_service,
     replace_service,
@@ -13,6 +14,7 @@ from suite.utils.resources_utils import (
 from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_virtual_server,
+    get_vs_nginx_template_conf,
     patch_virtual_server_from_yaml,
 )
 from suite.utils.yaml_utils import get_first_host_from_yaml, get_name_from_yaml, get_paths_from_vs_yaml
@@ -163,6 +165,45 @@ class TestVirtualServer:
             f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml",
             virtual_server_setup.namespace,
         )
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
+
+    def test_responses_after_virtual_server_update_with_gunzip(
+        self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, virtual_server_setup
+    ):
+        print("Step 1: update gunzip in the VS and check")
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            f"{TEST_DATA}/virtual-server/virtual-server-gunzip.yaml",
+            virtual_server_setup.namespace,
+        )
+        wait_before_test(1)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
+
+        print("Step 2: verify gunzip directive is present")
+
+        pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+
+        confFile = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
+
+        assert "gunzip on;" in confFile
+
+        print("Step 3: restore VS and check")
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml",
+            virtual_server_setup.namespace,
+        )
+        wait_before_test(1)
         wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
