@@ -215,7 +215,7 @@ class TestIngressMtlsPolicyVS:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        ssl_exception=""
+        ssl_exception = ""
         resp = mock.Mock()
         resp.status_code == 502
         counter = 0
