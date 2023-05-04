@@ -346,13 +346,13 @@ func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
 		return field.ErrorList{field.Required(fieldPath, "openid scope")}
 	}
 
-	allowedScopes := []string{"openid", "profile", "email", "address", "phone", "offline_access"}
-	msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", strings.Join(allowedScopes, ", "))
+	validScopes := []string{"openid", "profile", "email", "address", "phone", "offline_access"}
+	msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", strings.Join(validScopes, ", "))
 
 	allErrs := field.ErrorList{}
 	s := strings.Split(scope, "+")
 	for _, v := range s {
-		if !slices.Contains(allowedScopes, v) {
+		if !slices.Contains(validScopes, v) {
 			allErrs = append(allErrs, field.Invalid(fieldPath, v, msg))
 		}
 	}
