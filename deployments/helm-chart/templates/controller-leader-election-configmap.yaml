@@ -6,8 +6,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
-  {{- if .Values.controller.reportIngressStatus.annotations }}
-annotations:
-  {{ toYaml .Values.controller.reportIngressStatus.annotations | indent 4 }}
-  {{- end }}
-  {{- end }}
+{{- if .Values.controller.reportIngressStatus.annotations }}
+  annotations:
+{{ toYaml .Values.controller.reportIngressStatus.annotations | indent 4 }}
+{{- end }}
+{{- end }}
