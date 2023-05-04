@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -187,17 +188,15 @@ func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 }
 
 func validateBasic(basic *v1.BasicAuth, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
+	if basic.Secret == "" {
+		return field.ErrorList{field.Required(fieldPath.Child("secret"), "")}
+	}
 
+	allErrs := field.ErrorList{}
 	if basic.Realm != "" {
 		allErrs = append(allErrs, validateRealm(basic.Realm, fieldPath.Child("realm"))...)
 	}
-
-	if basic.Secret == "" {
-		return append(allErrs, field.Required(fieldPath.Child("secret"), ""))
-	}
 	allErrs = append(allErrs, validateSecretName(basic.Secret, fieldPath.Child("secret"))...)
-
 	return allErrs
 }
 
@@ -237,24 +236,23 @@ func validateEgressMTLS(egressMTLS *v1.EgressMTLS, fieldPath *field.Path) field.
 }
 
 func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if oidc.AuthEndpoint == "" {
-		return append(allErrs, field.Required(fieldPath.Child("authEndpoint"), ""))
+		return field.ErrorList{field.Required(fieldPath.Child("authEndpoint"), "")}
 	}
 	if oidc.TokenEndpoint == "" {
-		return append(allErrs, field.Required(fieldPath.Child("tokenEndpoint"), ""))
+		return field.ErrorList{field.Required(fieldPath.Child("tokenEndpoint"), "")}
 	}
 	if oidc.JWKSURI == "" {
-		return append(allErrs, field.Required(fieldPath.Child("jwksURI"), ""))
+		return field.ErrorList{field.Required(fieldPath.Child("jwksURI"), "")}
 	}
 	if oidc.ClientID == "" {
-		return append(allErrs, field.Required(fieldPath.Child("clientID"), ""))
+		return field.ErrorList{field.Required(fieldPath.Child("clientID"), "")}
 	}
 	if oidc.ClientSecret == "" {
-		return append(allErrs, field.Required(fieldPath.Child("clientSecret"), ""))
+		return field.ErrorList{field.Required(fieldPath.Child("clientSecret"), "")}
 	}
 
+	allErrs := field.ErrorList{}
 	if oidc.Scope != "" {
 		allErrs = append(allErrs, validateOIDCScope(oidc.Scope, fieldPath.Child("scope"))...)
 	}
@@ -342,30 +340,22 @@ func validateClientID(client string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-var validScopes = map[string]bool{
-	"openid":  true,
-	"profile": true,
-	"email":   true,
-	"address": true,
-	"phone":   true,
-}
-
 // https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
 func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !strings.Contains(scope, "openid") {
-		return append(allErrs, field.Required(fieldPath, "openid scope"))
+		return field.ErrorList{field.Required(fieldPath, "openid scope")}
 	}
 
+	allowedScopes := []string{"openid", "profile", "email", "address", "phone", "offline_access"}
+	msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", strings.Join(allowedScopes, ", "))
+
+	allErrs := field.ErrorList{}
 	s := strings.Split(scope, "+")
 	for _, v := range s {
-		if !validScopes[v] {
-			msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", mapToPrettyString(validScopes))
+		if !slices.Contains(allowedScopes, v) {
 			allErrs = append(allErrs, field.Invalid(fieldPath, v, msg))
 		}
 	}
-
 	return allErrs
 }
 
