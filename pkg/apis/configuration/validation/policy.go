@@ -123,9 +123,7 @@ func validateAccessControl(accessControl *v1.AccessControl, fieldPath *field.Pat
 }
 
 func validateRateLimit(rateLimit *v1.RateLimit, fieldPath *field.Path, isPlus bool) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	allErrs = append(allErrs, validateRateLimitZoneSize(rateLimit.ZoneSize, fieldPath.Child("zoneSize"))...)
+	allErrs := validateRateLimitZoneSize(rateLimit.ZoneSize, fieldPath.Child("zoneSize"))
 	allErrs = append(allErrs, validateRate(rateLimit.Rate, fieldPath.Child("rate"))...)
 	allErrs = append(allErrs, validateRateLimitKey(rateLimit.Key, fieldPath.Child("key"), isPlus)...)
 
@@ -196,18 +194,14 @@ func validateBasic(basic *v1.BasicAuth, fieldPath *field.Path) field.ErrorList {
 	if basic.Realm != "" {
 		allErrs = append(allErrs, validateRealm(basic.Realm, fieldPath.Child("realm"))...)
 	}
-	allErrs = append(allErrs, validateSecretName(basic.Secret, fieldPath.Child("secret"))...)
-	return allErrs
+	return append(allErrs, validateSecretName(basic.Secret, fieldPath.Child("secret"))...)
 }
 
 func validateIngressMTLS(ingressMTLS *v1.IngressMTLS, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if ingressMTLS.ClientCertSecret == "" {
-		return append(allErrs, field.Required(fieldPath.Child("clientCertSecret"), ""))
+		return field.ErrorList{field.Required(fieldPath.Child("clientCertSecret"), "")}
 	}
-	allErrs = append(allErrs, validateSecretName(ingressMTLS.ClientCertSecret, fieldPath.Child("clientCertSecret"))...)
-
+	allErrs := validateSecretName(ingressMTLS.ClientCertSecret, fieldPath.Child("clientCertSecret"))
 	allErrs = append(allErrs, validateIngressMTLSVerifyClient(ingressMTLS.VerifyClient, fieldPath.Child("verifyClient"))...)
 
 	if ingressMTLS.VerifyDepth != nil {
@@ -217,9 +211,7 @@ func validateIngressMTLS(ingressMTLS *v1.IngressMTLS, fieldPath *field.Path) fie
 }
 
 func validateEgressMTLS(egressMTLS *v1.EgressMTLS, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	allErrs = append(allErrs, validateSecretName(egressMTLS.TLSSecret, fieldPath.Child("tlsSecret"))...)
+	allErrs := validateSecretName(egressMTLS.TLSSecret, fieldPath.Child("tlsSecret"))
 
 	if egressMTLS.VerifyServer && egressMTLS.TrustedCertSecret == "" {
 		return append(allErrs, field.Required(fieldPath.Child("trustedCertSecret"), "must be set when verifyServer is 'true'"))
@@ -229,10 +221,7 @@ func validateEgressMTLS(egressMTLS *v1.EgressMTLS, fieldPath *field.Path) field.
 	if egressMTLS.VerifyDepth != nil {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*egressMTLS.VerifyDepth, fieldPath.Child("verifyDepth"))...)
 	}
-
-	allErrs = append(allErrs, validateSSLName(egressMTLS.SSLName, fieldPath.Child("sslName"))...)
-
-	return allErrs
+	return append(allErrs, validateSSLName(egressMTLS.SSLName, fieldPath.Child("sslName"))...)
 }
 
 func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
@@ -273,9 +262,7 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateURL(oidc.TokenEndpoint, fieldPath.Child("tokenEndpoint"))...)
 	allErrs = append(allErrs, validateURL(oidc.JWKSURI, fieldPath.Child("jwksURI"))...)
 	allErrs = append(allErrs, validateSecretName(oidc.ClientSecret, fieldPath.Child("clientSecret"))...)
-	allErrs = append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
-
-	return allErrs
+	return append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
 }
 
 func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
@@ -305,7 +292,6 @@ func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
 	if waf.SecurityLog != nil {
 		allErrs = append(allErrs, validateLogConf(waf.SecurityLog.ApLogConf, waf.SecurityLog.LogDest, fieldPath.Child("securityLog"))...)
 	}
-
 	return allErrs
 }
 
@@ -326,18 +312,15 @@ func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.Error
 }
 
 func validateClientID(client string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	// isValidHeaderValue checks for $ and " in the string
 	if isValidHeaderValue(client) != nil {
-		allErrs = append(allErrs, field.Invalid(
+		return field.ErrorList{field.Invalid(
 			fieldPath,
 			client,
 			`invalid string. String must contain valid ASCII characters, must have all '"' escaped and must not contain any '$' or end with an unescaped '\'
-		`))
+		`)}
 	}
-
-	return allErrs
+	return nil
 }
 
 // https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
@@ -360,24 +343,18 @@ func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
 }
 
 func validateURL(name string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	u, err := url.Parse(name)
 	if err != nil {
-		return append(allErrs, field.Invalid(fieldPath, name, err.Error()))
+		return field.ErrorList{field.Invalid(fieldPath, name, err.Error())}
 	}
-	var msg string
 	if u.Scheme == "" {
-		msg = "scheme required, please use the prefix http(s)://"
-		return append(allErrs, field.Invalid(fieldPath, name, msg))
+		return field.ErrorList{field.Invalid(fieldPath, name, "scheme required, please use the prefix http(s)://")}
 	}
 	if u.Host == "" {
-		msg = "hostname required"
-		return append(allErrs, field.Invalid(fieldPath, name, msg))
+		return field.ErrorList{field.Invalid(fieldPath, name, "hostname required")}
 	}
 	if u.Path == "" {
-		msg = "path required"
-		return append(allErrs, field.Invalid(fieldPath, name, msg))
+		return field.ErrorList{field.Invalid(fieldPath, name, "path required")}
 	}
 
 	host, port, err := net.SplitHostPort(u.Host)
@@ -385,33 +362,28 @@ func validateURL(name string, fieldPath *field.Path) field.ErrorList {
 		host = u.Host
 	}
 
-	allErrs = append(allErrs, validateSSLName(host, fieldPath)...)
+	allErrs := validateSSLName(host, fieldPath)
 	if port != "" {
 		allErrs = append(allErrs, validatePortNumber(port, fieldPath)...)
 	}
-
 	return allErrs
 }
 
 func validateQueryString(queryString string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	_, err := url.ParseQuery(queryString)
 	if err != nil {
-		return append(allErrs, field.Invalid(fieldPath, queryString, err.Error()))
+		return field.ErrorList{field.Invalid(fieldPath, queryString, err.Error())}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validatePortNumber(port string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 	portInt, _ := strconv.Atoi(port)
 	msg := validation.IsValidPortNum(portInt)
 	if msg != nil {
-		allErrs = append(allErrs, field.Invalid(fieldPath, port, msg[0]))
+		return field.ErrorList{field.Invalid(fieldPath, port, msg[0])}
 	}
-	return allErrs
+	return nil
 }
 
 func validateSSLName(name string, fieldPath *field.Path) field.ErrorList {
@@ -433,11 +405,10 @@ var validateVerifyClientKeyParameters = map[string]bool{
 }
 
 func validateIngressMTLSVerifyClient(verifyClient string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if verifyClient != "" {
-		allErrs = append(allErrs, ValidateParameter(verifyClient, validateVerifyClientKeyParameters, fieldPath)...)
+		return ValidateParameter(verifyClient, validateVerifyClientKeyParameters, fieldPath)
 	}
-	return allErrs
+	return nil
 }
 
 const (
@@ -448,27 +419,21 @@ const (
 var rateRegexp = regexp.MustCompile("^" + rateFmt + "$")
 
 func validateRate(rate string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if rate == "" {
-		return append(allErrs, field.Required(fieldPath, ""))
+		return field.ErrorList{field.Required(fieldPath, "")}
 	}
-
 	if !rateRegexp.MatchString(rate) {
 		msg := validation.RegexError(rateErrMsg, rateFmt, "16r/s", "32r/m", "64r/s")
-		return append(allErrs, field.Invalid(fieldPath, rate, msg))
+		return field.ErrorList{field.Invalid(fieldPath, rate, msg)}
 	}
-	return allErrs
+	return nil
 }
 
 func validateRateLimitZoneSize(zoneSize string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if zoneSize == "" {
-		return append(allErrs, field.Required(fieldPath, ""))
+		return field.ErrorList{field.Required(fieldPath, "")}
 	}
-
-	allErrs = append(allErrs, validateSize(zoneSize, fieldPath)...)
+	allErrs := validateSize(zoneSize, fieldPath)
 
 	kbZoneSize := strings.TrimSuffix(strings.ToLower(zoneSize), "k")
 	kbZoneSizeNum, err := strconv.Atoi(kbZoneSize)
@@ -479,7 +444,6 @@ func validateRateLimitZoneSize(zoneSize string, fieldPath *field.Path) field.Err
 	if err == nil && kbZoneSizeNum < 32 || mbErr == nil && mbZoneSizeNum == 0 {
 		allErrs = append(allErrs, field.Invalid(fieldPath, zoneSize, "must be greater than 31k"))
 	}
-
 	return allErrs
 }
 
@@ -494,33 +458,26 @@ var rateLimitKeyVariables = map[string]bool{
 }
 
 func validateRateLimitKey(key string, fieldPath *field.Path, isPlus bool) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if key == "" {
-		return append(allErrs, field.Required(fieldPath, ""))
+		return field.ErrorList{field.Required(fieldPath, "")}
 	}
-
+	allErrs := field.ErrorList{}
 	if err := ValidateEscapedString(key, `Hello World! \n`, `\"${request_uri}\" is unavailable. \n`); err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath, key, err.Error()))
 	}
-
-	allErrs = append(allErrs, validateStringWithVariables(key, fieldPath, rateLimitKeySpecialVariables, rateLimitKeyVariables, isPlus)...)
-
-	return allErrs
+	return append(allErrs, validateStringWithVariables(key, fieldPath, rateLimitKeySpecialVariables, rateLimitKeyVariables, isPlus)...)
 }
 
 var jwtTokenSpecialVariables = []string{"arg_", "http_", "cookie_"}
 
 func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if token == "" {
-		return allErrs
+		return nil
 	}
 
 	nginxVars := strings.Split(token, "$")
 	if len(nginxVars) != 2 {
-		return append(allErrs, field.Invalid(fieldPath, token, "must have 1 var"))
+		return field.ErrorList{field.Invalid(fieldPath, token, "must have 1 var")}
 	}
 	nVar := token[1:]
 
@@ -532,6 +489,7 @@ func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
 		}
 	}
 
+	allErrs := field.ErrorList{}
 	if special {
 		// validateJWTToken is called only when NGINX Plus is running
 		isPlus := true
@@ -539,7 +497,6 @@ func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
 	} else {
 		return append(allErrs, field.Invalid(fieldPath, token, "must only have special vars"))
 	}
-
 	return allErrs
 }
 
@@ -551,14 +508,11 @@ var validLogLevels = map[string]bool{
 }
 
 func validateRateLimitLogLevel(logLevel string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !validLogLevels[logLevel] {
-		allErrs = append(allErrs, field.Invalid(fieldPath, logLevel, fmt.Sprintf("Accepted values: %s",
-			mapToPrettyString(validLogLevels))))
+		return field.ErrorList{field.Invalid(fieldPath, logLevel, fmt.Sprintf("Accepted values: %s",
+			mapToPrettyString(validLogLevels)))}
 	}
-
-	return allErrs
+	return nil
 }
 
 const (
@@ -569,40 +523,30 @@ const (
 var realmFmtRegexp = regexp.MustCompile("^" + realmFmt + "$")
 
 func validateRealm(realm string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !realmFmtRegexp.MatchString(realm) {
 		msg := validation.RegexError(realmFmtErrMsg, realmFmt, "MyAPI", "My Product API")
-		allErrs = append(allErrs, field.Invalid(fieldPath, realm, msg))
+		return field.ErrorList{field.Invalid(fieldPath, realm, msg)}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateIPorCIDR(ipOrCIDR string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	_, _, err := net.ParseCIDR(ipOrCIDR)
 	if err == nil {
 		// valid CIDR
-		return allErrs
+		return nil
 	}
-
 	ip := net.ParseIP(ipOrCIDR)
 	if ip != nil {
 		// valid IP
-		return allErrs
+		return nil
 	}
-
-	return append(allErrs, field.Invalid(fieldPath, ipOrCIDR, "must be a CIDR or IP"))
+	return field.ErrorList{field.Invalid(fieldPath, ipOrCIDR, "must be a CIDR or IP")}
 }
 
 func validatePositiveInt(n int, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if n <= 0 {
-		return append(allErrs, field.Invalid(fieldPath, n, "must be positive"))
+		return field.ErrorList{field.Invalid(fieldPath, n, "must be positive")}
 	}
-
-	return allErrs
+	return nil
 }
