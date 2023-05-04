@@ -325,7 +325,7 @@ class TestIngressMtlsPolicyVS:
             )
             wait_before_test()
             counter += 1
-        
+
         vs_res = read_vs(kube_apis.custom_objects, test_namespace, virtual_server_setup.vs_name)
         teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
 
