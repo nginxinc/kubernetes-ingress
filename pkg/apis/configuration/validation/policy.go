@@ -489,15 +489,11 @@ func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
 		}
 	}
 
-	allErrs := field.ErrorList{}
-	if special {
-		// validateJWTToken is called only when NGINX Plus is running
-		isPlus := true
-		allErrs = append(allErrs, validateSpecialVariable(nVar, fieldPath, isPlus)...)
-	} else {
-		return append(allErrs, field.Invalid(fieldPath, token, "must only have special vars"))
+	if !special {
+		return field.ErrorList{field.Invalid(fieldPath, token, "must only have special vars")}
 	}
-	return allErrs
+	// validateJWTToken is called only when NGINX Plus is running
+	return validateSpecialVariable(nVar, fieldPath, true)
 }
 
 var validLogLevels = map[string]bool{
