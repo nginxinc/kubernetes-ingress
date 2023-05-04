@@ -50,9 +50,9 @@ All images include NGINX 1.23.2.
 {{% table %}}
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
 | ---| ---| ---| --- | --- |
-|Alpine-based image | ``nginx:1.23.3-alpine``, which is based on ``alpine:3.17`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:3.1.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image | ``nginx:1.23.3``, which is based on ``debian:11-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:3.1.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Ubi-based image | ``nginxcontrib/nginx:1.23.3-ubi``, which is based on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.1.0-ubi`` | arm64, amd64, ppc64le, s390x |
+|Alpine-based image | ``nginx:1.23.4-alpine``, which is based on ``alpine:3.17`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:3.1.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.23.4``, which is based on ``debian:11-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:3.1.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Ubi-based image | ``nginxcontrib/nginx:1.23.4-ubi``, which is based on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.1.0-ubi`` | arm64, amd64, ppc64le, s390x |
 {{% /table %}}
 
 ### Images with NGINX Plus
