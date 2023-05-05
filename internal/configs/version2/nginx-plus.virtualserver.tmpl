@@ -63,7 +63,7 @@ proxy_cache_path /var/cache/nginx/jwks_uri_{{$s.VSName}} levels=1 keys_zone=jwks
 {{ end }}
 
 server {
-    {{ if (eq $s.Gunzip "on") }}gunzip {{ $s.Gunzip }};{{end}}
+    {{ if $s.Gunzip }}gunzip on;{{end}}
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
 
