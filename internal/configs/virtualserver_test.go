@@ -197,6 +197,780 @@ func TestVariableNamer(t *testing.T) {
 	}
 }
 
+func TestGenerateVSConfig_GeneratesConfigWithGunzipOn(t *testing.T) {
+	t.Parallel()
+
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false)
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			Gunzip:          true,
+			StatusZone:      "cafe.example.com",
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerExWithGunzipOn, nil, nil)
+	if len(warnings) > 0 {
+		t.Fatalf("want no warnings, got: %v", vsc.warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestGenerateVSConfig_GeneratesConfigWithGunzipOff(t *testing.T) {
+	t.Parallel()
+
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false)
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			Gunzip:          false,
+			StatusZone:      "cafe.example.com",
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerExWithGunzipOff, nil, nil)
+	if len(warnings) > 0 {
+		t.Fatalf("want no warnings, got: %v", vsc.warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestGenerateVSConfig_GeneratesConfigWithNoGunzip(t *testing.T) {
+	t.Parallel()
+
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false)
+
+	want := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea-latest",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			Gunzip:          false,
+			StatusZone:      "cafe.example.com",
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
+				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
+			},
+		},
+	}
+
+	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerExWithNoGunzip, nil, nil)
+	if len(warnings) > 0 {
+		t.Fatalf("want no warnings, got: %v", vsc.warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
 func TestGenerateVirtualServerConfig(t *testing.T) {
 	t.Parallel()
 	virtualServerEx := VirtualServerEx{
@@ -9639,3 +10413,590 @@ func TestGenerateTimeWithDefault(t *testing.T) {
 		}
 	}
 }
+
+var (
+	baseCfgParams = ConfigParams{
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	virtualServerExWithGunzipOn = VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host:   "cafe.example.com",
+				Gunzip: true,
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:        "tea-latest",
+						Service:     "tea-svc",
+						Subselector: map[string]string{"version": "v1"},
+						Port:        80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/tea-latest",
+						Action: &conf_v1.Action{
+							Pass: "tea-latest",
+						},
+					},
+					{
+						Path:  "/coffee",
+						Route: "default/coffee",
+					},
+					{
+						Path:  "/subtea",
+						Route: "default/subtea",
+					},
+					{
+						Path: "/coffee-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+					{
+						Path:  "/coffee-errorpage-subroute",
+						Route: "default/subcoffee",
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/tea-svc_version=v1:80": {
+				"10.0.0.30:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.40:80",
+			},
+			"default/sub-tea-svc_version=v1:80": {
+				"10.0.0.50:80",
+			},
+		},
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subtea",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:        "subtea",
+							Service:     "sub-tea-svc",
+							Port:        80,
+							Subselector: map[string]string{"version": "v1"},
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/subtea",
+							Action: &conf_v1.Action{
+								Pass: "subtea",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subcoffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee-errorpage-subroute",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+						{
+							Path: "/coffee-errorpage-subroute-defined",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+							ErrorPages: []conf_v1.ErrorPage{
+								{
+									Codes: []int{502, 503},
+									Return: &conf_v1.ErrorPageReturn{
+										ActionReturn: conf_v1.ActionReturn{
+											Code: 200,
+											Type: "text/plain",
+											Body: "All Good",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerExWithGunzipOff = VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host:   "cafe.example.com",
+				Gunzip: false,
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:        "tea-latest",
+						Service:     "tea-svc",
+						Subselector: map[string]string{"version": "v1"},
+						Port:        80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/tea-latest",
+						Action: &conf_v1.Action{
+							Pass: "tea-latest",
+						},
+					},
+					{
+						Path:  "/coffee",
+						Route: "default/coffee",
+					},
+					{
+						Path:  "/subtea",
+						Route: "default/subtea",
+					},
+					{
+						Path: "/coffee-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+					{
+						Path:  "/coffee-errorpage-subroute",
+						Route: "default/subcoffee",
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/tea-svc_version=v1:80": {
+				"10.0.0.30:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.40:80",
+			},
+			"default/sub-tea-svc_version=v1:80": {
+				"10.0.0.50:80",
+			},
+		},
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subtea",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:        "subtea",
+							Service:     "sub-tea-svc",
+							Port:        80,
+							Subselector: map[string]string{"version": "v1"},
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/subtea",
+							Action: &conf_v1.Action{
+								Pass: "subtea",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subcoffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee-errorpage-subroute",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+						{
+							Path: "/coffee-errorpage-subroute-defined",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+							ErrorPages: []conf_v1.ErrorPage{
+								{
+									Codes: []int{502, 503},
+									Return: &conf_v1.ErrorPageReturn{
+										ActionReturn: conf_v1.ActionReturn{
+											Code: 200,
+											Type: "text/plain",
+											Body: "All Good",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerExWithNoGunzip = VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:        "tea-latest",
+						Service:     "tea-svc",
+						Subselector: map[string]string{"version": "v1"},
+						Port:        80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/tea-latest",
+						Action: &conf_v1.Action{
+							Pass: "tea-latest",
+						},
+					},
+					{
+						Path:  "/coffee",
+						Route: "default/coffee",
+					},
+					{
+						Path:  "/subtea",
+						Route: "default/subtea",
+					},
+					{
+						Path: "/coffee-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+					{
+						Path:  "/coffee-errorpage-subroute",
+						Route: "default/subcoffee",
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/tea-svc_version=v1:80": {
+				"10.0.0.30:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.40:80",
+			},
+			"default/sub-tea-svc_version=v1:80": {
+				"10.0.0.50:80",
+			},
+		},
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subtea",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:        "subtea",
+							Service:     "sub-tea-svc",
+							Port:        80,
+							Subselector: map[string]string{"version": "v1"},
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/subtea",
+							Action: &conf_v1.Action{
+								Pass: "subtea",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subcoffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee-errorpage-subroute",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+						{
+							Path: "/coffee-errorpage-subroute-defined",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+							ErrorPages: []conf_v1.ErrorPage{
+								{
+									Codes: []int{502, 503},
+									Return: &conf_v1.ErrorPageReturn{
+										ActionReturn: conf_v1.ActionReturn{
+											Code: 200,
+											Type: "text/plain",
+											Body: "All Good",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+)

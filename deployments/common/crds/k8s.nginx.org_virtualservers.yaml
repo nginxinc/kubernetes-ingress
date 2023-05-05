@@ -87,7 +87,7 @@ spec:
                     recordType:
                       type: string
                 gunzip:
-                  type: string
+                  type: boolean
                 host:
                   type: string
                 http-snippets:

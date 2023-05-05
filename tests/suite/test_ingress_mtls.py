@@ -145,13 +145,21 @@ class TestIngressMtlsPolicyVS:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        resp = session.get(
-            virtual_server_setup.backend_1_url_ssl,
-            cert=(crt, key),
-            headers={"host": virtual_server_setup.vs_host},
-            allow_redirects=False,
-            verify=False,
-        )
+        resp = mock.Mock()
+        resp.status_code == 502
+        counter = 0
+
+        while resp.status_code != expected_code and counter < 10:
+            resp = session.get(
+                virtual_server_setup.backend_1_url_ssl,
+                cert=(crt, key),
+                headers={"host": virtual_server_setup.vs_host},
+                allow_redirects=False,
+                verify=False,
+            )
+            wait_before_test()
+            counter += 1
+
         vs_res = read_vs(kube_apis.custom_objects, test_namespace, virtual_server_setup.vs_name)
         teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
 
@@ -208,21 +216,28 @@ class TestIngressMtlsPolicyVS:
         )
         wait_before_test()
         ssl_exception = ""
-        resp = ""
-        try:
-            resp = session.get(
-                virtual_server_setup.backend_1_url_ssl,
-                cert=certificate,
-                headers={"host": virtual_server_setup.vs_host},
-                allow_redirects=False,
-                verify=False,
-            )
-        except requests.exceptions.SSLError as e:
-            print(f"SSL certificate exception: {e}")
-            ssl_exception = str(e)
-            resp = mock.Mock()
-            resp.status_code = "None"
-            resp.text = "None"
+        resp = mock.Mock()
+        resp.status_code == 502
+        counter = 0
+
+        while resp.status_code != expected_code and counter < 10:
+            try:
+                resp = session.get(
+                    virtual_server_setup.backend_1_url_ssl,
+                    cert=certificate,
+                    headers={"host": virtual_server_setup.vs_host},
+                    allow_redirects=False,
+                    verify=False,
+                )
+                wait_before_test()
+                counter += 1
+
+            except requests.exceptions.SSLError as e:
+                print(f"SSL certificate exception: {e}")
+                ssl_exception = str(e)
+                resp = mock.Mock()
+                resp.status_code = "None"
+                resp.text = "None"
 
         teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
 
@@ -267,7 +282,7 @@ class TestIngressMtlsPolicyVS:
             ),
         ],
     )
-    def test_ingress_mtls_polciy_crl(
+    def test_ingress_mtls_policy_crl(
         self,
         kube_apis,
         crd_ingress_controller,
@@ -297,13 +312,21 @@ class TestIngressMtlsPolicyVS:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        resp = session.get(
-            virtual_server_setup.backend_1_url_ssl,
-            cert=(crt_not_revoked, key_not_revoked),
-            headers={"host": virtual_server_setup.vs_host},
-            allow_redirects=False,
-            verify=False,
-        )
+        resp = mock.Mock()
+        resp.status_code == 502
+        counter = 0
+
+        while resp.status_code != expected_code and counter < 10:
+            resp = session.get(
+                virtual_server_setup.backend_1_url_ssl,
+                cert=(crt_not_revoked, key_not_revoked),
+                headers={"host": virtual_server_setup.vs_host},
+                allow_redirects=False,
+                verify=False,
+            )
+            wait_before_test()
+            counter += 1
+
         vs_res = read_vs(kube_apis.custom_objects, test_namespace, virtual_server_setup.vs_name)
         teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
 
@@ -360,21 +383,27 @@ class TestIngressMtlsPolicyVS:
         )
         wait_before_test()
         ssl_exception = ""
-        resp = ""
-        try:
-            resp = session.get(
-                virtual_server_setup.backend_1_url_ssl,
-                cert=certificate,
-                headers={"host": virtual_server_setup.vs_host},
-                allow_redirects=False,
-                verify=False,
-            )
-        except requests.exceptions.SSLError as e:
-            print(f"SSL certificate exception: {e}")
-            ssl_exception = str(e)
-            resp = mock.Mock()
-            resp.status_code = "None"
-            resp.text = "None"
+        resp = mock.Mock()
+        resp.status_code == 502
+        counter = 0
+
+        while resp.status_code != expected_code and counter < 10:
+            try:
+                resp = session.get(
+                    virtual_server_setup.backend_1_url_ssl,
+                    cert=certificate,
+                    headers={"host": virtual_server_setup.vs_host},
+                    allow_redirects=False,
+                    verify=False,
+                )
+                wait_before_test()
+                counter += 1
+            except requests.exceptions.SSLError as e:
+                print(f"SSL certificate exception: {e}")
+                ssl_exception = str(e)
+                resp = mock.Mock()
+                resp.status_code = "None"
+                resp.text = "None"
 
         teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
 
