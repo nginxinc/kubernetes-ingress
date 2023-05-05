@@ -1050,23 +1050,37 @@ func TestValidateOIDC_PassesOnValidOIDC(t *testing.T) {
 	}
 }
 
-func TestValidateOIDCScope_FailsOnInvalidInput(t *testing.T) {
+func TestValidateOIDCScope_ErrorsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	scopes := []string{"", " ", "mycustomscope"}
-	for _, v := range scopes {
+	invalidInput := []string{
+		"",
+		" ",
+		"openid+scope\x5c",
+		"mycustom\x7fscope",
+		"openid+myscope\x20",
+		"openid+cus\x19tom",
+	}
+
+	for _, v := range invalidInput {
 		allErrs := validateOIDCScope(v, field.NewPath("scope"))
 		if len(allErrs) == 0 {
-			t.Error("want err on missing `openid` scope")
+			t.Error("want err on invalid scope, got no error")
 		}
 	}
 }
 
-func TestValidateOIDCScope_PassesOnValidScopes(t *testing.T) {
+func TestValidateOIDCScope_PassesOnValidInput(t *testing.T) {
 	t.Parallel()
 
-	scopes := []string{"openid", "validScope+openid", "SecondScope+openid+CustomScope"}
-	for _, v := range scopes {
+	validInput := []string{
+		"openid",
+		"validScope+openid",
+		"SecondScope+openid+CustomScope",
+		"validScope\x26+openid",
+		"openid+my\x33scope",
+	}
+	for _, v := range validInput {
 		allErrs := validateOIDCScope(v, field.NewPath("scope"))
 		if len(allErrs) != 0 {
 			t.Errorf("want no err, got %v", allErrs)
@@ -1097,6 +1111,18 @@ func TestValidateOIDC_FailsOnInvalidOIDC(t *testing.T) {
 				AccessTokenEnable: true,
 			},
 			msg: "missing openid in scope",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:      "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/auth",
+				TokenEndpoint:     "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/token",
+				JWKSURI:           "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/certs",
+				ClientID:          "client",
+				ClientSecret:      "secret",
+				Scope:             "openid+bogus\x7f",
+				AccessTokenEnable: true,
+			},
+			msg: "invalid unicode in scope",
 		},
 		{
 			oidc: &v1.OIDC{
@@ -1235,19 +1261,6 @@ func TestValidateClientID_FailsOnInvalidInput(t *testing.T) {
 		allErrs := validateClientID(test, field.NewPath("clientID"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateClientID(%q) didn't return error for invalid input", test)
-		}
-	}
-}
-
-func TestValidateOIDCScope_PassesOnValidInput(t *testing.T) {
-	t.Parallel()
-
-	validInput := []string{"openid", "openid+profile", "openid+email", "openid+phone"}
-
-	for _, test := range validInput {
-		allErrs := validateOIDCScope(test, field.NewPath("scope"))
-		if len(allErrs) != 0 {
-			t.Errorf("validateOIDCScope(%q) returned errors %v for valid input", allErrs, test)
 		}
 	}
 }

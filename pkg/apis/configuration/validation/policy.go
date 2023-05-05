@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -322,12 +323,30 @@ func validateClientID(client string, fieldPath *field.Path) field.ErrorList {
 	return nil
 }
 
+// Allowed unicode ranges in OIDC scope tokens.
+// Ref. https://datatracker.ietf.org/doc/html/rfc6749#section-3.3
+var validOIDCScopeRanges = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{0x21, 0x21, 1},
+		{0x23, 0x5B, 1},
+		{0x5D, 0x7E, 1},
+	},
+}
+
 // https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
 func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
 	if !strings.Contains(scope, "openid") {
-		return field.ErrorList{field.Required(fieldPath, "openid scope")}
+		return field.ErrorList{field.Required(fieldPath, "openid is required")}
 	}
-	// todo: Add scope values validation (characters) described in the rfc6749 doc
+
+	for _, token := range strings.Split(scope, "+") {
+		for _, v := range token {
+			if !unicode.Is(validOIDCScopeRanges, v) {
+				msg := fmt.Sprintf("not allowed character %v in scope %s", v, scope)
+				return field.ErrorList{field.Invalid(fieldPath, scope, msg)}
+			}
+		}
+	}
 	return nil
 }
 
