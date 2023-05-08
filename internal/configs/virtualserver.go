@@ -327,6 +327,12 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	}
 	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
 
+	if policiesCfg.JWKSAuthEnabled {
+		jwtAuthKey := policiesCfg.JWTAuth.Key
+		policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+		policiesCfg.JWTAuthList[jwtAuthKey] = policiesCfg.JWTAuth
+	}
+
 	dosCfg := generateDosCfg(dosResources[""])
 
 	// enabledInternalRoutes controls if a virtual server is configured as an internal route.
@@ -469,6 +475,18 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		if policiesCfg.OIDC {
 			routePoliciesCfg.OIDC = policiesCfg.OIDC
 		}
+		if routePoliciesCfg.JWKSAuthEnabled {
+			policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+
+			if policiesCfg.JWTAuthList == nil {
+				policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+			}
+
+			jwtAuthKey := routePoliciesCfg.JWTAuth.Key
+			if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
+				policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+			}
+		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -579,6 +597,18 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			if policiesCfg.OIDC {
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
+			if routePoliciesCfg.JWKSAuthEnabled {
+				policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+
+				if policiesCfg.JWTAuthList == nil {
+					policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+				}
+
+				jwtAuthKey := routePoliciesCfg.JWTAuth.Key
+				if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
+					policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+				}
+			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 			dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -654,6 +684,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		HTTPSnippets:  httpSnippets,
 		Server: version2.Server{
 			ServerName:                vsEx.VirtualServer.Spec.Host,
+			Gunzip:                    vsEx.VirtualServer.Spec.Gunzip,
 			StatusZone:                vsEx.VirtualServer.Spec.Host,
 			ProxyProtocol:             vsc.cfgParams.ProxyProtocol,
 			SSL:                       sslConfig,
@@ -675,6 +706,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			LimitReqs:                 policiesCfg.LimitReqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
 			BasicAuth:                 policiesCfg.BasicAuth,
+			JWTAuthList:               policiesCfg.JWTAuthList,
+			JWKSAuthEnabled:           policiesCfg.JWKSAuthEnabled,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			OIDC:                      vsc.oidcPolCfg.oidc,
@@ -699,6 +732,8 @@ type policiesCfg struct {
 	LimitReqZones   []version2.LimitReqZone
 	LimitReqs       []version2.LimitReq
 	JWTAuth         *version2.JWTAuth
+	JWTAuthList     map[string]*version2.JWTAuth
+	JWKSAuthEnabled bool
 	BasicAuth       *version2.BasicAuth
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
@@ -858,11 +893,13 @@ func (p *policiesCfg) addJWTAuthConfig(
 		}
 
 		p.JWTAuth = &version2.JWTAuth{
+			Key:      polKey,
 			JwksURI:  *JwksURI,
 			Realm:    jwtAuth.Realm,
 			Token:    jwtAuth.Token,
 			KeyCache: jwtAuth.KeyCache,
 		}
+		p.JWKSAuthEnabled = true
 		return res
 	}
 	return res

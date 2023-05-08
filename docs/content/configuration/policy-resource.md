@@ -234,10 +234,13 @@ jwt:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``jwksURI`` | The remote URI where the request will be sent to retrieve JSON Web Key set| ``string`` | Yes |
-|``keyCache`` | Enables the caching of keys that are obtained from the ``jwksURI`` and sets a valid time for expiration | ``string`` | Yes |
+|``keyCache`` | Enables in-memory caching of JWKS (JSON Web Key Sets) that are obtained from the ``jwksURI`` and sets a valid time for expiration. | ``string`` | Yes |
 |``realm`` | The realm of the JWT. | ``string`` | Yes |
 |``token`` | The token specifies a variable that contains the JSON Web Token. By default the JWT is passed in the ``Authorization`` header as a Bearer Token. JWT may be also passed as a cookie or a part of a query string, for example: ``$cookie_auth_token``. Accepted variables are ``$http_``, ``$arg_``, ``$cookie_``. | ``string`` | No |
 {{% /table %}}
+
+> Note: Content caching is enabled by default for each JWT policy with a default time of 12 hours.
+> This is done to ensure to improve resiliency by allowing the JWKS (JSON Web Key Set) to be retrieved from the cache even when it has expired.
 
 #### JWT Merging Behavior
 
