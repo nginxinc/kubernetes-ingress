@@ -1268,7 +1268,12 @@ func TestValidateClientID_FailsOnInvalidInput(t *testing.T) {
 func TestValidateURL_PassesOnValidInput(t *testing.T) {
 	t.Parallel()
 
-	validInput := []string{"http://google.com/auth", "https://foo.bar/baz", "http://127.0.0.1/bar", "http://openid.connect.com:8080/foo"}
+	validInput := []string{
+		"http://google.com/auth",
+		"https://foo.bar/baz",
+		"http://127.0.0.1/bar",
+		"http://openid.connect.com:8080/foo",
+	}
 
 	for _, test := range validInput {
 		allErrs := validateURL(test, field.NewPath("authEndpoint"))
@@ -1281,7 +1286,14 @@ func TestValidateURL_PassesOnValidInput(t *testing.T) {
 func TestValidateURL_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	invalidInput := []string{"www.google..foo.com", "http://{foo.bar", `https://google.foo\bar`, "http://foo.bar:8080", "http://foo.bar:812345/fooo"}
+	invalidInput := []string{
+		"www.google..foo.com",
+		"http://{foo.bar",
+		`https://google.foo\bar`,
+		"http://foo.bar:8080",
+		"http://foo.bar:812345/fooo",
+		"http://",
+	}
 
 	for _, test := range invalidInput {
 		allErrs := validateURL(test, field.NewPath("authEndpoint"))
