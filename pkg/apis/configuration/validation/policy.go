@@ -333,7 +333,14 @@ var validOIDCScopeRanges = &unicode.RangeTable{
 	},
 }
 
-// https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+// validateOIDCScope takes a scope representing OIDC scope tokens and
+// checks if the scope is valid. OIDC scope must contain scope token
+// "openid". Additionally, custom scope tokens can be added to the scope.
+//
+// Ref:
+// - https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+//
+// Scope tokens must be separated by "+", and the "+" can't be a part of the token.
 func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
 	if !strings.Contains(scope, "openid") {
 		return field.ErrorList{field.Required(fieldPath, "openid is required")}
