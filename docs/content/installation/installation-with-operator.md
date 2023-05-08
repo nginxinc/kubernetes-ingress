@@ -9,7 +9,7 @@ docs: "DOCS-604"
 ---
 
 {{< note >}}
-An NGINX Ingress Operator version compatible with the 3.1.0 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.
+An NGINX Ingress Operator version compatible with the 3.1.1 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.
 {{< /note >}}
 
 
@@ -42,7 +42,7 @@ spec:
     image:
       pullPolicy: IfNotPresent
       repository: nginx/nginx-ingress
-      tag: 3.1.0-ubi
+      tag: 3.1.1-ubi
     ingressClass: nginx
     kind: deployment
     nginxplus: false
