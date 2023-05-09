@@ -309,6 +309,18 @@ func TestValidateAccessControlFails(t *testing.T) {
 	}
 }
 
+func TestValidateRate_ErrorsOnBogusRate(t *testing.T) {
+	t.Parallel()
+
+	invalidRates := []string{"", "bogus"}
+	for _, v := range invalidRates {
+		allErrs := validateRate(v, field.NewPath("rate"))
+		if len(allErrs) == 0 {
+			t.Errorf("want err on invalid rate: %q, got nil", v)
+		}
+	}
+}
+
 func TestValidateRateLimit(t *testing.T) {
 	t.Parallel()
 	dryRun := true
@@ -564,7 +576,7 @@ func TestValidateJWTFails(t *testing.T) {
 	}
 }
 
-func TestValidateIPorCIDR(t *testing.T) {
+func TestValidateIPorCIDR_PassesOnValidInout(t *testing.T) {
 	t.Parallel()
 	validInput := []string{
 		"192.168.1.1",
@@ -595,8 +607,27 @@ func TestValidateIPorCIDR(t *testing.T) {
 	}
 }
 
-func TestValidateRate(t *testing.T) {
+func TestValidateIPorCIDR_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
+
+	invalidInput := []string{
+		"localhost",
+		"192.168.1.0/",
+		"2001:0db8:::1",
+		"2001:0db8::/",
+	}
+
+	for _, input := range invalidInput {
+		allErrs := validateIPorCIDR(input, field.NewPath("ipOrCIDR"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateIPorCIDR(%q) returned no errors for invalid input", input)
+		}
+	}
+}
+
+func TestValidateRate_PassesOnValidInput(t *testing.T) {
+	t.Parallel()
+
 	validInput := []string{
 		"10r/s",
 		"100r/m",
@@ -609,6 +640,10 @@ func TestValidateRate(t *testing.T) {
 			t.Errorf("validateRate(%q) returned errors %v for valid input", input, allErrs)
 		}
 	}
+}
+
+func TestValidateRate_ErrorsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 
 	invalidInput := []string{
 		"10s",
@@ -625,7 +660,7 @@ func TestValidateRate(t *testing.T) {
 	}
 }
 
-func TestValidatePositiveInt(t *testing.T) {
+func TestValidatePositiveInt_PassesOnValidInput(t *testing.T) {
 	t.Parallel()
 	validInput := []int{1, 2}
 
@@ -635,6 +670,10 @@ func TestValidatePositiveInt(t *testing.T) {
 			t.Errorf("validatePositiveInt(%q) returned errors %v for valid input", input, allErrs)
 		}
 	}
+}
+
+func TestValidatePositiveInt_ErrorsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 
 	invalidInput := []int{-1, 0}
 
@@ -1132,6 +1171,18 @@ func TestValidateOIDCInvalid(t *testing.T) {
 	}
 }
 
+func TestValidatePortNumber_ErrorsOnInvalidPort(t *testing.T) {
+	t.Parallel()
+
+	invalidPorts := []string{"bogus", ""}
+	for _, p := range invalidPorts {
+		allErrs := validatePortNumber(p, field.NewPath("port"))
+		if len(allErrs) == 0 {
+			t.Errorf("want err on invalid input %q, got nil", p)
+		}
+	}
+}
+
 func TestValidateClientID(t *testing.T) {
 	t.Parallel()
 	validInput := []string{"myid", "your.id", "id-sf-sjfdj.com", "foo_bar~vni"}
@@ -1174,9 +1225,14 @@ func TestValidateOIDCScope(t *testing.T) {
 	}
 }
 
-func TestValidateURL(t *testing.T) {
+func TestValidateURL_PassesOnValidInput(t *testing.T) {
 	t.Parallel()
-	validInput := []string{"http://google.com/auth", "https://foo.bar/baz", "http://127.0.0.1/bar", "http://openid.connect.com:8080/foo"}
+	validInput := []string{
+		"http://google.com/auth",
+		"https://foo.bar/baz",
+		"http://127.0.0.1/bar",
+		"http://openid.connect.com:8080/foo",
+	}
 
 	for _, test := range validInput {
 		allErrs := validateURL(test, field.NewPath("authEndpoint"))
@@ -1184,8 +1240,21 @@ func TestValidateURL(t *testing.T) {
 			t.Errorf("validateURL(%q) returned errors %v for valid input", allErrs, test)
 		}
 	}
+}
 
-	invalidInput := []string{"www.google..foo.com", "http://{foo.bar", `https://google.foo\bar`, "http://foo.bar:8080", "http://foo.bar:812345/fooo"}
+func TestValidateURL_ErrorsOnInvalidInput(t *testing.T) {
+	t.Parallel()
+
+	invalidInput := []string{
+		"www.google..foo.com",
+		"http://{foo.bar",
+		`https://google.foo\bar`,
+		"http://foo.bar:8080",
+		"http://foo.bar:812345/fooo",
+		"http://:812345/fooo",
+		"",
+		"bogusInput",
+	}
 
 	for _, test := range invalidInput {
 		allErrs := validateURL(test, field.NewPath("authEndpoint"))
