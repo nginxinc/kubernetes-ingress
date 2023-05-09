@@ -129,22 +129,13 @@ func validateListenerName(name string, fieldPath *field.Path) field.ErrorList {
 	return validateDNS1035Label(name, fieldPath)
 }
 
-// listenerProtocols defines the protocols supported by a listener.
-var listenerProtocols = map[string]bool{
-	"TCP": true,
-	"UDP": true,
-}
-
 func validateListenerProtocol(protocol string, fieldPath *field.Path) field.ErrorList {
-	if protocol == "" {
-		msg := fmt.Sprintf("must specify protocol. Accepted values: %s", mapToPrettyString(listenerProtocols))
-		return field.ErrorList{field.Required(fieldPath, msg)}
+	switch protocol {
+	case "TCP", "UDP":
+		return nil
+	default:
+		return field.ErrorList{field.Invalid(fieldPath, protocol, "must specify protocol. Accepted values: TCP, UDP.")}
 	}
-	if !listenerProtocols[protocol] {
-		msg := fmt.Sprintf("invalid protocol. Accepted values: %s", mapToPrettyString(listenerProtocols))
-		return field.ErrorList{field.Invalid(fieldPath, protocol, msg)}
-	}
-	return nil
 }
 
 func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.Set[string]) {
