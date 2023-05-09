@@ -203,7 +203,6 @@ func validateIngressMTLS(ingressMTLS *v1.IngressMTLS, fieldPath *field.Path) fie
 	}
 	allErrs := validateSecretName(ingressMTLS.ClientCertSecret, fieldPath.Child("clientCertSecret"))
 	allErrs = append(allErrs, validateIngressMTLSVerifyClient(ingressMTLS.VerifyClient, fieldPath.Child("verifyClient"))...)
-
 	if ingressMTLS.VerifyDepth != nil {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*ingressMTLS.VerifyDepth, fieldPath.Child("verifyDepth"))...)
 	}
@@ -245,15 +244,12 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	if oidc.Scope != "" {
 		allErrs = append(allErrs, validateOIDCScope(oidc.Scope, fieldPath.Child("scope"))...)
 	}
-
 	if oidc.RedirectURI != "" {
 		allErrs = append(allErrs, validatePath(oidc.RedirectURI, fieldPath.Child("redirectURI"))...)
 	}
-
 	if oidc.ZoneSyncLeeway != nil {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*oidc.ZoneSyncLeeway, fieldPath.Child("zoneSyncLeeway"))...)
 	}
-
 	if oidc.AuthExtraArgs != nil {
 		allErrs = append(allErrs, validateQueryString(strings.Join(oidc.AuthExtraArgs, "&"), fieldPath.Child("authExtraArgs"))...)
 	}
@@ -393,7 +389,10 @@ func validateQueryString(queryString string, fieldPath *field.Path) field.ErrorL
 }
 
 func validatePortNumber(port string, fieldPath *field.Path) field.ErrorList {
-	portInt, _ := strconv.Atoi(port)
+	portInt, err := strconv.Atoi(port)
+	if err != nil {
+		return field.ErrorList{field.Invalid(fieldPath, port, "invalid port")}
+	}
 	msg := validation.IsValidPortNum(portInt)
 	if msg != nil {
 		return field.ErrorList{field.Invalid(fieldPath, port, msg[0])}
@@ -448,11 +447,10 @@ func validateRateLimitZoneSize(zoneSize string, fieldPath *field.Path) field.Err
 	if zoneSize == "" {
 		return field.ErrorList{field.Required(fieldPath, "")}
 	}
-	allErrs := validateSize(zoneSize, fieldPath)
 
+	allErrs := validateSize(zoneSize, fieldPath)
 	kbZoneSize := strings.TrimSuffix(strings.ToLower(zoneSize), "k")
 	kbZoneSizeNum, err := strconv.Atoi(kbZoneSize)
-
 	mbZoneSize := strings.TrimSuffix(strings.ToLower(zoneSize), "m")
 	mbZoneSizeNum, mbErr := strconv.Atoi(mbZoneSize)
 
@@ -494,6 +492,7 @@ func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
 	if len(nginxVars) != 2 {
 		return field.ErrorList{field.Invalid(fieldPath, token, "must have 1 var")}
 	}
+
 	nVar := token[1:]
 
 	special := false

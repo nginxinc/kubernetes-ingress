@@ -111,11 +111,11 @@ func validateStringWithVariables(str string, fieldPath *field.Path, specialVars 
 			msg := "variables must be enclosed in curly braces, for example ${host}"
 
 			if str[i+1] != '{' {
-				return append(allErrs, field.Invalid(fieldPath, str, msg))
+				return field.ErrorList{field.Invalid(fieldPath, str, msg)}
 			}
 
 			if !strings.Contains(str[i+1:], "}") {
-				return append(allErrs, field.Invalid(fieldPath, str, msg))
+				return field.ErrorList{field.Invalid(fieldPath, str, msg)}
 			}
 		}
 	}

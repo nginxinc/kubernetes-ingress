@@ -601,6 +601,7 @@ func TestValidateIPorCIDR_FailsOnInvalidInput(t *testing.T) {
 
 func TestValidateRate_PassesOnValidInput(t *testing.T) {
 	t.Parallel()
+
 	validInput := []string{
 		"10r/s",
 		"100r/m",
@@ -615,7 +616,7 @@ func TestValidateRate_PassesOnValidInput(t *testing.T) {
 	}
 }
 
-func TestValidateRate_FailsOnInvalidInput(t *testing.T) {
+func TestValidateRate_ErrorsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	invalidInput := []string{
 		"10s",
@@ -644,7 +645,7 @@ func TestValidatePositiveInt_PassesOnValidInput(t *testing.T) {
 	}
 }
 
-func TestValidatePositiveInt_FailsOnInvalidInput(t *testing.T) {
+func TestValidatePositiveInt_ErrorsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 
 	invalidInput := []int{-1, 0}
@@ -1240,7 +1241,19 @@ func TestValidateOIDC_FailsOnInvalidOIDC(t *testing.T) {
 	}
 }
 
-func TestValidateClientID_PassesOnValidInput(t *testing.T) {
+func TestValidatePortNumber_ErrorsOnInvalidPort(t *testing.T) {
+	t.Parallel()
+
+	invalidPorts := []string{"bogus", ""}
+	for _, p := range invalidPorts {
+		allErrs := validatePortNumber(p, field.NewPath("port"))
+		if len(allErrs) == 0 {
+			t.Errorf("want err on invalid input %q, got nil", p)
+		}
+	}
+}
+
+func TestValidateClientID(t *testing.T) {
 	t.Parallel()
 
 	validInput := []string{"myid", "your.id", "id-sf-sjfdj.com", "foo_bar~vni"}
@@ -1292,7 +1305,9 @@ func TestValidateURL_FailsOnInvalidInput(t *testing.T) {
 		`https://google.foo\bar`,
 		"http://foo.bar:8080",
 		"http://foo.bar:812345/fooo",
-		"http://",
+		"http://:812345/fooo",
+		"",
+		"bogusInput",
 	}
 
 	for _, test := range invalidInput {

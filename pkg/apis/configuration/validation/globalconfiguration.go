@@ -63,9 +63,7 @@ func generatePortProtocolKey(port int, protocol string) string {
 }
 
 func (gcv *GlobalConfigurationValidator) validateListener(listener v1alpha1.Listener, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	allErrs = append(allErrs, validateGlobalConfigurationListenerName(listener.Name, fieldPath.Child("name"))...)
+	allErrs := validateGlobalConfigurationListenerName(listener.Name, fieldPath.Child("name"))
 	allErrs = append(allErrs, gcv.validateListenerPort(listener.Port, fieldPath.Child("port"))...)
 	allErrs = append(allErrs, validateListenerProtocol(listener.Protocol, fieldPath.Child("protocol"))...)
 
@@ -73,26 +71,21 @@ func (gcv *GlobalConfigurationValidator) validateListener(listener v1alpha1.List
 }
 
 func validateGlobalConfigurationListenerName(name string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if name == v1alpha1.TLSPassthroughListenerName {
-		return append(allErrs, field.Forbidden(fieldPath, "is the name of a built-in listener"))
+		return field.ErrorList{field.Forbidden(fieldPath, "is the name of a built-in listener")}
 	}
-
 	return validateListenerName(name, fieldPath)
 }
 
 func (gcv *GlobalConfigurationValidator) validateListenerPort(port int, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if gcv.forbiddenListenerPorts[port] {
 		msg := fmt.Sprintf("port %v is forbidden", port)
-		return append(allErrs, field.Forbidden(fieldPath, msg))
+		return field.ErrorList{field.Forbidden(fieldPath, msg)}
 	}
 
+	allErrs := field.ErrorList{}
 	for _, msg := range validation.IsValidPortNum(port) {
 		allErrs = append(allErrs, field.Invalid(fieldPath, port, msg))
 	}
-
 	return allErrs
 }
