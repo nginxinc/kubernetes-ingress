@@ -48,7 +48,7 @@ func NewTemplateExecutor(virtualServerTemplatePath string, transportServerTempla
 
 // UpdateVirtualServerTemplate updates the VirtualServer template.
 func (te *TemplateExecutor) UpdateVirtualServerTemplate(templateString *string) error {
-	newTemplate, err := template.New("virtualServerTemplate").Parse(*templateString)
+	newTemplate, err := template.New("virtualServerTemplate").Funcs(helperFunctions).Parse(*templateString)
 	if err != nil {
 		return err
 	}
