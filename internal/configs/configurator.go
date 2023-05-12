@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
@@ -100,6 +101,7 @@ type Configurator struct {
 	cfgParams               *ConfigParams
 	templateExecutor        *version1.TemplateExecutor
 	templateExecutorV2      *version2.TemplateExecutor
+	HealthChecks            map[string]*api_v1.Probe
 	ingresses               map[string]*IngressEx
 	minions                 map[string]map[string]bool
 	virtualServers          map[string]*VirtualServerEx
@@ -146,6 +148,7 @@ func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigPa
 		isPrometheusEnabled:     isPrometheusEnabled,
 		latencyCollector:        latencyCollector,
 		isLatencyMetricsEnabled: isLatencyMetricsEnabled,
+		HealthChecks:            make(map[string]*api_v1.Probe),
 	}
 	return &cnf
 }
@@ -785,9 +788,17 @@ func (cnf *Configurator) deleteTransportServer(key string) error {
 // UpdateEndpoints updates endpoints in NGINX configuration for the Ingress resources.
 func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
 	reloadPlus := false
+	forceReload := false
 
 	for _, ingEx := range ingExes {
 		// It is safe to ignore warnings here as no new warnings should appear when updating Endpoints for Ingresses
+		for k, v := range ingEx.HealthChecks {
+			data, exist := cnf.HealthChecks[ingEx.Ingress.Namespace+"-"+k]
+			if !exist || !reflect.DeepEqual(v, data) {
+				cnf.HealthChecks[ingEx.Ingress.Namespace+"-"+k] = v
+				forceReload = true
+			}
+		}
 		_, err := cnf.addOrUpdateIngress(ingEx)
 		if err != nil {
 			return fmt.Errorf("Error adding or updating ingress %v/%v: %w", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
@@ -802,7 +813,7 @@ func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
 		}
 	}
 
-	if cnf.isPlus && !reloadPlus {
+	if cnf.isPlus && !reloadPlus && !forceReload {
 		glog.V(3).Info("No need to reload nginx")
 		return nil
 	}
@@ -817,8 +828,25 @@ func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
 // UpdateEndpointsMergeableIngress updates endpoints in NGINX configuration for a mergeable Ingress resource.
 func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergeableIngresses []*MergeableIngresses) error {
 	reloadPlus := false
+	forceReload := false
 
 	for i := range mergeableIngresses {
+		for k, v := range mergeableIngresses[i].Master.HealthChecks {
+			data, exist := cnf.HealthChecks[mergeableIngresses[i].Master.Ingress.Namespace+"-"+k]
+			if !exist || !reflect.DeepEqual(v, data) {
+				cnf.HealthChecks[mergeableIngresses[i].Master.Ingress.Namespace+"-"+k] = v
+				forceReload = true
+			}
+		}
+		for _, minion := range mergeableIngresses[i].Minions {
+			for k, v := range minion.HealthChecks {
+				data, exist := cnf.HealthChecks[minion.Ingress.Namespace+"-"+k]
+				if !exist || !reflect.DeepEqual(v, data) {
+					cnf.HealthChecks[minion.Ingress.Namespace+"-"+k] = v
+					forceReload = true
+				}
+			}
+		}
 		// It is safe to ignore warnings here as no new warnings should appear when updating Endpoints for Ingresses
 		_, err := cnf.addOrUpdateMergeableIngress(mergeableIngresses[i])
 		if err != nil {
@@ -836,7 +864,7 @@ func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergeableIngresses []*M
 		}
 	}
 
-	if cnf.isPlus && !reloadPlus {
+	if cnf.isPlus && !reloadPlus && !forceReload {
 		glog.V(3).Info("No need to reload nginx")
 		return nil
 	}

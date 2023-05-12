@@ -188,7 +188,9 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 
 			if cfgParams.HealthCheckEnabled {
 				if hc, exists := ingEx.HealthChecks[path.Backend.ServiceName+path.Backend.ServicePort.String()]; exists {
-					healthChecks[upsName] = createHealthCheck(hc, upsName, &cfgParams)
+					if hc != nil {
+						healthChecks[upsName] = createHealthCheck(hc, upsName, &cfgParams)
+					}
 				}
 			}
 
@@ -230,7 +232,9 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 
 			if cfgParams.HealthCheckEnabled {
 				if hc, exists := ingEx.HealthChecks[ingEx.Ingress.Spec.Backend.ServiceName+ingEx.Ingress.Spec.Backend.ServicePort.String()]; exists {
-					healthChecks[upsName] = createHealthCheck(hc, upsName, &cfgParams)
+					if hc != nil {
+						healthChecks[upsName] = createHealthCheck(hc, upsName, &cfgParams)
+					}
 				}
 			}
 
@@ -395,7 +399,9 @@ func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, 
 func upstreamRequiresQueue(name string, ingEx *IngressEx, cfg *ConfigParams) (n int64, timeout int64) {
 	if cfg.HealthCheckEnabled && cfg.HealthCheckMandatory && cfg.HealthCheckMandatoryQueue > 0 {
 		if hc, exists := ingEx.HealthChecks[name]; exists {
-			return cfg.HealthCheckMandatoryQueue, int64(hc.TimeoutSeconds)
+			if hc != nil {
+				return cfg.HealthCheckMandatoryQueue, int64(hc.TimeoutSeconds)
+			}
 		}
 	}
 	return 0, 0
