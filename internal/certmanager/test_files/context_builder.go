@@ -44,9 +44,9 @@ import (
 	"github.com/cert-manager/cert-manager/pkg/metrics"
 	"github.com/cert-manager/cert-manager/pkg/util"
 	discoveryfake "github.com/cert-manager/cert-manager/test/unit/discovery"
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	vsfake "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
-	vsinformers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
+	k8s_nginx "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/clientset/versioned"
+	vsfake "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/clientset/versioned/fake"
+	vsinformers "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/informers/externalversions"
 )
 
 // Builder is a structure used to construct new Contexts for use during tests.

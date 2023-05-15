@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration"
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

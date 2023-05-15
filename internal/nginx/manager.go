@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/metrics/collectors"
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/nginx-plus-go-client/client"

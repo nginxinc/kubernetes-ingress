@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	extdnsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
-	extdnsclient "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/externaldns/v1"
+	vsapi "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
+	extdnsapi "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/externaldns/v1"
+	extdnsclient "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/listers/externaldns/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
