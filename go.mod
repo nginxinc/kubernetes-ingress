@@ -136,3 +136,5 @@ require (
 )
 
 replace github.com/golang/glog => github.com/nginxinc/glog v1.1.2
+
+replace github.com/Venafi/vcert/v4 => github.com/jetstack/vcert/v4 v4.9.6-0.20230127103832-3aa3dfd6613d
