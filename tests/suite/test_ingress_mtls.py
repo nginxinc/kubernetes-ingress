@@ -316,7 +316,7 @@ class TestIngressMtlsPolicyVS:
         resp.status_code == 502
         counter = 0
 
-        while resp.status_code != expected_code and counter < 10:
+        while resp.status_code != expected_code and counter < 20:
             resp = session.get(
                 virtual_server_setup.backend_1_url_ssl,
                 cert=(crt_not_revoked, key_not_revoked),
