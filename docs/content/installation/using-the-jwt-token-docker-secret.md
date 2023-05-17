@@ -42,9 +42,9 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "3.1.0-alpine",
-        "3.1.0-ubi",
-        "3.1.0"
+        "3.1.1-alpine",
+        "3.1.1-ubi",
+        "3.1.1"
     ]
     }
 
@@ -52,8 +52,8 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "3.1.0-ubi",
-        "3.1.0"
+        "3.1.1-ubi",
+        "3.1.1"
     ]
     }
 
@@ -61,8 +61,8 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic-dos/nginx-plus-ingress",
     "tags": [
-        "3.1.0-ubi",
-        "3.1.0"
+        "3.1.1-ubi",
+        "3.1.1"
     ]
     }
    ```

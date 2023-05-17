@@ -23,9 +23,6 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 #        fsGroup: 101 #nginx
-        sysctls:
-          - name: "net.ipv4.ip_unprivileged_port_start"
-            value: "0"
 #      volumes:
 #      - name: nginx-etc
 #        emptyDir: {}
@@ -36,7 +33,7 @@ spec:
 #      - name: nginx-log
 #        emptyDir: {}
       containers:
-      - image: nginx/nginx-ingress:3.1.0
+      - image: nginx/nginx-ingress:3.1.1
         imagePullPolicy: IfNotPresent
         name: nginx-ingress
         ports:
@@ -69,6 +66,8 @@ spec:
           capabilities:
             drop:
             - ALL
+            add:
+            - NET_BIND_SERVICE
 #        volumeMounts:
 #        - mountPath: /etc/nginx
 #          name: nginx-etc
@@ -97,7 +96,7 @@ spec:
          #- -enable-prometheus-metrics
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
 #      initContainers:
-#      - image: nginx/nginx-ingress:3.1.0
+#      - image: nginx/nginx-ingress:3.1.1
 #        imagePullPolicy: IfNotPresent
 #        name: init-nginx-ingress
 #        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']

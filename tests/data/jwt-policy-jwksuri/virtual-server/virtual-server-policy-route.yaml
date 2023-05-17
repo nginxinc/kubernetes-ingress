@@ -16,7 +16,7 @@ spec:
     action:
       pass: backend1
     policies:
-      - name: jwt-policy-valid
+    - name: jwt-policy-valid
   - path: "/backend2"
     action:
       pass: backend2

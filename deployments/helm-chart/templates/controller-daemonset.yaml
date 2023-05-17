@@ -45,9 +45,6 @@ spec:
 {{- if .Values.controller.readOnlyRootFilesystem }}
         fsGroup: 101 #nginx
 {{- end }}
-        sysctls:
-          - name: "net.ipv4.ip_unprivileged_port_start"
-            value: "0"
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
@@ -126,6 +123,8 @@ spec:
           capabilities:
             drop:
             - ALL
+            add:
+            - NET_BIND_SERVICE
 {{- if or .Values.controller.readOnlyRootFilesystem .Values.controller.volumeMounts }}
         volumeMounts:
 {{- end }}
@@ -237,7 +236,7 @@ spec:
           - -enable-oidc={{ .Values.controller.enableOIDC }}
           - -enable-external-dns={{ .Values.controller.enableExternalDNS }}
 {{- if .Values.controller.globalConfiguration.create }}
-          - -global-configuration=$(POD_NAMESPACE)/{{ include "nginx-ingress.name" . }}
+          - -global-configuration=$(POD_NAMESPACE)/{{ include "nginx-ingress.controller.fullname" . }}
 {{- end }}
 {{- end }}
           - -ready-status={{ .Values.controller.readyStatus.enable }}

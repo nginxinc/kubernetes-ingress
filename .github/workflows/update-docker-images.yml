@@ -2,7 +2,7 @@ name: Update Docker Images
 
 on:
   schedule:
-    - cron: '0 1 * * *' # run every day at 01:00 UTC
+    - cron: "0 1 * * *" # run every day at 01:00 UTC
   workflow_dispatch:
 
 defaults:
@@ -14,15 +14,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   variables:
     name: Get versions of base images
     runs-on: ubuntu-22.04
     outputs:
       kic-tag: ${{ steps.kic.outputs.tag }}
       versions: ${{ steps.versions.outputs.matrix }}
-      sha_short: ${{ steps.vars.outputs.sha_short }}
-      sha_long: ${{ steps.vars.outputs.sha_long }}
       k8s_version: ${{ steps.vars.outputs.k8s_version }}
     steps:
       - name: Checkout Repository
@@ -48,8 +45,6 @@ jobs:
       - name: Set other variables
         id: vars
         run: |
-          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "sha_long=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           echo "k8s_version=$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
 
   check:
@@ -163,7 +158,6 @@ jobs:
       platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
       image: debian
       tag: ${{ needs.variables.outputs.kic-tag }}
-      sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
     if: ${{ needs.check.outputs.needs-updating-debian == 'true' }}
 
@@ -175,7 +169,6 @@ jobs:
       platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
       image: alpine
       tag: ${{ needs.variables.outputs.kic-tag }}
-      sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
     if: ${{ needs.check.outputs.needs-updating-alpine == 'true' }}
 
@@ -187,6 +180,5 @@ jobs:
       platforms: linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
       image: ubi
       tag: ${{ needs.variables.outputs.kic-tag }}
-      sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
     if: ${{ needs.check.outputs.needs-updating-ubi == 'true' }}

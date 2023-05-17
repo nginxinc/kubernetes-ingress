@@ -6,7 +6,47 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+
+## NGINX Ingress Controller 3.1.1
+
+04 May 2023
+
+OVERVIEW:
+This release reverts the changes made in 3.1.0 to use sysctls to bind to lower level ports without the NET_BIND_SERVICE capability. It also adds support for serviceNameOverride in the Helm chart, that can be used to override the service name for the NGINX Ingress Controller. This is useful especially during an upgrade from versions prior to 3.1.0, to avoid downtime due to the service name change. To use this feature, set the `serviceNameOverride` value in the Helm chart to the name of the existing service.
+
+For example, if the existing service name is `my-release-nginx-ingress`, you can use `--set serviceNameOverride=my-release-nginx-ingress` when running the upgrade command.
+Here is an example upgrade command that keeps the existing service name `my-release-nginx-ingress` for a deployment named `my-release`:
+```bash
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.17.1 --set serviceNameOverride=my-release-nginx-ingress
+```
+
+FIXES:
+* [3849](https://github.com/nginxinc/kubernetes-ingress/pull/3849) Inherit NET_BIND_SERVICE from IC to Nginx. Thanks to [Valters Jansons](https://github.com/sigv).
+* [3855](https://github.com/nginxinc/kubernetes-ingress/pull/3855) Update VirtualServer template to generate an internal jwt auth location per policy applied.
+* [3856](https://github.com/nginxinc/kubernetes-ingress/pull/3856) Update VirtualServer to ignore CRL for EgressMTLS.
+
+IMPROVEMENTS:
+* [3847](https://github.com/nginxinc/kubernetes-ingress/pull/3847) Egress via Ingress VirtualServer Resource.
+
+CHANGES:
+* Update NGINX version to 1.23.4
+* Update NGINX Plus version to R29.
+
+HELM CHART:
+* [3801](https://github.com/nginxinc/kubernetes-ingress/pull/3801) Swap cpu and memory in HPA template.
+* [3848](https://github.com/nginxinc/kubernetes-ingress/pull/3848) Updated NGINX Service Mesh references in Helm templates. Thanks to [Jared Byers](https://github.com/jbyers19).
+* [3853](https://github.com/nginxinc/kubernetes-ingress/pull/3853) Add serviceNameOverride. Thanks to [Tim N](https://github.com/timnee).
+* [3854](https://github.com/nginxinc/kubernetes-ingress/pull/3854) Fix GlobalConfiguration name in Helm Chart.
+* [3862](https://github.com/nginxinc/kubernetes-ingress/pull/3862) Add correct indentation to controller-leader-election configmap helm template.
+* The version of the Helm chart is now 0.17.1.
+
+UPGRADE:
+* For NGINX, use the 3.1.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.1.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.1.1 images from the F5 Container registry or build your own image using the 3.1.1 source code.
+* For Helm, use version 0.17.1 of the chart.
+
 ## NGINX Ingress Controller 3.1.0
+
 29 Mar 2023
 
 OVERVIEW:
