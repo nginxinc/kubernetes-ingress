@@ -23,9 +23,8 @@ We explicitly test the NGINX Ingress Controller (NIC) on a range of Kubernetes p
 {{% table %}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| 3.1.1 | 1.26 - 1.22 | 0.17.1 | 1.3.0 | 1.23.4 / R29 |
-| 3.1.0 | 1.26 - 1.22 | 0.17.0 | 1.3.0 | 1.23.3 / R28 |
-| 3.0.2 | 1.26 - 1.21 | 0.16.2 | 1.3.0 | 1.23.3 / R28 |
+| 3.1.1 | 1.26 - 1.22 | 0.17.1 | 1.4.1 | 1.23.4 / R29 |
+| 3.0.2 | 1.26 - 1.21 | 0.16.2 | 1.3.1 | 1.23.3 / R28 |
 | 2.4.2 | 1.25 - 1.19 | 0.15.2 | 1.2.1 | 1.23.2 / R28 |
 | 2.3.1 | 1.24 - 1.19 | 0.14.1 | 1.1.0 | 1.23.1 / R27 |
 | 2.2.2 | 1.23 - 1.19 | 0.13.2 | 1.0.0 | 1.21.6 / R26 |
@@ -78,10 +77,10 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image](/nginx-ingress-controller/installation/using-aws-marketplace-image/) for details on how to set up the required IAM resources in your EKS cluster.
 
 {{% table %}}
-|Name | Base image | Third-party modules | AWS Marketplace Link |
-| ---| ---| --- | --- |
-|Debian-based image | ``debian:11-slim`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [NGINX Ingress Controller](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau) |
-|Debian-based image with App Protect | ``debian:11-slim`` | NGINX Plus App Protect, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [NGINX Ingress Controller with NGINX App Protect](https://aws.amazon.com/marketplace/pp/prodview-vnrnxbf6u3nra) |
+|Name | Base image | Third-party modules | AWS Marketplace Link | Architectures |
+| ---| ---| --- | --- | --- |
+|Debian-based image | ``debian:11-slim`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [NGINX Ingress Controller](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau) | amd64 |
+|Debian-based image with App Protect | ``debian:11-slim`` | NGINX Plus App Protect, JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [NGINX Ingress Controller with NGINX App Protect](https://aws.amazon.com/marketplace/pp/prodview-vnrnxbf6u3nra) | amd64 |
 {{% /table %}}
 
 ### Custom Images
