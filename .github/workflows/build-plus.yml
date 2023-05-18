@@ -95,6 +95,7 @@ jobs:
           tags: |
             type=edge
             type=ref,event=pr
+            type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/release-') }}
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=semver,pattern={{version}}
           labels: |
