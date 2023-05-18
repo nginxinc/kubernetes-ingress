@@ -18,11 +18,11 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.4
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/exp v0.0.0-20230105000112-eab7a2c85304
-	k8s.io/api v0.26.4
-	k8s.io/apimachinery v0.26.4
+	k8s.io/api v0.27.2
+	k8s.io/apimachinery v0.27.2
 	k8s.io/client-go v0.26.4
 	k8s.io/code-generator v0.27.1
-	k8s.io/utils v0.0.0-20230115233650-391b47cb4029
+	k8s.io/utils v0.0.0-20230209194617-a36077c30491
 	sigs.k8s.io/controller-tools v0.11.4
 )
 
@@ -85,7 +85,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
@@ -127,7 +127,7 @@ require (
 	k8s.io/gengo v0.0.0-20220902162205-c0856e24416d // indirect
 	k8s.io/klog/v2 v2.90.1 // indirect
 	k8s.io/kube-aggregator v0.26.4 // indirect
-	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
+	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.36 // indirect
 	sigs.k8s.io/gateway-api v0.6.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
