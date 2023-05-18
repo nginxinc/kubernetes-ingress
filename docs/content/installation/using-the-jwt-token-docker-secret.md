@@ -103,7 +103,7 @@ image:
   tag: 3.1.1
 ```
 
-### Specify the `imagePullSecrets`
+### Modify `imagePullSecretName` and type in the name of the secret (regcred per the above) you created in step 1.
 
 ```yaml
   serviceAccount:
@@ -119,6 +119,14 @@ image:
     imagePullSecretName: regcred
 ```
 
+You can now install NGINX Ingress controller with the `values.yaml` file modified.
+
+```bash
+helm install nicdev01 -n nginx-ingress --create-namespace -f values.yaml .
+```
+
+The above command will install NGINX Ingress controller in the `nginx-ingress` namespace. If the namespace does not exist, `--create-namespace` will create it. Using `-f values.yaml` tells `helm` to use the `values.yaml` file that we modified earlier with the settings we want to apply for our NGINX Ingress controller deployment.
+
 ### Using the `helm` charts method:
 
 This will install `NGINX Ingress controller` using the charts method, by defining specific settings using `set` on the command line.
@@ -126,10 +134,6 @@ This will install `NGINX Ingress controller` using the charts method, by definin
 ```bash
 helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.17.1 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.1.1 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
 ```
-
-### Verify that NGINX Ingress controller was installed successfull
-
-TODO: Add install output of successful install
 
 
 
