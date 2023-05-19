@@ -37,7 +37,7 @@ func (q *QueuingEventHandler) Enqueue(obj interface{}) {
 }
 
 // OnAdd adds a newly created object to the workqueue.
-func (q *QueuingEventHandler) OnAdd(obj interface{}) {
+func (q *QueuingEventHandler) OnAdd(obj interface{}, _ bool) {
 	q.Enqueue(obj)
 }
 
@@ -71,7 +71,7 @@ func (b *BlockingEventHandler) Enqueue(obj interface{}) {
 }
 
 // OnAdd synchronously adds a newly created object to the workqueue.
-func (b *BlockingEventHandler) OnAdd(obj interface{}) {
+func (b *BlockingEventHandler) OnAdd(obj interface{}, _ bool) {
 	b.WorkFunc(obj)
 }
 
