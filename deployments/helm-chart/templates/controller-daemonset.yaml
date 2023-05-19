@@ -42,9 +42,6 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-{{- if .Values.controller.readOnlyRootFilesystem }}
-        fsGroup: 101 #nginx
-{{- end }}
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
