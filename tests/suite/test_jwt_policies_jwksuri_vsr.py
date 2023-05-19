@@ -43,7 +43,8 @@ def get_token(request):
 
 
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.jwks
+@pytest.mark.policies
+@pytest.mark.skip(reason="issues with IdP communication")
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
