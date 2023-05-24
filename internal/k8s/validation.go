@@ -364,25 +364,19 @@ func validateJWTKey(context *annotationValidationContext) field.ErrorList {
 }
 
 func validateJWTRealm(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !validAnnotationValueRegex.MatchString(context.value) {
 		msg := validation.RegexError(annotationValueFmtErrMsg, annotationValueFmt, "My Realm", "Cafe App")
-		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, msg)}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateJWTTokenAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !validJWTTokenAnnotationValueRegex.MatchString(context.value) {
 		msg := validation.RegexError(jwtTokenValueFmtErrMsg, jwtTokenValueFmt, "$http_token", "$cookie_auth_token")
-		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, msg)}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateHTTPHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
@@ -417,8 +411,7 @@ func validateIngress(
 	internalRoutesEnabled bool,
 	snippetsEnabled bool,
 ) field.ErrorList {
-	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateIngressAnnotations(
+	allErrs := validateIngressAnnotations(
 		ing.Annotations,
 		getSpecServices(ing.Spec),
 		isPlus,
@@ -427,7 +420,7 @@ func validateIngress(
 		internalRoutesEnabled,
 		field.NewPath("annotations"),
 		snippetsEnabled,
-	)...)
+	)
 
 	allErrs = append(allErrs, validateIngressSpec(&ing.Spec, field.NewPath("spec"))...)
 
@@ -445,20 +438,18 @@ func validateIngress(
 }
 
 func validateChallengeIngress(spec *networking.IngressSpec, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if spec.Rules == nil || len(spec.Rules) != 1 {
-		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("rules"), "challenge Ingress must have exactly 1 rule defined"))
-		return allErrs
+		return field.ErrorList{field.Forbidden(fieldPath.Child("rules"), "challenge Ingress must have exactly 1 rule defined")}
 	}
 	r := spec.Rules[0]
 
 	if r.HTTP == nil || r.HTTP.Paths == nil || len(r.HTTP.Paths) != 1 {
-		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("rules.HTTP.Paths"), "challenge Ingress must have exactly 1 path defined"))
-		return allErrs
+		return field.ErrorList{field.Forbidden(fieldPath.Child("rules.HTTP.Paths"), "challenge Ingress must have exactly 1 path defined")}
 	}
 
 	p := r.HTTP.Paths[0]
 
+	allErrs := field.ErrorList{}
 	if p.Backend.Service == nil {
 		allErrs = append(allErrs, field.Required(fieldPath.Child("rules.HTTP.Paths[0].Backend.Service"), "challenge Ingress must have a Backend Service defined"))
 	}
@@ -518,182 +509,155 @@ func validateIngressAnnotation(context *annotationValidationContext) field.Error
 
 func validateRelatedAnnotation(name string, validator validatorFunc) annotationValidationFunc {
 	return func(context *annotationValidationContext) field.ErrorList {
-		allErrs := field.ErrorList{}
 		val, exists := context.annotations[name]
 		if !exists {
-			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s: must be set", name)))
+			return field.ErrorList{field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s: must be set", name))}
 		}
 
 		if err := validator(val); err != nil {
-			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s: %s", name, err.Error())))
+			return field.ErrorList{field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s: %s", name, err.Error()))}
 		}
-		return allErrs
+		return nil
 	}
 }
 
 func validateQualifiedName(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	err := validation.IsQualifiedName(context.value)
 	if err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a qualified name"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be a qualified name")}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateMergeableIngressTypeAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if context.value != "master" && context.value != "minion" {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be one of: 'master' or 'minion'"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be one of: 'master' or 'minion'")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateLBMethodAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	parseFunc := configs.ParseLBMethod
 	if context.isPlus {
 		parseFunc = configs.ParseLBMethodForPlus
 	}
-
 	if _, err := parseFunc(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, err.Error())}
 	}
-	return allErrs
+	return nil
 }
 
 func validateServerTokensAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !context.isPlus {
 		if _, err := configs.ParseBool(context.value); err != nil {
-			return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a boolean"))
+			return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be a boolean")}
 		}
 	}
-
 	if !validAnnotationValueRegex.MatchString(context.value) {
-		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, annotationValueFmtErrMsg))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, annotationValueFmtErrMsg)}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateRequiredAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if context.value == "" {
-		return append(allErrs, field.Required(context.fieldPath, ""))
+		return field.ErrorList{field.Required(context.fieldPath, "")}
 	}
-	return allErrs
+	return nil
 }
 
 func validatePlusOnlyAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if !context.isPlus {
-		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires NGINX Plus"))
+		return field.ErrorList{field.Forbidden(context.fieldPath, "annotation requires NGINX Plus")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateAppProtectOnlyAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if !context.appProtectEnabled {
-		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires AppProtect"))
+		return field.ErrorList{field.Forbidden(context.fieldPath, "annotation requires AppProtect")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateAppProtectDosOnlyAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if !context.appProtectDosEnabled {
-		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires AppProtectDos"))
+		return field.ErrorList{field.Forbidden(context.fieldPath, "annotation requires AppProtectDos")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateInternalRoutesOnlyAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if !context.internalRoutesEnabled {
-		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires Internal Routes enabled"))
+		return field.ErrorList{field.Forbidden(context.fieldPath, "annotation requires Internal Routes enabled")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateBoolAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseBool(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a boolean"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be a boolean")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateTimeAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseTime(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a time"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be a time")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateOffsetAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseOffset(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be an offset"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be an offset")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateSizeAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseSize(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a size"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be a size")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateProxyBuffersAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseProxyBuffersSpec(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a proxy buffer spec"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be a proxy buffer spec")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateUint64Annotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseUint64(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a non-negative integer"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be a non-negative integer")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateInt64Annotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseInt64(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be an integer"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be an integer")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateIntAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseInt(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be an integer"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be an integer")}
 	}
-	return allErrs
+	return nil
 }
 
 func validatePortListAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParsePortList(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a comma-separated list of port numbers"))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "must be a comma-separated list of port numbers")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	var unknownServices []string
 	annotationServices := configs.ParseServiceList(context.value)
 	for svc := range annotationServices {
@@ -706,25 +670,23 @@ func validateServiceListAnnotation(context *annotationValidationContext) field.E
 			"must be a comma-separated list of services. The following services were not found: %s",
 			strings.Join(unknownServices, commaDelimiter),
 		)
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, errorMsg)}
 	}
-	return allErrs
+	return nil
 }
 
 func validateStickyServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if _, err := configs.ParseStickyServiceList(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, err.Error())}
 	}
-	return allErrs
+	return nil
 }
 
 func validateRewriteListAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	var unknownServices []string
 	rewrites, err := configs.ParseRewriteList(context.value)
 	if err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, err.Error())}
 	}
 	for rewrite := range rewrites {
 		if _, exists := context.specServices[rewrite]; !exists {
@@ -736,9 +698,9 @@ func validateRewriteListAnnotation(context *annotationValidationContext) field.E
 			"The following services were not found: %s",
 			strings.Join(unknownServices, commaDelimiter),
 		)
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, errorMsg)}
 	}
-	return allErrs
+	return nil
 }
 
 func validateAppProtectSecurityLogAnnotation(context *annotationValidationContext) field.ErrorList {
@@ -767,31 +729,28 @@ func validateAppProtectSecurityLogDestAnnotation(context *annotationValidationCo
 }
 
 func validateSnippetsAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !context.snippetsEnabled {
-		return append(allErrs, field.Forbidden(context.fieldPath, "snippet specified but snippets feature is not enabled"))
+		return field.ErrorList{field.Forbidden(context.fieldPath, "snippet specified but snippets feature is not enabled")}
 	}
-	return allErrs
+	return nil
 }
 
 func validateSecretNameAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if msgs := validation.IsDNS1123Subdomain(context.value); msgs != nil {
+		allErrs := field.ErrorList{}
 		for _, msg := range msgs {
 			allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
 		}
 		return allErrs
 	}
-	return allErrs
+	return nil
 }
 
 func validateRealmAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if err := validateIsValidRealm(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, err.Error())}
 	}
-	return allErrs
+	return nil
 }
 
 func validateIsBool(v string) error {
@@ -863,13 +822,10 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 }
 
 func validateBackend(backend *networking.IngressBackend, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if backend.Resource != nil {
-		return append(allErrs, field.Forbidden(fieldPath.Child("resource"), "resource backends are not supported"))
+		return field.ErrorList{field.Forbidden(fieldPath.Child("resource"), "resource backends are not supported")}
 	}
-
-	return allErrs
+	return nil
 }
 
 const (
@@ -880,24 +836,22 @@ const (
 var pathRegexp = regexp.MustCompile("^" + pathFmt + "$")
 
 func validatePath(path string, pathType *networking.PathType, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if path == "" && pathType != nil && *pathType == networking.PathTypeImplementationSpecific {
 		// No path defined - no further validation needed.
 		// Path is not required for ImplementationSpecific PathType - it will default to /.
-		return allErrs
+		return nil
 	}
 
 	if path == "" {
-		return append(allErrs, field.Required(fieldPath, "path is required for Exact and Prefix PathTypes"))
+		return field.ErrorList{field.Required(fieldPath, "path is required for Exact and Prefix PathTypes")}
 	}
 
 	if !pathRegexp.MatchString(path) {
 		msg := validation.RegexError(pathErrMsg, pathFmt, "/", "/path", "/path/subpath-123")
-		return append(allErrs, field.Invalid(fieldPath, path, msg))
+		return field.ErrorList{field.Invalid(fieldPath, path, msg)}
 	}
 
-	allErrs = append(allErrs, validateRegexPath(path, fieldPath)...)
+	allErrs := validateRegexPath(path, fieldPath)
 	allErrs = append(allErrs, validateCurlyBraces(path, fieldPath)...)
 	allErrs = append(allErrs, validateIllegalKeywords(path, fieldPath)...)
 
@@ -905,17 +859,13 @@ func validatePath(path string, pathType *networking.PathType, fieldPath *field.P
 }
 
 func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if _, err := regexp.Compile(path); err != nil {
-		return append(allErrs, field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err)))
+		return field.ErrorList{field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err))}
 	}
-
 	if err := ValidateEscapedString(path, "*.jpg", "^/images/image_*.png$"); err != nil {
-		return append(allErrs, field.Invalid(fieldPath, path, err.Error()))
+		return field.ErrorList{field.Invalid(fieldPath, path, err.Error())}
 	}
-
-	return allErrs
+	return nil
 }
 
 const (
@@ -965,29 +915,22 @@ const (
 var illegalKeywordFmtRegexp = regexp.MustCompile("^" + illegalKeywordFmt + "$")
 
 func validateIllegalKeywords(path string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if illegalKeywordFmtRegexp.MatchString(path) {
-		return append(allErrs, field.Invalid(fieldPath, path, illegalKeywordErrMsg))
+		return field.ErrorList{field.Invalid(fieldPath, path, illegalKeywordErrMsg)}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateMasterSpec(spec *networking.IngressSpec, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if len(spec.Rules) != 1 {
-		return append(allErrs, field.TooMany(fieldPath.Child("rules"), len(spec.Rules), 1))
+		return field.ErrorList{field.TooMany(fieldPath.Child("rules"), len(spec.Rules), 1)}
 	}
-
 	// the number of paths of the first rule of the spec must be 0
 	if spec.Rules[0].HTTP != nil && len(spec.Rules[0].HTTP.Paths) > 0 {
 		pathsField := fieldPath.Child("rules").Index(0).Child("http").Child("paths")
-		return append(allErrs, field.TooMany(pathsField, len(spec.Rules[0].HTTP.Paths), 0))
+		return field.ErrorList{field.TooMany(pathsField, len(spec.Rules[0].HTTP.Paths), 0)}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateMinionSpec(spec *networking.IngressSpec, fieldPath *field.Path) field.ErrorList {

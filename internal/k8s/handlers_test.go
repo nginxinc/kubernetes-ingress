@@ -10,6 +10,7 @@ import (
 )
 
 func TestHasServicePortChanges(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		a      []v1.ServicePort
 		b      []v1.ServicePort
@@ -158,6 +159,7 @@ func TestHasServicePortChanges(t *testing.T) {
 }
 
 func TestAreResourcesDifferent(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		oldR, newR *unstructured.Unstructured
 		expected   bool

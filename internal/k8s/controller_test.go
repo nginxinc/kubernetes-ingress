@@ -30,6 +30,7 @@ import (
 )
 
 func TestHasCorrectIngressClass(t *testing.T) {
+	t.Parallel()
 	ingressClass := "ing-ctrl"
 	incorrectIngressClass := "gce"
 	emptyClass := ""
@@ -172,6 +173,7 @@ func deepCopyWithIngressClass(obj interface{}, class string) interface{} {
 }
 
 func TestIngressClassForCustomResources(t *testing.T) {
+	t.Parallel()
 	ctrl := &LoadBalancerController{
 		ingressClass: "nginx",
 	}
@@ -221,6 +223,7 @@ func TestIngressClassForCustomResources(t *testing.T) {
 }
 
 func TestComparePorts(t *testing.T) {
+	t.Parallel()
 	scenarios := []struct {
 		sp       api_v1.ServicePort
 		cp       api_v1.ContainerPort
@@ -314,6 +317,7 @@ func TestComparePorts(t *testing.T) {
 }
 
 func TestFindProbeForPods(t *testing.T) {
+	t.Parallel()
 	pods := []*api_v1.Pod{
 		{
 			Spec: api_v1.PodSpec{
@@ -404,6 +408,7 @@ func TestFindProbeForPods(t *testing.T) {
 }
 
 func TestGetServicePortForIngressPort(t *testing.T) {
+	t.Parallel()
 	fakeClient := fake.NewSimpleClientset()
 	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false, nil, false, nil, false)
 	lbc := LoadBalancerController{
@@ -462,6 +467,7 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 }
 
 func TestFormatWarningsMessages(t *testing.T) {
+	t.Parallel()
 	warnings := []string{"Test warning", "Test warning 2"}
 
 	expected := "Test warning; Test warning 2"
@@ -473,6 +479,7 @@ func TestFormatWarningsMessages(t *testing.T) {
 }
 
 func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsInOneEndpointSlice(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 
 	lbc := LoadBalancerController{
@@ -561,6 +568,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsInOneEndpointSlice(t *
 }
 
 func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSlice(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 
 	lbc := LoadBalancerController{
@@ -651,6 +659,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSlice(t
 }
 
 func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlices(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 
 	lbc := LoadBalancerController{
@@ -770,6 +779,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlice
 }
 
 func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSliceOneEndpointNotReady(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 
 	lbc := LoadBalancerController{
@@ -858,6 +868,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSliceOn
 }
 
 func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsAcrossTwoEndpointSlicesOneEndpointNotReady(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 
 	lbc := LoadBalancerController{
@@ -956,6 +967,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsAcrossTwoEndpointSl
 }
 
 func TestGetEndpointsFromEndpointSlices_ErrorsOnInvalidTargetPort(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 
 	lbc := LoadBalancerController{
@@ -1027,6 +1039,7 @@ func TestGetEndpointsFromEndpointSlices_ErrorsOnInvalidTargetPort(t *testing.T) 
 }
 
 func TestGetEndpointsFromEndpointSlices_ErrorsOnNoEndpointSlicesFound(t *testing.T) {
+	t.Parallel()
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
 	}
@@ -1076,6 +1089,7 @@ func TestGetEndpointsFromEndpointSlices_ErrorsOnNoEndpointSlicesFound(t *testing
 }
 
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodInOneEndpointSlice(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
@@ -1148,6 +1162,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodInOneEndpointSlice(t *test
 }
 
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDuplicateEndpoints(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
@@ -1237,6 +1252,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDup
 }
 
 func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInOneEndpointSlice(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
@@ -1338,6 +1354,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInOneEndpointSlice(t *tes
 }
 
 func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlices(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
@@ -1448,6 +1465,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindTwoPodsInTwoEndpointSlices(t *te
 }
 
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInOneEndpointSliceWithOneEndpointNotReady(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 	endpointReadyTrue := true
 	endpointReadyFalse := false
@@ -1543,6 +1561,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInOneEndpointSlice
 }
 
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInTwoEndpointSlicesWithOneEndpointNotReady(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 	endpointReadyTrue := true
 	endpointReadyFalse := false
@@ -1647,6 +1666,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodEndpointInTwoEndpointSlice
 }
 
 func TestGetEndpointSlicesBySubselectedPods_FindNoPods(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 	endpointReady := true
 	boolPointer := func(b bool) *bool { return &b }
@@ -1711,6 +1731,7 @@ func TestGetEndpointSlicesBySubselectedPods_FindNoPods(t *testing.T) {
 }
 
 func TestGetEndpointSlicesBySubselectedPods_TargetPortMismatch(t *testing.T) {
+	t.Parallel()
 	endpointPort := int32(8080)
 
 	boolPointer := func(b bool) *bool { return &b }
@@ -1788,6 +1809,7 @@ func unorderedEqual(got, want []podEndpoint) bool {
 }
 
 func TestGetStatusFromEventTitle(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		eventTitle string
 		expected   string
@@ -1847,6 +1869,7 @@ func TestGetStatusFromEventTitle(t *testing.T) {
 }
 
 func TestGetPolicies(t *testing.T) {
+	t.Parallel()
 	validPolicy := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-policy",
@@ -1946,6 +1969,7 @@ func TestGetPolicies(t *testing.T) {
 }
 
 func TestCreatePolicyMap(t *testing.T) {
+	t.Parallel()
 	policies := []*conf_v1.Policy{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -2001,6 +2025,7 @@ func TestCreatePolicyMap(t *testing.T) {
 }
 
 func TestGetPodOwnerTypeAndName(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		desc    string
 		expType string
@@ -2144,6 +2169,7 @@ func (t *testResource) String() string {
 }
 
 func TestRemoveDuplicateResources(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		resources []Resource
 		expected  []Resource
@@ -2182,6 +2208,7 @@ func TestRemoveDuplicateResources(t *testing.T) {
 }
 
 func TestFindPoliciesForSecret(t *testing.T) {
+	t.Parallel()
 	jwtPol1 := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "jwt-policy",
@@ -2398,6 +2425,7 @@ func errorComparer(e1, e2 error) bool {
 }
 
 func TestAddJWTSecrets(t *testing.T) {
+	t.Parallel()
 	invalidErr := errors.New("invalid")
 	validJWKSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -2542,6 +2570,7 @@ func TestAddJWTSecrets(t *testing.T) {
 }
 
 func TestAddBasicSecrets(t *testing.T) {
+	t.Parallel()
 	invalidErr := errors.New("invalid")
 	validBasicSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -2666,6 +2695,7 @@ func TestAddBasicSecrets(t *testing.T) {
 }
 
 func TestAddIngressMTLSSecret(t *testing.T) {
+	t.Parallel()
 	invalidErr := errors.New("invalid")
 	validSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -2788,6 +2818,7 @@ func TestAddIngressMTLSSecret(t *testing.T) {
 }
 
 func TestAddEgressMTLSSecrets(t *testing.T) {
+	t.Parallel()
 	invalidErr := errors.New("invalid")
 	validMTLSSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -3005,6 +3036,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 }
 
 func TestAddOidcSecret(t *testing.T) {
+	t.Parallel()
 	invalidErr := errors.New("invalid")
 	validSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -3128,6 +3160,7 @@ func TestAddOidcSecret(t *testing.T) {
 }
 
 func TestAddWAFPolicyRefs(t *testing.T) {
+	t.Parallel()
 	apPol := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -3358,6 +3391,7 @@ func TestAddWAFPolicyRefs(t *testing.T) {
 }
 
 func TestGetWAFPoliciesForAppProtectPolicy(t *testing.T) {
+	t.Parallel()
 	apPol := &conf_v1.Policy{
 		Spec: conf_v1.PolicySpec{
 			WAF: &conf_v1.WAF{
@@ -3435,6 +3469,7 @@ func TestGetWAFPoliciesForAppProtectPolicy(t *testing.T) {
 }
 
 func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
+	t.Parallel()
 	logConf := &conf_v1.Policy{
 		Spec: conf_v1.PolicySpec{
 			WAF: &conf_v1.WAF{
@@ -3541,6 +3576,7 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 }
 
 func TestPreSyncSecrets(t *testing.T) {
+	t.Parallel()
 	secretLister := &cache.FakeCustomStore{
 		ListFunc: func() []interface{} {
 			return []interface{}{

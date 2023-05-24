@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - release-*
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
@@ -31,28 +32,31 @@ jobs:
     name: Checks and variables
     runs-on: ubuntu-22.04
     outputs:
-      go_path: ${{ steps.go.outputs.go_path }}
+      go_path: ${{ steps.vars.outputs.go_path }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
+      chart_version: ${{ steps.vars.outputs.chart_version }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
+        with:
+          go-version-file: go.mod
+
       - name: Output Variables
         id: vars
         run: |
           echo "k8s_latest=$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
-      - name: Setup Golang Environment
-        uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
-        with:
-          go-version-file: go.mod
-      - name: Determine GOPATH
-        id: go
-        run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
+          echo "chart_version=$(yq '.version' <deployments/helm-chart/Chart.yaml)" >> $GITHUB_OUTPUT
+          echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
+
       - name: Check if go.mod and go.sum are up to date
-        run: |
-          go mod tidy && git diff --exit-code -- go.mod go.sum
+        run: go mod tidy && git diff --exit-code -- go.mod go.sum
+
       - name: Check if CRDs changed
-        run: |
-          make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
+        run: make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
+
       - name: Check if Codegen changed
         run: |
           cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
@@ -67,21 +71,44 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - name: Setup Golang Environment
-        uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
+        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
         with:
           go-version-file: go.mod
       - name: Run Tests
         run: make cover
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@894ff025c7b54547a9a2a1e9f228beae737ad3c2 # v3.1.3
+        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
         with:
           files: ./coverage.txt
 
   release:
-    name: Release
-    if: startsWith(github.ref, 'refs/tags/')
-    uses: ./.github/workflows/release.yml
-    secrets: inherit
+    runs-on: ubuntu-22.04
+    needs: [checks, unit-tests]
+    if: ${{ github.event_name == 'push' && ! github.ref != 'refs/heads/main' }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+      - name: Create/Update Draft
+        uses: lucacome/draft-release@b79be3ff634f771230b2b6ee9f47308c5793671a # v0.2.0
+        with:
+          minor-label: 'enhancement'
+          major-label: 'change'
+          publish: ${{ startsWith(github.ref, 'refs/tags/') }}
+          collapse-after: 50
+          variables: |
+            helm-chart=${{ needs.checks.outputs.chart_version }}
+          notes-footer: |
+            ## Upgrade
+            - For NGINX, use the {{version}} image from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name={{version-number}}), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+            - For NGINX Plus, use the {{version}} image from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the {{version}} source code.
+            - For Helm, use version {{helm-chart}} of the chart.
+
+            ## Resources
+            - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
+            - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/examples
+            - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/deployments/helm-chart
+            - Operator -- https://github.com/nginxinc/nginx-ingress-operator/
 
   binaries:
     name: Build Binaries
@@ -94,19 +121,19 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
+        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
         with:
           go-version-file: go.mod
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@422cb34a0f8b599678c41b21163ea6088edb2624 # v0.14.1
+        uses: anchore/sbom-action/download-syft@4d571ad1038a9cc29d676154ef265ab8f9027042 # v0.14.2
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Build binaries
         uses: goreleaser/goreleaser-action@f82d6c1c344bcacabba2c841718984797f664a6b # v4.2.0
         with:
           version: latest
-          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist
+          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ needs.checks.outputs.go_path }}
@@ -210,7 +237,6 @@ jobs:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
     needs: [checks, binaries]
-    if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -336,8 +362,8 @@ jobs:
   publish-helm:
     name: Package and Publish Helm Chart
     runs-on: ubuntu-22.04
-    needs: helm-tests
-    if: ${{ github.event_name == 'push' }}
+    needs: [checks, helm-tests]
+    if: ${{ github.event_name == 'push' && ! startsWith(github.ref, 'refs/heads/release-') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
@@ -375,22 +401,15 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.NGINX_PAT }}
           path: helm-charts
-
-      - name: Get Chart type
-        id: package-helm
-        run: |
-          echo "type=${{ contains(steps.package.outputs.path, 'edge') && 'edge' || 'stable' }}" >> $GITHUB_OUTPUT
-
-      - name: Remove previous Chart
-        if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
-        run: rm -f ${{ github.workspace }}/helm-charts/edge/nginx-ingress-0.0.0-edge.tgz
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
 
       - name: Push Helm Chart to Helm Charts Repository
         run: |
-          mv ${{ steps.package.outputs.path }} ${{ github.workspace }}/helm-charts/${{ steps.package-helm.outputs.type }}/
+          mv ${{ steps.package.outputs.path }} ${{ github.workspace }}/helm-charts/stable/
           cd ${{ github.workspace }}/helm-charts
-          helm repo index ${{ steps.package-helm.outputs.type }} --url https://helm.nginx.com/${{ steps.package-helm.outputs.type }}
+          helm repo index stable --url https://helm.nginx.com/stable
           git add -A
           git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
-          commit -m "NGINX Ingress Controller - Release ${{ steps.package-helm.outputs.type }} ${{ steps.package-helm.outputs.version }}"
+          commit -m "NGINX Ingress Controller - Release ${{ needs.checks.outputs.chart_version }}"
           git push -u origin master
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}

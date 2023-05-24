@@ -11,6 +11,7 @@ import (
 )
 
 func TestSecretIsReferencedByIngress(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing             *networking.Ingress
 		secretNamespace string
@@ -149,6 +150,7 @@ func TestSecretIsReferencedByIngress(t *testing.T) {
 }
 
 func TestSecretIsReferencedByMinion(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing             *networking.Ingress
 		secretNamespace string
@@ -230,6 +232,7 @@ func TestSecretIsReferencedByMinion(t *testing.T) {
 }
 
 func TestSecretIsReferencedByVirtualServer(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs              *conf_v1.VirtualServer
 		secretNamespace string
@@ -299,6 +302,7 @@ func TestSecretIsReferencedByVirtualServer(t *testing.T) {
 }
 
 func TestSecretIsReferencedByVirtualServerRoute(t *testing.T) {
+	t.Parallel()
 	isPlus := false // doesn't matter for VirtualServerRoute
 	rc := newSecretReferenceChecker(isPlus)
 
@@ -309,6 +313,7 @@ func TestSecretIsReferencedByVirtualServerRoute(t *testing.T) {
 }
 
 func TestSecretIsReferencedByTransportServer(t *testing.T) {
+	t.Parallel()
 	isPlus := false // doesn't matter for TransportServer
 	rc := newSecretReferenceChecker(isPlus)
 
@@ -320,6 +325,7 @@ func TestSecretIsReferencedByTransportServer(t *testing.T) {
 }
 
 func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing              *networking.Ingress
 		serviceNamespace string
@@ -454,6 +460,7 @@ func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
 }
 
 func TestServiceIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs               *conf_v1.VirtualServer
 		vsr              *conf_v1.VirtualServerRoute
@@ -570,6 +577,7 @@ func TestServiceIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) 
 }
 
 func TestIsServiceReferencedByTransportServer(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ts               *conf_v1alpha1.TransportServer
 		serviceNamespace string
@@ -644,25 +652,27 @@ func TestIsServiceReferencedByTransportServer(t *testing.T) {
 }
 
 func TestPolicyIsReferencedByIngressesAndTransportServers(t *testing.T) {
+	t.Parallel()
 	rc := newPolicyReferenceChecker()
 
 	result := rc.IsReferencedByIngress("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByIngress() returned true but expected false")
 	}
 
 	result = rc.IsReferencedByMinion("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByMinion() returned true but expected false")
 	}
 
 	result = rc.IsReferencedByTransportServer("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByTransportServer() returned true but expected false")
 	}
 }
 
 func TestPolicyIsReferencedByVirtualServerAndVirtualServerRoute(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs              *conf_v1.VirtualServer
 		vsr             *conf_v1.VirtualServerRoute
@@ -870,6 +880,7 @@ func TestPolicyIsReferencedByVirtualServerAndVirtualServerRoute(t *testing.T) {
 }
 
 func TestAppProtectResourceIsReferencedByIngresses(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing               *networking.Ingress
 		resourceNamespace string
@@ -1007,25 +1018,27 @@ func TestAppProtectResourceIsReferencedByIngresses(t *testing.T) {
 }
 
 func TestAppProtectResourceIsReferenced(t *testing.T) {
+	t.Parallel()
 	rc := newAppProtectResourceReferenceChecker("test")
 
 	result := rc.IsReferencedByVirtualServer("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByVirtualServer() returned true but expected false")
 	}
 
 	result = rc.IsReferencedByVirtualServerRoute("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByVirtualServer() returned true but expected false")
 	}
 
 	result = rc.IsReferencedByTransportServer("", "", nil)
-	if result != false {
+	if result {
 		t.Error("IsReferencedByTransportServer() returned true but expected false")
 	}
 }
 
 func TestIsPolicyIsReferenced(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		policies          []conf_v1.PolicyReference
 		resourceNamespace string
@@ -1096,6 +1109,7 @@ func TestIsPolicyIsReferenced(t *testing.T) {
 }
 
 func TestEndpointIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs               *conf_v1.VirtualServer
 		vsr              *conf_v1.VirtualServerRoute
@@ -1222,6 +1236,7 @@ func TestEndpointIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T)
 }
 
 func TestDosProtectedIsReferencedByIngresses(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing               *networking.Ingress
 		resourceNamespace string
@@ -1359,6 +1374,7 @@ func TestDosProtectedIsReferencedByIngresses(t *testing.T) {
 }
 
 func TestDosProtectedIsReferencedByVirtualServer(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		vs                 *conf_v1.VirtualServer
 		protectedNamespace string
