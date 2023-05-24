@@ -39,6 +39,7 @@ type VirtualServerSpec struct {
 	IngressClass   string            `json:"ingressClassName"`
 	Host           string            `json:"host"`
 	TLS            *TLS              `json:"tls"`
+	Gunzip         bool              `json:"gunzip"`
 	Policies       []PolicyReference `json:"policies"`
 	Upstreams      []Upstream        `json:"upstreams"`
 	Routes         []Route           `json:"routes"`
@@ -46,6 +47,8 @@ type VirtualServerSpec struct {
 	ServerSnippets string            `json:"server-snippets"`
 	Dos            string            `json:"dos"`
 	ExternalDNS    ExternalDNS       `json:"externalDNS"`
+	// InternalRoute allows for the configuration of internal routing.
+	InternalRoute bool `json:"internalRoute"`
 }
 
 // ExternalDNS defines externaldns sub-resource of a virtual server.

@@ -24,7 +24,6 @@ import (
 	"testing"
 	"time"
 
-	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -32,18 +31,13 @@ import (
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	coretesting "k8s.io/client-go/testing"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/utils/clock"
 	fakeclock "k8s.io/utils/clock/testing"
 
 	apiutil "github.com/cert-manager/cert-manager/pkg/api/util"
 	cmfake "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned/fake"
 	informers "github.com/cert-manager/cert-manager/pkg/client/informers/externalversions"
-	"github.com/cert-manager/cert-manager/pkg/controller"
-	"github.com/cert-manager/cert-manager/pkg/logs"
-	"github.com/cert-manager/cert-manager/pkg/metrics"
 	"github.com/cert-manager/cert-manager/pkg/util"
-	discoveryfake "github.com/cert-manager/cert-manager/test/unit/discovery"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	vsfake "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
 	vsinformers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
@@ -77,11 +71,10 @@ type Builder struct {
 	// test).
 	CheckFn func(*Builder, ...interface{})
 
-	stopCh              chan struct{}
-	requiredReactors    map[string]bool
-	additionalSyncFuncs []cache.InformerSynced
+	stopCh           chan struct{}
+	requiredReactors map[string]bool
 
-	*controller.Context
+	*Context
 }
 
 func (b *Builder) generateNameReactor(action coretesting.Action) (handled bool, ret runtime.Object, err error) {
@@ -100,7 +93,7 @@ const informerResyncPeriod = time.Millisecond * 10
 // for any unset fields.
 func (b *Builder) Init() {
 	if b.Context == nil {
-		b.Context = &controller.Context{
+		b.Context = &Context{
 			RootContext: context.Background(),
 		}
 	}
@@ -111,29 +104,6 @@ func (b *Builder) Init() {
 	b.Client = kubefake.NewSimpleClientset(b.KubeObjects...)
 	b.CMClient = cmfake.NewSimpleClientset(b.CertManagerObjects...)
 	b.VSClient = vsfake.NewSimpleClientset(b.VSObjects...)
-	b.DiscoveryClient = discoveryfake.NewDiscovery().WithServerResourcesForGroupVersion(func(groupVersion string) (*metav1.APIResourceList, error) {
-		if groupVersion == networkingv1.SchemeGroupVersion.String() {
-			return &metav1.APIResourceList{
-				TypeMeta:     metav1.TypeMeta{},
-				GroupVersion: networkingv1.SchemeGroupVersion.String(),
-				APIResources: []metav1.APIResource{
-					{
-						Name:               "ingresses",
-						SingularName:       "Ingress",
-						Namespaced:         true,
-						Group:              networkingv1.GroupName,
-						Version:            networkingv1.SchemeGroupVersion.Version,
-						Kind:               networkingv1.SchemeGroupVersion.WithKind("Ingress").Kind,
-						Verbs:              metav1.Verbs{"get", "list", "watch", "create", "update", "patch", "delete", "deletecollection"},
-						ShortNames:         []string{"ing"},
-						Categories:         []string{"all"},
-						StorageVersionHash: "testing",
-					},
-				},
-			}, nil
-		}
-		return &metav1.APIResourceList{}, nil
-	})
 	b.Recorder = new(FakeRecorder)
 	b.FakeKubeClient().PrependReactor("create", "*", b.generateNameReactor)
 	b.FakeCMClient().PrependReactor("create", "*", b.generateNameReactor)
@@ -142,7 +112,6 @@ func (b *Builder) Init() {
 	b.SharedInformerFactory = informers.NewSharedInformerFactory(b.CMClient, informerResyncPeriod)
 	b.VsSharedInformerFactory = vsinformers.NewSharedInformerFactory(b.VSClient, informerResyncPeriod)
 	b.stopCh = make(chan struct{})
-	b.Metrics = metrics.New(logs.Log, clock.RealClock{})
 
 	// set the Clock on the context
 	if b.Clock == nil {
@@ -328,19 +297,7 @@ func (b *Builder) Sync() {
 	if err := mustAllSync(b.VsSharedInformerFactory.WaitForCacheSync(b.stopCh)); err != nil {
 		panic("Error waiting for VSShared to sync: " + err.Error())
 	}
-	if b.additionalSyncFuncs != nil {
-		cache.WaitForCacheSync(b.stopCh, b.additionalSyncFuncs...)
-	}
 	time.Sleep(informerResyncPeriod * 3)
-}
-
-// RegisterAdditionalSyncFuncs registers an additional InformerSynced function
-// with the builder.
-// When the Sync method is called, the builder will also wait for the given
-// listers to be synced as well as the listers that were registered with the
-// informer factories that the builder provides.
-func (b *Builder) RegisterAdditionalSyncFuncs(fns ...cache.InformerSynced) {
-	b.additionalSyncFuncs = append(b.additionalSyncFuncs, fns...)
 }
 
 func (b *Builder) Events() []string {

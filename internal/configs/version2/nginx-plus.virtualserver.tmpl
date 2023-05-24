@@ -57,17 +57,13 @@ match {{ $m.Name }} {
 {{ end }}
 
 {{ $s := .Server }}
-{{ with $s.JWTAuth }}
-{{ if .KeyCache }}proxy_cache_path /var/cache/nginx/jwks_uri levels=1 keys_zone=jwks_uri:1m max_size=10m; {{ end }}
-{{ end }}
 
-{{ range $l := $s.Locations }}
-{{ with $l.JWTAuth }}
-{{ if .KeyCache }}proxy_cache_path /var/cache/nginx{{ $l.Path }}_jwks_uri levels=1 keys_zone={{ $l.Path }}_jwks_uri:1m max_size=10m; {{ end }}
-{{ end }}
+{{ with $s.JWKSAuthEnabled }}
+proxy_cache_path /var/cache/nginx/jwks_uri_{{$s.VSName}} levels=1 keys_zone=jwks_uri_{{$s.VSName}}:1m max_size=10m;
 {{ end }}
 
 server {
+    {{ if $s.Gunzip }}gunzip on;{{end}}
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
 
@@ -107,11 +103,21 @@ server {
 
         {{ if $ssl.RejectHandshake }}
     ssl_reject_handshake on;
+        {{ else if $.SpiffeCerts }}
+    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
         {{ else }}
     ssl_certificate {{ $ssl.Certificate }};
     ssl_certificate_key {{ $ssl.CertificateKey }};
         {{ end }}
-    {{ end }}
+    {{ else }}
+      {{ if $.SpiffeCerts }}
+    listen 443 ssl;
+    {{if not $s.DisableIPV6}}listen [::]:443 ssl;{{end}}
+    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+      {{ end }}
+    {{ end  }}
 
     {{ with $s.IngressMTLS }}
     ssl_client_certificate {{ .ClientCert }};
@@ -180,24 +186,27 @@ server {
     {{ if .Secret}}auth_jwt_key_file {{ .Secret }};{{ end }}
     {{ if .JwksURI.JwksHost }}
     {{ if .KeyCache }}auth_jwt_key_cache {{ .KeyCache }};{{ end }}
-    auth_jwt_key_request /_jwks_uri_server;
+    auth_jwt_key_request /_jwks_uri_server_{{ .Key }};
 
-    location = /_jwks_uri_server {
+    {{ end }}
+    {{ end }}
+
+    {{ range $index, $element := $s.JWTAuthList }}
+    location = /_jwks_uri_server_{{ .Key }} {
         internal;
         proxy_method GET;
         proxy_set_header Content-Length "";
         {{ if .KeyCache }}
-        proxy_cache jwks_uri;
+        proxy_cache jwks_uri_{{ $s.VSName }};
         proxy_cache_valid 200 12h;
         {{ end }}
-        {{ with $s.JWTAuth.JwksURI }}
+        {{ with .JwksURI }}
         proxy_set_header Host {{ .JwksHost }};
         set $idp_backend {{ .JwksHost }};
         proxy_pass {{ .JwksScheme}}://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
         {{ end }}
     }
 
-    {{ end }}
     {{ end }}
 
     {{ with $s.BasicAuth }}
@@ -381,22 +390,7 @@ server {
         {{ if .Secret}}auth_jwt_key_file {{ .Secret }};{{ end }}
         {{ if .JwksURI.JwksHost }}
         {{ if .KeyCache }}auth_jwt_key_cache {{ .KeyCache }};{{ end }}
-        auth_jwt_key_request {{ $l.Path }}_jwks_uri;
-
-        location = {{ $l.Path }}_jwks_uri {
-            internal;
-            proxy_method GET;
-            proxy_set_header Content-Length "";
-            {{ if .KeyCache }}
-            proxy_cache {{ $l.Path }}_jwks_uri;
-            proxy_cache_valid 200 12h;
-            {{ end }}
-            {{ with $l.JWTAuth.JwksURI }}
-            proxy_set_header Host {{ .JwksHost }};
-            set $idp_backend {{ .JwksHost }};
-            proxy_pass {{ .JwksScheme}}://$idp_backend{{ if .JwksPort }}:{{ .JwksPort }}{{ end }}{{ .JwksPath }};
-            {{ end }}
-        }
+        auth_jwt_key_request /_jwks_uri_server_{{ .Key }};
         {{ end }}
         {{ end }}
 
@@ -584,7 +578,7 @@ server {
             {{ range $h := $l.AddHeaders }}
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
             {{ end }}
-            {{ if $.SpiffeCerts }}
+            {{ if $.SpiffeClientCerts }}
         {{ $proxyOrGRPC }}_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
         {{ $proxyOrGRPC }}_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
         {{ $proxyOrGRPC }}_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;

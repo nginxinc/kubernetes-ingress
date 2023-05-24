@@ -232,6 +232,7 @@ type virtualServerConfigurator struct {
 	enableSnippets       bool
 	warnings             Warnings
 	spiffeCerts          bool
+	enableInternalRoutes bool
 	oidcPolCfg           *oidcPolicyCfg
 	isIPV6Disabled       bool
 }
@@ -272,6 +273,7 @@ func newVirtualServerConfigurator(
 		enableSnippets:       staticParams.EnableSnippets,
 		warnings:             make(map[runtime.Object][]string),
 		spiffeCerts:          staticParams.NginxServiceMesh,
+		enableInternalRoutes: staticParams.EnableInternalRoutes,
 		oidcPolCfg:           &oidcPolicyCfg{},
 		isIPV6Disabled:       staticParams.DisableIPV6,
 	}
@@ -325,7 +327,20 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	}
 	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
 
+	if policiesCfg.JWKSAuthEnabled {
+		jwtAuthKey := policiesCfg.JWTAuth.Key
+		policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+		policiesCfg.JWTAuthList[jwtAuthKey] = policiesCfg.JWTAuth
+	}
+
 	dosCfg := generateDosCfg(dosResources[""])
+
+	// enabledInternalRoutes controls if a virtual server is configured as an internal route.
+	enabledInternalRoutes := vsEx.VirtualServer.Spec.InternalRoute
+	if vsEx.VirtualServer.Spec.InternalRoute && !vsc.enableInternalRoutes {
+		vsc.addWarningf(vsEx.VirtualServer, "Internal Route cannot be configured for virtual server %s. Internal Routes can be enabled by setting the enable-internal-routes flag", vsEx.VirtualServer.Name)
+		enabledInternalRoutes = false
+	}
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
@@ -355,7 +370,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		ups := vsc.generateUpstream(vsEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
 		upstreams = append(upstreams, ups)
 
-		u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
+		u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts, vsEx.VirtualServer.Spec.InternalRoute)
 		crUpstreams[upstreamName] = u
 
 		if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
@@ -384,7 +399,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
 			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
 			upstreams = append(upstreams, ups)
-			u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
+			u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts, vsEx.VirtualServer.Spec.InternalRoute)
 			crUpstreams[upstreamName] = u
 
 			if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
@@ -459,6 +474,18 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		routePoliciesCfg := vsc.generatePolicies(ownerDetails, r.Policies, vsEx.Policies, routeContext, policyOpts)
 		if policiesCfg.OIDC {
 			routePoliciesCfg.OIDC = policiesCfg.OIDC
+		}
+		if routePoliciesCfg.JWKSAuthEnabled {
+			policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+
+			if policiesCfg.JWTAuthList == nil {
+				policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+			}
+
+			jwtAuthKey := routePoliciesCfg.JWTAuth.Key
+			if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
+				policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+			}
 		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
@@ -570,6 +597,18 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			if policiesCfg.OIDC {
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
+			if routePoliciesCfg.JWKSAuthEnabled {
+				policiesCfg.JWKSAuthEnabled = routePoliciesCfg.JWKSAuthEnabled
+
+				if policiesCfg.JWTAuthList == nil {
+					policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
+				}
+
+				jwtAuthKey := routePoliciesCfg.JWTAuth.Key
+				if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
+					policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+				}
+			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 			dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -645,6 +684,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		HTTPSnippets:  httpSnippets,
 		Server: version2.Server{
 			ServerName:                vsEx.VirtualServer.Spec.Host,
+			Gunzip:                    vsEx.VirtualServer.Spec.Gunzip,
 			StatusZone:                vsEx.VirtualServer.Spec.Host,
 			ProxyProtocol:             vsc.cfgParams.ProxyProtocol,
 			SSL:                       sslConfig,
@@ -666,6 +706,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			LimitReqs:                 policiesCfg.LimitReqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
 			BasicAuth:                 policiesCfg.BasicAuth,
+			JWTAuthList:               policiesCfg.JWTAuthList,
+			JWKSAuthEnabled:           policiesCfg.JWKSAuthEnabled,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			OIDC:                      vsc.oidcPolCfg.oidc,
@@ -676,7 +718,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			VSName:                    vsEx.VirtualServer.Name,
 			DisableIPV6:               vsc.isIPV6Disabled,
 		},
-		SpiffeCerts: vsc.spiffeCerts,
+		SpiffeCerts:       enabledInternalRoutes,
+		SpiffeClientCerts: vsc.spiffeCerts && !enabledInternalRoutes,
 	}
 
 	return vsCfg, vsc.warnings
@@ -689,6 +732,8 @@ type policiesCfg struct {
 	LimitReqZones   []version2.LimitReqZone
 	LimitReqs       []version2.LimitReq
 	JWTAuth         *version2.JWTAuth
+	JWTAuthList     map[string]*version2.JWTAuth
+	JWKSAuthEnabled bool
 	BasicAuth       *version2.BasicAuth
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
@@ -848,11 +893,13 @@ func (p *policiesCfg) addJWTAuthConfig(
 		}
 
 		p.JWTAuth = &version2.JWTAuth{
+			Key:      polKey,
 			JwksURI:  *JwksURI,
 			Realm:    jwtAuth.Realm,
 			Token:    jwtAuth.Token,
 			KeyCache: jwtAuth.KeyCache,
 		}
+		p.JWKSAuthEnabled = true
 		return res
 	}
 	return res
@@ -996,6 +1043,11 @@ func (p *policiesCfg) addEgressMTLSConfig(
 		}
 
 		trustedSecretPath = secretRef.Path
+	}
+
+	if len(trustedSecretPath) != 0 {
+		caFields := strings.Fields(trustedSecretPath)
+		trustedSecretPath = caFields[0]
 	}
 
 	p.EgressMTLS = &version2.EgressMTLS{
@@ -2474,8 +2526,16 @@ func generateProxySSLName(svcName, ns string) string {
 	return fmt.Sprintf("%s.%s.svc", svcName, ns)
 }
 
-func isTLSEnabled(u conf_v1.Upstream, spiffeCerts bool) bool {
-	return u.TLS.Enable || spiffeCerts
+// isTLSEnabled checks whether TLS is enabled for the given upstream, taking into account the configuration
+// of the NGINX Service Mesh and the presence of SPIFFE certificates.
+func isTLSEnabled(upstream conf_v1.Upstream, hasSpiffeCerts, isInternalRoute bool) bool {
+	if isInternalRoute {
+		// Internal routes in the NGINX Service Mesh do not require TLS.
+		return false
+	}
+
+	// TLS is enabled if explicitly configured for the upstream or if SPIFFE certificates are present.
+	return upstream.TLS.Enable || hasSpiffeCerts
 }
 
 func isGRPC(protocolType string) bool {

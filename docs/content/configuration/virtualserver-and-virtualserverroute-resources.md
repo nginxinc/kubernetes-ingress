@@ -12,7 +12,7 @@ docs: "DOCS-599"
 
 The VirtualServer and VirtualServerRoute resources, introduced in release 1.5, enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.0/examples/custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/custom-resources) folder in our GitHub repo.
 
 ## VirtualServer Specification
 
@@ -26,6 +26,7 @@ spec:
   host: cafe.example.com
   tls:
     secret: cafe-secret
+  gunzip: on
   upstreams:
   - name: tea
     service: tea-svc
@@ -53,12 +54,14 @@ spec:
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
 |``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
+|``gunzip`` | Enables or disables [decompression](https://docs.nginx.com/nginx/admin-guide/web-server/compression/) of gzipped responses for clients. Allowed values “on”/“off”, “true”/“false” or “yes”/“no”. If the ``gunzip`` value is not set, it defaults to ``off``.   | ``boolean`` | No |
 |``externalDNS`` | The externalDNS configuration for a VirtualServer. | [externalDNS](#virtualserverexternaldns) | No |
 |``dos`` | A reference to a DosProtectedResource, setting this enables DOS protection of the VirtualServer. | ``string`` | No |
 |``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
 |``routes`` | A list of routes. | [[]route](#virtualserverroute) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServer resource. | ``string`` | No |
+|``internalRoute`` | Specifies if the VirtualServer resource is an internal route or not. | ``boolean`` | No |
 |``http-snippets`` | Sets a custom snippet in the http context. | ``string`` | No |
 |``server-snippets`` | Sets a custom snippet in server context. Overrides the ``server-snippets`` ConfigMap key. | ``string`` | No |
 {{% /table %}}
@@ -312,7 +315,7 @@ tls:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes |
-|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.0/examples/ingress-resources/externalname-services#prerequisites) ). | ``string`` | Yes |
+|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/ingress-resources/externalname-services#prerequisites) ). | ``string`` | Yes |
 |``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, the Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No |
 |``use-cluster-ip`` | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as the Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP. | ``boolean`` | No |
 |``port`` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``. | ``uint16`` | Yes |
@@ -589,7 +592,7 @@ proxy:
 |``upstream`` | The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource. | ``string`` | Yes |
 |``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#actionproxyrequestheaders) | No |
 |``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#actionproxyresponseheaders) | No |
-|``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.0/examples/custom-resources/rewrites) example. | ``string`` | No |
+|``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/custom-resources/rewrites) example. | ``string`` | No |
 {{% /table %}}
 
 ### Action.Proxy.RequestHeaders

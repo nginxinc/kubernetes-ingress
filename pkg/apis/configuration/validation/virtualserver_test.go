@@ -12,6 +12,7 @@ import (
 
 func TestValidateVirtualServer(t *testing.T) {
 	t.Parallel()
+
 	virtualServer := v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",

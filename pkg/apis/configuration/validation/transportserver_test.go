@@ -14,6 +14,7 @@ func createTransportServerValidator() *TransportServerValidator {
 
 func TestValidateTransportServer(t *testing.T) {
 	t.Parallel()
+
 	ts := v1alpha1.TransportServer{
 		Spec: v1alpha1.TransportServerSpec{
 			Listener: v1alpha1.TransportServerListener{
@@ -41,7 +42,7 @@ func TestValidateTransportServer(t *testing.T) {
 	}
 }
 
-func TestValidateTransportServerFails(t *testing.T) {
+func TestValidateTransportServer_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	ts := v1alpha1.TransportServer{
 		Spec: v1alpha1.TransportServerSpec{
@@ -69,6 +70,7 @@ func TestValidateTransportServerFails(t *testing.T) {
 }
 
 func TestValidateTransportServerUpstreams(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		upstreams             []v1alpha1.Upstream
 		expectedUpstreamNames sets.Set[string]
@@ -103,7 +105,7 @@ func TestValidateTransportServerUpstreams(t *testing.T) {
 	for _, test := range tests {
 		allErrs, resultUpstreamNames := validateTransportServerUpstreams(test.upstreams, field.NewPath("upstreams"), true)
 		if len(allErrs) > 0 {
-			t.Errorf("validateTransportServerUpstreams() returned errors %v for valid input for the case of %s", allErrs, test.msg)
+			t.Fatalf("validateTransportServerUpstreams() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
 		if !resultUpstreamNames.Equal(test.expectedUpstreamNames) {
 			t.Errorf("validateTransportServerUpstreams() returned %v expected %v for the case of %s", resultUpstreamNames, test.expectedUpstreamNames, test.msg)
@@ -111,7 +113,8 @@ func TestValidateTransportServerUpstreams(t *testing.T) {
 	}
 }
 
-func TestValidateTransportServerUpstreamsFails(t *testing.T) {
+func TestValidateTransportServerUpstreams_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		upstreams             []v1alpha1.Upstream
 		expectedUpstreamNames sets.Set[string]
@@ -177,7 +180,7 @@ func TestValidateTransportServerUpstreamsFails(t *testing.T) {
 	for _, test := range tests {
 		allErrs, resultUpstreamNames := validateTransportServerUpstreams(test.upstreams, field.NewPath("upstreams"), true)
 		if len(allErrs) == 0 {
-			t.Errorf("validateTransportServerUpstreams() returned no errors for the case of %s", test.msg)
+			t.Fatalf("validateTransportServerUpstreams() returned no errors for the case of %s", test.msg)
 		}
 		if !resultUpstreamNames.Equal(test.expectedUpstreamNames) {
 			t.Errorf("validateTransportServerUpstreams() returned %v expected %v for the case of %s", resultUpstreamNames, test.expectedUpstreamNames, test.msg)
@@ -186,6 +189,7 @@ func TestValidateTransportServerUpstreamsFails(t *testing.T) {
 }
 
 func TestValidateTransportServerHost(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		host                     string
 		isTLSPassthroughListener bool
@@ -209,6 +213,8 @@ func TestValidateTransportServerHost(t *testing.T) {
 }
 
 func TestValidateTransportServerLoadBalancingMethod(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		method   string
 		isPlus   bool
@@ -314,7 +320,7 @@ func TestValidateTransportServerLoadBalancingMethod(t *testing.T) {
 	for _, test := range tests {
 		allErrs := validateLoadBalancingMethod(test.method, field.NewPath("method"), test.isPlus)
 		if !test.hasError && len(allErrs) > 0 {
-			t.Errorf("validateLoadBalancingMethod(%q, %v) returned errors %v for valid input", test.method, test.isPlus, allErrs)
+			t.Fatalf("validateLoadBalancingMethod(%q, %v) returned errors %v for valid input", test.method, test.isPlus, allErrs)
 		}
 		if test.hasError && len(allErrs) < 1 {
 			t.Errorf("validateLoadBalancingMethod(%q, %v) failed to return an error for invalid input", test.method, test.isPlus)
@@ -323,6 +329,7 @@ func TestValidateTransportServerLoadBalancingMethod(t *testing.T) {
 }
 
 func TestValidateTransportServerSnippet(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		snippet           string
 		isSnippetsEnabled bool
@@ -359,7 +366,8 @@ func TestValidateTransportServerSnippet(t *testing.T) {
 	}
 }
 
-func TestValidateTransportServerHostFails(t *testing.T) {
+func TestValidateTransportServerHost_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		host                     string
 		isTLSPassthroughListener bool
@@ -383,6 +391,7 @@ func TestValidateTransportServerHostFails(t *testing.T) {
 }
 
 func TestValidateTransportListener(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		listener       *v1alpha1.TransportServerListener
 		tlsPassthrough bool
@@ -422,7 +431,8 @@ func TestValidateTransportListener(t *testing.T) {
 	}
 }
 
-func TestValidateTransportListenerFails(t *testing.T) {
+func TestValidateTransportListener_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		listener       *v1alpha1.TransportServerListener
 		tlsPassthrough bool
@@ -477,6 +487,7 @@ func TestValidateTransportListenerFails(t *testing.T) {
 }
 
 func TestValidateIsPotentialTLSPassthroughListener(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		listener *v1alpha1.TransportServerListener
 		expected bool
@@ -513,6 +524,7 @@ func TestValidateIsPotentialTLSPassthroughListener(t *testing.T) {
 }
 
 func TestValidateListenerProtocol(t *testing.T) {
+	t.Parallel()
 	validProtocols := []string{
 		"TCP",
 		"UDP",
@@ -524,7 +536,10 @@ func TestValidateListenerProtocol(t *testing.T) {
 			t.Errorf("validateListenerProtocol(%q) returned errors %v for valid input", p, allErrs)
 		}
 	}
+}
 
+func TestValidateListenerProtocol_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	invalidProtocols := []string{
 		"",
 		"HTTP",
@@ -541,6 +556,7 @@ func TestValidateListenerProtocol(t *testing.T) {
 }
 
 func TestValidateTSUpstreamHealthChecks(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		healthCheck *v1alpha1.HealthCheck
 		msg         string
@@ -574,7 +590,8 @@ func TestValidateTSUpstreamHealthChecks(t *testing.T) {
 	}
 }
 
-func TestValidateTSUpstreamHealthChecksFails(t *testing.T) {
+func TestValidateTSUpstreamHealthChecks_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		healthCheck *v1alpha1.HealthCheck
 		msg         string
@@ -662,6 +679,7 @@ func TestValidateTSUpstreamHealthChecksFails(t *testing.T) {
 }
 
 func TestValidateUpstreamParameters(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		parameters *v1alpha1.UpstreamParameters
 		msg        string
@@ -685,6 +703,7 @@ func TestValidateUpstreamParameters(t *testing.T) {
 }
 
 func TestValidateSessionParameters(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		parameters *v1alpha1.SessionParameters
 		msg        string
@@ -713,7 +732,8 @@ func TestValidateSessionParameters(t *testing.T) {
 	}
 }
 
-func TestValidateSessionParametersFails(t *testing.T) {
+func TestValidateSessionParameters_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		parameters *v1alpha1.SessionParameters
 		msg        string
@@ -735,6 +755,7 @@ func TestValidateSessionParametersFails(t *testing.T) {
 }
 
 func TestValidateUDPUpstreamParameter(t *testing.T) {
+	t.Parallel()
 	validInput := []struct {
 		parameter *int
 		protocol  string
@@ -765,7 +786,8 @@ func TestValidateUDPUpstreamParameter(t *testing.T) {
 	}
 }
 
-func TestValidateUDPUpstreamParameterFails(t *testing.T) {
+func TestValidateUDPUpstreamParameter_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	invalidInput := []struct {
 		parameter *int
 		protocol  string
@@ -789,6 +811,7 @@ func TestValidateUDPUpstreamParameterFails(t *testing.T) {
 }
 
 func TestValidateTransportServerAction(t *testing.T) {
+	t.Parallel()
 	upstreamNames := map[string]sets.Empty{
 		"test": {},
 	}
@@ -803,7 +826,8 @@ func TestValidateTransportServerAction(t *testing.T) {
 	}
 }
 
-func TestValidateTransportServerActionFails(t *testing.T) {
+func TestValidateTransportServerAction_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	upstreamNames := map[string]sets.Empty{}
 
 	tests := []struct {
@@ -833,15 +857,12 @@ func TestValidateTransportServerActionFails(t *testing.T) {
 }
 
 func TestValidateMatchSend(t *testing.T) {
+	t.Parallel()
 	validInput := []string{
 		"",
 		"abc",
 		"hello${world}",
 		`hello\x00`,
-	}
-	invalidInput := []string{
-		`hello"world`,
-		`\x1x`,
 	}
 
 	for _, send := range validInput {
@@ -850,6 +871,15 @@ func TestValidateMatchSend(t *testing.T) {
 			t.Errorf("validateMatchSend(%q) returned errors %v for valid input", send, allErrs)
 		}
 	}
+}
+
+func TestValidateMatchSend_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
+	invalidInput := []string{
+		`hello"world`,
+		`\x1x`,
+	}
+
 	for _, send := range invalidInput {
 		allErrs := validateMatchSend(send, field.NewPath("send"))
 		if len(allErrs) == 0 {
@@ -859,6 +889,7 @@ func TestValidateMatchSend(t *testing.T) {
 }
 
 func TestValidateHexString(t *testing.T) {
+	t.Parallel()
 	validInput := []string{
 		"",
 		"abc",
@@ -868,6 +899,17 @@ func TestValidateHexString(t *testing.T) {
 		`\xff`,
 		`\xaaFFabc\x12`,
 	}
+
+	for _, s := range validInput {
+		err := validateHexString(s)
+		if err != nil {
+			t.Errorf("validateHexString(%q) returned error %v for valid input", s, err)
+		}
+	}
+}
+
+func TestValidateHexString_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	invalidInput := []string{
 		`\x`,
 		`\x1`,
@@ -876,12 +918,6 @@ func TestValidateHexString(t *testing.T) {
 		`\xaaFFabc\xx12`, // \xx1 is invalid
 	}
 
-	for _, s := range validInput {
-		err := validateHexString(s)
-		if err != nil {
-			t.Errorf("validateHexString(%q) returned error %v for valid input", s, err)
-		}
-	}
 	for _, s := range invalidInput {
 		err := validateHexString(s)
 		if err == nil {
@@ -891,6 +927,7 @@ func TestValidateHexString(t *testing.T) {
 }
 
 func TestValidateMatchExpect(t *testing.T) {
+	t.Parallel()
 	validInput := []string{
 		``,
 		`abc`,
@@ -900,6 +937,17 @@ func TestValidateMatchExpect(t *testing.T) {
 		`~`,
 		`~*`,
 	}
+
+	for _, input := range validInput {
+		allErrs := validateMatchExpect(input, field.NewPath("expect"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateMatchExpect(%q) returned errors %v for valid input", input, allErrs)
+		}
+	}
+}
+
+func TestValidateMatchExpect_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
 	invalidInput := []string{
 		`hello"world`,
 		`~hello"world`,
@@ -911,12 +959,6 @@ func TestValidateMatchExpect(t *testing.T) {
 		`~{1}`,
 	}
 
-	for _, input := range validInput {
-		allErrs := validateMatchExpect(input, field.NewPath("expect"))
-		if len(allErrs) > 0 {
-			t.Errorf("validateMatchExpect(%q) returned errors %v for valid input", input, allErrs)
-		}
-	}
 	for _, input := range invalidInput {
 		allErrs := validateMatchExpect(input, field.NewPath("expect"))
 		if len(allErrs) == 0 {
@@ -940,8 +982,11 @@ func TestValidateTsTLS(t *testing.T) {
 			t.Errorf("validateTLS() returned errors %v for valid input %v", allErrs, tls)
 		}
 	}
+}
 
-	tests := []struct {
+func TestValidateTsTLS_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
+	invalidTLSes := []struct {
 		tls              *v1alpha1.TLS
 		isTLSPassthrough bool
 	}{
@@ -971,7 +1016,7 @@ func TestValidateTsTLS(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range invalidTLSes {
 		allErrs := validateTLS(test.tls, test.isTLSPassthrough, field.NewPath("tls"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateTLS() returned no errors for invalid input %v", test)

@@ -6,18 +6,59 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+
+## NGINX Ingress Controller 3.1.1
+
+04 May 2023
+
+OVERVIEW:
+This release reverts the changes made in 3.1.0 to use sysctls to bind to lower level ports without the NET_BIND_SERVICE capability. It also adds support for serviceNameOverride in the Helm chart, that can be used to override the service name for the NGINX Ingress Controller. This is useful especially during an upgrade from versions prior to 3.1.0, to avoid downtime due to the service name change. To use this feature, set the `serviceNameOverride` value in the Helm chart to the name of the existing service.
+
+For example, if the existing service name is `my-release-nginx-ingress`, you can use `--set serviceNameOverride=my-release-nginx-ingress` when running the upgrade command.
+Here is an example upgrade command that keeps the existing service name `my-release-nginx-ingress` for a deployment named `my-release`:
+```bash
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.17.1 --set serviceNameOverride=my-release-nginx-ingress
+```
+
+FIXES:
+* [3849](https://github.com/nginxinc/kubernetes-ingress/pull/3849) Inherit NET_BIND_SERVICE from IC to Nginx. Thanks to [Valters Jansons](https://github.com/sigv).
+* [3855](https://github.com/nginxinc/kubernetes-ingress/pull/3855) Update VirtualServer template to generate an internal jwt auth location per policy applied.
+* [3856](https://github.com/nginxinc/kubernetes-ingress/pull/3856) Update VirtualServer to ignore CRL for EgressMTLS.
+
+IMPROVEMENTS:
+* [3847](https://github.com/nginxinc/kubernetes-ingress/pull/3847) Egress via Ingress VirtualServer Resource.
+
+CHANGES:
+* Update NGINX version to 1.23.4
+* Update NGINX Plus version to R29.
+
+HELM CHART:
+* [3801](https://github.com/nginxinc/kubernetes-ingress/pull/3801) Swap cpu and memory in HPA template.
+* [3848](https://github.com/nginxinc/kubernetes-ingress/pull/3848) Updated NGINX Service Mesh references in Helm templates. Thanks to [Jared Byers](https://github.com/jbyers19).
+* [3853](https://github.com/nginxinc/kubernetes-ingress/pull/3853) Add serviceNameOverride. Thanks to [Tim N](https://github.com/timnee).
+* [3854](https://github.com/nginxinc/kubernetes-ingress/pull/3854) Fix GlobalConfiguration name in Helm Chart.
+* [3862](https://github.com/nginxinc/kubernetes-ingress/pull/3862) Add correct indentation to controller-leader-election configmap helm template.
+* The version of the Helm chart is now 0.17.1.
+
+UPGRADE:
+* For NGINX, use the 3.1.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.1.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.1.1 images from the F5 Container registry or build your own image using the 3.1.1 source code.
+* For Helm, use version 0.17.1 of the chart.
+
 ## NGINX Ingress Controller 3.1.0
+
 29 Mar 2023
 
 OVERVIEW:
-* *The minimum supported version of Kubernetes is now 1.22*. The NGINX Ingress Controller now uses `sysctls` to [bind to lower level ports without privilege escalation](https://github.com/nginxinc/kubernetes-ingress/pull/3573/). This removes the need to use `NET_BIND_SERVICE` to bind to these ports. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
-* Added support for loading pre-compiled [AppProtect Policy Bundles](https://github.com/nginxinc/kubernetes-ingress/pull/3560) when using the `-enable-app-protect` cli argument. This feature removes the need for the Ingress Controller to re-compile App Protect when NGINX reloads, and will instead use a pre-compile policy bundle. See [App Protect WAF Bundles](https://docs.nginx.com/nginx-ingress-controller/app-protect-waf/configuration/#app-protect-waf-bundles) for examples and configuration details.
+* Beginning with release 3.1.0 the NET_BIND_SERVICE capability is no longer used, and instead relies on net.ipv4.ip_unprivileged_port_start sysctl to allow port binding. Kubernetes 1.22 or later is required for this sysctl to be [classified as safe](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/#safe-and-unsafe-sysctls). **Ensure that you are using the latest updated `deployment` and `daemonset` example yaml files available in the repo.**
+* *The minimum supported version of Kubernetes is now 1.22*. The NGINX Ingress Controller now uses `sysctls` to [bind to lower level ports without additional privileges](https://github.com/nginxinc/kubernetes-ingress/pull/3573/). This removes the need to use `NET_BIND_SERVICE` to bind to these ports. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
+* Added support for loading pre-compiled [AppProtect Policy Bundles](https://github.com/nginxinc/kubernetes-ingress/pull/3560) when using the `-enable-app-protect` cli argument. This feature removes the need for the Ingress Controller to compile NGINX App Protect Policy when NGINX App Protect Policy is updated.
 * IngressMTLS policy now supports configuring a Certificate Revocation Lists(CRL). When using this feature requests made using a revoked certificate will be rejected. See [Using a Certificate Revocation List](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#using-a-certificate-revocation-list) for details on configuring this option.
-* The NGINX Ingress Controller now supports [running with a Read-only Root Filesystem](https://github.com/nginxinc/kubernetes-ingress/pull/3548). This hardens the overall security of the Ingress Controller. See [Configure root filesystem as read-only](https://docs.nginx.com/nginx-ingress-controller/configuration/security/#configure-root-filesystem-as-read-only) for details on configuring this option with both HELM and Manifest. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
+* The NGINX Ingress Controller now supports [running with a Read-only Root Filesystem](https://github.com/nginxinc/kubernetes-ingress/pull/3548). This improves the security posture of NGINX Ingress Controller by protecting the file system from unknown writes. See [Configure root filesystem as read-only](https://docs.nginx.com/nginx-ingress-controller/configuration/security/#configure-root-filesystem-as-read-only) for details on configuring this option with both HELM and Manifest. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
 * HELM deployments can now set [custom environment variables with controller.env](https://github.com/nginxinc/kubernetes-ingress/pull/3326). Thanks to [Aaron Shiels](https://github.com/AaronShiels) for making this possible!
 * HELM deployments can now configure a [pod disruption budget](https://github.com/nginxinc/kubernetes-ingress/pull/3248) allowing deployments to configure either a minimum number or a maximum unavailable number of pods. Thanks to [Bryan Hendryx](https://github.com/coolbry95) for making this possible!
-* The NGINX Ingress Controller uses the latest OIDC reference implementation which now supports [access tokens for authorization](https://github.com/nginxinc/kubernetes-ingress/pull/3474) against protected resources. Thanks to [Shawn Kim](https://github.com/shawnhankim) for making this possible!
-* The default TLS secret is now optional. This ensures that TLS termination for not fall back to using the default TLS secret.
+* The NGINX Ingress Controller uses the latest OIDC reference implementation which now supports [forwarding access tokens to upstreams / backends](https://github.com/nginxinc/kubernetes-ingress/pull/3474). Thanks to [Shawn Kim](https://github.com/shawnhankim) for making this possible!
+* The default TLS secret is now optional. This improves the security posture of NGINX Ingress Controller through enabling [ssl_reject_handshake](http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_reject_handshake). This has the impact of immediately terminating the SSL handshake and not revealing TLS or cypher settings to calls that do not match a configured hostname.
 
 FEATURES:
 * [3034](https://github.com/nginxinc/kubernetes-ingress/pull/3034) Allow extra args to be provided to the OIDC auth endpoint. Thanks to [Alan Wilkie](https://github.com/alanwilkie-finocomp).

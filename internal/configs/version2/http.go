@@ -12,14 +12,15 @@ type UpstreamLabels struct {
 
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
-	HTTPSnippets  []string
-	LimitReqZones []LimitReqZone
-	Maps          []Map
-	Server        Server
-	SpiffeCerts   bool
-	SplitClients  []SplitClient
-	StatusMatches []StatusMatch
-	Upstreams     []Upstream
+	HTTPSnippets      []string
+	LimitReqZones     []LimitReqZone
+	Maps              []Map
+	Server            Server
+	SpiffeCerts       bool
+	SpiffeClientCerts bool
+	SplitClients      []SplitClient
+	StatusMatches     []StatusMatch
+	Upstreams         []Upstream
 }
 
 // Upstream defines an upstream.
@@ -68,6 +69,8 @@ type Server struct {
 	LimitReqOptions           LimitReqOptions
 	LimitReqs                 []LimitReq
 	JWTAuth                   *JWTAuth
+	JWTAuthList               map[string]*JWTAuth
+	JWKSAuthEnabled           bool
 	BasicAuth                 *BasicAuth
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
@@ -78,6 +81,7 @@ type Server struct {
 	VSNamespace               string
 	VSName                    string
 	DisableIPV6               bool
+	Gunzip                    bool
 }
 
 // SSL defines SSL configuration for a server.
@@ -355,6 +359,7 @@ func (rl LimitReqOptions) String() string {
 
 // JWTAuth holds JWT authentication configuration.
 type JWTAuth struct {
+	Key      string
 	Secret   string
 	Realm    string
 	Token    string
