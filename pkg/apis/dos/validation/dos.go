@@ -116,6 +116,9 @@ var (
 )
 
 func validateAppProtectDosLogDest(dstAntn string) error {
+	if dstAntn == "stderr" {
+		return nil
+	}
 	if validIPRegex.MatchString(dstAntn) || validDNSRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
 		chunks := strings.Split(dstAntn, ":")
 		err := validatePort(chunks[1])
@@ -124,10 +127,6 @@ func validateAppProtectDosLogDest(dstAntn string) error {
 		}
 		return nil
 	}
-	if dstAntn == "stderr" {
-		return nil
-	}
-
 	return fmt.Errorf("invalid log destination: %s, must follow format: <ip-address | localhost | dns name>:<port> or stderr", dstAntn)
 }
 
