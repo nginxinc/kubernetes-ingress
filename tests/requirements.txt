@@ -412,9 +412,9 @@ pytest-html==3.2.0 \
     --hash=sha256:868c08564a68d8b2c26866f1e33178419bb35b1e127c33784a28622eb827f3f3 \
     --hash=sha256:c4e2f4bb0bffc437f51ad2174a8a3e71df81bbc2f6894604e604af18fbe687c3
     # via -r requirements.txt
-pytest-metadata==2.0.4 \
-    --hash=sha256:acb739f89fabb3d798c099e9e0c035003062367a441910aaaf2281bc1972ee14 \
-    --hash=sha256:fcc653f65fe3035b478820b5284fbf0f52803622ee3f60a2faed7a7d3ba1f41e
+pytest-metadata==3.0.0 \
+    --hash=sha256:769a9c65d2884bd583bc626b0ace77ad15dbe02dd91a9106d47fd46d9c2569ca \
+    --hash=sha256:a17b1e40080401dc23177599208c52228df463db191c1a573ccdffacd885e190
     # via
     #   -r requirements.txt
     #   pytest-html
