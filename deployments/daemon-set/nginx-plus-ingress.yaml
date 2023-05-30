@@ -63,6 +63,7 @@ spec:
           allowPrivilegeEscalation: false
 #          readOnlyRootFilesystem: true
           runAsUser: 101 #nginx
+          runAsNonRoot: true
           capabilities:
             drop:
             - ALL
