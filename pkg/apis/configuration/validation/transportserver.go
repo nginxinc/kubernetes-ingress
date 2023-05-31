@@ -35,9 +35,7 @@ func (tsv *TransportServerValidator) ValidateTransportServer(transportServer *v1
 }
 
 func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.TransportServerSpec, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	allErrs = append(allErrs, tsv.validateTransportListener(&spec.Listener, fieldPath.Child("listener"))...)
+	allErrs := tsv.validateTransportListener(&spec.Listener, fieldPath.Child("listener"))
 
 	isTLSPassthroughListener := isPotentialTLSPassthroughListener(&spec.Listener)
 	allErrs = append(allErrs, validateTransportServerHost(spec.Host, fieldPath.Child("host"), isTLSPassthroughListener)...)
@@ -65,42 +63,32 @@ func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.
 }
 
 func validateTLS(tls *v1alpha1.TLS, isTLSPassthrough bool, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if tls == nil {
-		return allErrs
+		return nil
 	}
-
 	if isTLSPassthrough {
-		return append(allErrs, field.Forbidden(fieldPath, "cannot specify secret for tls passthrough"))
+		return field.ErrorList{field.Forbidden(fieldPath, "cannot specify secret for tls passthrough")}
 	}
-
 	if tls.Secret == "" {
-		return append(allErrs, field.Required(fieldPath, "must specify secret for tls"))
+		return field.ErrorList{field.Required(fieldPath, "must specify secret for tls")}
 	}
-
-	return append(allErrs, validateSecretName(tls.Secret, fieldPath.Child("secret"))...)
+	return validateSecretName(tls.Secret, fieldPath.Child("secret"))
 }
 
 func validateSnippets(serverSnippet string, fieldPath *field.Path, snippetsEnabled bool) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if !snippetsEnabled && serverSnippet != "" {
-		return append(allErrs, field.Forbidden(fieldPath, "snippet specified but snippets feature is not enabled"))
+		return field.ErrorList{field.Forbidden(fieldPath, "snippet specified but snippets feature is not enabled")}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateTransportServerHost(host string, fieldPath *field.Path, isTLSPassthroughListener bool) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !isTLSPassthroughListener {
 		if host != "" {
-			return append(allErrs, field.Forbidden(fieldPath, "host field is allowed only for TLS Passthrough TransportServers"))
+			return field.ErrorList{field.Forbidden(fieldPath, "host field is allowed only for TLS Passthrough TransportServers")}
 		}
-		return allErrs
+		return nil
 	}
-
 	return validateHost(host, fieldPath)
 }
 
@@ -113,11 +101,8 @@ func (tsv *TransportServerValidator) validateTransportListener(listener *v1alpha
 }
 
 func validateRegularListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	allErrs = append(allErrs, validateListenerName(listener.Name, fieldPath.Child("name"))...)
+	allErrs := validateListenerName(listener.Name, fieldPath.Child("name"))
 	allErrs = append(allErrs, validateListenerProtocol(listener.Protocol, fieldPath.Child("protocol"))...)
-
 	return allErrs
 }
 
@@ -126,49 +111,31 @@ func isPotentialTLSPassthroughListener(listener *v1alpha1.TransportServerListene
 }
 
 func (tsv *TransportServerValidator) validateTLSPassthroughListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !tsv.tlsPassthrough {
-		return append(allErrs, field.Forbidden(fieldPath, "TLS Passthrough is not enabled"))
+		return field.ErrorList{field.Forbidden(fieldPath, "TLS Passthrough is not enabled")}
 	}
-
 	if listener.Name == v1alpha1.TLSPassthroughListenerName && listener.Protocol != v1alpha1.TLSPassthroughListenerProtocol {
 		msg := fmt.Sprintf("must be '%s' for the built-in %s listener", v1alpha1.TLSPassthroughListenerProtocol, v1alpha1.TLSPassthroughListenerName)
-		return append(allErrs, field.Invalid(fieldPath.Child("protocol"), listener.Protocol, msg))
+		return field.ErrorList{field.Invalid(fieldPath.Child("protocol"), listener.Protocol, msg)}
 	}
-
 	if listener.Protocol == v1alpha1.TLSPassthroughListenerProtocol && listener.Name != v1alpha1.TLSPassthroughListenerName {
 		msg := fmt.Sprintf("must be '%s' for a listener with the protocol %s", v1alpha1.TLSPassthroughListenerName, v1alpha1.TLSPassthroughListenerProtocol)
-		return append(allErrs, field.Invalid(fieldPath.Child("name"), listener.Name, msg))
+		return field.ErrorList{field.Invalid(fieldPath.Child("name"), listener.Name, msg)}
 	}
-
-	return allErrs
+	return nil
 }
 
 func validateListenerName(name string, fieldPath *field.Path) field.ErrorList {
 	return validateDNS1035Label(name, fieldPath)
 }
 
-// listenerProtocols defines the protocols supported by a listener.
-var listenerProtocols = map[string]bool{
-	"TCP": true,
-	"UDP": true,
-}
-
 func validateListenerProtocol(protocol string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if protocol == "" {
-		msg := fmt.Sprintf("must specify protocol. Accepted values: %s", mapToPrettyString(listenerProtocols))
-		return append(allErrs, field.Required(fieldPath, msg))
+	switch protocol {
+	case "TCP", "UDP":
+		return nil
+	default:
+		return field.ErrorList{field.Invalid(fieldPath, protocol, "must specify protocol. Accepted values: TCP, UDP.")}
 	}
-
-	if !listenerProtocols[protocol] {
-		msg := fmt.Sprintf("invalid protocol. Accepted values: %s", mapToPrettyString(listenerProtocols))
-		allErrs = append(allErrs, field.Invalid(fieldPath, protocol, msg))
-	}
-
-	return allErrs
 }
 
 func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.Set[string]) {
@@ -205,13 +172,11 @@ func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *
 }
 
 func validateLoadBalancingMethod(method string, fieldPath *field.Path, isPlus bool) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if method == "" {
-		return allErrs
+		return nil
 	}
 
 	method = strings.TrimSpace(method)
-
 	if strings.HasPrefix(method, "hash") {
 		return validateHashLoadBalancingMethod(method, fieldPath, isPlus)
 	}
@@ -220,12 +185,10 @@ func validateLoadBalancingMethod(method string, fieldPath *field.Path, isPlus bo
 	if isPlus {
 		validMethodValues = nginxPlusStreamLoadBalanceValidInput
 	}
-
 	if _, exists := validMethodValues[method]; !exists {
-		return append(allErrs, field.Invalid(fieldPath, method, fmt.Sprintf("load balancing method is not valid: %v", method)))
+		return field.ErrorList{field.Invalid(fieldPath, method, fmt.Sprintf("load balancing method is not valid: %v", method))}
 	}
-
-	return allErrs
+	return nil
 }
 
 var nginxStreamLoadBalanceValidInput = map[string]bool{
@@ -256,35 +219,30 @@ var loadBalancingVariables = map[string]bool{
 var hashMethodRegexp = regexp.MustCompile(`^hash (\S+)(?: consistent)?$`)
 
 func validateHashLoadBalancingMethod(method string, fieldPath *field.Path, isPlus bool) field.ErrorList {
-	allErrs := field.ErrorList{}
 	matches := hashMethodRegexp.FindStringSubmatch(method)
 	if len(matches) != 2 {
 		msg := fmt.Sprintf("invalid value for load balancing method: %v", method)
-		return append(allErrs, field.Invalid(fieldPath, method, msg))
+		return field.ErrorList{field.Invalid(fieldPath, method, msg)}
 	}
 
+	allErrs := field.ErrorList{}
 	hashKey := matches[1]
 	if strings.Contains(hashKey, "$") {
 		varErrs := validateStringWithVariables(hashKey, fieldPath, []string{}, loadBalancingVariables, isPlus)
 		allErrs = append(allErrs, varErrs...)
 	}
-
 	if err := ValidateEscapedString(method); err != nil {
 		msg := fmt.Sprintf("invalid value for hash: %v", err)
 		return append(allErrs, field.Invalid(fieldPath, method, msg))
 	}
-
 	return allErrs
 }
 
 func validateTSUpstreamHealthChecks(hc *v1alpha1.HealthCheck, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if hc == nil {
-		return allErrs
+		return nil
 	}
-
-	allErrs = append(allErrs, validateTime(hc.Timeout, fieldPath.Child("timeout"))...)
+	allErrs := validateTime(hc.Timeout, fieldPath.Child("timeout"))
 	allErrs = append(allErrs, validateTime(hc.Interval, fieldPath.Child("interval"))...)
 	allErrs = append(allErrs, validateTime(hc.Jitter, fieldPath.Child("jitter"))...)
 	allErrs = append(allErrs, validatePositiveIntOrZero(hc.Fails, fieldPath.Child("fails"))...)
@@ -295,30 +253,26 @@ func validateTSUpstreamHealthChecks(hc *v1alpha1.HealthCheck, fieldPath *field.P
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("port"), hc.Port, msg))
 		}
 	}
-
 	allErrs = append(allErrs, validateHealthCheckMatch(hc.Match, fieldPath.Child("match"))...)
-
 	return allErrs
 }
 
 func validateHealthCheckMatch(match *v1alpha1.Match, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if match == nil {
-		return allErrs
+		return nil
 	}
-	allErrs = append(allErrs, validateMatchExpect(match.Expect, fieldPath.Child("expect"))...)
+
+	allErrs := validateMatchExpect(match.Expect, fieldPath.Child("expect"))
 	allErrs = append(allErrs, validateMatchSend(match.Expect, fieldPath.Child("send"))...)
 	return allErrs
 }
 
 func validateMatchExpect(expect string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if expect == "" {
-		return allErrs
+		return nil
 	}
-
 	if err := ValidateEscapedString(expect); err != nil {
-		return append(allErrs, field.Invalid(fieldPath, expect, err.Error()))
+		return field.ErrorList{field.Invalid(fieldPath, expect, err.Error())}
 	}
 
 	if strings.HasPrefix(expect, "~") {
@@ -331,33 +285,30 @@ func validateMatchExpect(expect string, fieldPath *field.Path) field.ErrorList {
 
 		// compile also validates hex literals
 		if _, err := regexp.Compile(expr); err != nil {
-			return append(allErrs, field.Invalid(fieldPath, expr, fmt.Sprintf("must be a valid regular expression: %v", err)))
+			return field.ErrorList{field.Invalid(fieldPath, expr, fmt.Sprintf("must be a valid regular expression: %v", err))}
 		}
 	} else {
 		if err := validateHexString(expect); err != nil {
-			return append(allErrs, field.Invalid(fieldPath, expect, err.Error()))
+			return field.ErrorList{field.Invalid(fieldPath, expect, err.Error())}
 		}
 	}
 
-	return allErrs
+	return nil
 }
 
 func validateMatchSend(send string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 	if send == "" {
-		return allErrs
+		return nil
 	}
 
 	if err := ValidateEscapedString(send); err != nil {
-		return append(allErrs, field.Invalid(fieldPath, send, err.Error()))
+		return field.ErrorList{field.Invalid(fieldPath, send, err.Error())}
 	}
 
-	err := validateHexString(send)
-	if err != nil {
-		return append(allErrs, field.Invalid(fieldPath, send, err.Error()))
+	if err := validateHexString(send); err != nil {
+		return field.ErrorList{field.Invalid(fieldPath, send, err.Error())}
 	}
-
-	return allErrs
+	return nil
 }
 
 var hexLiteralRegexp = regexp.MustCompile(`\\x(.{0,2})`)
@@ -382,49 +333,35 @@ func validateHexString(s string) error {
 }
 
 func validateTransportServerUpstreamParameters(upstreamParameters *v1alpha1.UpstreamParameters, fieldPath *field.Path, protocol string) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if upstreamParameters == nil {
-		return allErrs
+		return nil
 	}
 
-	allErrs = append(allErrs, validateUDPUpstreamParameter(upstreamParameters.UDPRequests, fieldPath.Child("udpRequests"), protocol)...)
+	allErrs := validateUDPUpstreamParameter(upstreamParameters.UDPRequests, fieldPath.Child("udpRequests"), protocol)
 	allErrs = append(allErrs, validateUDPUpstreamParameter(upstreamParameters.UDPResponses, fieldPath.Child("udpResponses"), protocol)...)
 	allErrs = append(allErrs, validateTime(upstreamParameters.ConnectTimeout, fieldPath.Child("connectTimeout"))...)
 	allErrs = append(allErrs, validateTime(upstreamParameters.NextUpstreamTimeout, fieldPath.Child("nextUpstreamTimeout"))...)
 	allErrs = append(allErrs, validatePositiveIntOrZero(upstreamParameters.NextUpstreamTries, fieldPath.Child("nextUpstreamTries"))...)
-
 	return allErrs
 }
 
 func validateSessionParameters(sessionParameters *v1alpha1.SessionParameters, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if sessionParameters == nil {
-		return allErrs
+		return nil
 	}
-
-	allErrs = append(allErrs, validateTime(sessionParameters.Timeout, fieldPath.Child("timeout"))...)
-
-	return allErrs
+	return validateTime(sessionParameters.Timeout, fieldPath.Child("timeout"))
 }
 
 func validateUDPUpstreamParameter(parameter *int, fieldPath *field.Path, protocol string) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if parameter != nil && protocol != "UDP" {
-		return append(allErrs, field.Forbidden(fieldPath, "is not allowed for non-UDP TransportServers"))
+		return field.ErrorList{field.Forbidden(fieldPath, "is not allowed for non-UDP TransportServers")}
 	}
-
 	return validatePositiveIntOrZeroFromPointer(parameter, fieldPath)
 }
 
 func validateTransportServerAction(action *v1alpha1.Action, fieldPath *field.Path, upstreamNames sets.Set[string]) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if action.Pass == "" {
-		return append(allErrs, field.Required(fieldPath, "must specify pass"))
+		return field.ErrorList{field.Required(fieldPath, "must specify pass")}
 	}
-
 	return validateReferencedUpstream(action.Pass, fieldPath.Child("pass"), upstreamNames)
 }

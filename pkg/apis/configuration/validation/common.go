@@ -27,13 +27,11 @@ func ValidateEscapedString(body string, examples ...string) error {
 }
 
 func validateVariable(nVar string, validVars map[string]bool, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !validVars[nVar] {
 		msg := fmt.Sprintf("'%v' contains an invalid NGINX variable. Accepted variables are: %v", nVar, mapToPrettyString(validVars))
-		allErrs = append(allErrs, field.Invalid(fieldPath, nVar, msg))
+		return field.ErrorList{field.Invalid(fieldPath, nVar, msg)}
 	}
-	return allErrs
+	return nil
 }
 
 // isValidSpecialHeaderLikeVariable validates special variables $http_, $jwt_header_, $jwt_claim_
@@ -103,22 +101,21 @@ func validateSpecialVariable(nVar string, fieldPath *field.Path, isPlus bool) fi
 }
 
 func validateStringWithVariables(str string, fieldPath *field.Path, specialVars []string, validVars map[string]bool, isPlus bool) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if strings.HasSuffix(str, "$") {
-		return append(allErrs, field.Invalid(fieldPath, str, "must not end with $"))
+		return field.ErrorList{field.Invalid(fieldPath, str, "must not end with $")}
 	}
 
+	allErrs := field.ErrorList{}
 	for i, c := range str {
 		if c == '$' {
 			msg := "variables must be enclosed in curly braces, for example ${host}"
 
 			if str[i+1] != '{' {
-				return append(allErrs, field.Invalid(fieldPath, str, msg))
+				return field.ErrorList{field.Invalid(fieldPath, str, msg)}
 			}
 
 			if !strings.Contains(str[i+1:], "}") {
-				return append(allErrs, field.Invalid(fieldPath, str, msg))
+				return field.ErrorList{field.Invalid(fieldPath, str, msg)}
 			}
 		}
 	}
@@ -144,67 +141,55 @@ func validateStringWithVariables(str string, fieldPath *field.Path, specialVars 
 }
 
 func validateTime(time string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if time == "" {
-		return allErrs
+		return nil
 	}
-
 	if _, err := configs.ParseTime(time); err != nil {
-		return append(allErrs, field.Invalid(fieldPath, time, err.Error()))
+		return field.ErrorList{field.Invalid(fieldPath, time, err.Error())}
 	}
-
-	return allErrs
+	return nil
 }
 
 // http://nginx.org/en/docs/syntax.html
 const offsetErrMsg = "must consist of numeric characters followed by a valid size suffix. 'k|K|m|M|g|G"
 
 func validateOffset(offset string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if offset == "" {
-		return allErrs
+		return nil
 	}
-
 	if _, err := configs.ParseOffset(offset); err != nil {
 		msg := validation.RegexError(offsetErrMsg, configs.OffsetFmt, "16", "32k", "64M", "2G")
-		return append(allErrs, field.Invalid(fieldPath, offset, msg))
+		return field.ErrorList{field.Invalid(fieldPath, offset, msg)}
 	}
-
-	return allErrs
+	return nil
 }
 
 // http://nginx.org/en/docs/syntax.html
 const sizeErrMsg = "must consist of numeric characters followed by a valid size suffix. 'k|K|m|M"
 
 func validateSize(size string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if size == "" {
-		return allErrs
+		return nil
 	}
 
 	if _, err := configs.ParseSize(size); err != nil {
 		msg := validation.RegexError(sizeErrMsg, configs.SizeFmt, "16", "32k", "64M")
-		return append(allErrs, field.Invalid(fieldPath, size, msg))
+		return field.ErrorList{field.Invalid(fieldPath, size, msg)}
 	}
-	return allErrs
+	return nil
 }
 
 // validateSecretName checks if a secret name is valid.
 // It performs the same validation as ValidateSecretName from k8s.io/kubernetes/pkg/apis/core/validation/validation.go.
 func validateSecretName(name string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if name == "" {
-		return allErrs
+		return nil
 	}
 
+	allErrs := field.ErrorList{}
 	for _, msg := range validation.IsDNS1123Subdomain(name) {
 		allErrs = append(allErrs, field.Invalid(fieldPath, name, msg))
 	}
-
 	return allErrs
 }
 
@@ -220,11 +205,9 @@ func mapToPrettyString(m map[string]bool) string {
 
 // ValidateParameter validates a parameter against a map of valid parameters for the directive
 func ValidateParameter(nPar string, validParams map[string]bool, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	if !validParams[nPar] {
 		msg := fmt.Sprintf("'%v' contains an invalid NGINX parameter. Accepted parameters are: %v", nPar, mapToPrettyString(validParams))
-		allErrs = append(allErrs, field.Invalid(fieldPath, nPar, msg))
+		return field.ErrorList{field.Invalid(fieldPath, nPar, msg)}
 	}
-	return allErrs
+	return nil
 }
