@@ -12,11 +12,11 @@ This document outlines how to enable usage reporting for NGINX Ingress Controlle
 
 ## Overview
 
-The Flexible Consumption Program (FCP) is a new pricing offer for NGINX Ingress Controller. The  pricing model is based on the number of NGINX Ingress Controller instances in a cluster. The number is reported to NGINX Management Suite, which is used to calculate the license cost. 
+The Flexible Consumption Program (FCP) is a new pricing offer for NGINX Ingress Controller. The  pricing model is based on the number of NGINX Ingress Controller instances in a cluster. The number is reported to NGINX Management Suite, which is used to calculate the license cost.
 
 NGINX Cluster Connector is a Kubernetes controller that connects to the NGINX Management Suite and reports the number of NGINX Ingress Controller nodes in the cluster. The NGINX Cluster Connector is deployed as a Kubernetes Deployment in the same cluster where NGINX Ingress Controller is deployed.
 
-To use the NGINX Cluster Connector, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.nginx.com/products/nginx-management-suite/). 
+To use the NGINX Cluster Connector, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.nginx.com/products/nginx-management-suite/).
 
 ### Requirements
 
@@ -44,7 +44,7 @@ In addition to the software requirements, you must have the following:
     > echo -n 'bar' | base64
     YmFy
     ```
-   
+
 2. In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret. Copying the following content to a text editor, and fill in the username and password under `data`, with base64 representation of the username and password obtained in step 1:
     ```
     apiVersion: v1
@@ -57,7 +57,7 @@ In addition to the software requirements, you must have the following:
       username: Zm9v # base64 representation of 'foo' obtained in step 1
       password: YmFy # base64 representation of 'bar' obtained in step 1
     ```
-    Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector. If you are using a different namespace, please change the namespace in the `metadata` section of the file. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64. 
+    Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector. If you are using a different namespace, please change the namespace in the `metadata` section of the file. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64.
 3. If the namespace `nginx-cluster-connector` does not exist, create the namespace:
     ```
     > kubectl create namespace nginx-cluster-connector
@@ -102,12 +102,12 @@ kubectl delete -f deployment.yaml
 The NGINX Cluster Connector supports several command-line arguments. The command-line arguments can be specified in the `args` section of the Kubernetes deployment file. The following is a list of the supported command-line arguments and their usage:
 
 ### -nms-server-address `<string>`
-The address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported. 
+The address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported.
 Default `apigw.nms.svc.cluster.local`.
 
 ### -nms-server-port `<int>`
 The port of the NGINX Management Suite host
-Default `443`. 
+Default `443`.
 
 ### -nms-basic-auth-secret `<string>`
 Secret for basic authentication to the NGINX Management Suite API. The secret must be in `kubernetes.io/basic-auth` format using base64 encoding.
@@ -125,4 +125,3 @@ Default `24h`.
 
 ### -proxy
 Use a proxy server to connect to the Kubernetes API started by the "kubectl proxy" command. **For testing purposes only.**
-
