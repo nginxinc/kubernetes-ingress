@@ -12,11 +12,11 @@ This document outlines how to enable usage reporting for NGINX Ingress Controlle
 
 ## Overview
 
-The  Flexible Consumption Program (FCP) is a new pricing offer for NGINX Ingress Controller. The  pricing model is based on the number of NGINX Ingress Controller instances in a cluster. The number is reported to NGINX Management Suite, which is used to calculate the license cost.
+The Flexible Consumption Program (FCP) is a new pricing offer for NGINX Ingress Controller. The  pricing model is based on the number of NGINX Ingress Controller instances in a cluster. The number is reported to NGINX Management Suite, which is used to calculate the license cost. 
 
 NGINX Cluster Connector is a Kubernetes controller that connects to the NGINX Management Suite and reports the number of NGINX Ingress Controller nodes in the cluster. The NGINX Cluster Connector is deployed as a Kubernetes Deployment in the same cluster where NGINX Ingress Controller is deployed.
 
-To use the NGINX Cluster Connector, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.nginx.com/products/nginx-management-suite/).
+To use the NGINX Cluster Connector, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.nginx.com/products/nginx-management-suite/). 
 
 ### Requirements
 
@@ -32,7 +32,7 @@ To deploy the NGINX Cluster Connector, you must have the following:
 | OpenSSL 3.0.0 or later                  | For converting credentials string to base64. Alternatively, you can use any online tools available. https://www.openssl.org/source/ |
 
 In addition to the software requirements, you must have the following:
-- Access to NGINX Management Suite with username and password for basic authentication
+- Access to NGINX Management Suite with username and password for basic authentication, including the URL, username, and password.
 - Access to the Kubernetes cluster where the NGINX Ingress Controller is deployed, with the ability to deploy a Kubernetes Deployment and a Kubernetes secret.
 
 ### Deploying the NGINX Cluster Connector
@@ -44,8 +44,8 @@ In addition to the software requirements, you must have the following:
     > echo -n 'bar' | base64
     YmFy
     ```
-
-2. In order to make the credential available to NGINX Cluster Connector, create a Kubernetes secret by creating a file named `nms-basic-auth.yaml` with the following content, using the base64 representation of the username and password obtained in step 1:
+   
+2. In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret. Copying the following content to a text editor, and fill in the username and password under `data`, with base64 representation of the username and password obtained in step 1:
     ```
     apiVersion: v1
     kind: Secret
@@ -57,18 +57,18 @@ In addition to the software requirements, you must have the following:
       username: Zm9v # base64 representation of 'foo' obtained in step 1
       password: YmFy # base64 representation of 'bar' obtained in step 1
     ```
-    In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector. If you are using a different namespace, please change the namespace in the `metadata` section of the file. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64.
+    Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector. If you are using a different namespace, please change the namespace in the `metadata` section of the file. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64. 
 3. If the namespace `nginx-cluster-connector` does not exist, create the namespace:
     ```
     > kubectl create namespace nginx-cluster-connector
     ```
-4. Deploy the Kubernetes secret:
+4. Deploy the Kubernetes secret created in step 2 to the Kubernetes cluster:
     ```
     > kubectl apply -f nms-basic-auth.yaml
     ```
-   To change the username and password, update the secret and apply the changes to the Kubernetes cluster. The NGINX Cluster Connector will automatically detect the changes and use the new username and password without redeploying the NGINX Cluster Connector.
+   If you want to update the basic-auth credentials to NMS server in the future, update the `username` and `password` fields, and apply the changes by running the command again. The NGINX Cluster Connector will automatically detect the changes and use the new username and password without redeploying the NGINX Cluster Connector.
 
-5. Download the [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/deployments/deployment/cluster-connector.yaml). Edit the args section  in `deployment.yaml` to edit the following values;
+5. Download the deployment file [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/deployments/deployment/cluster-connector.yaml). Edit the following the args section:
    ```
         args:
         - -nms-server-address=https://k8s-usage.example.com
@@ -77,13 +77,14 @@ In addition to the software requirements, you must have the following:
    The `nms-server-address` should be the address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported. The `nms-basic-auth-secret` should be the namespace/name of the secret created in step 2, i.e `nginx-cluster-connector/nms-basic-auth`.
    For more information on the command-line flags, see [Configuration](#configuration).
 
-6. To deploy the Nginx Cluster Connector,  run the following command to deploy the application to your Kubernetes cluster:
+6. To deploy the Nginx Cluster Connector, save the file above and run the following command to deploy it to your Kubernetes cluster:
    ```
    > kubectl apply -f cluster-connector.yaml
    ```
 
 
 ## Viewing Usage Data
+The NGINX Cluster Connector reports the number of NGINX Ingress Controller instances and nodes in the cluster to NGINX Management Suite. To view the usage data, query the NGINX Management Suite API. The usage data is available in the following endpoint:
 
 #TODO: instructions how to get the UUID.
 ```
@@ -91,23 +92,22 @@ curl -k --user "foo:bar" https://k8s-usage.example.com/usage/{uuid}
 ```
 
 
-## Uninstall
+## Uninstall the NGINX Cluster Connector
 To remove the Nginx Cluster Connector from your Kubernetes cluster, run the following command:
 ```
 kubectl delete -f deployment.yaml
 ```
 
-## Cammand-line Arguments
-The NGINX Cluster Connector supports several command-line arguments.
-Below we describe the available command-line arguments:
+## Command-line Arguments
+The NGINX Cluster Connector supports several command-line arguments. The command-line arguments can be specified in the `args` section of the Kubernetes deployment file. The following is a list of the supported command-line arguments and their usage:
 
 ### -nms-server-address `<string>`
-The address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported.
+The address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported. 
 Default `apigw.nms.svc.cluster.local`.
 
 ### -nms-server-port `<int>`
 The port of the NGINX Management Suite host
-Default `443`.
+Default `443`. 
 
 ### -nms-basic-auth-secret `<string>`
 Secret for basic authentication to the NGINX Management Suite API. The secret must be in `kubernetes.io/basic-auth` format using base64 encoding.
@@ -125,3 +125,4 @@ Default `24h`.
 
 ### -proxy
 Use a proxy server to connect to the Kubernetes API started by the "kubectl proxy" command. **For testing purposes only.**
+
