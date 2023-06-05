@@ -200,9 +200,9 @@ flaky==3.7.0 \
 forcediphttpsadapter==1.0.2 \
     --hash=sha256:f7582b34aaa6ab6b17f69ab1abbfe67097b952ed0682b758b5e01e18fe24433e
     # via -r requirements.txt
-google-auth==2.19.0 \
-    --hash=sha256:be617bfaf77774008e9d177573f782e109188c8a64ae6e744285df5cea3e7df6 \
-    --hash=sha256:f39d528077ac540793dd3c22a8706178f157642a67d874db25c640b7fead277e
+google-auth==2.19.1 \
+    --hash=sha256:a9cfa88b3e16196845e64a3658eb953992129d13ac7337b064c6546f77c17183 \
+    --hash=sha256:ea165e014c7cbd496558796b627c271aa8c18b4cba79dc1cc962b24c5efdfb85
     # via
     #   -r requirements.txt
     #   kubernetes
