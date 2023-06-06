@@ -29,11 +29,11 @@ To deploy the NGINX Cluster Connector, you must have the following:
 | Docker 23 or later                      | https://docs.docker.com/get-docker/                                                                                                 |
 | Kubernetes 1.22 or later                | Ensure your client can access the Kubernetes API server.                                                                            |
 | kubectl 1.22 or later                   | https://kubernetes.io/docs/tasks/tools/#kubectl                                                                                     |
-| OpenSSL 3.0.0 or later                  | For converting credentials string to base64. Alternatively, you can use any online tools available. https://www.openssl.org/source/ |
 
 In addition to the software requirements, you must have the following:
-- Access to NGINX Management Suite with username and password for basic authentication, including the URL, username, and password.
+- Access to NGINX Management Suite with username and password for basic authentication, including the URL, username, and password, with the access to the `/k8s-usage` endpoints
 - Access to the Kubernetes cluster where the NGINX Ingress Controller is deployed, with the ability to deploy a Kubernetes Deployment and a Kubernetes secret.
+- The Kubernetes cluster should have access to the NGINX container registry where the NGINX Cluster Connector image is hosted at `registry.nginx.com/nginx-cluster-connector`. Alternatively, you can pull this down and push the image to a private container registry that your cluster has access to.
 
 ### Deploying the NGINX Cluster Connector
 
@@ -71,7 +71,7 @@ In addition to the software requirements, you must have the following:
 5. Download the deployment file [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/deployments/deployment/cluster-connector.yaml). Edit the following the args section:
    ```
         args:
-        - -nms-server-address=https://k8s-usage.example.com
+        - -nms-server-address=https://nms.example.com
         - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
    ```
    The `nms-server-address` should be the address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported. The `nms-basic-auth-secret` should be the namespace/name of the secret created in step 2, i.e `nginx-cluster-connector/nms-basic-auth`.
@@ -86,9 +86,58 @@ In addition to the software requirements, you must have the following:
 ## Viewing Usage Data
 The NGINX Cluster Connector reports the number of NGINX Ingress Controller instances and nodes in the cluster to NGINX Management Suite. To view the usage data, query the NGINX Management Suite API. The usage data is available in the following endpoint:
 
-#TODO: instructions how to get the UUID.
 ```
-curl -k --user "foo:bar" https://k8s-usage.example.com/usage/{uuid}
+curl -k --user "foo:bar" https://nms.example.com/k8s-usage/
+{
+  "items": [
+    {
+      "metadata": {
+        "displayName": "my-cluster",
+        "uid": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+        "createTime": "2023-01-27T09:12:33.001Z",
+        "updateTime": "2023-01-29T10:12:33.001Z",
+        "monthReturned": "May"
+      },
+      "node_count": 4,
+      "max_node_count": 5,
+      "pod_details": {
+        "current_pod_counts": {
+          "pod_count": 15,
+          "waf_count": 5,
+          "dos_count": 0
+        },
+        "max_pod_counts": {
+          "max_pod_count": 25,
+          "max_waf_count": 7,
+          "max_dos_count": 1
+        }
+      }
+    },
+    {
+      "metadata": {
+        "displayName": "my-cluster2",
+        "uid": "12tgb8ug-g8ik-bs7h-gj3j-hjitk672946hb",
+        "createTime": "2023-01-25T09:12:33.001Z",
+        "updateTime": "2023-01-26T10:12:33.001Z",
+        "monthReturned": "May"
+      },
+      "node_count": 3,
+      "max_node_count": 3,
+      "pod_details": {
+        "current_pod_counts": {
+          "pod_count": 5,
+          "waf_count": 5,
+          "dos_count": 0
+        },
+        "max_pod_counts": {
+          "max_pod_count": 15,
+          "max_waf_count": 5,
+          "max_dos_count": 0
+        }
+      }
+    }
+  ]
+}
 ```
 
 
