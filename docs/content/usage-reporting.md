@@ -22,22 +22,33 @@ To use the NGINX Cluster Connector, you must have access to NGINX Management Sui
 
 To deploy the NGINX Cluster Connector, you must have the following:
 
-| Requirements                            | Notes                                                                                                                               |
-|-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| NGINX Ingress Controller 3.1.0 or later | https://docs.nginx.com/nginx-ingress-controller                                                                                     |
-| NGINX Management Suite 2.11 or later    | https://docs.nginx.com/nginx-management-suite                                                                                       |
-| Docker 23 or later                      | https://docs.docker.com/get-docker/                                                                                                 |
-| Kubernetes 1.22 or later                | Ensure your client can access the Kubernetes API server.                                                                            |
-| kubectl 1.22 or later                   | https://kubernetes.io/docs/tasks/tools/#kubectl                                                                                     |
+| Requirements                            | Notes                                                                                                                 |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| NGINX Ingress Controller 3.1.0 or later | https://docs.nginx.com/nginx-ingress-controller                                                                       |
+| NGINX Management Suite 2.11 or later    | https://docs.nginx.com/nginx-management-suite                                                                         |
+| Docker 23 or later                      | https://docs.docker.com/get-docker/                                                                                   |
+| Kubernetes 1.22 or later                | Ensure you can access the Kubernetes API, with the ability to deploy a Kubernetes Deployment and a Kubernetes secret. |
+| kubectl 1.22 or later                   | https://kubernetes.io/docs/tasks/tools/#kubectl                                                                       |
 
 In addition to the software requirements, you must have the following:
 - Access to NGINX Management Suite with username and password for basic authentication, including the URL, username, and password, with the access to the `/k8s-usage` endpoints
 - Access to the Kubernetes cluster where the NGINX Ingress Controller is deployed, with the ability to deploy a Kubernetes Deployment and a Kubernetes secret.
 - The Kubernetes cluster should have access to the NGINX container registry where the NGINX Cluster Connector image is hosted at `registry.nginx.com/nginx-cluster-connector`. Alternatively, you can pull this down and push the image to a private container registry that your cluster has access to.
 
+### Setting up user accounts in NGINX Management Suite
+
+The NGINX Cluster Connector uses the NGINX Management Suite API to report the number of NGINX Ingress Controller nodes in the cluster. To use the NGINX Management Suite API, you must have a user account with the correct role.
+
+1. Create a role following the steps in [Create a Role](https://docs.nginx.com/nginx-management-suite/admin-guides/access-control/set-up-rbac/#create-role) section of the NGINX Management Suite documentation. Select these permissions in step 6 for the role:
+   - Module: Instance Manager
+   - Feature: Nginx Plus Usage
+   - Access: CRUD
+
+2. Create a user account following the steps in [Add Users](https://docs.nginx.com/nginx-management-suite/admin-guides/access-control/set-up-rbac/#add-users) section of the NGINX Management Suite documentation. In step 6, assign the user to the role created above. Note that currently only basic auth authentication is supported for usage reporting purposes.
+
 ### Deploying the NGINX Cluster Connector
 
-1. Basic authentication is required to connect the NGINX Management Suite API. A base64 representation of the username and password is required to create the Kubernetes secret. In this example the username will be `foo` and the password will be `bar`. To obtain the base64 representation of a string, use the following command:
+1. Basic authentication is required to connect the NGINX Management Suite API. If you do not have a user account, create one following the above section . A base64 representation of the username and password is required to create the Kubernetes secret. In this example the username will be `foo` and the password will be `bar`. To obtain the base64 representation of a string, use the following command:
     ```
     > echo -n 'foo' | base64
     Zm9v
@@ -83,11 +94,11 @@ In addition to the software requirements, you must have the following:
    ```
 
 
-## Viewing Usage Data
+## Viewing Usage Data from the NGINX Management Suite API
 The NGINX Cluster Connector reports the number of NGINX Ingress Controller instances and nodes in the cluster to NGINX Management Suite. To view the usage data, query the NGINX Management Suite API. The usage data is available in the following endpoint:
 
 ```
-curl -k --user "foo:bar" https://nms.example.com/k8s-usage/
+> curl -k --user "foo:bar" https://nms.example.com/k8s-usage/
 {
   "items": [
     {
@@ -139,7 +150,35 @@ curl -k --user "foo:bar" https://nms.example.com/k8s-usage/
   ]
 }
 ```
+You can specify `displayName` for the cluster in the response  with the `-cluster-display-name` command-line argument when you deploy the Cluster Connector . See [Command-line Arguments](#Command-line Arguments) for more information.
 
+You can also query the usage data for a specific cluster by specifying the cluster uid in the endpoint, for example:
+```
+> curl -k --user "foo:bar" https://nms.example.com/k8s-usage/d290f1ee-6c54-4b01-90e6-d701748f0851
+{
+  "metadata": {
+    "displayName": "my-cluster",
+    "uid": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    "createTime": "2023-01-27T09:12:33.001Z",
+    "updateTime": "2023-01-29T10:12:33.001Z",
+    "monthReturned": "May"
+  },
+  "node_count": 4,
+  "max_node_count": 5,
+  "pod_details": {
+    "current_pod_counts": {
+      "pod_count": 15,
+      "waf_count": 5,
+      "dos_count": 0
+    },
+    "max_pod_counts": {
+      "max_pod_count": 25,
+      "max_waf_count": 7,
+      "max_dos_count": 1
+    }
+  }
+}
+```
 
 ## Uninstall the NGINX Cluster Connector
 To remove the Nginx Cluster Connector from your Kubernetes cluster, run the following command:
