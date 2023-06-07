@@ -1,7 +1,8 @@
 ---
 title: Usage Reporting
 description: |
-How to enable usage reporting for NGINX Ingress Controller and how to view the usage data through the API.weight: 1800
+How to enable usage reporting for NGINX Ingress Controller and view the usage data through the API.
+weight: 1800
 doctypes: ["concept"]
 toc: true
 docs: ["???"]
