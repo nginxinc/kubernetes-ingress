@@ -42,7 +42,7 @@ jobs:
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
+        uses: docker/setup-qemu-action@2b82ce82d56a2a04d2637cd93a637ae1b359c0a7 # v2.2.0
         with:
           platforms: arm,arm64,ppc64le,s390x
         if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
