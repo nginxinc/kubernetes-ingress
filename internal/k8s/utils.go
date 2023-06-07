@@ -90,7 +90,8 @@ type storeToEndpointSliceLister struct {
 }
 
 // GetServiceEndpointSlices returns the endpoints of a service, matched on service name.
-func (s *storeToEndpointSliceLister) GetServiceEndpointSlices(svc *v1.Service) (endpointSlices []discovery_v1.EndpointSlice, err error) {
+func (s *storeToEndpointSliceLister) GetServiceEndpointSlices(svc *v1.Service) ([]discovery_v1.EndpointSlice, error) {
+	var endpointSlices []discovery_v1.EndpointSlice
 	for _, epStore := range s.Store.List() {
 		ep := *epStore.(*discovery_v1.EndpointSlice)
 		if svc.Name == ep.Labels["kubernetes.io/service-name"] && svc.Namespace == ep.Namespace {
@@ -100,7 +101,7 @@ func (s *storeToEndpointSliceLister) GetServiceEndpointSlices(svc *v1.Service) (
 	if len(endpointSlices) > 0 {
 		return endpointSlices, nil
 	}
-	return endpointSlices, fmt.Errorf("could not find endpointslices for service: %v", svc.Name)
+	return nil, fmt.Errorf("could not find endpointslices for service: %v", svc.Name)
 }
 
 // findPort locates the container port for the given pod and portName.  If the
