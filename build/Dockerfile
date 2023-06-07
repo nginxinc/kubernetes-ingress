@@ -5,12 +5,12 @@ ARG DOWNLOAD_TAG=edge
 
 
 ############################################# Base images containing libs for Opentracing #############################################
-FROM opentracing/nginx-opentracing:nginx-1.23.4 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.23.4-alpine as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.0 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.0-alpine as alpine-opentracing-lib
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.23.4 AS debian
+FROM nginx:1.25.0 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -24,7 +24,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.23.4-alpine AS alpine
+FROM nginx:1.25.0-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -110,7 +110,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI #############################################
-FROM nginxcontrib/nginx:1.23.4-ubi AS ubi
+FROM nginxcontrib/nginx:1.25.0-ubi AS ubi
 ARG IC_VERSION
 
 LABEL name="NGINX Ingress Controller" \

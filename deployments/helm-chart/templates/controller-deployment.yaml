@@ -80,9 +80,6 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-{{- if .Values.controller.readOnlyRootFilesystem }}
-        fsGroup: 101 #nginx
-{{- end }}
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       dnsPolicy: {{ .Values.controller.dnsPolicy }}

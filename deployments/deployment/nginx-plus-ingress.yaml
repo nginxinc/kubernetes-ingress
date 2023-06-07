@@ -23,7 +23,6 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-#        fsGroup: 101 #nginx
 #      volumes:
 #      - name: nginx-etc
 #        emptyDir: {}
