@@ -61,7 +61,7 @@ jobs:
         if: github.event_name != 'pull_request'
 
       - name: Login to GCR
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -76,7 +76,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
 
       - name: Login to ECR
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
         if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
