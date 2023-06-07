@@ -21,7 +21,7 @@ To use the NGINX Cluster Connector, you must have access to NGINX Management Sui
 
 ## Requirements
 
-To deploy the NGINX Cluster Connector, you must have the following:
+To deploy Usage Reporting, you must have the following:
 
 | Requirements                            | Notes                                                                                                                 |
 |-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
