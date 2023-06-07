@@ -5,7 +5,7 @@ How to enable usage reporting for NGINX Ingress Controller and view the usage da
 weight: 1800
 doctypes: ["concept"]
 toc: true
-docs: "DOCS-
+docs: "DOCS-1228
 ---
 
 
