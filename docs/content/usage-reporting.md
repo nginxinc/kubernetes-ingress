@@ -80,7 +80,7 @@ The NGINX Cluster Connector uses the NGINX Management Suite API to report the nu
     ```
    If you want to update the basic-auth credentials to NMS server in the future, update the `username` and `password` fields, and apply the changes by running the command again. The NGINX Cluster Connector will automatically detect the changes and use the new username and password without redeploying the NGINX Cluster Connector.
 
-5. Download the deployment file [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/deployments/deployment/cluster-connector.yaml). Edit the following under `args` section
+5. Download the deployment file [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under `args` section
    ```
         args:
         - -nms-server-address=https://nms.example.com/api/platform/v1/k8s-usage
