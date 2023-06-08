@@ -3595,7 +3595,6 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 }
 
 func getEndpointsFromEndpointSlicesForSubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEndpointSlices []discovery_v1.EndpointSlice) []podEndpoint {
-
 	// Filter EndpointSlices by target Port for further processing.
 	matchEndpointSlicesWithPort := func(targetPort int32, esx []discovery_v1.EndpointSlice) []discovery_v1.EndpointSlice {
 		eps := make([]discovery_v1.EndpointSlice, 0, len(esx))
