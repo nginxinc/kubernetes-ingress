@@ -6,7 +6,7 @@ on:
       - main
       - release-*
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
   pull_request:
     branches:
       - main
@@ -16,7 +16,7 @@ on:
       - reopened
       - synchronize
   schedule:
-    - cron: '0 4 * * *' # run every day at 04:00 UTC
+    - cron: "0 4 * * *" # run every day at 04:00 UTC
 
 defaults:
   run:
@@ -27,7 +27,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   checks:
     name: Checks and variables
     runs-on: ubuntu-22.04
@@ -92,16 +91,16 @@ jobs:
       - name: Create/Update Draft
         uses: lucacome/draft-release@b79be3ff634f771230b2b6ee9f47308c5793671a # v0.2.0
         with:
-          minor-label: 'enhancement'
-          major-label: 'change'
+          minor-label: "enhancement"
+          major-label: "change"
           publish: ${{ startsWith(github.ref, 'refs/tags/') }}
           collapse-after: 50
           variables: |
             helm-chart=${{ needs.checks.outputs.chart_version }}
           notes-footer: |
             ## Upgrade
-            - For NGINX, use the {{version}} image from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name={{version-number}}), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
-            - For NGINX Plus, use the {{version}} image from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the {{version}} source code.
+            - For NGINX, use the {{version}} images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name={{version-number}}), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+            - For NGINX Plus, use the {{version}} images from the F5 Container registry, the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE), the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking) or build your own image using the {{version}} source code.
             - For Helm, use version {{helm-chart}} of the chart.
 
             ## Resources
@@ -163,10 +162,10 @@ jobs:
     strategy:
       matrix:
         include:
-         - image: debian
-           type: oss
-         - image: debian-plus
-           type: plus
+          - image: debian
+            type: oss
+          - image: debian-plus
+            type: plus
     steps:
       - name: Checkout Repository
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
@@ -176,12 +175,12 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2.5.0
+        uses: docker/setup-buildx-action@6a58db7e0d21ca03e6c44877909e80e45217eed2 # v2.6.0
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
         with:
           file: build/Dockerfile
-          context: '.'
+          context: "."
           cache-from: type=gha,scope=${{ matrix.image }}
           target: goreleaser
           tags: ${{ matrix.type }}:${{ github.sha }}
@@ -265,12 +264,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2.5.0
+        uses: docker/setup-buildx-action@6a58db7e0d21ca03e6c44877909e80e45217eed2 # v2.6.0
       - name: Build Test-Runner Container
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
         with:
           file: tests/docker/Dockerfile
-          context: '.'
+          context: "."
           cache-from: type=gha,scope=test-runner
           cache-to: type=gha,scope=test-runner,mode=max
           tags: test-runner:${{ github.sha }}
@@ -308,13 +307,14 @@ jobs:
     name: Build Docker OSS
     needs: smoke-tests
     strategy:
-        fail-fast: false
-        matrix:
-          image: [debian, alpine]
-          platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
-          include:
-            - image: ubi
-              platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+      fail-fast: false
+      matrix:
+        image: [debian, alpine]
+        platforms:
+          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+        include:
+          - image: ubi
+            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
     uses: ./.github/workflows/build-oss.yml
     with:
       platforms: ${{ matrix.platforms }}
@@ -325,15 +325,15 @@ jobs:
     name: Build Docker Plus
     needs: build-docker
     strategy:
-        fail-fast: false
-        matrix:
-          image: [debian-plus, alpine-plus]
-          platforms: ["linux/arm64, linux/amd64"]
-          target: [goreleaser, aws]
-          include:
-            - image: ubi-plus
-              platforms: "linux/arm64, linux/amd64, linux/s390x"
-              target: goreleaser
+      fail-fast: false
+      matrix:
+        image: [debian-plus, alpine-plus]
+        platforms: ["linux/arm64, linux/amd64"]
+        target: [goreleaser, aws]
+        include:
+          - image: ubi-plus
+            platforms: "linux/arm64, linux/amd64, linux/s390x"
+            target: goreleaser
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
@@ -345,12 +345,12 @@ jobs:
     name: Build Docker NAP
     needs: build-docker-plus
     strategy:
-        fail-fast: false
-        matrix:
-          image: [debian-plus-nap, ubi-plus-nap]
-          platforms: ["linux/amd64"]
-          target: [goreleaser, aws]
-          nap_modules: [dos, waf, "waf,dos"]
+      fail-fast: false
+      matrix:
+        image: [debian-plus-nap, ubi-plus-nap]
+        platforms: ["linux/amd64"]
+        target: [goreleaser, aws]
+        nap_modules: [dos, waf, "waf,dos"]
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
@@ -371,14 +371,14 @@ jobs:
           path: kic
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: DockerHub Login
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}

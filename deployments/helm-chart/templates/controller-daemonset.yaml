@@ -42,9 +42,6 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-{{- if .Values.controller.readOnlyRootFilesystem }}
-        fsGroup: 101 #nginx
-{{- end }}
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
@@ -207,7 +204,7 @@ spec:
 {{- else if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
-          - -external-service={{ include "nginx-ingress.controller.fullname" . }}
+          - -external-service={{ include "nginx-ingress.controller.service.name" . }}
 {{- end }}
 {{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}

@@ -60,10 +60,6 @@ When using manifests instead of Helm, uncomment the following sections of the de
 Refer to the below code-block for guidance:
 
 ```
-#        fsGroup: 101 #nginx
-.
-.
-.
 #      volumes:
 #      - name: nginx-etc
 #        emptyDir: {}

@@ -85,6 +85,15 @@ We also provide NGINX Plus images through the AWS Marketplace. Please see [Using
 |Debian-based image with NGINX App Protect WAF and DoS | ``debian:11-slim`` | NGINX App Protect WAF and DoS, NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [F5 NGINX Ingress Controller with F5 NGINX App Protect DoS](https://aws.amazon.com/marketplace/pp/prodview-sghjw2csktega) | amd64 |
 {{% /table %}}
 
+We also provide NGINX Plus images through the Google Cloud Marketplace. Please see [Using GCP Marketplace Ingress Controller](/nginx-ingress-controller/installation/using-gcp-marketplace-package/) for details on how use them.
+
+{{% table %}}
+|Name | Base image | Third-party modules | GCP Marketplace Link | Architectures |
+| ---| ---| --- | --- | --- |
+|Debian-based image | ``debian:11-slim`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [F5 NGINX Ingress Controller](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus) | amd64 |
+|Debian-based image with NGINX App Protect DoS | ``debian:11-slim`` | NGINX App Protect DoS, NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect DoS](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus-dos) | amd64 |
+{{% /table %}}
+
 ### Custom Images
 
 You can customize an existing Dockerfile or use it as a reference to create a new one, which is necessary for the following cases:
