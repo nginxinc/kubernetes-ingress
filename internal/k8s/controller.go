@@ -3595,38 +3595,60 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 }
 
 func getEndpointsFromEndpointSlicesForSubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEndpointSlices []discovery_v1.EndpointSlice) []podEndpoint {
-	endpointSet := make(map[podEndpoint]struct{})
 
-	for _, pod := range pods {
-		for _, endpointSlice := range svcEndpointSlices {
-			for _, port := range endpointSlice.Ports {
-				if *port.Port != targetPort {
-					continue
+	// Filter EndpointSlices by target Port for further processing.
+	matchEndpointSlicesWithPort := func(targetPort int32, esx []discovery_v1.EndpointSlice) []discovery_v1.EndpointSlice {
+		eps := make([]discovery_v1.EndpointSlice, 0, len(esx))
+		for _, es := range esx {
+			for _, p := range es.Ports {
+				if *p.Port == targetPort {
+					eps = append(eps, es)
 				}
-				for _, endpoint := range endpointSlice.Endpoints {
-					if !*endpoint.Conditions.Ready {
-						continue
-					}
-					for _, address := range endpoint.Addresses {
-						if pod.Status.PodIP == address {
-							addr := ipv6SafeAddrPort(pod.Status.PodIP, targetPort)
-							ownerType, ownerName := getPodOwnerTypeAndName(pod)
-							podEndpoint := podEndpoint{
-								Address: addr,
-								PodName: getPodName(endpoint.TargetRef),
-								MeshPodOwner: configs.MeshPodOwner{
-									OwnerType: ownerType,
-									OwnerName: ownerName,
-								},
-							}
-							endpointSet[podEndpoint] = struct{}{}
+			}
+		}
+		return eps
+	}
+
+	// Filter Endpoints that match status `ready`.
+	filterReadyEndpoints := func(esx []discovery_v1.EndpointSlice) []discovery_v1.Endpoint {
+		epx := make([]discovery_v1.Endpoint, 0, len(esx))
+		for _, es := range esx {
+			for _, e := range es.Endpoints {
+				if *e.Conditions.Ready {
+					epx = append(epx, e)
+				}
+			}
+		}
+		return epx
+	}
+
+	// We match ready endpoints' ip addresses with pod IP.
+	// If they match we create a new podEnpoint.
+	makePodEndpoints := func(pods []*api_v1.Pod, endpoints []discovery_v1.Endpoint) []podEndpoint {
+		endpointSet := make(map[podEndpoint]struct{})
+
+		for _, pod := range pods {
+			for _, endpoint := range endpoints {
+				for _, address := range endpoint.Addresses {
+					if pod.Status.PodIP == address {
+						addr := ipv6SafeAddrPort(pod.Status.PodIP, targetPort)
+						ownerType, ownerName := getPodOwnerTypeAndName(pod)
+						podEndpoint := podEndpoint{
+							Address: addr,
+							PodName: getPodName(endpoint.TargetRef),
+							MeshPodOwner: configs.MeshPodOwner{
+								OwnerType: ownerType,
+								OwnerName: ownerName,
+							},
 						}
+						endpointSet[podEndpoint] = struct{}{}
 					}
 				}
 			}
 		}
+		return maps.Keys(endpointSet)
 	}
-	return maps.Keys(endpointSet)
+	return makePodEndpoints(pods, filterReadyEndpoints(matchEndpointSlicesWithPort(targetPort, svcEndpointSlices)))
 }
 
 func ipv6SafeAddrPort(addr string, port int32) string {
