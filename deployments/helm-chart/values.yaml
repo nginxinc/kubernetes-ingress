@@ -5,6 +5,9 @@ controller:
   ## The kind of the Ingress Controller installation - deployment or daemonset.
   kind: deployment
 
+  ## The selectorLabels used to overide the default values.
+  selectorLabels: {}
+
   ## Annotations for deployments and daemonsets
   annotations: {}
 
