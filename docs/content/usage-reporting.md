@@ -55,7 +55,7 @@ The cluster connector needs a user account to send usage data to NIM. This is ho
     > kubectl create namespace nginx-cluster-connector
     ```
 
-### Define the credential for the NIM API
+### Define the credential for the NMS API
 
 In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret.
 
@@ -67,7 +67,7 @@ In order to make the credential available to NGINX Cluster Connector, we need to
     YmFy
     ```
 
-5. Copying the following content to a text editor, and fill in under `data` the base64 representation of the username and password obtained in step 1:
+5. Copying the following content to a text editor, and fill in under `data` the base64 representation of the username and password obtained in step 4:
     ```
     apiVersion: v1
     kind: Secret
@@ -89,6 +89,8 @@ If you are using a different namespace, please change the namespace in the `meta
     ```
 
 If you need to update the basic-auth credentials to NMS server in the future, update the `username` and `password` fields, and apply the changes by running the command again. The NGINX Cluster Connector will automatically detect the changes and use the new username and password without redeploying the NGINX Cluster Connector.
+
+### Deploy the cluster connector
 
 7. Download and save the deployment file [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
    ```
