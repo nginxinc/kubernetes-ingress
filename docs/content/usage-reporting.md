@@ -57,7 +57,7 @@ The cluster connector needs a user account to send usage data to NIM. This is ho
 
 ### Define the credential for the NIM API
 
-In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret. 
+In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret.
 
 4. The username and password created in the previous section are required to connect the NGINX Management Suite API. Both the username and password are stored in the Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`. To obtain the base64 representation of a string, use the following command:
     ```
@@ -79,7 +79,7 @@ In order to make the credential available to NGINX Cluster Connector, we need to
       username: Zm9v # base64 representation of 'foo' obtained in step 1
       password: YmFy # base64 representation of 'bar' obtained in step 1
     ```
-Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector. 
+Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector.
 
 If you are using a different namespace, please change the namespace in the `metadata` section of the file above. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64.
 
