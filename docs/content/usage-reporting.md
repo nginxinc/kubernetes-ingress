@@ -60,7 +60,7 @@ The cluster connector needs a user account to send usage data to NIM. This is ho
     ```
     > kubectl create namespace nginx-cluster-connector
     ```
-3. In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret. Copying the following content to a text editor, and fill in the username and password under `data`, with base64 representation of the username and password obtained in step 1:
+3. In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret. Copying the following content to a text editor, and fill in under `data` the base64 representation of the username and password obtained in step 1:
     ```
     apiVersion: v1
     kind: Secret
