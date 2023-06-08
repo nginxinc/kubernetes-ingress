@@ -27,19 +27,17 @@ To deploy Usage Reporting, you must have the following:
 |-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | NGINX Ingress Controller 3.1.0 or later | https://docs.nginx.com/nginx-ingress-controller                                                                       |
 | NGINX Management Suite 2.11 or later    | https://docs.nginx.com/nginx-management-suite                                                                         |
-| Docker 23 or later                      | https://docs.docker.com/get-docker/                                                                                   |
 | Kubernetes 1.22 or later                | Ensure you can access the Kubernetes API, with the ability to deploy a Kubernetes Deployment and a Kubernetes secret. |
-| kubectl 1.22 or later                   | https://kubernetes.io/docs/tasks/tools/#kubectl                                                                       |
 
 In addition to the software requirements, you must have the following:
 - Access to NGINX Management Suite with username and password for basic authentication, including the URL, username, and password, with the access to the `/api/platform/v1/k8s-usage` endpoints
 - Access to the Kubernetes cluster where the NGINX Ingress Controller is deployed, with the ability to deploy a Kubernetes Deployment and a Kubernetes Secret.
-- Access to public internet to pull the image, since the image is hosted in the NGINX container registry at `registry.nginx.com/cluster-connector`. Alternatively, you can pull the image down and push it to a private container registry that your cluster has access to.
+- Access to public internet to pull the image, since the image is hosted in the NGINX container registry at `public-registry.nginx.com/cluster-connector`. Alternatively, you can pull the image down and push it to a private container registry that your cluster has access to.
 [//]: # (  TODO: Update the image and tag after published)
 
 ## Setting up user accounts in NGINX Management Suite
 
-The NGINX Cluster Connector uses the NGINX Management Suite API to report the number of NGINX Ingress Controller nodes in the cluster. To use the NGINX Management Suite API, you must have a user account with the correct role.
+The cluster connector needs a user account to send usage data to NIM. This is how you create one for the Cluster Connector to use.
 
 1. Create a role following the steps in [Create a Role](https://docs.nginx.com/nginx-management-suite/admin-guides/access-control/set-up-rbac/#create-role) section of the NGINX Management Suite documentation. Select these permissions in step 6 for the role:
    - Module: Instance Manager
@@ -50,7 +48,7 @@ The NGINX Cluster Connector uses the NGINX Management Suite API to report the nu
 
 ## Deploying the NGINX Cluster Connector
 
-1. Basic authentication is required to connect the NGINX Management Suite API. If you do not have a user account, create one following the above section . A base64 representation of the username and password is required to create the Kubernetes secret. In this example the username will be `foo` and the password will be `bar`. To obtain the base64 representation of a string, use the following command:
+1. The username and password created in the previous section are required to connect the NGINX Management Suite API. Both the username and password are stored as Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`. To obtain the base64 representation of a string, use the following command:
     ```
     > echo -n 'foo' | base64
     Zm9v
@@ -58,7 +56,11 @@ The NGINX Cluster Connector uses the NGINX Management Suite API to report the nu
     YmFy
     ```
 
-2. In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret. Copying the following content to a text editor, and fill in the username and password under `data`, with base64 representation of the username and password obtained in step 1:
+2. Create a Kubernetes namespace `nginx-cluster-connector` for the NGINX Cluster Connector:
+    ```
+    > kubectl create namespace nginx-cluster-connector
+    ```
+3. In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret. Copying the following content to a text editor, and fill in the username and password under `data`, with base64 representation of the username and password obtained in step 1:
     ```
     apiVersion: v1
     kind: Secret
@@ -71,26 +73,22 @@ The NGINX Cluster Connector uses the NGINX Management Suite API to report the nu
       password: YmFy # base64 representation of 'bar' obtained in step 1
     ```
     Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector. If you are using a different namespace, please change the namespace in the `metadata` section of the file. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64.
-3. If the namespace `nginx-cluster-connector` does not exist, create the namespace:
-    ```
-    > kubectl create namespace nginx-cluster-connector
-    ```
 4. Deploy the Kubernetes secret created in step 2 to the Kubernetes cluster:
     ```
     > kubectl apply -f nms-basic-auth.yaml
     ```
    If you want to update the basic-auth credentials to NMS server in the future, update the `username` and `password` fields, and apply the changes by running the command again. The NGINX Cluster Connector will automatically detect the changes and use the new username and password without redeploying the NGINX Cluster Connector.
 
-5. Download the deployment file [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under `args` section
+5. Download the deployment file [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under `args` section and then save the file:
    ```
         args:
-        - -nms-server-address=https://nms.example.com/api/platform/v1/k8s-usage
+        - -nms-server-address=https://nms.example.com/api/platform/v1
         - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
    ```
    The `-nms-server-address` should be the address of the NGINX Management Suite host. The `nms-basic-auth-secret` should be the namespace/name of the secret created in step 2, i.e `nginx-cluster-connector/nms-basic-auth`.
    For more information on the command-line flags, see [Configuration](#configuration).
 
-6. To deploy the Nginx Cluster Connector, save the file above and run the following command to deploy it to your Kubernetes cluster:
+6. To deploy the Nginx Cluster Connector, run the following command to deploy it to your Kubernetes cluster:
    ```
    > kubectl apply -f cluster-connector.yaml
    ```
@@ -152,7 +150,7 @@ The NGINX Cluster Connector reports the number of NGINX Ingress Controller insta
   ]
 }
 ```
-You can specify `displayName` for the cluster in the response  with the `-cluster-display-name` command-line argument when you deploy the Cluster Connector . See [Command-line Arguments](#Command-line Arguments) for more information. From this response, you can see the cluster uid corresponding to the cluster name.
+If you want a friendly name for each cluster in the response, You can specify the `displayName` for the cluster with the `-cluster-display-name` command-line argument when you deploy the Cluster Connector . See [Command-line Arguments](#Command-line Arguments) for more information. From this response, you can see the cluster uid corresponding to the cluster name.
 
 You can also query the usage data for a specific cluster by specifying the cluster uid in the endpoint, for example:
 ```
@@ -207,11 +205,8 @@ Format `<namespace>/<name>`.
 The display name of the Kubernetes cluster.
 
 ### -skip-tls-verify
-Skip TLS verification for the NMS server. **For testing purposes with NMS server with self-assigned certificate.**
+Skip TLS verification for the NMS server. **For testing purposes with NMS server using self-assigned certificate.**
 
 ### -min-update-interval `<string>`
 The minimum interval between updates to the NMS.
 Default `24h`.
-
-### -proxy
-Use a proxy server to connect to the Kubernetes API started by the "kubectl proxy" command. **For testing purposes only.**

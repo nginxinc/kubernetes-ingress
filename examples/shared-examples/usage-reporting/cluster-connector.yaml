@@ -96,7 +96,7 @@ spec:
       serviceAccountName: cluster-connector
       automountServiceAccountToken: true
       containers:
-        - image: nginx-cluster-connector:0.0.1
+        - image: public-registry.nginx.com/cluster-connector:0.0.1 #TODO: update with correct image tag after publishing
           imagePullPolicy: IfNotPresent
           name: nginx-cluster-connector
           resources:
