@@ -446,7 +446,7 @@ func (lbc *LoadBalancerController) addLeaderHandler(leaderHandler leaderelection
 }
 
 // AddSyncQueue enqueues the provided item on the sync queue
-func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
+func (lbc *LoadBalancerController) AddSyncQueue(item any) {
 	lbc.syncQueue.Enqueue(item)
 }
 
@@ -770,12 +770,10 @@ func (lbc *LoadBalancerController) getNamespacedInformer(ns string) *namespacedI
 func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 	key := task.Key
 	var obj any
-	var endpointSliceExists bool
-	var err error
 	glog.V(3).Infof("Syncing EndpointSlices %v", key)
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, endpointSliceExists, err = lbc.getNamespacedInformer(ns).endpointSliceLister.GetByKey(key)
+	obj, endpointSliceExists, err := lbc.getNamespacedInformer(ns).endpointSliceLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -792,7 +790,7 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 
 	if len(resourceExes.IngressExes) > 0 {
 		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
-		err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
+		err := lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
 		if err != nil {
 			glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.IngressExes, err)
 		}
@@ -800,7 +798,7 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 
 	if len(resourceExes.MergeableIngresses) > 0 {
 		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
-		err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
+		err := lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
 		if err != nil {
 			glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.MergeableIngresses, err)
 		}
@@ -1300,12 +1298,9 @@ func (lbc *LoadBalancerController) syncIngressLink(task task) {
 func (lbc *LoadBalancerController) syncPolicy(task task) {
 	key := task.Key
 	var obj any
-	var polExists bool
-	var err error
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, polExists, err = lbc.getNamespacedInformer(ns).policyLister.GetByKey(key)
-
+	obj, polExists, err := lbc.getNamespacedInformer(ns).policyLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1331,7 +1326,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 			lbc.recorder.Eventf(pol, api_v1.EventTypeNormal, "AddedOrUpdated", msg)
 
 			if lbc.reportCustomResourceStatusEnabled() {
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
+				err := lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
 				if err != nil {
 					glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
 				}
@@ -1359,12 +1354,9 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 func (lbc *LoadBalancerController) syncTransportServer(task task) {
 	key := task.Key
 	var obj any
-	var tsExists bool
-	var err error
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, tsExists, err = lbc.getNamespacedInformer(ns).transportServerLister.GetByKey(key)
-
+	obj, tsExists, err := lbc.getNamespacedInformer(ns).transportServerLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1438,12 +1430,10 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	key := task.Key
 	var obj any
-	var vsExists bool
-	var err error
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, vsExists, err = lbc.getNamespacedInformer(ns).virtualServerLister.GetByKey(key)
 
+	obj, vsExists, err := lbc.getNamespacedInformer(ns).virtualServerLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -2273,13 +2263,11 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing service %v", key)
 
-	var obj interface{}
-	var exists bool
-	var err error
+	var obj any
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, exists, err = lbc.getNamespacedInformer(ns).svcLister.GetByKey(key)
 
+	obj, exists, err := lbc.getNamespacedInformer(ns).svcLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -3206,12 +3194,11 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 
 		policyKey := fmt.Sprintf("%s/%s", polNamespace, p.Name)
 
-		var policyObj interface{}
+		var policyObj any
 		var exists bool
 		var err error
 
 		policyObj, exists, err = lbc.getNamespacedInformer(polNamespace).policyLister.GetByKey(policyKey)
-
 		if err != nil {
 			errors = append(errors, fmt.Errorf("failed to get policy %s: %w", policyKey, err))
 			continue
@@ -3764,45 +3751,63 @@ func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpoin
 		return nil, fmt.Errorf("no port %v in service %s", backendPort, svc.Name)
 	}
 
-	endpointSet := make(map[podEndpoint]struct{})
-
-	for _, endpointSlice := range endpointSlices {
-		for _, endpointSlicePort := range endpointSlice.Ports {
-			if *endpointSlicePort.Port == targetPort {
-				for _, endpoint := range endpointSlice.Endpoints {
-					if !*endpoint.Conditions.Ready {
-						continue
-					}
-					for _, endpointAddress := range endpoint.Addresses {
-						address := ipv6SafeAddrPort(endpointAddress, *endpointSlicePort.Port)
-						podEndpoint := podEndpoint{
-							Address: address,
-						}
-						if endpoint.TargetRef != nil {
-							parentType, parentName := lbc.getPodOwnerTypeAndNameFromAddress(endpoint.TargetRef.Namespace, endpoint.TargetRef.Name)
-							podEndpoint.OwnerType = parentType
-							podEndpoint.OwnerName = parentName
-							podEndpoint.PodName = endpoint.TargetRef.Name
-						}
-						endpointSet[podEndpoint] = struct{}{}
-					}
+	matchEndpointSlicesWithTargetPort := func(targetPort int32, esx []discovery_v1.EndpointSlice) []discovery_v1.EndpointSlice {
+		eps := make([]discovery_v1.EndpointSlice, 0, len(esx))
+		for _, es := range esx {
+			for _, p := range es.Ports {
+				if *p.Port == targetPort {
+					eps = append(eps, es)
 				}
 			}
 		}
+		return eps
 	}
-	if len(endpointSet) == 0 {
+
+	// Filter Endpoints that match status `ready`.
+	filterReadyEndpoints := func(esx []discovery_v1.EndpointSlice) []discovery_v1.Endpoint {
+		epx := make([]discovery_v1.Endpoint, 0, len(esx))
+		for _, es := range esx {
+			for _, e := range es.Endpoints {
+				if *e.Conditions.Ready {
+					epx = append(epx, e)
+				}
+			}
+		}
+		return epx
+	}
+
+	makePodEndpoints := func(port int32, epx []discovery_v1.Endpoint) []podEndpoint {
+		endpointSet := make(map[podEndpoint]struct{})
+
+		for _, ep := range epx {
+			for _, addr := range ep.Addresses {
+				address := ipv6SafeAddrPort(addr, port)
+				podEndpoint := podEndpoint{
+					Address: address,
+				}
+				if ep.TargetRef != nil {
+					parentType, parentName := lbc.getPodOwnerTypeAndNameFromAddress(ep.TargetRef.Namespace, ep.TargetRef.Name)
+					podEndpoint.OwnerType = parentType
+					podEndpoint.OwnerName = parentName
+					podEndpoint.PodName = ep.TargetRef.Name
+				}
+				endpointSet[podEndpoint] = struct{}{}
+			}
+		}
+		return maps.Keys(endpointSet)
+	}
+
+	endpoints := makePodEndpoints(targetPort, filterReadyEndpoints(matchEndpointSlicesWithTargetPort(targetPort, endpointSlices)))
+	if len(endpoints) == 0 {
 		return nil, fmt.Errorf("no endpointslices for target port %v in service %s", targetPort, svc.Name)
 	}
-	return maps.Keys(endpointSet), nil
+	return endpoints, nil
 }
 
 func (lbc *LoadBalancerController) getPodOwnerTypeAndNameFromAddress(ns, name string) (parentType, parentName string) {
 	var obj any
-	var exists bool
-	var err error
 
-	obj, exists, err = lbc.getNamespacedInformer(ns).podLister.GetByKey(fmt.Sprintf("%s/%s", ns, name))
-
+	obj, exists, err := lbc.getNamespacedInformer(ns).podLister.GetByKey(fmt.Sprintf("%s/%s", ns, name))
 	if err != nil {
 		glog.Warningf("could not get pod by key %s/%s: %v", ns, name, err)
 		return "", ""
@@ -3885,10 +3890,8 @@ func (lbc *LoadBalancerController) getServiceForUpstream(namespace string, upstr
 func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *networking.IngressBackend, namespace string) (*api_v1.Service, error) {
 	svcKey := namespace + "/" + backend.Service.Name
 	var svcObj any
-	var svcExists bool
-	var err error
 
-	svcObj, svcExists, err = lbc.getNamespacedInformer(namespace).svcLister.GetByKey(svcKey)
+	svcObj, svcExists, err := lbc.getNamespacedInformer(namespace).svcLister.GetByKey(svcKey)
 	if err != nil {
 		return nil, err
 	}
@@ -3956,13 +3959,10 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing AppProtectPolicy %v", key)
 
-	var obj interface{}
-	var polExists bool
-	var err error
+	var obj any
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, polExists, err = lbc.getNamespacedInformer(ns).appProtectPolicyLister.GetByKey(key)
-
+	obj, polExists, err := lbc.getNamespacedInformer(ns).appProtectPolicyLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -3973,11 +3973,9 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 
 	if !polExists {
 		glog.V(2).Infof("Deleting AppProtectPolicy: %v\n", key)
-
 		changes, problems = lbc.appProtectConfiguration.DeletePolicy(key)
 	} else {
 		glog.V(2).Infof("Adding or Updating AppProtectPolicy: %v\n", key)
-
 		changes, problems = lbc.appProtectConfiguration.AddOrUpdatePolicy(obj.(*unstructured.Unstructured))
 	}
 
@@ -3989,12 +3987,9 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing AppProtectLogConf %v", key)
 	var obj interface{}
-	var confExists bool
-	var err error
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, confExists, err = lbc.getNamespacedInformer(ns).appProtectLogConfLister.GetByKey(key)
-
+	obj, confExists, err := lbc.getNamespacedInformer(ns).appProtectLogConfLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4005,11 +4000,9 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 
 	if !confExists {
 		glog.V(2).Infof("Deleting AppProtectLogConf: %v\n", key)
-
 		changes, problems = lbc.appProtectConfiguration.DeleteLogConf(key)
 	} else {
 		glog.V(2).Infof("Adding or Updating AppProtectLogConf: %v\n", key)
-
 		changes, problems = lbc.appProtectConfiguration.AddOrUpdateLogConf(obj.(*unstructured.Unstructured))
 	}
 
@@ -4021,12 +4014,9 @@ func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing AppProtectUserSig %v", key)
 	var obj any
-	var sigExists bool
-	var err error
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, sigExists, err = lbc.getNamespacedInformer(ns).appProtectUserSigLister.GetByKey(key)
-
+	obj, sigExists, err := lbc.getNamespacedInformer(ns).appProtectUserSigLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4053,12 +4043,9 @@ func (lbc *LoadBalancerController) syncAppProtectDosPolicy(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing AppProtectDosPolicy %v", key)
 	var obj any
-	var polExists bool
-	var err error
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, polExists, err = lbc.getNamespacedInformer(ns).appProtectDosPolicyLister.GetByKey(key)
-
+	obj, polExists, err := lbc.getNamespacedInformer(ns).appProtectDosPolicyLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4083,12 +4070,9 @@ func (lbc *LoadBalancerController) syncAppProtectDosLogConf(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing APDosLogConf %v", key)
 	var obj any
-	var confExists bool
-	var err error
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, confExists, err = lbc.getNamespacedInformer(ns).appProtectDosLogConfLister.GetByKey(key)
-
+	obj, confExists, err := lbc.getNamespacedInformer(ns).appProtectDosLogConfLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4113,12 +4097,9 @@ func (lbc *LoadBalancerController) syncDosProtectedResource(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing DosProtectedResource %v", key)
 	var obj any
-	var confExists bool
-	var err error
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, confExists, err = lbc.getNamespacedInformer(ns).appProtectDosProtectedLister.GetByKey(key)
-
+	obj, confExists, err := lbc.getNamespacedInformer(ns).appProtectDosProtectedLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
