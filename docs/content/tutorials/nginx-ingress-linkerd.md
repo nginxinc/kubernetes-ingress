@@ -73,6 +73,7 @@ If we do a `kubectl get pods -n nginx-ingress` on the NGINX Ingress controller, 
 
 ```bash
 kubectl get po -n nginx-ingress kic01-nginx-ingress-controller-5f8c9b586d-ng4r8
+
 NAME                                              READY   STATUS    RESTARTS   AGE
 kic01-nginx-ingress-controller-5f8c9b586d-ng4r8   2/2     Running   0          30m
 ```
@@ -108,7 +109,8 @@ httpbin-66df5bfbc9-ffhdp   2/2     Running   0          67s
 We can now start sending traffic to NGINX Ingress controller, to verify that `Linkerd` is doing the sidecar traffic connections.
 
 ```bash
-Γò░ΓöÇΓ₧ñ  curl -k https://httpbin.example.com -I
+curl -k https://httpbin.example.com -I
+
 HTTP/1.1 200 OK
 Server: nginx/1.23.4
 Date: Sat, 20 May 2023 00:08:31 GMT

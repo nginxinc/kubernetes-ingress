@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: oidc-keycloak
+type: nginx.org/oidc
+data:
+  client-secret: 
+    ZFJGSU1YZEJycEpCeE04ell3UklLcDNVbkt5YkRERW8=
