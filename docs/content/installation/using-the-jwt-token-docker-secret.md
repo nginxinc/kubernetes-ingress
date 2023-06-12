@@ -170,3 +170,16 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
     ]
     }
 ```
+
+## Pulling the image locally
+
+If you need to pull the image locally, and push to a different container registry, here are the steps to do so:
+
+```
+docker login private-registry.nginx.com --username=<output_of_jwt_token> --password=none
+```
+
+Replaces the contents of `<output_of_jwt_token>` with the contents of the `jwt token` itself.
+Once you have successfully pulled the image, you can then proceed with tagging the image as needed.
+
+
