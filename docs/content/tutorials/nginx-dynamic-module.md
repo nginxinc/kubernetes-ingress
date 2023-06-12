@@ -8,25 +8,25 @@ toc: true
 docs: "DOCS-1231"
 ---
 
-## How to use a NGINX dynamic module with NGINX Ingress controller    
+## How to use a NGINX dynamic module with NGINX Ingress controller
 
-NGINX has several dnynamic modules that can be used to add additional features and capabilities. NGINX Ingress controller can also use these same NGINX modules with NGINX Ingress controller.     
+NGINX has several dnynamic modules that can be used to add additional features and capabilities. NGINX Ingress controller can also use these same NGINX modules with NGINX Ingress controller.
 You will need to modify your NGINX Ingress controller build to ensure it is built into the image, and then load it into NGINX Ingress controller.
 This document will walk you throw how to accomplish this task.
 
 
-You can find more NGINX dynamic modules on the NGINX Plus website:    
+You can find more NGINX dynamic modules on the NGINX Plus website:
 [NGINX Dynamic modules](https://docs.nginx.com/nginx/admin-guide/dynamic-modules/dynamic-modules/)
 
-Here are the basic steps that you will need to perform.    
+Here are the basic steps that you will need to perform.
 
 - Update the Dockerfile and add your dynamic module you want to add to your NGINX Ingress controller image
-- Build the image with updated Dockerfile, reflecting the image you are goign to add to the image build.    
+- Build the image with updated Dockerfile, reflecting the image you are goign to add to the image build.
 - Load the module using a `configmap` into NGINX Ingress controller
 
-In order to build a custom NGINX Ingress image with specific modules, the first step you need to take is to modify the `Dockerfile` located in the `./build` directory of the NGINXINC repo. 
+In order to build a custom NGINX Ingress image with specific modules, the first step you need to take is to modify the `Dockerfile` located in the `./build` directory of the NGINXINC repo.
 
-Clone the NGINX Ingress controller repo:    
+Clone the NGINX Ingress controller repo:
 
 ```
 git clone git@github.com:nginxinc/kubernetes-ingress.git
@@ -35,9 +35,9 @@ git clone git@github.com:nginxinc/kubernetes-ingress.git
 Once you have the image cloned, edit the `Dockerfile` located in the `build` directory of the cloned repo.
 
 
-In our example, we are going to add the `Headers-more` dynamic module to our NGINX Ingress controller image.    
+In our example, we are going to add the `Headers-more` dynamic module to our NGINX Ingress controller image.
 
-Locate your preferred OS version that you want to modify in the DOckerfile (debian, alpine etc.).  
+Locate your preferred OS version that you want to modify in the DOckerfile (debian, alpine etc.).
 Here is a snippet of the `Dockerfile` for `debian-plus`
 
 ```
@@ -68,7 +68,7 @@ Look for a line similar to the following line in the `Dockerfile`:
 apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs
 ```
 
-This is the line you will want to modify/add the module you want to have loaded into NGINX Ingress controller.   
+This is the line you will want to modify/add the module you want to have loaded into NGINX Ingress controller.
 We are going to add the `headers-more` module. The updated line would look like this:
 
 ```
@@ -82,7 +82,7 @@ nginx-plus-module-headers-more
 
 After the new NGINX Ingress module image has been built successfully, the next step is to load the module into your NGINX Ingress controller when it will be deployed into your Kubernetes cluster.
 
-For this to work, we will need to edit and update your `configmap` and load the module into the `main` context.   
+For this to work, we will need to edit and update your `configmap` and load the module into the `main` context.
 Here is a simple example of updating of the `nginx-cofng.yaml` file, that is used when deploying via manifest (helm is also supported. Just updated the correct entries line appropriately.)
 
 ```
@@ -96,10 +96,10 @@ data:
     load_module modules/ngx_http_headers_more_filter_module.so;
 ```
 
-With the above `configmap` configured to load in our `ngx_http_headers_more` module, NGINX Ingress controller will not load that module.   
+With the above `configmap` configured to load in our `ngx_http_headers_more` module, NGINX Ingress controller will not load that module.
 You can verify this be executing `nginx -T` in the NGINX Ingress controller pod:
 
-If you are using `helm`, you will need to add a setting like the following in your `values.yaml` file:    
+If you are using `helm`, you will need to add a setting like the following in your `values.yaml` file:
 
 ```
 config:
@@ -113,4 +113,3 @@ config:
 kubectl exec -it -n nginx-ingress <nginx_ingress_pod> -- nginx -T
 
 You should see in the `nginx -T` full output, that your module is now loaded into NGINX Ingress controller.
-
