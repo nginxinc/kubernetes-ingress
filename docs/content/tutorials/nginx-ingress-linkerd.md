@@ -5,7 +5,7 @@ description: |
 weight: 1800
 doctypes: ["concept"]
 toc: true
-docs: "DOCS-"
+docs: "DOCS-1232"
 ---
 
 # NGINX Ingress controller with Linkerd
