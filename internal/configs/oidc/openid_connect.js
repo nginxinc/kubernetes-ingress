@@ -1,6 +1,6 @@
 /*
  * JavaScript functions for providing OpenID Connect with NGINX Plus
- * 
+ *
  * Copyright (C) 2020 Nginx, Inc.
  */
 var newSession = false; // Used by oidcAuth() and validateIdToken()
@@ -51,7 +51,7 @@ function auth(r, afterSyncCheck) {
         r.return(302, r.variables.oidc_authz_endpoint + getAuthZArgs(r));
         return;
     }
-    
+
     // Pass the refresh token to the /_refresh location so that it can be
     // proxied to the IdP in exchange for a new id_token
     r.subrequest("/_refresh", "token=" + r.variables.refresh_token,
@@ -308,5 +308,5 @@ function idpClientAuth(r) {
         return "code=" + r.variables.arg_code + "&code_verifier=" + r.variables.pkce_code_verifier;
     } else {
         return "code=" + r.variables.arg_code + "&client_secret=" + r.variables.oidc_client_secret;
-    }   
+    }
 }
