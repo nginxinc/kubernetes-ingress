@@ -99,7 +99,7 @@ If you need to update the basic-auth credentials to NMS server in the future, up
         - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
    ```
 
-The `-nms-server-address` should be the address of the NGINX Management Suite host. The `nms-basic-auth-secret` should be the namespace/name of the secret created in step 2, i.e `nginx-cluster-connector/nms-basic-auth`.
+The `-nms-server-address` should be the address of the usage reporting API, which should be the combination of NMS server hostname and the URI `api/platform/v1`.  The `nms-basic-auth-secret` should be the namespace/name of the secret created in step 2, i.e `nginx-cluster-connector/nms-basic-auth`.
 For more information on the command-line flags, see [Configuration](#configuration).
 
 8. To deploy the Nginx Cluster Connector, run the following command to deploy it to your Kubernetes cluster:
@@ -205,11 +205,7 @@ The NGINX Cluster Connector supports several command-line arguments. The command
 
 ### -nms-server-address `<string>`
 The address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported.
-Default `apigw.nms.svc.cluster.local`.
-
-### -nms-server-port `<int>`
-The port of the NGINX Management Suite host
-Default `443`.
+Default `http://apigw.nms.svc.cluster.local/api/platform/v1/k8s-usage`.
 
 ### -nms-basic-auth-secret `<string>`
 Secret for basic authentication to the NGINX Management Suite API. The secret must be in `kubernetes.io/basic-auth` format using base64 encoding.

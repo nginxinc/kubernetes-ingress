@@ -91,12 +91,12 @@ spec:
   template:
     metadata:
       labels:
-        app: cluster-connector
+        app: nginx-cluster-connector
     spec:
-      serviceAccountName: cluster-connector
+      serviceAccountName: nginx-cluster-connector
       automountServiceAccountToken: true
       containers:
-        - image: public-registry.nginx.com/cluster-connector:0.0.1 #TODO: update with correct image tag after publishing
+        - image: public-registry.nginx.com/cluster-connector/cluster-connector:0.0.1 #TODO: update with correct image tag after publishing
           imagePullPolicy: IfNotPresent
           name: nginx-cluster-connector
           resources:
@@ -122,10 +122,10 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
           args:
-            - -nms-server-address=apigw.nms.svc.cluster.local
-            - -nms-server-port=443
+            - -nms-server-address=https://apigw.nms.svc.cluster.local:443/api/platform/v1
             - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
-            - -cluster-display-name=my-cluster
-#        - -v=3
-#        - -skip-tls-verify
-#        - -min-update-interval=24h
+#          - -cluster-display-name=my-cluster
+#          - -v=3
+#          - -skip-tls-verify
+#          - -min-update-interval=24h
+
