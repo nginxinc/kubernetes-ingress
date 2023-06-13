@@ -45,7 +45,7 @@ repos:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.4.0
+    rev: v3.6.0
     hooks:
       - id: pyupgrade
   - repo: https://github.com/PyCQA/isort
