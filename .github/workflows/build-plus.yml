@@ -116,7 +116,7 @@ jobs:
         if: ${{ inputs.nap_modules != '' }}
 
       - name: Build Plus Docker image
-        uses: docker/build-push-action@44ea916f6c540f9302d50c2b1e5a8dc071f15cdf # v4.1.0
+        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: build/Dockerfile
           context: '.'
@@ -143,7 +143,7 @@ jobs:
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
       - name: Load image for Trivy
-        uses: docker/build-push-action@44ea916f6c540f9302d50c2b1e5a8dc071f15cdf # v4.1.0
+        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: build/Dockerfile
           context: '.'
