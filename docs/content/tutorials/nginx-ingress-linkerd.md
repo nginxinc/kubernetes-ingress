@@ -14,8 +14,8 @@ This document will walk you through how to install NGINX Ingress controller with
 
 We are going to install the Linkderd sidecar proxy with NGINX Ingress controller.
 
-We need to install the `Linkerd` control plane utility.    
-Linkerd has a great document on how to install the linkerd control plane utility on their website.   
+We need to install the `Linkerd` control plane utility.
+Linkerd has a great document on how to install the linkerd control plane utility on their website.
 You can find the install steps on `Linkerd` website: [Linkerd Service mesh](https://linkerd.io/2.13/getting-started/)
 
 Once you have the `Linkerd` control plane utility installed, you will need to inject the NGINX Ingress controller deployment and your application with the `Linkerd` sidecar.
@@ -25,12 +25,12 @@ We are going to use the NGINX Ingress controller custom resource definitions (CR
 We can install NGINX Ingress controller two ways: manfiets and with helm.
 
 Using manifests:
-You can install NGINX Ingress controller using our manifests from our documentation website. 
+You can install NGINX Ingress controller using our manifests from our documentation website.
 [NGINX Ingress controller manifest installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
 
 
 Once you have installed NGINX Ingress controller, you will need to inject the deployment with the `Linkerd` sidecar.
-This is accomplished by using the `linkerd` control plane utility.    
+This is accomplished by using the `linkerd` control plane utility.
 
 Here is an example:
 
@@ -38,7 +38,7 @@ Here is an example:
 kubectl get deployment -n nginx-ingress nginx-ingress -oyaml | linkerd inject - | kubectl apply -f
 ```
 
-In the above example, my `NGINX Ingress controller` deployment is in the `nginx-ingress` namespace. Adjust accordingly to your environment.    
+In the above example, my `NGINX Ingress controller` deployment is in the `nginx-ingress` namespace. Adjust accordingly to your environment.
 
 
 If you are using `Helm`, you can inject the sidecar in two ways.
@@ -60,7 +60,7 @@ This annotation will tell `Linkerd` to automatically inject the sidecar during t
 If you have an exisiting `Helm` install and want to inject the exisiting install, you can run the following:
 
 ```bash
-kubectl get deployment -n nginx-ingress <name_of_helm_release> -oyaml | linkerd inject - | kubectl apply -f 
+kubectl get deployment -n nginx-ingress <name_of_helm_release> -oyaml | linkerd inject - | kubectl apply -f
 ```
 
 For example, in my lab I ran the following to inject my `helm` release named `kic01-nginx-ingress-controller` in the `nginx-ingress` namespace:
