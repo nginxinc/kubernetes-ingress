@@ -7,6 +7,15 @@ toc: true
 docs: "DOCS-608"
 ---
 
+# Table of contents
+
+1. [Introduction](#introduction)
+2. [Use JWT token](#jwt-token)
+3. [Pull image locally](#image-local)
+
+<a id="introduction"></a>
+## Introduction
+
 This document explains how to use the NGINX Plus Ingress Controller image from the F5 Docker registry in your Kubernetes cluster by using your NGINX Ingress Controller subscription JWT token. **Please note that an NGINX Plus subscription certificate and key will not work with the F5 Docker registry.** You can also get the image using alternative methods:
 
 * You can use Docker to pull an Ingress Controller image with NGINX Plus and push it to your private registry by following the [Pulling the Ingress Controller Image](https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/)
@@ -29,6 +38,7 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
 6. Deploy NGINX Ingress controller into your kubernetes cluster and verify successful installation.
 
 
+<a id="jwt-token"></a>
 ## Using the JWT token in a Docker Config Secret
 
 1. Create a kubernetes `docker-registry` secret type, on the cluster using the JWT token as the username and `none` for password (password is unused).  The name of the docker server is `private-registry.nginx.com`.
@@ -171,6 +181,7 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
     }
 ```
 
+<a id="image-local"></a>
 ## Pulling the image locally
 
 If you need to pull the image locally, and push to a different container registry, here are the steps to do so:
