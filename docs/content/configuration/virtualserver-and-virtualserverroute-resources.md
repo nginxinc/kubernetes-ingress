@@ -460,6 +460,7 @@ sessionCookie:
   domain: .example.com
   httpOnly: false
   secure: true
+  samesite: strict
 ```
 See the [`sticky`](https://nginx.org/en/docs/http/ngx_http_upstream_module.html?#sticky) directive for additional information. The session cookie corresponds to the `sticky cookie` method.
 
@@ -475,6 +476,7 @@ Note: This feature is supported only in NGINX Plus.
 |``domain`` | The domain for which the cookie is set. | ``string`` | No |
 |``httpOnly`` | Adds the ``HttpOnly`` attribute to the cookie. | ``boolean`` | No |
 |``secure`` | Adds the ``Secure`` attribute to the cookie. | ``boolean`` | No |
+|``samesite`` | Adds the ``SameSite`` attribute to the cookie. The allowed values are: ``strict``, ``lax``, ``none`` | ``string`` | No |
 {{% /table %}}
 
 ### Header

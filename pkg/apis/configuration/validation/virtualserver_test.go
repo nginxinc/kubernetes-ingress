@@ -1823,19 +1823,8 @@ func TestValidateConditionFails(t *testing.T) {
 	}
 }
 
-func TestIsCookieName(t *testing.T) {
+func TestIsCookieName_ErrorsOnInvalidInput(t *testing.T) {
 	t.Parallel()
-	validCookieNames := []string{
-		"123",
-		"my_cookie",
-	}
-
-	for _, name := range validCookieNames {
-		errs := isCookieName(name)
-		if len(errs) > 0 {
-			t.Errorf("isCookieName(%q) returned errors %v for valid input", name, errs)
-		}
-	}
 
 	invalidCookieNames := []string{
 		"",
@@ -1847,6 +1836,22 @@ func TestIsCookieName(t *testing.T) {
 		errs := isCookieName(name)
 		if len(errs) == 0 {
 			t.Errorf("isCookieName(%q) returned no errors for invalid input", name)
+		}
+	}
+}
+
+func TestIsCookieName_IsValidOnValidInput(t *testing.T) {
+	t.Parallel()
+
+	validCookieNames := []string{
+		"123",
+		"my_cookie",
+	}
+
+	for _, name := range validCookieNames {
+		errs := isCookieName(name)
+		if len(errs) > 0 {
+			t.Errorf("isCookieName(%q) returned errors %v for valid input", name, errs)
 		}
 	}
 }
@@ -2959,7 +2964,6 @@ func TestValidateSessionCookie(t *testing.T) {
 			sc: &v1.SessionCookie{
 				Enable: true, Name: "test", Path: "/tea", Expires: "1", Domain: ".example.com", HTTPOnly: false, Secure: true,
 			},
-
 			msg: "max valid config",
 		},
 	}
@@ -2971,7 +2975,30 @@ func TestValidateSessionCookie(t *testing.T) {
 	}
 }
 
-func TestValidateSessionCookieFails(t *testing.T) {
+func TestValidateSessionCookie_IsValidOnValidSameSiteInput(t *testing.T) {
+	t.Parallel()
+
+	samesites := []string{
+		"strict",
+		"Strict",
+		"STRICT",
+		"lax",
+		"Lax",
+		"LAX",
+		"none",
+		"None",
+		"NONE",
+	}
+	for _, samesite := range samesites {
+		sc := &v1.SessionCookie{Enable: true, Name: "ValidCookie", SameSite: samesite}
+		allErr := validateSessionCookie(sc, field.NewPath("sessionCookie"))
+		if len(allErr) != 0 {
+			t.Errorf("validateSessionCookie() returned errors for valid input: %s", samesite)
+		}
+	}
+}
+
+func TestValidateSessionCookie_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		sc  *v1.SessionCookie
@@ -2997,12 +3024,18 @@ func TestValidateSessionCookieFails(t *testing.T) {
 			sc:  &v1.SessionCookie{Enable: true, Name: "test", Path: "/ coffee"},
 			msg: "invalid path format",
 		},
+		{
+			sc:  &v1.SessionCookie{Enable: true, Name: "ValidCookie", SameSite: "bogus_value"},
+			msg: "invalid samesite value",
+		},
 	}
 	for _, test := range tests {
-		allErrs := validateSessionCookie(test.sc, field.NewPath("sessionCookie"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateSessionCookie() returned no errors for invalid input for the case of: %v", test.msg)
-		}
+		t.Run(test.msg, func(t *testing.T) {
+			allErrs := validateSessionCookie(test.sc, field.NewPath("sessionCookie"))
+			if len(allErrs) == 0 {
+				t.Errorf("validateSessionCookie() did not return errors for invalid input for the case of: %s", test.msg)
+			}
+		})
 	}
 }
 
