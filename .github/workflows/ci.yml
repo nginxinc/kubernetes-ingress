@@ -83,7 +83,7 @@ jobs:
   release:
     runs-on: ubuntu-22.04
     needs: [checks, unit-tests]
-    if: ${{ github.event_name == 'push' && ! github.ref != 'refs/heads/main' }}
+    if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -175,9 +175,9 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@6a58db7e0d21ca03e6c44877909e80e45217eed2 # v2.6.0
+        uses: docker/setup-buildx-action@ecf95283f03858871ff00b787d79c419715afc34 # v2.7.0
       - name: Build Docker Image ${{ matrix.image }}
-        uses: docker/build-push-action@44ea916f6c540f9302d50c2b1e5a8dc071f15cdf # v4.1.0
+        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: build/Dockerfile
           context: "."
@@ -264,9 +264,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@6a58db7e0d21ca03e6c44877909e80e45217eed2 # v2.6.0
+        uses: docker/setup-buildx-action@ecf95283f03858871ff00b787d79c419715afc34 # v2.7.0
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@44ea916f6c540f9302d50c2b1e5a8dc071f15cdf # v4.1.0
+        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: tests/docker/Dockerfile
           context: "."
