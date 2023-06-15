@@ -80,7 +80,7 @@ In order to make the credential available to NGINX Cluster Connector, we need to
       password: YmFy # base64 representation of 'bar' obtained in step 1
     ```
    Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector.
-   
+
    If you are using a different namespace, please change the namespace in the `metadata` section of the file above. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64.
 
 4. Deploy the Kubernetes secret created in step 5 to the Kubernetes cluster:
