@@ -50,7 +50,7 @@ The cluster connector needs a user account to send usage data to NIM. This is ho
 
 ### Define a namespace
 
-3. Create a Kubernetes namespace `nginx-cluster-connector` for the NGINX Cluster Connector:
+1. Create a Kubernetes namespace `nginx-cluster-connector` for the NGINX Cluster Connector:
     ```
     > kubectl create namespace nginx-cluster-connector
     ```
@@ -59,7 +59,7 @@ The cluster connector needs a user account to send usage data to NIM. This is ho
 
 In order to make the credential available to NGINX Cluster Connector, we need to create a Kubernetes secret.
 
-4. The username and password created in the previous section are required to connect the NGINX Management Suite API. Both the username and password are stored in the Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`. To obtain the base64 representation of a string, use the following command:
+2. The username and password created in the previous section are required to connect the NGINX Management Suite API. Both the username and password are stored in the Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`. To obtain the base64 representation of a string, use the following command:
     ```
     > echo -n 'foo' | base64
     Zm9v
@@ -67,7 +67,7 @@ In order to make the credential available to NGINX Cluster Connector, we need to
     YmFy
     ```
 
-5. Copying the following content to a text editor, and fill in under `data` the base64 representation of the username and password obtained in step 4:
+3. Copying the following content to a text editor, and fill in under `data` the base64 representation of the username and password obtained in step 4:
     ```
     apiVersion: v1
     kind: Secret
@@ -79,11 +79,11 @@ In order to make the credential available to NGINX Cluster Connector, we need to
       username: Zm9v # base64 representation of 'foo' obtained in step 1
       password: YmFy # base64 representation of 'bar' obtained in step 1
     ```
-Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector.
+   Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` and the secret name is `nms-basic-auth`. The namespace is the default namespace for the NGINX Cluster Connector.
+   
+   If you are using a different namespace, please change the namespace in the `metadata` section of the file above. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64.
 
-If you are using a different namespace, please change the namespace in the `metadata` section of the file above. Note that the cluster connector only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64.
-
-6. Deploy the Kubernetes secret created in step 5 to the Kubernetes cluster:
+4. Deploy the Kubernetes secret created in step 5 to the Kubernetes cluster:
     ```
     > kubectl apply -f nms-basic-auth.yaml
     ```
@@ -92,7 +92,7 @@ If you need to update the basic-auth credentials to NMS server in the future, up
 
 ### Deploy the cluster connector
 
-7. Download and save the deployment file [nginx-cluster.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
+5. Download and save the deployment file [cluster-connector.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.1.1/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
    ```
         args:
         - -nms-server-address=https://nms.example.com/api/platform/v1
@@ -102,7 +102,7 @@ If you need to update the basic-auth credentials to NMS server in the future, up
 The `-nms-server-address` should be the address of the usage reporting API, which should be the combination of NMS server hostname and the URI `api/platform/v1`.  The `nms-basic-auth-secret` should be the namespace/name of the secret created in step 2, i.e `nginx-cluster-connector/nms-basic-auth`.
 For more information on the command-line flags, see [Configuration](#configuration).
 
-8. To deploy the Nginx Cluster Connector, run the following command to deploy it to your Kubernetes cluster:
+6. To deploy the Nginx Cluster Connector, run the following command to deploy it to your Kubernetes cluster:
    ```
    > kubectl apply -f cluster-connector.yaml
    ```
