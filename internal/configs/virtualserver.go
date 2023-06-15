@@ -1537,6 +1537,7 @@ func generateSessionCookie(sc *conf_v1.SessionCookie) *version2.SessionCookie {
 		Domain:   sc.Domain,
 		HTTPOnly: sc.HTTPOnly,
 		Secure:   sc.Secure,
+		SameSite: sc.SameSite,
 	}
 }
 

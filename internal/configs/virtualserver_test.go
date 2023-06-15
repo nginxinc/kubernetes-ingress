@@ -9308,12 +9308,19 @@ func TestGenerateSessionCookie(t *testing.T) {
 			expected: nil,
 			msg:      "session cookie not enabled",
 		},
+		{
+			sc:       &conf_v1.SessionCookie{Enable: true, Name: "testcookie", SameSite: "lax"},
+			expected: &version2.SessionCookie{Enable: true, Name: "testcookie", SameSite: "lax"},
+			msg:      "session cookie with samesite param",
+		},
 	}
 	for _, test := range tests {
-		result := generateSessionCookie(test.sc)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateSessionCookie() returned %v, but expected %v for the case of: %v", result, test.expected, test.msg)
-		}
+		t.Run(test.msg, func(t *testing.T) {
+			result := generateSessionCookie(test.sc)
+			if !cmp.Equal(test.expected, result) {
+				t.Error(cmp.Diff(test.expected, result))
+			}
+		})
 	}
 }
 
