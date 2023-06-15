@@ -110,7 +110,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI #############################################
-FROM nginxcontrib/nginx:1.25.0-ubi AS ubi
+FROM nginxcontrib/nginx:1.25.1-ubi AS ubi
 ARG IC_VERSION
 
 LABEL name="NGINX Ingress Controller" \
