@@ -191,7 +191,6 @@ FROM ${BUILD_OS} as common
 
 ARG BUILD_OS
 ARG IC_VERSION
-ARG GIT_COMMIT
 ARG TARGETPLATFORM
 ARG NAP_MODULES=none
 
@@ -228,7 +227,6 @@ ENTRYPOINT ["/nginx-ingress"]
 USER 101
 
 LABEL org.opencontainers.image.version="${IC_VERSION}"
-LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
 LABEL org.nginx.kic.image.build.os="${BUILD_OS}"
 LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERSION}"
