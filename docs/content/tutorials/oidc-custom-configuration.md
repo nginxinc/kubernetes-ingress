@@ -54,7 +54,7 @@ oidc.conf:
     subrequest_output_buffer_size 32k; # To fit a complete tokenset response
     gunzip on; # Decompress IdP responses if necessary
     # Advanced configuration END
-    
+
     ...
     # Rest of config ammended
 ```
@@ -85,12 +85,12 @@ data:
         subrequest_output_buffer_size 32k; # To fit a complete tokenset response
         gunzip on; # Decompress IdP responses if necessary
         # Advanced configuration END
-        
+
         ...
         # Rest of config ammended
 ```
 > **IMPORTANT**
-> 
+>
 > In Step 3 we will deploy/update an Ingress Controller that will use this ConfigMap. Any changes made to this ConfigMap must be made **before** deploying/updating the Ingress Controller. If an update is applied to the ConfigMap after the Ingress Controller is deployed, it will not get applied. Applying any updates to the data in this ConfigMap will require the Ingress Controller to be re-deployed.
 
 ## Step 3 - Add Volume and VolumeMount to the Ingress Controller deployment
