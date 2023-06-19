@@ -38,7 +38,7 @@ func RunPrometheusListenerForNginxPlus(port int, nginxPlusCollector prometheus.C
 // runServer starts the metrics server.
 func runServer(port string, registry prometheus.Gatherer, prometheusSecret *v1.Secret) {
 	addr := fmt.Sprintf(":%s", port)
-	ms, err := NewMetricsServer(addr, registry, prometheusSecret)
+	ms, err := NewServer(addr, registry, prometheusSecret)
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -46,18 +46,18 @@ func runServer(port string, registry prometheus.Gatherer, prometheusSecret *v1.S
 	glog.Fatal(ms.ListenAndServe())
 }
 
-// MetricsServer holds information about NIC metrics server.
-type MetricsServer struct {
+// Server holds information about NIC metrics server.
+type Server struct {
 	Server   *http.Server
 	URL      string
 	Registry prometheus.Gatherer
 }
 
-// NewMetricsServer creates HTTP server for serving NIC metrics for Prometheus.
+// NewServer creates HTTP server for serving NIC metrics for Prometheus.
 //
 // Metrics are exposed on the `/metrics` endpoint.
-func NewMetricsServer(addr string, registry prometheus.Gatherer, secret *v1.Secret) (*MetricsServer, error) {
-	ms := MetricsServer{
+func NewServer(addr string, registry prometheus.Gatherer, secret *v1.Secret) (*Server, error) {
+	ms := Server{
 		Server: &http.Server{
 			Addr:         addr,
 			ReadTimeout:  10 * time.Second,
@@ -83,7 +83,7 @@ func NewMetricsServer(addr string, registry prometheus.Gatherer, secret *v1.Secr
 }
 
 // Home is a handler for serving metrics home page.
-func (ms *MetricsServer) Home(w http.ResponseWriter, r *http.Request) {
+func (ms *Server) Home(w http.ResponseWriter, r *http.Request) { //nolint:revive
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte(`<html>
@@ -101,7 +101,7 @@ func (ms *MetricsServer) Home(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListenAndServe starts metrics server.
-func (ms *MetricsServer) ListenAndServe() error {
+func (ms *Server) ListenAndServe() error {
 	mux := chi.NewRouter()
 	mux.Get("/", ms.Home)
 	mux.Handle("/metrics", promhttp.HandlerFor(ms.Registry, promhttp.HandlerOpts{}))
@@ -113,7 +113,7 @@ func (ms *MetricsServer) ListenAndServe() error {
 }
 
 // Shutdown shuts down metrics server.
-func (ms *MetricsServer) Shutdown(ctx context.Context) error {
+func (ms *Server) Shutdown(ctx context.Context) error {
 	return ms.Server.Shutdown(ctx)
 }
 
