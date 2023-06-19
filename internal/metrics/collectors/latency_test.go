@@ -71,7 +71,7 @@ func TestParseMessageWithValidInputs(t *testing.T) {
 			}
 		} else {
 			if err != nil {
-				t.Errorf("parseMessage returned an unexpected error: %v", err)
+				t.Fatalf("parseMessage returned an unexpected error: %v", err)
 			}
 			if actual != test.expected {
 				t.Errorf("parseMessage returned: %+v, expected: %+v", actual, test.expected)
@@ -112,7 +112,7 @@ func TestCreateLatencyLabelValuesWithCorrectNumberOfLabels(t *testing.T) {
 	expected := []string{"upstream-1", "10.0.0.1", "200", "service-1", "ingress", "ingress-1", "default", "pod-1"}
 	actual, err := collector.createLatencyLabelValues(lm)
 	if err != nil {
-		t.Errorf("createLatencyLabelValues returned unexpected error: %v", err)
+		t.Fatalf("createLatencyLabelValues returned unexpected error: %v", err)
 	}
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("createLatencyLabelValues returned: %v, expected: %v", actual, expected)
@@ -184,7 +184,7 @@ func TestMetricsPublished(t *testing.T) {
 	// verify metrics for upstream-1 are correct
 	upstream1Metrics, ok := collector.metricsPublishedMap["upstream-1/10.0.0.0:80"]
 	if !ok {
-		t.Errorf("updateMetricsPublished did not add upstream-1 as key to map")
+		t.Fatal("updateMetricsPublished did not add upstream-1 as key to map")
 	}
 	if l := len(upstream1Metrics); l != 2 {
 		t.Errorf("updateMetricsPublished did not update upstream-1 map correctly, length is %d expected 2", l)
@@ -208,7 +208,7 @@ func TestMetricsPublished(t *testing.T) {
 	// verify metrics for upstream-2 are correct
 	upstream2Metrics, ok := collector.metricsPublishedMap["upstream-2/10.0.0.0:80"]
 	if !ok {
-		t.Errorf("updateMetricsPublished did not add upstream-2 as key to map")
+		t.Fatal("updateMetricsPublished did not add upstream-2 as key to map")
 	}
 	if l := len(upstream2Metrics); l != 1 {
 		t.Errorf("updateMetricsPublished did not update upstream-2 map correctly, length is %d expected 1", l)
