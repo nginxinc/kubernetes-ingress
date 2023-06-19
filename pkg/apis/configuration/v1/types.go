@@ -162,6 +162,7 @@ type SessionCookie struct {
 	Domain   string `json:"domain"`
 	HTTPOnly bool   `json:"httpOnly"`
 	Secure   bool   `json:"secure"`
+	SameSite string `json:"samesite"`
 }
 
 // Route defines a route.
