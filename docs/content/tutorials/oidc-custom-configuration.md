@@ -1,13 +1,13 @@
 ---
-title: NGINX Ingress Controller and Open Service Mesh
+title: Customise OIDC Configuration with NGINX Ingress Controller
 description: |
-  Use NGINX Ingress Controller with Open Service Mesh.
+  How to Customise the default OIDC Configuration with NGINX Ingress Controller
 weight: 1800
 doctypes: ["concept"]
 toc: true
 ---
 
-# OIDC Custom Configuration
+# Overview
 
 The F5 NGINX Ingress Controller implements OpenID Connect (OIDC) using the NGINX OpenID Connect Reference implementation: [nginx-openid-connect](https://github.com/nginxinc/nginx-openid-connect).
 
