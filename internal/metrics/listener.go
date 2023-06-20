@@ -38,12 +38,12 @@ func RunPrometheusListenerForNginxPlus(port int, nginxPlusCollector prometheus.C
 // runServer starts the metrics server.
 func runServer(port string, registry prometheus.Gatherer, prometheusSecret *v1.Secret) {
 	addr := fmt.Sprintf(":%s", port)
-	ms, err := NewServer(addr, registry, prometheusSecret)
+	s, err := NewServer(addr, registry, prometheusSecret)
 	if err != nil {
 		glog.Fatal(err)
 	}
 	glog.Infof("Starting prometheus listener on: %s/metrics", addr)
-	glog.Fatal(ms.ListenAndServe())
+	glog.Fatal(s.ListenAndServe())
 }
 
 // Server holds information about NIC metrics server.
@@ -57,7 +57,7 @@ type Server struct {
 //
 // Metrics are exposed on the `/metrics` endpoint.
 func NewServer(addr string, registry prometheus.Gatherer, secret *v1.Secret) (*Server, error) {
-	ms := Server{
+	s := Server{
 		Server: &http.Server{
 			Addr:         addr,
 			ReadTimeout:  10 * time.Second,
@@ -73,17 +73,17 @@ func NewServer(addr string, registry prometheus.Gatherer, secret *v1.Secret) (*S
 		if err != nil {
 			return nil, fmt.Errorf("unable to create TLS cert: %w", err)
 		}
-		ms.Server.TLSConfig = &tls.Config{
+		s.Server.TLSConfig = &tls.Config{
 			Certificates: []tls.Certificate{tlsCert},
 			MinVersion:   tls.VersionTLS12,
 		}
-		ms.URL = fmt.Sprintf("https://%s/", addr)
+		s.URL = fmt.Sprintf("https://%s/", addr)
 	}
-	return &ms, nil
+	return &s, nil
 }
 
 // Home is a handler for serving metrics home page.
-func (ms *Server) Home(w http.ResponseWriter, r *http.Request) { //nolint:revive
+func (s *Server) Home(w http.ResponseWriter, r *http.Request) { //nolint:revive
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte(`<html>
@@ -101,20 +101,20 @@ func (ms *Server) Home(w http.ResponseWriter, r *http.Request) { //nolint:revive
 }
 
 // ListenAndServe starts metrics server.
-func (ms *Server) ListenAndServe() error {
+func (s *Server) ListenAndServe() error {
 	mux := chi.NewRouter()
-	mux.Get("/", ms.Home)
-	mux.Handle("/metrics", promhttp.HandlerFor(ms.Registry, promhttp.HandlerOpts{}))
-	ms.Server.Handler = mux
-	if ms.Server.TLSConfig != nil {
-		return ms.Server.ListenAndServeTLS("", "")
+	mux.Get("/", s.Home)
+	mux.Handle("/metrics", promhttp.HandlerFor(s.Registry, promhttp.HandlerOpts{}))
+	s.Server.Handler = mux
+	if s.Server.TLSConfig != nil {
+		return s.Server.ListenAndServeTLS("", "")
 	}
-	return ms.Server.ListenAndServe()
+	return s.Server.ListenAndServe()
 }
 
 // Shutdown shuts down metrics server.
-func (ms *Server) Shutdown(ctx context.Context) error {
-	return ms.Server.Shutdown(ctx)
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.Server.Shutdown(ctx)
 }
 
 // makeCert takes K8s Secret and returns tls Certificate for the server.
