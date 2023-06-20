@@ -40,12 +40,12 @@ repos:
         types: [go]
         pass_filenames: false
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.53.2
+    rev: v1.53.3
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.6.0
+    rev: v3.7.0
     hooks:
       - id: pyupgrade
   - repo: https://github.com/PyCQA/isort
@@ -57,7 +57,7 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.23.1
+    rev: 0.23.2
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
