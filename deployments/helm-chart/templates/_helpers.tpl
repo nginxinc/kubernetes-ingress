@@ -30,7 +30,11 @@ Create a default fully qualified controller name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "nginx-ingress.controller.fullname" -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride -}}
+{{- else }}
 {{- printf "%s-%s" (include "nginx-ingress.fullname" .) .Values.controller.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
