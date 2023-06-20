@@ -327,7 +327,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [debian-plus, alpine-plus]
+        image: [debian-plus, alpine-plus, alpine-plus-fips]
         platforms: ["linux/arm64, linux/amd64"]
         target: [goreleaser, aws]
         include:
