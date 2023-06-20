@@ -1,7 +1,7 @@
 ---
 title: Troubleshooting
 description:
-weight: 2000
+weight: 1800
 menu:
   docs:
     parent: NGINX Ingress Controller

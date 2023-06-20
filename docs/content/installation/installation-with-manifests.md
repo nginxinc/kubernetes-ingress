@@ -112,7 +112,7 @@ Create a custom resource definition for `APDosPolicy`, `APDosLogConf` and `DosPr
    $ kubectl apply -f common/crds/appprotectdos.f5.com_dosprotectedresources.yaml
    ```
 
-## 3. Deploy the Ingress Controller
+## 4. Deploy the Ingress Controller
 
 We include two options for deploying the Ingress Controller:
 * *Deployment*. Use a Deployment if you plan to dynamically change the number of Ingress Controller replicas.
@@ -132,7 +132,7 @@ If you would like to use the App Protect DoS module, you will need to deploy the
    $ kubectl apply -f service/appprotect-dos-arb-svc.yaml
    ```
 
-### 3.1 Run the Ingress Controller
+### 4.1 Run the Ingress Controller
 * *Use a Deployment*.
     When you run the Ingress Controller by using a Deployment, by default, Kubernetes will create one Ingress Controller pod.
 
@@ -165,20 +165,20 @@ If you would like to use the App Protect DoS module, you will need to deploy the
 
     **Note**: Update the `nginx-plus-ingress.yaml` with the chosen image from the F5 Container registry; or the container image that you have built.
 
-### 3.2 Check that the Ingress Controller is Running
+### 4.2 Check that the Ingress Controller is Running
 
 Run the following command to make sure that the Ingress Controller pods are running:
 ```
 $ kubectl get pods --namespace=nginx-ingress
 ```
 
-## 4. Get Access to the Ingress Controller
+## 5. Get Access to the Ingress Controller
 
 **If you created a daemonset**, ports 80 and 443 of the Ingress Controller container are mapped to the same ports of the node where the container is running. To access the Ingress Controller, use those ports and an IP address of any node of the cluster where the Ingress Controller is running.
 
 **If you created a deployment**, below are two options for accessing the Ingress Controller pods.
 
-### 4.1 Create a Service for the Ingress Controller Pods
+### 5.1 Create a Service for the Ingress Controller Pods
 
 * *Use a NodePort service*.
 
