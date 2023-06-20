@@ -55,7 +55,7 @@ oidc.conf:
     # Advanced configuration END
 
     ...
-     # Rest of configuration file truncated
+    # Rest of configuration file truncated
 ```
 
 ## Step 2 - Customising the default configuration
@@ -86,7 +86,7 @@ data:
         # Advanced configuration END
 
         ...
-         # Rest of configuration file truncated
+        # Rest of configuration file truncated
 ```
 > **IMPORTANT**
 >
