@@ -49,7 +49,7 @@ To check the Ingress Controller logs -- both of the Ingress Controller software 
 
 ### Enabling debuging for NGINX Ingress Controller
 
-If you need to do additional troubleshooting for the Ingress Controller, there are a few additional settings you can configure, to add more verbose logging.
+If you need to do additional troubleshooting for the NGINX Ingress Controller, there are a few additional settings for more verbose logging.
 
 There are two settings that need to be set to enable more debug/verbose logging for the Ingress Controller.
 
@@ -79,7 +79,7 @@ args:
   - -v=3
 ```
 
-You can configure `error-log-level` in the NGINX Ingress controller `configMap`:
+You can configure `error-log-level` in the NGINX Ingress Controller `configMap`:
 
 ```yaml
 kind: ConfigMap
