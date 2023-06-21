@@ -8,7 +8,6 @@ import (
 	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -20,9 +19,9 @@ type FakeGlobalConfigurations struct {
 	ns   string
 }
 
-var globalconfigurationsResource = schema.GroupVersionResource{Group: "k8s.nginx.org", Version: "v1alpha1", Resource: "globalconfigurations"}
+var globalconfigurationsResource = v1alpha1.SchemeGroupVersion.WithResource("globalconfigurations")
 
-var globalconfigurationsKind = schema.GroupVersionKind{Group: "k8s.nginx.org", Version: "v1alpha1", Kind: "GlobalConfiguration"}
+var globalconfigurationsKind = v1alpha1.SchemeGroupVersion.WithKind("GlobalConfiguration")
 
 // Get takes name of the globalConfiguration, and returns the corresponding globalConfiguration object, and an error if there is any.
 func (c *FakeGlobalConfigurations) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.GlobalConfiguration, err error) {

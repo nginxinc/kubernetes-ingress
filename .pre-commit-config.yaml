@@ -29,6 +29,8 @@ repos:
       - id: no-commit-to-branch
       - id: requirements-txt-fixer
       - id: fix-byte-order-marker
+      - id: detect-private-key
+        exclude: ^(examples/|tests/|internal/k8s/secrets/)
   - repo: local
     hooks:
       - id: golang-diff
@@ -38,24 +40,24 @@ repos:
         types: [go]
         pass_filenames: false
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.50.1
+    rev: v1.53.3
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.0
+    rev: v3.7.0
     hooks:
       - id: pyupgrade
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.12.0
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 23.3.0
     hooks:
       - id: black
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.19.2
+    rev: 0.23.2
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"

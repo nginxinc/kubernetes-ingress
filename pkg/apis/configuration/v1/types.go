@@ -39,6 +39,7 @@ type VirtualServerSpec struct {
 	IngressClass   string            `json:"ingressClassName"`
 	Host           string            `json:"host"`
 	TLS            *TLS              `json:"tls"`
+	Gunzip         bool              `json:"gunzip"`
 	Policies       []PolicyReference `json:"policies"`
 	Upstreams      []Upstream        `json:"upstreams"`
 	Routes         []Route           `json:"routes"`
@@ -46,6 +47,8 @@ type VirtualServerSpec struct {
 	ServerSnippets string            `json:"server-snippets"`
 	Dos            string            `json:"dos"`
 	ExternalDNS    ExternalDNS       `json:"externalDNS"`
+	// InternalRoute allows for the configuration of internal routing.
+	InternalRoute bool `json:"internalRoute"`
 }
 
 // ExternalDNS defines externaldns sub-resource of a virtual server.
@@ -141,6 +144,7 @@ type HealthCheck struct {
 	GRPCService    string       `json:"grpcService"`
 	Mandatory      bool         `json:"mandatory"`
 	Persistent     bool         `json:"persistent"`
+	KeepaliveTime  string       `json:"keepalive-time"`
 }
 
 // Header defines an HTTP Header.
@@ -158,6 +162,7 @@ type SessionCookie struct {
 	Domain   string `json:"domain"`
 	HTTPOnly bool   `json:"httpOnly"`
 	Secure   bool   `json:"secure"`
+	SameSite string `json:"samesite"`
 }
 
 // Route defines a route.
@@ -438,9 +443,11 @@ type RateLimit struct {
 
 // JWTAuth holds JWT authentication configuration.
 type JWTAuth struct {
-	Realm  string `json:"realm"`
-	Secret string `json:"secret"`
-	Token  string `json:"token"`
+	Realm    string `json:"realm"`
+	Secret   string `json:"secret"`
+	Token    string `json:"token"`
+	JwksURI  string `json:"jwksURI"`
+	KeyCache string `json:"keyCache"`
 }
 
 // BasicAuth holds HTTP Basic authentication configuration
@@ -453,6 +460,7 @@ type BasicAuth struct {
 // IngressMTLS defines an Ingress MTLS policy.
 type IngressMTLS struct {
 	ClientCertSecret string `json:"clientCertSecret"`
+	CrlFileName      string `json:"crlFileName"`
 	VerifyClient     string `json:"verifyClient"`
 	VerifyDepth      *int   `json:"verifyDepth"`
 }
@@ -472,20 +480,23 @@ type EgressMTLS struct {
 
 // OIDC defines an Open ID Connect policy.
 type OIDC struct {
-	AuthEndpoint   string `json:"authEndpoint"`
-	TokenEndpoint  string `json:"tokenEndpoint"`
-	JWKSURI        string `json:"jwksURI"`
-	ClientID       string `json:"clientID"`
-	ClientSecret   string `json:"clientSecret"`
-	Scope          string `json:"scope"`
-	RedirectURI    string `json:"redirectURI"`
-	ZoneSyncLeeway *int   `json:"zoneSyncLeeway"`
+	AuthEndpoint      string   `json:"authEndpoint"`
+	TokenEndpoint     string   `json:"tokenEndpoint"`
+	JWKSURI           string   `json:"jwksURI"`
+	ClientID          string   `json:"clientID"`
+	ClientSecret      string   `json:"clientSecret"`
+	Scope             string   `json:"scope"`
+	RedirectURI       string   `json:"redirectURI"`
+	ZoneSyncLeeway    *int     `json:"zoneSyncLeeway"`
+	AuthExtraArgs     []string `json:"authExtraArgs"`
+	AccessTokenEnable bool     `json:"accessTokenEnable"`
 }
 
 // WAF defines an WAF policy.
 type WAF struct {
 	Enable       bool           `json:"enable"`
 	ApPolicy     string         `json:"apPolicy"`
+	ApBundle     string         `json:"apBundle"`
 	SecurityLog  *SecurityLog   `json:"securityLog"`
 	SecurityLogs []*SecurityLog `json:"securityLogs"`
 }

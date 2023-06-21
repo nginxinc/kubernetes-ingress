@@ -8,7 +8,7 @@ from suite.utils.resources_utils import (
     wait_before_test,
 )
 from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
-from suite.utils.yaml_utils import get_secret_name_from_vs_yaml
+from suite.utils.yaml_utils import get_secret_name_from_vs_or_ts_yaml
 
 
 @pytest.mark.vs
@@ -27,7 +27,7 @@ from suite.utils.yaml_utils import get_secret_name_from_vs_yaml
 class TestCertManagerVirtualServer:
     def test_responses_after_setup(self, kube_apis, crd_ingress_controller, create_certmanager, virtual_server_setup):
         print("\nStep 1: Verify secret exists")
-        secret_name = get_secret_name_from_vs_yaml(
+        secret_name = get_secret_name_from_vs_or_ts_yaml(
             f"{TEST_DATA}/virtual-server-certmanager/standard/virtual-server.yaml"
         )
         retry = 0
@@ -58,7 +58,7 @@ class TestCertManagerVirtualServerCA:
     def test_responses_after_setup(self, kube_apis, crd_ingress_controller, create_certmanager, virtual_server_setup):
         vs_src = f"{TEST_DATA}/virtual-server-certmanager/virtual-server-updated.yaml"
         print("\nStep 1: Verify no secret exists with bad issuer name")
-        secret_name = get_secret_name_from_vs_yaml(
+        secret_name = get_secret_name_from_vs_or_ts_yaml(
             f"{TEST_DATA}/virtual-server-certmanager/standard/virtual-server.yaml"
         )
         sec = is_secret_present(kube_apis.v1, secret_name, virtual_server_setup.namespace)
@@ -67,7 +67,7 @@ class TestCertManagerVirtualServerCA:
             kube_apis.custom_objects, virtual_server_setup.vs_name, vs_src, virtual_server_setup.namespace
         )
         print("\nStep 2: Verify secret exists with updated issuer name")
-        secret_name = get_secret_name_from_vs_yaml(
+        secret_name = get_secret_name_from_vs_or_ts_yaml(
             f"{TEST_DATA}/virtual-server-certmanager/virtual-server-updated.yaml"
         )
 
@@ -126,7 +126,7 @@ class TestCertManagerVirtualServerWatchLabel:
         self, kube_apis, crd_ingress_controller, create_certmanager, virtual_server_setup, test_namespace
     ):
         print("\nStep 1: Not watching namespace - verify secret does not exist")
-        secret_name = get_secret_name_from_vs_yaml(
+        secret_name = get_secret_name_from_vs_or_ts_yaml(
             f"{TEST_DATA}/virtual-server-certmanager/standard/virtual-server.yaml"
         )
         # add a wait to avoid a false negative
@@ -137,7 +137,7 @@ class TestCertManagerVirtualServerWatchLabel:
         print("\nStep 2: Add label to namespace - Verify secret exists now")
         patch_namespace_with_label(kube_apis.v1, test_namespace, "watch", f"{TEST_DATA}/common/ns-patch.yaml")
         wait_before_test()
-        secret_name = get_secret_name_from_vs_yaml(
+        secret_name = get_secret_name_from_vs_or_ts_yaml(
             f"{TEST_DATA}/virtual-server-certmanager/standard/virtual-server.yaml"
         )
         retry = 0

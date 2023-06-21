@@ -115,3 +115,7 @@ Tests are marked with custom markers. The markers allow to logically split all t
 ```bash
 $ python3 -m pytest --markers
 ```
+
+## Test Containers
+
+The source code for the tests containers used in some tests, for example the [transport-server-tcp-load-balance](./data/transport-server-tcp-load-balance/standard/service_deployment.yaml) is located at [kic-test-containers](https://github.com/nginxinc/kic-test-containers).

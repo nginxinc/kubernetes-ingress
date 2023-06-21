@@ -12,6 +12,7 @@ import (
 
 func TestValidateVirtualServer(t *testing.T) {
 	t.Parallel()
+
 	virtualServer := v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -395,12 +396,12 @@ func TestValidateUpstreams(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		upstreams             []v1.Upstream
-		expectedUpstreamNames sets.String
+		expectedUpstreamNames sets.Set[string]
 		msg                   string
 	}{
 		{
 			upstreams:             []v1.Upstream{},
-			expectedUpstreamNames: sets.String{},
+			expectedUpstreamNames: sets.Set[string]{},
 			msg:                   "no upstreams",
 		},
 		{
@@ -458,7 +459,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		upstreams             []v1.Upstream
-		expectedUpstreamNames sets.String
+		expectedUpstreamNames sets.Set[string]
 		msg                   string
 	}{
 		{
@@ -472,7 +473,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					ProxyNextUpstreamTries:   5,
 				},
 			},
-			expectedUpstreamNames: sets.String{},
+			expectedUpstreamNames: sets.Set[string]{},
 			msg:                   "invalid upstream name",
 		},
 		{
@@ -783,12 +784,12 @@ func TestValidateVirtualServerRoutes(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		routes        []v1.Route
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
 			routes:        []v1.Route{},
-			upstreamNames: sets.String{},
+			upstreamNames: sets.Set[string]{},
 			msg:           "no routes",
 		},
 		{
@@ -821,7 +822,7 @@ func TestValidateVirtualServerRoutesFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		routes        []v1.Route
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -872,7 +873,7 @@ func TestValidateRoute(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		route                 v1.Route
-		upstreamNames         sets.String
+		upstreamNames         sets.Set[string]
 		isRouteFieldForbidden bool
 		msg                   string
 	}{
@@ -966,7 +967,7 @@ func TestValidateRouteFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		route                 v1.Route
-		upstreamNames         sets.String
+		upstreamNames         sets.Set[string]
 		isRouteFieldForbidden bool
 		msg                   string
 	}{
@@ -990,7 +991,7 @@ func TestValidateRouteFails(t *testing.T) {
 					Pass: "-test",
 				},
 			},
-			upstreamNames:         sets.String{},
+			upstreamNames:         sets.Set[string]{},
 			isRouteFieldForbidden: false,
 			msg:                   "invalid pass action",
 		},
@@ -1001,7 +1002,7 @@ func TestValidateRouteFails(t *testing.T) {
 					Pass: "test",
 				},
 			},
-			upstreamNames:         sets.String{},
+			upstreamNames:         sets.Set[string]{},
 			isRouteFieldForbidden: false,
 			msg:                   "non-existing upstream in pass action",
 		},
@@ -1419,7 +1420,7 @@ func TestValidateUpstreamFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		upstream      string
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -1611,7 +1612,7 @@ func TestValidateSplitsFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		splits        []v1.Split
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -1822,19 +1823,8 @@ func TestValidateConditionFails(t *testing.T) {
 	}
 }
 
-func TestIsCookieName(t *testing.T) {
+func TestIsCookieName_ErrorsOnInvalidInput(t *testing.T) {
 	t.Parallel()
-	validCookieNames := []string{
-		"123",
-		"my_cookie",
-	}
-
-	for _, name := range validCookieNames {
-		errs := isCookieName(name)
-		if len(errs) > 0 {
-			t.Errorf("isCookieName(%q) returned errors %v for valid input", name, errs)
-		}
-	}
 
 	invalidCookieNames := []string{
 		"",
@@ -1846,6 +1836,22 @@ func TestIsCookieName(t *testing.T) {
 		errs := isCookieName(name)
 		if len(errs) == 0 {
 			t.Errorf("isCookieName(%q) returned no errors for invalid input", name)
+		}
+	}
+}
+
+func TestIsCookieName_IsValidOnValidInput(t *testing.T) {
+	t.Parallel()
+
+	validCookieNames := []string{
+		"123",
+		"my_cookie",
+	}
+
+	for _, name := range validCookieNames {
+		errs := isCookieName(name)
+		if len(errs) > 0 {
+			t.Errorf("isCookieName(%q) returned errors %v for valid input", name, errs)
 		}
 	}
 }
@@ -1908,7 +1914,7 @@ func TestValidateMatch(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		match         v1.Match
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -1973,7 +1979,7 @@ func TestValidateMatchFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		match         v1.Match
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		msg           string
 	}{
 		{
@@ -2212,13 +2218,13 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		routes        []v1.Route
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		pathPrefix    string
 		msg           string
 	}{
 		{
 			routes:        []v1.Route{},
-			upstreamNames: sets.String{},
+			upstreamNames: sets.Set[string]{},
 			pathPrefix:    "/",
 			msg:           "no routes",
 		},
@@ -2254,7 +2260,7 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		routes        []v1.Route
-		upstreamNames sets.String
+		upstreamNames sets.Set[string]
 		pathPrefix    string
 		msg           string
 	}{
@@ -2503,9 +2509,10 @@ func TestValidateUpstreamHealthCheck(t *testing.T) {
 				Value: "my.service",
 			},
 		},
-		StatusMatch: "! 500",
-		Mandatory:   true,
-		Persistent:  true,
+		StatusMatch:   "! 500",
+		Mandatory:     true,
+		Persistent:    true,
+		KeepaliveTime: "120s",
 	}
 
 	allErrs := validateUpstreamHealthCheck(hc, "", field.NewPath("healthCheck"))
@@ -2957,7 +2964,6 @@ func TestValidateSessionCookie(t *testing.T) {
 			sc: &v1.SessionCookie{
 				Enable: true, Name: "test", Path: "/tea", Expires: "1", Domain: ".example.com", HTTPOnly: false, Secure: true,
 			},
-
 			msg: "max valid config",
 		},
 	}
@@ -2969,7 +2975,30 @@ func TestValidateSessionCookie(t *testing.T) {
 	}
 }
 
-func TestValidateSessionCookieFails(t *testing.T) {
+func TestValidateSessionCookie_IsValidOnValidSameSiteInput(t *testing.T) {
+	t.Parallel()
+
+	samesites := []string{
+		"strict",
+		"Strict",
+		"STRICT",
+		"lax",
+		"Lax",
+		"LAX",
+		"none",
+		"None",
+		"NONE",
+	}
+	for _, samesite := range samesites {
+		sc := &v1.SessionCookie{Enable: true, Name: "ValidCookie", SameSite: samesite}
+		allErr := validateSessionCookie(sc, field.NewPath("sessionCookie"))
+		if len(allErr) != 0 {
+			t.Errorf("validateSessionCookie() returned errors for valid input: %s", samesite)
+		}
+	}
+}
+
+func TestValidateSessionCookie_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		sc  *v1.SessionCookie
@@ -2995,12 +3024,18 @@ func TestValidateSessionCookieFails(t *testing.T) {
 			sc:  &v1.SessionCookie{Enable: true, Name: "test", Path: "/ coffee"},
 			msg: "invalid path format",
 		},
+		{
+			sc:  &v1.SessionCookie{Enable: true, Name: "ValidCookie", SameSite: "bogus_value"},
+			msg: "invalid samesite value",
+		},
 	}
 	for _, test := range tests {
-		allErrs := validateSessionCookie(test.sc, field.NewPath("sessionCookie"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateSessionCookie() returned no errors for invalid input for the case of: %v", test.msg)
-		}
+		t.Run(test.msg, func(t *testing.T) {
+			allErrs := validateSessionCookie(test.sc, field.NewPath("sessionCookie"))
+			if len(allErrs) == 0 {
+				t.Errorf("validateSessionCookie() did not return errors for invalid input for the case of: %s", test.msg)
+			}
+		})
 	}
 }
 

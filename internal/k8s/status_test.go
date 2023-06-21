@@ -19,6 +19,7 @@ import (
 )
 
 func TestUpdateTransportServerStatus(t *testing.T) {
+	t.Parallel()
 	ts := &conf_v1alpha1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
@@ -70,6 +71,7 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 }
 
 func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
+	t.Parallel()
 	ts := &conf_v1alpha1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
@@ -131,6 +133,7 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 }
 
 func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
+	t.Parallel()
 	ts := &conf_v1alpha1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
@@ -187,14 +190,15 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 }
 
 func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
+	t.Parallel()
 	ing := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ing-1",
 			Namespace: "namespace",
 		},
 		Status: networking.IngressStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{
+			LoadBalancer: networking.IngressLoadBalancerStatus{
+				Ingress: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "1.2.3.4",
 					},
@@ -293,14 +297,15 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 }
 
 func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
+	t.Parallel()
 	ing := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ing-1",
 			Namespace: "namespace",
 		},
 		Status: networking.IngressStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{
+			LoadBalancer: networking.IngressLoadBalancerStatus{
+				Ingress: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "1.2.3.4",
 					},
@@ -403,13 +408,14 @@ func checkStatus(expected string, actual networking.Ingress) bool {
 }
 
 func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		su                statusUpdater
 		expectedEndpoints []conf_v1.ExternalEndpoint
 	}{
 		{
 			su: statusUpdater{
-				status: []v1.LoadBalancerIngress{
+				status: []networking.IngressLoadBalancerIngress{
 					{
 						IP: "8.8.8.8",
 					},
@@ -421,7 +427,7 @@ func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
 		},
 		{
 			su: statusUpdater{
-				status: []v1.LoadBalancerIngress{
+				status: []networking.IngressLoadBalancerIngress{
 					{
 						Hostname: "my-loadbalancer.example.com",
 					},
@@ -443,6 +449,7 @@ func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
 }
 
 func TestHasVsStatusChanged(t *testing.T) {
+	t.Parallel()
 	state := "Valid"
 	reason := "AddedOrUpdated"
 	msg := "Configuration was added or updated"
@@ -503,6 +510,7 @@ func TestHasVsStatusChanged(t *testing.T) {
 }
 
 func TestHasVsrStatusChanged(t *testing.T) {
+	t.Parallel()
 	referencedBy := "namespace/name"
 	state := "Valid"
 	reason := "AddedOrUpdated"
@@ -579,6 +587,7 @@ func TestHasVsrStatusChanged(t *testing.T) {
 }
 
 func TestGetExternalServicePorts(t *testing.T) {
+	t.Parallel()
 	svc := v1.Service{
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
@@ -609,6 +618,7 @@ func TestGetExternalServicePorts(t *testing.T) {
 }
 
 func TestIsRequiredPort(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		port     intstr.IntOrString
 		expected bool
@@ -667,6 +677,7 @@ func TestIsRequiredPort(t *testing.T) {
 }
 
 func TestHasPolicyStatusChanged(t *testing.T) {
+	t.Parallel()
 	state := "Valid"
 	reason := "AddedOrUpdated"
 	msg := "Configuration was added or updated"

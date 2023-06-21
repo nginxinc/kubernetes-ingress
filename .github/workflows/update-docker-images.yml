@@ -2,7 +2,7 @@ name: Update Docker Images
 
 on:
   schedule:
-    - cron:  '0 1 * * *'
+    - cron: "0 1 * * *" # run every day at 01:00 UTC
   workflow_dispatch:
 
 defaults:
@@ -14,19 +14,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   variables:
     name: Get versions of base images
     runs-on: ubuntu-22.04
     outputs:
       kic-tag: ${{ steps.kic.outputs.tag }}
       versions: ${{ steps.versions.outputs.matrix }}
-      sha_short: ${{ steps.vars.outputs.sha_short }}
-      sha_long: ${{ steps.vars.outputs.sha_long }}
       k8s_version: ${{ steps.vars.outputs.k8s_version }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           fetch-depth: 0
       - name: Set KIC version
@@ -35,7 +32,7 @@ jobs:
           tag="$(git tag --sort=-version:refname | head -n1)"
           echo "tag=${tag//v}" >> $GITHUB_OUTPUT
       - name: Checkout Repository at ${{ steps.kic.outputs.tag }}
-        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           ref: refs/tags/v${{ steps.kic.outputs.tag }}
       - name: Set NGINX versions
@@ -43,13 +40,11 @@ jobs:
         run: |
           nginx=library/$(grep -m1 "FROM nginx:" < build/Dockerfile | awk -F" " '{print $2}')
           nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx:.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
-          nginx_ubi=$(grep "FROM redhat" < build/Dockerfile | awk -F" " '{print $2}')
+          nginx_ubi=$(grep -m1 "FROM nginxcontrib/nginx:" < build/Dockerfile | awk -F" " '{print $2}')
           echo "matrix=[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]" >> $GITHUB_OUTPUT
       - name: Set other variables
         id: vars
         run: |
-          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "sha_long=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           echo "k8s_version=$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
 
   check:
@@ -71,10 +66,12 @@ jobs:
           echo "tag=${{ needs.variables.outputs.kic-tag }}${dist}" >> $GITHUB_OUTPUT
       - name: Check if update available for ${{ matrix.base_image.version }}
         id: update
-        uses: lucacome/docker-image-update-checker@93aeebde51b01e63284197bae89f9a1d6dd1921f # v1.1.1
+        uses: lucacome/docker-image-update-checker@f50d56412b948cfdbb842c5419372681e0db3df1 # v1.2.1
         with:
           base-image: ${{ matrix.base_image.version}}
           image: nginx/nginx-ingress:${{ steps.dist.outputs.tag }}
+        env:
+          DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
       - id: needs
         run: echo "${{ matrix.base_image.distro }}=${{ steps.update.outputs.needs-updating }}" >> $GITHUB_OUTPUT
 
@@ -85,20 +82,19 @@ jobs:
     needs: [check, variables]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
       - name: Setup Golang Environment
-        uses: actions/setup-go@d0a58c1c4d2b25278816e339b944508c875f3613 # v3.4.0
+        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
         with:
           go-version-file: go.mod
-          cache: true
       - name: Determine GOPATH
         id: go
         run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@b508e2e3ef3b19d4e4146d4f8fb3ba9db644a757 # v3.2.0
+        uses: goreleaser/goreleaser-action@336e29918d653399e599bfca99fadc1d7ffbc9f7 # v4.3.0
         with:
           version: latest
           args: build --rm-dist --id kubernetes-ingress
@@ -106,10 +102,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ steps.go.outputs.go_path }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # v3.0.11
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
   test:
     name: Run tests
@@ -129,15 +125,15 @@ jobs:
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Fetch Cached Artifacts
-        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # v3.0.11
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Run Smoke Tests
         id: smoke-tests
@@ -148,7 +144,7 @@ jobs:
           k8s-version: ${{ needs.variables.outputs.k8s_version }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Upload Test Results
-        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # v3.1.1
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
@@ -162,7 +158,6 @@ jobs:
       platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
       image: debian
       tag: ${{ needs.variables.outputs.kic-tag }}
-      sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
     if: ${{ needs.check.outputs.needs-updating-debian == 'true' }}
 
@@ -174,7 +169,6 @@ jobs:
       platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
       image: alpine
       tag: ${{ needs.variables.outputs.kic-tag }}
-      sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
     if: ${{ needs.check.outputs.needs-updating-alpine == 'true' }}
 
@@ -183,9 +177,8 @@ jobs:
     needs: [binary, check, variables]
     uses: ./.github/workflows/build-oss.yml
     with:
-      platforms: linux/arm64,linux/amd64,linux/s390x
+      platforms: linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
       image: ubi
       tag: ${{ needs.variables.outputs.kic-tag }}
-      sha_long: ${{ needs.variables.outputs.sha_long }}
     secrets: inherit
     if: ${{ needs.check.outputs.needs-updating-ubi == 'true' }}

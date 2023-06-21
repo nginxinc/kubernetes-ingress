@@ -1,7 +1,7 @@
 from ssl import SSLError
 
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import BASEDIR, DEPLOYMENTS, TEST_DATA
 from suite.utils.resources_utils import (
     create_secret_from_yaml,
     delete_secret,
@@ -29,7 +29,7 @@ def assert_unrecognized_name_error(endpoint):
         assert "TLSV1_UNRECOGNIZED_NAME" in e.reason
 
 
-secret_path = f"{DEPLOYMENTS}/common/default-server-secret.yaml"
+secret_path = f"{TEST_DATA}/common/default-server-secret.yaml"
 test_data_path = f"{TEST_DATA}/default-server"
 invalid_secret_path = f"{test_data_path}/invalid-tls-secret.yaml"
 new_secret_path = f"{test_data_path}/new-tls-secret.yaml"

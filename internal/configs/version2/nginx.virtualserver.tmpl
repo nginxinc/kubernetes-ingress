@@ -40,6 +40,7 @@ limit_req_zone {{ $z.Key }} zone={{ $z.ZoneName }}:{{ $z.ZoneSize }} rate={{ $z.
 
 {{ $s := .Server }}
 server {
+    {{ if $s.Gunzip }}gunzip on;{{end}}
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
 
@@ -62,14 +63,27 @@ server {
 
         {{ if $ssl.RejectHandshake }}
     ssl_reject_handshake on;
+        {{ else if $.SpiffeCerts }}
+    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
         {{ else }}
     ssl_certificate {{ $ssl.Certificate }};
     ssl_certificate_key {{ $ssl.CertificateKey }};
         {{ end }}
+    {{ else }}
+      {{ if $.SpiffeCerts }}
+    listen 443 ssl;
+    {{if not $s.DisableIPV6}}listen [::]:443 ssl;{{end}}
+    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+      {{ end }}
     {{ end }}
 
     {{ with $s.IngressMTLS }}
     ssl_client_certificate {{ .ClientCert }};
+    {{ if .ClientCrl }}
+    ssl_crl {{ .ClientCrl }};
+    {{ end }}
     ssl_verify_client {{ .VerifyClient }};
     ssl_verify_depth {{ .VerifyDepth }};
     {{ end }}
@@ -310,7 +324,6 @@ server {
             {{ if $l.ProxyBufferSize }}
         {{ $proxyOrGRPC }}_buffer_size {{ $l.ProxyBufferSize }};
             {{ end }}
-
             {{ if not $l.GRPCPass }}
         proxy_http_version 1.1;
         set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
@@ -356,6 +369,15 @@ server {
             {{ end }}
             {{ range $h := $l.AddHeaders }}
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
+            {{ end }}
+            {{ if $.SpiffeClientCerts }}
+        {{ $proxyOrGRPC }}_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+        {{ $proxyOrGRPC }}_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+        {{ $proxyOrGRPC }}_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
+        {{ $proxyOrGRPC }}_ssl_server_name on;
+        {{ $proxyOrGRPC }}_ssl_verify on;
+        {{ $proxyOrGRPC }}_ssl_verify_depth 25;
+        {{ $proxyOrGRPC }}_ssl_name {{ $l.ProxySSLName }};
             {{ end }}
             {{if $l.GRPCPass}}
         grpc_pass {{ $l.GRPCPass }};

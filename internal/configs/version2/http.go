@@ -12,14 +12,15 @@ type UpstreamLabels struct {
 
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
-	HTTPSnippets  []string
-	LimitReqZones []LimitReqZone
-	Maps          []Map
-	Server        Server
-	SpiffeCerts   bool
-	SplitClients  []SplitClient
-	StatusMatches []StatusMatch
-	Upstreams     []Upstream
+	HTTPSnippets      []string
+	LimitReqZones     []LimitReqZone
+	Maps              []Map
+	Server            Server
+	SpiffeCerts       bool
+	SpiffeClientCerts bool
+	SplitClients      []SplitClient
+	StatusMatches     []StatusMatch
+	Upstreams         []Upstream
 }
 
 // Upstream defines an upstream.
@@ -68,6 +69,8 @@ type Server struct {
 	LimitReqOptions           LimitReqOptions
 	LimitReqs                 []LimitReq
 	JWTAuth                   *JWTAuth
+	JWTAuthList               map[string]*JWTAuth
+	JWKSAuthEnabled           bool
 	BasicAuth                 *BasicAuth
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
@@ -78,6 +81,7 @@ type Server struct {
 	VSNamespace               string
 	VSName                    string
 	DisableIPV6               bool
+	Gunzip                    bool
 }
 
 // SSL defines SSL configuration for a server.
@@ -91,6 +95,7 @@ type SSL struct {
 // IngressMTLS defines TLS configuration for a server. This is a subset of TLS specifically for clients auth.
 type IngressMTLS struct {
 	ClientCert   string
+	ClientCrl    string
 	VerifyClient string
 	VerifyDepth  int
 }
@@ -111,20 +116,23 @@ type EgressMTLS struct {
 
 // OIDC holds OIDC configuration data.
 type OIDC struct {
-	AuthEndpoint   string
-	ClientID       string
-	ClientSecret   string
-	JwksURI        string
-	Scope          string
-	TokenEndpoint  string
-	RedirectURI    string
-	ZoneSyncLeeway int
+	AuthEndpoint      string
+	ClientID          string
+	ClientSecret      string
+	JwksURI           string
+	Scope             string
+	TokenEndpoint     string
+	RedirectURI       string
+	ZoneSyncLeeway    int
+	AuthExtraArgs     string
+	AccessTokenEnable bool
 }
 
 // WAF defines WAF configuration.
 type WAF struct {
 	Enable              string
 	ApPolicy            string
+	ApBundle            string
 	ApSecurityLogEnable bool
 	ApLogConf           []string
 }
@@ -257,6 +265,7 @@ type HealthCheck struct {
 	GRPCService         string
 	Mandatory           bool
 	Persistent          bool
+	KeepaliveTime       string
 }
 
 // TLSRedirect defines a redirect in a Server.
@@ -274,6 +283,7 @@ type SessionCookie struct {
 	Domain   string
 	HTTPOnly bool
 	Secure   bool
+	SameSite string
 }
 
 // Distribution maps weight to a value in a SplitClient.
@@ -350,9 +360,20 @@ func (rl LimitReqOptions) String() string {
 
 // JWTAuth holds JWT authentication configuration.
 type JWTAuth struct {
-	Secret string
-	Realm  string
-	Token  string
+	Key      string
+	Secret   string
+	Realm    string
+	Token    string
+	KeyCache string
+	JwksURI  JwksURI
+}
+
+// JwksURI defines the components of a JwksURI
+type JwksURI struct {
+	JwksScheme string
+	JwksHost   string
+	JwksPort   string
+	JwksPath   string
 }
 
 // BasicAuth refers to basic HTTP authentication mechanism options

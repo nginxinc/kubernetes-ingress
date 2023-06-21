@@ -45,6 +45,7 @@ func createTestConfiguration() *Configuration {
 }
 
 func TestAddIngressForRegularIngress(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
 	// no problems are expected for all cases
@@ -216,6 +217,7 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 }
 
 func TestAddInvalidIngress(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
 	ing := createTestIngress("ingress", "foo.example.com", "foo.example.com")
@@ -2761,6 +2763,36 @@ func TestChallengeIngressToVSR(t *testing.T) {
 	}
 }
 
+func TestChallengeIngressNoVSR(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	var expectedProblems []ConfigurationProblem
+
+	vs := createTestVirtualServer("virtualserver", "bar.example.com")
+	ing := createTestChallengeIngress("challenge", "foo.example.com", "/.well-known/acme-challenge/test", "cm-acme-http-solver-test")
+	configuration.AddOrUpdateVirtualServer(vs)
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &IngressConfiguration{
+				Ingress: ing,
+				ValidHosts: map[string]bool{
+					"foo.example.com": true,
+				},
+				ChildWarnings: map[string][]string{},
+			},
+		},
+	}
+
+	changes, problems := configuration.AddOrUpdateIngress(ing)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+}
+
 func mustInitGlobalConfiguration(c *Configuration, gc *conf_v1alpha1.GlobalConfiguration) {
 	changes, problems, err := c.AddOrUpdateGlobalConfiguration(gc)
 
@@ -3042,6 +3074,7 @@ func TestChooseObjectMetaWinner(t *testing.T) {
 }
 
 func TestSquashResourceChanges(t *testing.T) {
+	t.Parallel()
 	ingConfig := &IngressConfiguration{
 		Ingress: createTestIngress("test", "foo.example.com"),
 	}
@@ -3226,6 +3259,7 @@ func (rc *testReferenceChecker) IsReferencedByTransportServer(namespace string, 
 }
 
 func TestFindResourcesForResourceReference(t *testing.T) {
+	t.Parallel()
 	regularIng := createTestIngress("regular-ingress", "foo.example.com")
 	master := createTestIngressMaster("master-ingress", "bar.example.com")
 	minion := createTestIngressMinion("minion-ingress", "bar.example.com", "/")
@@ -3349,6 +3383,7 @@ func TestFindResourcesForResourceReference(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
+	t.Parallel()
 	ing := createTestIngress("ingress", "foo.example.com", "bar.example.com")
 	vs := createTestVirtualServer("virtualserver", "qwe.example.com")
 	passTS := createTestTLSPassthroughTransportServer("transportserver", "abc.example.com")
@@ -3416,6 +3451,7 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGetTransportServerMetrics(t *testing.T) {
+	t.Parallel()
 	tsPass := createTestTLSPassthroughTransportServer("transportserver", "abc.example.com")
 	tsTCP := createTestTransportServer("transportserver-tcp", "tcp-7777", "TCP")
 	tsUDP := createTestTransportServer("transportserver-udp", "udp-7777", "UDP")
@@ -3514,6 +3550,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 }
 
 func TestIsEqualForIngressConfigurations(t *testing.T) {
+	t.Parallel()
 	regularIng := createTestIngress("regular-ingress", "foo.example.com")
 
 	ingConfigWithInvalidHost := NewRegularIngressConfiguration(regularIng)
@@ -3608,6 +3645,7 @@ func TestIsEqualForIngressConfigurations(t *testing.T) {
 }
 
 func TestIsEqualForVirtualServers(t *testing.T) {
+	t.Parallel()
 	vs := createTestVirtualServerWithRoutes(
 		"virtualserver",
 		"foo.example.com",
@@ -3666,6 +3704,7 @@ func TestIsEqualForVirtualServers(t *testing.T) {
 }
 
 func TestIsEqualForDifferentResources(t *testing.T) {
+	t.Parallel()
 	ingConfig := NewRegularIngressConfiguration(createTestIngress("ingress", "foo.example.com"))
 	vsConfig := NewVirtualServerConfiguration(createTestVirtualServer("virtualserver", "bar.example.com"), []*conf_v1.VirtualServerRoute{}, []string{})
 
@@ -3676,6 +3715,7 @@ func TestIsEqualForDifferentResources(t *testing.T) {
 }
 
 func TestCompareConfigurationProblems(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		problem1 *ConfigurationProblem
 		problem2 *ConfigurationProblem

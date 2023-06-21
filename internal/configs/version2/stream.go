@@ -46,6 +46,14 @@ type StreamServer struct {
 	HealthCheck              *StreamHealthCheck
 	ServerSnippets           []string
 	DisableIPV6              bool
+	SSL                      *StreamSSL
+}
+
+// StreamSSL defines SSL configuration for a server.
+type StreamSSL struct {
+	Enabled        bool
+	Certificate    string
+	CertificateKey string
 }
 
 // StreamHealthCheck defines a health check for a StreamUpstream in a StreamServer.

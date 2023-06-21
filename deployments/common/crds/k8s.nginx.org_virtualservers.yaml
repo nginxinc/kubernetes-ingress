@@ -2,8 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.10.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.12.0
   name: virtualservers.k8s.nginx.org
 spec:
   group: k8s.nginx.org
@@ -87,12 +86,17 @@ spec:
                       format: int64
                     recordType:
                       type: string
+                gunzip:
+                  type: boolean
                 host:
                   type: string
                 http-snippets:
                   type: string
                 ingressClassName:
                   type: string
+                internalRoute:
+                  description: InternalRoute allows for the configuration of internal routing.
+                  type: boolean
                 policies:
                   type: array
                   items:
@@ -597,6 +601,8 @@ spec:
                             type: string
                           jitter:
                             type: string
+                          keepalive-time:
+                            type: string
                           mandatory:
                             type: boolean
                           passes:
@@ -668,6 +674,8 @@ spec:
                           name:
                             type: string
                           path:
+                            type: string
+                          samesite:
                             type: string
                           secure:
                             type: boolean

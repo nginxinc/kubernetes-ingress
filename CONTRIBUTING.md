@@ -14,12 +14,15 @@ The following is a set of guidelines for contributing to the NGINX Ingress Contr
   * [Git Style Guide](#git-style-guide)
   * [Go Style Guide](#go-style-guide)
 
-[Code of Conduct](https://github.com/nginxinc/kubernetes-ingress/blob/main/CODE_OF_CONDUCT.md)
+[Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## Ask a Question
 
-We will have a public forum soon where you can come and ask questions and have a discussion. For now please open an Issue on GitHub with the label `question`.
+To ask a question please use [Github Discussions](https://github.com/nginxinc/kubernetes-ingress/discussions).
 
+You can also join our [Community Slack](https://community.nginx.org/joinslack) which has a wider NGINX audience.
+
+Please reserve GitHub issues for feature requests and bugs rather than general questions.
 
 ## Getting Started
 
@@ -33,33 +36,41 @@ Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/mai
 * The project follows a standard Go project layout
     * The main code is found at `cmd/nginx-ingress/`
     * The internal code is found at `internal/`
-    * Build files for Docker and CI are found under `build/`
+    * Build files for Docker are found at `build/`
+    * CI files are found at `.github/workflows/`
     * Deployment yaml files, and Helm files are found at `deployments/`
-    * The project dependencies are found at `vendor/`. We use [Go Modules](https://github.com/golang/go/wiki/Modules) for managing dependencies.
+    * We use [Go modules](https://github.com/golang/go/wiki/Modules) for managing dependencies.
 
 ## Contributing
 
 ### Report a Bug
 
-To report a bug, open an issue on GitHub with the label `bug` using the available bug report issue template. Please ensure the issue has not already been reported.
+To report a bug, open an issue on GitHub and choose the type 'Bug report'. Please ensure the issue has not already been reported, and that you fill in the template as provided, as this can reduce turnaround time.
 
-### Suggest an Enhancement
+### Suggest a new feature or other improvement
 
-To suggest an enhancement, please create an issue on GitHub with the label `enhancement` using the available feature issue template.
+To suggest an new feature or other improvement, create an issue on Github and choose the type 'Feature request'. Please fill in the template as provided.
 
 ### Open a Pull Request
 
+* Before working on a possible pull request, first open an associated issue describing the proposed change. This allows the core development team to discuss the potential pull request with you before you do the work.
 * Fork the repo, create a branch, submit a PR when your changes are tested and ready for review
-* Fill in [our pull request template](https://github.com/nginxinc/kubernetes-ingress/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
+* Fill in [our pull request template](.github/PULL_REQUEST_TEMPLATE.md)
 
-Note: if you’d like to implement a new feature, please consider creating a feature request issue first to start a discussion about the feature.
+> **Note**
+>
+> Remember to create a feature request / bug report issue first to start a discussion about the proposed change.
+
+### Issue lifecycle
+
+* When an issue or PR is created, it will be triaged by the core development team and assigned a label to indicate the type of issue it is (bug, feature request, etc) and to determine the milestone. Please see the [Issue Lifecycle](ISSUE_LIFECYCLE.md) document for more information.
 
 ## Style Guides
 
 ### Git Style Guide
 
 * Keep a clean, concise and meaningful git commit history on your branch, rebasing locally and squashing before submitting a PR
-* Follow the guidelines of writing a good commit message as described here https://chris.beams.io/posts/git-commit/ and summarised in the next few points
+* Follow the guidelines of writing a good commit message as described here https://chris.beams.io/posts/git-commit/ and summarized in the next few points
     * In the subject line, use the present tense ("Add feature" not "Added feature")
     * In the subject line, use the imperative mood ("Move cursor to..." not "Moves cursor to...")
     * Limit the subject line to 72 characters or less

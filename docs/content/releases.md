@@ -1,11 +1,202 @@
 ---
 title: Releases
 description: "NGINX Ingress Controller Release Notes."
-weight: 1900
+weight: 2100
 doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+
+## NGINX Ingress Controller 3.1.1
+
+04 May 2023
+
+OVERVIEW:
+This release reverts the changes made in 3.1.0 to use sysctls to bind to lower level ports without the NET_BIND_SERVICE capability. It also adds support for serviceNameOverride in the Helm chart, that can be used to override the service name for the NGINX Ingress Controller. This is useful especially during an upgrade from versions prior to 3.1.0, to avoid downtime due to the service name change. To use this feature, set the `serviceNameOverride` value in the Helm chart to the name of the existing service.
+
+For example, if the existing service name is `my-release-nginx-ingress`, you can use `--set serviceNameOverride=my-release-nginx-ingress` when running the upgrade command.
+Here is an example upgrade command that keeps the existing service name `my-release-nginx-ingress` for a deployment named `my-release`:
+```bash
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.17.1 --set serviceNameOverride=my-release-nginx-ingress
+```
+
+FIXES:
+* [3849](https://github.com/nginxinc/kubernetes-ingress/pull/3849) Inherit NET_BIND_SERVICE from IC to Nginx. Thanks to [Valters Jansons](https://github.com/sigv).
+* [3855](https://github.com/nginxinc/kubernetes-ingress/pull/3855) Update VirtualServer template to generate an internal jwt auth location per policy applied.
+* [3856](https://github.com/nginxinc/kubernetes-ingress/pull/3856) Update VirtualServer to ignore CRL for EgressMTLS.
+
+IMPROVEMENTS:
+* [3847](https://github.com/nginxinc/kubernetes-ingress/pull/3847) Egress via Ingress VirtualServer Resource.
+
+CHANGES:
+* Update NGINX version to 1.23.4
+* Update NGINX Plus version to R29.
+
+HELM CHART:
+* [3801](https://github.com/nginxinc/kubernetes-ingress/pull/3801) Swap cpu and memory in HPA template.
+* [3848](https://github.com/nginxinc/kubernetes-ingress/pull/3848) Updated NGINX Service Mesh references in Helm templates. Thanks to [Jared Byers](https://github.com/jbyers19).
+* [3853](https://github.com/nginxinc/kubernetes-ingress/pull/3853) Add serviceNameOverride. Thanks to [Tim N](https://github.com/timnee).
+* [3854](https://github.com/nginxinc/kubernetes-ingress/pull/3854) Fix GlobalConfiguration name in Helm Chart.
+* [3862](https://github.com/nginxinc/kubernetes-ingress/pull/3862) Add correct indentation to controller-leader-election configmap helm template.
+* The version of the Helm chart is now 0.17.1.
+
+UPGRADE:
+* For NGINX, use the 3.1.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.1.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.1.1 images from the F5 Container registry or build your own image using the 3.1.1 source code.
+* For Helm, use version 0.17.1 of the chart.
+
+## NGINX Ingress Controller 3.1.0
+
+29 Mar 2023
+
+OVERVIEW:
+* Beginning with release 3.1.0 the NET_BIND_SERVICE capability is no longer used, and instead relies on net.ipv4.ip_unprivileged_port_start sysctl to allow port binding. Kubernetes 1.22 or later is required for this sysctl to be [classified as safe](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/#safe-and-unsafe-sysctls). **Ensure that you are using the latest updated `deployment` and `daemonset` example yaml files available in the repo.**
+* *The minimum supported version of Kubernetes is now 1.22*. The NGINX Ingress Controller now uses `sysctls` to [bind to lower level ports without additional privileges](https://github.com/nginxinc/kubernetes-ingress/pull/3573/). This removes the need to use `NET_BIND_SERVICE` to bind to these ports. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
+* Added support for loading pre-compiled [AppProtect Policy Bundles](https://github.com/nginxinc/kubernetes-ingress/pull/3560) when using the `-enable-app-protect` cli argument. This feature removes the need for the Ingress Controller to compile NGINX App Protect Policy when NGINX App Protect Policy is updated.
+* IngressMTLS policy now supports configuring a Certificate Revocation Lists(CRL). When using this feature requests made using a revoked certificate will be rejected. See [Using a Certificate Revocation List](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#using-a-certificate-revocation-list) for details on configuring this option.
+* The NGINX Ingress Controller now supports [running with a Read-only Root Filesystem](https://github.com/nginxinc/kubernetes-ingress/pull/3548). This improves the security posture of NGINX Ingress Controller by protecting the file system from unknown writes. See [Configure root filesystem as read-only](https://docs.nginx.com/nginx-ingress-controller/configuration/security/#configure-root-filesystem-as-read-only) for details on configuring this option with both HELM and Manifest. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
+* HELM deployments can now set [custom environment variables with controller.env](https://github.com/nginxinc/kubernetes-ingress/pull/3326). Thanks to [Aaron Shiels](https://github.com/AaronShiels) for making this possible!
+* HELM deployments can now configure a [pod disruption budget](https://github.com/nginxinc/kubernetes-ingress/pull/3248) allowing deployments to configure either a minimum number or a maximum unavailable number of pods. Thanks to [Bryan Hendryx](https://github.com/coolbry95) for making this possible!
+* The NGINX Ingress Controller uses the latest OIDC reference implementation which now supports [forwarding access tokens to upstreams / backends](https://github.com/nginxinc/kubernetes-ingress/pull/3474). Thanks to [Shawn Kim](https://github.com/shawnhankim) for making this possible!
+* The default TLS secret is now optional. This improves the security posture of NGINX Ingress Controller through enabling [ssl_reject_handshake](http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_reject_handshake). This has the impact of immediately terminating the SSL handshake and not revealing TLS or cypher settings to calls that do not match a configured hostname.
+
+FEATURES:
+* [3034](https://github.com/nginxinc/kubernetes-ingress/pull/3034) Allow extra args to be provided to the OIDC auth endpoint. Thanks to [Alan Wilkie](https://github.com/alanwilkie-finocomp).
+* [3474](https://github.com/nginxinc/kubernetes-ingress/pull/3474) Add access token support in the OIDC. Thanks to [Shawn Kim](https://github.com/shawnhankim).
+* [3326](https://github.com/nginxinc/kubernetes-ingress/pull/3326) Add support for custom environment variables on the Nginx Controller container. Thanks to [Aaron Shiels](https://github.com/AaronShiels).
+* [3527](https://github.com/nginxinc/kubernetes-ingress/pull/3527) Change controller.topologySpreadConstraints schema to array. Thanks to [Marco Londero](https://github.com/marcuz).
+* [3248](https://github.com/nginxinc/kubernetes-ingress/pull/3248) Add Pod disruption budget option to HELM based installations. Thanks to [Bryan Hendryx](https://github.com/coolbry95).
+* [3462](https://github.com/nginxinc/kubernetes-ingress/pull/3462) Add initial support for SSL termination for TransportServer.
+* [3451](https://github.com/nginxinc/kubernetes-ingress/pull/3451) Enable keepalive-time for healthchecks in VS and VSR.
+* [3560](https://github.com/nginxinc/kubernetes-ingress/pull/3560) Add support for load a pre-compiles AppProtect Policy Bundle.
+* [3632](https://github.com/nginxinc/kubernetes-ingress/pull/3632) Update nginx.org/ca secret type & crl field to IngressMTLS to support CRL.
+
+IMPROVEMENTS:
+* [3629](https://github.com/nginxinc/kubernetes-ingress/pull/3629) Use the "runtime default" seccomp profile. Thanks to [Valters Jansons](https://github.com/sigv).
+* [3573](https://github.com/nginxinc/kubernetes-ingress/pull/3573) Rework port binding logic without privileges. Thanks to [Valters Jansons](https://github.com/sigv).
+* [3646](https://github.com/nginxinc/kubernetes-ingress/pull/3646) Remove app protect agent.
+* [3507](https://github.com/nginxinc/kubernetes-ingress/pull/3507) Support empty path for ImplementationSpecific pathType.
+* [3482](https://github.com/nginxinc/kubernetes-ingress/pull/3482) Use new NSM Spiffe and Cert rotation library.
+* [3442](https://github.com/nginxinc/kubernetes-ingress/pull/3442) Add websocket protocol option to monitor directive.
+* [3674](https://github.com/nginxinc/kubernetes-ingress/pull/3674) Move NAP DoS chart to new repo
+* [3302](https://github.com/nginxinc/kubernetes-ingress/pull/3302) Make default-server-secret optional.
+* [3586](https://github.com/nginxinc/kubernetes-ingress/pull/3586) Add new labels and metadata to add version information to pods
+
+FIXES:
+* [3463](https://github.com/nginxinc/kubernetes-ingress/pull/3463) Support non-vs created Challenge Ingress.
+* [3475](https://github.com/nginxinc/kubernetes-ingress/pull/3475) Ensure leader election is correctly disabled when option is set to `false` in helm template.
+* [3481](https://github.com/nginxinc/kubernetes-ingress/pull/3481) Add missing OSS internal routes for integration with NSM.
+* [3541](https://github.com/nginxinc/kubernetes-ingress/pull/3541) Ensure non-ready endpoints are not added to upstreams.
+* [3583](https://github.com/nginxinc/kubernetes-ingress/pull/3583) Update keyCache path for JWKs to avoid conflict with OIDC.
+* [3607](https://github.com/nginxinc/kubernetes-ingress/pull/3607) Clear Content-Length headers for requests processed by internal JWKS routes.
+* [3660](https://github.com/nginxinc/kubernetes-ingress/pull/3660) Remove unwanted chars from label value.
+
+HELM CHART:
+* [3581](https://github.com/nginxinc/kubernetes-ingress/pull/3581) Push edge Helm Chart to OCI registries.
+* [3449](https://github.com/nginxinc/kubernetes-ingress/pull/3449) Correct values.schema.json nodeSelector.
+* [3448](https://github.com/nginxinc/kubernetes-ingress/pull/3448) Fix Helm Chart Schema for priorityClassName.
+* [3519](https://github.com/nginxinc/kubernetes-ingress/pull/3519) Add OnDelete to allowed strategy values.
+* [3537](https://github.com/nginxinc/kubernetes-ingress/pull/3537) Update schema references to k8s v1.26.1.
+* [3606](https://github.com/nginxinc/kubernetes-ingress/pull/3606) Fix Helm Chart labels and templates. Move version update to labels.
+
+
+UPGRADE:
+* Make sure the Kubernetes version is in the supported platforms listed below.
+* For NGINX, use the 3.1.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.1.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.1.0 images from the F5 Container registry or build your own image using the 3.1.0 source code.
+* For Helm, use version 0.17.0 of the chart.
+
+SUPPORTED PLATFORMS:
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.22-1.26.
+
+## NGINX Ingress Controller 3.0.2
+
+13 Feb 2023
+
+FIXES:
+* [3519](https://github.com/nginxinc/kubernetes-ingress/pull/3519) Add OnDelete to allowed strategy values
+* [3541](https://github.com/nginxinc/kubernetes-ingress/pull/3541) Ensure non-ready endpoints are not added to upstreams
+* [3527](https://github.com/nginxinc/kubernetes-ingress/pull/3527) Fix controller.topologySpreadConstraints schema, thanks to [Marco Londero](https://github.com/marcuz)
+
+HELM CHART:
+* The version of the Helm chart is now 0.16.2.
+
+UPGRADE:
+* For NGINX, use the 3.0.2 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.0.2), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.0.2 images from the F5 Container registry or build your own image using the 3.0.2 source code.
+* For Helm, use version 0.16.2 of the chart.
+
+## NGINX Ingress Controller 3.0.1
+
+25 Jan 2023
+
+FIXES:
+* [3448](https://github.com/nginxinc/kubernetes-ingress/pull/3448) Fix Helm Chart Schema for priorityClassName
+* [3449](https://github.com/nginxinc/kubernetes-ingress/pull/3449) Correct nodeSelector in the Helm Chart Schema
+* [3463](https://github.com/nginxinc/kubernetes-ingress/pull/3463) Support non-VS created Challenge Ingress
+* [3481](https://github.com/nginxinc/kubernetes-ingress/pull/3481) Add missing OSS internal routes for NGINX Service Mesh
+
+HELM CHART:
+* The version of the Helm chart is now 0.16.1.
+
+UPGRADE:
+* For NGINX, use the 3.0.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.0.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.0.1 images from the F5 Container registry or build your own image using the 3.0.1 source code.
+* For Helm, use version 0.16.1 of the chart.
+
+## NGINX Ingress Controller 3.0.0
+
+12 January 2023
+
+OVERVIEW:
+* Added support for [Deep Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight) for VirtualServer and TransportServer using the [-enable-service-insight](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-service-insight) cli argument.
+* *The minimum supported version of Kubernetes is now 1.21*. NGINX Ingress Controller 3.0.0 removes support for `k8s.io/v1/Endpoints` API in favor of `discovery.k8s.io/v1/EndpointSlices`. For older Kubernetes versions, use the 2.4.x release of the Ingress Controller.
+* Added support for [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/).
+* Added support to dynamically reconfigure namespace watchers using labels  [-watch-namespace-label](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-label-string) and watching secrets using the [-watch-secret-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-secret-namespace-string) cli arguments.
+* Allow configuration of NGINX directives `map-hash-bucket-size` and `map-hash-max-size` using the [ConfigMap resource](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource#general-customization) .
+* Added support for [fetching JWKs from a remote URL](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource#jwt-using-jwks-from-remote-location
+) to dynamically validate JWT tokens and optimize performance through caching.
+* Beginning with NGINX Service Mesh release 1.7 it will include support for the free version of NGINX Ingress Controller as well as the paid version.
+* NGINX Ingress Controller + NGINX App Protect Denial of Service is now available through the AWS Marketplace.
+
+FEATURES:
+* [3260](https://github.com/nginxinc/kubernetes-ingress/pull/3260) Added support for EndpointSlices.
+* [3299](https://github.com/nginxinc/kubernetes-ingress/pull/3299) Support Dynamic namespaces using Labels.
+* [3261](https://github.com/nginxinc/kubernetes-ingress/pull/3261) Deep service insight endpoint for VirtualServer CR.
+* [3361](https://github.com/nginxinc/kubernetes-ingress/pull/3361) Added healthcheck for TransportServer CR.
+* [3347](https://github.com/nginxinc/kubernetes-ingress/pull/3347) Import JWKS from URL on JWT policy.
+* [3274](https://github.com/nginxinc/kubernetes-ingress/pull/3274) Allow configuration of map-hash-bucket-size and map-hash-max-size directives.
+* [3376](https://github.com/nginxinc/kubernetes-ingress/pull/3376) NGINX Service Mesh will support the free version of NGINX Ingress Controller when using NGINX open source.
+
+IMPROVEMENTS:
+* [3170](https://github.com/nginxinc/kubernetes-ingress/pull/3170) Watch subset of namespaces for secrets. Thanks to [Hans Feldt](https://github.com/hafe).
+* [3341](https://github.com/nginxinc/kubernetes-ingress/pull/3341) Set value of `$remote_addr` to client IP when TLSPassthrough and Proxy Protocol are enabled.
+* [3131](https://github.com/nginxinc/kubernetes-ingress/pull/3131) NAP DoS images are now available in the AWS Marketplace.
+* [3231](https://github.com/nginxinc/kubernetes-ingress/pull/3231) Always print build info and flags used at the start to provide better supportability.
+* [2735](https://github.com/nginxinc/kubernetes-ingress/pull/2735) Support default client proxy headers to be overwritten in VirtualServer. Thanks to [Alex Wied](https://github.com/centromere)
+* [3133](https://github.com/nginxinc/kubernetes-ingress/pull/3133) Added caseSensitiveHttpHeaders to APPolicy CRD. Thanks to [Pavel Galitskiy](https://github.com/galitskiy).
+
+FIXES:
+* [3139](https://github.com/nginxinc/kubernetes-ingress/pull/3139) Remove all IPV6 listeners in ingress resources with `-disable-ipv6` command line.
+
+HELM CHART:
+* [3113](https://github.com/nginxinc/kubernetes-ingress/pull/3113) Added JSON Schema.
+* [3143](https://github.com/nginxinc/kubernetes-ingress/pull/3143) Added annotations for deployment and daemonset.
+* [3136](https://github.com/nginxinc/kubernetes-ingress/pull/3136) Added controller.dnsPolicy. Thanks to [Dong Wang](https://github.com/wd).
+* [3065](https://github.com/nginxinc/kubernetes-ingress/pull/3065) Added annotations to the service account. Thanks to [0m1xa](https://github.com/0m1xa).
+* [3276](https://github.com/nginxinc/kubernetes-ingress/pull/3276) Added horizontalpodautoscaler. Thanks to [Bryan Hendryx](https://github.com/coolbry95).
+
+UPGRADE:
+* Make sure the Kubernetes version is in the supported platforms listed below.
+* For NGINX, use the 3.0.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.0.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
+* For NGINX Plus, use the 3.0.0 images from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the 3.0.0 source code.
+* For Helm, use version 0.16.0 of the chart. Helm does not upgrade the CRDs. If you're using custom resources like VirtualServer and TransportServer (`controller.enableCustomResources` is set to `true`), after running the `helm upgrade` command, run `kubectl apply -f deployments/helm-chart/crds` to upgrade the CRDs.
+
+SUPPORTED PLATFORMS:
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.21-1.26.
+
 ## NGINX Ingress Controller 2.4.2
 
 30 Nov 2022
@@ -66,17 +257,15 @@ UPGRADE:
 04 October 2022
 
 OVERVIEW:
-
 * Added support for enabling [proxy_protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/shared-examples/proxy-protocol) when port 443 is being used for both HTTPS traffic and [TLS Passthrough traffic](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/tls-passthrough).
 * Updates to the TransportServer resource to support using [ExternalName services](https://kubernetes.io/docs/concepts/services-networking/service/#externalname). For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/externalname-services).
 * VirtualServer resource now supports [wildcard hostname](https://kubernetes.io/docs/concepts/services-networking/ingress/#hostname-wildcards).
 * NGINX Ingress Controller images including the combined NGINX AppProtect WAF and NGINX AppProtect DoS solutions are now published to our registry. See [Images with NGINX Plus](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#images-with-nginx-plus) for a detailed list of images in our registry.
 * Added support for watching multiple namespaces using the [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string) cli argument. This can configured by passing a comma-separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
-* A new cli argument has been added: [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). This appends the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
+* A new cli argument has been added: [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). This appends the current year to the log output from the Ingress Controller. Example output: `I20220512 09:20:42.345457`.
 * Post-startup configuration reloads have been optimized to reduce traffic impacts. When many resources are modified at the same time, changes are combined to reduce the number of data plane reloads.
 
 FEATURES:
-
 * [2986](https://github.com/nginxinc/kubernetes-ingress/pull/2986) Batch reloads at runtime.
 * [2914](https://github.com/nginxinc/kubernetes-ingress/pull/2914) Support watching multiple namespaces.
 * [2884](https://github.com/nginxinc/kubernetes-ingress/pull/2884) Include year in logs.
@@ -85,17 +274,14 @@ FEATURES:
 * [2939](https://github.com/nginxinc/kubernetes-ingress/pull/2939) Add support for wildcard hostname in VirtualServer.
 
 IMPROVEMENTS:
-
 * [3040](https://github.com/nginxinc/kubernetes-ingress/pull/3040) Add command line argument to manually disable IPV6 listeners for unsupported clusters.
 * [3088](https://github.com/nginxinc/kubernetes-ingress/pull/3088) Filter secrets of type helm.sh/release.v1.
 
 FIXES:
-
 * [2971](https://github.com/nginxinc/kubernetes-ingress/pull/2971) fix: Correct error message on missing path in path validation. Thanks to [Zachary Seguin](https://github.com/zachomedia).
 * [3095](https://github.com/nginxinc/kubernetes-ingress/pull/3095) do not create configmap if customConfigMap is used. Thanks to [Bryan Hendryx](https://github.com/coolbry95).
 
 HELM CHART:
-
 * [3087](https://github.com/nginxinc/kubernetes-ingress/pull/3087) Allow omitting the default server secret from Helm installs.
 * [2831](https://github.com/nginxinc/kubernetes-ingress/pull/2831) Add ServiceMonitor to Helm Chart. Thanks to [araineUnity](https://github.com/araineUnity).
 * [2855](https://github.com/nginxinc/kubernetes-ingress/pull/2854) Add initialDelaySeconds to helm charts. Thanks to [Daniel Edgar](https://github.com/aknot242).
@@ -133,14 +319,12 @@ UPGRADE:
 12 July 2022
 
 OVERVIEW:
-
 * Support making VirtualServer resources discoverable via public DNS servers using [external-dns](https://kubernetes-sigs.github.io/external-dns). Examples for configuring external-dns with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/external-dns).
 * Resolves [CVE-2022-30535](https://support.f5.com/csp/article/K52125139). This vulnerability impacted the visibility of secrets accessible by NGINX Ingress Controller. In some cases, secrets visible to NGINX Ingress Controller could be exposed to any authenticated user with permission to create and update Ingress objects. This vulnerability affected Ingress objects only - our Custom Resources (VirtualServer and TransportServer) were not affected. Customers unable to upgrade should migrate any Ingress resources to VirtualServer resources where possible, and use RBAC to restrict write access for users for Ingress objects.
 * Support using HTTP basic authentication with [VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.1/examples/custom-resources/basic-auth) and [Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/basic-auth) resources. Special thanks to [Simon Wachter](https://github.com/svvac).
 * Support HTTP01 type ACME Issuers for use with VirtualServer resources with [cert-manager](https://cert-manager.io/docs/).
 
 FEATURES:
-
 * [2581](https://github.com/nginxinc/kubernetes-ingress/pull/2581) Add OpenTracing to all Debian and Alpine based images.
 * [2328](https://github.com/nginxinc/kubernetes-ingress/pull/2328) Add handling of multiple log destinations.
 * [2691](https://github.com/nginxinc/kubernetes-ingress/pull/2691) AP: log-conf escaping chars.
@@ -151,7 +335,6 @@ FEATURES:
 * [2800](https://github.com/nginxinc/kubernetes-ingress/pull/2800) Integrate external-dns with VirtualServer resources.
 
 IMPROVEMENTS:
-
 * [2583](https://github.com/nginxinc/kubernetes-ingress/pull/2583) Add runAsNonRoot in deployments.
 * [2484](https://github.com/nginxinc/kubernetes-ingress/pull/2484) Add container resource requests.
 * [2627](https://github.com/nginxinc/kubernetes-ingress/pull/2627) Update InternalRoute server_name.
@@ -167,7 +350,6 @@ IMPROVEMENTS:
 * [2781](https://github.com/nginxinc/kubernetes-ingress/pull/2781) Report Hostname in ExternalEndpoint for VS and VSR resources.
 
 FIXES:
-
 * [2617](https://github.com/nginxinc/kubernetes-ingress/pull/2617) Fix Dockerfile for amd64 microarchitectures.
 * [2637](https://github.com/nginxinc/kubernetes-ingress/pull/2637) Add terminationGracePeriodSeconds to deployment. Thanks to [Maksym Iv](https://github.com/maksym-iv).
 * [2654](https://github.com/nginxinc/kubernetes-ingress/pull/2654) Sync changes from OIDC repo, add field in policy.
@@ -175,11 +357,9 @@ FIXES:
 * [2718](https://github.com/nginxinc/kubernetes-ingress/pull/2718) Fix cases where CM enabled but no TLS block specified in VS.
 
 HELM CHART:
-
 * [2418](https://github.com/nginxinc/kubernetes-ingress/pull/2418) Add support for allocateLoadBalancerNodePorts, ipFamilyPolicy and ipFamilies. Thanks to [centromere](https://github.com/centromere).
 * [2672](https://github.com/nginxinc/kubernetes-ingress/pull/2672) Add minReadySeconds & strategy support. Thanks to [Ciaran](https://github.com/cmk-pcs).
 * [2625](https://github.com/nginxinc/kubernetes-ingress/pull/2625) allow configuring topologySpreadConstraints in Helm chart. Thanks to [Kamil Domański](https://github.com/kdomanski).
-
 
 UPGRADE:
 * For NGINX, use the 2.3.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.3.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).

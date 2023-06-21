@@ -323,6 +323,7 @@ def are_all_pods_in_ready_state(v1: CoreV1Api, namespace) -> bool:
         return False
     pod_ready_amount = 0
     for pod in pods.items:
+        print(f"Pod {pod.metadata.name} has image {pod.spec.containers[0].image}")
         if pod.status.conditions is None:
             return False
         for condition in pod.status.conditions:
@@ -1132,6 +1133,9 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     dep["spec"]["replicas"] = int(cli_arguments["replicas"])
     dep["spec"]["template"]["spec"]["containers"][0]["image"] = cli_arguments["image"]
     dep["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = cli_arguments["image-pull-policy"]
+    dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(
+        ["-default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret"]
+    )
     if args is not None:
         dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(args)
     if cli_arguments["deployment-type"] == "deployment":

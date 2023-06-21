@@ -13,6 +13,7 @@ import (
 )
 
 func TestValidateIngress(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ing                   *networking.Ingress
 		isPlus                bool
@@ -134,6 +135,7 @@ func TestValidateIngress(t *testing.T) {
 }
 
 func TestValidateNginxIngressAnnotations(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		annotations           map[string]string
 		specServices          map[string]bool
@@ -2801,6 +2803,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 }
 
 func TestValidateIngressSpec(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		spec           *networking.IngressSpec
 		expectedErrors []field.ErrorType
@@ -3059,6 +3062,7 @@ func TestValidateIngressSpec(t *testing.T) {
 }
 
 func TestValidateMasterSpec(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		spec           *networking.IngressSpec
 		expectedErrors []string
@@ -3130,6 +3134,7 @@ func TestValidateMasterSpec(t *testing.T) {
 }
 
 func TestValidateMinionSpec(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		spec           *networking.IngressSpec
 		expectedErrors []string
@@ -3268,6 +3273,7 @@ func errorListToTypes(list field.ErrorList) []field.ErrorType {
 }
 
 func TestGetSpecServices(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		spec     networking.IngressSpec
 		expected map[string]bool
@@ -3420,8 +3426,10 @@ func TestValidatePath(t *testing.T) {
 		"/abc}{abc",
 	}
 
+	pathType := networking.PathTypeExact
+
 	for _, path := range validPaths {
-		allErrs := validatePath(path, field.NewPath("path"))
+		allErrs := validatePath(path, &pathType, field.NewPath("path"))
 		if len(allErrs) > 0 {
 			t.Errorf("validatePath(%q) returned errors %v for valid input", path, allErrs)
 		}
@@ -3440,10 +3448,17 @@ func TestValidatePath(t *testing.T) {
 	}
 
 	for _, path := range invalidPaths {
-		allErrs := validatePath(path, field.NewPath("path"))
+		allErrs := validatePath(path, &pathType, field.NewPath("path"))
 		if len(allErrs) == 0 {
 			t.Errorf("validatePath(%q) returned no errors for invalid input", path)
 		}
+	}
+
+	pathType = networking.PathTypeImplementationSpecific
+
+	allErrs := validatePath("", &pathType, field.NewPath("path"))
+	if len(allErrs) > 0 {
+		t.Errorf("validatePath with empty path and type ImplementationSpecific returned errors %v for valid input", allErrs)
 	}
 }
 

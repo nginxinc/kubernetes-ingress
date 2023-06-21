@@ -42,6 +42,11 @@ import (
 // Injected during build
 var version string
 
+const (
+	nginxVersionLabel = "app.nginx.org/version"
+	versionLabel      = "app.kubernetes.io/version"
+)
+
 func main() {
 	commitHash, commitTime, dirtyBuild := getBuildInfo()
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
@@ -64,11 +69,13 @@ func main() {
 
 	nginxManager, useFakeNginxManager := createNginxManager(managerCollector)
 
-	getNginxVersionInfo(nginxManager)
+	nginxVersion := getNginxVersionInfo(nginxManager)
+
+	updateSelfWithVersionInfo(kubeClient, version, nginxVersion)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
-	aPPluginDone, aPAgentDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
+	aPPluginDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
 
 	sslRejectHandshake := processDefaultServerSecret(kubeClient, nginxManager)
 
@@ -178,7 +185,7 @@ func main() {
 	}
 
 	if *appProtect || *appProtectDos {
-		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPAgentDone, aPPluginDone, aPPDosAgentDone, *appProtect, *appProtectDos)
+		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPPluginDone, aPPDosAgentDone, *appProtect, *appProtectDos)
 	} else {
 		go handleTermination(lbc, nginxManager, syslogListener, nginxDone)
 	}
@@ -226,7 +233,7 @@ func kubernetesVersionInfo(kubeClient kubernetes.Interface) {
 	}
 	glog.Infof("Kubernetes version: %v", k8sVersion)
 
-	minK8sVersion, err := util_version.ParseGeneric("1.21.0")
+	minK8sVersion, err := util_version.ParseGeneric("1.22.0")
 	if err != nil {
 		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
 	}
@@ -367,7 +374,7 @@ func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Man
 	return nginxManager, useFakeNginxManager
 }
 
-func getNginxVersionInfo(nginxManager nginx.Manager) {
+func getNginxVersionInfo(nginxManager nginx.Manager) string {
 	nginxVersion := nginxManager.Version()
 	isPlus := strings.Contains(nginxVersion, "plus")
 	glog.Infof("Using %s", nginxVersion)
@@ -377,18 +384,15 @@ func getNginxVersionInfo(nginxManager nginx.Manager) {
 	} else if !*nginxPlus && isPlus {
 		glog.Fatal("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
 	}
+	return nginxVersion
 }
 
-func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error, chan error) {
+func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error) {
 	var aPPluginDone chan error
-	var aPAgentDone chan error
 
 	if *appProtect {
 		aPPluginDone = make(chan error, 1)
-		aPAgentDone = make(chan error, 1)
-
-		nginxManager.AppProtectAgentStart(aPAgentDone, *appProtectLogLevel)
-		nginxManager.AppProtectPluginStart(aPPluginDone)
+		nginxManager.AppProtectPluginStart(aPPluginDone, *appProtectLogLevel)
 	}
 
 	var aPPDosAgentDone chan error
@@ -397,7 +401,7 @@ func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error
 		aPPDosAgentDone = make(chan error, 1)
 		nginxManager.AppProtectDosAgentStart(aPPDosAgentDone, *appProtectDosDebug, *appProtectDosMaxDaemons, *appProtectDosMaxWorkers, *appProtectDosMemory)
 	}
-	return aPPluginDone, aPAgentDone, aPPDosAgentDone
+	return aPPluginDone, aPPDosAgentDone
 }
 
 func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
@@ -540,7 +544,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	return secret, nil
 }
 
-func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, agentDone, pluginDone, agentDosDone chan error, appProtectEnabled, appProtectDosEnabled bool) {
+func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, pluginDone, agentDosDone chan error, appProtectEnabled, appProtectDosEnabled bool) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
@@ -549,8 +553,6 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 		glog.Fatalf("nginx command exited unexpectedly with status: %v", err)
 	case err := <-pluginDone:
 		glog.Fatalf("AppProtectPlugin command exited unexpectedly with status: %v", err)
-	case err := <-agentDone:
-		glog.Fatalf("AppProtectAgent command exited unexpectedly with status: %v", err)
 	case err := <-agentDosDone:
 		glog.Fatalf("AppProtectDosAgent command exited unexpectedly with status: %v", err)
 	case <-signalChan:
@@ -561,8 +563,6 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 		if appProtectEnabled {
 			nginxManager.AppProtectPluginQuit()
 			<-pluginDone
-			nginxManager.AppProtectAgentQuit()
-			<-agentDone
 		}
 		if appProtectDosEnabled {
 			nginxManager.AppProtectDosAgentQuit()
@@ -745,4 +745,33 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 		}
 	}
 	return cfgParams
+}
+
+func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string, nginxVersion string) {
+	pod, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), os.Getenv("POD_NAME"), meta_v1.GetOptions{})
+	if err != nil {
+		glog.Errorf("Error getting pod: %v", err)
+		return
+	}
+
+	// Copy pod and update the labels.
+	newPod := pod.DeepCopy()
+	labels := newPod.ObjectMeta.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	nginxVer := strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
+	replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
+	nginxVer = replacer.Replace(nginxVer)
+	labels[nginxVersionLabel] = nginxVer
+	labels[versionLabel] = strings.TrimPrefix(version, "v")
+	newPod.ObjectMeta.Labels = labels
+
+	_, err = kubeClient.CoreV1().Pods(newPod.ObjectMeta.Namespace).Update(context.TODO(), newPod, meta_v1.UpdateOptions{})
+	if err != nil {
+		glog.Errorf("Error updating pod with labels: %v", err)
+		return
+	}
+
+	glog.Infof("Pod label updated: %s", pod.ObjectMeta.Name)
 }

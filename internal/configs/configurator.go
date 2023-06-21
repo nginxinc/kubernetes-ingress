@@ -32,6 +32,7 @@ import (
 
 const (
 	pemFileNameForWildcardTLSSecret = "/etc/nginx/secrets/wildcard" // #nosec G101
+	appProtectBundleFolder          = "/etc/nginx/waf/bundles/"
 	appProtectPolicyFolder          = "/etc/nginx/waf/nac-policies/"
 	appProtectLogConfFolder         = "/etc/nginx/waf/nac-logconfs/"
 	appProtectUserSigFolder         = "/etc/nginx/waf/nac-usersigs/"
@@ -42,6 +43,9 @@ const (
 
 // DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server. #nosec G101
 const DefaultServerSecretPath = "/etc/nginx/secrets/default"
+
+// DefaultSecretPath is the full default path to where secrets are stored and accessed.
+const DefaultSecretPath = "/etc/nginx/secrets" // #nosec G101
 
 // DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server.
 const DefaultServerSecretName = "default"
@@ -55,8 +59,11 @@ const JWTKeyKey = "jwk"
 // HtpasswdFileKey is the key of the data field of a Secret where the HTTP basic authorization list must be stored
 const HtpasswdFileKey = "htpasswd"
 
-// CAKey is the key of the data field of a Secret where the cert must be stored.
-const CAKey = "ca.crt"
+// CACrtKey is the key of the data field of a Secret where the cert must be stored.
+const CACrtKey = "ca.crt"
+
+// CACrlKey is the key of the data field of a Secret where the cert revocation list must be stored.
+const CACrlKey = "ca.crl"
 
 // ClientSecretKey is the key of the data field of a Secret where the OIDC client secret must be stored.
 const ClientSecretKey = "client-secret"
@@ -111,6 +118,7 @@ type Configurator struct {
 	ingresses               map[string]*IngressEx
 	minions                 map[string]map[string]bool
 	virtualServers          map[string]*VirtualServerEx
+	transportServers        map[string]*TransportServerEx
 	tlsPassthroughPairs     map[string]tlsPassthroughPair
 	isWildcardEnabled       bool
 	isPlus                  bool
@@ -145,6 +153,7 @@ func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigPa
 		cfgParams:               config,
 		ingresses:               make(map[string]*IngressEx),
 		virtualServers:          make(map[string]*VirtualServerEx),
+		transportServers:        make(map[string]*TransportServerEx),
 		templateExecutor:        templateExecutor,
 		templateExecutorV2:      templateExecutorV2,
 		minions:                 make(map[string]map[string]bool),
@@ -265,8 +274,8 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) (Warnings, error) 
 	return warnings, nil
 }
 
-// GetVirtualServerForHost takes a hostname and returns a VS for the given hostname.
-func (cnf *Configurator) GetVirtualServerForHost(hostname string) *conf_v1.VirtualServer {
+// virtualServerForHost takes a hostname and returns a VS for the given hostname.
+func (cnf *Configurator) virtualServerForHost(hostname string) *conf_v1.VirtualServer {
 	for _, vsEx := range cnf.virtualServers {
 		if vsEx.VirtualServer.Spec.Host == hostname {
 			return vsEx.VirtualServer
@@ -275,8 +284,8 @@ func (cnf *Configurator) GetVirtualServerForHost(hostname string) *conf_v1.Virtu
 	return nil
 }
 
-// GetUpstreamsforVirtualServer takes VS and returns a slice of upstreams.
-func (cnf *Configurator) GetUpstreamsforVirtualServer(vs *conf_v1.VirtualServer) []string {
+// upstreamsForVirtualServer takes VirtualServer and returns a list of associated upstreams.
+func (cnf *Configurator) upstreamsForVirtualServer(vs *conf_v1.VirtualServer) []string {
 	glog.V(3).Infof("Get upstreamName for vs: %s", vs.Spec.Host)
 	upstreamNames := make([]string, 0, len(vs.Spec.Upstreams))
 
@@ -290,16 +299,50 @@ func (cnf *Configurator) GetUpstreamsforVirtualServer(vs *conf_v1.VirtualServer)
 	return upstreamNames
 }
 
-// GetUpstreamsforHost takes a hostname and returns a slice of upstreams
-// for the given hostname.
-func (cnf *Configurator) GetUpstreamsforHost(hostname string) []string {
+// UpstreamsForHost takes a hostname and returns upstreams for the given hostname.
+func (cnf *Configurator) UpstreamsForHost(hostname string) []string {
 	glog.V(3).Infof("Get upstream for host: %s", hostname)
-	vs := cnf.GetVirtualServerForHost(hostname)
-
+	vs := cnf.virtualServerForHost(hostname)
 	if vs != nil {
-		return cnf.GetUpstreamsforVirtualServer(vs)
+		return cnf.upstreamsForVirtualServer(vs)
 	}
 	return nil
+}
+
+// StreamUpstreamsForName takes a name and returns stream upstreams
+// associated with this name. The name represents TS's
+// (TransportServer) action name.
+func (cnf *Configurator) StreamUpstreamsForName(name string) []string {
+	glog.V(3).Infof("Get stream upstreams for name: '%s'", name)
+	ts := cnf.transportServerForActionName(name)
+	if ts != nil {
+		return cnf.streamUpstreamsForTransportServer(ts)
+	}
+	return nil
+}
+
+// transportServerForActionName takes an action name and returns
+// Transport Server obj associated with that name.
+func (cnf *Configurator) transportServerForActionName(name string) *conf_v1alpha1.TransportServer {
+	for _, tsEx := range cnf.transportServers {
+		glog.V(3).Infof("Check ts action '%s' for requested name: '%s'", tsEx.TransportServer.Spec.Action.Pass, name)
+		if tsEx.TransportServer.Spec.Action.Pass == name {
+			return tsEx.TransportServer
+		}
+	}
+	return nil
+}
+
+// streamUpstreamsForTransportServer takes TransportServer obj and returns
+// a list of stream upstreams associated with this TransportServer.
+func (cnf *Configurator) streamUpstreamsForTransportServer(ts *conf_v1alpha1.TransportServer) []string {
+	upstreamNames := make([]string, 0, len(ts.Spec.Upstreams))
+	n := newUpstreamNamerForTransportServer(ts)
+	for _, u := range ts.Spec.Upstreams {
+		un := n.GetNameForUpstream(u.Name)
+		upstreamNames = append(upstreamNames, un)
+	}
+	return upstreamNames
 }
 
 func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (Warnings, error) {
@@ -489,8 +532,7 @@ func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServer
 }
 
 func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) error {
-	err := cnf.nginxManager.CreateOpenTracingTracerConfig(content)
-	return err
+	return cnf.nginxManager.CreateOpenTracingTracerConfig(content)
 }
 
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
@@ -632,8 +674,9 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 	if cnf.isPlus && cnf.isPrometheusEnabled {
 		cnf.updateTransportServerMetricsLabels(transportServerEx, tsCfg.Upstreams)
 	}
-
 	cnf.nginxManager.CreateStreamConfig(name, content)
+
+	cnf.transportServers[name] = transportServerEx
 
 	// update TLS Passthrough Hosts config in case we have a TLS Passthrough TransportServer
 	// only TLS Passthrough TransportServers have non-empty hosts
@@ -687,8 +730,12 @@ func generateTLSPassthroughHostsConfig(tlsPassthroughPairs map[string]tlsPassthr
 
 func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
-	data := GenerateCAFileContent(secret)
-	return cnf.nginxManager.CreateSecret(name, data, nginx.TLSSecretFileMode)
+	crtData, crlData := GenerateCAFileContent(secret)
+	crtSecretName := fmt.Sprintf("%s-%s", name, CACrtKey)
+	crlSecretName := fmt.Sprintf("%s-%s", name, CACrlKey)
+	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.TLSSecretFileMode)
+	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.TLSSecretFileMode)
+	return fmt.Sprintf("%s %s", crtFileName, crlFileName)
 }
 
 func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
@@ -778,12 +825,14 @@ func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 }
 
 // GenerateCAFileContent generates a pem file content from the TLS secret.
-func GenerateCAFileContent(secret *api_v1.Secret) []byte {
-	var res bytes.Buffer
+func GenerateCAFileContent(secret *api_v1.Secret) ([]byte, []byte) {
+	var caKey bytes.Buffer
+	var caCrl bytes.Buffer
 
-	res.Write(secret.Data[CAKey])
+	caKey.Write(secret.Data[CACrtKey])
+	caCrl.Write(secret.Data[CACrlKey])
 
-	return res.Bytes()
+	return caKey.Bytes(), caCrl.Bytes()
 }
 
 // DeleteIngress deletes NGINX configuration for the Ingress resource.
