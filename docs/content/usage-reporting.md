@@ -12,7 +12,7 @@ This document outlines how to enable usage reporting for NGINX Ingress Controlle
 
 ## Overview
 
-As a requirement for the Flexible Consumption Program (FCP) licensing option, there is a requirement to track the deployments of NGINX Ingress Controller according to the pricing dimensions of the program. The NGINX Management Suite is used as a data aggregation point for the reporting component called the cluster connector.
+To use the Flexible Consumption Program (FCP) licensing option, there is a requirement to track the deployments of NGINX Ingress Controller according to the pricing dimensions of the program. The NGINX Management Suite is used as a data aggregation point for the reporting component called the cluster connector.
 
 NGINX Cluster Connector is a Kubernetes controller that sends reporting data to the NGINX Management Suite. The NGINX Cluster Connector is deployed as a Kubernetes Deployment in the same cluster(s) where NGINX Ingress Controller is deployed.
 
@@ -26,7 +26,6 @@ To deploy Usage Reporting, you must have the following:
 |-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | NGINX Ingress Controller 3.1.0 or later | https://docs.nginx.com/nginx-ingress-controller                                                                       |
 | NGINX Management Suite 2.11 or later    | https://docs.nginx.com/nginx-management-suite                                                                         |
-| Kubernetes 1.22 or later                | Ensure you can access the Kubernetes API, with the ability to deploy a Kubernetes Deployment and a Kubernetes secret. |
 
 In addition to the software requirements, you must have the following:
 - Access to an NGINX Management Suite username and password for basic authentication.  You will need the URL of your NGINX Management Suite system, and the cluster connector username, and password.  The cluster connector user account must have access to the `/api/platform/v1/k8s-usage` endpoint.
@@ -214,7 +213,7 @@ Format `<namespace>/<name>`.
 The display name of the Kubernetes cluster.
 
 ### -skip-tls-verify
-Skip TLS verification for the NMS server. **For testing purposes with NMS server using self-assigned certificate.**
+Skip TLS verification for the NGINX Management Suite server. **For testing purposes with NMS server using self-assigned certificate.**
 
 ### -min-update-interval `<string>`
 The minimum interval between updates to the NMS.
