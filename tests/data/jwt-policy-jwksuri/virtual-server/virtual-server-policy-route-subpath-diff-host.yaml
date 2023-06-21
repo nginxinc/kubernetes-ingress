@@ -1,0 +1,22 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server-2
+spec:
+  host: virtual-server-2.example.com
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  routes:
+  - path: "/backend1/subpath1"
+    action:
+      pass: backend1
+    policies:
+    - name: jwt-policy-valid
+  - path: "/backend2/subpath2"
+    action:
+      pass: backend2

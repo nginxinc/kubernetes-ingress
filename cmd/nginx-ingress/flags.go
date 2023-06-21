@@ -289,6 +289,7 @@ func initialChecks() {
 		if err != nil {
 			glog.Fatalf("Failed startup check: %v", err)
 		}
+		glog.Info("AWS startup check passed")
 	}
 
 	glog.Infof("Starting with flags: %+q", os.Args[1:])

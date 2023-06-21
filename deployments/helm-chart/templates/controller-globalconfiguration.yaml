@@ -2,7 +2,7 @@
 apiVersion: k8s.nginx.org/v1alpha1
 kind: GlobalConfiguration
 metadata:
-  name: {{ include "nginx-ingress.fullname" . }}
+  name: {{ include "nginx-ingress.controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
