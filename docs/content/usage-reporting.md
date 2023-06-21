@@ -35,7 +35,7 @@ In addition to the software requirements, you must have the following:
 
 ## Setting up user accounts in NGINX Management Suite
 
-The cluster connector needs a user account to send usage data to NIM. This is how you create one for the Cluster Connector to use.
+The cluster connector needs a user account to send usage data to NGINX Instance Manager. This is how you create one for the Cluster Connector to use.
 
 1. Create a role following the steps in [Create a Role](https://docs.nginx.com/nginx-management-suite/admin-guides/access-control/set-up-rbac/#create-role) section of the NGINX Management Suite documentation. Select these permissions in step 6 for the role:
    - Module: Instance Manager
@@ -50,7 +50,7 @@ The cluster connector needs a user account to send usage data to NIM. This is ho
 
 1. Create a Kubernetes namespace `nginx-cluster-connector` for the NGINX Cluster Connector:
     ```
-    > kubectl create namespace nginx-cluster-connector
+    kubectl create namespace nginx-cluster-connector
     ```
 
 ### Define the credential for the NMS API
@@ -97,7 +97,7 @@ If you need to update the basic-auth credentials to NMS server in the future, up
         - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
    ```
 
-The `-nms-server-address` should be the address of the usage reporting API, which should be the combination of NMS server hostname and the URI `api/platform/v1`.  The `nms-basic-auth-secret` should be the namespace/name of the secret created in step 2, i.e `nginx-cluster-connector/nms-basic-auth`.
+The `-nms-server-address` should be the address of the usage reporting API, which should be the combination of NMS server hostname and the URI `api/platform/v1`. The `nms-basic-auth-secret` should be the namespace/name of the secret created in step 2, i.e `nginx-cluster-connector/nms-basic-auth`.
 For more information on the command-line flags, see [Configuration](#configuration).
 
 6. To deploy the Nginx Cluster Connector, run the following command to deploy it to your Kubernetes cluster:
