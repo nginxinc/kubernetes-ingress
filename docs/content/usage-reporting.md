@@ -15,7 +15,7 @@ This document outlines how to enable usage reporting for NGINX Ingress Controlle
 
 As a requirement for the Flexible Consumption Program (FCP) licensing option, there is a requirement to track the deployments of NGINX Ingress Controller according to the pricing dimensions of the program. The NGINX Management Suite is used as a data aggregation point for the reporting component called the cluster connector.
 
-NGINX Cluster Connector is a Kubernetes controller that sends reporting data to the NGINX Management Suite.  The NGINX Cluster Connector is deployed as a Kubernetes Deployment in the same cluster(s) where NGINX Ingress Controller is deployed.
+NGINX Cluster Connector is a Kubernetes controller that sends reporting data to the NGINX Management Suite. The NGINX Cluster Connector is deployed as a Kubernetes Deployment in the same cluster(s) where NGINX Ingress Controller is deployed.
 
 To use the NGINX Cluster Connector, you must have NGINX Management Suite installed and running in your data center. For more information, see [NGINX Management Suite](https://www.nginx.com/products/nginx-management-suite/). The NGINX Management Suite component is included in your subscription and should be available to download through your MyF5.com account.
 
