@@ -30,7 +30,7 @@ To deploy Usage Reporting, you must have the following:
 In addition to the software requirements, you must have the following:
 - Access to an NGINX Management Suite username and password for basic authentication. You will need the URL of your NGINX Management Suite system, and the cluster connector username, and password. The cluster connector user account must have access to the `/api/platform/v1/k8s-usage` endpoint.
 - Access to the Kubernetes cluster where the NGINX Ingress Controller is deployed, with the ability to deploy a Kubernetes Deployment and a Kubernetes Secret.
-- Access to public internet to pull the cluster connector image. This image is hosted in the NGINX container registry at `public-registry.nginx.com/cluster-connector`. You can pull the image and push it to a private container registry for deployment.
+- Access to public internet to pull the cluster connector image. This image is hosted in the NGINX container registry at `docker-registry.nginx.com/cluster-connector`. You can pull the image and push it to a private container registry for deployment.
 [//]: # (  TODO: Update the image and tag after published)
 
 ## Setting up user accounts in NGINX Management Suite
