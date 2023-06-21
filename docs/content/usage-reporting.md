@@ -164,7 +164,7 @@ The NGINX Cluster Connector reports the number of NGINX Ingress Controller insta
   ]
 }
 ```
-If you want a friendly name for each cluster in the response, You can specify the `displayName` for the cluster with the `-cluster-display-name` command-line argument when you deploy the Cluster Connector . See [Command-line Arguments](#Command-line Arguments) for more information. From this response, you can see the cluster uid corresponding to the cluster name.
+If you want a friendly name for each cluster in the response, You can specify the `displayName` for the cluster with the `-cluster-display-name` command-line argument when you deploy the Cluster Connector. See [Command-line Arguments](#Command-line Arguments) for more information. From this response, you can see the cluster uid corresponding to the cluster name.
 
 You can also query the usage data for a specific cluster by specifying the cluster uid in the endpoint, for example:
 ```
