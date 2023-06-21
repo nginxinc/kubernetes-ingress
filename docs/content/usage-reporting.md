@@ -191,7 +191,7 @@ kubectl delete -f cluster-connector.yaml
 ```
 
 ## Command-line Arguments
-The NGINX Cluster Connector supports several command-line arguments. The command-line arguments can be specified in the `args` section of the Kubernetes deployment file. The following is a list of the supported command-line arguments and their usage:
+Usage Reporting supports several command-line arguments. The command-line arguments can be specified in the `args` section of the Kubernetes deployment file. The following is a list of the supported command-line arguments and their usage:
 
 ### -nms-server-address `<string>`
 The address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported.
