@@ -110,7 +110,7 @@ jobs:
           tags: |
             type=edge
             type=ref,event=pr
-            type=schedule
+            type=schedule,enable=${{ inputs.tag == '' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
@@ -157,7 +157,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v2.13.4
+        uses: github/codeql-action/upload-sarif@f6e388ebf0efc915c6c5b165b019ee61a6746a38 # v2.20.1
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
