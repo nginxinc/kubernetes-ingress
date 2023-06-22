@@ -110,6 +110,7 @@ jobs:
           tags: |
             type=edge
             type=ref,event=pr
+            type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/release-') }}
             type=schedule,enable=${{ inputs.tag == '' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
