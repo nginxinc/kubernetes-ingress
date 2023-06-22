@@ -16,7 +16,7 @@ To use Usage Reporting, you must have access to NGINX Management Suite. For more
 
 To deploy Usage Reporting, you must have the following:
 
-* [NGINX Ingress Controller 3.1.0](https://docs.nginx.com/nginx-ingress-controller) or later
+* [NGINX Ingress Controller 3.2.0](https://docs.nginx.com/nginx-ingress-controller) or later
 * [NGINX Management Suite 2.11](https://docs.nginx.com/nginx-management-suite) or later
 
 In addition to the software requirements, you will need:
