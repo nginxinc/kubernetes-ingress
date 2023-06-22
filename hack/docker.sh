@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-git_commit=$1
-git_tag=$2
+git_tag=$1
 docker_tag=edge
 
+git_commit=$(git rev-parse HEAD)
 commit_tag=$(git describe --exact-match ${git_commit} 2>/dev/null)
 
 if [[ ${commit_tag} == ${git_tag} ]]; then
