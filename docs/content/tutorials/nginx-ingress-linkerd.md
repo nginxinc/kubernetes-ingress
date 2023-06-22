@@ -36,7 +36,7 @@ You can do this through the use of NGINX Ingress Controller's custom resource de
 ---
 
 ### During Installation
-**Using Manifests**  
+**Using Manifests**
 
 When installing NGINX Ingress Controller, you can [create a custom resource](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/#3-create-custom-resources) for Linkerd.
 
@@ -44,7 +44,7 @@ When installing NGINX Ingress Controller, you can [create a custom resource](htt
 TODO: INSERT CUSTOM RESOURCE EXAMPLE
 ```
 
-**Using Helm**  
+**Using Helm**
 
 Add the following annotation to your Helm deployment:
 
@@ -62,7 +62,7 @@ This annotation will instruct `helm` to tell `Linkerd` to automatically inject i
 ### With an Existing Installation
 To integrate Linkerd with an existing NGINX Ingress Controller installation, you will need to inject the `Linkerd` sidecar, using its `linkerd` control plane utility.
 
-**Using Manifests**  
+**Using Manifests**
 
 If you want to inject into an existing Manifest-based installation, you can run the following:
 
@@ -70,7 +70,7 @@ If you want to inject into an existing Manifest-based installation, you can run 
 kubectl get deployment -n nginx-ingress nginx-ingress -o yaml | linkerd inject - | kubectl apply -f
 ```
 
-**Using Helm**  
+**Using Helm**
 If you want to inject into an existing `Helm` installation, you can run the following:
 
 ```bash
