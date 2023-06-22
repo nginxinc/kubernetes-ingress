@@ -28,7 +28,7 @@ In order to build a custom NGINX Ingress Controller image with specific modules,
 
 Clone the NGINX Ingress Controller repo:
 
-```
+```bash
 git clone git@github.com:nginxinc/kubernetes-ingress.git
 ```
 
@@ -40,7 +40,7 @@ In our example, we are going to add the `Headers-more` dynamic module to our NGI
 Locate your preferred OS version that you want to modify in the Dockerfile (debian, alpine etc.).
 Here is a snippet of the `Dockerfile` for `debian-plus`
 
-```
+```Dockerfile
 FROM debian:11-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
@@ -64,18 +64,19 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 Look for a line similar to the following line in the `Dockerfile`:
 
-```
+```bash
 apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs
 ```
 
 This is the line you will want to modify/add the module you want to have loaded into NGINX Ingress Controller.
 We are going to add the `headers-more` module. The updated line would look like this:
 
-```
+```bash
 apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs nginx-plus-module-headers-more
 ```
 
 In the above example, I added a single module line:
+
 ```
 nginx-plus-module-headers-more
 ```
@@ -83,9 +84,9 @@ nginx-plus-module-headers-more
 After the new NGINX Ingress module image has been built successfully, the next step is to load the module into your NGINX Ingress Controller when it will be deployed into your Kubernetes cluster.
 
 For this to work, we will need to edit and update your `configmap` and load the module into the `main` context.
-Here is a simple example of updating of the `nginx-cofng.yaml` file, that is used when deploying via manifest (helm is also supported. Just updated the correct entries line appropriately.)
+Here is a simple example of updating of the `nginx-config.yaml` file, that is used when deploying via manifest (helm is also supported. Just updated the correct entries line appropriately.)
 
-```
+```yaml
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -101,7 +102,7 @@ You can verify this be executing `nginx -T` in the NGINX Ingress Controller pod:
 
 If you are using `helm`, you will need to add a setting like the following in your `values.yaml` file:
 
-```
+```yaml
 config:
   name: nginx-ingress
   entries:
@@ -110,6 +111,8 @@ config:
     lb-method: "least_time last_byte"
 ```
 
+```console
 kubectl exec -it -n nginx-ingress <nginx_ingress_pod> -- nginx -T
+```
 
 You should see in the `nginx -T` full output, that your module is now loaded into NGINX Ingress controller.
