@@ -205,8 +205,8 @@ Format `<namespace>/<name>`.
 The display name of the Kubernetes cluster.
 
 ### -skip-tls-verify
-Skip TLS verification for the NGINX Management Suite server. **For testing purposes with NMS server using self-assigned certificate.**
+Skip TLS verification for the NGINX Management Suite server. **For testing purposes with NGINX Management Suite server using self-assigned certificate.**
 
 ### -min-update-interval `<string>`
-The minimum interval between updates to the NMS.
+The minimum interval between updates to the NGINX Management Suite. **For testing purposes only.**
 Default `24h`.
