@@ -62,7 +62,7 @@ Once the image is built and pushed, make sure you update your deployment to poin
 Once deployed, create a new `VirtualServer` resource and run `nginx -T` to confirm if the port change has taken effect.
 
 Ensure that your `Deployment` and your `Service` match up to the new port you configured in the templates.
-Below is an example of  `deployment` and `service` matching to the new port that NGINX Ingress Controller now listens on.
+Below is an example of  `Deployment` and `Service` matching to the new port that NGINX Ingress Controller now listens on.
 
 ```yaml
 apiVersion: apps/v1
