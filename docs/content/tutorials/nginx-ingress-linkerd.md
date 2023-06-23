@@ -41,7 +41,23 @@ You can do this through the use of NGINX Ingress Controller's custom resource de
 When installing NGINX Ingress Controller, you can [create a custom resource](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/#3-create-custom-resources) for Linkerd.
 
 ```yaml
-TODO: INSERT CUSTOM RESOURCE EXAMPLE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled
+      labels:
+        app: nginx-ingress
+        app.kubernetes.io/name: nginx-ingress
 ```
 
 **Using Helm**
