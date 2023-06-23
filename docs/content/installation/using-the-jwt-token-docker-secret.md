@@ -40,7 +40,7 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
 
 
 <a id="jwt-token"></a>
-## Using the JWT token in a Kubernetes `docker-registry` secret:    
+## Using the JWT token in a Kubernetes `docker-registry` secret:
 
 1. Create a kubernetes `docker-registry` secret type, on the cluster using the JWT token as the username and `none` for password (password is unused).  The name of the docker server is `private-registry.nginx.com`.
 
@@ -50,13 +50,13 @@ First, `cat` the contents of the `JWT` token. We will use the output of the `tok
  cat nginx-repo.jwt
  <output_of_jwt>
   ```
-We will now create the Kubernetes secret required to authenticate to the NGINX private-registry to be able to pull the NGINX Ingress controller image:    
+We will now create the Kubernetes secret required to authenticate to the NGINX private-registry to be able to pull the NGINX Ingress controller image:
 
 	```
     kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
   ```
 
-2. Confirm the details of the created secret by running:    
+2. Confirm the details of the created secret by running:
 
   ```bash
   kubectl get secret regcred --output-yaml
@@ -157,7 +157,7 @@ helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ing
 <a id="image-local"></a>
 ## Pulling the image locally
 
-There may be times when you are unable to connect directly to a repo, or you need to scan a docker image before putting it into your cluster. 
+There may be times when you are unable to connect directly to a repo, or you need to scan a docker image before putting it into your cluster.
 If you need to pull the image locally, and push to a different container registry, here are the steps to do so:
 
 ```
