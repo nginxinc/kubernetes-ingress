@@ -4,7 +4,6 @@ description: "This document explains how to build an NGINX Ingress Controller im
 weight: 2200
 doctypes: [""]
 toc: true
-docs: "DOCS-601"
 ---
 
 This document explains how to build an NGINX Ingress Controller image using the source code. You can also use pre-built images: please see [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the NGINX Ingress Controller based on NGINX Plus from the F5 Docker registry; for NGINX Ingress Controller based on NGINX OSS, we provide the images through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) and [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress).
@@ -19,7 +18,7 @@ Before you can build the image, make sure that the following software is install
 * [OpenSSL](https://www.openssl.org/), optionally, if you would like to generate a self-signed certificate and a key for the default server.
 * For NGINX Plus, you must have the NGINX Plus license -- the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`).
 
-Although the NGINX Ingress Controller is written in golang, golang is not required, you have the option to download the binary or to build the NGINX Ingress Controller in a Docker container.
+Although the NGINX Ingress Controller is written in golang, golang is not required: you can download the binary file or build the NGINX Ingress Controller in a Docker container.
 
 ## Building the Image and Pushing It to the Private Registry
 
