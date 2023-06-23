@@ -83,20 +83,20 @@ To integrate Linkerd with an existing NGINX Ingress Controller installation, you
 If you want to inject into an existing Manifest-based installation, you can run the following:
 
 ```bash
-kubectl get deployment -n nginx-ingress nginx-ingress -o yaml | linkerd inject - | kubectl apply -f
+kubectl get deployment -n nginx-ingress nginx-ingress -o yaml | linkerd inject - | kubectl apply -f -
 ```
 
 **Using Helm**
 If you want to inject into an existing `Helm` installation, you can run the following:
 
 ```bash
-kubectl get deployment -n <name_of_namespace> <name_of_helm_release> -o yaml | linkerd inject - | kubectl apply -f
+kubectl get deployment -n <name_of_namespace> <name_of_helm_release> -o yaml | linkerd inject - | kubectl apply -f -
 ```
 In this example, the `helm` release named `kic01-nginx-ingress-controller` is injected into the `nginx-ingress` namespace:
 
 ```bash
- kubectl get deploy -n nginx-ingress kic01-nginx-ingress-controller -o yaml | linkerd inject - | kubectl apply -f -
- ```
+kubectl get deploy -n nginx-ingress kic01-nginx-ingress-controller -o yaml | linkerd inject - | kubectl apply -f -
+```
 
 ## Testing the Integration
 
@@ -104,7 +104,7 @@ Once NGINX Ingress Controller has been integrated with Linkerd, we can check the
 
 ```bash
 kubectl get pods -n nginx-ingress
-# Example Output
+
 NAME                                              READY   STATUS    RESTARTS   AGE
 kic01-nginx-ingress-controller-5f8c9b586d-ng4r8   2/2     Running   0          30m
 ```
