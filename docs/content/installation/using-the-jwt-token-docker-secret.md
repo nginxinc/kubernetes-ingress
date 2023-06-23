@@ -52,9 +52,9 @@ First, `cat` the contents of the `JWT` token. We will use the output of the `tok
   ```
 We will now create the Kubernetes secret required to authenticate to the NGINX private-registry to be able to pull the NGINX Ingress controller image:    
 
-	``bash
+	```
     kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
-  ``
+  ```
 
 2. Confirm the details of the created secret by running:    
 
