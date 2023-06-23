@@ -4,9 +4,10 @@ ARG NGINX_PLUS_VERSION=R29
 ARG DOWNLOAD_TAG=edge
 
 
-############################################# Base images containing libs for Opentracing #############################################
+############################################# Base images containing libs for Opentracing and FIPS #############################################
 FROM opentracing/nginx-opentracing:nginx-1.25.1 as opentracing-lib
 FROM opentracing/nginx-opentracing:nginx-1.25.1-alpine as alpine-opentracing-lib
+FROM ghcr.io/nginxinc/alpine-fips:0.1.1-alpine3.18 as alpine-fips
 
 
 ############################################# Base image for Debian #############################################
@@ -50,11 +51,11 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 ############################################# Base image for Alpine with NGINX Plus and FIPS #############################################
 FROM alpine-plus as alpine-plus-fips
 
-RUN --mount=type=bind,from=ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17,target=/tmp/fips/ \
-    mkdir -p /usr/ssl \
-    && cp -av /tmp/fips/usr/lib/ossl-modules/fips.so /usr/lib/ossl-modules/fips.so \
-    && cp -av /tmp/fips/usr/ssl/fipsmodule.cnf /usr/ssl/fipsmodule.cnf \
-    && cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+RUN --mount=type=bind,from=alpine-fips,target=/tmp/fips/ \
+	mkdir -p /usr/ssl \
+	&& cp -av /tmp/fips/usr/lib/ossl-modules/fips.so /usr/lib/ossl-modules/fips.so \
+	&& cp -av /tmp/fips/usr/ssl/fipsmodule.cnf /usr/ssl/fipsmodule.cnf \
+	&& cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
