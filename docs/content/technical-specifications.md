@@ -64,6 +64,7 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 |Name | Base image | Third-party modules | F5 Container Registry Image | Architectures |
 | ---| ---| --- | --- | --- |
 |Alpine-based image | ``alpine:3.17`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:3.1.1-alpine` | arm64, amd64 |
+|Alpine-based image with FIPS inside | ``alpine:3.17`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog, FIPS module and OpenSSL configuration | `nginx-ic/nginx-plus-ingress:3.1.1-alpine-fips` | arm64, amd64 |
 |Debian-based image | ``debian:11-slim`` | NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:3.1.1` | arm64, amd64 |
 |Debian-based image with NGINX App Protect WAF | ``debian:11-slim`` | NGINX App Protect WAF, NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-nap/nginx-plus-ingress:3.1.1` | amd64 |
 |Debian-based image with NGINX App Protect DoS | ``debian:11-slim`` | NGINX App Protect DoS, NGINX Plus JavaScript and OpenTracing modules, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic-dos/nginx-plus-ingress:3.1.1` | amd64 |
