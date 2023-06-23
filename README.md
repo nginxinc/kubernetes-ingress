@@ -3,7 +3,7 @@
 
 # NGINX Ingress Controller
 
-This repo provides an implementation of an Ingress Controller for NGINX and NGINX Plus.
+This repo provides an implementation of an Ingress Controller for NGINX and NGINX Plus from the people behind NGINX.
 
 NGINX Ingress Controller works with both NGINX and NGINX Plus and supports the standard Ingress features - content-based routing and TLS/SSL termination.
 
