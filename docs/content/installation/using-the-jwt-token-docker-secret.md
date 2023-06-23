@@ -40,20 +40,27 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
 
 
 <a id="jwt-token"></a>
-## Using the JWT token in a Docker Config Secret
+## Using the JWT token in a Kubernetes `docker-registry` secret:    
 
 1. Create a kubernetes `docker-registry` secret type, on the cluster using the JWT token as the username and `none` for password (password is unused).  The name of the docker server is `private-registry.nginx.com`.
 
-	```
+First, `cat` the contents of the `JWT` token. We will use the output of the `token` to populate the `--docker-username=<>` field when we create the Kubernetes secret:
+
+  ```bash
+ cat nginx-repo.jwt
+ <output_of_jwt>
+  ```
+We will now create the Kubernetes secret required to authenticate to the NGINX private-registry to be able to pull the NGINX Ingress controller image:    
+
+	``bash
     kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
-    ```
-   In the above command, it is important that the `--docker-username=<JWT Token>` contains the contents of the token and is not pointing to the token itself. Ensure that when you copy the contents of the JWT token, there are no additional characters or extra whitepaces. This can invalidate the token and cause 401 errors when trying to authenticate to the registry.
+  ``
 
-2. Confirm the details of the created secret by running:
+2. Confirm the details of the created secret by running:    
 
-	```bash
-    kubectl get secret regcred --output=yaml
-    ```
+  ```bash
+  kubectl get secret regcred --output-yaml
+  ```
 
 3. We are now going to use our newly created kubernetes secret in our `helm` and `manifest` deployments.
 
