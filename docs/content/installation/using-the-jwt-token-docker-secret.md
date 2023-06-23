@@ -12,6 +12,7 @@ docs: "DOCS-608"
 1. [Introduction](#introduction)
 2. [Use JWT token](#jwt-token)
 3. [Pull image locally](#image-local)
+4. [Verifying and troubleshooting](#verify-troubleshoot)
 
 <a id="introduction"></a>
 ## Introduction
@@ -97,6 +98,7 @@ We want to set a few lines for NGINX Plus Ingress controller to be deployed.
 
 
 ### Ensure nginxplus is set to `true`
+
 ```yaml
 ## Deploys the Ingress Controller for NGINX Plus.
 nginxplus: true
@@ -145,9 +147,24 @@ This will install `NGINX Ingress controller` using the charts method, by definin
 helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.17.1 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.1.1 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
 ```
 
+<a id="image-local"></a>
+## Pulling the image locally
+
+There may be times when you are unable to connect directly to a repo, or you need to scan a docker image before putting it into your cluster. 
+If you need to pull the image locally, and push to a different container registry, here are the steps to do so:
+
+```
+docker login private-registry.nginx.com --username=<output_of_jwt_token> --password=none
+```
+
+Replaces the contents of `<output_of_jwt_token>` with the contents of the `jwt token` itself.
+Once you have successfully pulled the image, you can then proceed performing required actions (scanning the image, pushing to a local trusted registry for example) before you install into your cluster.
 
 
-## Checking the validation that the .crts/key and .jwt are able to successfully authenticate to the repo to pull NGINX Ingress controller images:
+<a id="verify-troubleshoot"></a>
+## Verify and troubleshooting
+
+### Checking the validation that the .crts/key and .jwt are able to successfully authenticate to the repo to pull NGINX Ingress controller images:
 
 You can also use the certificate and key from the MyF5 portal and the Docker registry API to list the available image tags for the repositories, e.g.:
 
@@ -179,16 +196,3 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
         "3.1.1"
     ]
     }
-```
-
-<a id="image-local"></a>
-## Pulling the image locally
-
-If you need to pull the image locally, and push to a different container registry, here are the steps to do so:
-
-```
-docker login private-registry.nginx.com --username=<output_of_jwt_token> --password=none
-```
-
-Replaces the contents of `<output_of_jwt_token>` with the contents of the `jwt token` itself.
-Once you have successfully pulled the image, you can then proceed with tagging the image as needed.
