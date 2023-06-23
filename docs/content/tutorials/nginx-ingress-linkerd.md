@@ -121,8 +121,8 @@ kubectl apply -f httpbin.yaml
 
 Once `httpbin` has been created and applied, we can inject it into an existing deployment with the following command:
 
-```
-kubectl get deployment -n httpbin httpbin -oyaml | linkerd inject - | kubectl apply -f -
+```bash
+kubectl get deployment -n httpbin httpbin -o yaml | linkerd inject - | kubectl apply -f -
 ```
 
 Like the main installation, you can check the number of pods to confirm that the application has been successfully injected using the `linkerd` sidecar:
