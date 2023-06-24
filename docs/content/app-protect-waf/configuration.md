@@ -99,7 +99,6 @@ To add any [NGINX App Protect WAF policy](/nginx-app-protect-waf/declarative-pol
   ```
 
   > Notice how the fields match exactly in name and level. NGINX Ingress Controller will transform the YAML into a valid JSON WAF policy config.
-<br>
 
 ## NGINX App Protect WAF Logs
 
@@ -251,13 +250,13 @@ These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingr
 
 **Note**:  You need to make sure that the server where the resource files are located is always available when you are compiling your policy.
 
-##### Example Configuration
+### Example Configuration
 
 In this example, we are adding an OpenAPI Specification file reference to `/etc/app_protect/conf/NginxApiSecurityPolicy.yaml` using the [link](https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml). This will configure allowed data types for `query_int` and `query_str` parameters values.
 
 **Policy configuration:**
 
-~~~yaml
+```yaml
 ---
 apiVersion: appprotect.f5.com/v1beta1
   kind: APPolicy
@@ -327,12 +326,11 @@ apiVersion: appprotect.f5.com/v1beta1
         - block: true
           description: Illegal repeated parameter name
           name: VIOL_PARAMETER_REPEATED
-
-~~~
+```
 
 Content of the referenced file `myapi.yaml`:
 
-~~~yaml
+```yaml
 openapi: 3.0.1
 info:
   title: 'Primitive data types'
@@ -365,7 +363,7 @@ paths:
           description: OK
         404:
           description: NotFound
-~~~
+```
 
 In this case, the following request will trigger an `Illegal parameter data type` violation, as we expect to have an integer value in the `query_int` parameter:
 
@@ -390,21 +388,21 @@ In this example we deploy NGINX Ingress Controller with NGINX Plus and NGINX App
 1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF.
 2. Save the public IP address of NGINX Ingress Controller into a shell variable:
 
-   ```
+   ```console
     IC_IP=XXX.YYY.ZZZ.III
    ```
 
 3. Save the HTTP port of NGINX Ingress Controller into a shell variable:
 
-   ```
+   ```console
     IC_HTTP_PORT=<port number>
-    ```
+   ```
 
 ### Step 1. Deploy a Web Application
 
 Create the application deployment and service:
 
-  ```
+  ```console
   kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/webapp.yaml
   ```
 
@@ -412,25 +410,25 @@ Create the application deployment and service:
 
 1. Create the syslog service and pod for the NGINX App Protect WAF security logs:
 
-    ```
+   ```console
    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/syslog.yaml
    ```
 
 2. Create the User-Defined Signature, WAF policy, and log configuration:
 
-    ```
-      kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/ap-apple-uds.yaml
-      kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/ap-dataguard-alarm-policy.yaml
-      kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/ap-logconf.yaml
+    ```console
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/ap-apple-uds.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/ap-dataguard-alarm-policy.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/ap-logconf.yaml
     ```
 
 ### Step 3 - Deploy the WAF Policy
 
 Create the WAF policy
 
- ```
+ ```console
   kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/waf.yaml
-  ```
+ ```
 
   Note the NGINX App Protect WAF configuration settings in the Policy resource. They enable WAF protection by configuring NGINX App Protect WAF with the policy and log configuration created in the previous step.
 
@@ -438,7 +436,7 @@ Create the WAF policy
 
 1. Create the VirtualServer Resource:
 
-    ```
+    ```console
     kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.2.0/examples/custom-resources/app-protect-waf/virtual-server.yaml
     ```
 
@@ -450,7 +448,7 @@ To access the application, curl the coffee and the tea services. We'll use the -
 
 1. Send a request to the application:
 
-    ```
+   ```console
     $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.com:$IC_HTTP_PORT/
     Server address: 10.12.0.18:80
     Server name: webapp-7586895968-r26zn
@@ -458,14 +456,14 @@ To access the application, curl the coffee and the tea services. We'll use the -
 
 2. Now, let's try to send a request with a suspicious URL:
 
-    ```
+   ```console
     $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP "http://webapp.example.com:$IC_HTTP_PORT/<script>"
     <html><head><title>Request Rejected</title></head><body>
    ```
 
 3. Lastly, let's try to send some suspicious data that matches the user defined signature.
 
-    ```
+    ```console
     $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP -X POST -d "apple" http://webapp.example.com:$IC_HTTP_PORT/
     <html><head><title>Request Rejected</title></head><body>
     ```
@@ -474,7 +472,7 @@ To access the application, curl the coffee and the tea services. We'll use the -
 
 4. To check the security logs in the syslog pod:
 
-    ```
+    ```console
     kubectl exec -it <SYSLOG_POD> -- cat /var/log/messages
     ```
 
