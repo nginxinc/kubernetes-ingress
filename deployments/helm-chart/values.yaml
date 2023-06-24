@@ -142,7 +142,6 @@ controller:
   #   cpu: 1
   #   memory: 1Gi
 
-
   ## The tolerations of the Ingress Controller pods.
   tolerations: []
 
