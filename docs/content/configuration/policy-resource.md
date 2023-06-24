@@ -39,7 +39,7 @@ spec:
 |``accessControl`` | The access control policy based on the client IP address. | [accessControl](#accesscontrol) | No |
 |``ingressClassName`` | Specifies which instance of NGINX Ingress Controller must handle the Policy resource. | ``string`` | No |
 |``rateLimit`` | The rate limit policy controls the rate of processing requests per a defined key. | [rateLimit](#ratelimit) | No |
-|``basicAuth`` | The basic auth policy configures NGINX to authenticate client requests using HTTP Basic authentication credentials. | [basicAuth](#basic-auth) | No |
+|``basicAuth`` | The basic auth policy configures NGINX to authenticate client requests using HTTP Basic authentication credentials. | [basicAuth](#basicauth) | No |
 |``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | [jwt](#jwt) | No |
 |``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No |
 |``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | [egressMTLS](#egressmtls) | No |
@@ -502,15 +502,17 @@ You can use the usual `kubectl` commands to work with Policy resources, just as 
 
 For example, the following command creates a Policy resource defined in `access-control-policy-allow.yaml` with the name `webapp-policy`:
 
-```
-$ kubectl apply -f access-control-policy-allow.yaml
+```console
+kubectl apply -f access-control-policy-allow.yaml
+
 policy.k8s.nginx.org/webapp-policy configured
 ```
 
 You can get the resource by running:
 
-```
-$ kubectl get policy webapp-policy
+```console
+kubectl get policy webapp-policy
+
 NAME            AGE
 webapp-policy   27m
 ```
@@ -666,15 +668,17 @@ If you try to create (or update) a resource that violates the structural schema 
 
 * Example of `kubectl` validation:
 
-    ```
-    $ kubectl apply -f access-control-policy-allow.yaml
+    ```console
+    kubectl apply -f access-control-policy-allow.yaml
+
     error: error validating "access-control-policy-allow.yaml": error validating data: ValidationError(Policy.spec.accessControl.allow): invalid type for org.nginx.k8s.v1.Policy.spec.accessControl.allow: got "string", expected "array"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
 * Example of Kubernetes API server validation:
 
-    ```
-    $ kubectl apply -f access-control-policy-allow.yaml --validate=false
+    ```console
+    kubectl apply -f access-control-policy-allow.yaml --validate=false
+
     The Policy "webapp-policy" is invalid: spec.accessControl.allow: Invalid value: "string": spec.accessControl.allow in body must be of type array: "string"
     ```
 
@@ -686,8 +690,9 @@ NGINX Ingress Controller validates the fields of a Policy resource. If a resourc
 
 You can use `kubectl` to check whether or not NGINX Ingress Controller successfully applied a Policy configuration. For our example `webapp-policy` Policy, we can run:
 
-```
-$ kubectl describe pol webapp-policy
+```console
+kubectl describe pol webapp-policy
+
 . . .
 Events:
   Type    Reason          Age   From                      Message
@@ -699,8 +704,9 @@ Note how the events section includes a Normal event with the AddedOrUpdated reas
 
 If you create an invalid resource, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create a Policy `webapp-policy` with an invalid IP `10.0.0.` in the `allow` field, you will get:
 
-```
-$ kubectl describe policy webapp-policy
+```console
+kubectl describe policy webapp-policy
+
 . . .
 Events:
   Type     Reason    Age   From                      Message
@@ -712,8 +718,9 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 Additionally, this information is also available in the `status` field of the Policy resource. Note the Status section of the Policy:
 
-```
-$ kubectl describe pol webapp-policy
+```console
+kubectl describe pol webapp-policy
+
 . . .
 Status:
   Message:  Policy default/webapp-policy is invalid and was rejected: spec.accessControl.allow[0]: Invalid value: "10.0.0.": must be a CIDR or IP

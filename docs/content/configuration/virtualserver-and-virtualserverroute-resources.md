@@ -894,15 +894,17 @@ You can use the usual `kubectl` commands to work with VirtualServer and VirtualS
 
 For example, the following command creates a VirtualServer resource defined in `cafe-virtual-server.yaml` with the name `cafe`:
 
-```
-$ kubectl apply -f cafe-virtual-server.yaml
+```console
+kubectl apply -f cafe-virtual-server.yaml
+
 virtualserver.k8s.nginx.org "cafe" created
 ```
 
 You can get the resource by running:
 
-```
-$ kubectl get virtualserver cafe
+```console
+kubectl get virtualserver cafe
+
 NAME   STATE   HOST                   IP            PORTS      AGE
 cafe   Valid   cafe.example.com       12.13.23.123  [80,443]   3m
 ```
@@ -980,15 +982,17 @@ If you try to create (or update) a resource that violates the structural schema 
 
 * Example of `kubectl` validation:
 
-    ```
-    $ kubectl apply -f cafe-virtual-server.yaml
+    ```console
+    kubectl apply -f cafe-virtual-server.yaml
+
       error: error validating "cafe-virtual-server.yaml": error validating data: ValidationError(VirtualServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.VirtualServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
 * Example of Kubernetes API server validation:
 
-    ```
-    $ kubectl apply -f cafe-virtual-server.yaml --validate=false
+    ```console
+    kubectl apply -f cafe-virtual-server.yaml --validate=false
+
       The VirtualServer "cafe" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
       spec.upstreams.port in body must be of type integer: "string"
     ```
@@ -1001,8 +1005,9 @@ The Ingress Controller validates the fields of the VirtualServer and VirtualServ
 
 You can check if the Ingress Controller successfully applied the configuration for a VirtualServer. For our example `cafe` VirtualServer, we can run:
 
-```
-$ kubectl describe vs cafe
+```console
+kubectl describe vs cafe
+
 . . .
 Events:
   Type    Reason          Age   From                      Message
@@ -1014,8 +1019,9 @@ Note how the events section includes a Normal event with the AddedOrUpdated reas
 
 If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a VirtualServer `cafe` with two upstream with the same name `tea`, you will get:
 
-```
-$ kubectl describe vs cafe
+```console
+kubectl describe vs cafe
+
 . . .
 Events:
   Type     Reason    Age   From                      Message
@@ -1027,8 +1033,9 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 Additionally, this information is also available in the `status` field of the VirtualServer resource. Note the Status section of the VirtualServer:
 
-```
-$ kubectl describe vs cafe
+```console
+kubectl describe vs cafe
+
 . . .
 Status:
   External Endpoints:
