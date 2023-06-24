@@ -59,7 +59,7 @@ RUN --mount=type=bind,from=alpine-fips,target=/tmp/fips/ \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:11-slim AS debian-plus
+FROM debian:12-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 ARG BUILD_OS
@@ -84,7 +84,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for Debian with NGINX Plus and App Protect WAF/DoS #############################################
-FROM debian:11-slim as debian-plus-nap
+FROM debian:12-slim as debian-plus-nap
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 ARG NAP_MODULES
