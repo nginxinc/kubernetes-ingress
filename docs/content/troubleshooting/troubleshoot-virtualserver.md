@@ -4,13 +4,15 @@ description: "This page describes how to troubleshoot VirtualServer and VirtualS
 weight: 500
 doctypes: [""]
 toc: true
+aliases:
+ - /content/troubleshooting/virtualserver-virtualserverroute
 ---
 ## Inspecting VirtualServer and VirtualServerRoute Resource Events
 After creating or updating a VirtualServer resource, you can immediately check if the NGINX configuration for that resource was successfully by using `kubectl describe vs <resource-name>`:
 
-```
+```shell
 kubectl describe vs cafe
-# Example Output
+
 Events:
   Type    Reason          Age   From                      Message
   ----    ------          ----  ----                      -------
@@ -21,9 +23,9 @@ In the above example, we have a `Normal` event with the `AddedOrUpdate` reason, 
 
 Checking the events of a VirtualServerRoute is similar:
 
-```
+```shell
 kubectl describe vsr coffee
-# Example Output
+
 Events:
   Type     Reason                 Age   From                      Message
   ----     ------                 ----  ----                      -------
