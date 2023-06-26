@@ -160,6 +160,7 @@ jobs:
 
       - name: Publish to AWS Marketplace
         uses: nginxinc/aws-marketplace-publish@9e9f4ae1c545da9fa6adc24b0b10ce50e0d4969c # v0.1.0
+        continue-on-error: true
         with:
           version: ${{ steps.aws.outputs.version }}
           product-id: ${{ secrets[steps.aws.outputs.product_code] }}
