@@ -16,8 +16,10 @@ FEATURES:
 * [3790](https://github.com/nginxinc/kubernetes-ingress/pull/3790) Gunzip for VS
 * [3863](https://github.com/nginxinc/kubernetes-ingress/pull/3863) OIDC - relaxed OIDC scope validation
 * [3925](https://github.com/nginxinc/kubernetes-ingress/pull/3925) Specify runAsNonRoot in daemon-set manifests. Thanks to [Valters Jansons](https://github.com/sigv).
+* [3951](https://github.com/nginxinc/kubernetes-ingress/pull/3951) Add NGINX Plus images to Google Marketplace.
+* [3954](https://github.com/nginxinc/kubernetes-ingress/pull/3954) Add utilization tracking for supported (paid) customers.
 * [4001](https://github.com/nginxinc/kubernetes-ingress/pull/4001) Add support for the SameSite sticky cookie attribute.
-* [4031](https://github.com/nginxinc/kubernetes-ingress/pull/4031) Add Alpine image with FIPS inside.
+* [4031](https://github.com/nginxinc/kubernetes-ingress/pull/4031) Add NGINX Plus Alpine image with FIPS inside for supported (paid) customers.
 
 FIXES:
 
