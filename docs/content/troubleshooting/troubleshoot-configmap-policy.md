@@ -21,7 +21,7 @@ Events:
 
 The events section has a *Normal* event with the *AddedOrUpdated reason*, indicating the policy was successfully accepted.
 
-However, the fact that a policy was accepted doesn’t guarantee that the NGINX configuration was successfully applied. 
+However, the fact that a policy was accepted doesn’t guarantee that the NGINX configuration was successfully applied.
 
 To verify the configuration applied, check the events of the [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver) that reference the policy.
 
