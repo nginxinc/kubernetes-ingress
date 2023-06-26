@@ -143,7 +143,7 @@ jobs:
       - name: AWS variables
         id: aws
         run: |
-          aws_registry=$(echo "${{ steps.meta.outputs.tags }}" | grep "709825985650.dkr.ecr.us-east-1.amazonaws.com")
+          aws_registry=$(echo "${{ steps.meta.outputs.tags }}" | grep -oP "709825985650.dkr.ecr.us-east-1.amazonaws.com/[^[:space:]]+")
           version=$(echo ${{ steps.meta.outputs.version }} | sed 's/-mktpl//')
           declare -A nap_mapping=(
               ["waf"]=_NAP_WAF
