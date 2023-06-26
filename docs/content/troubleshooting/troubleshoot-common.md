@@ -1,18 +1,12 @@
 ---
 title: "Troubleshooting Common Issues"
 date: 2021-07-13T21:01:29-06:00
-draft: true
-description: "This document describes how to troubleshoot problems with the Ingress Controller."
-# Assign weights in increments of 100
+description: "How to troubleshoot common problems with NGINX Ingress Controller."
 weight: 100
 draft: false
 toc: true
 tags: [ "docs" ]
-# Taxonomies
-# These are pre-populated with all available terms for your convenience.
-# Remove all terms that do not apply.
 doctypes: ["troubleshooting"]
-docs: "DOCS-619"
 ---
 
 ## Overview

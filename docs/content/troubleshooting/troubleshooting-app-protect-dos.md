@@ -1,17 +1,14 @@
 ---
-title: Troubleshooting with NGINX App Protect Dos
-description: "This document describes how to troubleshoot problems with the Ingress Controller with the App Protect Dos module enabled."
-weight: 2000
+title: Troubleshooting with NGINX App Protect DoS
+description: "This document describes how to troubleshoot problems with the Ingress Controller with the App Protect DoS module enabled."
+weight: 700
 doctypes: [""]
-aliases:
-- /app-protect/troubleshooting/
 toc: true
-docs: "DOCS-620"
 ---
 
-This document describes how to troubleshoot problems with the Ingress Controller with the App Protect DoS module enabled.
+This document describes how to troubleshoot problems with the NGINX Ingress Controller with the App Protect DoS module enabled.
 
-For general troubleshooting of the Ingress Controller, check the general [troubleshooting](/nginx-ingress-controller/troubleshooting/) documentation.
+To troubleshoot other parts of the NGINX Ingress Controller, check [troubleshooting](/nginx-ingress-controller/troubleshooting/) section of the documentation.
 
 ## Potential Problems
 
@@ -26,9 +23,9 @@ The table below categorizes some potential problems with the Ingress Controller 
 
 ## Troubleshooting Methods
 
-### Check the Ingress Controller and App Protect DoS logs
+### Checking NGINX Ingress Controller and App Protect DoS logs
 
-App Protect DoS logs are part of the Ingress Controller logs when the module is enabled. To check the Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs](/nginx-ingress-controller/troubleshooting/#checking-the-ingress-controller-logs) of the Troubleshooting guide.
+App Protect DoS logs are part of the NGINX Ingress Controller logs when the module is enabled. To check the Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs](/nginx-ingress-controller/troubleshooting/#checking-the-ingress-controller-logs) of the Troubleshooting guide.
 
 For App Protect DoS specific logs, look for messages starting with `APP_PROTECT_DOS`, for example:
 ```
@@ -37,11 +34,11 @@ For App Protect DoS specific logs, look for messages starting with `APP_PROTECT_
 
 ### Check events of an Ingress Resource
 
-Follow the steps of [Checking the Events of an Ingress Resource]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#checking-the-events-of-an-ingress-resource" >}}).
+Follow the steps of [Checking the Events of an Ingress Resource]({{< relref "troubleshooting/troubleshoot-common#checking-the-events-of-an-ingress-resource" >}}).
 
 ### Check events of a VirtualServer Resource
 
-Follow the steps of [Checking the Events of a VirtualServer Resource]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#checking-the-events-of-a-virtualserver-and-virtualserverroute-resources" >}}).
+Follow the steps of [Checking the Events of a VirtualServer Resource]({{< relref "troubleshooting/troubleshoot-common#checking-the-events-of-a-virtualserver-and-virtualserverroute-resources" >}}).
 
 ### Check events of DosProtectedResource
 

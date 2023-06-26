@@ -1,3 +1,11 @@
+---
+title: Troubleshooting Ingress Resources
+description: ""
+weight: 300
+doctypes: [""]
+toc: true
+---
+
 Checking the Events of an Ingress Resource
 After you create or update an Ingress resource, you can immediately check if the NGINX configuration for that Ingress resource was successfully applied by NGINX:
 

@@ -1,17 +1,14 @@
 ---
-title: Troubleshooting with NGINX App Protect
+title: Troubleshooting with NGINX App Protect WAF
 description: "This document describes how to troubleshoot problems when using NGINX Ingress Controller with the NGINX App Protect WAF module enabled."
-weight: 2000
+weight: 800
 doctypes: [""]
-aliases:
-    - /app-protect/troubleshooting/
 toc: true
-docs: "DOCS-621"
 ---
 
 This document describes how to troubleshoot problems with the Ingress Controller with the [App Protect](/nginx-app-protect/) module enabled.
 
-For general troubleshooting of the Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting/troubleshoot-ingress-controller.md" >}}) documentation.
+For general troubleshooting of the Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting/troubleshoot-common." >}}) documentation.
 
 {{< see-also >}}You can find more troubleshooting tips in the NGINX App Protect WAF [troubleshooting guide](/nginx-app-protect/troubleshooting/) {{< /see-also >}}.
 
@@ -31,7 +28,7 @@ The table below categorizes some potential problems with the Ingress Controller 
 
 ### Check the Ingress Controller and App Protect logs
 
-App Protect logs are part of the Ingress Controller logs when the module is enabled. To check the Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#checking-the-ingress-controller-logs" >}}) of the Troubleshooting guide.
+App Protect logs are part of the Ingress Controller logs when the module is enabled. To check the Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs]({{< relref "troubleshooting/troubleshoot-common#checking-the-ingress-controller-logs" >}}) of the Troubleshooting guide.
 
 For App Protect specific logs, look for messages starting with `APP_PROTECT`, for example:
 ```
@@ -40,7 +37,7 @@ For App Protect specific logs, look for messages starting with `APP_PROTECT`, fo
 
 ### Check events of an Ingress Resource
 
-Follow the steps of [Checking the Events of an Ingress Resource]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#checking-the-events-of-an-ingress-resource" >}}).
+Follow the steps of [Checking the Events of an Ingress Resource]({{< relref "troubleshooting/troubleshoot-common#checking-the-events-of-an-ingress-resource" >}}).
 
 ### Check events of APLogConf
 
@@ -100,7 +97,7 @@ curl -w '%{time_total}' http://192.168.100.100/resources/headersettings.txt
 
 ## Run App Protect in Debug Mode
 
-When you set the Ingress Controller to use debug mode, the setting also applies to the App Protect WAF module.  See  [Running NGINX in the Debug Mode]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#running-nginx-in-the-debug-mode" >}}) for instructions.
+When you set the Ingress Controller to use debug mode, the setting also applies to the App Protect WAF module.  See  [Running NGINX in the Debug Mode]({{< relref "troubleshooting/troubleshoot-common.md#running-nginx-in-the-debug-mode" >}}) for instructions.
 
 ## Known Issues
 
