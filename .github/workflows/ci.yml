@@ -102,7 +102,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@b79be3ff634f771230b2b6ee9f47308c5793671a # v0.2.0
+        uses: lucacome/draft-release@d13ccde6350706e32f451566ee5cd4bf5a27de3d # v0.2.1
         id: release-notes
         with:
           minor-label: "enhancement"
