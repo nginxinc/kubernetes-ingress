@@ -40,7 +40,7 @@ To check NGINX Ingress Controller logs, which include both information from NGIN
 kubectl logs <nginx-ingress-pod> -n nginx-ingress
 ```
 
-### Checking the Generated Config   
+### Checking the Generated Config
 For each Ingress/VirtualServer resource, NGINX Ingress Controller generates a corresponding NGINX configuration file in the `/etc/nginx/conf.d folder`.
 
  Additionally, NGINX Ingress Controller generates the main configuration file `/etc/nginx/nginx.conf`, which includes all the configurations files from `/etc/nginx/conf.d`. The configuration for a VirtualServerRoute resource is located in the configuration file of the VirtualServer that references the resource.
@@ -76,7 +76,7 @@ There are two settings that need to be set to enable more verbose logging for NG
 1. Command Line Arguments
 2. Configmap Settings
 
-**Command Line Arguments**  
+**Command Line Arguments**
 
 When using `manifest` for deployment, use the command line argument `-nginx-debug` in your deployment or daemonset.
 
@@ -92,7 +92,7 @@ args:
   - -v=3
 ```
 
-**ConfigMap Settings**  
+**ConfigMap Settings**
 You can configure `error-log-level` in the NGINX Ingress Controller `configMap`:
 
 ```yaml

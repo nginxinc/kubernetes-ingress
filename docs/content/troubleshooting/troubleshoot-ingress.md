@@ -14,7 +14,7 @@ kubectl describe ing cafe-ingress
 Name:             cafe-ingress
 Namespace:        default
 
-Events: 
+Events:
   Type    Reason          Age   From                      Message
   ----    ------          ----  ----                      -------
   Normal  AddedOrUpdated  12s   nginx-ingress-controller  Configuration for default/cafe-ingress was added or updated
