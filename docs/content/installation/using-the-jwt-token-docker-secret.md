@@ -8,7 +8,7 @@ toc: true
 
 ## Overview
 
-This document explains how to use the NGINX Plus Ingress Controller image from the F5 Docker registry in your Kubernetes cluster by using an NGINX Ingress Controller subscription JWT token. 
+This document explains how to use the NGINX Plus Ingress Controller image from the F5 Docker registry in your Kubernetes cluster by using an NGINX Ingress Controller subscription JWT token.
 
 {{<note>}}
 An NGINX Plus subscription certificate and key will not work with the F5 Docker registry.
@@ -32,7 +32,7 @@ You will need the following information from [MyF5](https://my.f5.com) for these
 
 1. Choose your desired [NGINX Ingress Controller Image](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#images-with-nginx-plus).
 1. Log into the [MyF5 Portal](https://myf5.com/), navigate to your subscription details, and download the relevant .cert, .key and .JWT files.
-1. Create a Kubernetes secret using the JWT token. You should use `cat` to view the contents of the JWT token and store the output for use in later steps. 
+1. Create a Kubernetes secret using the JWT token. You should use `cat` to view the contents of the JWT token and store the output for use in later steps.
 1. Ensure there are no additional characters or extra whiespace that might have been accidently added. This will break authorization and prevent the NGINX Ingress Controller image from being downloaded.
 1. Modify your deployment (manifest or helm) to use the Kubernetes secret created in step three.
 1. Deploy NGINX Ingress Controller into your Kubernetes cluster and verify successful installation.
@@ -128,7 +128,7 @@ With `values.yaml` modified, you can now use Helm to install NGINX Ingress Contr
 helm install nicdev01 -n nginx-ingress --create-namespace -f values.yaml .
 ```
 
-The above command will install NGINX Ingress Controller in the `nginx-ingress` namespace. 
+The above command will install NGINX Ingress Controller in the `nginx-ingress` namespace.
 
 If the namespace does not exist, `--create-namespace` will create it. Using `-f values.yaml` tells `helm` to use the `values.yaml` file that you modified earlier with the settings you want to apply for your NGINX Ingress Controller deployment.
 
