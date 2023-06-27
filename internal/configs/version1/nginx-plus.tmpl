@@ -21,6 +21,7 @@ load_module modules/ngx_http_app_protect_module.so;
 {{- if .AppProtectDosLoadModule}}
 load_module modules/ngx_http_app_protect_dos_module.so;
 {{- end}}
+load_module modules/ngx_fips_check_module.so;
 {{- if .MainSnippets}}
 {{range $value := .MainSnippets}}
 {{$value}}{{end}}

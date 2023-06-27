@@ -15,22 +15,25 @@ on:
       nap_modules:
         required: false
         type: string
+      release-url:
+        required: false
+        type: string
 
 defaults:
   run:
     shell: bash
 
-permissions:  # added using https://github.com/step-security/secure-workflows
+permissions:
   contents: read
 
 jobs:
   build:
-      permissions:
-        contents: read  # for docker/build-push-action to read repo content
-        security-events: write  # for github/codeql-action/upload-sarif to upload SARIF results
-        id-token: write # for OIDC login to AWS
-      runs-on: ubuntu-22.04
-      steps:
+    permissions:
+      contents: read # for docker/build-push-action to read repo content
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      id-token: write # for OIDC login to AWS
+    runs-on: ubuntu-22.04
+    steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
@@ -90,7 +93,7 @@ jobs:
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
             name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws') }}
           flavor: |
-            suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }},onlatest=true
+            suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}},onlatest=true
             latest=${{ contains(inputs.target, 'aws') && 'false' || 'auto' }}
           tags: |
             type=edge
@@ -106,12 +109,7 @@ jobs:
       - name: NAP modules
         id: nap_modules
         run: |
-          modules=""
-          if [[ "${{ inputs.nap_modules }}" == "waf,dos" ]]; then
-            modules="both"
-          else
-            modules="${{ inputs.nap_modules }}"
-          fi
+          [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="both" || modules="${{ inputs.nap_modules }}"
           echo "modules=${modules}" >> $GITHUB_OUTPUT
         if: ${{ inputs.nap_modules != '' }}
 
@@ -119,7 +117,7 @@ jobs:
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: build/Dockerfile
-          context: '.'
+          context: "."
           cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}
           cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},mode=max
           target: ${{ inputs.target }}
@@ -142,11 +140,46 @@ jobs:
             "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
+      - name: AWS variables
+        id: aws
+        run: |
+          aws_registry=$(echo "${{ steps.meta.outputs.tags }}" | grep -oP "709825985650.dkr.ecr.us-east-1.amazonaws.com/[^[:space:]]+")
+          version=$(echo ${{ steps.meta.outputs.version }} | sed 's/-mktpl//')
+          declare -A nap_mapping=(
+              ["waf"]=_NAP_WAF
+              ["dos"]=_NAP_DOS
+              ["waf,dos"]=_NAP_WAF_DOS
+          )
+          modules=${{ inputs.nap_modules }}
+          [[ -n $modules && ${nap_mapping[$modules]+_} ]] && nap=${nap_mapping[$modules]}
+
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "product_code=AWS${nap}_PRODUCT_CODE" >> $GITHUB_OUTPUT
+          echo "registry=${aws_registry}" >> $GITHUB_OUTPUT
+        if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
+
+      - name: Publish to AWS Marketplace
+        uses: nginxinc/aws-marketplace-publish@9e9f4ae1c545da9fa6adc24b0b10ce50e0d4969c # v0.1.0
+        continue-on-error: true
+        with:
+          version: ${{ steps.aws.outputs.version }}
+          product-id: ${{ secrets[steps.aws.outputs.product_code] }}
+          registry: ${{ steps.aws.outputs.registry }}
+          release-notes: ${{ inputs.release-url }}
+          description: |
+            Best-in-class traffic management solution for services in Amazon EKS.
+            This is the official implementation of NGINX Ingress Controller (based on NGINX Plus) from NGINX.
+          usage-instructions: |
+            This container requires Kubernetes and can be deployed to EKS.
+            Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments
+            Use this image instead of building your own.
+        if: ${{ startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws') }}
+
       - name: Load image for Trivy
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: build/Dockerfile
-          context: '.'
+          context: "."
           cache-from: type=gha,scope=${{ inputs.image }}
           target: ${{ inputs.target }}
           tags: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
@@ -166,20 +199,20 @@ jobs:
         continue-on-error: true
         with:
           image-ref: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
-          format: 'sarif'
-          output: 'trivy-results-${{ inputs.image }}.sarif'
-          ignore-unfixed: 'true'
+          format: "sarif"
+          output: "trivy-results-${{ inputs.image }}.sarif"
+          ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v2.13.4
+        uses: github/codeql-action/upload-sarif@f6e388ebf0efc915c6c5b165b019ee61a6746a38 # v2.20.1
         continue-on-error: true
         with:
-          sarif_file: 'trivy-results-${{ inputs.image }}.sarif'
+          sarif_file: "trivy-results-${{ inputs.image }}.sarif"
 
       - name: Upload Scan Results
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         continue-on-error: true
         with:
-          name: 'trivy-results-${{ inputs.image }}.sarif'
-          path: 'trivy-results-${{ inputs.image }}.sarif'
+          name: "trivy-results-${{ inputs.image }}.sarif"
+          path: "trivy-results-${{ inputs.image }}.sarif"
         if: always()
