@@ -102,7 +102,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@b79be3ff634f771230b2b6ee9f47308c5793671a # v0.2.0
+        uses: lucacome/draft-release@d13ccde6350706e32f451566ee5cd4bf5a27de3d # v0.2.1
         id: release-notes
         with:
           minor-label: "enhancement"
@@ -253,7 +253,7 @@ jobs:
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
           else
-            echo "matrix={\"k8s\": [\"1.22.17\", \"1.23.17\", \"1.24.12\", \"1.25.8\", \"1.26.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+            echo "matrix={\"k8s\": [\"1.22.17\", \"1.23.17\", \"1.24.15\", \"1.25.11\", \"1.26.6\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
                                              \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}" >> $GITHUB_OUTPUT
           fi
 

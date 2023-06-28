@@ -54,7 +54,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
-    # tag: "3.1.1"
+    # tag: "3.2.0"
 
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
@@ -141,7 +141,6 @@ controller:
   # limits:
   #   cpu: 1
   #   memory: 1Gi
-
 
   ## The tolerations of the Ingress Controller pods.
   tolerations: []
