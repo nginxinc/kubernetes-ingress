@@ -23,7 +23,7 @@ docs: "DOCS-603"
     cd kubernetes-ingress/deployments
     ```
 
-    {{<note>}}The above command will clone the branch of the latest NGINX Ingress Controller release, and all documentation assumes you are using it.{{</note>}} 
+    {{<note>}}The above command will clone the branch of the latest NGINX Ingress Controller release, and all documentation assumes you are using it.{{</note>}}
 
 ---
 
@@ -156,7 +156,7 @@ There are two steps for deploying NGINX Ingress Controller with the NGINX App Pr
    kubectl apply -f service/appprotect-dos-arb-svc.yaml
    ```
 
---- 
+---
 
 ### 4.1 Running NGINX Ingress Controller
 
@@ -182,7 +182,7 @@ kubectl apply -f deployment/nginx-plus-ingress.yaml
 #### Using a DaemonSet
 When you run the Ingress Controller by using a DaemonSet, Kubernetes will create an Ingress Controller pod on every node of the cluster.
 
-{{<note>}} Read the Kubernetes [DaemonSet docs](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) to learn how to run NGINX Ingress Controller on a subset of nodes instead of on every node of the cluster.{{</note>}} 
+{{<note>}} Read the Kubernetes [DaemonSet docs](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) to learn how to run NGINX Ingress Controller on a subset of nodes instead of on every node of the cluster.{{</note>}}
 
 For NGINX, run:
 
@@ -226,7 +226,7 @@ kubectl create -f service/nodeport.yaml
 
 Kubernetes will randomly allocate two ports on every node of the cluster. To access the Ingress Controller, use an IP address of any node of the cluster along with the two allocated ports.
 
-{{<note>}} Read more about the type NodePort in the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport). {{</note>}} 
+{{<note>}} Read more about the type NodePort in the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport). {{</note>}}
 
 #### Using a LoadBalancer Service
 
@@ -258,7 +258,7 @@ Kubernetes will randomly allocate two ports on every node of the cluster. To acc
             kubectl apply -f common/nginx-config.yaml
             ```
 
-        {{<note>}} For AWS, additional options regarding an allocated load balancer are available, such as its type and SSL termination. Read the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer) to learn more. {{</note>}} 
+        {{<note>}} For AWS, additional options regarding an allocated load balancer are available, such as its type and SSL termination. Read the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer) to learn more. {{</note>}}
 
     Kubernetes will allocate and configure a cloud load balancer for load balancing the Ingress Controller pods.
 2. Use the public IP of the load balancer to access NGINX Ingress Controller. To get the public IP:
