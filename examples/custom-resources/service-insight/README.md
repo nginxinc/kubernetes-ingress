@@ -28,7 +28,7 @@ spec:
       securityContext:
       ...
       containers:
-      - image: nginx-plus-ingress:3.0.2
+      - image: nginx-plus-ingress:3.2.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -71,18 +71,18 @@ The examples below use the `nodeport` service.
 
 First, get the pod name in namespace `nginx-ingress`:
 
-```bash
+```console
 kubectl get pods -n nginx-ingress
 ```
 
-```bash
+```console
 NAME                             READY   STATUS    RESTARTS   AGE
 nginx-ingress-5b99f485fb-vflb8   1/1     Running   0          72m
 ```
 
 Using the id, forward the service insight port (9114) to localhost port 9114:
 
-```bash
+```console
 kubectl port-forward -n nginx-ingress nginx-ingress-5b99f485fb-vflb8 9114:9114
 ```
 
@@ -96,7 +96,7 @@ Follow the [basic configuration example](../basic-configuration/) to deploy `caf
 
 Verify that the virtual server is running, and check the hostname:
 
-```bash
+```console
 kubectl get vs cafe
 NAME   STATE   HOST               IP    PORTS   AGE
 cafe   Valid   cafe.example.com                 16m
@@ -104,32 +104,32 @@ cafe   Valid   cafe.example.com                 16m
 
 Scale down the `tea` and `coffee` deployments:
 
-```bash
+```console
 kubectl scale deployment tea --replicas=1
 ```
 
-```bash
+```console
 kubectl scale deployment coffee --replicas=1
 ```
 
 Verify `tea` deployment:
 
-```bash
+```console
 kubectl get deployments.apps tea
 ```
 
-```bash
+```console
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 tea    1/1     1            1           19m
 ```
 
 Verify `coffee` deployment:
 
-```bash
+```console
 kubectl get deployments.apps coffee
 ```
 
-```bash
+```console
 NAME     READY   UP-TO-DATE   AVAILABLE   AGE
 coffee   1/1     1            1           20m
 ```
@@ -138,7 +138,7 @@ Send a `GET` request to the service insight endpoint to check statistics:
 
 Request:
 
-```bash
+```console
 curl http://localhost:9114/probe/cafe.example.com
 ```
 
@@ -150,37 +150,37 @@ Response:
 
 Scale up deployments:
 
-```bash
+```console
 kubectl scale deployment tea --replicas=3
 ```
 
-```bash
+```console
 kubectl scale deployment coffee --replicas=3
 ```
 
 Verify deployments:
 
-```bash
+```console
 kubectl get deployments.apps tea
 ```
 
-```bash
+```console
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 tea    3/3     3            3           31m
 ```
 
-```bash
+```console
 kubectl get deployments.apps coffee
 ```
 
-```bash
+```console
 NAME     READY   UP-TO-DATE   AVAILABLE   AGE
 coffee   3/3     3            3           31m
 ```
 
 Send a `GET` HTTP request to the service insight endpoint to check statistics:
 
-```bash
+```console
 curl http://localhost:9114/probe/cafe.example.com
 ```
 
@@ -198,7 +198,7 @@ The examples below use the `nodeport` service.
 
 First, get the nginx-ingress pod id:
 
-```bash
+```console
 kubectl get pods -n nginx-ingress
 ```
 
@@ -208,7 +208,8 @@ nginx-ingress-67978954cc-l6gvq   1/1     Running   0          72m
 ```
 
 Using the id, forward the service insight port (9114) to localhost port 9114:
-```bash
+
+```console
 kubectl port-forward -n nginx-ingress nginx-ingress-67978954cc-l6gvq 9114:9114 &
 ```
 
@@ -220,7 +221,7 @@ Follow the [tls passthrough example](../tls-passthrough/) to deploy the `secure-
 
 Verify that the transport server is running, and check the app name:
 
-```bash
+```console
 kubectl get ts secure-app
 NAME         STATE   REASON           AGE
 secure-app   Valid   AddedOrUpdated   5h37m
@@ -228,13 +229,13 @@ secure-app   Valid   AddedOrUpdated   5h37m
 
 Scale down the `secure-app` deployment:
 
-```bash
+```console
 kubectl scale deployment secure-app --replicas=1
 ```
 
 Verify `secure-app` deployment:
 
-```bash
+```console
 kubectl get deployments.apps secure-app
 NAME         READY   UP-TO-DATE   AVAILABLE   AGE
 secure-app   1/1     1            1           5h41m
@@ -244,7 +245,7 @@ Send a `GET` request to the service insight endpoint to check statistics:
 
 Request:
 
-```bash
+```console
 curl http://localhost:9114/probe/ts/secure-app
 ```
 
@@ -256,17 +257,17 @@ Response:
 
 Scale up deployments:
 
-```bash
+```console
 kubectl scale deployment secure-app --replicas=3
 ```
 
 Verify deployments:
 
-```bash
+```console
 kubectl get deployments.apps secure-app
 ```
 
-```bash
+```console
 NAME         READY   UP-TO-DATE   AVAILABLE   AGE
 secure-app   3/3     3            3           5h53m
 ```
@@ -275,7 +276,7 @@ Send a `GET` HTTP request to the service insight endpoint to check statistics:
 
 Request:
 
-```bash
+```console
 curl http://localhost:9114/probe/ts/secure-app
 ```
 
@@ -311,7 +312,7 @@ spec:
       securityContext:
       ...
       containers:
-      - image: nginx-plus-ingress:3.0.2
+      - image: nginx-plus-ingress:3.2.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -346,41 +347,39 @@ spec:
 
 The example below uses the `nodeport` service.
 
-
 First, create and verify the secret:
 
-```bash
+```console
 kubectl apply -f service-insight-secret.yaml
 ```
 
-```bash
+```console
 kubectl get secrets service-insight-secret
 ```
 
-```bash
+```console
 NAME                     TYPE                DATA   AGE
 service-insight-secret   kubernetes.io/tls   2      55s
 ```
 
-
 Get the nginx-ingress pod id:
 
-```bash
+```console
 kubectl get pods -n nginx-ingress
 ```
 
-```bash
+```console
 NAME                             READY   STATUS    RESTARTS   AGE
 nginx-ingress-687d9c6764-g6vwx   1/1     Running   0          2m8s
 ```
 
 Verify the nginx-ingress configuration parameters:
 
-```bash
+```console
 kubectl describe pods -n nginx-ingress nginx-ingress-687d9c6764-g6vwx
 ```
 
-```bash
+```console
 ...
 Containers:
   nginx-plus-ingress:
@@ -403,7 +402,7 @@ Containers:
 
 Using the nginx-ingress pod id, forward the service insight port (9114) to localhost port 9114:
 
-```bash
+```console
 kubectl port-forward -n nginx-ingress nginx-ingress-687d9c6764-g6vwx 9114:9114 &
 ```
 
@@ -413,7 +412,7 @@ Send a `GET` request to the service insight (TLS) endpoint to check statistics:
 
 Request:
 
-```bash
+```console
 curl https://localhost:9114/probe/cafe.example.com --insecure
 ```
 
