@@ -154,7 +154,7 @@ jobs:
           [[ -n $modules && ${nap_mapping[$modules]+_} ]] && nap=${nap_mapping[$modules]}
 
           echo "version=$version" >> $GITHUB_OUTPUT
-          echo "product_code=AWS${nap}_PRODUCT_CODE" >> $GITHUB_OUTPUT
+          echo "product_code=AWS${nap}_PRODUCT_ID" >> $GITHUB_OUTPUT
           echo "registry=${aws_registry}" >> $GITHUB_OUTPUT
         if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
 
