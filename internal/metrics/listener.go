@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang/glog"
-	
+
   config "github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/v3/internal/nginx"
 
