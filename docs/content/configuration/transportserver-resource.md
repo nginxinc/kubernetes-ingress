@@ -10,7 +10,7 @@ docs: "DOCS-598"
 
 The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.0/examples/custom-resources) folder in our GitHub repo.
 
 ## Prerequisites
 
@@ -22,6 +22,7 @@ This document is the reference documentation for the TransportServer resource. T
 The TransportServer resource defines load balancing configuration for TCP, UDP, or TLS Passthrough traffic. Below are a few examples:
 
 * TCP load balancing:
+
   ```yaml
   apiVersion: k8s.nginx.org/v1alpha1
   kind: TransportServer
@@ -40,7 +41,9 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
     action:
       pass: dns-app
   ```
+
 * UDP load balancing:
+
   ```yaml
   apiVersion: k8s.nginx.org/v1alpha1
   kind: TransportServer
@@ -60,7 +63,9 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
     action:
       pass: dns-app
   ```
+
 * TLS passthrough load balancing:
+
   ```yaml
   apiVersion: k8s.nginx.org/v1alpha1
   kind: TransportServer
@@ -100,6 +105,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 The listener field references a listener that NGINX will use to accept incoming traffic for the TransportServer. For TCP and UDP, the listener must be defined in the [GlobalConfiguration resource](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource). When referencing a listener, both the name and the protocol must match. For TLS Passthrough, use the built-in listener with the name `tls-passthrough` and the protocol `TLS_PASSTHROUGH`.
 
 An example:
+
 ```yaml
 listener:
   name: dns-udp
@@ -116,6 +122,7 @@ listener:
 ### TLS
 
 The tls field defines TLS configuration for a TransportServer. Please note the current implementation supports TLS termination on multiple ports, where each application owns a dedicated port - the Ingress Controller terminates TLS connections on each port, where each application uses its own cert/key, and routes connections to appropriate application (service) based on that incoming port (any TLS connection regardless of the SNI on a port will be routed to the application that corresponds to that port). An example configuration is shown below:
+
 ```yaml
 secret: cafe-secret
 ```
@@ -129,6 +136,7 @@ secret: cafe-secret
 ### Upstream
 
 The upstream defines a destination for the TransportServer. For example:
+
 ```yaml
 name: secure-app
 service: secure-app
@@ -151,7 +159,6 @@ loadBalancingMethod: least_conn
 |``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstreamhealthcheck) | No |
 |``loadBalancingMethod`` | The method used to load balance the upstream servers. By default, connections are distributed between the servers using a weighted round-robin balancing method. See the [upstream](http://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#upstream) section for available methods and their details. | ``string`` | No |
 {{% /table %}}
-
 
 ### Upstream.Healthcheck
 
@@ -189,6 +196,7 @@ Note: This feature is supported only in NGINX Plus.
 ### Upstream.Healthcheck.Match
 
 The match controls the data to send and the response to expect for the healthcheck:
+
 ```yaml
 match:
   send: 'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n'
@@ -209,6 +217,7 @@ See the [match](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.h
 ### UpstreamParameters
 
 The upstream parameters define various parameters for the upstreams:
+
 ```yaml
 upstreamParameters:
   udpRequests: 1
@@ -233,6 +242,7 @@ upstreamParameters:
 ### SessionParameters
 
 The session parameters define various parameters for TCP connections and UDP sessions.
+
 ```yaml
 sessionParameters:
   timeout: 50s
@@ -249,6 +259,7 @@ sessionParameters:
 The action defines an action to perform for a client connection/datagram.
 
 In the example below, client connections/datagrams are passed to an upstream `dns-app`:
+
 ```yaml
 action:
   pass: dns-app
@@ -265,14 +276,18 @@ action:
 You can use the usual `kubectl` commands to work with TransportServer resources, similar to Ingress resources.
 
 For example, the following command creates a TransportServer resource defined in `transport-server-passthrough.yaml` with the name `secure-app`:
-```
-$ kubectl apply -f transport-server-passthrough.yaml
+
+```console
+kubectl apply -f transport-server-passthrough.yaml
+
 transportserver.k8s.nginx.org/secure-app created
 ```
 
 You can get the resource by running:
-```
-$ kubectl get transportserver secure-app
+
+```console
+kubectl get transportserver secure-app
+
 NAME         AGE
 secure-app   46sm
 ```
@@ -321,21 +336,21 @@ Snippets are intended to be used by advanced NGINX users who need more control o
 However, because of the disadvantages described below, snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
 
 Disadvantages of using snippets:
+
 * *Complexity*. To use snippets, you will need to:
   * Understand NGINX configuration primitives and implement a correct NGINX configuration.
   * Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
 * *Decreased robustness*. An incorrect snippet makes the NGINX config invalid which will lead to a failed reload. This will prevent any new configuration updates, including updates for the other TransportServer resource until the snippet is fixed.
 * *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller.
 
-
 > Note: during a period when the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
 
 > Note: to configure snippets in the `stream` context, use `stream-snippets` ConfigMap key.
 
-
 ### Validation
 
 Two types of validation are available for the TransportServer resource:
+
 * *Structural validation* by the `kubectl` and Kubernetes API server.
 * *Comprehensive validation* by the Ingress Controller.
 
@@ -344,14 +359,20 @@ Two types of validation are available for the TransportServer resource:
 The custom resource definition for the TransportServer includes structural OpenAPI schema which describes the type of every field of the resource.
 
 If you try to create (or update) a resource that violates the structural schema (for example, you use a string value for the port field of an upstream), `kubectl` and Kubernetes API server will reject such a resource:
+
 * Example of `kubectl` validation:
-    ```
-    $ kubectl apply -f transport-server-passthrough.yaml
+
+    ```console
+    kubectl apply -f transport-server-passthrough.yaml
+
       error: error validating "transport-server-passthrough.yaml": error validating data: ValidationError(TransportServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1alpha1.TransportServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
+
 * Example of Kubernetes API server validation:
-    ```
-    $ kubectl apply -f transport-server-passthrough.yaml --validate=false
+
+    ```console
+    kubectl apply -f transport-server-passthrough.yaml --validate=false
+
       The TransportServer "secure-app" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
       spec.upstreams.port in body must be of type integer: "string"
     ```
@@ -363,25 +384,31 @@ If a resource is not rejected (it doesn't violate the structural schema), the In
 The Ingress Controller validates the fields of a TransportServer resource. If a resource is invalid, the Ingress Controller will reject it: the resource will continue to exist in the cluster, but the Ingress Controller will ignore it.
 
 You can check if the Ingress Controller successfully applied the configuration for a TransportServer. For our example `secure-app` TransportServer, we can run:
-```
-$ kubectl describe ts secure-app
+
+```console
+kubectl describe ts secure-app
+
 . . .
 Events:
   Type    Reason          Age   From                      Message
   ----    ------          ----  ----                      -------
   Normal  AddedOrUpdated  3s    nginx-ingress-controller  Configuration for default/secure-app was added or updated
 ```
+
 Note how the events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
 
 If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a TransportServer `secure-app` with a pass action that references a non-existing upstream, you will get  :
-```
-$ kubectl describe ts secure-app
+
+```console
+kubectl describe ts secure-app
+
 . . .
 Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
   Warning  Rejected  2s    nginx-ingress-controller  TransportServer default/secure-app is invalid and was rejected: spec.action.pass: Not found: "some-app"
 ```
+
 Note how the events section includes a Warning event with the Rejected reason.
 
 **Note**: If you make an existing resource invalid, the Ingress Controller will reject it and remove the corresponding configuration from NGINX.

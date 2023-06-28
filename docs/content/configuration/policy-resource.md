@@ -12,7 +12,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.1.1/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.0/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -21,6 +21,7 @@ Policies work together with [VirtualServer and VirtualServerRoute resources](/ng
 ## Policy Specification
 
 Below is an example of a policy that allows access for clients from the subnet `10.0.0.0/8` and denies access for any other clients:
+
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: Policy
@@ -38,7 +39,7 @@ spec:
 |``accessControl`` | The access control policy based on the client IP address. | [accessControl](#accesscontrol) | No |
 |``ingressClassName`` | Specifies which instance of NGINX Ingress Controller must handle the Policy resource. | ``string`` | No |
 |``rateLimit`` | The rate limit policy controls the rate of processing requests per a defined key. | [rateLimit](#ratelimit) | No |
-|``basicAuth`` | The basic auth policy configures NGINX to authenticate client requests using HTTP Basic authentication credentials. | [basicAuth](#basic-auth) | No |
+|``basicAuth`` | The basic auth policy configures NGINX to authenticate client requests using HTTP Basic authentication credentials. | [basicAuth](#basicauth) | No |
 |``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | [jwt](#jwt) | No |
 |``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No |
 |``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | [egressMTLS](#egressmtls) | No |
@@ -52,6 +53,7 @@ spec:
 The access control policy configures NGINX to deny or allow requests from clients with the specified IP addresses/subnets.
 
 For example, the following policy allows access for clients from the subnet `10.0.0.0/8` and denies access for any other clients:
+
 ```yaml
 accessControl:
   allow:
@@ -59,6 +61,7 @@ accessControl:
 ```
 
 In contrast, the policy below does the opposite: denies access for clients from `10.0.0.0/8` and allows access for any other clients:
+
 ```yaml
 accessControl:
   deny:
@@ -77,14 +80,17 @@ accessControl:
 #### AccessControl Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference multiple access control policies. For example, here we reference two policies, each with configured allow lists:
+
 ```yaml
 policies:
 - name: allow-policy-one
 - name: allow-policy-two
 ```
+
 When you reference more than one access control policy, NGINX Ingress Controller will merge the contents into a single allow list or a single deny list.
 
 Referencing both allow and deny policies, as shown in the example below, is not supported. If both allow and deny lists are referenced, NGINX Ingress Controller uses just the allow list policies.
+
 ```yaml
 policies:
 - name: deny-policy
@@ -97,6 +103,7 @@ policies:
 The rate limit policy configures NGINX to limit the processing rate of requests.
 
 For example, the following policy will limit all subsequent requests coming from a single IP address once a rate of 10 requests per second is exceeded:
+
 ```yaml
 rateLimit:
   rate: 10r/s
@@ -123,7 +130,9 @@ rateLimit:
 > For each policy referenced in a VirtualServer and/or its VirtualServerRoutes, NGINX Ingress Controller will generate a single rate limiting zone defined by the [`limit_req_zone`](http://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) directive. If two VirtualServer resources reference the same policy, NGINX Ingress Controller will generate two different rate limiting zones, one zone per VirtualServer.
 
 #### RateLimit Merging Behavior
+
 A VirtualServer/VirtualServerRoute can reference multiple rate limit policies. For example, here we reference two policies:
+
 ```yaml
 policies:
 - name: rate-limit-policy-one
@@ -137,6 +146,7 @@ When you reference more than one rate limit policy, NGINX Ingress Controller wil
 The basic auth policy configures NGINX to authenticate cllient requests using the [HTTP Basic authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 
 For example, the following policy will reject all requests that do not include a valid username/password combination in the HTTP header `Authentication`
+
 ```yaml
 basicAuth:
   secret: htpasswd-secret
@@ -155,11 +165,13 @@ basicAuth:
 #### BasicAuth Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference multiple basic auth policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+
 ```yaml
 policies:
 - name: basic-auth-policy-one
 - name: basic-auth-policy-two
 ```
+
 In this example NGINX Ingress Controller will use the configuration from the first policy reference `basic-auth-policy-one`, and ignores `basic-auth-policy-two`.
 
 ### JWT Using Local Kubernetes Secret
@@ -169,6 +181,7 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens.
 
 The following example policy will reject all requests that do not include a valid JWT in the HTTP header `token`:
+
 ```yaml
 jwt:
   secret: jwk-secret
@@ -177,6 +190,7 @@ jwt:
 ```
 
 You can pass the JWT claims and JOSE headers to the upstream servers. For example:
+
 ```yaml
 action:
   proxy:
@@ -188,10 +202,10 @@ action:
       - name: alg
         value: ${jwt_header_alg}
 ```
+
 We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#actionproxy) to set the values of two headers that NGINX will pass to the upstream servers.
 
 The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a period (`.`) are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header.
-
 
 > Note: This feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
 
@@ -206,11 +220,13 @@ The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For 
 #### JWT Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied: every subsequent reference will be ignored. For example, here we reference two policies:
+
 ```yaml
 policies:
 - name: jwt-policy-one
 - name: jwt-policy-two
 ```
+
 In this example NGINX Ingress Controller will use the configuration from the first policy reference `jwt-policy-one`, and ignores `jwt-policy-two`.
 
 ### JWT Using JWKS From Remote Location
@@ -220,6 +236,7 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens, allowing import of the keys (JWKS) for JWT policy by means of a URL (for a remote server or an identity provider) as a result they don't have to be copied and updated to the IC pod.
 
 The following example policy will reject all requests that do not include a valid JWT in the HTTP header fetched from the identity provider:
+
 ```yaml
 jwt:
   realm: MyProductAPI
@@ -245,11 +262,13 @@ jwt:
 #### JWT Merging Behavior
 
 This behavior is similar to using a local Kubernetes secret where a VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied: every subsequent reference will be ignored. For example, here we reference two policies:
+
 ```yaml
 policies:
 - name: jwt-policy-one
 - name: jwt-policy-two
 ```
+
 In this example NGINX Ingress Controller will use the configuration from the first policy reference `jwt-policy-one`, and ignores `jwt-policy-two`.
 
 ### IngressMTLS
@@ -257,6 +276,7 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 The IngressMTLS policy configures client certificate verification.
 
 For example, the following policy will verify a client certificate using the CA certificate specified in the `ingress-mtls-secret`:
+
 ```yaml
 ingressMTLS:
   clientCertSecret: ingress-mtls-secret
@@ -265,6 +285,7 @@ ingressMTLS:
 ```
 
 Below is an example of the `ingress-mtls-secret` using the secret type `nginx.org/ca`
+
 ```yaml
 kind: Secret
 metadata:
@@ -276,12 +297,14 @@ data:
 ```
 
 A VirtualServer that references an IngressMTLS policy must:
+
 * Enable [TLS termination](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualservertls).
-* Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route `](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroutesubroute).
+* Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroutesubroute).
 
 If the conditions above are not met, NGINX will send the `500` status code to clients.
 
 You can pass the client certificate details, including the certificate, to the upstream servers. For example:
+
 ```yaml
 action:
   proxy:
@@ -293,11 +316,13 @@ action:
       - name: client-cert
         value: ${ssl_client_escaped_cert} # client certificate in the PEM format (urlencoded)
 ```
+
 We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#actionproxy) to set the values of the two headers that NGINX will pass to the upstream servers. See the [list of embedded variables](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#variables) that are supported by the `ngx_http_ssl_module`, which you can use to pass the client certificate details.
 
 > Note: The feature is implemented using the NGINX [ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
 #### Using a Certificate Revocation List
+
 The IngressMTLS policy supports configuring at CRL for your policy.
 This can be done in one of two ways.
 
@@ -305,6 +330,7 @@ This can be done in one of two ways.
 
 1. Adding the `ca.crl` field to the `nginx.org/ca` secret type, which accepts a base64 encoded certificate revocation list (crl).
    Example YAML:
+
 ```yaml
 kind: Secret
 metadata:
@@ -322,6 +348,7 @@ data:
 > Otherwise we recommend using the `nginx.org/ca` secret type for managing your CRL.
 
 Example YAML:
+
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: Policy
@@ -337,6 +364,7 @@ ingressMTLS:
 
 **IMPORTANT NOTE**
 When configuring a CRL with the `ingressMTLS.crlFileName` field, there is additional context to keep in mind:
+
 1. NGINX Ingress Controller will expect the CRL, in this case `webapp.crl`, will be in `/etc/nginx/secrets`. A volume mount will need to be added to NGINX Ingress Controller deployment add your CRL to `/etc/nginx/secrets`
 2. When updating the content of your CRL (e.g a new certificate has been revoked), NGINX will need to be reloaded to pick up the latest changes. Depending on your environment this may require updating the name of your CRL and applying this update to your `ingress-mtls.yaml` policy to ensure NGINX picks up the latest CRL.
 
@@ -354,11 +382,13 @@ Please refer to the Kubernetes documentation on [volumes](https://kubernetes.io/
 #### IngressMTLS Merging Behavior
 
 A VirtualServer can reference only a single IngressMTLS policy. Every subsequent reference will be ignored. For example, here we reference two policies:
+
 ```yaml
 policies:
 - name: ingress-mtls-policy-one
 - name: ingress-mtls-policy-two
 ```
+
 In this example NGINX Ingress Controller will use the configuration from the first policy reference `ingress-mtls-policy-one`, and ignores `ingress-mtls-policy-two`.
 
 ### EgressMTLS
@@ -366,6 +396,7 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 The EgressMTLS policy configures upstreams authentication and certificate verification.
 
 For example, the following policy will use `egress-mtls-secret` to authenticate with the upstream application and `egress-trusted-ca-secret` to verify the certificate of the application:
+
 ```yaml
 egressMTLS:
   tlsSecret: egress-mtls-secret
@@ -393,11 +424,13 @@ egressMTLS:
 #### EgressMTLS Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference multiple EgressMTLS policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+
 ```yaml
 policies:
 - name: egress-mtls-policy-one
 - name: egress-mtls-policy-two
 ```
+
 In this example NGINX Ingress Controller will use the configuration from the first policy reference `egress-mtls-policy-one`, and ignores `egress-mtls-policy-two`.
 
 ### OIDC
@@ -407,6 +440,7 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 The OIDC policy configures NGINX Plus as a relying party for OpenID Connect authentication.
 
 For example, the following policy will use the client ID `nginx-plus` and the client secret `oidc-secret` to authenticate with the OpenID Connect provider `https://idp.example.com`:
+
 ```yaml
 spec:
   oidc:
@@ -425,7 +459,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 #### Prerequisites
 
 In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
-You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.1.1/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.0/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 
@@ -453,11 +487,13 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 #### OIDC Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference only a single OIDC policy. Every subsequent reference will be ignored. For example, here we reference two policies:
+
 ```yaml
 policies:
 - name: oidc-policy-one
 - name: oidc-policy-two
 ```
+
 In this example NGINX Ingress Controller will use the configuration from the first policy reference `oidc-policy-one`, and ignores `oidc-policy-two`.
 
 ## Using Policy
@@ -465,14 +501,18 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 You can use the usual `kubectl` commands to work with Policy resources, just as with built-in Kubernetes resources.
 
 For example, the following command creates a Policy resource defined in `access-control-policy-allow.yaml` with the name `webapp-policy`:
-```
-$ kubectl apply -f access-control-policy-allow.yaml
+
+```console
+kubectl apply -f access-control-policy-allow.yaml
+
 policy.k8s.nginx.org/webapp-policy configured
 ```
 
 You can get the resource by running:
-```
-$ kubectl get policy webapp-policy
+
+```console
+kubectl get policy webapp-policy
+
 NAME            AGE
 webapp-policy   27m
 ```
@@ -486,6 +526,7 @@ For `kubectl get` and similar commands, you can also use the short name `pol` in
 The WAF policy configures NGINX Plus to secure client requests using App Protect WAF policies.
 
 For example, the following policy will enable the referenced APPolicy. You can configure multiple APLogConfs with log destinations:
+
 ```yaml
 waf:
   enable: true
@@ -498,6 +539,7 @@ waf:
     apLogConf: "default/logconf"
     logDest: "syslog:server=syslog-svc-secondary.default:514"
 ```
+
 > Note: The field `waf.securityLog` is deprecated and will be removed in future releases.It will be ignored if `waf.securityLogs` is populated.
 > Note: The feature is implemented using the NGINX Plus [NGINX App Protect WAF Module](https://docs.nginx.com/nginx-app-protect/configuration/).
 
@@ -514,17 +556,21 @@ waf:
 #### WAF Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference multiple WAF policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+
 ```yaml
 policies:
 - name: waf-policy-one
 - name: waf-policy-two
 ```
+
 In this example NGINX Ingress Controller will use the configuration from the first policy reference `waf-policy-one`, and ignores `waf-policy-two`.
 
 ### Applying Policies
 
 You can apply policies to both VirtualServer and VirtualServerRoute resources. For example:
-  * VirtualServer:
+
+* VirtualServer:
+
     ```yaml
     apiVersion: k8s.nginx.org/v1
     kind: VirtualServer
@@ -556,13 +602,15 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
       ```
 
       For VirtualServer, you can apply a policy:
-      - to all routes (spec policies)
-      - to a specific route (route policies)
+  * to all routes (spec policies)
+  * to a specific route (route policies)
 
       Route policies of the *same type* override spec policies. In the example above, if the type of the policies `policy-1` and `policy-3` is `accessControl`, then for requests to `cafe.example.com/coffee`, NGINX will apply `policy-3`.
 
       The overriding is enforced by NGINX: the spec policies are implemented in the `server` context of the config, and the route policies are implemented in the `location` context. As a result, the route policies of the same type win.
-  * VirtualServerRoute, which is referenced by the VirtualServer above:
+
+* VirtualServerRoute, which is referenced by the VirtualServer above:
+
     ```yaml
     apiVersion: k8s.nginx.org/v1
     kind: VirtualServerRoute
@@ -593,12 +641,13 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
 ### Invalid Policies
 
 NGINX will treat a policy as invalid if one of the following conditions is met:
+
 * The policy doesn't pass the [comprehensive validation](#comprehensive-validation).
 * The policy isn't present in the cluster.
 * The policy doesn't meet its type-specific requirements. For example, an `ingressMTLS` policy requires TLS termination enabled in the VirtualServer.
 
-
 For an invalid policy, NGINX returns the 500 status code for client requests with the following rules:
+
 * If a policy is referenced in a VirtualServer `route` or a VirtualServerRoute `subroute`, then NGINX will return the 500 status code for requests for the URIs of that route/subroute.
 * If a policy is referenced in the VirtualServer `spec`, then NGINX will return the 500 status code for requests for all URIs of that VirtualServer.
 
@@ -607,6 +656,7 @@ If a policy is invalid, the VirtualServer or VirtualServerRoute will have the [s
 ### Validation
 
 Two types of validation are available for the Policy resource:
+
 * *Structural validation*, done by `kubectl` and the Kubernetes API server.
 * *Comprehensive validation*, done by NGINX Ingress Controller.
 
@@ -615,14 +665,20 @@ Two types of validation are available for the Policy resource:
 The custom resource definition for the Policy includes a structural OpenAPI schema, which describes the type of every field of the resource.
 
 If you try to create (or update) a resource that violates the structural schema -- for example, the resource uses a string value instead of an array of strings in the `allow` field -- `kubectl` and the Kubernetes API server will reject the resource.
+
 * Example of `kubectl` validation:
-    ```
-    $ kubectl apply -f access-control-policy-allow.yaml
+
+    ```console
+    kubectl apply -f access-control-policy-allow.yaml
+
     error: error validating "access-control-policy-allow.yaml": error validating data: ValidationError(Policy.spec.accessControl.allow): invalid type for org.nginx.k8s.v1.Policy.spec.accessControl.allow: got "string", expected "array"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
+
 * Example of Kubernetes API server validation:
-    ```
-    $ kubectl apply -f access-control-policy-allow.yaml --validate=false
+
+    ```console
+    kubectl apply -f access-control-policy-allow.yaml --validate=false
+
     The Policy "webapp-policy" is invalid: spec.accessControl.allow: Invalid value: "string": spec.accessControl.allow in body must be of type array: "string"
     ```
 
@@ -633,31 +689,38 @@ If a resource passes structural validation, then NGINX Ingress Controller's comp
 NGINX Ingress Controller validates the fields of a Policy resource. If a resource is invalid, NGINX Ingress Controller will reject it. The resource will continue to exist in the cluster, but NGINX Ingress Controller will ignore it.
 
 You can use `kubectl` to check whether or not NGINX Ingress Controller successfully applied a Policy configuration. For our example `webapp-policy` Policy, we can run:
-```
-$ kubectl describe pol webapp-policy
+
+```console
+kubectl describe pol webapp-policy
+
 . . .
 Events:
   Type    Reason          Age   From                      Message
   ----    ------          ----  ----                      -------
   Normal  AddedOrUpdated  11s   nginx-ingress-controller  Policy default/webapp-policy was added or updated
 ```
+
 Note how the events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
 
 If you create an invalid resource, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create a Policy `webapp-policy` with an invalid IP `10.0.0.` in the `allow` field, you will get:
-```
-$ kubectl describe policy webapp-policy
+
+```console
+kubectl describe policy webapp-policy
+
 . . .
 Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
   Warning  Rejected  7s    nginx-ingress-controller  Policy default/webapp-policy is invalid and was rejected: spec.accessControl.allow[0]: Invalid value: "10.0.0.": must be a CIDR or IP
 ```
+
 Note how the events section includes a Warning event with the Rejected reason.
 
 Additionally, this information is also available in the `status` field of the Policy resource. Note the Status section of the Policy:
 
-```
-$ kubectl describe pol webapp-policy
+```console
+kubectl describe pol webapp-policy
+
 . . .
 Status:
   Message:  Policy default/webapp-policy is invalid and was rejected: spec.accessControl.allow[0]: Invalid value: "10.0.0.": must be a CIDR or IP

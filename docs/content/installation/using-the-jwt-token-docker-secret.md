@@ -22,47 +22,49 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
 
 1. Create a `docker-registry` secret on the cluster using the JWT token as the username and `none` for password (password is unused).  The name of the docker server is `private-registry.nginx.com`. Optionally namespace the secret.
 
-	```
-    kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
-    ```
+```console
+kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
+```
 
 2. Confirm the details of the created secret by running:
 
-	```bash
-    kubectl get secret regcred --output=yaml
-    ```
+```console
+kubectl get secret regcred --output=yaml
+```
 
 3. You can now add this secret to a deployment spec or to a service account to apply to all deployments for a given SA spec. See the [Create a Pod that uses your Secret](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-pod-that-uses-your-secret) and [Add ImagePullSecrets to a service account](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account) documentation for more details.
 
 4. Update the deployment spec with the chosen image path. Choose the image from the [available images]({{< relref "/technical-specifications.md#images-with-nginx-plus" >}}).
 
 5. You can use the certificate and key from the MyF5 portal and the Docker registry API to list the available image tags for the repositories, e.g.:
-   ```
-   $ curl https://private-registry.nginx.com/v2/nginx-ic/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
+
+   ```json
+
+   $ curl <https://private-registry.nginx.com/v2/nginx-ic/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "3.1.1-alpine",
-        "3.1.1-ubi",
-        "3.1.1"
+        "3.2.0-alpine",
+        "3.2.0-ubi",
+        "3.2.0"
     ]
     }
 
-   $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   $ curl <https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "3.1.1-ubi",
-        "3.1.1"
+        "3.2.0-ubi",
+        "3.2.0"
     ]
     }
 
-   $ curl https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   $ curl <https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-dos/nginx-plus-ingress",
     "tags": [
-        "3.1.1-ubi",
-        "3.1.1"
+        "3.2.0-ubi",
+        "3.2.0"
     ]
     }
    ```
