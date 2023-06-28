@@ -3602,6 +3602,9 @@ func selectEndpointSlicesForPort(targetPort int32, esx []discovery_v1.EndpointSl
 	eps := make([]discovery_v1.EndpointSlice, 0, len(esx))
 	for _, es := range esx {
 		for _, p := range es.Ports {
+			if p.Port == nil {
+				continue
+			}
 			if *p.Port == targetPort {
 				eps = append(eps, es)
 			}
@@ -3615,6 +3618,9 @@ func filterReadyEndpointsFrom(esx []discovery_v1.EndpointSlice) []discovery_v1.E
 	epx := make([]discovery_v1.Endpoint, 0, len(esx))
 	for _, es := range esx {
 		for _, e := range es.Endpoints {
+			if e.Conditions.Ready == nil {
+				continue
+			}
 			if *e.Conditions.Ready {
 				epx = append(epx, e)
 			}
