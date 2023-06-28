@@ -13,7 +13,6 @@ docs: "DOCS-889"
 NGINX Ingress Controller can now be used as the Ingress Controller for applications running inside an Istio service mesh. This allows you to continue using the advanced capabilities that NGINX IC provides on Istio-based environments without resorting to any workarounds.
 This is accomplished using the special setting [use-cluster-ip](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream) for the backend.
 
-
 Here is a standard deployment of NGINX Ingress Controller without a sidecar proxy injected into the pod.
 
 {{< img src="./img/nginx_plain.png" alt="NGINX stand alone." >}}
@@ -22,7 +21,6 @@ Notice that NGINX Ingress Controller enumerates the pods of the backend service 
 If your service pods support TLS, then NIC can re-encrypt the traffic to them and provide end-to-end encryption.
 
 But then, if your services could do that, you might not be implementing a Service Mesh.
-
 
 To begin, Istio needs to be installed into your cluster.
 
@@ -35,28 +33,26 @@ It is crucial to make sure you install Istio **BEFORE** installing NGINX Ingress
 
 You can install Istio by your preferred method (helm, operator, etc.). In this case, I ran the following command to install Istio into my cluster:
 
-```
+```console
 istioctl install --set profile=minimal
 ```
 
 We need to ensure that Istio injects sidecar proxies into our namespace for testing. To do so, we need to tell Istio what namespaces to inject sidecars into. We can do that with the following command:
 
-```bash
+```console
 
 kubectl label ns <namespace_specified> istio-injection=enabled
 ```
+
 Before proceeding, and before installing NGINX Ingress Controller you need to tell Istio that it will be injecting sidecars with the NGINX Ingress controller pods as they are deployed.
 
-```bash
-
+```console
 kubectl label namespace nginx-ingress istio-injection=enabled
 ```
 
-
 Using `kubectl`, we can see that the namespace for our demo (nginx-ingress) now has `istio-injection=enabled` specified:
 
-```bash
-
+```console
 kubectl get namespaces -A --show-labels
 
 
@@ -77,13 +73,11 @@ The image below shows how an NGINX Ingress Controller and Istio deployment looks
 
 {{< img src="./img/nginx-envoy.png" alt="NGINX with envoy sidecar." >}}
 
-
 ## Install NGINX Ingress Controller
 
 Once Istio is installed, you can install NGINX Ingress Controller.
 
-
-## Setting up NGINX Plus Ingress controller deployment for Istio.
+## Setting up NGINX Plus Ingress controller deployment for Istio
 
 When deploying NGINX Plus Ingress Controller with Istio, you must modify your Deployment file to include the specific annotations required to work with Istio. Those four specific lines are:
 
@@ -96,7 +90,6 @@ sidecar.istio.io/inject: 'true'
 
 Additional information on the above annotations can be found on Istio's website.
 [Istio Service Mesh Annotations](https://istio.io/latest/docs/reference/config/annotations/)
-
 
 Your updated `nginx-plus-ingress.yaml` file will look something like this with the added annotations:
 
@@ -122,13 +115,11 @@ spec:
         sidecar.istio.io/inject: 'true'
 ```
 
-
 {{< img src="./img/nginx_istio_small.png" alt="NGINX Ingress pod with envoy sidecar." >}}
-
 
 We can now see that after configuring Istio, an Istio sidecar proxy has been installed into the same pod as NGINX Ingress Controller. Now, there are two containers in the same pod for NGINX Ingress Controller: the NGINX Ingress controller container and the Istio sidecar proxy container.
 
-```
+```console
 kubectl get pods -A
 
 NAMESPACE       NAME                                      READY   STATUS    RESTARTS   AGE
@@ -140,7 +131,6 @@ nginx-ingress   nginx-ingress-5898f94c49-v4jrf            2/2     Running   1   
 ```
 
 Here is our VirtualServer configuration for Istio service mesh (note `use-cluster-ip` and `requestHeaders`). These settings are required when using Istio service mesh:
-
 
 ```yaml
 apiVersion: k8s.nginx.org/v1
@@ -183,7 +173,6 @@ spec:
 With our new Host header control in v1.11, when VirtualServer is configured with `requestHeaders`, the value specified will be used and `proxy_set_header $host` will NOT be used.
 The value of `requestHeaders` should be: `<service.namespace.svc.cluster.local>`. Adjust the value for your specific environment.
 
-
 When `use-cluster-ip` is set to `true`, NGINX forwards requests to the service IP. In our example above, that would be `tea-svc` and `coffee-svc`.
 
 Here is a simple example of what your `upstream` section will look like now in `virtualServer/virtualServerRoute`:
@@ -202,10 +191,9 @@ upstreams:
 
 NGINX Ingress `upstreams` will be populated with the `Service/cluster IP`. In the example above, the service/cluster IPs for `tea-svc` and `coffee-svc` will be added to the `upstream` configuration as the `server` addresses.
 
-
 Now we can test our NGINX Ingress with Istio setup with a simple curl request to our application.
 
-```bash
+```console
 curl -kI https://cafe.example.com/coffee
 
 HTTP/1.1 200 OK
@@ -222,8 +210,6 @@ x-envoy-decorator-operation: coffee-svc.nginx-ingress.svc.cluster.local:80/*
 
 We can see in the above output that our curl request is sent and received by NGINX Ingress Controller. We can see that the envoy sidecar proxy sends the request to the service IP to the application (coffee). The full request is complete and correct. Now we have a full working NGINX+ Ingress with Istio as the sidecar proxies are deployed.
 
-
-
 ## Additional Technical information details
 
 By default, for NGINX Ingress Controller, we populate the upstream server addresses with the endpoint IPs of the pods.
@@ -232,13 +218,10 @@ When using the new `use-cluster-ip` feature, we will no populate the upstream wi
 
 In the 1.11 release, NGINX Ingress controller will only send one host header, depending on how you configure Ingress. By default NGINX Ingress Controller will send `proxy_set_header $host`. If Ingress has been configured with `action.proxy.requestHeaders` this ensures that only one set of headers will be sent to the upstream server. In summary, by setting `action.proxy.requestHeaders` in the `VirtualServer` CRD, NGINX Ingress will only send the specified headers that have been defined.
 
-
-
 Here is the output of `nginx -T` to show our upstreams and proxy_set_header values.
 The server IP address the upstream is the IP address of the service for that given application.
 
-
-```bash
+```nginx
 upstream vs_nginx-ingress_cafe_tea {
     zone vs_nginx-ingress_cafe_tea 256k;
     random two least_conn;

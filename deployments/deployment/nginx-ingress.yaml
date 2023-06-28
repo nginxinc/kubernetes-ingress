@@ -23,7 +23,6 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-#        fsGroup: 101 #nginx
 #      volumes:
 #      - name: nginx-etc
 #        emptyDir: {}
@@ -34,7 +33,7 @@ spec:
 #      - name: nginx-log
 #        emptyDir: {}
       containers:
-      - image: nginx/nginx-ingress:3.1.1
+      - image: nginx/nginx-ingress:3.2.0
         imagePullPolicy: IfNotPresent
         name: nginx-ingress
         ports:
@@ -98,7 +97,7 @@ spec:
          #- -enable-prometheus-metrics
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
 #      initContainers:
-#      - image: nginx/nginx-ingress:3.1.1
+#      - image: nginx/nginx-ingress:3.2.0
 #        imagePullPolicy: IfNotPresent
 #        name: init-nginx-ingress
 #        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']

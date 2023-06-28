@@ -30,7 +30,7 @@ jobs:
       image_digest: ${{ steps.build-push.outputs.digest }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           ref: ${{ inputs.tag != '' && format('refs/tags/v{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
@@ -42,23 +42,23 @@ jobs:
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
+        uses: docker/setup-qemu-action@2b82ce82d56a2a04d2637cd93a637ae1b359c0a7 # v2.2.0
         with:
           platforms: arm,arm64,ppc64le,s390x
         if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2.5.0
+        uses: docker/setup-buildx-action@ecf95283f03858871ff00b787d79c419715afc34 # v2.7.0
 
       - name: DockerHub Login
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -66,20 +66,20 @@ jobs:
         if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e1e17a757e536f70e52b5a12b2e8d1d1c60e04ef # v2.0.0
+        uses: aws-actions/configure-aws-credentials@5fd3084fc36e372ff1fff382a39b10d03659f355 # v2.2.0
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ROLE_PUBLIC_ECR }}
         if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           registry: public.ecr.aws
         if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
 
       - name: Login to Quay.io
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
@@ -96,7 +96,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e # v4.4.0
+        uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175 # v4.6.0
         with:
           context: ${{ inputs.tag != '' && 'git' || 'workflow' }}
           images: |
@@ -110,7 +110,8 @@ jobs:
           tags: |
             type=edge
             type=ref,event=pr
-            type=schedule
+            type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/release-') }}
+            type=schedule,enable=${{ inputs.tag == '' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
@@ -126,7 +127,7 @@ jobs:
             io.artifacthub.package.keywords=kubernetes,ingress,nginx,controller
 
       - name: Build Docker image
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # v4.0.0
+        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         id: build-push
         with:
           file: build/Dockerfile
@@ -148,7 +149,7 @@ jobs:
             IC_VERSION=${{ (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release-')) && 'CI' || steps.meta.outputs.version }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@e5f43133f6e8736992c9f3c1b3296e24b37e17f2 # 0.10.0
+        uses: aquasecurity/trivy-action@41f05d9ecffa2ed3f1580af306000f734b733e54 # 0.11.2
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -157,7 +158,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@f0e3dfb30302f8a0881bb509b044e0de4f6ef589 # v2.3.4
+        uses: github/codeql-action/upload-sarif@f6e388ebf0efc915c6c5b165b019ee61a6746a38 # v2.20.1
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"

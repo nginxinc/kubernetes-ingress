@@ -1,0 +1,13 @@
+allow_licenses:
+  - Apache-1.1
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - BSL-1.0
+  - ISC
+  - MIT
+  - NCSA
+  - OpenSSL
+  - Python-2.0
+  - X11
+comment-summary-in-pr: true

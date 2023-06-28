@@ -26,13 +26,11 @@ const maxNameLength = 63
 
 // ValidateDosProtectedResource validates a dos protected resource.
 func ValidateDosProtectedResource(protected *v1beta1.DosProtectedResource) error {
-	var err error
-
 	// name
 	if protected.Spec.Name == "" {
 		return fmt.Errorf("error validating DosProtectedResource: %v missing value for field: %v", protected.Name, "name")
 	}
-	err = validateAppProtectDosName(protected.Spec.Name)
+	err := validateAppProtectDosName(protected.Spec.Name)
 	if err != nil {
 		return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "name", err)
 	}
@@ -92,13 +90,11 @@ func validateResourceReference(ref string) error {
 // checkAppProtectDosLogConfContentField check content field doesn't appear in dos log
 func checkAppProtectDosLogConfContentField(obj *unstructured.Unstructured) string {
 	_, found, err := unstructured.NestedMap(obj.Object, "spec", "content")
-	if err == nil && found {
-		unstructured.RemoveNestedField(obj.Object, "spec", "content")
-		msg := "the Content field is not supported, defaulting to splunk format."
-		return msg
+	if err != nil || !found {
+		return ""
 	}
-
-	return ""
+	unstructured.RemoveNestedField(obj.Object, "spec", "content")
+	return "the Content field is not supported, defaulting to splunk format."
 }
 
 // ValidateAppProtectDosLogConf validates LogConfiguration resource
@@ -120,6 +116,9 @@ var (
 )
 
 func validateAppProtectDosLogDest(dstAntn string) error {
+	if dstAntn == "stderr" {
+		return nil
+	}
 	if validIPRegex.MatchString(dstAntn) || validDNSRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
 		chunks := strings.Split(dstAntn, ":")
 		err := validatePort(chunks[1])
@@ -128,15 +127,14 @@ func validateAppProtectDosLogDest(dstAntn string) error {
 		}
 		return nil
 	}
-	if dstAntn == "stderr" {
-		return nil
-	}
-
 	return fmt.Errorf("invalid log destination: %s, must follow format: <ip-address | localhost | dns name>:<port> or stderr", dstAntn)
 }
 
 func validatePort(value string) error {
-	port, _ := strconv.Atoi(value)
+	port, err := strconv.Atoi(value)
+	if err != nil {
+		return fmt.Errorf("error parsing port number: %w", err)
+	}
 	if port > 65535 || port < 1 {
 		return fmt.Errorf("error parsing port: %v not a valid port number", port)
 	}

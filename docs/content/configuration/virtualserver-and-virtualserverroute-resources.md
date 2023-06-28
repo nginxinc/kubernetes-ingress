@@ -12,11 +12,12 @@ docs: "DOCS-599"
 
 The VirtualServer and VirtualServerRoute resources, introduced in release 1.5, enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.0/examples/custom-resources) folder in our GitHub repo.
 
 ## VirtualServer Specification
 
 The VirtualServer resource defines load balancing configuration for a domain name, such as `example.com`. Below is an example of such configuration:
+
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: VirtualServer
@@ -69,6 +70,7 @@ spec:
 ### VirtualServer.TLS
 
 The tls field defines TLS configuration for a VirtualServer. For example:
+
 ```yaml
 secret: cafe-secret
 redirect:
@@ -86,6 +88,7 @@ redirect:
 ### VirtualServer.TLS.Redirect
 
 The redirect field configures a TLS redirect for a VirtualServer:
+
 ```yaml
 enable: true
 code: 301
@@ -103,6 +106,7 @@ basedOn: scheme
 ### VirtualServer.TLS.CertManager
 
 The cert-manager field configures x509 automated Certificate management for VirtualServer resources using cert-manager (cert-manager.io). Please see the [cert-manager configuration documentation](https://cert-manager.io/docs/configuration/) for more information on deploying and configuring Issuers. Example:
+
 ```yaml
 cert-manager:
   cluster-issuer: "my-issuer-name"
@@ -124,6 +128,7 @@ cert-manager:
 ### VirtualServer.ExternalDNS
 
 The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/v0.12.0/) for more information on deploying and configuring ExternalDNS and Providers. Example:
+
 ```yaml
 enable: true
 ```
@@ -141,6 +146,7 @@ enable: true
 ### VirtualServer.ExternalDNS.ProviderSpecific
 
 The providerSpecific field of the externalDNS block allows the specification of provider specific properties which is a list of key value pairs of configurations which are specific to individual DNS providers. Example:
+
 ```yaml
 - name: my-name
   value: my-value
@@ -158,10 +164,10 @@ The providerSpecific field of the externalDNS block allows the specification of 
 ### VirtualServer.Policy
 
 The policy field references a [Policy resource](/nginx-ingress-controller/configuration/policy-resource/) by its name and optional namespace. For example:
+
 ```yaml
 name: access-control
 ```
-
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -173,6 +179,7 @@ name: access-control
 ### VirtualServer.Route
 
 The route defines rules for matching client requests to actions like passing a request to an upstream. For example:
+
 ```yaml
   path: /tea
   action:
@@ -202,6 +209,7 @@ The VirtualServerRoute resource defines a route for a VirtualServer. It can cons
 In the example below, the VirtualServer `cafe` from the namespace `cafe-ns` defines a route with the path `/coffee`, which is further defined in the VirtualServerRoute `coffee` from the namespace `coffee-ns`.
 
 VirtualServer:
+
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: VirtualServer
@@ -223,6 +231,7 @@ spec:
 ```
 
 VirtualServerRoute:
+
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: VirtualServerRoute
@@ -261,6 +270,7 @@ Note that each subroute must have a `path` that starts with the same prefix (her
 ### VirtualServerRoute.Subroute
 
 The subroute defines rules for matching client requests to actions like passing a request to an upstream. For example:
+
 ```yaml
 path: /coffee
 action:
@@ -287,6 +297,7 @@ action:
 ### Upstream
 
 The upstream defines a destination for the routing configuration. For example:
+
 ```yaml
 name: tea
 service: tea-svc
@@ -315,7 +326,7 @@ tls:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes |
-|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/ingress-resources/externalname-services#prerequisites) ). | ``string`` | Yes |
+|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.0/examples/ingress-resources/externalname-services#prerequisites) ). | ``string`` | Yes |
 |``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, the Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No |
 |``use-cluster-ip`` | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as the Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP. | ``boolean`` | No |
 |``port`` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``. | ``uint16`` | Yes |
@@ -343,12 +354,14 @@ tls:
 {{% /table %}}
 
 ### Upstream.Buffers
+
 The buffers field configures the buffers used for reading a response from the upstream server for a single connection:
 
 ```yaml
 number: 4
 size: 8K
 ```
+
 See the [proxy_buffers](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers) directive for additional information.
 
 {{% table %}}
@@ -460,7 +473,9 @@ sessionCookie:
   domain: .example.com
   httpOnly: false
   secure: true
+  samesite: strict
 ```
+
 See the [`sticky`](https://nginx.org/en/docs/http/ngx_http_upstream_module.html?#sticky) directive for additional information. The session cookie corresponds to the `sticky cookie` method.
 
 Note: This feature is supported only in NGINX Plus.
@@ -475,11 +490,13 @@ Note: This feature is supported only in NGINX Plus.
 |``domain`` | The domain for which the cookie is set. | ``string`` | No |
 |``httpOnly`` | Adds the ``HttpOnly`` attribute to the cookie. | ``boolean`` | No |
 |``secure`` | Adds the ``Secure`` attribute to the cookie. | ``boolean`` | No |
+|``samesite`` | Adds the ``SameSite`` attribute to the cookie. The allowed values are: ``strict``, ``lax``, ``none`` | ``string`` | No |
 {{% /table %}}
 
 ### Header
 
 The header defines an HTTP Header:
+
 ```yaml
 name: Host
 value: example.com
@@ -497,6 +514,7 @@ value: example.com
 The action defines an action to perform for a request.
 
 In the example below, client requests are passed to an upstream `coffee`:
+
 ```yaml
  path: /coffee
  action:
@@ -519,6 +537,7 @@ In the example below, client requests are passed to an upstream `coffee`:
 The redirect action defines a redirect to return for a request.
 
 In the example below, client requests are passed to a url `http://www.nginx.com`:
+
 ```yaml
 redirect:
   url: http://www.nginx.com
@@ -537,6 +556,7 @@ redirect:
 The return action defines a preconfigured response for a request.
 
 In the example below, NGINX will respond with the preconfigured response for every request:
+
 ```yaml
 return:
   code: 200
@@ -559,6 +579,7 @@ return:
 The proxy action passes requests to an upstream with the ability to modify the request/response (for example, rewrite the URI or modify the headers).
 
 In the example below, the request URI is rewritten to `/`, and the request and the response headers are modified:
+
 ```yaml
 proxy:
   upstream: coffee
@@ -592,7 +613,7 @@ proxy:
 |``upstream`` | The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource. | ``string`` | Yes |
 |``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#actionproxyrequestheaders) | No |
 |``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#actionproxyresponseheaders) | No |
-|``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/custom-resources/rewrites) example. | ``string`` | No |
+|``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.0/examples/custom-resources/rewrites) example. | ``string`` | No |
 {{% /table %}}
 
 ### Action.Proxy.RequestHeaders
@@ -609,12 +630,14 @@ The RequestHeaders field modifies the headers of the request to the proxied upst
 ### Action.Proxy.RequestHeaders.Set.Header
 
 The header defines an HTTP Header:
+
 ```yaml
 name: My-Header
 value: My-Value
 ```
 
 It is possible to override the default value of the `Host` header, which the Ingress Controller sets to [`$host`](https://nginx.org/en/docs/http/ngx_http_core_module.html#var_host):
+
 ```yaml
 name: Host
 value: example.com
@@ -649,6 +672,7 @@ The ResponseHeaders field modifies the headers of the response to the client.
 ### AddHeader
 
 The addHeader defines an HTTP Header with an optional `always` field:
+
 ```yaml
 name: My-Header
 value: My-Value
@@ -672,6 +696,7 @@ always: true
 The split defines a weight for an action as part of the splits configuration.
 
 In the example below NGINX passes 80% of requests to the upstream `coffee-v1` and the remaining 20% to `coffee-v2`:
+
 ```yaml
 splits:
 - weight: 80
@@ -694,6 +719,7 @@ splits:
 The match defines a match between conditions and an action or splits.
 
 In the example below, NGINX routes requests with the path `/coffee` to different upstreams based on the value of the cookie `user`:
+
 * `user=john` -> `coffee-future`
 * `user=bob` -> `coffee-deprecated`
 * If the cookie is not set or not equal to either `john` or `bob`, NGINX routes to `coffee-stable`
@@ -716,6 +742,7 @@ action:
 ```
 
 In the next example, NGINX routes requests based on the value of the built-in [`$request_method` variable](https://nginx.org/en/docs/http/ngx_http_core_module.html#var_request_method), which represents the HTTP method of a request:
+
 * all POST requests -> `coffee-post`
 * all non-POST requests -> `coffee`
 
@@ -760,6 +787,7 @@ The condition defines a condition in a match.
 Supported NGINX variables: `$args`, `$http2`, `$https`, `$remote_addr`, `$remote_port`, `$query_string`, `$request`, `$request_body`, `$request_uri`, `$request_method`, `$scheme`. Find the documentation for each variable [here](https://nginx.org/en/docs/varindex.html).
 
 The value supports two kinds of matching:
+
 * *Case-insensitive string comparison*. For example:
   * `john` -- case-insensitive matching that succeeds for strings, such as `john`, `John`, `JOHN`.
   * `!john` -- negation of the case-insensitive matching for john that succeeds for strings, such as `bob`, `anything`, `''` (empty string).
@@ -770,10 +798,10 @@ The value supports two kinds of matching:
 
 **Note**: a value must not include any unescaped double quotes (`"`) and must not end with an unescaped backslash (`\`). For example, the following are invalid values: `some"value`, `somevalue\`.
 
-
 ### ErrorPage
 
 The errorPage defines a custom response for a route for the case when either an upstream server responds with (or NGINX generates) an error status code. The custom response can be a redirect or a canned response. See the [error_page](https://nginx.org/en/docs/http/ngx_http_core_module.html#error_page) directive for more information.
+
 ```yaml
 path: /coffee
 errorPages:
@@ -865,14 +893,18 @@ value: ${upstream_status}
 You can use the usual `kubectl` commands to work with VirtualServer and VirtualServerRoute resources, similar to Ingress resources.
 
 For example, the following command creates a VirtualServer resource defined in `cafe-virtual-server.yaml` with the name `cafe`:
-```
-$ kubectl apply -f cafe-virtual-server.yaml
+
+```console
+kubectl apply -f cafe-virtual-server.yaml
+
 virtualserver.k8s.nginx.org "cafe" created
 ```
 
 You can get the resource by running:
-```
-$ kubectl get virtualserver cafe
+
+```console
+kubectl get virtualserver cafe
+
 NAME   STATE   HOST                   IP            PORTS      AGE
 cafe   Valid   cafe.example.com       12.13.23.123  [80,443]   3m
 ```
@@ -924,6 +956,7 @@ Snippets are intended to be used by advanced NGINX users who need more control o
 However, because of the disadvantages described below, snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
 
 Disadvantages of using snippets:
+
 * *Complexity*. To use snippets, you will need to:
   * Understand NGINX configuration primitives and implement a correct NGINX configuration.
   * Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
@@ -937,6 +970,7 @@ To help catch errors when using snippets, the Ingress Controller reports config 
 ### Validation
 
 Two types of validation are available for VirtualServer and VirtualServerRoute resources:
+
 * *Structural validation* by the `kubectl` and Kubernetes API server.
 * *Comprehensive validation* by the Ingress Controller.
 
@@ -945,14 +979,20 @@ Two types of validation are available for VirtualServer and VirtualServerRoute r
 The custom resource definitions for VirtualServer and VirtualServerRoute include structural OpenAPI schema which describes the type of every field of those resources.
 
 If you try to create (or update) a resource that violates the structural schema (for example, you use a string value for the port field of an upstream), `kubectl` and Kubernetes API server will reject such a resource:
+
 * Example of `kubectl` validation:
-    ```
-    $ kubectl apply -f cafe-virtual-server.yaml
+
+    ```console
+    kubectl apply -f cafe-virtual-server.yaml
+
       error: error validating "cafe-virtual-server.yaml": error validating data: ValidationError(VirtualServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.VirtualServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
+
 * Example of Kubernetes API server validation:
-    ```
-    $ kubectl apply -f cafe-virtual-server.yaml --validate=false
+
+    ```console
+    kubectl apply -f cafe-virtual-server.yaml --validate=false
+
       The VirtualServer "cafe" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
       spec.upstreams.port in body must be of type integer: "string"
     ```
@@ -964,31 +1004,38 @@ If a resource is not rejected (it doesn't violate the structural schema), the In
 The Ingress Controller validates the fields of the VirtualServer and VirtualServerRoute resources. If a resource is invalid, the Ingress Controller will reject it: the resource will continue to exist in the cluster, but the Ingress Controller will ignore it.
 
 You can check if the Ingress Controller successfully applied the configuration for a VirtualServer. For our example `cafe` VirtualServer, we can run:
-```
-$ kubectl describe vs cafe
+
+```console
+kubectl describe vs cafe
+
 . . .
 Events:
   Type    Reason          Age   From                      Message
   ----    ------          ----  ----                      -------
   Normal  AddedOrUpdated  16s   nginx-ingress-controller  Configuration for default/cafe was added or updated
 ```
+
 Note how the events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
 
 If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a VirtualServer `cafe` with two upstream with the same name `tea`, you will get:
-```
-$ kubectl describe vs cafe
+
+```console
+kubectl describe vs cafe
+
 . . .
 Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
   Warning  Rejected  12s   nginx-ingress-controller  VirtualServer default/cafe is invalid and was rejected: spec.upstreams[1].name: Duplicate value: "tea"
 ```
+
 Note how the events section includes a Warning event with the Rejected reason.
 
 Additionally, this information is also available in the `status` field of the VirtualServer resource. Note the Status section of the VirtualServer:
 
-```
-$ kubectl describe vs cafe
+```console
+kubectl describe vs cafe
+
 . . .
 Status:
   External Endpoints:
@@ -1006,6 +1053,7 @@ The Ingress Controller validates VirtualServerRoute resources in a similar way.
 ## Customization via ConfigMap
 
 You can customize the NGINX configuration for VirtualServer and VirtualServerRoutes resources using the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource). Most of the ConfigMap keys are supported, with the following exceptions:
+
 * `proxy-hide-headers`
 * `proxy-pass-headers`
 * `hsts`

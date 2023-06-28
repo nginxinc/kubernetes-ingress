@@ -470,3 +470,41 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 		}
 	}
 }
+
+func TestValidatePort_IsValidOnValidInput(t *testing.T) {
+	t.Parallel()
+
+	ports := []string{"1", "65535"}
+	for _, p := range ports {
+		if err := validatePort(p); err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+func TestValidatePort_ErrorsOnInvalidString(t *testing.T) {
+	t.Parallel()
+
+	if err := validatePort(""); err == nil {
+		t.Error("want error, got nil")
+	}
+}
+
+func TestValidatePort_ErrorsOnInvalidRange(t *testing.T) {
+	t.Parallel()
+
+	ports := []string{"0", "-1", "65536"}
+	for _, p := range ports {
+		if err := validatePort(p); err == nil {
+			t.Error("want error, got nil")
+		}
+	}
+}
+
+func TestValidateAppProtectDosLogDest_ValidOnDestinationStdErr(t *testing.T) {
+	t.Parallel()
+
+	if err := validateAppProtectDosLogDest("stderr"); err != nil {
+		t.Error(err)
+	}
+}

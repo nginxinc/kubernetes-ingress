@@ -1,16 +1,14 @@
 # variables that should not be overridden by the user
-GIT_COMMIT = $(shell git rev-parse HEAD || echo unknown)
-GIT_COMMIT_SHORT = $(shell echo ${GIT_COMMIT} | cut -c1-7)
 GIT_TAG = $(shell git describe --tags --abbrev=0 || echo untagged)
-VERSION = $(GIT_TAG)-SNAPSHOT-$(GIT_COMMIT_SHORT)
+VERSION = $(GIT_TAG)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
 # variables that can be overridden by the user
-PREFIX ?= nginx/nginx-ingress## The name of the image. For example, nginx/nginx-ingress
-TAG ?= $(VERSION:v%=%)## The tag of the image. For example, 2.0.0
-TARGET ?= local## The target of the build. Possible values: local, container and download
-override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT)## The options for the docker build command. For example, --pull.
-ARCH ?= amd64## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets.
+PREFIX ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
+TAG ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
+TARGET ?= local ## The target of the build. Possible values: local, container and download
+override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
+ARCH ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
 
 # final docker build command
 DOCKER_CMD = docker build --platform linux/$(ARCH) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
@@ -22,7 +20,7 @@ export DOCKER_BUILDKIT = 1
 .PHONY: help
 help: Makefile ## Display this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "; printf "Usage:\n\n    make \033[36m<target>\033[0m [VARIABLE=value...]\n\nTargets:\n\n"}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
-	@grep -E '^(override )?[a-zA-Z_-]+ \??\+?= .*?## .*$$' $< | sort | awk 'BEGIN {FS = " \\??\\+?= .*?## "; printf "\nVariables:\n\n"}; {gsub(/override /, "", $$1); printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(override )?[a-zA-Z_-]+ \??\+?= .*? ## .*$$' $< | sort | awk 'BEGIN {FS = " \\??\\+?= .*? ## "; printf "\nVariables:\n\n"}; {gsub(/override /, "", $$1); printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: all
 all: test lint verify-codegen update-crds debian-image
@@ -85,7 +83,7 @@ endif
 .PHONY: download-binary-docker
 download-binary-docker: ## Download Docker image from which to extract Ingress Controller binary, TARGET=download is required
 ifeq (${TARGET},download)
-DOWNLOAD_TAG := $(shell ./hack/docker.sh $(GIT_COMMIT) $(GIT_TAG))
+DOWNLOAD_TAG := $(shell ./hack/docker.sh $(GIT_TAG))
 ifeq ($(DOWNLOAD_TAG),fail)
 $(error unable to build with TARGET=download, this function is only available when building from a git tag or from the latest commit matching the edge image)
 endif
@@ -95,7 +93,7 @@ endif
 .PHONY: build-goreleaser
 build-goreleaser: ## Build Ingress Controller binary using GoReleaser
 	@goreleaser -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with GoReleaser. Follow the docs to install it https://goreleaser.com/install\n"; exit $$code)
-	GOOS=linux GOPATH=$(shell go env GOPATH) GOARCH=$(ARCH) goreleaser build --rm-dist --debug --snapshot --id kubernetes-ingress --single-target
+	GOOS=linux GOPATH=$(shell go env GOPATH) GOARCH=$(ARCH) goreleaser build --clean --debug --snapshot --id kubernetes-ingress --single-target
 
 .PHONY: debian-image
 debian-image: build ## Create Docker image for Ingress Controller (Debian)
@@ -109,20 +107,24 @@ alpine-image: build ## Create Docker image for Ingress Controller (Alpine)
 alpine-image-plus: build ## Create Docker image for Ingress Controller (Alpine with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus
 
+.PHONY: alpine-image-plus-fips
+alpine-image-plus-fips: build ## Create Docker image for Ingress Controller (Alpine with NGINX Plus and FIPS)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus-fips
+
 .PHONY: debian-image-plus
 debian-image-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus
 
 .PHONY: debian-image-nap-plus
-debian-image-nap-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect WAF)
+debian-image-nap-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and NGINX App Protect WAF)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=waf
 
 .PHONY: debian-image-dos-plus
-debian-image-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect DoS)
+debian-image-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and NGINX App Protect DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=dos
 
 .PHONY: debian-image-nap-dos-plus
-debian-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus, App Protect WAF and DoS)
+debian-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus, NGINX App Protect WAF and DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=waf,dos
 
 .PHONY: ubi-image
@@ -134,29 +136,16 @@ ubi-image-plus: build ## Create Docker image for Ingress Controller (UBI with NG
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=ubi-plus
 
 .PHONY: ubi-image-nap-plus
-ubi-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect WAF)
+ubi-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and NGINX App Protect WAF)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf
 
 .PHONY: ubi-image-dos-plus
-ubi-image-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect DoS)
+ubi-image-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and NGINX App Protect DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=dos
 
 .PHONY: ubi-image-nap-dos-plus
-ubi-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus, App Protect WAF and DoS)
+ubi-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus, NGINX App Protect WAF and DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf,dos
-
-.PHONY: openshift-image openshift-image-plus openshift-image-nap-plus openshift-image-dos-plus openshift-image-nap-dos-plus
-openshift-image openshift-image-plus openshift-image-nap-plus openshift-image-dos-plus openshift-image-nap-dos-plus:
-	@printf "\033[0;31mWarning\033[0m: The target $(filter openshift-%,$(MAKECMDGOALS)) was renamed to $(subst openshift,ubi,$(filter openshift-%,$(MAKECMDGOALS))) and will be removed in a future release.\n"
-	@$(MAKE) $(subst openshift,ubi,$(MAKECMDGOALS)) $(MAKEFLAGS)
-
-.PHONY: alpine-image-opentracing
-alpine-image-opentracing:
-	@echo "OpenTracing is now included in all Alpine based images"
-
-.PHONY: debian-image-opentracing debian-image-opentracing-plus
-debian-image-opentracing debian-image-opentracing-plus:
-	@echo "OpenTracing is now included in all Debian based images"
 
 .PHONY: all-images ## Create all the Docker images for Ingress Controller
 all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian-image-nap-plus debian-image-dos-plus debian-image-nap-dos-plus ubi-image ubi-image-plus ubi-image-nap-plus ubi-image-dos-plus ubi-image-nap-dos-plus
