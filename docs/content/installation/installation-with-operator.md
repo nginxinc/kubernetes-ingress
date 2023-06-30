@@ -8,10 +8,6 @@ toc: true
 docs: "DOCS-604"
 ---
 
-{{< note >}}
-An NGINX Ingress Operator version compatible with the 3.2.0 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.
-{{< /note >}}
-
 This document describes how to install the F5 NGINX Ingress Controller in your Kubernetes cluster using the NGINX Ingress Operator.
 
 ## Prerequisites
