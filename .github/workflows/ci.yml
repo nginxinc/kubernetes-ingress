@@ -171,7 +171,7 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@ecf95283f03858871ff00b787d79c419715afc34 # v2.7.0
+        uses: docker/setup-buildx-action@16c0bc4a6e6ada2cfd8afd41d22d95379cf7c32a # v2.8.0
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
@@ -260,7 +260,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@ecf95283f03858871ff00b787d79c419715afc34 # v2.7.0
+        uses: docker/setup-buildx-action@16c0bc4a6e6ada2cfd8afd41d22d95379cf7c32a # v2.8.0
       - name: Build Test-Runner Container
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
