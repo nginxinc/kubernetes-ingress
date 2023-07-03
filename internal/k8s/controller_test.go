@@ -1266,10 +1266,6 @@ func TestGetEndpointSlicesBySubselectedPods_GetsEndpointsOnNilValues(t *testing.
 	}
 }
 
-func TestFilterReadyEndpoints(t *testing.T) {
-	t.Parallel()
-}
-
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDuplicateEndpoints(t *testing.T) {
 	t.Parallel()
 	endpointPort := int32(8080)
