@@ -1161,6 +1161,111 @@ func TestGetEndpointSlicesBySubselectedPods_FindOnePodInOneEndpointSlice(t *test
 	}
 }
 
+func TestGetEndpointSlicesBySubselectedPods_GetsEndpointsOnNilValues(t *testing.T) {
+	t.Parallel()
+	endpointPort := int32(8080)
+	endpointReady := true
+	boolPointer := func(b bool) *bool { return &b }
+
+	tests := []struct {
+		desc              string
+		targetPort        int32
+		svcEndpointSlices []discovery_v1.EndpointSlice
+		pods              []*api_v1.Pod
+		want              []podEndpoint
+	}{
+		{
+			desc:       "no endpoints selected on nil endpoint port",
+			targetPort: 8080,
+			want:       []podEndpoint{},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: nil,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+							Conditions: discovery_v1.EndpointConditions{
+								Ready: &endpointReady,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:       "no endpoints selected on nil endpoint condition",
+			targetPort: 8080,
+			want:       []podEndpoint{},
+			pods: []*api_v1.Pod{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						OwnerReferences: []meta_v1.OwnerReference{
+							{
+								Kind:       "Deployment",
+								Name:       "deploy-1",
+								Controller: boolPointer(true),
+							},
+						},
+					},
+					Status: api_v1.PodStatus{
+						PodIP: "1.2.3.4",
+					},
+				},
+			},
+			svcEndpointSlices: []discovery_v1.EndpointSlice{
+				{
+					Ports: []discovery_v1.EndpointPort{
+						{
+							Port: &endpointPort,
+						},
+					},
+					Endpoints: []discovery_v1.Endpoint{
+						{
+							Addresses: []string{
+								"1.2.3.4",
+							},
+							Conditions: discovery_v1.EndpointConditions{
+								Ready: nil,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			got := getEndpointsFromEndpointSlicesForSubselectedPods(test.targetPort, test.pods, test.svcEndpointSlices)
+			if !cmp.Equal(got, test.want) {
+				t.Error(cmp.Diff(got, test.want))
+			}
+		})
+	}
+}
+
 func TestGetEndpointSlicesBySubselectedPods_FindOnePodInTwoEndpointSlicesWithDuplicateEndpoints(t *testing.T) {
 	t.Parallel()
 	endpointPort := int32(8080)
