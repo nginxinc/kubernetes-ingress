@@ -24,7 +24,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-  "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
+
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
 
 	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/appprotect"
