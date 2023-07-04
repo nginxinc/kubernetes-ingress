@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	"golang.org/x/exp/maps"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectcommon"
@@ -3596,46 +3597,66 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 	return endps, nil
 }
 
+// selectEndpointSlicesForPort returns EndpointSlices that match given targetPort.
+func selectEndpointSlicesForPort(targetPort int32, esx []discovery_v1.EndpointSlice) []discovery_v1.EndpointSlice {
+	eps := make([]discovery_v1.EndpointSlice, 0, len(esx))
+	for _, es := range esx {
+		for _, p := range es.Ports {
+			if p.Port == nil {
+				continue
+			}
+			if *p.Port == targetPort {
+				eps = append(eps, es)
+			}
+		}
+	}
+	return eps
+}
+
+// filterReadyEndpoinsFrom returns ready Endpoints from given EndpointSlices.
+func filterReadyEndpointsFrom(esx []discovery_v1.EndpointSlice) []discovery_v1.Endpoint {
+	epx := make([]discovery_v1.Endpoint, 0, len(esx))
+	for _, es := range esx {
+		for _, e := range es.Endpoints {
+			if e.Conditions.Ready == nil {
+				continue
+			}
+			if *e.Conditions.Ready {
+				epx = append(epx, e)
+			}
+		}
+	}
+	return epx
+}
+
 func getEndpointsFromEndpointSlicesForSubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEndpointSlices []discovery_v1.EndpointSlice) (podEndpoints []podEndpoint) {
-	endpointSet := make(map[podEndpoint]struct{})
-	for _, pod := range pods {
-		for _, endpointSlice := range svcEndpointSlices {
-			for _, port := range endpointSlice.Ports {
-				if *port.Port != targetPort {
-					continue
-				}
-				for _, endpoint := range endpointSlice.Endpoints {
-					if !*endpoint.Conditions.Ready {
-						continue
-					}
-					for _, address := range endpoint.Addresses {
-						if pod.Status.PodIP == address {
-							addr := ipv6SafeAddrPort(pod.Status.PodIP, targetPort)
-							ownerType, ownerName := getPodOwnerTypeAndName(pod)
-							podEndpoint := podEndpoint{
-								Address: addr,
-								PodName: getPodName(endpoint.TargetRef),
-								MeshPodOwner: configs.MeshPodOwner{
-									OwnerType: ownerType,
-									OwnerName: ownerName,
-								},
-							}
-							endpointSet[podEndpoint] = struct{}{}
-							podEndpoints = append(podEndpoints, podEndpoint)
+	// Match ready endpoints IP ddresses with Pod's IP. If they match create a new podEnpoint.
+	makePodEndpoints := func(pods []*api_v1.Pod, endpoints []discovery_v1.Endpoint) []podEndpoint {
+		endpointSet := make(map[podEndpoint]struct{})
+
+		for _, pod := range pods {
+			for _, endpoint := range endpoints {
+				for _, address := range endpoint.Addresses {
+					if pod.Status.PodIP == address {
+						addr := ipv6SafeAddrPort(pod.Status.PodIP, targetPort)
+						ownerType, ownerName := getPodOwnerTypeAndName(pod)
+						podEndpoint := podEndpoint{
+							Address: addr,
+							PodName: getPodName(endpoint.TargetRef),
+							MeshPodOwner: configs.MeshPodOwner{
+								OwnerType: ownerType,
+								OwnerName: ownerName,
+							},
 						}
+						endpointSet[podEndpoint] = struct{}{}
 					}
 				}
 			}
 		}
+		return maps.Keys(endpointSet)
 	}
-	if len(endpointSet) == 0 {
-		return nil
-	}
-	endpoints := make([]podEndpoint, 0, len(endpointSet))
-	for ep := range endpointSet {
-		endpoints = append(endpoints, ep)
-	}
-	return endpoints
+
+	return makePodEndpoints(pods, filterReadyEndpointsFrom(selectEndpointSlicesForPort(targetPort, svcEndpointSlices)))
 }
 
 func ipv6SafeAddrPort(addr string, port int32) string {
@@ -3754,37 +3775,30 @@ func (lbc *LoadBalancerController) getEndpointsForPortFromEndpointSlices(endpoin
 		return nil, fmt.Errorf("no port %v in service %s", backendPort, svc.Name)
 	}
 
-	endpointSet := make(map[podEndpoint]struct{})
-	for _, endpointSlice := range endpointSlices {
-		for _, endpointSlicePort := range endpointSlice.Ports {
-			if *endpointSlicePort.Port == targetPort {
-				for _, endpoint := range endpointSlice.Endpoints {
-					if !*endpoint.Conditions.Ready {
-						continue
-					}
-					for _, endpointAddress := range endpoint.Addresses {
-						address := ipv6SafeAddrPort(endpointAddress, *endpointSlicePort.Port)
-						podEndpoint := podEndpoint{
-							Address: address,
-						}
-						if endpoint.TargetRef != nil {
-							parentType, parentName := lbc.getPodOwnerTypeAndNameFromAddress(endpoint.TargetRef.Namespace, endpoint.TargetRef.Name)
-							podEndpoint.OwnerType = parentType
-							podEndpoint.OwnerName = parentName
-							podEndpoint.PodName = endpoint.TargetRef.Name
-						}
-						endpointSet[podEndpoint] = struct{}{}
-					}
+	makePodEndpoints := func(port int32, epx []discovery_v1.Endpoint) []podEndpoint {
+		endpointSet := make(map[podEndpoint]struct{})
+
+		for _, ep := range epx {
+			for _, addr := range ep.Addresses {
+				address := ipv6SafeAddrPort(addr, port)
+				podEndpoint := podEndpoint{
+					Address: address,
 				}
+				if ep.TargetRef != nil {
+					parentType, parentName := lbc.getPodOwnerTypeAndNameFromAddress(ep.TargetRef.Namespace, ep.TargetRef.Name)
+					podEndpoint.OwnerType = parentType
+					podEndpoint.OwnerName = parentName
+					podEndpoint.PodName = ep.TargetRef.Name
+				}
+				endpointSet[podEndpoint] = struct{}{}
 			}
 		}
+		return maps.Keys(endpointSet)
 	}
-	if len(endpointSet) == 0 {
+
+	endpoints := makePodEndpoints(targetPort, filterReadyEndpointsFrom(selectEndpointSlicesForPort(targetPort, endpointSlices)))
+	if len(endpoints) == 0 {
 		return nil, fmt.Errorf("no endpointslices for target port %v in service %s", targetPort, svc.Name)
-	}
-	endpoints := make([]podEndpoint, 0, len(endpointSet))
-	for ep := range endpointSet {
-		endpoints = append(endpoints, ep)
 	}
 	return endpoints, nil
 }
