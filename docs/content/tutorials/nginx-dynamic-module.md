@@ -1,7 +1,7 @@
 ---
-title: NGINX Ingress Controller with dynamic module
+title: Using NGINX Ingress Controller with Dynamic Modules
 description: |
-  Use NGINX Ingress Controller with dynamic module
+  How to use NGINX Ingress Controller with NGINX dynamic modules.
 weight: 1800
 doctypes: ["concept"]
 toc: true
@@ -18,7 +18,7 @@ This document will walk you throw how to accomplish this task.
 You can find more NGINX dynamic modules on the NGINX Plus website:
 [NGINX Dynamic modules](https://docs.nginx.com/nginx/admin-guide/dynamic-modules/dynamic-modules/)
 
-Here are the basic steps that you will need to perform.
+Here are the basic steps you will need to perform.
 
 - Update the Dockerfile and add the dynamic module you want to add to your NGINX Ingress Controller image
 - Build the image with updated Dockerfile, reflecting the image you are goign to add to the image build.
@@ -64,14 +64,14 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 Look for a line similar to the following line in the `Dockerfile`:
 
-```bash
+```shell
 apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs
 ```
 
 This is the line you will want to modify/add the module you want to have loaded into NGINX Ingress Controller.
 We are going to add the `headers-more` module. The updated line would look like this:
 
-```bash
+```shell
 apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs nginx-plus-module-headers-more
 ```
 
@@ -111,7 +111,7 @@ config:
     lb-method: "least_time last_byte"
 ```
 
-```console
+```shell
 kubectl exec -it -n nginx-ingress <nginx_ingress_pod> -- nginx -T
 ```
 
