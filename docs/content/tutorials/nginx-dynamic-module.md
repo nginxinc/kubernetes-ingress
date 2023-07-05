@@ -8,7 +8,7 @@ toc: true
 docs: "DOCS-1231"
 ---
 
-## How to use a NGINX dynamic module with NGINX Ingress controller
+## How to use an NGINX dynamic module with NGINX Ingress Controller
 
 NGINX has several dynamic modules that can be used to add additional features and capabilities. NGINX Ingress Controller can also use these same NGINX modules with NGINX Ingress Controller.
 You will need to modify your NGINX Ingress Controller build to ensure it is built into the image, and then load it into NGINX Ingress Controller.
