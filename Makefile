@@ -73,16 +73,16 @@ certificate-and-key: ## Create default cert and key
 .PHONY: build
 build: ## Build Ingress Controller binary
 	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
-ifeq (${TARGET},local)
+ifeq ($(strip $(TARGET)),local)
 	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container or TARGET=download\n"; exit $$code)
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
-else ifeq (${TARGET},download)
+else ifeq ($(strip $(TARGET)),download)
 	@$(MAKE) download-binary-docker
 endif
 
 .PHONY: download-binary-docker
 download-binary-docker: ## Download Docker image from which to extract Ingress Controller binary, TARGET=download is required
-ifeq (${TARGET},download)
+ifeq ($(strip $(TARGET)),download)
 DOWNLOAD_TAG := $(shell ./hack/docker.sh $(GIT_TAG))
 ifeq ($(DOWNLOAD_TAG),fail)
 $(error unable to build with TARGET=download, this function is only available when building from a git tag or from the latest commit matching the edge image)
