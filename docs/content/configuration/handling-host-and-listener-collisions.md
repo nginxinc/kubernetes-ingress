@@ -19,13 +19,16 @@ Note: the `creationTimestamp` and `uid` fields are part of the resource [ObjectM
 ## Host Collisions
 
 A host collision occurs when multiple Ingress, VirtualServer, and TransportServer (configured for TLS Passthrough) resources configure the same `host`. The Ingress Controller supports two options for handling host collisions:
+
 * Choosing the winner so that only one resource handles the host.
 * Merging configuration of the conflicting resources.
 
 ### Choosing the Winner
 
 Consider the following two resources:
+
 * `cafe-ingress` Ingress:
+
     ```yaml
     apiVersion: networking.k8s.io/v1
     kind: Ingress
@@ -37,7 +40,9 @@ Consider the following two resources:
       - host: cafe.example.com
         . . .
     ```
+
 * `cafe-virtual-server` VirtualServer:
+
     ```yaml
     apiVersion: k8s.nginx.org/v1
     kind: VirtualServer
@@ -51,8 +56,10 @@ Consider the following two resources:
 If a user creates both resources in the cluster, a host collision will occur. As a result, the Ingress Controller will pick the winner using the [winner selection algorithm](#winner-selection-algorithm).
 
 In our example, if `cafe-virtual-server` was created first, it will win the host `cafe.example.com` and the Ingress Controller will reject `cafe-ingress`. This will be reflected in the events and in the resource's status field:
-```
-$ kubectl describe vs cafe-virtual-server
+
+```console
+kubectl describe vs cafe-virtual-server
+
 . . .
 Status:
   . . .
@@ -71,6 +78,7 @@ Events:
   ----     ------    ----  ----                      -------
   Warning  Rejected  66s   nginx-ingress-controller  All hosts are taken by other resources
 ```
+
 > Note: You can configure multiple hosts for Ingress resources. As a result, it's possible that an Ingress resource can be the winner for some of its hosts and a loser for the others. For example, if `cafe-ingress` had an additional rule host rule -- `pub.example.com` -- the Ingress Controller would not reject the Ingress. Rather, it would allow `cafe-ingress` to handle `pub.example.com`.
 
 Similarly, if `cafe-ingress` was created first, it will win `cafe.example.com` and the Ingress Controller will reject `cafe-virtual-server`.
@@ -79,7 +87,7 @@ Similarly, if `cafe-ingress` was created first, it will win `cafe.example.com` a
 
 It is possible to merge configuration for multiple Ingress resources for the same host. One common use case for this approach is distributing resources across multiple namespaces. See the [Cross-namespace Configuration](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/) doc for more information.
 
-It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/custom-resources/cross-namespace-configuration) on GitHub.
+It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.0/examples/custom-resources/cross-namespace-configuration) on GitHub.
 
 It is *not* possible to merge configuration for multiple TransportServer resources.
 
@@ -90,7 +98,9 @@ Listener collisions occur when multiple TransportServer resources (configured fo
 ### Choosing the Winner
 
 Consider the following two resources:
+
 * `tcp-1` TransportServer:
+
     ```yaml
     apiVersion: k8s.nginx.org/v1alpha1
     kind: TransportServer
@@ -102,7 +112,9 @@ Consider the following two resources:
         protocol: TCP
         . . .
     ```
+
 * `tcp-2` TransportServer:
+
     ```yaml
     apiVersion: k8s.nginx.org/v1alpha1
     kind: TransportServer
@@ -118,8 +130,10 @@ Consider the following two resources:
 If a user creates both resources in the cluster, a listener collision will occur. As a result, the Ingress Controller will pick the winner using the [winner selection algorithm](#winner-selection-algorithm).
 
 In our example, if `tcp-1` was created first, it will win the listener `dns-tcp` and the Ingress Controller will reject `tcp-2`. This will be reflected in the events and in the resource's status field:
-```
-$ kubectl describe ts tcp-2
+
+```console
+kubectl describe ts tcp-2
+
 . . .
 Events:
   Type     Reason    Age   From                      Message

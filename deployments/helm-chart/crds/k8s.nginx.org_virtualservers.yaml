@@ -675,6 +675,8 @@ spec:
                             type: string
                           path:
                             type: string
+                          samesite:
+                            type: string
                           secure:
                             type: boolean
                       slow-start:

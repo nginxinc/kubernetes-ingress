@@ -80,16 +80,30 @@ jobs:
         with:
           files: ./coverage.txt
 
-  release:
+  binaries:
+    name: Build Binaries
     runs-on: ubuntu-22.04
     needs: [checks, unit-tests]
-    if: ${{ github.event_name == 'push' && ! github.ref != 'refs/heads/main' }}
+    outputs:
+      release-url: ${{ steps.release-notes.outputs.release-url }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
+        with:
+          go-version-file: go.mod
+
+      - name: Download Syft
+        uses: anchore/sbom-action/download-syft@78fc58e266e87a38d4194b2137a3d4e9bcaf7ca1 # v0.14.3
+        if: startsWith(github.ref, 'refs/tags/')
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@b79be3ff634f771230b2b6ee9f47308c5793671a # v0.2.0
+        uses: lucacome/draft-release@d13ccde6350706e32f451566ee5cd4bf5a27de3d # v0.2.1
+        id: release-notes
         with:
           minor-label: "enhancement"
           major-label: "change"
@@ -108,28 +122,10 @@ jobs:
             - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/examples
             - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/deployments/helm-chart
             - Operator -- https://github.com/nginxinc/nginx-ingress-operator/
-
-  binaries:
-    name: Build Binaries
-    runs-on: ubuntu-22.04
-    needs: [checks, unit-tests]
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-        with:
-          fetch-depth: 0
-
-      - name: Setup Golang Environment
-        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
-        with:
-          go-version-file: go.mod
-
-      - name: Download Syft
-        uses: anchore/sbom-action/download-syft@4d571ad1038a9cc29d676154ef265ab8f9027042 # v0.14.2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@f82d6c1c344bcacabba2c841718984797f664a6b # v4.2.0
+        uses: goreleaser/goreleaser-action@336e29918d653399e599bfca99fadc1d7ffbc9f7 # v4.3.0
         with:
           version: latest
           args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --clean
@@ -175,9 +171,9 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@6a58db7e0d21ca03e6c44877909e80e45217eed2 # v2.6.0
+        uses: docker/setup-buildx-action@16c0bc4a6e6ada2cfd8afd41d22d95379cf7c32a # v2.8.0
       - name: Build Docker Image ${{ matrix.image }}
-        uses: docker/build-push-action@44ea916f6c540f9302d50c2b1e5a8dc071f15cdf # v4.1.0
+        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: build/Dockerfile
           context: "."
@@ -257,16 +253,16 @@ jobs:
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
           else
-            echo "matrix={\"k8s\": [\"1.22.17\", \"1.23.17\", \"1.24.12\", \"1.25.8\", \"1.26.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+            echo "matrix={\"k8s\": [\"1.22.17\", \"1.23.17\", \"1.24.15\", \"1.25.11\", \"1.26.6\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
                                              \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}" >> $GITHUB_OUTPUT
           fi
 
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@6a58db7e0d21ca03e6c44877909e80e45217eed2 # v2.6.0
+        uses: docker/setup-buildx-action@16c0bc4a6e6ada2cfd8afd41d22d95379cf7c32a # v2.8.0
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@44ea916f6c540f9302d50c2b1e5a8dc071f15cdf # v4.1.0
+        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: tests/docker/Dockerfile
           context: "."
@@ -323,11 +319,11 @@ jobs:
 
   build-docker-plus:
     name: Build Docker Plus
-    needs: build-docker
+    needs: [binaries, build-docker]
     strategy:
       fail-fast: false
       matrix:
-        image: [debian-plus, alpine-plus]
+        image: [debian-plus, alpine-plus, alpine-plus-fips]
         platforms: ["linux/arm64, linux/amd64"]
         target: [goreleaser, aws]
         include:
@@ -339,6 +335,7 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
+      release-url: ${{ needs.binaries.outputs.release-url }}
     secrets: inherit
 
   build-docker-nap:

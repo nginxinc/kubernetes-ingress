@@ -2,7 +2,7 @@ name: "Pull Request Labeler"
 on:
   - pull_request_target
 
-permissions:  # added using https://github.com/step-security/secure-workflows
+permissions:
   contents: read
 
 jobs:
@@ -10,8 +10,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-    - uses: joshdales/labeler@7b1327b4c44a8794dfc7573d60637cd60ce4b697 # if https://github.com/actions/labeler/pull/203 is merged, use the official action actions/labeler
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+      - uses: actions/labeler@4f052778de9a9b80cb16cfb9079b02287285a4cb # v5.0.0-alpha.1
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"

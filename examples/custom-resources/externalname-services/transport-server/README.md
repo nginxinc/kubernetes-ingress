@@ -23,20 +23,23 @@ We will use the ```examples/custom-resources/tls-passthrough``` application exam
 ## 2. Deploy external service to external namespace
 
 1. Deploy backend application to external namespace (```external-ns```). Note that the namespace is not being watched by ```NIC```.
-    ```bash
-    $ kubectl apply -f secure-app-external.yaml
+
+    ```console
+    kubectl apply -f secure-app-external.yaml
     ```
 
 ## 3. Setup ExternalName service
 
 1. Create the service of type ```ExternalName```
-    ```
-    $ kubectl apply -f externalname-svc.yaml
+
+    ```console
+    kubectl apply -f externalname-svc.yaml
     ```
 
 2. Apply the config map
-    ```bash
-    $ kubectl apply -f nginx-config.yaml
+
+    ```console
+    kubectl apply -f nginx-config.yaml
     ```
 
 ## 4. Change the Transport Server to point to the ExternalName and verify if it is working correctly
@@ -44,6 +47,7 @@ We will use the ```examples/custom-resources/tls-passthrough``` application exam
 1. Navigate to the tls-passthrough example ```examples/custom-resources/tls-passthrough``` and open the ```transport-server-passthrough.yaml``` file.
 
 2. Replace the service name ```secure-app``` with ```externalname-service``` and apply the change.
+
     ```yaml
     apiVersion: k8s.nginx.org/v1alpha1
     kind: TransportServer
@@ -62,15 +66,18 @@ We will use the ```examples/custom-resources/tls-passthrough``` application exam
         pass: secure-app
     ```
 
-    ```
-    $ kubectl apply -f transport-server-passthrough.yaml
+    ```console
+    kubectl apply -f transport-server-passthrough.yaml
     ```
 
 3. Verify if the application is working by sending a request and check if the response is coming from the "external backend pod" (refer to to the tls-passthrough example)
-    ```bash
-    $ curl --resolve app.example.com:$IC_HTTPS_PORT:$IC_IP https://app.example.com:$IC_HTTPS_PORT --insecure
+
+    ```console
+    curl --resolve app.example.com:$IC_HTTPS_PORT:$IC_IP https://app.example.com:$IC_HTTPS_PORT --insecure
     ```
+
     Response
-    ```
+
+    ```console
     hello from pod secure-app-external-backend-5fbf4fb494-x7bkl
     ```
