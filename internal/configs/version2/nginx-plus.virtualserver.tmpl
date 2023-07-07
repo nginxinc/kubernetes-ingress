@@ -337,7 +337,7 @@ server {
     {{ range $l := $s.Locations }}
     location {{ $l.Path }} {
         set $service "{{ $l.ServiceName }}";
-        status_zone {{ $l.ServiceName }};
+        status_zone "{{ $l.Path }}";
         {{ if $l.IsVSR }}
         set $resource_type "virtualserverroute";
         set $resource_name "{{ $l.VSRName }}";
