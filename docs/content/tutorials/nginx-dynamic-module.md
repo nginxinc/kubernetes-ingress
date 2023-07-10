@@ -75,6 +75,19 @@ To do this, modify your NGINX Ingress Controller configuration to add the module
 
 {{<tabs name="install-methods">}}
 
+{{%tab name="Helm"%}}
+
+```yaml
+config:
+  name: nginx-ingress
+  entries:
+    main-snippets: load_module modules/ngx_http_headers_more_filder_module.so;
+    http-snippets: underscores_in_headers on;
+    lb-method: "least_time last_byte"
+```
+
+{{%/tab%}}
+
 {{%tab name="Manifest"%}}
 
 ```yaml
@@ -90,18 +103,7 @@ data:
 
 {{%/tab%}}
 
-{{%tab name="Helm"%}}
 
-```yaml
-config:
-  name: nginx-ingress
-  entries:
-    main-snippets: load_module modules/ngx_http_headers_more_filder_module.so;
-    http-snippets: underscores_in_headers on;
-    lb-method: "least_time last_byte"
-```
-
-{{%/tab%}}
 
 {{</tabs>}}
 
