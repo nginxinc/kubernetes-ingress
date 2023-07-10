@@ -132,7 +132,7 @@ By default, it is required to create custom resource definitions for VirtualServ
 
 ## 4. Deploying NGINX Ingress Controller
 
-There are two two options for deploying NGINX Ingress Controller:
+There are two options for deploying NGINX Ingress Controller:
 
 * *Deployment*. Use a Deployment if you plan to dynamically change the number of Ingress Controller replicas.
 * *DaemonSet*. Use a DaemonSet for deploying the Ingress Controller on every node or a subset of nodes.
