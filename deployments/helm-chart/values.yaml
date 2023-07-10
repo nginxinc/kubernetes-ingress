@@ -82,7 +82,7 @@ controller:
 
   ## It is recommended to use your own TLS certificates and keys
   defaultTLS:
-    ## The base64-encoded TLS certificate for the default HTTPS server. By default, a pre-generated self-signed certificate is used.
+    ## The base64-encoded TLS certificate for the default HTTPS server.
     ## Note: It is recommended that you specify your own certificate. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
     cert: ""
 
