@@ -26,7 +26,7 @@ Run the tests:
 * Use local Python3 installation (advised to use pyenv/virtualenv):
     ```bash
     $ cd perf_tests
-    $ pip install -r requirements.txt --no-deps
+    $ pip install -r ../tests/requirements.txt --no-deps
     $ pytest -v -s -m ap_perf --count=<INT>  --users=<INT> --hatch-rate=<INT> --time=<INT>
     ```
 
