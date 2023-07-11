@@ -106,7 +106,7 @@ By default, it is required to create custom resource definitions for VirtualServ
     kubectl apply -f common/crds/k8s.nginx.org_policies.yaml
     ```
 
-2. If you would like to use the TCP and UDP load balancing features of, create a custom resource definition for the [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resource:
+2. If you would like to use the TCP and UDP load balancing features, create a custom resource definition for the [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resource:
 
     ```console
     kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
