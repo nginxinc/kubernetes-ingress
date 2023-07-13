@@ -25,11 +25,6 @@ updates:
     schedule:
       interval: weekly
 
-  - package-ecosystem: pip
-    directory: /perf-tests
-    schedule:
-      interval: weekly
-
   - package-ecosystem: gomod
     directory: /docs
     schedule:
