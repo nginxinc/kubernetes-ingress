@@ -38,6 +38,7 @@ We explicitly test the NGINX Ingress Controller (NIC) on a range of Kubernetes p
 | 1.8.1 |  | 0.6.0 | 0.0.6 | 1.19.2 / R22 |
 | 1.7.2 |  | 0.5.1 | 0.0.4 | 1.19.0 / R22 |
 | 1.6.3 |  | 0.4.3 | -- | 1.17.9 / R21 |
+{{% /table %}}
 
 ## Supported Docker Images
 
