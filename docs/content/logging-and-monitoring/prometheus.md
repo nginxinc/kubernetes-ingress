@@ -50,6 +50,13 @@ The Ingress Controller exports the following metrics:
   * `controller_ingress_resources_total`. Number of handled Ingress resources. This metric includes the label type, that groups the Ingress resources by their type (regular, [minion or master](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration)). **Note**: The metric doesn't count minions without a master.
   * `controller_virtualserver_resources_total`. Number of handled VirtualServer resources.
   * `controller_virtualserverroute_resources_total`. Number of handled VirtualServerRoute resources. **Note**: The metric counts only VirtualServerRoutes that have a reference from a VirtualServer.
+  * `location_zone` (upstream services) metrics:
+    * `location_zone_sent`. Number of bytes sent to clients.
+    * `location_zone_received`. Number of bytes received from clients.
+    * `location_zone_requests`. Total number of client requests.
+    * `location_zone_responses`. Total number of responses sent to clients.
+    * `location_zone_responses_codes`. Total number of responses sent to clients.
+    * `location_zone_sent`. Number of bytes sent to clients.
   * `controller_transportserver_resources_total`. Number of handled TransportServer resources. This metric includes the label type, that groups the TransportServer resources by their type (passthrough, tcp or udp).
   * Workqueue metrics. **Note**: the workqueue is a queue used by the Ingress Controller to process changes to the relevant resources in the cluster like Ingress resources. The Ingress Controller uses only one queue. The metrics for that queue will have the label `name="taskQueue"`
     * `workqueue_depth`. Current depth of the workqueue.

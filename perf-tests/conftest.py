@@ -3,12 +3,19 @@
 import os
 import sys
 
+sys.path.insert(0, "../tests")
+
 import pytest
 from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
-from settings import DEFAULT_DEPLOYMENT_TYPE, DEFAULT_IC_TYPE, DEFAULT_IMAGE, DEFAULT_PULL_POLICY, DEFAULT_SERVICE
-from suite.resources_utils import get_first_pod_name
-
-sys.path.insert(0, "../tests")
+from settings import (
+    DEFAULT_DEPLOYMENT_TYPE,
+    DEFAULT_IC_TYPE,
+    DEFAULT_IMAGE,
+    DEFAULT_PULL_POLICY,
+    DEFAULT_SERVICE,
+    NUM_REPLICAS,
+)
+from suite.utils.resources_utils import get_first_pod_name
 
 
 def pytest_addoption(parser) -> None:
@@ -54,6 +61,12 @@ def pytest_addoption(parser) -> None:
         help="The type of the Ingress Controller service: nodeport or loadbalancer.",
     )
     parser.addoption(
+        "--replicas",
+        action="store",
+        default=NUM_REPLICAS,
+        help="Number of replica pods for type deployment",
+    )
+    parser.addoption(
         "--node-ip",
         action="store",
         help="The public IP of a cluster node. Not required if you use the loadbalancer service (see --service argument).",
@@ -69,6 +82,12 @@ def pytest_addoption(parser) -> None:
         action="store",
         default="no",
         help="Show IC logs in stdout on test failure",
+    )
+    parser.addoption(
+        "--skip-fixture-teardown",
+        action="store",
+        default="no",
+        help="Skips teardown of test fixtures for debugging purposes",
     )
     parser.addoption(
         "--users",
@@ -91,7 +110,7 @@ def pytest_addoption(parser) -> None:
 
 
 # import fixtures into pytest global namespace
-pytest_plugins = ["suite.fixtures"]
+pytest_plugins = ["suite.fixtures.fixtures", "suite.fixtures.ic_fixtures", "suite.fixtures.custom_resource_fixtures"]
 
 
 def pytest_collection_modifyitems(config, items) -> None:
