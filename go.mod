@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.27
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.14.13
 	github.com/cert-manager/cert-manager v1.12.2
-	github.com/go-chi/chi/v5 v5.0.8
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.9
