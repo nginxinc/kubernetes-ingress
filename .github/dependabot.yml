@@ -29,3 +29,8 @@ updates:
     directory: /perf-tests
     schedule:
       interval: weekly
+
+  - package-ecosystem: gomod
+    directory: /docs
+    schedule:
+      interval: weekly
