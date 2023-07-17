@@ -15,6 +15,7 @@ An NGINX Ingress Operator version compatible with the 3.2.0 NGINX Ingress Contro
 This document describes how to install the F5 NGINX Ingress Controller in your Kubernetes cluster using the NGINX Ingress Operator.
 
 ## Prerequisites
+{{<note>}} All documentation should only be used with the latest stable release, indicated on [the releases page](https://github.com/nginxinc/kubernetes-ingress/releases) of the GitHub repository. {{</note>}}
 
 1. Make sure you have access to the Ingress Controller image:
     * For NGINX Ingress Controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
