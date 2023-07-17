@@ -13,6 +13,7 @@ docs: "DOCS-602"
 This chart deploys the NGINX Ingress Controller in your Kubernetes cluster.
 
 ## Prerequisites
+{{<note>}} All documentation should only be used with the latest stable release, indicated on [the releases page](https://github.com/nginxinc/kubernetes-ingress/releases) of the GitHub repository. {{</note>}}
 
 - A [Kubernetes Version Supported by the Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
 - Helm 3.0+.
@@ -200,8 +201,8 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.config.annotations` | The annotations of the Ingress Controller configmap. | {} |
 |`controller.config.entries` | The entries of the ConfigMap for customizing NGINX configuration. See [ConfigMap resource docs](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) for the list of supported ConfigMap keys. | {} |
 |`controller.customPorts` | A list of custom ports to expose on the NGINX Ingress Controller pod. Follows the conventional Kubernetes yaml syntax for container ports. | [] |
-|`controller.defaultTLS.cert` | The base64-encoded TLS certificate for the default HTTPS server. **Note:** By default, a pre-generated self-signed certificate is used. It is recommended that you specify your own certificate. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. | A pre-generated self-signed certificate. |
-|`controller.defaultTLS.key` | The base64-encoded TLS key for the default HTTPS server. **Note:** By default, a pre-generated key is used. It is recommended that you specify your own key. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. | A pre-generated key. |
+|`controller.defaultTLS.cert` | The base64-encoded TLS certificate for the default HTTPS server. **Note:** It is recommended that you specify your own certificate. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. |
+|`controller.defaultTLS.key` | The base64-encoded TLS key for the default HTTPS server. **Note:** It is recommended that you specify your own key. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. |
 |`controller.defaultTLS.secret` | The secret with a TLS certificate and key for the default HTTPS server. The value must follow the following format: `<namespace>/<name>`. Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters. **Note:** Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. | None |
 |`controller.wildcardTLS.cert` | The base64-encoded TLS certificate for every Ingress/VirtualServer host that has TLS enabled but no secret specified. If the parameter is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection. | None |
 |`controller.wildcardTLS.key` | The base64-encoded TLS key for every Ingress/VirtualServer host that has TLS enabled but no secret specified. If the parameter is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection. | None |
