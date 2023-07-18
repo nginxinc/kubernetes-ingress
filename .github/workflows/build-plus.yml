@@ -159,7 +159,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
 
       - name: Publish to AWS Marketplace
-        uses: nginxinc/aws-marketplace-publish@23bd2392b93aefac335f39415acf48fc94dd493b # v0.1.1
+        uses: nginxinc/aws-marketplace-publish@93e03c5ce4baa842a8e5baad0a3f35d07b38460c # v0.1.2
         continue-on-error: true
         with:
           version: ${{ steps.aws.outputs.version }}
