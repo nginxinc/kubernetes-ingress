@@ -177,7 +177,11 @@ server {
 	{{end -}}
 
 	{{range $location := $server.Locations}}
-	location {{$location.Path}} {
+	{{ if index $.Ingress.Annotations "nginx.org/path-regex" }}
+	location {{  makePathRegex $location.Path $.Ingress.Annotations | printf }} {
+	{{ else }}
+	location {{ $location.Path }} {
+	{{ end }}
 		set $service "{{$location.ServiceName}}";
 		status_zone "{{ $location.ServiceName }}";
 		{{with $location.MinionIngress}}
