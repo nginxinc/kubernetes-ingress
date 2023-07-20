@@ -94,7 +94,7 @@ def crd_ingress_controller(
             request.param.get("extra_args", None),
         )
         if request.param["type"] == "tls-passthrough-custom-port":
-            ingress_controller_endpoint.port_ssl = 8443
+            ingress_controller_endpoint.port_ssl = ingress_controller_endpoint.custom_ssl_port
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
             ingress_controller_endpoint.port,
