@@ -12,6 +12,272 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+func TestValidateIngress_WithValidPathRegexValuesForNGINXPlus(t *testing.T) {
+	t.Parallel()
+	tt := []struct {
+		name    string
+		ingress *networking.Ingress
+		isPlus  bool
+	}{
+		{
+			name: "case sensitive path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "case_sensitive",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+		{
+			name: "case insensitive path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "case_insensitive",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+		{
+			name: "exact path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "exact",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateIngress(tc.ingress, tc.isPlus, false, false, false, false)
+			if len(allErrs) != 0 {
+				t.Errorf("want no errors, got %+v\n", allErrs)
+			}
+		})
+	}
+}
+
+func TestValidateIngress_WithValidPathRegexValuesForNGINX(t *testing.T) {
+	t.Parallel()
+	tt := []struct {
+		name    string
+		ingress *networking.Ingress
+		isPlus  bool
+	}{
+		{
+			name: "case sensitive path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "case_sensitive",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+		{
+			name: "case insensitive path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "case_insensitive",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+		{
+			name: "exact path regex",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "exact",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateIngress(tc.ingress, tc.isPlus, false, false, false, false)
+			if len(allErrs) != 0 {
+				t.Errorf("want no errors, got %+v\n", allErrs)
+			}
+		})
+	}
+}
+
+func TestValidateIngress_WithInvalidPathRegexValuesForNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name    string
+		ingress *networking.Ingress
+		isPlus  bool
+	}{
+		{
+			name: "bogus not empty path regex string",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "bogus",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+		{
+			name: "bogus empty path regex string",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: true,
+		},
+	}
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateIngress(tc.ingress, tc.isPlus, false, false, false, false)
+			if len(allErrs) == 0 {
+				t.Error("want errors on invalid path regex values")
+			}
+			t.Log(allErrs)
+		})
+	}
+}
+
+func TestValidateIngress_WithInvalidPathRegexValuesForNGINX(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name    string
+		ingress *networking.Ingress
+		isPlus  bool
+	}{
+		{
+			name: "bogus not empty path regex string",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "bogus",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+		{
+			name: "bogus empty path regex string",
+			ingress: &networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{
+						"nginx.org/path-regex": "",
+					},
+				},
+				Spec: networking.IngressSpec{
+					Rules: []networking.IngressRule{
+						{
+							Host: "example.com",
+						},
+					},
+				},
+			},
+			isPlus: false,
+		},
+	}
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateIngress(tc.ingress, tc.isPlus, false, false, false, false)
+			if len(allErrs) == 0 {
+				t.Error("want errors on invalid path regex values")
+			}
+			t.Log(allErrs)
+		})
+	}
+}
+
 func TestValidateIngress(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

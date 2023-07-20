@@ -67,6 +67,7 @@ const (
 	grpcServicesAnnotation                = "nginx.org/grpc-services"
 	rewritesAnnotation                    = "nginx.org/rewrites"
 	stickyCookieServicesAnnotation        = "nginx.com/sticky-cookie-services"
+	pathRegexAnnotation                   = "nginx.org/path-regex"
 )
 
 const (
@@ -327,9 +328,21 @@ var (
 			validateRequiredAnnotation,
 			validateStickyServiceListAnnotation,
 		},
+		pathRegexAnnotation: {
+			validatePathRegex,
+		},
 	}
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
+
+func validatePathRegex(context *annotationValidationContext) field.ErrorList {
+	switch context.value {
+	case "case_sensitive", "case_insensitive", "exact":
+		return nil
+	default:
+		return field.ErrorList{field.Invalid(context.fieldPath, context.value, "allowed values: 'case_sensitive', 'case_insensitive' or 'exact'")}
+	}
+}
 
 func validateJWTLoginURLAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
