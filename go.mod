@@ -18,9 +18,9 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.6
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
-	k8s.io/api v0.27.3
-	k8s.io/apimachinery v0.27.3
-	k8s.io/client-go v0.27.3
+	k8s.io/api v0.27.4
+	k8s.io/apimachinery v0.27.4
+	k8s.io/client-go v0.27.4
 	k8s.io/code-generator v0.27.3
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	sigs.k8s.io/controller-tools v0.12.1
@@ -86,7 +86,7 @@ require (
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.10.1 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
