@@ -24,14 +24,17 @@ class TransportServerTlsSetup:
 
     Attributes:
         public_endpoint (object):
+        tls_passthrough_port (int):
         ts_resource (dict):
         name (str):
         namespace (str):
         ts_host (str):
     """
 
-    def __init__(self, public_endpoint: PublicEndpoint, ts_resource, name, namespace, ts_host):
+    def __init__(self, public_endpoint: PublicEndpoint, tls_passthrough_port: int, ts_resource, name, namespace, ts_host):
         self.public_endpoint = public_endpoint
+        # self.public_endpoint.port_ssl = tls_passthrough_port
+        self.tls_passthrough_port = tls_passthrough_port
         self.ts_resource = ts_resource
         self.name = name
         self.namespace = namespace
@@ -72,6 +75,7 @@ def transport_server_tls_passthrough_setup(
 
     return TransportServerTlsSetup(
         ingress_controller_endpoint,
+        request.param["tls_passthrough_port"],
         ts_resource,
         ts_resource["metadata"]["name"],
         test_namespace,
@@ -92,7 +96,7 @@ def transport_server_tls_passthrough_setup(
                     "-enable-tls-passthrough=true",
                 ],
             },
-            {"example": "transport-server-tls-passthrough"},
+            {"example": "transport-server-tls-passthrough", "tls_passthrough_port": 443},
         ),
         (
             {
@@ -104,8 +108,8 @@ def transport_server_tls_passthrough_setup(
                     "-tls-passthrough-port=8443",
                 ],
             },
-            {"example": "transport-server-tls-passthrough"},
-        ),
+            {"example": "transport-server-tls-passthrough", "tls_passthrough_port": 8443},
+        )
     ],
     indirect=True,
     ids=["tls_passthrough_with_default_port", "tls_passthrough_with_custom_port"],
@@ -149,51 +153,34 @@ class TestTransportServerTlsPassthrough:
         assert resp.status_code == 200
         assert f"hello from pod {get_first_pod_name(kube_apis.v1, test_namespace)}" in resp.text
 
-    # def test_tls_passthrough_config(
-    #     self,
-    #     kube_apis,
-    #     ingress_controller_prerequisites,
-    #     crd_ingress_controller,
-    #     transport_server_tls_passthrough_setup,
-    #     test_namespace,
-    # ):
-    #     """
-    #     Test TransportServer TLS passthrough on https port.
-    #     """
-    #     config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
-    #     assert f"listen {transport_server_tls_passthrough_setup.public_endpoint.port_ssl};" in config
-    #     assert f"listen [::]:{transport_server_tls_passthrough_setup.public_endpoint.port_ssl};" in config
-    #
-    # def test_tls_passthrough_proxy_protocol_config(
-    #     self,
-    #     kube_apis,
-    #     ingress_controller_prerequisites,
-    #     crd_ingress_controller,
-    #     transport_server_tls_passthrough_setup,
-    #     test_namespace,
-    # ):
-    #     """
-    #     Test TransportServer TLS passthrough on https port with proxy protocol enabled.
-    #     """
-    #     replace_configmap_from_yaml(
-    #         kube_apis.v1,
-    #         ingress_controller_prerequisites.config_map["metadata"]["name"],
-    #         ingress_controller_prerequisites.namespace,
-    #         f"{TEST_DATA}/transport-server-tls-passthrough/nginx-config.yaml",
-    #     )
-    #     wait_before_test(1)
-    #     config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
-    #     assert f"listen {transport_server_tls_passthrough_setup.public_endpoint.port_ssl} proxy_protocol;" in config
-    #     assert (
-    #         f"listen [::]:{transport_server_tls_passthrough_setup.public_endpoint.port_ssl} proxy_protocol;" in config
-    #     )
-    #     std_cm_src = f"{DEPLOYMENTS}/common/nginx-config.yaml"
-    #     replace_configmap_from_yaml(
-    #         kube_apis.v1,
-    #         ingress_controller_prerequisites.config_map["metadata"]["name"],
-    #         ingress_controller_prerequisites.namespace,
-    #         std_cm_src,
-    #     )
+    def test_tls_passthrough_proxy_protocol_config(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        transport_server_tls_passthrough_setup,
+        test_namespace,
+    ):
+        """
+        Test TransportServer TLS passthrough on https port with proxy protocol enabled.
+        """
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/transport-server-tls-passthrough/nginx-config.yaml",
+        )
+        wait_before_test(1)
+        config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert f"listen {transport_server_tls_passthrough_setup.tls_passthrough_port} proxy_protocol;" in config
+        assert f"listen [::]:{transport_server_tls_passthrough_setup.tls_passthrough_port} proxy_protocol;" in config
+        std_cm_src = f"{DEPLOYMENTS}/common/nginx-config.yaml"
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            std_cm_src,
+        )
 
     def test_tls_passthrough_host_collision_ts(
         self,
