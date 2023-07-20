@@ -187,7 +187,15 @@ def ingress_controller_endpoint(cli_arguments, kube_apis, ingress_controller_pre
             custom_ssl_port,
         ) = get_service_node_ports(kube_apis.v1, service_name, namespace)
         return PublicEndpoint(
-            public_ip, port, port_ssl, api_port, metrics_port, tcp_server_port, udp_server_port, service_insight_port, custom_ssl_port
+            public_ip,
+            port,
+            port_ssl,
+            api_port,
+            metrics_port,
+            tcp_server_port,
+            udp_server_port,
+            service_insight_port,
+            custom_ssl_port,
         )
     else:
         create_service_from_yaml(

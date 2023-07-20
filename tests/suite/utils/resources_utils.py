@@ -449,7 +449,7 @@ def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, in
         resp.spec.ports[4].node_port,
         resp.spec.ports[5].node_port,
         resp.spec.ports[6].node_port,
-        resp.spec.ports[7].node_port
+        resp.spec.ports[7].node_port,
     )
 
 
