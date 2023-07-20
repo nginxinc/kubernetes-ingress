@@ -40,7 +40,27 @@ func TestWithPathReqex_DoesNotMatchModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
+	got := makePathRegex("/coffee", map[string]string{"nginx.org/path-regex": "bogus"})
+	if got != want {
+		t.Errorf("got: %s, want: %s", got, want)
+	}
+}
+
+func TestWithPathReqex_DoesNotMatchEmptyModifier(t *testing.T) {
+	t.Parallel()
+
+	want := "/coffee"
 	got := makePathRegex("/coffee", map[string]string{"nginx.org/path-regex": ""})
+	if got != want {
+		t.Errorf("got: %s, want: %s", got, want)
+	}
+}
+
+func TestWithPathReqex_DoesNotMatchBogusAnnotationName(t *testing.T) {
+	t.Parallel()
+
+	want := "/coffee"
+	got := makePathRegex("/coffee", map[string]string{"nginx.org/bogus-annotation": ""})
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
