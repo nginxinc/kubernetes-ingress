@@ -40,6 +40,10 @@ In the case of NGINX, the Ingress Controller is deployed in a pod along with the
 
 ## Getting Started
 
+> **Note**
+>
+> All documentation should only be used with the latest stable release, indicated on [the releases page](https://github.com/nginxinc/kubernetes-ingress/releases) of the GitHub repository.
+
 1. Install the NGINX Ingress Controller using the [Helm chart](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/) or the Kubernetes [manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/).
 1. Configure load balancing for a simple web application:
     * Use the Ingress resource. See the [Cafe example](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/ingress-resources/complete-example).
