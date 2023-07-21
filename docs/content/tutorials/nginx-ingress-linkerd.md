@@ -133,6 +133,31 @@ NAME                       READY   STATUS    RESTARTS   AGE
 httpbin-66df5bfbc9-ffhdp   2/2     Running   0          67s
 ```
 
+Next, we are going to create `virtualserver` resource for the NGINX Ingress controller.
+
+```yaml
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: httpbin
+  namespace: httpbin
+spec:
+  host: httpbin.example.com
+  tls:
+    secret: httpbin-secret
+  upstreams:
+  - name: httpbin
+    service: httpbin
+    port: 14001
+    use-cluster-ip: true
+  routes:
+  - path: /
+    action:
+      pass: httpbin
+```
+
+The `use-cluster-ip` is required when using the Linkerd sidecar proxy.
+
 We can now start sending traffic to NGINX Ingress Controller, to verify that `Linkerd` is handling the sidecar traffic connections.
 
 ```bash
