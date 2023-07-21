@@ -215,10 +215,10 @@ NGINX Ingress Controller supports OpenAPI Specification versions 2.0 and 3.0.
 
 The simplest way to create an API protection policy is using an OpenAPI Specification file to import the details of the APIs. If you use an OpenAPI Specification file, NGINX App Protect WAF will automatically create a policy for the following properties (depending on what's included in the spec file):
 
-* Methods
-* URLs
-* Parameters
-* JSON profiles
+- Methods
+- URLs
+- Parameters
+- JSON profiles
 
 An OpenAPI-ready policy template is provided with the NGINX App Protect WAF packages and is located in: `/etc/app_protect/conf/NginxApiSecurityPolicy.json`
 

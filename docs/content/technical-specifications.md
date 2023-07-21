@@ -101,8 +101,8 @@ We also provide NGINX Plus images through the Google Cloud Marketplace. Please s
 
 You can customize an existing Dockerfile or use it as a reference to create a new one, which is necessary for the following cases:
 
-* Choosing a different base image.
-* Installing additional NGINX modules.
+- Choosing a different base image.
+- Installing additional NGINX modules.
 
 ## Supported Helm Versions
 

@@ -43,15 +43,15 @@ spec:
 
 Here is a breakdown of what this Ingress resource definition means:
 
-* The `metadata.name` field defines the name of the resource `cafe‑ingress`.
-* In the `spec.tls` field we set up SSL/TLS termination:
-  * In the `secretName`, we reference a secret resource by its name, `cafe‑secret`. The secret must belong to the same namespace as the Ingress, it must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that hold the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the hosts to which the secret is applied.
-  * In the `hosts` field, we apply the certificate and key to our `cafe.example.com` host.
-* In the `spec.rules` field, we define a host with domain name `cafe.example.com`.
-* In the `paths` field, we define two path‑based rules:
-  * The rule with the path `/tea` instructs NGINX to distribute the requests with the `/tea` URI among the pods of the *tea* service, which is deployed with the name `tea‑svc` in the cluster.
-  * The rule with the path `/coffee` instructs NGINX to distribute the requests with the `/coffee` URI among the pods of the *coffee* service, which is deployed with the name `coffee‑svc` in the cluster.
-  * Both rules instruct NGINX to distribute the requests to `port 80` of the corresponding service (the `servicePort` field).
+- The `metadata.name` field defines the name of the resource `cafe‑ingress`.
+- In the `spec.tls` field we set up SSL/TLS termination:
+  - In the `secretName`, we reference a secret resource by its name, `cafe‑secret`. The secret must belong to the same namespace as the Ingress, it must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that hold the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the hosts to which the secret is applied.
+  - In the `hosts` field, we apply the certificate and key to our `cafe.example.com` host.
+- In the `spec.rules` field, we define a host with domain name `cafe.example.com`.
+- In the `paths` field, we define two path‑based rules:
+  - The rule with the path `/tea` instructs NGINX to distribute the requests with the `/tea` URI among the pods of the *tea* service, which is deployed with the name `tea‑svc` in the cluster.
+  - The rule with the path `/coffee` instructs NGINX to distribute the requests with the `/coffee` URI among the pods of the *coffee* service, which is deployed with the name `coffee‑svc` in the cluster.
+  - Both rules instruct NGINX to distribute the requests to `port 80` of the corresponding service (the `servicePort` field).
 
 > For complete instructions on deploying the Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.0/examples/ingress-resources/complete-example) in our GitHub repository.
 
@@ -61,8 +61,8 @@ Here is a breakdown of what this Ingress resource definition means:
 
 Starting from Kubernetes 1.18, you can use the following new features:
 
-* The host field supports wildcard domain names, such as `*.example.com`.
-* The path supports different matching rules with the new field `pathType`, which takes the following values: `Prefix` for prefix-based matching, `Exact` for exact matching and `ImplementationSpecific`, which is the default type and is the same as `Prefix`. For example:
+- The host field supports wildcard domain names, such as `*.example.com`.
+- The path supports different matching rules with the new field `pathType`, which takes the following values: `Prefix` for prefix-based matching, `Exact` for exact matching and `ImplementationSpecific`, which is the default type and is the same as `Prefix`. For example:
 
   ```yaml
     - path: /tea
@@ -86,7 +86,7 @@ Starting from Kubernetes 1.18, you can use the following new features:
               number: 80
   ```
 
-* The `ingressClassName` field is now supported:
+- The `ingressClassName` field is now supported:
 
   ```yaml
     apiVersion: networking.k8s.io/v1
@@ -110,10 +110,10 @@ Starting from Kubernetes 1.18, you can use the following new features:
 
 The NGINX Ingress Controller imposes the following restrictions on Ingress resources:
 
-* When defining an Ingress resource, the `host` field is required.
-* The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions).
-* The `path` field in `spec.rules[].http.paths[]` is required for `Exact` and `Prefix` `pathTypes`.
-* The ImplementationSpecific `pathType` is treated as equivilent to `Prefix` `pathType`, with the exception that when this `pathType` is configured, the `path` field in `spec.rules[].http.paths[]` is not mandatory. `path` defaults to `/` if not set but the `pathType` is set to ImplementationSpecific.
+- When defining an Ingress resource, the `host` field is required.
+- The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions).
+- The `path` field in `spec.rules[].http.paths[]` is required for `Exact` and `Prefix` `pathTypes`.
+- The ImplementationSpecific `pathType` is treated as equivilent to `Prefix` `pathType`, with the exception that when this `pathType` is configured, the `path` field in `spec.rules[].http.paths[]` is not mandatory. `path` defaults to `/` if not set but the `pathType` is set to ImplementationSpecific.
 
 ## Advanced Configuration
 

@@ -33,6 +33,7 @@ The table below categorizes some potential problems with the Ingress Controller 
 App Protect logs are part of NGINX Ingress Controller logs when the module is enabled. To check NGINX Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs]({{< relref "troubleshooting/troubleshoot-common#checking-the-ingress-controller-logs" >}}) of the Troubleshooting guide.
 
 For App Protect specific logs, look for messages starting with `APP_PROTECT`, for example:
+
 ```
 2020/07/10 11:13:20 [notice] 17#17: APP_PROTECT { "event": "configuration_load_success", "software_version": "2.52.1", "completed_successfully":true,"attack_signatures_package":{"revision_datetime":"2020-06-18T10:11:32Z","version":"2020.06.18"}}
 ```
@@ -55,6 +56,7 @@ Events:
   ----    ------          ----  ----                      -------
   Normal  AddedOrUpdated  11s   nginx-ingress-controller  AppProtectLogConfig  default/logconf was added or updated
 ```
+
 Note that in the events section, we have a `Normal` event with the `AddedOrUpdated` reason, which informs us that the configuration was successfully applied.
 
 ### Check events of APPolicy
@@ -71,6 +73,7 @@ Events:
   ----    ------          ----   ----                      -------
   Normal  AddedOrUpdated  2m25s  nginx-ingress-controller  AppProtectPolicy default/dataguard-alarm was added or updated
 ```
+
 The events section has a *Normal* event with the *AddedOrUpdated reason*, indicating the policy was successfully accepted.
 
 ### Replace the Policy
@@ -83,7 +86,7 @@ In this case you can force-replace the resource. This will remove the resource a
 kubectl replace appolicy -f your-policy-manifest.yaml --force
 ```
 
-### Check the Availability of APPolicy External References.
+### Check the Availability of APPolicy External References
 
 NOTE: This method only applies if you're using [external references](/nginx-app-protect/configuration/#external-references) in NGINX App Protect policies.
 

@@ -26,6 +26,7 @@ However, the fact that a policy was accepted doesn’t guarantee that the NGINX 
 To verify the configuration applied, check the events of the [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver) that reference the policy.
 
 ## ConfigMap Resources
+
 After you update the ConfigMap resource, you can immediately check if the configuration was successfully applied by NGINX:
 
 ```shell

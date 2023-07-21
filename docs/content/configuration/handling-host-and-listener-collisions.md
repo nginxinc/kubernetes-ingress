@@ -20,14 +20,14 @@ Note: the `creationTimestamp` and `uid` fields are part of the resource [ObjectM
 
 A host collision occurs when multiple Ingress, VirtualServer, and TransportServer (configured for TLS Passthrough) resources configure the same `host`. The Ingress Controller supports two options for handling host collisions:
 
-* Choosing the winner so that only one resource handles the host.
-* Merging configuration of the conflicting resources.
+- Choosing the winner so that only one resource handles the host.
+- Merging configuration of the conflicting resources.
 
 ### Choosing the Winner
 
 Consider the following two resources:
 
-* `cafe-ingress` Ingress:
+- `cafe-ingress` Ingress:
 
     ```yaml
     apiVersion: networking.k8s.io/v1
@@ -41,7 +41,7 @@ Consider the following two resources:
         . . .
     ```
 
-* `cafe-virtual-server` VirtualServer:
+- `cafe-virtual-server` VirtualServer:
 
     ```yaml
     apiVersion: k8s.nginx.org/v1
@@ -99,7 +99,7 @@ Listener collisions occur when multiple TransportServer resources (configured fo
 
 Consider the following two resources:
 
-* `tcp-1` TransportServer:
+- `tcp-1` TransportServer:
 
     ```yaml
     apiVersion: k8s.nginx.org/v1alpha1
@@ -113,7 +113,7 @@ Consider the following two resources:
         . . .
     ```
 
-* `tcp-2` TransportServer:
+- `tcp-2` TransportServer:
 
     ```yaml
     apiVersion: k8s.nginx.org/v1alpha1

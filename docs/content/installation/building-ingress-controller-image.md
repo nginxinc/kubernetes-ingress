@@ -12,11 +12,11 @@ This document explains how to build an NGINX Ingress Controller image using the 
 
 Before you can build the image, make sure that the following software is installed on your machine:
 
-* [Docker](https://www.docker.com/products/docker) v19.03+
-* [GNU Make](https://www.gnu.org/software/make/)
-* [git](https://git-scm.com/)
-* [OpenSSL](https://www.openssl.org/), optionally, if you would like to generate a self-signed certificate and a key for the default server.
-* For NGINX Plus, you must have the NGINX Plus license -- the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`).
+- [Docker](https://www.docker.com/products/docker) v19.03+
+- [GNU Make](https://www.gnu.org/software/make/)
+- [git](https://git-scm.com/)
+- [OpenSSL](https://www.openssl.org/), optionally, if you would like to generate a self-signed certificate and a key for the default server.
+- For NGINX Plus, you must have the NGINX Plus license -- the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`).
 
 Although the NGINX Ingress Controller is written in golang, golang is not required: you can download the binary file or build the NGINX Ingress Controller in a Docker container.
 
@@ -38,7 +38,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
     ```
 
 1. Build the image:
-    * For **NGINX**:
+    - For **NGINX**:
 
       ```console
       make debian-image PREFIX=myregistry.example.com/nginx-ingress TARGET=download
@@ -54,7 +54,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 
       As a result, the image **myregistry.example.com/nginx-ingress:3.2.0** is built. Note that the tag `3.2.0` comes from the `VERSION` variable, defined in the Makefile.
 
-    * For **NGINX Plus**, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
+    - For **NGINX Plus**, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
 
       ```console
       $ ls nginx-repo.*
@@ -89,20 +89,20 @@ You can see a list of all the targets by running `make` without any target or `m
 
 Below you can find some of the most useful targets in the **Makefile**:
 
-* **build**: creates the NGINX Ingress Controller binary using the local golang environment (ignored when `TARGET` is `container`).
-* **alpine-image**: for building an alpine-based image with NGINX.
-* **alpine-image-plus**: for building an alpine-based image with NGINX Plus.
-* **alpine-image-plus-fips**: for building an alpine-based image with NGINX Plus and FIPS inside.
-* **debian-image**: for building a debian-based image with NGINX.
-* **debian-image-plus**: for building a debian-based image with NGINX Plus.
-* **debian-image-nap-plus**: for building a debian-based image with NGINX Plus and the [NGINX App Protect WAF](/nginx-app-protect/) module.
-* **debian-image-dos-plus**: for building a debian-based image with NGINX Plus and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module.
-* **debian-image-nap-dos-plus**: for building a debian-based image with NGINX Plus, [NGINX App Protect WAF](/nginx-app-protect/) and [NGINX App Protect DoS](/nginx-app-protect-dos/) modules.
-* **ubi-image**: for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.
-* **ubi-image-plus**: for building an ubi-based image with NGINX Plus for [Openshift](https://www.openshift.com/) clusters.
-* **ubi-image-nap-plus**: for building an ubi-based image with NGINX Plus and the [NGINX App Protect WAF](/nginx-app-protect/) module for [Openshift](https://www.openshift.com/) clusters.
-* **ubi-image-dos-plus**: for building an ubi-based image with NGINX Plus and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
-* **ubi-image-nap-dos-plus**: for building an ubi-based image with NGINX Plus, [NGINX App Protect WAF](/nginx-app-protect/) and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
+- **build**: creates the NGINX Ingress Controller binary using the local golang environment (ignored when `TARGET` is `container`).
+- **alpine-image**: for building an alpine-based image with NGINX.
+- **alpine-image-plus**: for building an alpine-based image with NGINX Plus.
+- **alpine-image-plus-fips**: for building an alpine-based image with NGINX Plus and FIPS inside.
+- **debian-image**: for building a debian-based image with NGINX.
+- **debian-image-plus**: for building a debian-based image with NGINX Plus.
+- **debian-image-nap-plus**: for building a debian-based image with NGINX Plus and the [NGINX App Protect WAF](/nginx-app-protect/) module.
+- **debian-image-dos-plus**: for building a debian-based image with NGINX Plus and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module.
+- **debian-image-nap-dos-plus**: for building a debian-based image with NGINX Plus, [NGINX App Protect WAF](/nginx-app-protect/) and [NGINX App Protect DoS](/nginx-app-protect-dos/) modules.
+- **ubi-image**: for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.
+- **ubi-image-plus**: for building an ubi-based image with NGINX Plus for [Openshift](https://www.openshift.com/) clusters.
+- **ubi-image-nap-plus**: for building an ubi-based image with NGINX Plus and the [NGINX App Protect WAF](/nginx-app-protect/) module for [Openshift](https://www.openshift.com/) clusters.
+- **ubi-image-dos-plus**: for building an ubi-based image with NGINX Plus and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
+- **ubi-image-nap-dos-plus**: for building an ubi-based image with NGINX Plus, [NGINX App Protect WAF](/nginx-app-protect/) and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
 Note: You need to store your RHEL organization and activation keys in a file named `rhel_license` in the project root. Example:
 
   ```console
@@ -112,17 +112,17 @@ Note: You need to store your RHEL organization and activation keys in a file nam
 
 A few other useful targets:
 
-* **push**: pushes the image to the Docker registry specified in `PREFIX` and `TAG` variables.
-* **all**: executes test `test`, `lint`, `verify-codegen`, `update-crds` and `debian-image`. If one of the targets fails, the execution process stops, reporting an error.
-* **test**: runs unit tests.
-* **certificate-and-key**: The Ingress Controller requires a certificate and a key for the default HTTP/HTTPS server. You can reference them in a TLS Secret in a command-line argument to the Ingress Controller. As an alternative, you can add a file in the PEM format with your certificate and key to the image as `/etc/nginx/secrets/default`. Optionally, you can generate a self-signed certificate and a key using this target. Note that you must add the `ADD` instruction in the Dockerfile to copy the cert and the key to the image.
+- **push**: pushes the image to the Docker registry specified in `PREFIX` and `TAG` variables.
+- **all**: executes test `test`, `lint`, `verify-codegen`, `update-crds` and `debian-image`. If one of the targets fails, the execution process stops, reporting an error.
+- **test**: runs unit tests.
+- **certificate-and-key**: The Ingress Controller requires a certificate and a key for the default HTTP/HTTPS server. You can reference them in a TLS Secret in a command-line argument to the Ingress Controller. As an alternative, you can add a file in the PEM format with your certificate and key to the image as `/etc/nginx/secrets/default`. Optionally, you can generate a self-signed certificate and a key using this target. Note that you must add the `ADD` instruction in the Dockerfile to copy the cert and the key to the image.
 
 ### Makefile Variables
 
 The **Makefile** contains the following main variables for you to customize (either by changing the Makefile or by overriding the variables in the make command):
 
-* **ARCH** -- the architecture of the image (and the binary). The default value is `amd64`. The most common architectures are `amd64` and `arm64`. Some other popular options are `arm`, `ppc64le` and `s390x`.
-* **PREFIX** -- the name of the image. The default is `nginx/nginx-ingress`.
-* **TAG** -- the tag added to the image. It's set to the version of the Ingress Controller by default.
-* **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
-* **TARGET** -- by default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the Ingress Controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`. If you checked out a tag or are on the latest commit on `main` you can specify `TARGET=download` to avoid compiling the binary.
+- **ARCH** -- the architecture of the image (and the binary). The default value is `amd64`. The most common architectures are `amd64` and `arm64`. Some other popular options are `arm`, `ppc64le` and `s390x`.
+- **PREFIX** -- the name of the image. The default is `nginx/nginx-ingress`.
+- **TAG** -- the tag added to the image. It's set to the version of the Ingress Controller by default.
+- **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
+- **TARGET** -- by default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the Ingress Controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`. If you checked out a tag or are on the latest commit on `main` you can specify `TARGET=download` to avoid compiling the binary.
