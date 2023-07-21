@@ -41,16 +41,19 @@ You will need the following information from [MyF5](https://my.f5.com) for these
 
 1. Create a kubernetes `docker-registry` secret type on the cluster, using the JWT token as the username and `none` for password (Password is unused).  The name of the docker server is `private-registry.nginx.com`.
 
+
 	```shell
     kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
     ```
    It is important that the `--docker-username=<JWT Token>` contains the contents of the token and is not pointing to the token itself. Ensure that when you copy the contents of the JWT token, there are no additional characters or extra whitepaces. This can invalidate the token and cause 401 errors when trying to authenticate to the registry.
+
 
 1. Confirm the details of the created secret by running:
 
 	```shell
     kubectl get secret regcred --output=yaml
     ```
+
 
 1. You can now use the newly created Kubernetes secret in `helm` and `manifest` deployments.
 
@@ -146,6 +149,7 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
 
 ```shell
    $ curl https://private-registry.nginx.com/v2/nginx-ic/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
+
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
@@ -155,7 +159,7 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
     ]
     }
 
-   $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   $ curl <https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
@@ -164,7 +168,7 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
     ]
     }
 
-   $ curl https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   $ curl <https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-dos/nginx-plus-ingress",
     "tags": [

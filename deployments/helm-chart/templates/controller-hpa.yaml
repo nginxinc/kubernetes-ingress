@@ -1,4 +1,4 @@
-{{- if and .Values.controller.autoscaling.enabled (eq .Values.controller.kind "deployment") (semverCompare ">=1.23.0" .Capabilities.KubeVersion.Version) -}}
+{{- if and .Values.controller.autoscaling.enabled (eq .Values.controller.kind "deployment") (.Capabilities.APIVersions.Has "autoscaling/v2") -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

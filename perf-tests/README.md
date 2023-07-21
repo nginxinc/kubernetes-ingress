@@ -26,8 +26,8 @@ Run the tests:
 * Use local Python3 installation (advised to use pyenv/virtualenv):
     ```bash
     $ cd perf_tests
-    $ pip3 install -r requirements.txt
-    $ pytest -v -s -m ap_perf --count=<INT> --node-ip=$(minikube ip) --users=<INT> --hatch-rate=<INT> --time=<INT>
+    $ pip install -r ../tests/requirements.txt --no-deps
+    $ pytest -v -s -m ap_perf --count=<INT>  --users=<INT> --hatch-rate=<INT> --time=<INT>
     ```
 
 The tests will use the Ingress Controller for NGINX with the image built from `debian-image-nap-plus`. See the section below to learn how to configure the tests including the image and the type of NGINX -- NGINX or NGINX Plus.
@@ -47,9 +47,7 @@ The table below shows various configuration options for the performance tests. U
 | `--service` | The type of the Ingress Controller service: nodeport or loadbalancer. | `nodeport` |
 | `--node-ip` | The public IP of a cluster node. Not required if you use the loadbalancer service (see --service argument). | `""` |
 | `--kubeconfig` | An absolute path to a kubeconfig file. | `~/.kube/config` or the value of the `KUBECONFIG` env variable |
-| `N/A` | A path to a folder with a kubeconfig file. | `~/.kube/` |
 | `--show-ic-logs` | A flag to control accumulating IC logs in stdout. | `no` |
-| `N/A` | Any additional pytest command-line arguments (i.e `-m "smoke"`) | `""` |
 | `--count` | Number of times to repeat tests | `1` |
 | `--users` | Total no. of users/locusts for response perf tests. | `10` |
 | `--hatch-rate` | No. of users hatched per second. | `5` |

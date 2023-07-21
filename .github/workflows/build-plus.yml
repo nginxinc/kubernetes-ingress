@@ -52,7 +52,7 @@ jobs:
         if: github.event_name != 'pull_request'
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@ecf95283f03858871ff00b787d79c419715afc34 # v2.7.0
+        uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1 # v2.9.1
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -154,12 +154,12 @@ jobs:
           [[ -n $modules && ${nap_mapping[$modules]+_} ]] && nap=${nap_mapping[$modules]}
 
           echo "version=$version" >> $GITHUB_OUTPUT
-          echo "product_code=AWS${nap}_PRODUCT_CODE" >> $GITHUB_OUTPUT
+          echo "product_code=AWS${nap}_PRODUCT_ID" >> $GITHUB_OUTPUT
           echo "registry=${aws_registry}" >> $GITHUB_OUTPUT
         if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
 
       - name: Publish to AWS Marketplace
-        uses: nginxinc/aws-marketplace-publish@9e9f4ae1c545da9fa6adc24b0b10ce50e0d4969c # v0.1.0
+        uses: nginxinc/aws-marketplace-publish@93e03c5ce4baa842a8e5baad0a3f35d07b38460c # v0.1.2
         continue-on-error: true
         with:
           version: ${{ steps.aws.outputs.version }}
@@ -204,7 +204,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@f6e388ebf0efc915c6c5b165b019ee61a6746a38 # v2.20.1
+        uses: github/codeql-action/upload-sarif@489225d82a57396c6f426a40e66d461b16b3461d # v2.20.4
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
