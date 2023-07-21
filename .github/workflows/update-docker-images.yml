@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.ref_name }}-update
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   variables:
     name: Get versions of base images
@@ -26,15 +29,18 @@ jobs:
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           fetch-depth: 0
+
       - name: Set KIC version
         id: kic
         run: |
           tag="$(git tag --sort=-version:refname | head -n1)"
           echo "tag=${tag//v}" >> $GITHUB_OUTPUT
+
       - name: Checkout Repository at ${{ steps.kic.outputs.tag }}
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           ref: refs/tags/v${{ steps.kic.outputs.tag }}
+
       - name: Set NGINX versions
         id: versions
         run: |
@@ -42,6 +48,7 @@ jobs:
           nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx:.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
           nginx_ubi=$(grep -m1 "FROM nginxcontrib/nginx:" < build/Dockerfile | awk -F" " '{print $2}')
           echo "matrix=[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]" >> $GITHUB_OUTPUT
+
       - name: Set other variables
         id: vars
         run: |
@@ -64,6 +71,7 @@ jobs:
         run: |
           if [ ${{ matrix.base_image.distro }} == "debian" ]; then dist=""; else dist="-${{ matrix.base_image.distro }}"; fi
           echo "tag=${{ needs.variables.outputs.kic-tag }}${dist}" >> $GITHUB_OUTPUT
+
       - name: Check if update available for ${{ matrix.base_image.version }}
         id: update
         uses: lucacome/docker-image-update-checker@f50d56412b948cfdbb842c5419372681e0db3df1 # v1.2.1
@@ -72,6 +80,7 @@ jobs:
           image: nginx/nginx-ingress:${{ steps.dist.outputs.tag }}
         env:
           DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+
       - id: needs
         run: echo "${{ matrix.base_image.distro }}=${{ steps.update.outputs.needs-updating }}" >> $GITHUB_OUTPUT
 
@@ -86,13 +95,16 @@ jobs:
         with:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
+
       - name: Setup Golang Environment
         uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
         with:
           go-version-file: go.mod
+
       - name: Determine GOPATH
         id: go
         run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
+
       - name: Build binaries
         uses: goreleaser/goreleaser-action@336e29918d653399e599bfca99fadc1d7ffbc9f7 # v4.3.0
         with:
@@ -101,6 +113,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ steps.go.outputs.go_path }}
+
       - name: Store Artifacts in Cache
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
@@ -129,12 +142,14 @@ jobs:
         with:
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
+
       - name: Fetch Cached Artifacts
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
         if: ${{ matrix.needs-updating == 'true' }}
+
       - name: Run Smoke Tests
         id: smoke-tests
         uses: ./.github/actions/smoke-tests
@@ -143,6 +158,7 @@ jobs:
           marker: ${{ matrix.marker }}
           k8s-version: ${{ needs.variables.outputs.k8s_version }}
         if: ${{ matrix.needs-updating == 'true' }}
+
       - name: Upload Test Results
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:

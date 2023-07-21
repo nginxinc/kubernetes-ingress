@@ -11,10 +11,6 @@ on:
     branches:
       - main
       - release-*
-    types:
-      - opened
-      - reopened
-      - synchronize
   schedule:
     - cron: "0 4 * * *" # run every day at 04:00 UTC
 
@@ -25,6 +21,9 @@ defaults:
 concurrency:
   group: ${{ github.ref_name }}-ci
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   checks:
@@ -86,6 +85,8 @@ jobs:
     needs: [checks, unit-tests]
     outputs:
       release-url: ${{ steps.release-notes.outputs.release-url }}
+    permissions:
+      contents: write # for lucacome/draft-release and goreleaser/goreleaser-action to manage releases
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -165,13 +166,16 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
       - name: Fetch Cached Artifacts
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+
       - name: Docker Buildx
         uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1 # v2.9.1
+
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
@@ -188,11 +192,13 @@ jobs:
           secrets: |
             ${{ contains(matrix.type, 'plus') && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
             ${{ contains(matrix.type, 'plus') && format('"nginx-repo.key={0}"', secrets.NGINX_KEY) || '' }}
+
       - name: Deploy Kubernetes
         id: k8s
         run: |
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
           kind load docker-image ${{ matrix.type }}:${{ github.sha }} --name ${{ github.run_id }}
+
       - name: Install Chart
         run: >
           helm install
@@ -204,9 +210,11 @@ jobs:
           --set controller.nginxplus=${{ contains(matrix.type, 'plus') && 'true' || 'false' }}
           --wait
         working-directory: ${{ github.workspace }}/deployments/helm-chart
+
       - name: Expose Test Ingresses
         run: |
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress-controller 8080:80 8443:443 &
+
       - name: Test HTTP
         run: |
           counter=0
@@ -217,6 +225,7 @@ jobs:
             fi
             printf '.'; counter=$(($counter+1)); sleep 5;
           done
+
       - name: Test HTTPS
         run: |
           counter=0
@@ -258,8 +267,10 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
       - name: Docker Buildx
         uses: docker/setup-buildx-action@4c0219f9ac95b02789c1075625400b2acbff50b1 # v2.9.1
+
       - name: Build Test-Runner Container
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
@@ -281,6 +292,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
       - name: Run Smoke Tests
         id: smoke-tests
         uses: ./.github/actions/smoke-tests
@@ -291,6 +303,7 @@ jobs:
           nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
           nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
+
       - name: Upload Test Results
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
@@ -314,6 +327,12 @@ jobs:
     with:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
     secrets: inherit
 
   build-docker-plus:
@@ -335,6 +354,10 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       release-url: ${{ needs.binaries.outputs.release-url }}
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
     secrets: inherit
 
   build-docker-nap:
@@ -353,6 +376,10 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       nap_modules: ${{ matrix.nap_modules }}
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
     secrets: inherit
 
   publish-helm:
@@ -360,6 +387,8 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [checks, helm-tests]
     if: ${{ github.event_name == 'push' && ! startsWith(github.ref, 'refs/heads/release-') }}
+    permissions:
+      contents: write # for pushing to Helm Charts repository
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3

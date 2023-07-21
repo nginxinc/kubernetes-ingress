@@ -11,6 +11,8 @@ concurrency:
   group: ${{ github.ref_name }}-dockerhub
   cancel-in-progress: true
 
+permissions:
+  contents: read
 
 jobs:
   dockerHubDescription:

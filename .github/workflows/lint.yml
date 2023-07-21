@@ -5,13 +5,9 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
-    types:
-      - opened
-      - reopened
-      - synchronize
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
 
 defaults:
   run:
@@ -21,18 +17,25 @@ concurrency:
   group: ${{ github.ref_name }}-lint
   cancel-in-progress: true
 
-jobs:
+permissions:
+  contents: read
 
+jobs:
   lint:
     name: Lint
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pull-requests: read # for golangci-lint-action
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
       - name: Setup Golang Environment
         uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
         with:
           go-version-file: go.mod
+
       - name: Lint Code
         uses: golangci/golangci-lint-action@639cd343e1d3b897ff35927a75193d57cfcba299 # v3.6.0
         with:
@@ -44,6 +47,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
       - uses: reviewdog/action-actionlint@7485c2136bd093d2317a854c72910eebaee35238 # v1.37.1
         with:
           actionlint_flags: -shellcheck ""
@@ -54,5 +58,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
       - name: Lint chart
         run: helm lint deployments/helm-chart

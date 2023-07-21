@@ -9,7 +9,7 @@ jobs:
   triage:
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: write # for actions/labeler to add labels
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/labeler@4f052778de9a9b80cb16cfb9079b02287285a4cb # v5.0.0-alpha.1
