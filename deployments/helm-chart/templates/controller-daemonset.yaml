@@ -87,10 +87,14 @@ spec:
         ports:
         - name: http
           containerPort: 80
+{{- if .Values.controller.hostNetwork }}
           hostPort: 80
+{{- end }}
         - name: https
           containerPort: 443
+{{- if .Values.controller.hostNetwork }}
           hostPort: 443
+{{- end }}
 {{ if .Values.controller.customPorts }}
 {{ toYaml .Values.controller.customPorts | indent 8 }}
 {{ end }}
