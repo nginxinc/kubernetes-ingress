@@ -4,9 +4,9 @@ NGINX and NGINX Plus support regular expression modifiers for [location](https:/
 
 The NGINX Ingress Controller provides the following annotations for configuring regular expression support:
 
-* Optional: ```nginx.com/path-regex: "case_sensitive"``` -- specifies a preceding regex modifier to be case sensitive (`~*`).
-* Optional: ```nginx.com/path-regex: "case_insensitive"``` -- specifies a preceding regex modifier to be case sensitive (`~`).
-* Optional: ```nginx.com/path-regex: "exact"``` -- specifies exact match preceding modifier (`=`).
+* Optional: ```nginx.org/path-regex: "case_sensitive"``` - specifies a preceding regex modifier to be case sensitive (`~*`).
+* Optional: ```nginx.org/path-regex: "case_insensitive"``` - specifies a preceding regex modifier to be case sensitive (`~`).
+* Optional: ```nginx.org/path-regex: "exact"``` - specifies exact match preceding modifier (`=`).
 
 [NGINX documentation](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority) provides additional information about how NGINX and NGINX Plus resolve location priority. Read [it](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority) before using the ``path-regex`` annotation.
 
@@ -30,7 +30,7 @@ The ``location_match`` defines what NGINX checks the request URI against. The ex
 
 ## Example 1: Case Sensitive RegEx
 
-In the following example you enable path regex annotation ``nginx.com/path-regex`` and set its value to `case_sensitive`.
+In the following example you enable path regex annotation ``nginx.org/path-regex`` and set its value to `case_sensitive`.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -80,7 +80,7 @@ Corresponding NGINX config file snippet:
 
 ## Example 2: Case Insensitive RegEx
 
-In the following example you enable path regex annotation ``nginx.com/path-regex`` and set its value to `case_insensitive`.
+In the following example you enable path regex annotation ``nginx.org/path-regex`` and set its value to `case_insensitive`.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -130,7 +130,7 @@ Corresponding NGINX config file snippet:
 
 ## Example 3: Exact RegEx
 
-In the following example you enable path regex annotation ``nginx.com/path-regex`` and set its value to `exact` match.
+In the following example you enable path regex annotation ``nginx.org/path-regex`` and set its value to `exact` match.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
