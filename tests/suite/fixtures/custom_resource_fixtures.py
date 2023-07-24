@@ -54,6 +54,14 @@ class VirtualServerSetup:
         self.backend_2_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}{vs_paths[1]}"
         self.backend_1_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[0]}"
         self.backend_2_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[1]}"
+        self.backend_1_url_custom = f"http://{public_endpoint.public_ip}:{public_endpoint.custom_http}{vs_paths[0]}"
+        self.backend_2_url_custom = f"http://{public_endpoint.public_ip}:{public_endpoint.custom_http}{vs_paths[1]}"
+        self.backend_1_url_custom_ssl = (
+            f"https://{public_endpoint.public_ip}:{public_endpoint.custom_https}{vs_paths[0]}"
+        )
+        self.backend_2_url_custom_ssl = (
+            f"https://{public_endpoint.public_ip}:{public_endpoint.custom_https}{vs_paths[1]}"
+        )
         self.metrics_url = f"http://{public_endpoint.public_ip}:{public_endpoint.metrics_port}/metrics"
 
 
