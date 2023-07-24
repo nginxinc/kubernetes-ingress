@@ -24,7 +24,7 @@ The ``location_match`` defines what NGINX checks the request URI against. The ex
 
 * **~** : Tilde modifier (annotation value ``case_sensitive``) - the location is interpreted as a case-sensitive regular expression match
 
-* **~***: Tilde and asterisk modifier (annotation value ``case_insensitive`) - the location is interpreted as a case-insensitive regular expression match
+* **~***: Tilde and asterisk modifier (annotation value ``case_insensitive``) - the location is interpreted as a case-insensitive regular expression match
 
 * **=** : Equal sign modifier (annotation value ``exact``) - the location is considered a match if the request URI exactly matches the location provided.
 
