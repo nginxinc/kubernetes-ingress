@@ -13,7 +13,7 @@ Docs are written in Markdown. We build the docs using [Hugo](https://gohugo.io) 
 2. We use markdownlint to check that Markdown files are correct. Use `npm` to install markdownlint-cli:
 
     ```shell
-    npm install -g markdownlint-cli   
+    npm install -g markdownlint-cli
     ```
 
 ## Local Docs Development
@@ -61,7 +61,7 @@ The available content types (`kind`) are:
 
 - concept: Helps a customer learn about a specific feature or feature set.
 - tutorial: Walks a customer through an example use case scenario; results in a functional PoC environment.
-- reference: Describes an API, command line tool, config options, etc.; should be generated automatically from source code. 
+- reference: Describes an API, command line tool, config options, etc.; should be generated automatically from source code.
 - troubleshooting: Helps a customer solve a specific problem.
 - openapi: Contains front-matter and shortcode for rendering an openapi.yaml spec
 
@@ -110,7 +110,7 @@ The callout shortcodes also support multi-line blocks:
 
 ```md
 {{< caution >}}
-You should probably never do this specific thing in a production environment. 
+You should probably never do this specific thing in a production environment.
 
 If you do, and things break, don't say we didn't warn you.
 {{< /caution >}}
