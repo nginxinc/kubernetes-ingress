@@ -164,9 +164,9 @@ var (
 		`The namespace/name of the GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. Format: <namespace>/<name>`)
 
 	enableTLSPassthrough = flag.Bool("enable-tls-passthrough", false,
-		"Enable TLS Passthrough on port 443 by default. Requires -enable-custom-resources")
+		"Enable TLS Passthrough on default port 443. Requires -enable-custom-resources")
 
-	tlsPassthroughPort = flag.Int("tls-passthrough-port", 443, "Set the port where TLS Passthrough traffic is accepted. [1 - 65535]")
+	tlsPassthroughPort = flag.Int("tls-passthrough-port", 443, "Set the port for TLS Passthrough. [1024 - 65535]")
 
 	spireAgentAddress = flag.String("spire-agent-address", "",
 		`Specifies the address of the running Spire agent. Requires -nginx-plus and is for use with NGINX Service Mesh only. If the flag is set,

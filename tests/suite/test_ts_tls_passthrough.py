@@ -31,9 +31,10 @@ class TransportServerTlsSetup:
         ts_host (str):
     """
 
-    def __init__(self, public_endpoint: PublicEndpoint, tls_passthrough_port: int, ts_resource, name, namespace, ts_host):
+    def __init__(
+        self, public_endpoint: PublicEndpoint, tls_passthrough_port: int, ts_resource, name, namespace, ts_host
+    ):
         self.public_endpoint = public_endpoint
-        # self.public_endpoint.port_ssl = tls_passthrough_port
         self.tls_passthrough_port = tls_passthrough_port
         self.ts_resource = ts_resource
         self.name = name
