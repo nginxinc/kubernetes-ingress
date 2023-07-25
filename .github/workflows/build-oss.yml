@@ -17,6 +17,9 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -179,5 +182,8 @@ jobs:
       tag: ${{ inputs.tag }}
       version: ${{ needs.build.outputs.version }}
       image_digest: ${{ needs.build.outputs.image_digest }}
+    permissions:
+      contents: read
+      actions: read
     secrets: inherit
     if: ${{ inputs.tag != '' }}

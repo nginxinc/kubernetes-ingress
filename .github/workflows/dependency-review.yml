@@ -1,5 +1,13 @@
 name: "Dependency Review"
-on: [pull_request]
+on:
+  pull_request:
+    branches:
+      - main
+      - release-*
+
+concurrency:
+  group: ${{ github.ref_name }}-deps-review
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -8,8 +16,8 @@ jobs:
   dependency-review:
     runs-on: ubuntu-22.04
     permissions:
-      contents: read
-      pull-requests: write
+      contents: read # for actions/checkout
+      pull-requests: write # for actions/dependency-review-action to post comments
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3

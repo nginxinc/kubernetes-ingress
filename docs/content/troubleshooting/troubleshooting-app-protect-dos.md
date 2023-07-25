@@ -83,6 +83,7 @@ Events:
   ----    ------          ----  ----                      -------
   Normal  AddedOrUpdated  11s   nginx-ingress-controller  AppProtectDosLogConfig  default/logconf was added or updated
 ```
+
 Note that in the events section, we have a `Normal` event with the `AddedOrUpdated` reason, which informs us that the configuration was successfully applied.
 
 ### Check events of APDosPolicy

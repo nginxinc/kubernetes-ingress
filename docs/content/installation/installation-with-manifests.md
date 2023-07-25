@@ -10,13 +10,14 @@ docs: "DOCS-603"
 ---
 
 ## Prerequisites
+
 {{<note>}} All documentation should only be used with the latest stable release, indicated on [the releases page](https://github.com/nginxinc/kubernetes-ingress/releases) of the GitHub repository. {{</note>}}
 
 1. Make sure you have access to an NGINX Ingress Controller image:
-    * For NGINX Ingress Controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
-    * For NGINX Plus Ingress Controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on pulling the image from the F5 Docker registry.
-    * To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
-    * You can also build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
+    - For NGINX Ingress Controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
+    - For NGINX Plus Ingress Controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on pulling the image from the F5 Docker registry.
+    - To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
+    - You can also build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 2. Clone the NGINX Ingress Controller repository and change into the deployments folder:
 
     ```shell
@@ -135,8 +136,8 @@ By default, it is required to create custom resource definitions for VirtualServ
 
 There are two options for deploying NGINX Ingress Controller:
 
-* *Deployment*. Use a Deployment if you plan to dynamically change the number of Ingress Controller replicas.
-* *DaemonSet*. Use a DaemonSet for deploying the Ingress Controller on every node or a subset of nodes.
+- *Deployment*. Use a Deployment if you plan to dynamically change the number of Ingress Controller replicas.
+- *DaemonSet*. Use a DaemonSet for deploying the Ingress Controller on every node or a subset of nodes.
 
 Additionally, if you would like to use the NGINX App Protect DoS module, you'll need to deploy the Arbitrator.
 
@@ -162,6 +163,7 @@ There are two steps for deploying NGINX Ingress Controller with the NGINX App Pr
 ### 4.1 Running NGINX Ingress Controller
 
 #### Using a Deployment
+
 When you run NGINX Ingress Controller by using a Deployment, by default, Kubernetes will create one NGINX Ingress Controller pod.
 
 For NGINX, run:
@@ -181,6 +183,7 @@ kubectl apply -f deployment/nginx-plus-ingress.yaml
 ---
 
 #### Using a DaemonSet
+
 When you run the Ingress Controller by using a DaemonSet, Kubernetes will create an Ingress Controller pod on every node of the cluster.
 
 {{<note>}} Read the Kubernetes [DaemonSet docs](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) to learn how to run NGINX Ingress Controller on a subset of nodes instead of on every node of the cluster.{{</note>}}
@@ -232,20 +235,20 @@ Kubernetes will randomly allocate two ports on every node of the cluster. To acc
 #### Using a LoadBalancer Service
 
 1. Create a service using a manifest for your cloud provider:
-    * For GCP or Azure, run:
+    - For GCP or Azure, run:
 
         ```shell
         kubectl apply -f service/loadbalancer.yaml
         ```
 
-    * For AWS, run:
+    - For AWS, run:
 
         ```shell
         kubectl apply -f service/loadbalancer-aws-elb.yaml
         ```
 
         Kubernetes will allocate a Classic Load Balancer (ELB) in TCP mode with the PROXY protocol enabled to pass the client's information (the IP address and the port). NGINX must be configured to use the PROXY protocol:
-        * Add the following keys to the config map file `nginx-config.yaml` from the Step 2:
+        - Add the following keys to the config map file `nginx-config.yaml` from the Step 2:
 
             ```yaml
             proxy-protocol: "True"
@@ -253,7 +256,7 @@ Kubernetes will randomly allocate two ports on every node of the cluster. To acc
             set-real-ip-from: "0.0.0.0/0"
             ```
 
-        * Update the config map:
+        - Update the config map:
 
             ```shell
             kubectl apply -f common/nginx-config.yaml
@@ -263,13 +266,13 @@ Kubernetes will randomly allocate two ports on every node of the cluster. To acc
 
     Kubernetes will allocate and configure a cloud load balancer for load balancing the Ingress Controller pods.
 2. Use the public IP of the load balancer to access NGINX Ingress Controller. To get the public IP:
-    * For GCP or Azure, run:
+    - For GCP or Azure, run:
 
         ```shell
         kubectl get svc nginx-ingress --namespace=nginx-ingress
         ```
 
-    * In case of AWS ELB, the public IP is not reported by `kubectl`, because the ELB IP addresses are not static. In general, you should rely on the ELB DNS name instead of the ELB IP addresses. However, for testing purposes, you can get the DNS name of the ELB using `kubectl describe` and then run `nslookup` to find the associated IP address:
+    - In case of AWS ELB, the public IP is not reported by `kubectl`, because the ELB IP addresses are not static. In general, you should rely on the ELB DNS name instead of the ELB IP addresses. However, for testing purposes, you can get the DNS name of the ELB using `kubectl describe` and then run `nslookup` to find the associated IP address:
 
         ```shell
         kubectl describe svc nginx-ingress --namespace=nginx-ingress

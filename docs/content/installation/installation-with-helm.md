@@ -13,6 +13,7 @@ docs: "DOCS-602"
 This chart deploys the NGINX Ingress Controller in your Kubernetes cluster.
 
 ## Prerequisites
+
 {{<note>}} All documentation should only be used with the latest stable release, indicated on [the releases page](https://github.com/nginxinc/kubernetes-ingress/releases) of the GitHub repository. {{</note>}}
 
 - A [Kubernetes Version Supported by the Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)

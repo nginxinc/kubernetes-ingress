@@ -17,13 +17,13 @@ This document explains how to integrate NGINX Ingress Controller with Linkerd us
 
 There are two methods provided in this tutorial:
 
-* Adding Linkerd to a new NGINX Ingress Controller Installation
-* Adding Linkerd to an Existing NGINX Ingress Controller Installation
+- Adding Linkerd to a new NGINX Ingress Controller Installation
+- Adding Linkerd to an Existing NGINX Ingress Controller Installation
 
 If you are adding Linkerd to an existing installation, these are the requirements:
 
-* A working NGINX Ingress Controller instance.
-* A working [Linkerd installation](https://linkerd.io/2.13/getting-started/).
+- A working NGINX Ingress Controller instance.
+- A working [Linkerd installation](https://linkerd.io/2.13/getting-started/).
 
 ---
 
@@ -36,6 +36,7 @@ You can do this through the use of NGINX Ingress Controller's custom resource de
 ---
 
 ### During Installation
+
 **Using Manifests**
 
 When installing NGINX Ingress Controller, you can [create a custom resource](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/#3-create-custom-resources) for Linkerd.
@@ -76,6 +77,7 @@ This annotation will instruct `helm` to tell `Linkerd` to automatically inject i
 ---
 
 ### With an Existing Installation
+
 To integrate Linkerd with an existing NGINX Ingress Controller installation, you will need to inject the `Linkerd` sidecar, using its `linkerd` control plane utility.
 
 **Using Manifests**
@@ -92,6 +94,7 @@ If you want to inject into an existing `Helm` installation, you can run the foll
 ```bash
 kubectl get deployment -n <name_of_namespace> <name_of_helm_release> -o yaml | linkerd inject - | kubectl apply -f -
 ```
+
 In this example, the `helm` release named `kic01-nginx-ingress-controller` is injected into the `nginx-ingress` namespace:
 
 ```bash

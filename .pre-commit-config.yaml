@@ -31,6 +31,7 @@ repos:
       - id: fix-byte-order-marker
       - id: detect-private-key
         exclude: ^(examples/|tests/|internal/k8s/secrets/)
+
   - repo: local
     hooks:
       - id: golang-diff
@@ -39,23 +40,28 @@ repos:
         language: system
         types: [go]
         pass_filenames: false
+
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.53.3
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
+
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.9.0
     hooks:
       - id: pyupgrade
+
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0
     hooks:
       - id: isort
+
   - repo: https://github.com/psf/black
     rev: 23.7.0
     hooks:
       - id: black
+
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.23.3
     hooks:
@@ -64,5 +70,11 @@ repos:
         files: deployments/helm-chart/values.yaml
         types: [yaml]
         args: ['--schemafile', 'deployments/helm-chart/values.schema.json']
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.8.1
+    hooks:
+    - id: markdownlint-cli2
+
 ci:
-  skip: [golang-diff, golangci-lint, check-jsonschema]
+  skip: [golang-diff, golangci-lint, check-jsonschema, markdownlint-cli2]

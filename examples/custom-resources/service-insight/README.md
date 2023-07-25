@@ -2,9 +2,13 @@
 
   > The Service Insight feature is available only for F5 NGINX Plus.
 
-To use the [Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/) feature provided by F5 NGINX Ingress Controller you must enable it by setting `serviceInsight.create=true` in your `helm install/upgrade...` command OR  [manifest](../../../deployments/deployment/nginx-plus-ingress.yaml) depending on your preferred installation method.
+To use the [Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/)
+feature provided by F5 NGINX Ingress Controller you must enable it by setting `serviceInsight.create=true` in your `helm
+install/upgrade...` command OR  [manifest](../../../deployments/deployment/nginx-plus-ingress.yaml) depending on your
+preferred installation method.
 
-The following example demonstrates how to enable the Service Insight for NGINX Ingress Controller using [manifests (Deployment)](../../../deployments/deployment/nginx-plus-ingress.yaml):
+The following example demonstrates how to enable the Service Insight for NGINX Ingress Controller using [manifests
+(Deployment)](../../../deployments/deployment/nginx-plus-ingress.yaml):
 
 ```yaml
 apiVersion: apps/v1
@@ -63,7 +67,9 @@ spec:
 
 ## Deployment
 
-[Install NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), and uncomment the `-enable-service-insight` option: this will allow Service Insight to interact with it.
+[Install NGINX Ingress
+Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), and uncomment
+the `-enable-service-insight` option: this will allow Service Insight to interact with it.
 
 The examples below use the `nodeport` service.
 
@@ -75,7 +81,7 @@ First, get the pod name in namespace `nginx-ingress`:
 kubectl get pods -n nginx-ingress
 ```
 
-```console
+```text
 NAME                             READY   STATUS    RESTARTS   AGE
 nginx-ingress-5b99f485fb-vflb8   1/1     Running   0          72m
 ```
@@ -96,7 +102,7 @@ Follow the [basic configuration example](../basic-configuration/) to deploy `caf
 
 Verify that the virtual server is running, and check the hostname:
 
-```console
+```text
 kubectl get vs cafe
 NAME   STATE   HOST               IP    PORTS   AGE
 cafe   Valid   cafe.example.com                 16m
@@ -118,7 +124,7 @@ Verify `tea` deployment:
 kubectl get deployments.apps tea
 ```
 
-```console
+```text
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 tea    1/1     1            1           19m
 ```
@@ -129,7 +135,7 @@ Verify `coffee` deployment:
 kubectl get deployments.apps coffee
 ```
 
-```console
+```text
 NAME     READY   UP-TO-DATE   AVAILABLE   AGE
 coffee   1/1     1            1           20m
 ```
@@ -164,7 +170,7 @@ Verify deployments:
 kubectl get deployments.apps tea
 ```
 
-```console
+```text
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 tea    3/3     3            3           31m
 ```
@@ -173,7 +179,7 @@ tea    3/3     3            3           31m
 kubectl get deployments.apps coffee
 ```
 
-```console
+```text
 NAME     READY   UP-TO-DATE   AVAILABLE   AGE
 coffee   3/3     3            3           31m
 ```
@@ -192,7 +198,9 @@ Response:
 
 ## Transport Servers
 
-[Install NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), and uncomment the `-enable-service-insight`, `-enable-custom-resources`, and `-enable-tls-passthrough` options.
+[Install NGINX Ingress
+Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), and uncomment
+the `-enable-service-insight`, `-enable-custom-resources`, and `-enable-tls-passthrough` options.
 
 The examples below use the `nodeport` service.
 
@@ -202,7 +210,7 @@ First, get the nginx-ingress pod id:
 kubectl get pods -n nginx-ingress
 ```
 
-```
+```text
 NAME                             READY   STATUS    RESTARTS   AGE
 nginx-ingress-67978954cc-l6gvq   1/1     Running   0          72m
 ```
@@ -221,7 +229,7 @@ Follow the [tls passthrough example](../tls-passthrough/) to deploy the `secure-
 
 Verify that the transport server is running, and check the app name:
 
-```console
+```text
 kubectl get ts secure-app
 NAME         STATE   REASON           AGE
 secure-app   Valid   AddedOrUpdated   5h37m
@@ -235,7 +243,7 @@ kubectl scale deployment secure-app --replicas=1
 
 Verify `secure-app` deployment:
 
-```console
+```text
 kubectl get deployments.apps secure-app
 NAME         READY   UP-TO-DATE   AVAILABLE   AGE
 secure-app   1/1     1            1           5h41m
@@ -267,7 +275,7 @@ Verify deployments:
 kubectl get deployments.apps secure-app
 ```
 
-```console
+```text
 NAME         READY   UP-TO-DATE   AVAILABLE   AGE
 secure-app   3/3     3            3           5h53m
 ```
@@ -288,7 +296,8 @@ Response:
 
 ## Service Insight with TLS
 
-The following example demonstrates how to enable the Service Insight for NGINX Ingress Controller with **TLS** using [manifests (Deployment)](../../../deployments/deployment/nginx-plus-ingress.yaml):
+The following example demonstrates how to enable the Service Insight for NGINX Ingress Controller with **TLS** using
+[manifests (Deployment)](../../../deployments/deployment/nginx-plus-ingress.yaml):
 
 ```yaml
 apiVersion: apps/v1
@@ -357,7 +366,7 @@ kubectl apply -f service-insight-secret.yaml
 kubectl get secrets service-insight-secret
 ```
 
-```console
+```text
 NAME                     TYPE                DATA   AGE
 service-insight-secret   kubernetes.io/tls   2      55s
 ```
@@ -368,7 +377,7 @@ Get the nginx-ingress pod id:
 kubectl get pods -n nginx-ingress
 ```
 
-```console
+```text
 NAME                             READY   STATUS    RESTARTS   AGE
 nginx-ingress-687d9c6764-g6vwx   1/1     Running   0          2m8s
 ```
@@ -379,7 +388,7 @@ Verify the nginx-ingress configuration parameters:
 kubectl describe pods -n nginx-ingress nginx-ingress-687d9c6764-g6vwx
 ```
 
-```console
+```yaml
 ...
 Containers:
   nginx-plus-ingress:

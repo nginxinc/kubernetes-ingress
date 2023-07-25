@@ -29,8 +29,9 @@ The table below shows common problems with NGINX Ingress Controller you may enco
 ## Troubleshooting Methods
 
 The commands in the next sections make the following assumptions:
-* That NGINX Ingress Controller is deployed in the namespace `nginx-ingress`.
-* `<nginx-ingress-pod>` is the name of one of the NGINX Ingress Controller pods.
+
+- That NGINX Ingress Controller is deployed in the namespace `nginx-ingress`.
+- `<nginx-ingress-pod>` is the name of one of the NGINX Ingress Controller pods.
 
 ### Checking NGINX Ingress Controller Logs
 
@@ -41,6 +42,7 @@ kubectl logs <nginx-ingress-pod> -n nginx-ingress
 ```
 
 ### Checking the Generated Config
+
 For each Ingress/VirtualServer resource, NGINX Ingress Controller generates a corresponding NGINX configuration file in the `/etc/nginx/conf.d folder`.
 
  Additionally, NGINX Ingress Controller generates the main configuration file `/etc/nginx/nginx.conf`, which includes all the configurations files from `/etc/nginx/conf.d`. The configuration for a VirtualServerRoute resource is located in the configuration file of the VirtualServer that references the resource.
@@ -159,6 +161,7 @@ By enabling the `nginx-debug` CLI argument and changing the `error-log-level` to
 **NOTE**: It is recommended to only enable `nginx-debug` CLI and the `error-log-level` for debugging purposes.
 
 #### Example debug NGINX Ingress Controller Output
+
 These logs show some of the additional entries when debugging is enabled for NGINX Ingress Controller.
 
 ```shell

@@ -1,22 +1,26 @@
 # gRPC support
 
-To support a gRPC application with NGINX Ingress Controllers, you need to add the **nginx.org/grpc-services** annotation to your Ingress resource definition.
+To support a gRPC application with NGINX Ingress Controllers, you need to add the **nginx.org/grpc-services** annotation
+to your Ingress resource definition.
 
 ## Prerequisites
 
-* HTTP/2 must be enabled. See `http2` ConfigMap key in the [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)
-* Ingress resources for gRPC applications must include TLS termination.
+- HTTP/2 must be enabled. See `http2` ConfigMap key in the
+  [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)
+- Ingress resources for gRPC applications must include TLS termination.
 
 ## Syntax
 
 The `nginx.org/grpc-services` specifies which services are gRPC services. The annotation syntax is as follows:
-```
+
+```yaml
 nginx.org/grpc-services: "service1[,service2,...]"
 ```
 
 ## Example
 
 In the following example we load balance three applications, one of which is using gRPC:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -56,4 +60,6 @@ spec:
             port:
               number: 80
 ```
-*grpc-svc* is a service for the gRPC application. The service becomes available at the `/helloworld.Greeter` path. Note how we used the **nginx.org/grpc-services** annotation.
+
+*grpc-svc* is a service for the gRPC application. The service becomes available at the `/helloworld.Greeter` path. Note
+how we used the **nginx.org/grpc-services** annotation.
