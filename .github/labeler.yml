@@ -1,25 +1,29 @@
+change:
+  - head-branch: ['^change/']
+
 enhancement:
-- branch: ['feature/**', 'feat/**', 'enhancement/**', 'enh/**']
+  - head-branch: ['^feature/', '^feat/', '^enhancement/', '^enh/']
 
 bug:
-- branch: ['fix/**', 'bug/**']
+  - head-branch: ['^fix/', '^bug/']
 
 chore:
-- branch: ['chore/**']
+  - head-branch: ['^chore/']
 
 tests:
-- branch: ['tests/**', 'test/**']
-- tests/**/*
-- perf-tests/**/*
+  - any:
+      - head-branch: ['^tests/', '^test/']
+      - changed-files: ['tests/**/*', 'perf-tests/**/*']
+  - all:
+      - changed-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
 
 documentation:
-- branch: ['docs/**', 'doc/**']
-- '**/*.md'
+  - head-branch: ['^docs/', '^doc/']
+  - changed-files: '**/*.md'
 
 dependencies:
-- branch: ['deps/**', 'dep/**', 'dependabot/**']
-- go.mod
-- go.sum
+  - head-branch: ['^deps/', '^dep/', '^dependabot/', 'pre-commit-ci-update-config']
+  - changed-files: ['go.mod', 'go.sum']
 
 helm_chart:
-- deployments/helm-chart/**/*
+  - changed-files: ['deployments/helm-chart/**/*']

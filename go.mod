@@ -3,10 +3,10 @@ module github.com/nginxinc/kubernetes-ingress
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go-v2/config v1.18.22
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.14.10
-	github.com/cert-manager/cert-manager v1.12.1
-	github.com/go-chi/chi/v5 v5.0.8
+	github.com/aws/aws-sdk-go-v2/config v1.18.28
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.14.14
+	github.com/cert-manager/cert-manager v1.12.2
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.9
@@ -14,31 +14,31 @@ require (
 	github.com/nginxinc/nginx-plus-go-client v0.10.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.11.0
 	github.com/nginxinc/nginx-service-mesh v1.7.0
-	github.com/prometheus/client_golang v1.15.1
+	github.com/prometheus/client_golang v1.16.0
 	github.com/spiffe/go-spiffe/v2 v2.1.6
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20230105000112-eab7a2c85304
-	k8s.io/api v0.27.2
-	k8s.io/apimachinery v0.27.2
-	k8s.io/client-go v0.27.2
-	k8s.io/code-generator v0.27.2
+	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
+	k8s.io/api v0.27.4
+	k8s.io/apimachinery v0.27.4
+	k8s.io/client-go v0.27.4
+	k8s.io/code-generator v0.27.4
 	k8s.io/utils v0.0.0-20230505201702-9f6742963106
-	sigs.k8s.io/controller-tools v0.12.0
+	sigs.k8s.io/controller-tools v0.12.1
 )
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.18.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.21 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.33 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.27 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.34 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.27 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.12.9 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.9 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.10 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.19.0 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.27 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.5 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.35 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.29 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.36 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.29 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.12.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.19.3 // indirect
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -85,8 +85,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
-	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	github.com/prometheus/procfs v0.10.1 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect

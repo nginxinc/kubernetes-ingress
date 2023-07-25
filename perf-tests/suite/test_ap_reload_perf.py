@@ -10,14 +10,13 @@ import requests
 import yaml
 from kubernetes.client import V1ContainerPort
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_resources_utils import (
+from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     delete_ap_logconf,
     delete_ap_policy,
-    read_ap_crd,
 )
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_example_app,
     create_ingress,
     create_ingress_with_ap_annotations,
@@ -35,7 +34,7 @@ from suite.resources_utils import (
     wait_for_event_increment,
     wait_until_all_pods_are_ready,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 ap_policy = "dataguard-alarm"
 valid_resp_addr = "Server address:"

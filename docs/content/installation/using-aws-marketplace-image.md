@@ -15,6 +15,7 @@ This document will walk you through the steps needed to use the NGINX Ingress Co
 > **NOTE**: NGINX Ingress Controller from the Marketplace does NOT work in AWS Region US-West-1.
 
 ## Instructions
+
 Instructions for using AWS Marketplace:
 
 1. Ensure you have a working AWS EKS cluster. If you do not have a EKS cluster, you can create one using either the AWS console, or using the AWS tool eksctl. See [this guide](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html) for details on getting started with EKS using eksctl.
@@ -23,19 +24,20 @@ Instructions for using AWS Marketplace:
 
 3. You must associate this IAM role with your service account in your EKS cluster. When you do so, your service account Kubernetes object will have a annotation, showing the link to the IAM role.
 
-
 > **NB** You must associate your AWS EKS cluster with an OIDC provider before you can create your IAM Service account! This is required.
 
-## Step by step instructions using eksctl utility.
+## Step by step instructions using eksctl utility
 
 This assumes you have an existing EKS cluster up and running. If not, please create one before proceeding. This also assumes the namespace for the NGINX Ingress Controller already exists.
 
 1. Associate your EKS cluster with a “OIDC IAM provider” (replace `--cluster <name>` and `--region <region>` with the values of your environment).
+
 ```
 eksctl utils associate-iam-oidc-provider --region=eu-west-1 --cluster=json-eu-east1 --approve
 ```
 
-2.  Now create your IAM role and service account for your cluster. Substitute `--name <name>` `--namespace <name>` and `--region <region>` with your values.
+2. Now create your IAM role and service account for your cluster. Substitute `--name <name>` `--namespace <name>` and `--region <region>` with your values.
+
 ```
 eksctl create iamserviceaccount --name nginx-ingress --namespace nginx-ingress --cluster json-test01 --region us-east-2 --attach-policy-arn arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage --approve
  ```

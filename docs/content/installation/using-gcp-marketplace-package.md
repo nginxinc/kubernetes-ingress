@@ -9,14 +9,15 @@ docs: "DOCS-000"
 
 This document will walk you through the steps needed to deploy and configure the NGINX Ingress Controller through the GCP Marketplace.
 
-## Product overview.
+## Product overview
 
 The F5 NGINX Ingress Controller is an implementation of a Kubernetes Ingress Controller for NGINX and NGINX Plus.
 
 Basic features include:
-* Host-based routing. For example, routing requests with the host header foo.example.com to one group of services and the host header bar.example.com to another group.
-* Path-based routing. For example, routing requests with the URI that starts with /serviceA to service A and requests with the URI that starts with /serviceB to service B.
-* TLS/SSL termination for each hostname, such as foo.example.com.
+
+- Host-based routing. For example, routing requests with the host header foo.example.com to one group of services and the host header bar.example.com to another group.
+- Path-based routing. For example, routing requests with the URI that starts with /serviceA to service A and requests with the URI that starts with /serviceB to service B.
+- TLS/SSL termination for each hostname, such as foo.example.com.
 
 ## One-time setup
 

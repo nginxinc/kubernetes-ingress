@@ -1,11 +1,15 @@
 # WebSocket support
 
-To load balance a WebSocket application with NGINX Ingress Controllers, you need to add the **nginx.org/websocket-services** annotation to your Ingress resource definition. The annotation specifies which services are websocket services. The annotation syntax is as follows:
-```
+To load balance a WebSocket application with NGINX Ingress Controllers, you need to add the
+**nginx.org/websocket-services** annotation to your Ingress resource definition. The annotation specifies which services
+are websocket services. The annotation syntax is as follows:
+
+```yaml
 nginx.org/websocket-services: "service1[,service2,...]"
 ```
 
 In the following example we load balance three applications, one of which is using WebSocket:
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -40,4 +44,6 @@ spec:
             port:
               number: 8008
 ```
-*ws-svc* is a service for the WebSocket application. The service becomes available at the `/ws` path. Note how we used the **nginx.org/websocket-services** annotation.
+
+*ws-svc* is a service for the WebSocket application. The service becomes available at the `/ws` path. Note how we used
+the **nginx.org/websocket-services** annotation.
