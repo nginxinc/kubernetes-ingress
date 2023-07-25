@@ -64,7 +64,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "nginx-ingress.selectorLabels" -}}
-{{- if .Values.controller.selectorLabels }}
+{{- if .Values.controller.selectorLabels -}}
 {{ toYaml .Values.controller.selectorLabels }}
 {{- else -}}
 app.kubernetes.io/name: {{ include "nginx-ingress.name" . }}
