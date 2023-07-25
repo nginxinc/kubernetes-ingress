@@ -110,7 +110,7 @@ def transport_server_tls_passthrough_setup(
                 ],
             },
             {"example": "transport-server-tls-passthrough", "tls_passthrough_port": 8443},
-        )
+        ),
     ],
     indirect=True,
     ids=["tls_passthrough_with_default_port", "tls_passthrough_with_custom_port"],
