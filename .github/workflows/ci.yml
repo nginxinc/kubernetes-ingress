@@ -389,6 +389,7 @@ jobs:
     if: ${{ github.event_name == 'push' && ! startsWith(github.ref, 'refs/heads/release-') }}
     permissions:
       contents: write # for pushing to Helm Charts repository
+      packages: write # for helm to push to GHCR
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3

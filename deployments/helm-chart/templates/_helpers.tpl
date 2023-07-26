@@ -64,9 +64,13 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "nginx-ingress.selectorLabels" -}}
+{{- if .Values.controller.selectorLabels -}}
+{{ toYaml .Values.controller.selectorLabels }}
+{{- else -}}
 app.kubernetes.io/name: {{ include "nginx-ingress.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Expand the name of the configmap.
