@@ -1,3 +1,4 @@
+{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version2.VirtualServerConfig*/ -}}
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
     zone {{ $u.Name }} {{ if ne $u.UpstreamZoneSize "0" }}{{ $u.UpstreamZoneSize }}{{ else }}512k{{ end }};
