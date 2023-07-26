@@ -619,6 +619,14 @@
             false
           ]
         },
+        "tlsPassthroughPort": {
+          "type": "integer",
+          "default": 443,
+          "title": "The tlsPassthroughPort",
+          "examples": [
+            443
+          ]
+        },
         "enableCertManager": {
           "type": "boolean",
           "default": false,
@@ -1332,6 +1340,7 @@
           "enableOIDC": false,
           "includeYear": false,
           "enableTLSPassthrough": false,
+          "tlsPassthroughPort": 443,
           "enableCertManager": false,
           "enableExternalDNS": false,
           "globalConfiguration": {

@@ -229,7 +229,7 @@ spec:
 {{- if .Values.controller.enableCustomResources }}
           - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
 {{ if .Values.controller.enableTLSPassthrough }}
-          - -tls-passthrough-port={{ .Values.controller.tlsPassThroughPort }}
+          - -tls-passthrough-port={{ .Values.controller.tlsPassthroughPort }}
 {{ end }}
           - -enable-preview-policies={{ .Values.controller.enablePreviewPolicies }}
           - -enable-cert-manager={{ .Values.controller.enableCertManager }}

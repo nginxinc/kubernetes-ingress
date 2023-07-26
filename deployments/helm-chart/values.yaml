@@ -240,7 +240,7 @@ controller:
   enableTLSPassthrough: false
 
   ## Set the port for TLS Passthrough. Requires controller.enableCustomResources and controller.enableTLSPassthrough.
-  tlsPassThroughPort: 443
+  tlsPassthroughPort: 443
 
   ## Enable cert manager for Virtual Server resources. Requires controller.enableCustomResources.
   enableCertManager: false
