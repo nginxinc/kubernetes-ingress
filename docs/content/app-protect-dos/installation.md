@@ -14,13 +14,14 @@ This document provides an overview of the steps required to use NGINX App Protec
 ## Prerequisites
 
 1. Make sure you have access to the Ingress Controller image:
-    * For NGINX Plus Ingress Controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
-    * To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
-    * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
+    - For NGINX Plus Ingress Controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
+    - To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
+    - It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 2. Clone the Ingress Controller repo:
+
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.1.1
-    $ cd kubernetes-ingress/deployments
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.2.0
+    cd kubernetes-ingress/deployments
     ```
 
 ## Install the App Protect DoS Arbitrator
@@ -30,7 +31,7 @@ This document provides an overview of the steps required to use NGINX App Protec
 The App Protect DoS Arbitrator can be installed using the [NGINX App Protect DoS Helm Chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart).
 If you have the NGINX Helm Repository already added, you can install the App Protect DoS Arbitrator by running the following command:
 
-```bash
+```console
 helm install my-release-dos nginx-stable/nginx-appprotect-dos-arbitrator
 ```
 
@@ -40,12 +41,13 @@ Alternatively, you can install the App Protect DoS Arbitrator using the YAML man
 
 - Create the namespace and service account
 
-```bash
+```console
   kubectl apply -f common/ns-and-sa.yaml
 ```
 
 - Deploy the app protect dos arbitrator
-    ```bash
+
+    ```console
     kubectl apply -f deployment/appprotect-dos-arb.yaml
     kubectl apply -f service/appprotect-dos-arb-svc.yaml
     ```
@@ -58,9 +60,10 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
 
   When running the `make` command to build the image, be sure to use the `debian-image-dos-plus` target. For example:
 
-    ```bash
+    ```console
     make debian-image-dos-plus PREFIX=<your Docker registry domain>/nginx-plus-ingress
     ```
+
     Alternatively, if you want to run on an [OpenShift](https://www.openshift.com/) cluster, use the `ubi-image-dos-plus` target.
 
     If you want to include the App Protect WAF module in the image, you can use the `debian-image-nap-dos-plus` target or the `ubi-image-nap-dos-plus` target for OpenShift.
@@ -79,4 +82,4 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
 3. Enable the App Protect Dos module by adding the `enable-app-protect-dos` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect-dos) to your Deployment or DaemonSet file.
 4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
 
-For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect-dos/configuration),the [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v3.1.1/examples/ingress-resources/app-protect-dos).
+For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect-dos/configuration),the [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.0/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.0/examples/ingress-resources/app-protect-dos).

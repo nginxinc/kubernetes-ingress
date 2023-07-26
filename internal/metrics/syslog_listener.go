@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/metrics/collectors"
 )
 
 // SyslogListener is an interface for syslog metrics listener

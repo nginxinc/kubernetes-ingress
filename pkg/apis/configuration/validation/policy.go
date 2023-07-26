@@ -7,8 +7,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -185,25 +186,21 @@ func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 }
 
 func validateBasic(basic *v1.BasicAuth, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
+	if basic.Secret == "" {
+		return field.ErrorList{field.Required(fieldPath.Child("secret"), "")}
+	}
 
+	allErrs := field.ErrorList{}
 	if basic.Realm != "" {
 		allErrs = append(allErrs, validateRealm(basic.Realm, fieldPath.Child("realm"))...)
 	}
-
-	if basic.Secret == "" {
-		return append(allErrs, field.Required(fieldPath.Child("secret"), ""))
-	}
-	allErrs = append(allErrs, validateSecretName(basic.Secret, fieldPath.Child("secret"))...)
-
-	return allErrs
+	return append(allErrs, validateSecretName(basic.Secret, fieldPath.Child("secret"))...)
 }
 
 func validateIngressMTLS(ingressMTLS *v1.IngressMTLS, fieldPath *field.Path) field.ErrorList {
 	if ingressMTLS.ClientCertSecret == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("clientCertSecret"), "")}
 	}
-
 	allErrs := validateSecretName(ingressMTLS.ClientCertSecret, fieldPath.Child("clientCertSecret"))
 	allErrs = append(allErrs, validateIngressMTLSVerifyClient(ingressMTLS.VerifyClient, fieldPath.Child("verifyClient"))...)
 	if ingressMTLS.VerifyDepth != nil {
@@ -223,10 +220,7 @@ func validateEgressMTLS(egressMTLS *v1.EgressMTLS, fieldPath *field.Path) field.
 	if egressMTLS.VerifyDepth != nil {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*egressMTLS.VerifyDepth, fieldPath.Child("verifyDepth"))...)
 	}
-
-	allErrs = append(allErrs, validateSSLName(egressMTLS.SSLName, fieldPath.Child("sslName"))...)
-
-	return allErrs
+	return append(allErrs, validateSSLName(egressMTLS.SSLName, fieldPath.Child("sslName"))...)
 }
 
 func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
@@ -264,9 +258,7 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateURL(oidc.TokenEndpoint, fieldPath.Child("tokenEndpoint"))...)
 	allErrs = append(allErrs, validateURL(oidc.JWKSURI, fieldPath.Child("jwksURI"))...)
 	allErrs = append(allErrs, validateSecretName(oidc.ClientSecret, fieldPath.Child("clientSecret"))...)
-	allErrs = append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
-
-	return allErrs
+	return append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
 }
 
 func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
@@ -296,7 +288,6 @@ func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
 	if waf.SecurityLog != nil {
 		allErrs = append(allErrs, validateLogConf(waf.SecurityLog.ApLogConf, waf.SecurityLog.LogDest, fieldPath.Child("securityLog"))...)
 	}
-
 	return allErrs
 }
 
@@ -317,43 +308,49 @@ func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.Error
 }
 
 func validateClientID(client string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	// isValidHeaderValue checks for $ and " in the string
 	if isValidHeaderValue(client) != nil {
-		allErrs = append(allErrs, field.Invalid(
+		return field.ErrorList{field.Invalid(
 			fieldPath,
 			client,
 			`invalid string. String must contain valid ASCII characters, must have all '"' escaped and must not contain any '$' or end with an unescaped '\'
-		`))
+		`)}
 	}
-
-	return allErrs
+	return nil
 }
 
-var validScopes = map[string]bool{
-	"openid":  true,
-	"profile": true,
-	"email":   true,
-	"address": true,
-	"phone":   true,
+// Allowed unicode ranges in OIDC scope tokens.
+// Ref. https://datatracker.ietf.org/doc/html/rfc6749#section-3.3
+var validOIDCScopeRanges = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{0x21, 0x21, 1},
+		{0x23, 0x5B, 1},
+		{0x5D, 0x7E, 1},
+	},
 }
 
-// https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+// validateOIDCScope takes a scope representing OIDC scope tokens and
+// checks if the scope is valid. OIDC scope must contain scope token
+// "openid". Additionally, custom scope tokens can be added to the scope.
+//
+// Ref:
+// - https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+//
+// Scope tokens must be separated by "+", and the "+" can't be a part of the token.
 func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
 	if !strings.Contains(scope, "openid") {
-		return field.ErrorList{field.Required(fieldPath, "openid scope")}
+		return field.ErrorList{field.Required(fieldPath, "openid is required")}
 	}
 
-	allErrs := field.ErrorList{}
-	s := strings.Split(scope, "+")
-	for _, v := range s {
-		if !validScopes[v] {
-			msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", mapToPrettyString(validScopes))
-			allErrs = append(allErrs, field.Invalid(fieldPath, v, msg))
+	for _, token := range strings.Split(scope, "+") {
+		for _, v := range token {
+			if !unicode.Is(validOIDCScopeRanges, v) {
+				msg := fmt.Sprintf("not allowed character %v in scope %s", v, scope)
+				return field.ErrorList{field.Invalid(fieldPath, scope, msg)}
+			}
 		}
 	}
-	return allErrs
+	return nil
 }
 
 func validateURL(name string, fieldPath *field.Path) field.ErrorList {
@@ -460,7 +457,6 @@ func validateRateLimitZoneSize(zoneSize string, fieldPath *field.Path) field.Err
 	if err == nil && kbZoneSizeNum < 32 || mbErr == nil && mbZoneSizeNum == 0 {
 		allErrs = append(allErrs, field.Invalid(fieldPath, zoneSize, "must be greater than 31k"))
 	}
-
 	return allErrs
 }
 
@@ -478,13 +474,11 @@ func validateRateLimitKey(key string, fieldPath *field.Path, isPlus bool) field.
 	if key == "" {
 		return field.ErrorList{field.Required(fieldPath, "")}
 	}
-
 	allErrs := field.ErrorList{}
 	if err := ValidateEscapedString(key, `Hello World! \n`, `\"${request_uri}\" is unavailable. \n`); err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath, key, err.Error()))
 	}
-	allErrs = append(allErrs, validateStringWithVariables(key, fieldPath, rateLimitKeySpecialVariables, rateLimitKeyVariables, isPlus)...)
-	return allErrs
+	return append(allErrs, validateStringWithVariables(key, fieldPath, rateLimitKeySpecialVariables, rateLimitKeyVariables, isPlus)...)
 }
 
 var jwtTokenSpecialVariables = []string{"arg_", "http_", "cookie_"}
@@ -508,12 +502,12 @@ func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
 			break
 		}
 	}
-	if special {
-		// validateJWTToken is called only when NGINX Plus is running
-		return validateSpecialVariable(nVar, fieldPath, true)
-	} else {
+
+	if !special {
 		return field.ErrorList{field.Invalid(fieldPath, token, "must only have special vars")}
 	}
+	// validateJWTToken is called only when NGINX Plus is running
+	return validateSpecialVariable(nVar, fieldPath, true)
 }
 
 var validLogLevels = map[string]bool{

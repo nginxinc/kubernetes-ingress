@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -105,6 +105,7 @@ func validateStringWithVariables(str string, fieldPath *field.Path, specialVars 
 		return field.ErrorList{field.Invalid(fieldPath, str, "must not end with $")}
 	}
 
+	allErrs := field.ErrorList{}
 	for i, c := range str {
 		if c == '$' {
 			msg := "variables must be enclosed in curly braces, for example ${host}"
@@ -119,7 +120,6 @@ func validateStringWithVariables(str string, fieldPath *field.Path, specialVars 
 		}
 	}
 
-	allErrs := field.ErrorList{}
 	nginxVars := captureVariables(str)
 	for _, nVar := range nginxVars {
 		special := false
@@ -157,7 +157,6 @@ func validateOffset(offset string, fieldPath *field.Path) field.ErrorList {
 	if offset == "" {
 		return nil
 	}
-
 	if _, err := configs.ParseOffset(offset); err != nil {
 		msg := validation.RegexError(offsetErrMsg, configs.OffsetFmt, "16", "32k", "64M", "2G")
 		return field.ErrorList{field.Invalid(fieldPath, offset, msg)}

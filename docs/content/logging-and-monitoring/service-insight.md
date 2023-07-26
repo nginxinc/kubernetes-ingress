@@ -20,7 +20,7 @@ Returned HTTP codes indicate the health of the service.
 The service is indicated as not healthy (HTTP response code different than 200 OK) if all upstreams (pods) are determined unhealthy by NGINX Plus.
 The service is healthy if at least one upstream pod is healthy as determined by NGINX Plus. In this case, the endpoint returns HTTP code 200 OK.
 
-NGINX Plus determination of healthy can be tuned using advanced health checks, and also dynamically relate to pods responses and responsiveness.  See Upstream Healthcheck https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream
+NGINX Plus determination of healthy can be tuned using advanced health checks, and also dynamically relate to pods responses and responsiveness.  See Upstream Healthcheck <https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream>
 
 ## Enabling Service Insight Endpoint
 
@@ -41,9 +41,9 @@ If you're using *Helm* to install the Ingress Controller, to enable Service Insi
 
 The Service Insight provides the following statistics:
 
-* Total number of VS or TS pods
-* Number of VS or TS pods in 'Up' state
-* Number of VS or TS pods in 'Unhealthy' state
+- Total number of VS or TS pods
+- Number of VS or TS pods in 'Up' state
+- Number of VS or TS pods in 'Unhealthy' state
 
 These statistics are returned as JSON:
 
@@ -53,8 +53,8 @@ These statistics are returned as JSON:
 
 Response codes:
 
-* HTTP 200 OK - Service is healthy
-* HTTP 404 Not Found - No upstreams/VS/TS found for the requested hostname/name
-* HTTP 418 I'm a teapot - The service is down (All upstreams/VS/TS are "Unhealthy")
+- HTTP 200 OK - Service is healthy
+- HTTP 404 Not Found - No upstreams/VS/TS found for the requested hostname/name
+- HTTP 418 I'm a teapot - The service is down (All upstreams/VS/TS are "Unhealthy")
 
 **Note**: wildcards in hostnames are not supported at the moment.

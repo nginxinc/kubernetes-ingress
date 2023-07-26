@@ -80,9 +80,6 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-{{- if .Values.controller.readOnlyRootFilesystem }}
-        fsGroup: 101 #nginx
-{{- end }}
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       dnsPolicy: {{ .Values.controller.dnsPolicy }}
@@ -176,8 +173,8 @@ spec:
           - -enable-app-protect-dos={{ .Values.controller.appprotectdos.enable }}
 {{- if .Values.controller.appprotectdos.enable }}
           - -app-protect-dos-debug={{ .Values.controller.appprotectdos.debug }}
-          - -app-protect-dos-max-daemons={{ .Values.controller.appprotectdos.maxWorkers }}
-          - -app-protect-dos-max-workers={{ .Values.controller.appprotectdos.maxDaemons }}
+          - -app-protect-dos-max-daemons={{ .Values.controller.appprotectdos.maxDaemons }}
+          - -app-protect-dos-max-workers={{ .Values.controller.appprotectdos.maxWorkers }}
           - -app-protect-dos-memory={{ .Values.controller.appprotectdos.memory }}
 {{ end }}
           - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
@@ -212,7 +209,7 @@ spec:
 {{- else if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
-          - -external-service={{ include "nginx-ingress.controller.fullname" . }}
+          - -external-service={{ include "nginx-ingress.controller.service.name" . }}
 {{- end }}
 {{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}

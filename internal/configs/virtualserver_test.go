@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/secrets"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/nginx"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -9308,12 +9308,19 @@ func TestGenerateSessionCookie(t *testing.T) {
 			expected: nil,
 			msg:      "session cookie not enabled",
 		},
+		{
+			sc:       &conf_v1.SessionCookie{Enable: true, Name: "testcookie", SameSite: "lax"},
+			expected: &version2.SessionCookie{Enable: true, Name: "testcookie", SameSite: "lax"},
+			msg:      "session cookie with samesite param",
+		},
 	}
 	for _, test := range tests {
-		result := generateSessionCookie(test.sc)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateSessionCookie() returned %v, but expected %v for the case of: %v", result, test.expected, test.msg)
-		}
+		t.Run(test.msg, func(t *testing.T) {
+			result := generateSessionCookie(test.sc)
+			if !cmp.Equal(test.expected, result) {
+				t.Error(cmp.Diff(test.expected, result))
+			}
+		})
 	}
 }
 

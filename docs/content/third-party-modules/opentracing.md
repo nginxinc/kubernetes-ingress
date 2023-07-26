@@ -17,16 +17,18 @@ This document explains how to use OpenTracing with the Ingress Controller.
 **Note**: The examples below use the snippets annotations, which are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
 
 ## Prerequisites
+
 1. **Use an Ingress Controller image that contains OpenTracing.**
    - You can find the images that include OpenTracing listed [in the technical specs doc]({{< relref "technical-specifications.md#supported-docker-images" >}}).
    - Alternatively, you can [build your own image]({{< relref "installation/building-ingress-controller-image.md" >}}) using `debian-image` (or `alpine-image`) for NGINX or `debian-image-plus` (or `alpine-image-plus`) for NGINX Plus.
 [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing) and [Datadog](https://github.com/DataDog/dd-opentracing-cpp/) tracers are installed by default.
 
 2. **Load the OpenTracing module.** You need to load the module with the configuration for the chosen tracer using the following ConfigMap keys:
-   * `opentracing-tracer`: sets the path to the vendor tracer binary plugin. This is the path you used in the COPY line of step *ii* above.
-   * `opentracing-tracer-config`: sets the tracer configuration in JSON format.
+   - `opentracing-tracer`: sets the path to the vendor tracer binary plugin. This is the path you used in the COPY line of step *ii* above.
+   - `opentracing-tracer-config`: sets the tracer configuration in JSON format.
 
    Below an example on how to use those keys to load the module with Jaeger tracer:
+
     ```yaml
     opentracing-tracer: "/usr/local/lib/libjaegertracing_plugin.so"
     opentracing-tracer-config: |
@@ -44,6 +46,7 @@ This document explains how to use OpenTracing with the Ingress Controller.
     ```
 
 ## Enable OpenTracing Globally
+
 To enable OpenTracing globally (for all Ingress, VirtualServer and VirtualServerRoute resources), set the `opentracing` ConfigMap key to `True`:
 
 ```yaml
@@ -55,13 +58,17 @@ opentracing: True
 It is possible to use annotations to enable or disable OpenTracing for a specific Ingress Resource. As mentioned in the prerequisites section, both `opentracing-tracer` and `opentracing-tracer-config` must be configured.
 
 Consider the following two cases:
+
 1. OpenTracing is globally disabled.
    1. To enable OpenTracing for a specific Ingress Resource, use the server snippet annotation:
+
         ```yaml
         nginx.org/server-snippets: |
             opentracing on;
         ```
+
    1. To enable OpenTracing for specific paths, (1) you need to use [Mergeable Ingress resources](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration) and (2) use the location snippets annotation to enable OpenTracing for the paths of a specific Minion Ingress resource:
+
         ```yaml
         nginx.org/location-snippets: |
             opentracing on;
@@ -69,12 +76,14 @@ Consider the following two cases:
 
 2. OpenTracing is globally enabled:
    1. To disable OpenTracing for a specific Ingress Resource, use the server snippet annotation:
+
         ```yaml
         nginx.org/server-snippets: |
             opentracing off;
         ```
 
    1. To disable OpenTracing for specific paths, (1) you need to use [Mergeable Ingress resources](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration) and (2) use the location snippets annotation to disable OpenTracing for the paths of a specific Minion Ingress resource:
+
         ```yaml
         nginx.org/location-snippets: |
             opentracing off;

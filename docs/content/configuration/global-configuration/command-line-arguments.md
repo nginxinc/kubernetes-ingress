@@ -10,8 +10,8 @@ docs: "DOCS-585"
 
 The Ingress Controller supports several command-line arguments. Setting the arguments depends on how you install the Ingress Controller:
 
-* If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the Ingress Controller, to set the command-line arguments, modify those manifests accordingly. See the [Installation with Manifests](/nginx-ingress-controller/installation/installation-with-manifests) doc.
-* If you're using *Helm* to install the Ingress Controller, modify the parameters of the Helm chart that correspond to the command-line arguments. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
+- If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the Ingress Controller, to set the command-line arguments, modify those manifests accordingly. See the [Installation with Manifests](/nginx-ingress-controller/installation/installation-with-manifests) doc.
+- If you're using *Helm* to install the Ingress Controller, modify the parameters of the Helm chart that correspond to the command-line arguments. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
 
 Below we describe the available command-line arguments:
 &nbsp;
@@ -29,9 +29,9 @@ Default `false`.
 
 Secret with a TLS certificate and key for TLS termination of the default server.
 
-* If not set, certificate and key in the file `/etc/nginx/secrets/default` are used.
-* If `/etc/nginx/secrets/default` doesn't exist, the Ingress Controller will configure NGINX to reject TLS connections to the default server.
-* If a secret is set, but the Ingress Controller is not able to fetch it from Kubernetes API, or it is not set and the Ingress Controller fails to read the file "/etc/nginx/secrets/default", the Ingress Controller will fail to start.
+- If not set, certificate and key in the file `/etc/nginx/secrets/default` are used.
+- If `/etc/nginx/secrets/default` doesn't exist, the Ingress Controller will configure NGINX to reject TLS connections to the default server.
+- If a secret is set, but the Ingress Controller is not able to fetch it from Kubernetes API, or it is not set and the Ingress Controller fails to read the file "/etc/nginx/secrets/default", the Ingress Controller will fail to start.
 
 Format: `<namespace>/<name>`
 &nbsp;
@@ -41,9 +41,9 @@ Format: `<namespace>/<name>`
 
 A Secret with a TLS certificate and key for TLS termination of every Ingress/VirtualServer host for which TLS termination is enabled but the Secret is not specified.
 
-* If the argument is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection.
+- If the argument is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection.
 
-* If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.
+- If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.
 
 Format: `<namespace>/<name>`
 &nbsp;
@@ -74,6 +74,7 @@ Default `false`.
 <a name="cmdoption-enable-leader-election"></a>
 
 ### -inlcude-year
+
 Adds year to log headers.
 
 Default `false`.
@@ -189,8 +190,8 @@ When logging hits line `file:N`, emit a stack trace.
 
 Path to the main NGINX configuration template.
 
-* Default for NGINX is `nginx.ingress.tmpl`.
-* Default for NGINX Plus is `nginx-plus.ingress.tmpl`.
+- Default for NGINX is `nginx.ingress.tmpl`.
+- Default for NGINX Plus is `nginx-plus.ingress.tmpl`.
 &nbsp;
 <a name="cmdoption-nginx-configmaps"></a>
 
@@ -266,8 +267,8 @@ Requires the [-external-service](#cmdoption-external-service) or [-ingresslink](
 
 Path to the TransportServer NGINX configuration template for a TransportServer resource.
 
-* Default for NGINX is `nginx.transportserver.tmpl`.
-* Default for NGINX Plus is `nginx-plus.transportserver.tmpl`.
+- Default for NGINX is `nginx.transportserver.tmpl`.
+- Default for NGINX Plus is `nginx-plus.transportserver.tmpl`.
 
 &nbsp;
 <a name="cmdoption-v"></a>
@@ -288,8 +289,8 @@ Print the version, git-commit hash and build date and exit.
 
 Path to the VirtualServer NGINX configuration template for a VirtualServer resource.
 
-* Default for NGINX is `nginx.ingress.tmpl`.
-* Default for NGINX Plus is `nginx-plus.ingress.tmpl`.
+- Default for NGINX is `nginx.ingress.tmpl`.
+- Default for NGINX Plus is `nginx-plus.ingress.tmpl`.
 
 &nbsp;
 <a name="cmdoption-vmodule"></a>
@@ -336,8 +337,8 @@ Format: `[1024 - 65535]` (default `9113`)
 
 A Secret with a TLS certificate and key for TLS termination of the Prometheus metrics endpoint.
 
-* If the argument is not set, the Prometheus endpoint will not use a TLS connection.
-* If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.
+- If the argument is not set, the Prometheus endpoint will not use a TLS connection.
+- If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.
 &nbsp;
 <a name="cmdoption-enable-service-insight"></a>
 
@@ -359,8 +360,8 @@ Format: `[1024 - 65535]` (default `9114`)
 
 A Secret with a TLS certificate and key for TLS termination of the Service Insight endpoint.
 
-* If the argument is not set, the Service Insight endpoint will not use a TLS connection.
-* If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.
+- If the argument is not set, the Service Insight endpoint will not use a TLS connection.
+- If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.
 
 Format: `<namespace>/<name>`
 &nbsp;
@@ -370,7 +371,7 @@ Format: `<namespace>/<name>`
 
 Specifies the address of a running Spire agent. **For use with NGINX Service Mesh only**.
 
-* If the argument is set, but the Ingress Controller is unable to connect to the Spire Agent, the Ingress Controller will fail to start.
+- If the argument is set, but the Ingress Controller is unable to connect to the Spire Agent, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-enable-internal-routes"></a>
@@ -381,7 +382,7 @@ Enable support for internal routes with NGINX Service Mesh. **For use with NGINX
 
 Requires [-spire-agent-address](#cmdoption-spire-agent-address).
 
-* If the argument is set, but `spire-agent-address` is not provided, the Ingress Controller will fail to start.
+- If the argument is set, but `spire-agent-address` is not provided, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-enable-latency-metrics"></a>
@@ -399,7 +400,7 @@ Enables support for App Protect.
 
 Requires [-nginx-plus](#cmdoption-nginx-plus).
 
-* If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
+- If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-app-protect-log-level"></a>
@@ -410,7 +411,7 @@ Sets log level for App Protect. Allowed values: fatal, error, warn, info, debug,
 
 Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect](#cmdoption-enable-app-protect).
 
-* If the argument is set, but `nginx-plus` and `enable-app-protect` are set to false, the Ingress Controller will fail to start.
+- If the argument is set, but `nginx-plus` and `enable-app-protect` are set to false, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-enable-app-protect-dos"></a>
@@ -421,7 +422,7 @@ Enables support for App Protect DoS.
 
 Requires [-nginx-plus](#cmdoption-nginx-plus).
 
-* If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
+- If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-app-protect-dos-debug"></a>
@@ -432,7 +433,7 @@ Enable debugging for App Protect DoS.
 
 Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect-dos](#cmdoption-enable-app-protect-dos).
 
-* If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.
+- If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-app-protect-dos-max-daemons"></a>
@@ -445,7 +446,7 @@ Default `1`.
 
 Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect-dos](#cmdoption-enable-app-protect-dos).
 
-* If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.
+- If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-app-protect-dos-max-workers"></a>
@@ -458,8 +459,7 @@ Default `Number of CPU cores in the machine`.
 
 Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect-dos](#cmdoption-enable-app-protect-dos).
 
-* If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.
-
+- If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-app-protect-dos-memory"></a>
@@ -472,8 +472,7 @@ Default `50% of free RAM in the container or 80MB, the smaller`.
 
 Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect-dos](#cmdoption-enable-app-protect-dos).
 
-* If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.
-
+- If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.
 
 &nbsp;
 <a name="cmdoption-ready-status"></a>

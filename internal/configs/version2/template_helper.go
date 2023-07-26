@@ -20,7 +20,17 @@ func hasCIKey(key string, d map[string]string) bool {
 	return ok
 }
 
+// toLower takes a string and make it lowercase.
+//
+// Example:
+//
+//	{{ if .SameSite}} samesite={{.SameSite | toLower }}{{ end }}
+func toLower(s string) string {
+	return strings.ToLower(s)
+}
+
 var helperFunctions = template.FuncMap{
 	"headerListToCIMap": headerListToCIMap,
 	"hasCIKey":          hasCIKey,
+	"toLower":           toLower,
 }

@@ -5,6 +5,9 @@ controller:
   ## The kind of the Ingress Controller installation - deployment or daemonset.
   kind: deployment
 
+  ## The selectorLabels used to overide the default values.
+  selectorLabels: {}
+
   ## Annotations for deployments and daemonsets
   annotations: {}
 
@@ -54,7 +57,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
-    # tag: "3.1.1"
+    # tag: "3.2.0"
 
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
@@ -82,11 +85,11 @@ controller:
 
   ## It is recommended to use your own TLS certificates and keys
   defaultTLS:
-    ## The base64-encoded TLS certificate for the default HTTPS server. By default, a pre-generated self-signed certificate is used.
+    ## The base64-encoded TLS certificate for the default HTTPS server.
     ## Note: It is recommended that you specify your own certificate. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
     cert: ""
 
-    ## The base64-encoded TLS key for the default HTTPS server. By default, a pre-generated key is used.
+    ## The base64-encoded TLS key for the default HTTPS server.
     ## Note: It is recommended that you specify your own key. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
     key: ""
 
@@ -141,7 +144,6 @@ controller:
   # limits:
   #   cpu: 1
   #   memory: 1Gi
-
 
   ## The tolerations of the Ingress Controller pods.
   tolerations: []

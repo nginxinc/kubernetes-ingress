@@ -1,13 +1,14 @@
 # gRPC support
 
-To support a gRPC application using VirtualServer resources with NGINX Ingress Controller, you need to add the **type: grpc** field to an upstream.
-The protocol defaults to http if left unset.
+To support a gRPC application using VirtualServer resources with NGINX Ingress Controller, you need to add the **type:
+grpc** field to an upstream. The protocol defaults to http if left unset.
 
 ## Prerequisites
 
-* HTTP/2 must be enabled. See `http2` ConfigMap key in the [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)
+- HTTP/2 must be enabled. See `http2` ConfigMap key in the
+  [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)
 
-* VirtualServer and VirtualServerRoute resources for gRPC applications must include TLS termination.
+- VirtualServer and VirtualServerRoute resources for gRPC applications must include TLS termination.
 
 ## Example
 
@@ -30,4 +31,6 @@ spec:
     action:
       pass: grpc1
 ```
-*grpc-svc* is a service for the gRPC application. The service becomes available at the `/helloworld.Greeter` path. Note how we used the **type: grpc** field in the Upstream configuration.
+
+*grpc-svc* is a service for the gRPC application. The service becomes available at the `/helloworld.Greeter` path. Note
+how we used the **type: grpc** field in the Upstream configuration.

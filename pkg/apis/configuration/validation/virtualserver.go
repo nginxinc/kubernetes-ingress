@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
+	v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -368,6 +368,9 @@ func validateGrpcStatus(i *int, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
+// validateSessionCookie implements validation rules for session cookies.
+//
+// [Ref.]: https://nginx.org/en/docs/http/ngx_http_upstream_module.html#sticky
 func validateSessionCookie(sc *v1.SessionCookie, fieldPath *field.Path) field.ErrorList {
 	if sc == nil {
 		return nil
@@ -398,6 +401,13 @@ func validateSessionCookie(sc *v1.SessionCookie, fieldPath *field.Path) field.Er
 		}
 	}
 
+	if sc.SameSite != "" {
+		switch strings.ToLower(sc.SameSite) {
+		case "strict", "lax", "none":
+		default:
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("samesite"), sc.SameSite, "must be one of: `strict`, `lax`, `none`"))
+		}
+	}
 	return allErrs
 }
 

@@ -34,6 +34,14 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Create a default fully qualified controller service name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "nginx-ingress.controller.service.name" -}}
+{{- default (include "nginx-ingress.controller.fullname" .) .Values.serviceNameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "nginx-ingress.chart" -}}
@@ -56,9 +64,13 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "nginx-ingress.selectorLabels" -}}
+{{- if .Values.controller.selectorLabels -}}
+{{ toYaml .Values.controller.selectorLabels }}
+{{- else -}}
 app.kubernetes.io/name: {{ include "nginx-ingress.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Expand the name of the configmap.
