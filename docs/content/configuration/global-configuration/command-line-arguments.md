@@ -101,7 +101,7 @@ Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 ### -tls-passthrough-port `<int>`
 
 Set the port for TLS Passthrough.
-Format: `[1 - 65535]` (default `443`)
+Format: `[1024 - 65535]` (default `443`)
 
 Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 &nbsp;

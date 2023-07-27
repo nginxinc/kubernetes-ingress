@@ -22,7 +22,7 @@ spec:
   - port: 8443
     targetPort: 8443
     protocol: TCP
-    name: custom-tsl-port
+    name: custom-tls-port
   - port: 9113
     targetPort: 9113
     protocol: TCP
