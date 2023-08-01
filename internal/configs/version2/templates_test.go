@@ -11,7 +11,7 @@ func createPointerFromInt(n int) *int {
 
 // newExecutor takes VirtualServer and TransportServer templates and returns a test helper func.
 //
-// Depending on passed arguments.Returned test helper func creates either NGINXPlus or
+// Depending on passed arguments returned test helper func creates either NGINXPlus or
 // NGINX template executor.
 func newExecutor(vsTemplate, tsTemplate string) func(t *testing.T) *TemplateExecutor {
 	return func(t *testing.T) *TemplateExecutor {
@@ -188,7 +188,7 @@ func TestExecuteVirtualServerTemplateWithJWKSWithoutToken(t *testing.T) {
 		t.Error(err)
 	}
 	if bytes.Contains(got, []byte("token=$http_token")) {
-		t.Error("want no `token=` string in the rendered template")
+		t.Error("want no `token=$http_token` string in generated template")
 	}
 	if !bytes.Contains(got, []byte("proxy_cache jwks_uri_")) {
 		t.Error("want `proxy_cache` in generated template")
