@@ -84,6 +84,17 @@ func TestValidatePolicy_JWTIsNotValidOn(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "missing keyCache when using JWKS",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:   "My Product API",
+						JwksURI: "https://myjwksuri.com",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tt {

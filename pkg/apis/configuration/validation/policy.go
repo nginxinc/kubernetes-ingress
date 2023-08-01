@@ -192,6 +192,10 @@ func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 		if jwt.Token != "" {
 			allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
 		}
+		// keyCache must be present when using JWKS
+		if jwt.KeyCache == "" {
+			allErrs = append(allErrs, field.Required(fieldPath.Child("keyCache"), "key cache must be set when using JWKS"))
+		}
 		return allErrs
 	}
 	return allErrs
