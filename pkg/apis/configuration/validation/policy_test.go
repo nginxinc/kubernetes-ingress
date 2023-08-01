@@ -94,7 +94,6 @@ func TestValidatePolicy_JWTIsNotValidOn(t *testing.T) {
 			if err == nil {
 				t.Errorf("got no errors on invalid JWTAuth policy spec input")
 			}
-			t.Log(err)
 		})
 	}
 }
