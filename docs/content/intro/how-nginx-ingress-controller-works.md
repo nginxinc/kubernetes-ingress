@@ -210,7 +210,7 @@ The Controller [sync](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.
 
 Rather than show how all the various sync methods work, we focus on the most important one -- the *syncIngress* method -- and look at how it processes a new Ingress resource, illustrated in the diagram below.
 
-{{< img src="/img/controller-sync.png" title="Controller sync" >}}
+{{< img src="img/controller-sync.png" title="Controller sync" >}}
 
 1. The *Workqueue* calls the *sync* method and passes a workqueue element to it that includes the changed resource *kind* and *key* (the key is the resource namespace/name like “default/cafe-ingress”).
 2. Using the *kind*, the *sync* method calls the appropriate sync method and passes the resource key. For Ingresses, that method is *syncIngress*.
