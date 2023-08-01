@@ -6,15 +6,9 @@ Docs are written in Markdown. We build the docs using [Hugo](https://gohugo.io) 
 
 ## Setup
 
-1. To install Hugo locally, refer to the [Hugo installation instructions](https://gohugo.io/getting-started/installing/).
+To install Hugo locally, refer to the [Hugo installation instructions](https://gohugo.io/getting-started/installing/).
 
-    > **NOTE**: We are currently running [Hugo v0.115.3](https://github.com/gohugoio/hugo/releases/tag/v0.115.3) in production.
-
-2. We use markdownlint to check that Markdown files are correct. Use `npm` to install markdownlint-cli:
-
-    ```shell
-    npm install -g markdownlint-cli
-    ```
+> **NOTE**: We are currently running [Hugo v0.115.3](https://github.com/gohugoio/hugo/releases/tag/v0.115.3) in production.
 
 ## Local Docs Development
 
@@ -26,16 +20,6 @@ make docs           -   runs a local hugo server so you can view docs in your br
 make hugo-mod       -   cleans the Hugo module cache and fetches the latest version of the theme module
 make docs-drafts    -   runs the local hugo server and includes all docs marked with `draft: true`
 ```
-
-## Linting
-
-- To run the markdownlint check, run the following command from the docs directory:
-
-    ```bash
-    markdownlint -c docs/mdlint_conf.json content
-    ```
-
-    Note: You can run this tool on an entire directory or on an individual file.
 
 ## Add new docs
 
@@ -133,4 +117,4 @@ A few more fun shortcodes:
 - `link`: makes it possible to link to a file and prepend the path with the Hugo baseUrl
 - `openapi`: loads an OpenAPI spec and renders as HTML using ReDoc
 - `raw-html`: makes it possible to include a block of raw HTML
-- `readfile`: includes the content of another file in the current file; does not require the included file to be in a specific location
+- `readfile`: includes the content of another file in the current file; does not require the included file to be in a specific location.
