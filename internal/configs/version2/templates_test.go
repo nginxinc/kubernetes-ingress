@@ -9,35 +9,27 @@ func createPointerFromInt(n int) *int {
 	return &n
 }
 
-// newExecutor takes VirtualServer and TransportServer templates and returns a test helper func.
-//
-// Depending on passed arguments returned test helper func creates either NGINXPlus or
-// NGINX template executor.
-func newExecutor(vsTemplate, tsTemplate string) func(t *testing.T) *TemplateExecutor {
-	return func(t *testing.T) *TemplateExecutor {
-		t.Helper()
-		executor, err := NewTemplateExecutor(vsTemplate, tsTemplate)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return executor
+func newTmplExecutorNGINXPlus(t *testing.T) *TemplateExecutor {
+	t.Helper()
+	executor, err := NewTemplateExecutor("nginx-plus.virtualserver.tmpl", "nginx-plus.transportserver.tmpl")
+	if err != nil {
+		t.Fatal(err)
 	}
+	return executor
 }
 
-var (
-	tmplExecutorNGINXplus = newExecutor(
-		"nginx-plus.virtualserver.tmpl",
-		"nginx-plus.transportserver.tmpl",
-	)
-	tmplExecutorNGINX = newExecutor(
-		"nginx.virtualserver.tmpl",
-		"nginx.transportserver.tmpl",
-	)
-)
+func newTmplExecutorNGINX(t *testing.T) *TemplateExecutor {
+	t.Helper()
+	executor, err := NewTemplateExecutor("nginx.virtualserver.tmpl", "nginx.transportserver.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return executor
+}
 
 func TestVirtualServerForNginxPlus(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -47,7 +39,7 @@ func TestVirtualServerForNginxPlus(t *testing.T) {
 
 func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOn(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithGunzipOn)
 	if err != nil {
 		t.Error(err)
@@ -60,7 +52,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOn(t *testi
 
 func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOff(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithGunzipOff)
 	if err != nil {
 		t.Error(err)
@@ -73,7 +65,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOff(t *test
 
 func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithGunzipNotSet)
 	if err != nil {
 		t.Error(err)
@@ -86,7 +78,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *t
 
 func TestExecuteVirtualServerTemplate_RendersTemplateWithSessionCookieSameSite(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithSessionCookieSameSite)
 	if err != nil {
 		t.Error(err)
@@ -99,7 +91,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithSessionCookieSameSite(t
 
 func TestVirtualServerForNginxPlusWithWAFApBundle(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithWAFApBundle)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -109,7 +101,7 @@ func TestVirtualServerForNginxPlusWithWAFApBundle(t *testing.T) {
 
 func TestVirtualServerForNginx(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINX(t)
+	executor := newTmplExecutorNGINX(t)
 	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -119,7 +111,7 @@ func TestVirtualServerForNginx(t *testing.T) {
 
 func TestTransportServerForNginxPlus(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -129,7 +121,7 @@ func TestTransportServerForNginxPlus(t *testing.T) {
 
 func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	_, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -138,7 +130,7 @@ func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 
 func TestTransportServerForNginx(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINX(t)
+	executor := newTmplExecutorNGINX(t)
 	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -148,7 +140,7 @@ func TestTransportServerForNginx(t *testing.T) {
 
 func TestTLSPassthroughHosts(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINX(t)
+	executor := newTmplExecutorNGINX(t)
 
 	unixSocketsCfg := TLSPassthroughHostsConfig{
 		"app.example.com": "unix:/var/lib/nginx/passthrough-default_secure-app.sock",
@@ -163,7 +155,7 @@ func TestTLSPassthroughHosts(t *testing.T) {
 
 func TestExecuteVirtualServerTemplateWithJWKSWithToken(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithJWTPolicyJWKSWithToken)
 	if err != nil {
 		t.Error(err)
@@ -182,7 +174,7 @@ func TestExecuteVirtualServerTemplateWithJWKSWithToken(t *testing.T) {
 
 func TestExecuteVirtualServerTemplateWithJWKSWithoutToken(t *testing.T) {
 	t.Parallel()
-	executor := tmplExecutorNGINXplus(t)
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithJWTPolicyJWKSWithoutToken)
 	if err != nil {
 		t.Error(err)
