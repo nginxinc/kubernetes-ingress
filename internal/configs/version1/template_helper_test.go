@@ -10,7 +10,7 @@ func TestWithPathRegex_MatchesCaseSensitiveModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "~ \"^/coffee/[A-Z0-9]{3}\""
-	got := makePathRegex("/coffee/[A-Z0-9]{3}", map[string]string{"nginx.org/path-regex": "case_sensitive"})
+	got := makeLocationPath("/coffee/[A-Z0-9]{3}", map[string]string{"nginx.org/path-regex": "case_sensitive"})
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -20,7 +20,7 @@ func TestWithPathRegex_MatchesCaseInsensitiveModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "~* \"^/coffee/[A-Z0-9]{3}\""
-	got := makePathRegex("/coffee/[A-Z0-9]{3}", map[string]string{"nginx.org/path-regex": "case_insensitive"})
+	got := makeLocationPath("/coffee/[A-Z0-9]{3}", map[string]string{"nginx.org/path-regex": "case_insensitive"})
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -30,7 +30,7 @@ func TestWithPathReqex_MatchesExactModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "= \"/coffee\""
-	got := makePathRegex("/coffee", map[string]string{"nginx.org/path-regex": "exact"})
+	got := makeLocationPath("/coffee", map[string]string{"nginx.org/path-regex": "exact"})
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -40,7 +40,7 @@ func TestWithPathReqex_DoesNotMatchModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
-	got := makePathRegex("/coffee", map[string]string{"nginx.org/path-regex": "bogus"})
+	got := makeLocationPath("/coffee", map[string]string{"nginx.org/path-regex": "bogus"})
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -50,7 +50,7 @@ func TestWithPathReqex_DoesNotMatchEmptyModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
-	got := makePathRegex("/coffee", map[string]string{"nginx.org/path-regex": ""})
+	got := makeLocationPath("/coffee", map[string]string{"nginx.org/path-regex": ""})
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -60,7 +60,7 @@ func TestWithPathReqex_DoesNotMatchBogusAnnotationName(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
-	got := makePathRegex("/coffee", map[string]string{"nginx.org/bogus-annotation": ""})
+	got := makeLocationPath("/coffee", map[string]string{"nginx.org/bogus-annotation": ""})
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}

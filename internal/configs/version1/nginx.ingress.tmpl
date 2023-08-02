@@ -102,11 +102,7 @@ server {
 	{{- end}}
 
 	{{range $location := $server.Locations}}
-	{{ if index $.Ingress.Annotations "nginx.org/path-regex" }}
-	location {{  makePathRegex $location.Path $.Ingress.Annotations | printf }} {
-	{{ else }}
-	location {{ $location.Path }} {
-	{{ end }}
+	location {{  makeLocationPath $location.Path $.Ingress.Annotations | printf }} {
 		set $service "{{$location.ServiceName}}";
 		{{with $location.MinionIngress}}
 		# location for minion {{$location.MinionIngress.Namespace}}/{{$location.MinionIngress.Name}}
