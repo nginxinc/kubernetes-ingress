@@ -18,6 +18,7 @@ To build the docs locally, run the desired `make` command from the docs director
 make clean          -   removes the local `public` directory, which is the default output path used by Hugo
 make docs           -   runs a local hugo server so you can view docs in your browser while you work
 make hugo-mod       -   cleans the Hugo module cache and fetches the latest version of the theme module
+make hugo-mod-tidy  -   removes unused entries in go.mod and go.sum and verifies the dependencies
 make docs-drafts    -   runs the local hugo server and includes all docs marked with `draft: true`
 ```
 

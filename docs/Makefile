@@ -2,7 +2,7 @@ THEME_MODULE = github.com/nginxinc/nginx-hugo-theme
 ## Pulls the current theme version from the Netlify settings
 THEME_VERSION = $(NGINX_THEME_VERSION)
 
-.PHONY: all clean hugo-mod build-production build-staging hugo-server-drafts hugo-server netlify
+.PHONY: all clean hugo-mod hugo-mod-tidy build-production build-staging hugo-server-drafts hugo-server netlify
 
 all: hugo-mod build-production
 
@@ -16,6 +16,9 @@ clean:
 
 hugo-mod:
 	hugo mod get $(THEME_MODULE)@v$(THEME_VERSION)
+
+hugo-mod-tidy:
+	hugo mod tidy && hugo mod verify
 
 # Builds using the Hugo "production" environment
 # For deploys to docs.nginx.com only
