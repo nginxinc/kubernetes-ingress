@@ -258,6 +258,7 @@ jobs:
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
                                                 {\"image\": \"ubi-plus\", \"marker\": \"policies\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
           else
