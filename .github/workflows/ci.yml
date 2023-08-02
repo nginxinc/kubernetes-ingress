@@ -45,7 +45,7 @@ jobs:
       - name: Output Variables
         id: vars
         run: |
-          echo "k8s_latest=$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
+          echo "k8s_latest=$(grep -m1 'FROM kindest/node' <tests/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
           echo "chart_version=$(yq '.version' <deployments/helm-chart/Chart.yaml)" >> $GITHUB_OUTPUT
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
 
@@ -274,7 +274,7 @@ jobs:
       - name: Build Test-Runner Container
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
-          file: tests/docker/Dockerfile
+          file: tests/Dockerfile
           context: "."
           cache-from: type=gha,scope=test-runner
           cache-to: type=gha,scope=test-runner,mode=max

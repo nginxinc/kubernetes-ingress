@@ -52,7 +52,7 @@ jobs:
       - name: Set other variables
         id: vars
         run: |
-          echo "k8s_version=$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
+          echo "k8s_version=$(grep -m1 'FROM kindest/node' <tests/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
 
   check:
     name: Check if updates are needed
