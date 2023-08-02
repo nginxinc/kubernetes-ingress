@@ -161,7 +161,7 @@ func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 	}
 	allErrs := validateRealm(jwt.Realm, fieldPath.Child("realm"))
 
-	// Use either JWT Secret or JWKS URI, they are are mutually exclusive.
+	// Use either JWT Secret or JWKS URI, they are mutually exclusive.
 	if jwt.Secret == "" && jwt.JwksURI == "" {
 		return append(allErrs, field.Required(fieldPath.Child("secret"), "either Secret or JwksURI must be present"))
 	}
