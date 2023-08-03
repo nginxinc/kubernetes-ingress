@@ -76,13 +76,13 @@ jobs:
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
-        if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
+        if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
 
       - name: Login to ECR
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
-        if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
+        if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
 
       - name: Docker meta
         id: meta
@@ -90,8 +90,8 @@ jobs:
         with:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
-            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress,enable=${{ github.ref_type == 'tag' }}
+            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ github.ref_type == 'tag' && contains(inputs.target, 'aws') }}
           flavor: |
             suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}},onlatest=true
             latest=${{ contains(inputs.target, 'aws') && 'false' || 'auto' }}
@@ -132,7 +132,7 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.meta.outputs.version || 'CI' }}
+            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
@@ -156,7 +156,7 @@ jobs:
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "product_code=AWS${nap}_PRODUCT_ID" >> $GITHUB_OUTPUT
           echo "registry=${aws_registry}" >> $GITHUB_OUTPUT
-        if: startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws')
+        if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
 
       - name: Publish to AWS Marketplace
         uses: nginxinc/aws-marketplace-publish@93e03c5ce4baa842a8e5baad0a3f35d07b38460c # v0.1.2
@@ -173,7 +173,7 @@ jobs:
             This container requires Kubernetes and can be deployed to EKS.
             Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments
             Use this image instead of building your own.
-        if: ${{ startsWith(github.ref, 'refs/tags/') && contains(inputs.target, 'aws') }}
+        if: ${{ github.ref_type == 'tag' && contains(inputs.target, 'aws') }}
 
       - name: Load image for Trivy
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
@@ -186,7 +186,7 @@ jobs:
           load: true
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.meta.outputs.version || 'CI' }}
+            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
