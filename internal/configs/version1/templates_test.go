@@ -7,27 +7,9 @@ import (
 	"text/template"
 )
 
-func makeTemplateNGINXPlus(t *testing.T) *template.Template {
-	t.Helper()
-	tmpl, err := template.New(nginxPlusIngressTmpl).Funcs(helperFunctions).ParseFiles(nginxPlusIngressTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return tmpl
-}
-
-func makeTemplateNGINX(t *testing.T) *template.Template {
-	t.Helper()
-	tmpl, err := template.New(nginxIngressTmpl).Funcs(helperFunctions).ParseFiles(nginxIngressTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return tmpl
-}
-
 func TestIngressForNGINXPlus(t *testing.T) {
 	t.Parallel()
-	tmpl := makeTemplateNGINXPlus(t)
+	tmpl := newNGINXPlusIngressTmpl(t)
 	buf := &bytes.Buffer{}
 	err := tmpl.Execute(buf, ingressCfg)
 	t.Log(buf.String())
@@ -38,7 +20,7 @@ func TestIngressForNGINXPlus(t *testing.T) {
 
 func TestIngressForNGINX(t *testing.T) {
 	t.Parallel()
-	tmpl := makeTemplateNGINX(t)
+	tmpl := newNGINXIngressTmpl(t)
 	buf := &bytes.Buffer{}
 
 	err := tmpl.Execute(buf, ingressCfg)
@@ -50,7 +32,7 @@ func TestIngressForNGINX(t *testing.T) {
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegExAnnotationCaseSensitive(t *testing.T) {
 	t.Parallel()
-	tmpl := makeTemplateNGINXPlus(t)
+	tmpl := newNGINXPlusIngressTmpl(t)
 	buf := &bytes.Buffer{}
 
 	err := tmpl.Execute(buf, ingressCfgWithRegExAnnotationCaseSensitive)
@@ -67,7 +49,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegExAnnotationCaseSensitive(
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegExAnnotationCaseInsensitive(t *testing.T) {
 	t.Parallel()
-	tmpl := makeTemplateNGINXPlus(t)
+	tmpl := newNGINXPlusIngressTmpl(t)
 	buf := &bytes.Buffer{}
 
 	err := tmpl.Execute(buf, ingressCfgWithRegExAnnotationCaseInsensitive)
@@ -84,7 +66,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegExAnnotationCaseInsensitiv
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegExAnnotationExactMatch(t *testing.T) {
 	t.Parallel()
-	tmpl := makeTemplateNGINXPlus(t)
+	tmpl := newNGINXPlusIngressTmpl(t)
 	buf := &bytes.Buffer{}
 
 	err := tmpl.Execute(buf, ingressCfgWithRegExAnnotationExactMatch)
@@ -101,7 +83,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegExAnnotationExactMatch(t *
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegExAnnotationEmpty(t *testing.T) {
 	t.Parallel()
-	tmpl := makeTemplateNGINXPlus(t)
+	tmpl := newNGINXPlusIngressTmpl(t)
 	buf := &bytes.Buffer{}
 
 	err := tmpl.Execute(buf, ingressCfgWithRegExAnnotationEmptyString)
@@ -118,32 +100,64 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegExAnnotationEmpty(t *testi
 
 func TestMainForNGINXPlus(t *testing.T) {
 	t.Parallel()
-	tmpl, err := template.New(nginxPlusMainTmpl).ParseFiles(nginxPlusMainTmpl)
-	if err != nil {
-		t.Fatalf("Failed to parse template file: %v", err)
-	}
+
+	tmpl := newNGINXPlusMainTmpl(t)
 	buf := &bytes.Buffer{}
 
-	err = tmpl.Execute(buf, mainCfg)
-	t.Log(buf.String())
+	err := tmpl.Execute(buf, mainCfg)
 	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
+		t.Errorf("Failed to write template %v", err)
 	}
+	t.Log(buf.String())
 }
 
 func TestMainForNGINX(t *testing.T) {
 	t.Parallel()
-	tmpl, err := template.New(nginxMainTmpl).ParseFiles(nginxMainTmpl)
-	if err != nil {
-		t.Fatalf("Failed to parse template file: %v", err)
-	}
+
+	tmpl := newNGINXMainTmpl(t)
 	buf := &bytes.Buffer{}
 
-	err = tmpl.Execute(buf, mainCfg)
-	t.Log(buf.String())
+	err := tmpl.Execute(buf, mainCfg)
 	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
+		t.Errorf("Failed to write template %v", err)
 	}
+	t.Log(buf.String())
+}
+
+func newNGINXPlusIngressTmpl(t *testing.T) *template.Template {
+	t.Helper()
+	tmpl, err := template.New("nginx-plus.ingress.tmpl").Funcs(helperFunctions).ParseFiles("nginx-plus.ingress.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return tmpl
+}
+
+func newNGINXIngressTmpl(t *testing.T) *template.Template {
+	t.Helper()
+	tmpl, err := template.New("nginx.ingress.tmpl").Funcs(helperFunctions).ParseFiles("nginx.ingress.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return tmpl
+}
+
+func newNGINXPlusMainTmpl(t *testing.T) *template.Template {
+	t.Helper()
+	tmpl, err := template.New("nginx-plus.tmpl").ParseFiles("nginx-plus.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return tmpl
+}
+
+func newNGINXMainTmpl(t *testing.T) *template.Template {
+	t.Helper()
+	tmpl, err := template.New("nginx.tmpl").ParseFiles("nginx.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return tmpl
 }
 
 var (
@@ -444,13 +458,6 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
 	}
-)
-
-const (
-	nginxIngressTmpl     = "nginx.ingress.tmpl"
-	nginxMainTmpl        = "nginx.tmpl"
-	nginxPlusIngressTmpl = "nginx-plus.ingress.tmpl"
-	nginxPlusMainTmpl    = "nginx-plus.tmpl"
 )
 
 var testUpstream = Upstream{
