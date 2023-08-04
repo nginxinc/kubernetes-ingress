@@ -7,7 +7,7 @@ import (
 	"text/template"
 )
 
-func TestIngressForNGINXPlus(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINXPlus(t *testing.T) {
 	t.Parallel()
 	tmpl := newNGINXPlusIngressTmpl(t)
 	buf := &bytes.Buffer{}
@@ -18,7 +18,7 @@ func TestIngressForNGINXPlus(t *testing.T) {
 	}
 }
 
-func TestIngressForNGINX(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINX(t *testing.T) {
 	t.Parallel()
 	tmpl := newNGINXIngressTmpl(t)
 	buf := &bytes.Buffer{}
