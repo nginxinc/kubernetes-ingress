@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-func TestWithPathRegex_MatchesCaseSensitiveModifier(t *testing.T) {
+func TestMakeLocationPath_WithRegexCaseSensitiveModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "~ \"^/coffee/[A-Z0-9]{3}\""
@@ -16,7 +16,7 @@ func TestWithPathRegex_MatchesCaseSensitiveModifier(t *testing.T) {
 	}
 }
 
-func TestWithPathRegex_MatchesCaseInsensitiveModifier(t *testing.T) {
+func TestMakeLocationPath_WithRegexCaseInsensitiveModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "~* \"^/coffee/[A-Z0-9]{3}\""
@@ -26,7 +26,7 @@ func TestWithPathRegex_MatchesCaseInsensitiveModifier(t *testing.T) {
 	}
 }
 
-func TestWithPathReqex_MatchesExactModifier(t *testing.T) {
+func TestMakeLocationPath_WithRegexExactModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "= \"/coffee\""
@@ -36,7 +36,7 @@ func TestWithPathReqex_MatchesExactModifier(t *testing.T) {
 	}
 }
 
-func TestWithPathReqex_DoesNotMatchModifier(t *testing.T) {
+func TestMakeLocationPath_WithBogusRegexModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
@@ -46,7 +46,7 @@ func TestWithPathReqex_DoesNotMatchModifier(t *testing.T) {
 	}
 }
 
-func TestWithPathReqex_DoesNotMatchEmptyModifier(t *testing.T) {
+func TestMakeLocationPath_WithEmptyRegexModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
@@ -56,7 +56,7 @@ func TestWithPathReqex_DoesNotMatchEmptyModifier(t *testing.T) {
 	}
 }
 
-func TestWithPathReqex_DoesNotMatchBogusAnnotationName(t *testing.T) {
+func TestMakeLocationPath_WithBogusAnnotationName(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
@@ -66,50 +66,62 @@ func TestWithPathReqex_DoesNotMatchBogusAnnotationName(t *testing.T) {
 	}
 }
 
-func TestSplitHelperFunction(t *testing.T) {
+func TestSplitInputString(t *testing.T) {
 	t.Parallel()
-	const tpl = `{{range $n := split . ","}}{{$n}} {{end}}`
 
-	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(tpl)
-	if err != nil {
-		t.Fatalf("Failed to parse template: %v", err)
-	}
-
+	tmpl := newSplitTemplate(t)
 	var buf bytes.Buffer
 
 	input := "foo,bar"
 	expected := "foo bar "
 
-	err = tmpl.Execute(&buf, input)
+	err := tmpl.Execute(&buf, input)
 	if err != nil {
 		t.Fatalf("Failed to execute the template %v", err)
 	}
-
 	if buf.String() != expected {
-		t.Fatalf("Template generated wrong config, got %v but expected %v.", buf.String(), expected)
+		t.Errorf("Template generated wrong config, got %v but expected %v.", buf.String(), expected)
 	}
 }
 
-func TestTrimHelperFunction(t *testing.T) {
+func TestTrimWhiteSpaceFromInputString(t *testing.T) {
 	t.Parallel()
-	const tpl = `{{trim .}}`
 
-	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(tpl)
+	tmpl := newTrimTemplate(t)
+	inputs := []string{
+		"  foobar     ",
+		"foobar   ",
+		"   foobar",
+		"foobar",
+	}
+	expected := "foobar"
+
+	for _, i := range inputs {
+		var buf bytes.Buffer
+		err := tmpl.Execute(&buf, i)
+		if err != nil {
+			t.Fatalf("Failed to execute the template %v", err)
+		}
+		if buf.String() != expected {
+			t.Errorf("Template generated wrong config, got %v but expected %v.", buf.String(), expected)
+		}
+	}
+}
+
+func newSplitTemplate(t *testing.T) *template.Template {
+	t.Helper()
+	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(`{{range $n := split . ","}}{{$n}} {{end}}`)
 	if err != nil {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
+	return tmpl
+}
 
-	var buf bytes.Buffer
-
-	input := "  foobar     "
-	expected := "foobar"
-
-	err = tmpl.Execute(&buf, input)
+func newTrimTemplate(t *testing.T) *template.Template {
+	t.Helper()
+	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(`{{trim .}}`)
 	if err != nil {
-		t.Fatalf("Failed to execute the template %v", err)
+		t.Fatalf("Failed to parse template: %v", err)
 	}
-
-	if buf.String() != expected {
-		t.Fatalf("Template generated wrong config, got %v but expected %v.", buf.String(), expected)
-	}
+	return tmpl
 }
