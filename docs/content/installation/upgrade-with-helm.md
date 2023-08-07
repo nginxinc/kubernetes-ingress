@@ -11,7 +11,7 @@ This document will walk you through the steps needed to upgrade the NGINX Ingres
 
 ## Background
 
-In the NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to align better with Helm best practices. 
+In the NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to align better with Helm best practices.
 However upon running a helm upgrade job from previous installed version to 3.1.0+, some resources like Deploymeny/DaemonSet and Service will be recreated (recreate no rolling update) due to changes in nomenclature and selector labels resulting in undesirable downtime.
 
 ## Steps to perform upgrade without downtine
@@ -33,7 +33,7 @@ However upon running a helm upgrade job from previous installed version to 3.1.0
 2. Checkout the latest available tag using ```git checkout v3.3.0```
 
 3. Update the ```selectorLabels: {}``` field in ```values.yaml``` file located at       ``` /kubernates-ingress/deployments/helm-chart``` with the ```selector``` from Step 1.
-    ```shell    
+    ```shell
     selectorLabels: {app: nginx-ingress-nginx-ingress}
     ```
 
@@ -41,7 +41,7 @@ However upon running a helm upgrade job from previous installed version to 3.1.0
     ```shell
     --set controller.serviceNameOverride=“nginx-ingress-nginx-ingress”
     --set controller.name=""
-    --set fullnameOverride=“nginx-ingress-nginx-ingress” 
+    --set fullnameOverride=“nginx-ingress-nginx-ingress”
     ```
     eg: ```helm upgrade nginx-ingress --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride=“nginx-ingress-nginx-ingress” --set controller.name=“” --set fullnameOverride=“nginx-ingress-nginx-ingress” .```
 
@@ -71,7 +71,7 @@ However upon running a helm upgrade job from previous installed version to 3.1.0
 2. Checkout the latest available tag using ```git checkout v3.3.0```
 
 3. Update the ```selectorLabels: {}``` field in ```values.yaml``` file located at       ``` /kubernates-ingress/deployments/helm-chart``` with the ```selector``` from Step 1.
-    ```shell    
+    ```shell
     selectorLabels: {app: <helm_release_name>-nginx-ingress}
     ```
 
