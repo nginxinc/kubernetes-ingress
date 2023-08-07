@@ -1,4 +1,3 @@
-
 name: Run Smoke Tests
 
 on:
@@ -49,10 +48,10 @@ jobs:
         uses: docker/build-push-action@37abcedcc1da61a57767b7588cb9d03eb57e28b3 # v3.3.0
         with:
           file: build/Dockerfile
-          context: '.'
+          context: "."
           cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
           target: goreleaser
-          tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
+          tags: "docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}"
           load: true
           pull: true
           build-args: |
@@ -92,8 +91,8 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
       - run: pip install -r requirements.txt
         working-directory: ./tests
 
@@ -117,8 +116,7 @@ jobs:
         working-directory: ./tests
 
       - name: Save Kind logs
-        run: |
-          kind export logs ${{ github.workspace }}/kind-${{ github.run_id }}
+        run: kind export logs ${{ github.workspace }}/kind-${{ github.run_id }}
         if: always()
 
       - name: Upload Kind logs
