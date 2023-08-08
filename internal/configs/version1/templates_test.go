@@ -124,6 +124,18 @@ func TestMainForNGINX(t *testing.T) {
 	t.Log(buf.String())
 }
 
+func TestExecuteTemplate_ForMergeableIngress(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusIngressTmpl(t)
+	buf := &bytes.Buffer{}
+	err := tmpl.Execute(buf, ingressCfgMasterMinionNGINXPlus)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func newNGINXPlusIngressTmpl(t *testing.T) *template.Template {
 	t.Helper()
 	tmpl, err := template.New("nginx-plus.ingress.tmpl").Funcs(helperFunctions).ParseFiles("nginx-plus.ingress.tmpl")
@@ -457,6 +469,118 @@ var (
 		VariablesHashBucketSize: 256,
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
+	}
+
+	// Vars for Mergable Ingress Master - Minion tests
+
+	coffeeUpstreamNginxPlus = Upstream{
+		Name:             "default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: "512k",
+		UpstreamServers: []UpstreamServer{
+			{
+				Address:     "10.0.0.1:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+		UpstreamLabels: UpstreamLabels{
+			Service:           "coffee-svc",
+			ResourceType:      "ingress",
+			ResourceName:      "cafe-ingress-coffee-minion",
+			ResourceNamespace: "default",
+		},
+	}
+
+	teaUpstreamNGINXPlus = Upstream{
+		Name:             "default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: "512k",
+		UpstreamServers: []UpstreamServer{
+			{
+				Address:     "10.0.0.2:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+		UpstreamLabels: UpstreamLabels{
+			Service:           "tea-svc",
+			ResourceType:      "ingress",
+			ResourceName:      "cafe-ingress-tea-minion",
+			ResourceNamespace: "default",
+		},
+	}
+
+	ingressCfgMasterMinionNGINXPlus = IngressNginxConfig{
+		Upstreams: []Upstream{
+			coffeeUpstreamNginxPlus,
+			teaUpstreamNGINXPlus,
+		},
+		Servers: []Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []Location{
+					{
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstreamNginxPlus,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-coffee-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
+						ProxySSLName: "coffee-svc.default.svc",
+					},
+					{
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstreamNGINXPlus,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-tea-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
+						ProxySSLName: "tea-svc.default.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]HealthCheck),
+			},
+		},
+		Ingress: Ingress{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
 	}
 )
 
