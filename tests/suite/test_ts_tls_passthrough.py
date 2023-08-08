@@ -85,7 +85,6 @@ def transport_server_tls_passthrough_setup(
 
 
 @pytest.mark.ts
-@pytest.mark.tls_passthrough
 @pytest.mark.parametrize(
     "crd_ingress_controller, transport_server_tls_passthrough_setup",
     [
