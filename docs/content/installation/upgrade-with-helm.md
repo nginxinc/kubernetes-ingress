@@ -21,7 +21,7 @@ The steps you should follow depend on the Helm release name:
 
 {{<tabs name="upgrade-helm">}}
 
-{{%tab name="Release name is nginx-ingress"%}}
+{{%tab name="Helm release name is `nginx-ingress`"%}}
 
 1. Use `kubectl describe deployments` to get the `Selector` value:
 
@@ -49,7 +49,9 @@ The steps you should follow depend on the Helm release name:
     ```
     It could look as follows:
 
-     `helm upgrade nginx-ingress --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress"`
+    ```shell
+    helm upgrade nginx-ingress --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress"
+    ```
 
 1. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
     ```shell
@@ -61,7 +63,7 @@ The steps you should follow depend on the Helm release name:
 
 {{%/tab%}}
 
-{{%tab name="Release name is not nginx-ingress"%}}
+{{%tab name="Helm release name is not `nginx-ingress`"%}}
 
 1. Use `kubectl describe deployments` to get the `Selector` value:
 
@@ -83,12 +85,14 @@ The steps you should follow depend on the Helm release name:
 
 1. Run `helm upgrade` with following arguments set:
     ```shell
-      --set controller.serviceNameOverride="<helm_release_name>-nginx-ingress"
-      --set controller.name=""
+    --set controller.serviceNameOverride="<helm_release_name>-nginx-ingress"
+    --set controller.name=""
     ```
     It could look as follows:
 
-    `helm upgrade test-release --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="test-release-nginx-ingress" --set controller.name=""`
+    ```shell
+    helm upgrade test-release --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="test-release-nginx-ingress" --set controller.name=""
+    ```
 
 1. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
     ```shell
