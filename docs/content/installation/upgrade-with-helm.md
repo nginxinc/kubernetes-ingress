@@ -35,7 +35,7 @@ The steps you should follow depend on the Helm release name:
 
 1. Checkout the latest available tag using `git checkout v3.3.0`
 
-1. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `selector` value.
+1. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
     ```shell
     selectorLabels: {app: nginx-ingress-nginx-ingress}
     ```
@@ -75,14 +75,14 @@ The steps you should follow depend on the Helm release name:
 
 1. Checkout the latest available tag using `git checkout v3.3.0`
 
-1. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `selector` value.
+1. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
     ```shell
     selectorLabels: {app: <helm_release_name>-nginx-ingress}
     ```
 
 1. Run `helm upgrade` with following arguments set:
     ```shell
-      --set controller.serviceNameOverride="<helm_release_name>-nginx-ingress",
+      --set controller.serviceNameOverride="<helm_release_name>-nginx-ingress"
       --set controller.name=""
     ```
     It could look as follows:
