@@ -12,7 +12,7 @@ This document will walk you through the steps needed to upgrade the NGINX Ingres
 ## Background
 
 In the NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to align better with Helm best practices.
-However upon running a helm upgrade job from previous installed version to 3.1.0+, some resources like Deploymeny/DaemonSet and Service will be recreated (recreate no rolling update) due to changes in nomenclature and selector labels resulting in undesirable downtime.
+However upon running a helm upgrade job from previous installed version to 3.1.0+, some resources like Deploymeny/DaemonSet and Service will be recreated due to changes in nomenclature and selector labels resulting in undesirable downtime.
 
 ## Steps to perform upgrade without downtine
 **Note**: Below steps applies to both 2.x and 3.0.x releases.
@@ -39,11 +39,11 @@ However upon running a helm upgrade job from previous installed version to 3.1.0
 
 4. Run helm upgrade with following arguments set:
     ```shell
-    --set controller.serviceNameOverride=“nginx-ingress-nginx-ingress”
+    --set controller.serviceNameOverride="nginx-ingress-nginx-ingress"
     --set controller.name=""
-    --set fullnameOverride=“nginx-ingress-nginx-ingress”
+    --set fullnameOverride="nginx-ingress-nginx-ingress"
     ```
-    eg: ```helm upgrade nginx-ingress --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride=“nginx-ingress-nginx-ingress” --set controller.name=“” --set fullnameOverride=“nginx-ingress-nginx-ingress” .```
+    eg: ```helm upgrade nginx-ingress --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" .```
 
 5. Once upgrade process is finished, verify it by running a ```kubectl describe... ``` on deployment (daemonset will have no such events) and that events section should have rolling update workflow:
     eg:
@@ -77,10 +77,10 @@ However upon running a helm upgrade job from previous installed version to 3.1.0
 
 4. Run helm upgrade with following arguments set:
     ```shell
-      --set controller.serviceNameOverride=“<helm_release_name>-nginx-ingress”,
+      --set controller.serviceNameOverride="<helm_release_name>-nginx-ingress",
       --set controller.name=""
     ```
-    eg: ```helm upgrade test-release --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride=“test-release-nginx-ingress” --set controller.name="" .```
+    eg: ```helm upgrade test-release --set controller.kind=deployment --set controller.nginxplus=false --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="test-release-nginx-ingress" --set controller.name="" .```
 
 5. Once upgrade process is finished, verify it by running a ```kubectl describe... ``` on deployment and that events section should have rolling update workflow:
     eg:
