@@ -10,7 +10,7 @@ docs: "DOCS-603"
 ## Background
 
 In NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to fit with Helm best practices.
-When using Helm to upgrade from a version prior to to 3.1.0, certain resources like Deployment, DaemonSet and Service will be recreated due to the aforementioned changes, which will result in downtime. 
+When using Helm to upgrade from a version prior to to 3.1.0, certain resources like Deployment, DaemonSet and Service will be recreated due to the aforementioned changes, which will result in downtime.
 Although the advisory is to update all resources in accordance with new naming convention, to avoid the downtime please follow the steps listed in this page.
 
 ## Upgrade Steps
