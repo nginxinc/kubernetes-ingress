@@ -177,7 +177,7 @@ server {
 	{{end -}}
 
 	{{range $location := $server.Locations}}
-	location {{  makeLocationPath $location.Path $.Ingress.Annotations | printf }} {
+	location {{  makeLocationPath $location $.Ingress.Annotations | printf }} {
 		set $service "{{$location.ServiceName}}";
 		status_zone "{{ $location.ServiceName }}";
 		{{with $location.MinionIngress}}

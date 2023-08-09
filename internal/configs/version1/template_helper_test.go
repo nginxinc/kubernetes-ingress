@@ -10,7 +10,10 @@ func TestMakeLocationPath_WithRegexCaseSensitiveModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "~ \"^/coffee/[A-Z0-9]{3}\""
-	got := makeLocationPath("/coffee/[A-Z0-9]{3}", map[string]string{"nginx.org/path-regex": "case_sensitive"})
+	got := makeLocationPath(
+		&Location{Path: "/coffee/[A-Z0-9]{3}"},
+		map[string]string{"nginx.org/path-regex": "case_sensitive"},
+	)
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -20,7 +23,10 @@ func TestMakeLocationPath_WithRegexCaseInsensitiveModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "~* \"^/coffee/[A-Z0-9]{3}\""
-	got := makeLocationPath("/coffee/[A-Z0-9]{3}", map[string]string{"nginx.org/path-regex": "case_insensitive"})
+	got := makeLocationPath(
+		&Location{Path: "/coffee/[A-Z0-9]{3}"},
+		map[string]string{"nginx.org/path-regex": "case_insensitive"},
+	)
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -30,7 +36,10 @@ func TestMakeLocationPath_WithRegexExactModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "= \"/coffee\""
-	got := makeLocationPath("/coffee", map[string]string{"nginx.org/path-regex": "exact"})
+	got := makeLocationPath(
+		&Location{Path: "/coffee"},
+		map[string]string{"nginx.org/path-regex": "exact"},
+	)
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -40,7 +49,10 @@ func TestMakeLocationPath_WithBogusRegexModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
-	got := makeLocationPath("/coffee", map[string]string{"nginx.org/path-regex": "bogus"})
+	got := makeLocationPath(
+		&Location{Path: "/coffee"},
+		map[string]string{"nginx.org/path-regex": "bogus"},
+	)
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -50,7 +62,10 @@ func TestMakeLocationPath_WithEmptyRegexModifier(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
-	got := makeLocationPath("/coffee", map[string]string{"nginx.org/path-regex": ""})
+	got := makeLocationPath(
+		&Location{Path: "/coffee"},
+		map[string]string{"nginx.org/path-regex": ""},
+	)
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
 	}
@@ -60,9 +75,156 @@ func TestMakeLocationPath_WithBogusAnnotationName(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
-	got := makeLocationPath("/coffee", map[string]string{"nginx.org/bogus-annotation": ""})
+	got := makeLocationPath(
+		&Location{Path: "/coffee"},
+		map[string]string{"nginx.org/bogus-annotation": ""},
+	)
 	if got != want {
 		t.Errorf("got: %s, want: %s", got, want)
+	}
+}
+
+func TestUpdateLocationPathForIngressWithoutPathRegex(t *testing.T) {
+	t.Parallel()
+
+	want := "/coffee"
+	got := makeLocationPath(
+		&Location{Path: "/coffee"},
+		map[string]string{
+			"kubernetes.io/ingress.class": "nginx",
+		},
+	)
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestUpdateLocationPathForIngressWithPathRegexCaseSensitive(t *testing.T) {
+	t.Parallel()
+
+	want := "~ \"^/coffee\""
+	got := makeLocationPath(
+		&Location{Path: "/coffee"},
+		map[string]string{
+			"kubernetes.io/ingress.class": "nginx",
+			"nginx.org/path-regex":        "case_sensitive",
+		},
+	)
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestMakeLocationPathForIngressWithPathRegexSetOnMinion(t *testing.T) {
+	t.Parallel()
+
+	want := "~ \"^/coffee\""
+	got := makeLocationPath(
+		&Location{
+			Path: "/coffee",
+			MinionIngress: &Ingress{
+				Name:      "cafe-ingress-coffee-minion",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"nginx.org/mergeable-ingress-type": "minion",
+					"kubernetes.io/ingress.class":      "nginx",
+					"nginx.org/path-regex":             "case_sensitive",
+				},
+			},
+		},
+		map[string]string{
+			"kubernetes.io/ingress.class":      "nginx",
+			"nginx.org/mergeable-ingress-type": "master",
+		},
+	)
+
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestMakeLocationPathForIngressWithPathRegexSetOnMaster(t *testing.T) {
+	t.Parallel()
+
+	want := "~ \"^/coffee\""
+	got := makeLocationPath(
+		&Location{
+			Path: "/coffee",
+			MinionIngress: &Ingress{
+				Name:      "cafe-ingress-coffee-minion",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"nginx.org/mergeable-ingress-type": "minion",
+					"kubernetes.io/ingress.class":      "nginx",
+				},
+			},
+		},
+		map[string]string{
+			"kubernetes.io/ingress.class":      "nginx",
+			"nginx.org/mergeable-ingress-type": "master",
+			"nginx.org/path-regex":             "case_sensitive",
+		},
+	)
+
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestMakeLocationPath_PathRegexSetOnMinionTakesPreference(t *testing.T) {
+	t.Parallel()
+
+	want := "= \"/coffee\""
+	got := makeLocationPath(
+		&Location{
+			Path: "/coffee",
+			MinionIngress: &Ingress{
+				Name:      "cafe-ingress-coffee-minion",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"nginx.org/mergeable-ingress-type": "minion",
+					"kubernetes.io/ingress.class":      "nginx",
+					"nginx.org/path-regex":             "exact",
+				},
+			},
+		},
+		map[string]string{
+			"kubernetes.io/ingress.class":      "nginx",
+			"nginx.org/mergeable-ingress-type": "master",
+			"nginx.org/path-regex":             "case_sensitive",
+		},
+	)
+
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestMakeLocationPath_PathRegexSetOnMaster(t *testing.T) {
+	t.Parallel()
+
+	want := "= \"/coffee\""
+	got := makeLocationPath(
+		&Location{
+			Path: "/coffee",
+			MinionIngress: &Ingress{
+				Name:      "cafe-ingress-coffee-minion",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"nginx.org/mergeable-ingress-type": "minion",
+					"kubernetes.io/ingress.class":      "nginx",
+				},
+			},
+		},
+		map[string]string{
+			"kubernetes.io/ingress.class":      "nginx",
+			"nginx.org/mergeable-ingress-type": "master",
+			"nginx.org/path-regex":             "exact",
+		},
+	)
+
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
 
