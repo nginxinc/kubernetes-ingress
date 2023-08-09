@@ -14,13 +14,13 @@ func trim(s string) string {
 	return strings.TrimSpace(s)
 }
 
-// makePathRegex takes a string representing a location path
+// makeLocationPath takes a string representing a location path
 // and a map representing Ingress annotations.
 // It returns a location path with added regular expression modifier.
 // See [Location Directive].
 //
 // [Location Directive]: https://nginx.org/en/docs/http/ngx_http_core_module.html#location
-func makePathRegex(path string, annotations map[string]string) string {
+func makeLocationPath(path string, annotations map[string]string) string {
 	p, ok := annotations["nginx.org/path-regex"]
 	if !ok {
 		return path
@@ -38,7 +38,7 @@ func makePathRegex(path string, annotations map[string]string) string {
 }
 
 var helperFunctions = template.FuncMap{
-	"split":         split,
-	"trim":          trim,
-	"makePathRegex": makePathRegex,
+	"split":            split,
+	"trim":             trim,
+	"makeLocationPath": makeLocationPath,
 }

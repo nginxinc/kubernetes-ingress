@@ -16,7 +16,7 @@ updates:
       interval: daily
 
   - package-ecosystem: docker
-    directory: /tests/docker
+    directory: /tests
     schedule:
       interval: daily
 

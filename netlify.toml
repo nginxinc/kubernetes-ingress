@@ -13,10 +13,10 @@
   command = "make all"
 
 [context.deploy-preview]
-  command = "hugo --gc -b $DEPLOY_PRIME_URL/nginx-ingress-controller"
+  command = "make deploy-preview"
 
 [context.branch-deploy]
-  command = "hugo --gc -b $DEPLOY_PRIME_URL/nginx-ingress-controller"
+  command = "make deploy-preview"
 
 [[headers]]
   for = "/*"

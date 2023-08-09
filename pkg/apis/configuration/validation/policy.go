@@ -149,39 +149,55 @@ func validateRateLimit(rateLimit *v1.RateLimit, fieldPath *field.Path, isPlus bo
 	return allErrs
 }
 
+// validateJWT validates JWT Policy according the rules specified in documentation
+// for using [jwt] local k8s secrets and using [jwks] from remote location.
+//
+// [jwt]: https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#jwt-using-local-kubernetes-secret
+// [jwks]: https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#jwt-using-jwks-from-remote-location
 func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
+	// Realm is always required.
 	if jwt.Realm == "" {
-		allErrs = append(allErrs, field.Required(fieldPath, ""))
-	} else {
-		allErrs = append(allErrs, validateRealm(jwt.Realm, fieldPath.Child("realm"))...)
+		return field.ErrorList{field.Required(fieldPath.Child("realm"), "realm field must be present")}
 	}
+	allErrs := validateRealm(jwt.Realm, fieldPath.Child("realm"))
 
+	// Use either JWT Secret or JWKS URI, they are mutually exclusive.
 	if jwt.Secret == "" && jwt.JwksURI == "" {
 		return append(allErrs, field.Required(fieldPath.Child("secret"), "either Secret or JwksURI must be present"))
 	}
-
 	if jwt.Secret != "" && jwt.JwksURI != "" {
 		return append(allErrs, field.Forbidden(fieldPath.Child("secret"), "only either of Secret or JwksURI can be used"))
 	}
 
-	if jwt.KeyCache != "" && jwt.JwksURI == "" {
-		return append(allErrs, field.Required(fieldPath.Child("jwksURI"), "jwksURI must be present when keyCache is used."))
+	// Verify a case when using JWT Secret
+	if jwt.Secret != "" {
+		allErrs = append(allErrs, validateSecretName(jwt.Secret, fieldPath.Child("secret"))...)
+		// jwt.Token is not required field. Verify it when provided.
+		if jwt.Token != "" {
+			allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
+		}
+
+		// keyCache must not be present when using Secret
+		if jwt.KeyCache != "" {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("keyCache"), "key cache must not be used when using Secret"))
+		}
+		return allErrs
 	}
 
-	allErrs = append(allErrs, validateSecretName(jwt.Secret, fieldPath.Child("secret"))...)
-
-	allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
-
+	// Verify a case when using JWKS
 	if jwt.JwksURI != "" {
-		allErrs = append(allErrs, validateURL(jwt.JwksURI, fieldPath.Child("jwksURI"))...)
-	}
-
-	if jwt.KeyCache != "" {
+		allErrs = append(allErrs, validateURL(jwt.JwksURI, fieldPath.Child("JwksURI"))...)
 		allErrs = append(allErrs, validateTime(jwt.KeyCache, fieldPath.Child("keyCache"))...)
+		// jwt.Token is not required field. Verify it if it's provided.
+		if jwt.Token != "" {
+			allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
+		}
+		// keyCache must be present when using JWKS
+		if jwt.KeyCache == "" {
+			allErrs = append(allErrs, field.Required(fieldPath.Child("keyCache"), "key cache must be set, example value: 1h"))
+		}
+		return allErrs
 	}
-
 	return allErrs
 }
 
