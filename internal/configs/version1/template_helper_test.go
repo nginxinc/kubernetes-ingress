@@ -106,8 +106,7 @@ func TestMakeLocationPath_ForIngressWithPathRegexCaseSensitive(t *testing.T) {
 	got := makeLocationPath(
 		&Location{Path: "/coffee"},
 		map[string]string{
-			"kubernetes.io/ingress.class": "nginx",
-			"nginx.org/path-regex":        "case_sensitive",
+			"nginx.org/path-regex": "case_sensitive",
 		},
 	)
 	if got != want {
@@ -127,13 +126,11 @@ func TestMakeLocationPath_ForIngressWithPathRegexSetOnMinion(t *testing.T) {
 				Namespace: "default",
 				Annotations: map[string]string{
 					"nginx.org/mergeable-ingress-type": "minion",
-					"kubernetes.io/ingress.class":      "nginx",
 					"nginx.org/path-regex":             "case_sensitive",
 				},
 			},
 		},
 		map[string]string{
-			"kubernetes.io/ingress.class":      "nginx",
 			"nginx.org/mergeable-ingress-type": "master",
 		},
 	)
@@ -155,12 +152,10 @@ func TestMakeLocationPath_ForIngressWithPathRegexSetOnMaster(t *testing.T) {
 				Namespace: "default",
 				Annotations: map[string]string{
 					"nginx.org/mergeable-ingress-type": "minion",
-					"kubernetes.io/ingress.class":      "nginx",
 				},
 			},
 		},
 		map[string]string{
-			"kubernetes.io/ingress.class":      "nginx",
 			"nginx.org/mergeable-ingress-type": "master",
 			"nginx.org/path-regex":             "case_sensitive",
 		},
@@ -183,13 +178,11 @@ func TestMakeLocationPath_SetOnMinionTakesPrecedenceOverMaster(t *testing.T) {
 				Namespace: "default",
 				Annotations: map[string]string{
 					"nginx.org/mergeable-ingress-type": "minion",
-					"kubernetes.io/ingress.class":      "nginx",
 					"nginx.org/path-regex":             "exact",
 				},
 			},
 		},
 		map[string]string{
-			"kubernetes.io/ingress.class":      "nginx",
 			"nginx.org/mergeable-ingress-type": "master",
 			"nginx.org/path-regex":             "case_sensitive",
 		},
@@ -212,12 +205,10 @@ func TestMakeLocationPath_PathRegexSetOnMaster(t *testing.T) {
 				Namespace: "default",
 				Annotations: map[string]string{
 					"nginx.org/mergeable-ingress-type": "minion",
-					"kubernetes.io/ingress.class":      "nginx",
 				},
 			},
 		},
 		map[string]string{
-			"kubernetes.io/ingress.class":      "nginx",
 			"nginx.org/mergeable-ingress-type": "master",
 			"nginx.org/path-regex":             "exact",
 		},
