@@ -90,9 +90,7 @@ func TestMakeLocationPath_ForIngressWithoutPathRegex(t *testing.T) {
 	want := "/coffee"
 	got := makeLocationPath(
 		&Location{Path: "/coffee"},
-		map[string]string{
-			"kubernetes.io/ingress.class": "nginx",
-		},
+		map[string]string{},
 	)
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
