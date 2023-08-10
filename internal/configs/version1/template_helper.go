@@ -16,7 +16,7 @@ func trim(s string) string {
 
 // makeLocationPath takes location and Ingress annotations and returns
 // modified location path with added regex modifier or the original path
-// if if no path-regex annotoation is present in ingressAnnotations
+// if no path-regex annotation is present in ingressAnnotations
 // or in Location's Ingress.
 //
 // Annotation 'path-regex' set on the Minion takes higher priority comparing

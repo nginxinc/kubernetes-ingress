@@ -7,7 +7,7 @@ import (
 	"text/template"
 )
 
-func TestMainForNGINXplus(t *testing.T) {
+func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusMainTmpl(t)
@@ -20,7 +20,7 @@ func TestMainForNGINXplus(t *testing.T) {
 	t.Log(buf.String())
 }
 
-func TestMainForNGINX(t *testing.T) {
+func TestExecuteMainTemplateForNGINX(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXMainTmpl(t)
@@ -33,7 +33,7 @@ func TestMainForNGINX(t *testing.T) {
 	t.Log(buf.String())
 }
 
-func TestExecuteTemplate_ForIngressForNGINXplus(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINXPlus(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)
@@ -59,7 +59,7 @@ func TestExecuteTemplate_ForIngressForNGINX(t *testing.T) {
 	}
 }
 
-func TestExecuteTemplate_ForIngressForNGINXplusWithRegexAnnotationCaseSensitive(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseSensitiveModifier(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)
@@ -77,7 +77,7 @@ func TestExecuteTemplate_ForIngressForNGINXplusWithRegexAnnotationCaseSensitive(
 	}
 }
 
-func TestExecuteTemplate_ForIngressForNGINXplusWithRegexAnnotationCaseInsensitive(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseInsensitiveModifier(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)
@@ -95,7 +95,7 @@ func TestExecuteTemplate_ForIngressForNGINXplusWithRegexAnnotationCaseInsensitiv
 	}
 }
 
-func TestExecuteTemplate_ForIngressForNGINXplusWithRegexAnnotationExactMatch(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationExactMatchModifier(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)
@@ -113,7 +113,7 @@ func TestExecuteTemplate_ForIngressForNGINXplusWithRegexAnnotationExactMatch(t *
 	}
 }
 
-func TestExecuteTemplate_ForIngressForNGINXplusWithRegexAnnotationEmpty(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationEmpty(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)
@@ -131,7 +131,7 @@ func TestExecuteTemplate_ForIngressForNGINXplusWithRegexAnnotationEmpty(t *testi
 	}
 }
 
-func TestExecuteTemplate_ForMergeableIngressForNGINXplus(t *testing.T) {
+func TestExecuteTemplate_ForMergeableIngressForNGINXPlus(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)
@@ -198,7 +198,7 @@ func TestExecuteTemplate_ForMergeableIngressWithSecondMinionWithPathRegexAnnotat
 	}
 }
 
-func TestExecuteTemplate_ForMergeableIngressForNGINXplusWithPathRegexAnnotationOnMaster(t *testing.T) {
+func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMaster(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)
@@ -220,7 +220,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXplusWithPathRegexAnnotationO
 	}
 }
 
-func TestExecuteTemplate_ForMergeableIngressForNGINXplusWithPathRegexAnnotationOnMasterAndMinions(t *testing.T) {
+func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMasterAndMinions(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)
@@ -242,7 +242,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXplusWithPathRegexAnnotationO
 	}
 }
 
-func TestExecuteTemplate_ForMergeableIngressForNGINXplusWithPathRegexAnnotationOnMinionsNotOnMaster(t *testing.T) {
+func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMinionsNotOnMaster(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusIngressTmpl(t)

@@ -84,7 +84,7 @@ func TestMakeLocationPath_WithBogusAnnotationName(t *testing.T) {
 	}
 }
 
-func TestUpdateLocationPathForIngressWithoutPathRegex(t *testing.T) {
+func TestMakeLocationPath_ForIngressWithoutPathRegex(t *testing.T) {
 	t.Parallel()
 
 	want := "/coffee"
@@ -99,7 +99,7 @@ func TestUpdateLocationPathForIngressWithoutPathRegex(t *testing.T) {
 	}
 }
 
-func TestUpdateLocationPathForIngressWithPathRegexCaseSensitive(t *testing.T) {
+func TestMakeLocationPath_ForIngressWithPathRegexCaseSensitive(t *testing.T) {
 	t.Parallel()
 
 	want := "~ \"^/coffee\""
@@ -115,7 +115,7 @@ func TestUpdateLocationPathForIngressWithPathRegexCaseSensitive(t *testing.T) {
 	}
 }
 
-func TestMakeLocationPathForIngressWithPathRegexSetOnMinion(t *testing.T) {
+func TestMakeLocationPath_ForIngressWithPathRegexSetOnMinion(t *testing.T) {
 	t.Parallel()
 
 	want := "~ \"^/coffee\""
@@ -143,7 +143,7 @@ func TestMakeLocationPathForIngressWithPathRegexSetOnMinion(t *testing.T) {
 	}
 }
 
-func TestMakeLocationPathForIngressWithPathRegexSetOnMaster(t *testing.T) {
+func TestMakeLocationPath_ForIngressWithPathRegexSetOnMaster(t *testing.T) {
 	t.Parallel()
 
 	want := "~ \"^/coffee\""
@@ -171,7 +171,7 @@ func TestMakeLocationPathForIngressWithPathRegexSetOnMaster(t *testing.T) {
 	}
 }
 
-func TestMakeLocationPath_PathRegexSetOnMinionTakesPreference(t *testing.T) {
+func TestMakeLocationPath_SetOnMinionTakesPrecedenceOverMaster(t *testing.T) {
 	t.Parallel()
 
 	want := "= \"/coffee\""
