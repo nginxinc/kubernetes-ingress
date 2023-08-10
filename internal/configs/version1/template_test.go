@@ -664,7 +664,6 @@ var (
 							Name:      "cafe-ingress-coffee-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 							},
 						},
@@ -683,7 +682,6 @@ var (
 							Name:      "cafe-ingress-tea-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 							},
 						},
@@ -705,7 +703,6 @@ var (
 			Name:      "cafe-ingress-master",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"kubernetes.io/ingress.class":      "nginx",
 				"nginx.org/mergeable-ingress-type": "master",
 			},
 		},
@@ -740,7 +737,6 @@ var (
 							Name:      "cafe-ingress-coffee-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 								"nginx.org/path-regex":             "case_insensitive",
 							},
@@ -760,7 +756,6 @@ var (
 							Name:      "cafe-ingress-tea-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 							},
 						},
@@ -782,7 +777,6 @@ var (
 			Name:      "cafe-ingress-master",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"kubernetes.io/ingress.class":      "nginx",
 				"nginx.org/mergeable-ingress-type": "master",
 			},
 		},
@@ -817,7 +811,6 @@ var (
 							Name:      "cafe-ingress-coffee-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 							},
 						},
@@ -836,7 +829,6 @@ var (
 							Name:      "cafe-ingress-tea-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 								"nginx.org/path-regex":             "case_sensitive",
 							},
@@ -859,7 +851,6 @@ var (
 			Name:      "cafe-ingress-master",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"kubernetes.io/ingress.class":      "nginx",
 				"nginx.org/mergeable-ingress-type": "master",
 			},
 		},
@@ -895,7 +886,6 @@ var (
 							Name:      "cafe-ingress-coffee-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 							},
 						},
@@ -914,7 +904,6 @@ var (
 							Name:      "cafe-ingress-tea-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 							},
 						},
@@ -936,7 +925,6 @@ var (
 			Name:      "cafe-ingress-master",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"kubernetes.io/ingress.class":      "nginx",
 				"nginx.org/mergeable-ingress-type": "master",
 				"nginx.org/path-regex":             "case_sensitive",
 			},
@@ -973,7 +961,6 @@ var (
 							Name:      "cafe-ingress-coffee-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 								"nginx.org/path-regex":             "case_insensitive",
 							},
@@ -993,7 +980,6 @@ var (
 							Name:      "cafe-ingress-tea-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 								"nginx.org/path-regex":             "case_insensitive",
 							},
@@ -1016,7 +1002,6 @@ var (
 			Name:      "cafe-ingress-master",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"kubernetes.io/ingress.class":      "nginx",
 				"nginx.org/mergeable-ingress-type": "master",
 				"nginx.org/path-regex":             "case_sensitive",
 			},
@@ -1052,7 +1037,6 @@ var (
 							Name:      "cafe-ingress-coffee-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 								"nginx.org/path-regex":             "case_insensitive",
 							},
@@ -1072,7 +1056,6 @@ var (
 							Name:      "cafe-ingress-tea-minion",
 							Namespace: "default",
 							Annotations: map[string]string{
-								"kubernetes.io/ingress.class":      "nginx",
 								"nginx.org/mergeable-ingress-type": "minion",
 								"nginx.org/path-regex":             "case_sensitive",
 							},
@@ -1095,7 +1078,6 @@ var (
 			Name:      "cafe-ingress-master",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"kubernetes.io/ingress.class":      "nginx",
 				"nginx.org/mergeable-ingress-type": "master",
 			},
 		},
