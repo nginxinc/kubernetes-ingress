@@ -264,6 +264,162 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationO
 	}
 }
 
+func TestExecuteTemplate_ForMainForNGINXWithCustomTLSPassthroughPort(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfgCustomTLSPassthroughPort)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	wantDirectives := []string{
+		"listen 8443;",
+		"listen [::]:8443;",
+		"proxy_pass $dest_internal_passthrough",
+	}
+
+	mainConf := buf.String()
+	for _, want := range wantDirectives {
+		if !strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXPlusWithCustomTLSPassthroughPort(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfgCustomTLSPassthroughPort)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	wantDirectives := []string{
+		"listen 8443;",
+		"listen [::]:8443;",
+		"proxy_pass $dest_internal_passthrough",
+	}
+
+	mainConf := buf.String()
+	for _, want := range wantDirectives {
+		if !strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXWithoutCustomTLSPassthroughPort(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfg)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	wantDirectives := []string{
+		"listen 443;",
+		"listen [::]:443;",
+		"proxy_pass $dest_internal_passthrough",
+	}
+
+	mainConf := buf.String()
+	for _, want := range wantDirectives {
+		if !strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomTLSPassthroughPort(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfg)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	wantDirectives := []string{
+		"listen 443;",
+		"listen [::]:443;",
+		"proxy_pass $dest_internal_passthrough",
+	}
+
+	mainConf := buf.String()
+	for _, want := range wantDirectives {
+		if !strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXTLSPassthroughDisabled(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfgWithoutTLSPassthrough)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	unwantDirectives := []string{
+		"listen 8443;",
+		"listen [::]:8443;",
+		"proxy_pass $dest_internal_passthrough",
+	}
+
+	mainConf := buf.String()
+	for _, want := range unwantDirectives {
+		if strings.Contains(mainConf, want) {
+			t.Errorf("unwant %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXPlusTLSPassthroughPortDisabled(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfgWithoutTLSPassthrough)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	unwantDirectives := []string{
+		"listen 443;",
+		"listen [::]:443;",
+		"proxy_pass $dest_internal_passthrough",
+	}
+
+	mainConf := buf.String()
+	for _, want := range unwantDirectives {
+		if strings.Contains(mainConf, want) {
+			t.Errorf("unwant %q in generated config", want)
+		}
+	}
+}
+
 func newNGINXPlusIngressTmpl(t *testing.T) *template.Template {
 	t.Helper()
 	tmpl, err := template.New("nginx-plus.ingress.tmpl").Funcs(helperFunctions).ParseFiles("nginx-plus.ingress.tmpl")
@@ -597,6 +753,57 @@ var (
 		VariablesHashBucketSize: 256,
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
+		TLSPassthroughPort:      443,
+	}
+
+	mainCfgCustomTLSPassthroughPort = MainConfig{
+		ServerNamesHashMaxSize:  "512",
+		ServerTokens:            "off",
+		WorkerProcesses:         "auto",
+		WorkerCPUAffinity:       "auto",
+		WorkerShutdownTimeout:   "1m",
+		WorkerConnections:       "1024",
+		WorkerRlimitNofile:      "65536",
+		LogFormat:               []string{"$remote_addr", "$remote_user"},
+		LogFormatEscaping:       "default",
+		StreamSnippets:          []string{"# comment"},
+		StreamLogFormat:         []string{"$remote_addr", "$remote_user"},
+		StreamLogFormatEscaping: "none",
+		ResolverAddresses:       []string{"example.com", "127.0.0.1"},
+		ResolverIPV6:            false,
+		ResolverValid:           "10s",
+		ResolverTimeout:         "15s",
+		KeepaliveTimeout:        "65s",
+		KeepaliveRequests:       100,
+		VariablesHashBucketSize: 256,
+		VariablesHashMaxSize:    1024,
+		TLSPassthrough:          true,
+		TLSPassthroughPort:      8443,
+	}
+
+	mainCfgWithoutTLSPassthrough = MainConfig{
+		ServerNamesHashMaxSize:  "512",
+		ServerTokens:            "off",
+		WorkerProcesses:         "auto",
+		WorkerCPUAffinity:       "auto",
+		WorkerShutdownTimeout:   "1m",
+		WorkerConnections:       "1024",
+		WorkerRlimitNofile:      "65536",
+		LogFormat:               []string{"$remote_addr", "$remote_user"},
+		LogFormatEscaping:       "default",
+		StreamSnippets:          []string{"# comment"},
+		StreamLogFormat:         []string{"$remote_addr", "$remote_user"},
+		StreamLogFormatEscaping: "none",
+		ResolverAddresses:       []string{"example.com", "127.0.0.1"},
+		ResolverIPV6:            false,
+		ResolverValid:           "10s",
+		ResolverTimeout:         "15s",
+		KeepaliveTimeout:        "65s",
+		KeepaliveRequests:       100,
+		VariablesHashBucketSize: 256,
+		VariablesHashMaxSize:    1024,
+		TLSPassthrough:          false,
+		TLSPassthroughPort:      8443,
 	}
 
 	// Vars for Mergable Ingress Master - Minion tests
