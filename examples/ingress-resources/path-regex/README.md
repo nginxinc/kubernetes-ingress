@@ -41,7 +41,7 @@ as a case-insensitive regular expression match
 - **=** : Equal sign modifier (annotation value ``exact``) - the location is considered a match if the request
  URI exactly matches the location provided.
 
-## Path-Regex Annotation in Ingress Types
+## Path-Regex Annotation in Simple Ingress Type
 
 ### Example 1: Case Sensitive RegEx
 
