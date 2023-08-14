@@ -152,6 +152,27 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlus(t *testing.T) {
 	}
 }
 
+func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithMasterPathRegex(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusIngressTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, ingressCfgMasterMinionNGINXPlusMasterMinions)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "location /coffee {"
+	if !strings.Contains(buf.String(), want) {
+		t.Errorf("want %q in generated config", want)
+	}
+	want = "location /tea {"
+	if !strings.Contains(buf.String(), want) {
+		t.Errorf("want %q in generated config", want)
+	}
+}
+
 func TestExecuteTemplate_ForMergeableIngressWithOneMinionWithPathRegexAnnotation(t *testing.T) {
 	t.Parallel()
 
@@ -210,11 +231,11 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationO
 		t.Fatal(err)
 	}
 
-	want := "location ~ \"^/coffee\" {"
+	want := "location /coffee {"
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
-	want = "location ~ \"^/tea\" {"
+	want = "location /tea {"
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
@@ -911,6 +932,80 @@ var (
 			Namespace: "default",
 			Annotations: map[string]string{
 				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
+	}
+
+	// ingressCfgMasterMinionNGINXPlusMasterMinions holds data to test the following scenario:
+	//
+	// Ingress Master - Minion
+	//  - Master: with `path-regex` annotation
+	//  - Minion 1 (cafe-ingress-coffee-minion): without `path-regex` annotation
+	//  - Minion 2 (cafe-ingress-tea-minion): without `path-regex` annotation
+	ingressCfgMasterMinionNGINXPlusMasterMinions = IngressNginxConfig{
+		Upstreams: []Upstream{
+			coffeeUpstreamNginxPlus,
+			teaUpstreamNGINXPlus,
+		},
+		Servers: []Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []Location{
+					{
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstreamNginxPlus,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-coffee-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
+						ProxySSLName: "coffee-svc.default.svc",
+					},
+					{
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstreamNGINXPlus,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-tea-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
+						ProxySSLName: "tea-svc.default.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]HealthCheck),
+			},
+		},
+		Ingress: Ingress{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/path-regex":             "case_sensitive",
 			},
 		},
 	}
