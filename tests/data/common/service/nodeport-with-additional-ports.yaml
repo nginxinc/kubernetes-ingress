@@ -34,5 +34,9 @@ spec:
     targetPort: 9114
     protocol: TCP
     name: service-insight
+  - port: 8443
+    targetPort: 8443
+    protocol: TCP
+    name: custom-ssl-port
   selector:
     app: nginx-ingress

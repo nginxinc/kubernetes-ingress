@@ -205,6 +205,7 @@ type MainConfig struct {
 	StreamSnippets                     []string
 	StubStatusOverUnixSocketForOSS     bool
 	TLSPassthrough                     bool
+	TLSPassthroughPort                 int
 	VariablesHashBucketSize            uint64
 	VariablesHashMaxSize               uint64
 	WorkerConnections                  string
