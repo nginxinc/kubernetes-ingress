@@ -7,6 +7,8 @@ description = "Enterprise-grade Ingress load balancing on Kubernetes platforms."
 refLinksErrorLevel = "ERROR"
 enableRobotsTXT = "true"
 canonifyURLs = true
+pygmentsCodeFences = true
+pygmentsUseClasses = true
 
 [caches]
   [caches.modules]
