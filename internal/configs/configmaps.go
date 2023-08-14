@@ -550,6 +550,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		SSLProtocols:                       config.MainServerSSLProtocols,
 		SSLRejectHandshake:                 staticCfgParams.SSLRejectHandshake,
 		TLSPassthrough:                     staticCfgParams.TLSPassthrough,
+		TLSPassthroughPort:                 staticCfgParams.TLSPassthroughPort,
 		StreamLogFormat:                    config.MainStreamLogFormat,
 		StreamLogFormatEscaping:            config.MainStreamLogFormatEscaping,
 		StreamSnippets:                     config.MainStreamSnippets,

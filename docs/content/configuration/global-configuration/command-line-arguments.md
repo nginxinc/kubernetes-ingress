@@ -96,6 +96,15 @@ Enable TLS Passthrough on port 443.
 
 Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 &nbsp;
+<a name="cmdoption-tls-passthrough-port"></a>
+
+### -tls-passthrough-port `<int>`
+
+Set the port for TLS Passthrough.
+Format: `[1024 - 65535]` (default `443`)
+
+Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
+&nbsp;
 <a name="cmdoption-enable-cert-manager"></a>
 
 ### -enable-cert-manager

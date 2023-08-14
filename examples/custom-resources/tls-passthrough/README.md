@@ -34,11 +34,20 @@ You can see how the Secure App is implemented in the `secure-app.yaml` file.
       and
       [`-enable-tls-passthrough`](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-tls-passthrough)
       command-line arguments of the Ingress Controller to enable the TLS Passthrough feature.
+    - If you would like to use any other port than 443 for TLS Passthrough, set
+      the [`-tls-passthrough-port`](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-tls-passthrough-port)
+      command-line argument of the Ingress Controller, and configure the load balancer to forward traffic to that port.
+
 1. Save the public IP address of the Ingress Controller into a shell variable:
 
     ```console
     IC_IP=XXX.YYY.ZZZ.III
     ```
+
+1. Save the HTTPS port of the Ingress Controller where TLS Passthrough is enabled into a shell variable:
+
+    ```console
+    $ IC_HTTPS_PORT=<port number>
 
 1. Save the HTTPS port of the Ingress Controller into a shell variable:
 
