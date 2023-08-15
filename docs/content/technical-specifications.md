@@ -58,7 +58,7 @@ All images include NGINX 1.25.1.
 
 ### Images with NGINX Plus
 
-NGINX Plus images include NGINX Plus R29.
+NGINX Plus images include NGINX Plus R30.
 
 NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Using the NGINX IC Plus JWT token in a Docker Config Secret](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
 
