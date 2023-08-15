@@ -26,11 +26,14 @@ func trim(s string) string {
 func makeLocationPath(loc *Location, ingressAnnotations map[string]string) string {
 	if loc.MinionIngress != nil {
 		// Case when annotation 'path-regex' set on Location's Minion.
-		_, isMinion := loc.MinionIngress.Annotations["nginx.org/mergeable-ingress-type"]
+		ingressType, isMergeable := loc.MinionIngress.Annotations["nginx.org/mergeable-ingress-type"]
 		regexType, hasRegex := loc.MinionIngress.Annotations["nginx.org/path-regex"]
 
-		if isMinion && hasRegex {
+		if isMergeable && ingressType == "minion" && hasRegex {
 			return makePathWithRegex(loc.Path, regexType)
+		}
+		if isMergeable && ingressType == "minion" && !hasRegex {
+			return loc.Path
 		}
 	}
 
