@@ -15,9 +15,7 @@ metadata:
 {{- end }}
 spec:
 {{- if .Values.controller.service.clusterIP }}
-  {{- if not (eq .Values.controller.service.clusterIP "") }}
   clusterIP: {{ .Values.controller.service.clusterIP }}
-  {{- end }}
 {{- end }}
 {{- if or (eq .Values.controller.service.type "LoadBalancer") (eq .Values.controller.service.type "NodePort") }}
   {{- if .Values.controller.service.externalTrafficPolicy }}
