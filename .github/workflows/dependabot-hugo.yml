@@ -1,0 +1,49 @@
+name: Run hugo commands on Dependabot PRs
+
+on:
+  pull_request:
+    paths:
+      - "docs/go.mod"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Fetch Dependabot metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@c9c4182bf1b97f5224aee3906fd373f6b61b4526 # v1.6.0
+
+      - name: Checkout Repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'gomod' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.NGINX_PAT }}
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@16361eb4acea8698b220b76c0d4e84e1fd22c61d # v2.6.0
+        if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'gomod' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
+
+      - name: Run build
+        if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'gomod' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
+        run: |
+          hugo mod tidy
+          hugo mod verify
+
+      - name: Commit changes
+        if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'gomod' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
+        id: commit
+        uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4.16.0
+        with:
+          commit_message: "Update docs go.mod"
