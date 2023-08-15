@@ -10,6 +10,9 @@ const JWTKeyAnnotation = "nginx.com/jwt-key"
 // BasicAuthSecretAnnotation is the annotation where the Secret with the HTTP basic user list
 const BasicAuthSecretAnnotation = "nginx.org/basic-auth-secret" // #nosec G101
 
+// PathRegexAnnotation is the annotation where the regex location (path) modifier is specified.
+const PathRegexAnnotation = "nginx.org/path-regex"
+
 // AppProtectPolicyAnnotation is where the NGINX App Protect policy is specified
 const AppProtectPolicyAnnotation = "appprotect.f5.com/app-protect-policy"
 
@@ -71,6 +74,12 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/max-fails":                true,
 	"nginx.org/max-conns":                true,
 	"nginx.org/fail-timeout":             true,
+}
+
+var validPathRegex = map[string]bool{
+	"case_sensitive":   true,
+	"case_insensitive": true,
+	"exact":            true,
 }
 
 func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, hasAppProtectDos bool, enableInternalRoutes bool) ConfigParams {
@@ -383,6 +392,13 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 			} else {
 				cfgParams.SpiffeServerCerts = spiffeServerCerts
 			}
+		}
+	}
+
+	if pathRegex, exists := ingEx.Ingress.Annotations[PathRegexAnnotation]; exists {
+		_, ok := validPathRegex[pathRegex]
+		if !ok {
+			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/path-regex: got %q. Allowed values: 'case_sensitive', 'case_insensitive', 'exact'", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), pathRegex)
 		}
 	}
 	return cfgParams

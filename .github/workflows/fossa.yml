@@ -5,19 +5,18 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
 
 concurrency:
   group: ${{ github.ref_name }}-fossa
   cancel-in-progress: true
 
-permissions:  # added using https://github.com/step-security/secure-workflows
+permissions:
   contents: read
 
 jobs:
-
   scan:
     name: Fossa
     runs-on: ubuntu-22.04
@@ -25,6 +24,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
       - name: Scan
         uses: fossas/fossa-action@f61a4c0c263690f2ddb54b9822a719c25a7b608f # v1.3.1
         with:

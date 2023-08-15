@@ -97,6 +97,7 @@ func main() {
 		NginxStatusPort:                *nginxStatusPort,
 		StubStatusOverUnixSocketForOSS: *enablePrometheusMetrics,
 		TLSPassthrough:                 *enableTLSPassthrough,
+		TLSPassthroughPort:             *tlsPassthroughPort,
 		EnableSnippets:                 *enableSnippets,
 		NginxServiceMesh:               *spireAgentAddress != "",
 		MainAppProtectLoadModule:       *appProtect,
@@ -166,6 +167,7 @@ func main() {
 		IsPrometheusEnabled:          *enablePrometheusMetrics,
 		IsLatencyMetricsEnabled:      *enableLatencyMetrics,
 		IsTLSPassthroughEnabled:      *enableTLSPassthrough,
+		TLSPassthroughPort:           *tlsPassthroughPort,
 		SnippetsEnabled:              *enableSnippets,
 		CertManagerEnabled:           *enableCertManager,
 		ExternalDNSEnabled:           *enableExternalDNS,
@@ -457,6 +459,10 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 
 	if *enableServiceInsight {
 		forbiddenListenerPorts[*serviceInsightListenPort] = true
+	}
+
+	if *enableTLSPassthrough {
+		forbiddenListenerPorts[*tlsPassthroughPort] = true
 	}
 
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)

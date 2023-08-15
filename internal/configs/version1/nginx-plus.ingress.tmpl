@@ -1,3 +1,4 @@
+{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.IngressNginxConfig*/ -}}
 # configuration for {{.Ingress.Namespace}}/{{.Ingress.Name}}
 {{range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {
@@ -177,8 +178,9 @@ server {
 	{{end -}}
 
 	{{range $location := $server.Locations}}
-	location {{$location.Path}} {
+	location {{  makeLocationPath $location $.Ingress.Annotations | printf }} {
 		set $service "{{$location.ServiceName}}";
+		status_zone "{{ $location.ServiceName }}";
 		{{with $location.MinionIngress}}
 		# location for minion {{$location.MinionIngress.Namespace}}/{{$location.MinionIngress.Name}}
 		set $resource_name "{{$location.MinionIngress.Name}}";

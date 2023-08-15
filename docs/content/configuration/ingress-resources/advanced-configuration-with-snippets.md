@@ -15,6 +15,7 @@ Snippets are also available through the [ConfigMap](/nginx-ingress-controller/co
 ## Using Snippets
 
 The example below shows how to use snippets to customize the NGINX configuration template using annotations.
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -49,6 +50,7 @@ spec:
 ```
 
 Generated NGINX configuration:
+
 ```nginx
 server {
     listen 80;
@@ -77,6 +79,7 @@ server {
     }
 }
 ```
+
 **Note**: The generated configs are truncated for the clarity of the example.
 
 ## Summary of Snippets
@@ -88,11 +91,11 @@ However, because of the disadvantages described below, snippets are disabled by 
 
 Snippets have the following disadvantages:
 
-* *Complexity*. To use snippets, you will need to:
-  * Understand NGINX configuration primitives and implement a correct NGINX configuration.
-  * Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
-* *Decreased robustness*. An incorrect snippet makes the NGINX config invalid, which causes reload failures. This will prevent any new configuration updates, including updates for the other Ingress resources, until the snippet is fixed.
-* *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller. For example, a snippet can configure NGINX to serve the TLS certificates and keys used for TLS termination for Ingress resources.
+- *Complexity*. To use snippets, you will need to:
+  - Understand NGINX configuration primitives and implement a correct NGINX configuration.
+  - Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
+- *Decreased robustness*. An incorrect snippet makes the NGINX config invalid, which causes reload failures. This will prevent any new configuration updates, including updates for the other Ingress resources, until the snippet is fixed.
+- *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller. For example, a snippet can configure NGINX to serve the TLS certificates and keys used for TLS termination for Ingress resources.
 
 > **Note**: If the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
 
@@ -101,6 +104,7 @@ Snippets have the following disadvantages:
 If a snippet includes an invalid NGINX configuration, the Ingress Controller will fail to reload NGINX. The error will be reported in the Ingress Controller logs and an event with the error will be associated with the Ingress resource:
 
 An example of an error from the logs:
+
 ```
 [emerg] 31#31: unknown directive "badd_header" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54
 Event(v1.ObjectReference{Kind:"Ingress", Namespace:"default", Name:"cafe-ingress-with-snippets", UID:"f9656dc9-63a6-41dd-a499-525b0e0309bb", APIVersion:"extensions/v1beta1", ResourceVersion:"2322030", FieldPath:""}): type: 'Warning' reason: 'AddedOrUpdatedWithError' Configuration for default/cafe-ingress-with-snippets was added or updated, but not applied: Error reloading NGINX for default/cafe-ingress-with-snippets: nginx reload failed: Command /usr/sbin/nginx -s reload stdout: ""
@@ -109,6 +113,7 @@ finished with error: exit status 1
 ```
 
 An example of an event with an error (you can view events associated with the Ingress by running `kubectl describe -n nginx-ingress ingress nginx-ingress`):
+
 ```
 Events:
 Type     Reason                   Age                From                      Message
