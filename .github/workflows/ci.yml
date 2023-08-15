@@ -315,6 +315,12 @@ jobs:
     with:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
     secrets: inherit
 
   build-docker-plus:
@@ -336,6 +342,10 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       release-url: ${{ needs.binaries.outputs.release-url }}
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
     secrets: inherit
 
   build-docker-nap:
@@ -354,6 +364,10 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       nap_modules: ${{ matrix.nap_modules }}
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
     secrets: inherit
 
   publish-helm:
