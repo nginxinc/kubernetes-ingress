@@ -41,7 +41,9 @@ as a case-insensitive regular expression match
 - **=** : Equal sign modifier (annotation value ``exact``) - the location is considered a match if the request
  URI exactly matches the location provided.
 
-## Example 1: Case Sensitive RegEx
+## Path-Regex Annotation in Simple Ingress Type
+
+### Example 1: Case Sensitive RegEx
 
 In the following example you enable path regex annotation ``nginx.org/path-regex`` and set its value to `case_sensitive`.
 
@@ -91,7 +93,7 @@ Corresponding NGINX config file snippet:
 ...
 ```
 
-## Example 2: Case Insensitive RegEx
+### Example 2: Case Insensitive RegEx
 
 In the following example you enable path regex annotation ``nginx.org/path-regex`` and set its value to `case_insensitive`.
 
@@ -141,7 +143,7 @@ Corresponding NGINX config file snippet:
 ...
 ```
 
-## Example 3: Exact RegEx
+### Example 3: Exact RegEx
 
 In the following example you enable path regex annotation ``nginx.org/path-regex`` and set its value to `exact` match.
 
@@ -187,5 +189,206 @@ Corresponding NGINX config file snippet:
 
     set $service "coffee-svc";
     status_zone "coffee-svc";
+...
+```
+
+## Path-Regex Annotation in Mergeable Ingress Types
+
+### Example 1: Path-Regex on all Minion Ingresses
+
+In the following example you enable path regex annotations ``nginx.org/path-regex`` on **Minion Ingresses**.
+On the first minion you will set path regex value ``case_insesitive``, and
+ on the second minion ``case_sensitive``.
+
+Content of `cafe-master.yaml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-ingress-master
+  annotations:
+    nginx.org/mergeable-ingress-type: "master"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - cafe.example.com
+    secretName: cafe-secret
+  rules:
+  - host: cafe.example.com
+```
+
+Content of `coffee-minion.yaml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-ingress-coffee-minion
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/path-regex: "case_insensitive"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: cafe.example.com
+    http:
+      paths:
+      - path: /coffee/[A-Z0-9]
+        pathType: Prefix
+        backend:
+          service:
+            name: coffee-svc
+            port:
+              number: 80
+```
+
+Content of `tea-minion.yaml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-ingress-tea-minion
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/path-regex: "case_sensitive"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: cafe.example.com
+    http:
+      paths:
+      - path: /tea/[A-Z0-9]
+        pathType: Prefix
+        backend:
+          service:
+            name: tea-svc
+            port:
+              number: 80
+```
+
+Corresponding NGINX config file snippet:
+
+```bash
+...
+  location ~* "^/coffee/[A-Z0-9]" {
+    set $service "coffee-svc";
+    status_zone "coffee-svc";
+
+    # location for minion default/cafe-ingress-coffee-minion
+    set $resource_name "cafe-ingress-coffee-minion";
+    set $resource_namespace "default";
+
+...
+
+  location ~ "^/tea/[A-Z0-9]" {
+    set $service "tea-svc";
+    status_zone "tea-svc";
+
+    # location for minion default/cafe-ingress-tea-minion
+    set $resource_name "cafe-ingress-tea-minion";
+    set $resource_namespace "default";
+
+...
+```
+
+### Example 2: Path-Regex on a single Minion Ingress
+
+In the following example you enable path regex annotations ``nginx.org/path-regex`` on one **Minion Ingress**.
+On the minion you will set path regex value ``case_insesitive``.
+A ``path-regex`` annotation is not set on the second **Minion Ingress**.
+
+Content of `cafe-master.yaml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-ingress-master
+  annotations:
+    nginx.org/mergeable-ingress-type: "master"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - cafe.example.com
+    secretName: cafe-secret
+  rules:
+  - host: cafe.example.com
+```
+
+Content of `coffee-minion.yaml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-ingress-coffee-minion
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/path-regex: "case_insensitive"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: cafe.example.com
+    http:
+      paths:
+      - path: /coffee/[A-Z0-9]
+        pathType: Prefix
+        backend:
+          service:
+            name: coffee-svc
+            port:
+              number: 80
+```
+
+Content of `tea-minion.yaml`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-ingress-tea-minion
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: cafe.example.com
+    http:
+      paths:
+      - path: /tea
+        pathType: Prefix
+        backend:
+          service:
+            name: tea-svc
+            port:
+              number: 80
+```
+
+Corresponding NGINX config file snippet:
+
+```bash
+...
+location ~* "^/coffee/[A-Z0-9]" {
+    set $service "coffee-svc";
+    status_zone "coffee-svc";
+
+    # location for minion default/cafe-ingress-coffee-minion
+    set $resource_name "cafe-ingress-coffee-minion";
+    set $resource_namespace "default";
+
+...
+
+location /tea {
+    set $service "tea-svc";
+    status_zone "tea-svc";
+
+    # location for minion default/cafe-ingress-tea-minion
+    set $resource_name "cafe-ingress-tea-minion";
+    set $resource_namespace "default";
+
 ...
 ```
