@@ -301,6 +301,9 @@ controller:
     ## The static IP address for the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature.
     loadBalancerIP: ""
 
+    ## The ClusterIP for the Ingress Controller service, autoassigned if not specified.
+    clusterIP: ""
+
     ## The list of external IPs for the Ingress Controller service.
     externalIPs: []
 
