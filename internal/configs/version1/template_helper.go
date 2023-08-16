@@ -19,10 +19,8 @@ func trim(s string) string {
 // if no path-regex annotation is present in ingressAnnotations
 // or in Location's Ingress.
 //
-// Annotation 'path-regex' set on a Minion Ingress will take priority over
-// the annotation set on the master (in Master-Minion Ingress setup).
-// If no annotation 'path-regex' is set on Minion and only on Ingress (including master),
-// all location paths will be updated using provided regex modifier types.
+// Annotations 'path-regex' are set only on Minions. If set on Master Ingress,
+// they are ignored and have no effect.
 func makeLocationPath(loc *Location, ingressAnnotations map[string]string) string {
 	if loc.MinionIngress != nil {
 		// Case when annotation 'path-regex' set on Location's Minion.
