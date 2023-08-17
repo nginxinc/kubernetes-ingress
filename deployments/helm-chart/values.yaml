@@ -5,6 +5,9 @@ controller:
   ## The kind of the Ingress Controller installation - deployment or daemonset.
   kind: deployment
 
+  ## The selectorLabels used to override the default values.
+  selectorLabels: {}
+
   ## Annotations for deployments and daemonsets
   annotations: {}
 
@@ -236,6 +239,9 @@ controller:
   ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
   enableTLSPassthrough: false
 
+  ## Set the port for TLS Passthrough. Requires controller.enableCustomResources and controller.enableTLSPassthrough.
+  tlsPassthroughPort: 443
+
   ## Enable cert manager for Virtual Server resources. Requires controller.enableCustomResources.
   enableCertManager: false
 
@@ -294,6 +300,9 @@ controller:
 
     ## The static IP address for the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature.
     loadBalancerIP: ""
+
+    ## The ClusterIP for the Ingress Controller service, autoassigned if not specified.
+    clusterIP: ""
 
     ## The list of external IPs for the Ingress Controller service.
     externalIPs: []

@@ -1,12 +1,17 @@
 # Wildcard TLS Certificate
 
-The wildcard TLS certificate simplifies the configuration of TLS termination if you need to use the same TLS certificate in multiple Ingress and VirtualServer resources from various namespaces. Typically, such a certificate is for a subdomain (for example, `*.example.com`), while the hosts in the Ingress and VirtualServer resources include that subdomain (for example, `foo.example.com`, `bar.example.com`).
+The wildcard TLS certificate simplifies the configuration of TLS termination if you need to use the same TLS certificate
+in multiple Ingress and VirtualServer resources from various namespaces. Typically, such a certificate is for a
+subdomain (for example, `*.example.com`), while the hosts in the Ingress and VirtualServer resources include that
+subdomain (for example, `foo.example.com`, `bar.example.com`).
 
 ## Example
 
 ### Prerequisites
 
-Start the Ingress Controller with the `-wildcard-tls-secret` [command-line argument](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-wildcard-tls-secret) set to a TLS secret with a wildcard cert/key. For example:
+Start the Ingress Controller with the `-wildcard-tls-secret` [command-line
+argument](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-wildcard-tls-secret)
+set to a TLS secret with a wildcard cert/key. For example:
 
 ```yaml
 -wildcard-tls-secret=nginx-ingress/wildcard-tls-secret
@@ -16,7 +21,8 @@ Start the Ingress Controller with the `-wildcard-tls-secret` [command-line argum
 
 ### Configuring TLS Termination
 
-In the example below we configure TLS termination for an Ingress for the host `foo.example.com` and a VirtualServer for the host `bar.example.com`:
+In the example below we configure TLS termination for an Ingress for the host `foo.example.com` and a VirtualServer for
+the host `bar.example.com`:
 
 `foo` Ingress from the namespace `foo`:
 
@@ -66,4 +72,6 @@ spec:
       pass: bar
 ```
 
-Because we don't reference any TLS secret in the resources above -- there is no `secret` field in the `tls` section of the Ingress resource and the `secret` field is empty in the VirtualServer -- NGINX will use the wildcard secret specified in the `-wildcard-tls-secret` command-line argument.
+Because we don't reference any TLS secret in the resources above -- there is no `secret` field in the `tls` section of
+the Ingress resource and the `secret` field is empty in the VirtualServer -- NGINX will use the wildcard secret
+specified in the `-wildcard-tls-secret` command-line argument.

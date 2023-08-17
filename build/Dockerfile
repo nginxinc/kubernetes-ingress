@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.5
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=R29
+ARG NGINX_PLUS_VERSION=R30
 ARG DOWNLOAD_TAG=edge
 
 
@@ -11,7 +11,7 @@ FROM ghcr.io/nginxinc/alpine-fips:0.1.1-alpine3.18 as alpine-fips
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.25.1 AS debian
+FROM nginx:1.25.2 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -23,7 +23,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.25.1-alpine AS alpine
+FROM nginx:1.25.2-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -129,7 +129,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI #############################################
-FROM nginxcontrib/nginx:1.25.1-ubi AS ubi
+FROM nginxcontrib/nginx:1.25.2-ubi AS ubi
 ARG IC_VERSION
 
 LABEL name="NGINX Ingress Controller" \
@@ -254,7 +254,7 @@ LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERS
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.20-alpine AS builder
+FROM golang:1.21-alpine AS builder
 ARG IC_VERSION
 ARG TARGETARCH
 

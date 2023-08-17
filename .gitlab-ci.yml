@@ -1,4 +1,0 @@
-include:
-  - project: "f5/nginx/kic/kic-pipelines"
-    file: "/include/ingress-controller.yml"
-    ref: "master"

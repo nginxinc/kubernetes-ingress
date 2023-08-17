@@ -9,16 +9,16 @@ docs: "DOCS-605"
 
 This document explains how to pull an NGINX Plus Ingress Controller image from the F5 Docker registry using your NGINX Ingress Controller subscription certificate and key. **Please note that an NGINX Plus subscription certificate and key will not work with the F5 Docker registry.** You can also get the image using the following alternate methods:
 
-* [Install using a JWT token in a Docker Config Secret]({{< relref "using-the-jwt-token-docker-secret" >}})
-* [Build the Ingress Controller image]({{< relref "building-ingress-controller-image" >}}) using the source code from the GitHub repository and your NGINX Plus subscription certificate and key.
-* For NGINX Ingress Controller based on NGINX OSS, you can pull the [nginx/nginx-ingress image](https://hub.docker.com/r/nginx/nginx-ingress/) from DockerHub.
+- [Install using a JWT token in a Docker Config Secret]({{< relref "using-the-jwt-token-docker-secret" >}})
+- [Build the Ingress Controller image]({{< relref "building-ingress-controller-image" >}}) using the source code from the GitHub repository and your NGINX Plus subscription certificate and key.
+- For NGINX Ingress Controller based on NGINX OSS, you can pull the [nginx/nginx-ingress image](https://hub.docker.com/r/nginx/nginx-ingress/) from DockerHub.
 
 ## Prerequisites
 
 Before you can pull the image, make sure that the following software is installed on your machine:
 
-* [Docker](https://www.docker.com/products/docker) v18.09+
-* For NGINX Ingress Controller, you must have the NGINX Ingress Controller subscription -- download the NGINX Plus Ingress Controller (per instance) certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) from [MyF5](https://my.f5.com).
+- [Docker](https://www.docker.com/products/docker) v18.09+
+- For NGINX Ingress Controller, you must have the NGINX Ingress Controller subscription -- download the NGINX Plus Ingress Controller (per instance) certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) from [MyF5](https://my.f5.com).
 
 ## Pulling the Image using Docker and Pushing It to the Private Registry
 
@@ -86,8 +86,8 @@ Before you can pull the image, make sure that the following software is installe
 
 3. Tag and push the image to your private registry.
 
-   * Make sure to run the `docker login <my-docker-registry>` command first to log in to the registry.
-   * Replace `<my-docker-registry>` in the examples below with the correct path to your private Docker registry.
+   - Make sure to run the `docker login <my-docker-registry>` command first to log in to the registry.
+   - Replace `<my-docker-registry>` in the examples below with the correct path to your private Docker registry.
 
    ```console
    docker tag private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.2.0 <my-docker-registry>/nginx-ic/nginx-plus-ingress:3.2.0

@@ -8,6 +8,7 @@ aliases:
  - /content/troubleshooting/virtualserver-virtualserverroute
 ---
 ## Inspecting VirtualServer and VirtualServerRoute Resource Events
+
 After creating or updating a VirtualServer resource, you can immediately check if the NGINX configuration for that resource was successfully by using `kubectl describe vs <resource-name>`:
 
 ```shell

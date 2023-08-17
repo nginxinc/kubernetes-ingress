@@ -1,41 +1,48 @@
 # AP Performance (reload and response times) Tests
 
-The project includes automated performance tests for Ingress Controller with AppProtect module in a Kubernetes cluster. The tests are written in Python3 and use the pytest framework for reload tests and locust.io for API tests.
+The project includes automated performance tests for Ingress Controller with AppProtect module in a Kubernetes cluster.
+The tests are written in Python3 and use the pytest framework for reload tests and locust.io for API tests.
 
-Below you will find the instructions on how to run the tests against a Minikube cluster. However, you are not limited to Minikube and can use other types of Kubernetes clusters. See the [Configuring the Tests](#configuring-the-tests) section to find out about various configuration options.
+Below you will find the instructions on how to run the tests against a Minikube cluster. However, you are not limited to
+Minikube and can use other types of Kubernetes clusters. See the [Configuring the Tests](#configuring-the-tests) section
+to find out about various configuration options.
 
 ## Running Tests in Minikube
 
-### Prerequisites:
+### Prerequisites
 
-* Minikube.
-* Python3 (in a virtualenv)
+- Minikube.
+- Python3 (in a virtualenv)
 
 #### Step 1 - Create a Minikube Cluster
 
 ```bash
-$ minikube start
+minikube start
 ```
 
 #### Step 2 - Run the Performance Tests
 
-**Note**: if you have the Ingress Controller deployed in the cluster, please uninstall it first, making sure to remove its namespace and RBAC resources.
+**Note**: if you have the Ingress Controller deployed in the cluster, please uninstall it first, making sure to remove
+its namespace and RBAC resources.
 
 Run the tests:
 
-* Use local Python3 installation (advised to use pyenv/virtualenv):
+- Use local Python3 installation (advised to use pyenv/virtualenv):
+
     ```bash
-    $ cd perf_tests
-    $ pip install -r ../tests/requirements.txt --no-deps
-    $ pytest -v -s -m ap_perf --count=<INT>  --users=<INT> --hatch-rate=<INT> --time=<INT>
+    cd perf_tests
+    pip install -r ../tests/requirements.txt --no-deps
+    pytest -v -s -m ap_perf --count=<INT>  --users=<INT> --hatch-rate=<INT> --time=<INT>
     ```
 
-The tests will use the Ingress Controller for NGINX with the image built from `debian-image-nap-plus`. See the section below to learn how to configure the tests including the image and the type of NGINX -- NGINX or NGINX Plus.
-Refer the [Configuring the Tests](#configuring-the-tests) section for valid arguments.
+The tests will use the Ingress Controller for NGINX with the image built from `debian-image-nap-plus`. See the section
+below to learn how to configure the tests including the image and the type of NGINX -- NGINX or NGINX Plus. Refer the
+[Configuring the Tests](#configuring-the-tests) section for valid arguments.
 
 ## Configuring the Tests
 
-The table below shows various configuration options for the performance tests. Use command line arguments to run tests with Python3
+The table below shows various configuration options for the performance tests. Use command line arguments to run tests
+with Python3
 
 | Command-line Argument | Description | Default |
 | :----------------------- | :------------ | :----------------------- |

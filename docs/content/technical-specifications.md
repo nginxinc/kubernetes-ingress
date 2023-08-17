@@ -58,7 +58,7 @@ All images include NGINX 1.25.1.
 
 ### Images with NGINX Plus
 
-NGINX Plus images include NGINX Plus R29.
+NGINX Plus images include NGINX Plus R30.
 
 NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Using the NGINX IC Plus JWT token in a Docker Config Secret](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
 
@@ -101,8 +101,8 @@ We also provide NGINX Plus images through the Google Cloud Marketplace. Please s
 
 You can customize an existing Dockerfile or use it as a reference to create a new one, which is necessary for the following cases:
 
-* Choosing a different base image.
-* Installing additional NGINX modules.
+- Choosing a different base image.
+- Installing additional NGINX modules.
 
 ## Supported Helm Versions
 

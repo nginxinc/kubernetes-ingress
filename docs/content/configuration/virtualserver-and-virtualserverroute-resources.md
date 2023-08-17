@@ -720,9 +720,9 @@ The match defines a match between conditions and an action or splits.
 
 In the example below, NGINX routes requests with the path `/coffee` to different upstreams based on the value of the cookie `user`:
 
-* `user=john` -> `coffee-future`
-* `user=bob` -> `coffee-deprecated`
-* If the cookie is not set or not equal to either `john` or `bob`, NGINX routes to `coffee-stable`
+- `user=john` -> `coffee-future`
+- `user=bob` -> `coffee-deprecated`
+- If the cookie is not set or not equal to either `john` or `bob`, NGINX routes to `coffee-stable`
 
 ```yaml
 path: /coffee
@@ -743,8 +743,8 @@ action:
 
 In the next example, NGINX routes requests based on the value of the built-in [`$request_method` variable](https://nginx.org/en/docs/http/ngx_http_core_module.html#var_request_method), which represents the HTTP method of a request:
 
-* all POST requests -> `coffee-post`
-* all non-POST requests -> `coffee`
+- all POST requests -> `coffee-post`
+- all non-POST requests -> `coffee`
 
 ```yaml
 path: /coffee
@@ -788,13 +788,13 @@ Supported NGINX variables: `$args`, `$http2`, `$https`, `$remote_addr`, `$remote
 
 The value supports two kinds of matching:
 
-* *Case-insensitive string comparison*. For example:
-  * `john` -- case-insensitive matching that succeeds for strings, such as `john`, `John`, `JOHN`.
-  * `!john` -- negation of the case-insensitive matching for john that succeeds for strings, such as `bob`, `anything`, `''` (empty string).
-* *Matching with a regular expression*. Note that NGINX supports regular expressions compatible with those used by the Perl programming language (PCRE). For example:
-  * `~^yes` -- a case-sensitive regular expression that matches any string that starts with `yes`. For example: `yes`, `yes123`.
-  * `!~^yes` -- negation of the previous regular expression that succeeds for strings like `YES`, `Yes123`, `noyes`. (The negation mechanism is not part of the PCRE syntax).
-  * `~*no$` -- a case-insensitive regular expression that matches any string that ends with `no`. For example: `no`, `123no`, `123NO`.
+- *Case-insensitive string comparison*. For example:
+  - `john` -- case-insensitive matching that succeeds for strings, such as `john`, `John`, `JOHN`.
+  - `!john` -- negation of the case-insensitive matching for john that succeeds for strings, such as `bob`, `anything`, `''` (empty string).
+- *Matching with a regular expression*. Note that NGINX supports regular expressions compatible with those used by the Perl programming language (PCRE). For example:
+  - `~^yes` -- a case-sensitive regular expression that matches any string that starts with `yes`. For example: `yes`, `yes123`.
+  - `!~^yes` -- negation of the previous regular expression that succeeds for strings like `YES`, `Yes123`, `noyes`. (The negation mechanism is not part of the PCRE syntax).
+  - `~*no$` -- a case-insensitive regular expression that matches any string that ends with `no`. For example: `no`, `123no`, `123NO`.
 
 **Note**: a value must not include any unescaped double quotes (`"`) and must not end with an unescaped backslash (`\`). For example, the following are invalid values: `some"value`, `somevalue\`.
 
@@ -957,11 +957,11 @@ However, because of the disadvantages described below, snippets are disabled by 
 
 Disadvantages of using snippets:
 
-* *Complexity*. To use snippets, you will need to:
-  * Understand NGINX configuration primitives and implement a correct NGINX configuration.
-  * Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
-* *Decreased robustness*. An incorrect snippet makes the NGINX config invalid which will lead to a failed reload. This will prevent any new configuration updates, including updates for the other VirtualServer and VirtualServerRoute resources until the snippet is fixed.
-* *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller. For example, a snippet can configure NGINX to serve the TLS certificates and keys used for TLS termination for Ingress and VirtualServer resources.
+- *Complexity*. To use snippets, you will need to:
+  - Understand NGINX configuration primitives and implement a correct NGINX configuration.
+  - Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
+- *Decreased robustness*. An incorrect snippet makes the NGINX config invalid which will lead to a failed reload. This will prevent any new configuration updates, including updates for the other VirtualServer and VirtualServerRoute resources until the snippet is fixed.
+- *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller. For example, a snippet can configure NGINX to serve the TLS certificates and keys used for TLS termination for Ingress and VirtualServer resources.
 
 To help catch errors when using snippets, the Ingress Controller reports config reload errors in the logs as well as in the events and status field of VirtualServer and VirtualServerRoute resources. Additionally, a number of Prometheus metrics show the stats about failed reloads – `controller_nginx_last_reload_status` and `controller_nginx_reload_errors_total`.
 
@@ -971,8 +971,8 @@ To help catch errors when using snippets, the Ingress Controller reports config 
 
 Two types of validation are available for VirtualServer and VirtualServerRoute resources:
 
-* *Structural validation* by the `kubectl` and Kubernetes API server.
-* *Comprehensive validation* by the Ingress Controller.
+- *Structural validation* by the `kubectl` and Kubernetes API server.
+- *Comprehensive validation* by the Ingress Controller.
 
 #### Structural Validation
 
@@ -980,7 +980,7 @@ The custom resource definitions for VirtualServer and VirtualServerRoute include
 
 If you try to create (or update) a resource that violates the structural schema (for example, you use a string value for the port field of an upstream), `kubectl` and Kubernetes API server will reject such a resource:
 
-* Example of `kubectl` validation:
+- Example of `kubectl` validation:
 
     ```console
     kubectl apply -f cafe-virtual-server.yaml
@@ -988,7 +988,7 @@ If you try to create (or update) a resource that violates the structural schema 
       error: error validating "cafe-virtual-server.yaml": error validating data: ValidationError(VirtualServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.VirtualServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
-* Example of Kubernetes API server validation:
+- Example of Kubernetes API server validation:
 
     ```console
     kubectl apply -f cafe-virtual-server.yaml --validate=false
@@ -1054,11 +1054,11 @@ The Ingress Controller validates VirtualServerRoute resources in a similar way.
 
 You can customize the NGINX configuration for VirtualServer and VirtualServerRoutes resources using the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource). Most of the ConfigMap keys are supported, with the following exceptions:
 
-* `proxy-hide-headers`
-* `proxy-pass-headers`
-* `hsts`
-* `hsts-max-age`
-* `hsts-include-subdomains`
-* `hsts-behind-proxy`
-* `redirect-to-https`
-* `ssl-redirect`
+- `proxy-hide-headers`
+- `proxy-pass-headers`
+- `hsts`
+- `hsts-max-age`
+- `hsts-include-subdomains`
+- `hsts-behind-proxy`
+- `redirect-to-https`
+- `ssl-redirect`

@@ -437,9 +437,15 @@ def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, in
     resp = v1.read_namespaced_service(name, namespace)
     if len(resp.spec.ports) == 7:
         print("An unexpected amount of ports in a service. Check the configuration")
+
+    print(f"Service with an HTTP port: {resp.spec.ports[0].node_port}")
+    print(f"Service with an HTTPS port: {resp.spec.ports[1].node_port}")
     print(f"Service with an API port: {resp.spec.ports[2].node_port}")
     print(f"Service with an Exporter port: {resp.spec.ports[3].node_port}")
+    print(f"Service with an TPC server port: {resp.spec.ports[4].node_port}")
+    print(f"Service with an UDP server port: {resp.spec.ports[5].node_port}")
     print(f"Service with an Service Insight port: {resp.spec.ports[6].node_port}")
+    print(f"Service with an custom ssl port: {resp.spec.ports[7].node_port}")
     return (
         resp.spec.ports[0].node_port,
         resp.spec.ports[1].node_port,
@@ -448,6 +454,7 @@ def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, in
         resp.spec.ports[4].node_port,
         resp.spec.ports[5].node_port,
         resp.spec.ports[6].node_port,
+        resp.spec.ports[7].node_port,
     )
 
 

@@ -14,14 +14,14 @@ This document is the reference documentation for the TransportServer resource. T
 
 ## Prerequisites
 
-* For TCP and UDP, the TransportServer resource must be used in conjunction with the [GlobalConfiguration resource](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource), which must be created separately.
-* For TLS Passthrough, make sure to enable the [`-enable-tls-passthrough`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-tls-passthrough) command-line argument of the Ingress Controller.
+- For TCP and UDP, the TransportServer resource must be used in conjunction with the [GlobalConfiguration resource](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource), which must be created separately.
+- For TLS Passthrough, make sure to enable the [`-enable-tls-passthrough`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-tls-passthrough) command-line argument of the Ingress Controller.
 
 ## TransportServer Specification
 
 The TransportServer resource defines load balancing configuration for TCP, UDP, or TLS Passthrough traffic. Below are a few examples:
 
-* TCP load balancing:
+- TCP load balancing:
 
   ```yaml
   apiVersion: k8s.nginx.org/v1alpha1
@@ -42,7 +42,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
       pass: dns-app
   ```
 
-* UDP load balancing:
+- UDP load balancing:
 
   ```yaml
   apiVersion: k8s.nginx.org/v1alpha1
@@ -64,7 +64,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
       pass: dns-app
   ```
 
-* TLS passthrough load balancing:
+- TLS passthrough load balancing:
 
   ```yaml
   apiVersion: k8s.nginx.org/v1alpha1
@@ -337,11 +337,11 @@ However, because of the disadvantages described below, snippets are disabled by 
 
 Disadvantages of using snippets:
 
-* *Complexity*. To use snippets, you will need to:
-  * Understand NGINX configuration primitives and implement a correct NGINX configuration.
-  * Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
-* *Decreased robustness*. An incorrect snippet makes the NGINX config invalid which will lead to a failed reload. This will prevent any new configuration updates, including updates for the other TransportServer resource until the snippet is fixed.
-* *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller.
+- *Complexity*. To use snippets, you will need to:
+  - Understand NGINX configuration primitives and implement a correct NGINX configuration.
+  - Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
+- *Decreased robustness*. An incorrect snippet makes the NGINX config invalid which will lead to a failed reload. This will prevent any new configuration updates, including updates for the other TransportServer resource until the snippet is fixed.
+- *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller.
 
 > Note: during a period when the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
 
@@ -351,8 +351,8 @@ Disadvantages of using snippets:
 
 Two types of validation are available for the TransportServer resource:
 
-* *Structural validation* by the `kubectl` and Kubernetes API server.
-* *Comprehensive validation* by the Ingress Controller.
+- *Structural validation* by the `kubectl` and Kubernetes API server.
+- *Comprehensive validation* by the Ingress Controller.
 
 #### Structural Validation
 
@@ -360,7 +360,7 @@ The custom resource definition for the TransportServer includes structural OpenA
 
 If you try to create (or update) a resource that violates the structural schema (for example, you use a string value for the port field of an upstream), `kubectl` and Kubernetes API server will reject such a resource:
 
-* Example of `kubectl` validation:
+- Example of `kubectl` validation:
 
     ```console
     kubectl apply -f transport-server-passthrough.yaml
@@ -368,7 +368,7 @@ If you try to create (or update) a resource that violates the structural schema 
       error: error validating "transport-server-passthrough.yaml": error validating data: ValidationError(TransportServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1alpha1.TransportServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
-* Example of Kubernetes API server validation:
+- Example of Kubernetes API server validation:
 
     ```console
     kubectl apply -f transport-server-passthrough.yaml --validate=false
