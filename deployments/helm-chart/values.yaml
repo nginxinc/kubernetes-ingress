@@ -40,6 +40,24 @@ controller:
   ## Enables the Ingress Controller pods to use the host's network namespace.
   hostNetwork: false
 
+  ## The hostPort configuration for the Ingress Controller pods.
+  hostPort:
+    ## Enables hostPort for the Ingress Controller pods.
+    enable: false
+
+    ## The HTTP hostPort configuration for the Ingress Controller pods.
+    http: 80
+
+    ## The HTTPS hostPort configuration for the Ingress Controller pods.
+    https: 443
+
+  containerPort:
+    ## The HTTP containerPort configuration for the Ingress Controller pods.
+    http: 80
+
+    ## The HTTPS containerPort configuration for the Ingress Controller pods.
+    https: 443
+
   ## DNS policy for the Ingress Controller pods
   dnsPolicy: ClusterFirst
 
