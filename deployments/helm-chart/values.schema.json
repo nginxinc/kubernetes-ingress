@@ -194,24 +194,28 @@
           "patternProperties": {
             "^.*$": {
               "anyOf": [
-              {"$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.api.core.v1.ContainerPort/properties/hostPort"},
-              {"type": "boolean"}
+                {
+                  "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.api.core.v1.ContainerPort/properties/hostPort"
+                },
+                {
+                  "type": "boolean"
+                }
               ]
             }
           },
           "additionalProperties": false
         },
         "containerPort": {
-            "type": "object",
-            "default": {},
-            "title": "The containerPort Schema",
-            "patternProperties": {
-              "^.*$": {
-                "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.api.core.v1.ContainerPort/properties/containerPort"
-              }
-            },
-            "additionalProperties": false
+          "type": "object",
+          "default": {},
+          "title": "The containerPort Schema",
+          "patternProperties": {
+            "^.*$": {
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.api.core.v1.ContainerPort/properties/containerPort"
+            }
           },
+          "additionalProperties": false
+        },
         "dnsPolicy": {
           "type": "string",
           "allOf": [
