@@ -93,7 +93,7 @@ spec:
           servicePort: 80
 ```
 
-In the NGINX config file the ``/tea/[A-Z0-9]`` and ``/coffee/[A-Z0-9]`` paths will look like in the snippets below.
+In the NGINX config file, the ``/tea/[A-Z0-9]`` and ``/coffee/[A-Z0-9]`` paths should look like in the snippets below.
 
 tea path
 
