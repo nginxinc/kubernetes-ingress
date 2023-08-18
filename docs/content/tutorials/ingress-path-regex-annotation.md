@@ -1,15 +1,14 @@
 ---
 title: Customizing Ingresses with Path-Regex Annotations
 description: |
-  How to customize Ingress Types with path-regex annotations.
+  How to customize Simple Ingress and Mergeable Ingress types with path-regex annotations.
 weight: 1800
 doctypes: ["concept"]
 toc: true
 ---
 ## Customizing NGINX Ingress Controller with Path-Regex Annotations
 
-
-This document explains how to use `path-regex` annotations with Simpe Ingresses and Mergeable Ingresses (Master - Minion)
+This document explains how to use `path-regex` annotations with Simpe Ingress and Mergeable Ingress (Master and Minions)
 types.
 
 [NGINX documentation](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority) provides
@@ -19,12 +18,12 @@ Read [it](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-
 
 ## Simple Ingress Type
 
-In this example, we will use the `nginx.org/path-regex` annotations to add regex modifiers the location paths.
+In this example, you will use the `nginx.org/path-regex` annotations to add regex modifiers the location paths.
 
 Start by modifying `cafe-ingress.tmpl` metadata. Add the annotation section and configure annotation ``nginx.org/path-regex``
 with value `case_sensitive`.
 
-The content of `cafe-ingress.tmpl`:
+`cafe-ingress.tmpl`:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -70,6 +69,7 @@ location ~ "^/coffee/[A-Z0-9]" {
 Note that the regex modifier `case_sensitive` is applied to all paths.
 
 To change regex modifier value from `case_sensitive` to `case_insensitive` update the `nginx.org/path-regex` annotation.
+
 The config `cafe-ingress.tmpl` file below shows the change.
 
 ```yaml
@@ -98,18 +98,18 @@ spec:
           servicePort: 80
 ```
 
-In the NGINX config file the ``tea`` and ``coffee`` paths will look like in the snippets below:
+In the NGINX config file the ``/tea/[A-Z0-9]`` and ``/coffee/[A-Z0-9]`` paths will look like in the snippets below.
 
-tea path:
+tea path
 
 ```nginx
-location ~* "^/tea/[A-Z0-9]" {
+location ~* "^/tea/[A-Z0-9]"
 ```
 
-coffee path:
+coffee path
 
 ```nginx
-location ~* "^/coffee/[A-Z0-9]" {
+location ~* "^/coffee/[A-Z0-9]"
 ```
 
 
@@ -119,7 +119,7 @@ This document section explains how to deploy and configure Mergeable Ingress Typ
 
 You will deploy a Master Ingress and two Minion Ingresses. Next, you will configure them with `path-regex` annotations.
 
-Start by creating a Master Ingress.
+Create a Master Ingress.
 
 `cafe-master.yaml`
 ```yaml
@@ -139,13 +139,13 @@ spec:
   - host: cafe.example.com
 ```
 
-Create the Ingress:
+Create the Ingress
 
 ```console
 kubectl create -f cafe-master.yaml
 ```
 
-Verify the Master Ingress is created
+Verify the Master Ingress was created
 
 ```console
 kubectl get ingress cafe-ingress-master
@@ -204,6 +204,7 @@ spec:
 
 ```console
 kubectl create -f tea-minion.yaml
+
 ingress.networking.k8s.io/cafe-ingress-tea-minion created
 ```
 
@@ -335,7 +336,7 @@ spec:
 Apply the changes
 
 ```console
-kuubectl apply -f tea-minion.yaml
+kubectl apply -f tea-minion.yaml
 ```
 
 Verify the change
