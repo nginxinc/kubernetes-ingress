@@ -1,7 +1,7 @@
 ---
 title: Ingresses Path Matching Using Path-Regex Annotation
 description: |
-  How to customize Simple Ingress and Mergeable Ingress types with path-regex annotations.
+  How to customize Ingress and Mergeable Ingress types with path-regex annotations.
 weight: 1800
 doctypes: ["concept"]
 toc: true
@@ -11,9 +11,9 @@ toc: true
 We suggest reading the NGINX [documentation on resolve location priority](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority)
 to gain additional contenx about NGINX and NGINX Plus before using the ``path-regex`` annotation.
 
-## Simple Ingress Type
+## Ingress Type
 
-In this example, you will use the `nginx.org/path-regex` annotations to add regex modifiers the location paths.
+In this example, you will use the `nginx.org/path-regex` annotations to add regex modifiers to the location paths.
 
 Start by modifying `cafe-ingress.yaml` metadata to add the annotation section and configure
 the ``nginx.org/path-regex`` annotation.
