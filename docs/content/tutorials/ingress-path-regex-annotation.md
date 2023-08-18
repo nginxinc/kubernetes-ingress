@@ -111,7 +111,7 @@ location ~* "^/coffee/[A-Z0-9]"
 
 This document section explains how to deploy and configure Mergeable Ingress Type.
 
-You will deploy a Master Ingress and two Minion Ingresses. Next, you will configure them with `path-regex` annotations.
+First, you will deploy a Master Ingress and two Minion Ingresses. Then, you will configure them with `path-regex` annotations.
 
 Create a Master Ingress.
 
@@ -171,7 +171,7 @@ Events:
   Normal  AddedOrUpdated  62s   nginx-ingress-controller  Configuration for default/cafe-ingress-master was added or updated
 ```
 
-Create first Ingress Minion.
+Create the first Ingress Minion.
 
 `tea-minion.yaml`
 
@@ -203,7 +203,7 @@ kubectl create -f tea-minion.yaml
 ingress.networking.k8s.io/cafe-ingress-tea-minion created
 ```
 
-Verify the minion was created
+Verify the Minion was created:
 
 ```shell
 kubectl get ingress cafe-ingress-tea-minion
@@ -233,7 +233,7 @@ Events:
   Normal  AddedOrUpdated  24m   nginx-ingress-controller  Configuration for default/cafe-ingress-tea-minion was added or updated
 ```
 
-Create second Minion
+Create the second Ingress Minion.
 
 `tea-minion.yaml`
 
@@ -259,14 +259,13 @@ spec:
               number: 80
 ```
 
-
 ```shell
 kubectl create -f tea-minion.yaml
 
 ingress.networking.k8s.io/cafe-ingress-tea-minion created
 ```
 
-Verify the minion was created
+Verify the Minion Ingress was created:
 
 ```shell
 kubectl get ingress cafe-ingress-tea-minion
@@ -296,11 +295,11 @@ Events:
   Normal  AddedOrUpdated  5m52s  nginx-ingress-controller  Configuration for default/cafe-ingress-tea-minion was added or updated
 ```
 
-You created Master Ingress two Minion Ingresses. Minion Ingresses define two paths: `/tea` and `/coffee`.
+You created a Master Ingress and two Minion Ingresses. Minion Ingresses are defined with two paths: `/tea` and `/coffee`.
 
 In the following steps, you will modify the paths by applying regex modifiers.
 
-Update Minion Ingress `Tea`:
+Update the Minion Ingress `Tea`:
 
 - add `path-regex` annotation with value `case_insensitive`
 - modify path with regex you want to use (in the example below: `/tea/[A-Z0-9]`)
@@ -328,13 +327,13 @@ spec:
               number: 80
 ```
 
-Apply the changes
+Apply the changes:
 
 ```shell
 kubectl apply -f tea-minion.yaml
 ```
 
-Verify the change
+Verify the change:
 
 ```shell
 kubectl describe ingress cafe-ingress-tea-minion
@@ -358,8 +357,9 @@ Events:
   Normal  AddedOrUpdated  47s (x2 over 34m)  nginx-ingress-controller  Configuration for default/cafe-ingress-tea-minion was added or updated
 ```
 
-Note the updated list of annotations. The new `path-regex` annotation was added.
-It updates the path `/tea/[A-Z0-9]` using `case_insensitive` reg-ex modifier.
+Looking at the updated list of annotations, we can see the new `path-regex` annotation was added.
+
+It updates the path `/tea/[A-Z0-9]` using the `case_insensitive` regex modifier.
 Updated path (location) in the NGINX config file: `location ~* "^/tea/[A-Z0-9]"`.
 
 Note that the `path-regex` annotation applies only to paths defined on the corresponding Minion Ingress.
@@ -391,7 +391,7 @@ spec:
               number: 80
 ```
 
-Add `path-regex` annotation and modify path `/coffee`
+Add `path-regex` annotation and modify the path `/coffee`:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -449,5 +449,5 @@ Events:
 ```
 
 The new annotation `nginx.org/path-regex` was added.
-It updates the path `/coffee/[A-Za-z0-9]` using  the `case_sensitive` regex modifier.
+It updates the path `/coffee/[A-Za-z0-9]` using the `case_sensitive` regex modifier.
 Updated path (location) in the NGINX config file: `location ~ "^/coffee/[A-Za-z0-9]"`.
