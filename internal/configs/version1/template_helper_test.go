@@ -148,9 +148,6 @@ func TestMakeLocationPath_ForIngressWithPathRegexSetOnMaster(t *testing.T) {
 			MinionIngress: &Ingress{
 				Name:      "cafe-ingress-coffee-minion",
 				Namespace: "default",
-				Annotations: map[string]string{
-					"nginx.org/mergeable-ingress-type": "minion",
-				},
 			},
 		},
 		map[string]string{
@@ -191,10 +188,10 @@ func TestMakeLocationPath_SetOnMinionTakesPrecedenceOverMaster(t *testing.T) {
 	}
 }
 
-func TestMakeLocationPath_PathRegexSetOnMaster(t *testing.T) {
+func TestMakeLocationPath_PathRegexSetOnMasterDoesNotModifyMinionWithoutPathRegexAnnotation(t *testing.T) {
 	t.Parallel()
 
-	want := "= \"/coffee\""
+	want := "/coffee"
 	got := makeLocationPath(
 		&Location{
 			Path: "/coffee",
@@ -209,6 +206,24 @@ func TestMakeLocationPath_PathRegexSetOnMaster(t *testing.T) {
 		map[string]string{
 			"nginx.org/mergeable-ingress-type": "master",
 			"nginx.org/path-regex":             "exact",
+		},
+	)
+
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestMakeLocationPath_ForIngress(t *testing.T) {
+	t.Parallel()
+
+	want := "~ \"^/coffee\""
+	got := makeLocationPath(
+		&Location{
+			Path: "/coffee",
+		},
+		map[string]string{
+			"nginx.org/path-regex": "case_sensitive",
 		},
 	)
 
