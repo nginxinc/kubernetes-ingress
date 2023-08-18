@@ -107,7 +107,6 @@ coffee path
 location ~* "^/coffee/[A-Z0-9]"
 ```
 
-
 ## Mergeable Ingress Type
 
 This document section explains how to deploy and configure Mergeable Ingress Type.
@@ -117,6 +116,7 @@ You will deploy a Master Ingress and two Minion Ingresses. Next, you will config
 Create a Master Ingress.
 
 `cafe-master.yaml`
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -136,21 +136,20 @@ spec:
 
 Create the Ingress
 
-```console
+```shell
 kubectl create -f cafe-master.yaml
 ```
 
 Verify the Master Ingress was created
 
-```console
+```shell
 kubectl get ingress cafe-ingress-master
 
 NAME                  CLASS   HOSTS              ADDRESS   PORTS     AGE
 cafe-ingress-master   nginx   cafe.example.com             80, 443   29s
 ```
 
-
-```console
+```shell
 kubectl describe ingress cafe-ingress-master
 
 Name:             cafe-ingress-master
@@ -175,6 +174,7 @@ Events:
 Create first Ingress Minion.
 
 `tea-minion.yaml`
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -197,7 +197,7 @@ spec:
               number: 80
 ```
 
-```console
+```shell
 kubectl create -f tea-minion.yaml
 
 ingress.networking.k8s.io/cafe-ingress-tea-minion created
@@ -205,14 +205,14 @@ ingress.networking.k8s.io/cafe-ingress-tea-minion created
 
 Verify the minion was created
 
-```console
+```shell
 kubectl get ingress cafe-ingress-tea-minion
 
 NAME                      CLASS   HOSTS              ADDRESS   PORTS   AGE
 cafe-ingress-tea-minion   nginx   cafe.example.com             80      23m
 ```
 
-```console
+```shell
 kubectl describe ingress cafe-ingress-tea-minion
 
 Name:             cafe-ingress-tea-minion
@@ -260,7 +260,7 @@ spec:
 ```
 
 
-```console
+```shell
 kubectl create -f tea-minion.yaml
 
 ingress.networking.k8s.io/cafe-ingress-tea-minion created
@@ -268,14 +268,14 @@ ingress.networking.k8s.io/cafe-ingress-tea-minion created
 
 Verify the minion was created
 
-```console
+```shell
 kubectl get ingress cafe-ingress-tea-minion
 
 NAME                      CLASS   HOSTS              ADDRESS   PORTS   AGE
 cafe-ingress-tea-minion   nginx   cafe.example.com             80      5m21s
 ```
 
-```console
+```shell
 kubectl describe ingress cafe-ingress-tea-minion
 
 Name:             cafe-ingress-tea-minion
@@ -330,13 +330,13 @@ spec:
 
 Apply the changes
 
-```console
+```shell
 kubectl apply -f tea-minion.yaml
 ```
 
 Verify the change
 
-```console
+```shell
 kubectl describe ingress cafe-ingress-tea-minion
 
 Name:             cafe-ingress-tea-minion
