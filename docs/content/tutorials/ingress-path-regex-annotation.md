@@ -1,5 +1,5 @@
 ---
-title: Customizing Ingresses with Path-Regex Annotations
+title: Ingresses Path Matching Using Path-Regex Annotation
 description: |
   How to customize Simple Ingress and Mergeable Ingress types with path-regex annotations.
 weight: 1800
@@ -8,22 +8,17 @@ toc: true
 ---
 ## Customizing NGINX Ingress Controller with Path-Regex Annotations
 
-This document explains how to use `path-regex` annotations with Simpe Ingress and Mergeable Ingress (Master and Minions)
-types.
-
-[NGINX documentation](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority) provides
-additional information about how NGINX and NGINX Plus resolve location priority.
-Read [it](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority) before using
- the ``path-regex`` annotation.
+We suggest reading the NGINX [documentation on resolve location priority](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority)
+to gain additional contenx about NGINX and NGINX Plus before using the ``path-regex`` annotation.
 
 ## Simple Ingress Type
 
 In this example, you will use the `nginx.org/path-regex` annotations to add regex modifiers the location paths.
 
-Start by modifying `cafe-ingress.tmpl` metadata. Add the annotation section and configure annotation ``nginx.org/path-regex``
-with value `case_sensitive`.
+Start by modifying `cafe-ingress.yaml` metadata to add the annotation section and configure
+the ``nginx.org/path-regex`` annotation.
 
-`cafe-ingress.tmpl`:
+`cafe-ingress.yaml`:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -51,26 +46,26 @@ spec:
           servicePort: 80
 ```
 
-After creating the Ingress (`kubectl create -f cafe-ingres,yaml`), all defined paths will be updated. In the generated
+After creating the Ingress (`kubectl create -f cafe-ingres.yaml`), all defined paths will be updated. In the generated
 NGINX config file the ``tea`` and ``coffee`` paths will look like in the snippets below:
 
 tea path:
 
-```bash
-location ~ "^/tea/[A-Z0-9]" {
+```nginx
+location ~ "^/tea/[A-Z0-9]"
 ```
 
 coffee path:
 
-```bash
-location ~ "^/coffee/[A-Z0-9]" {
+```nginx
+location ~ "^/coffee/[A-Z0-9]"
 ```
 
 Note that the regex modifier `case_sensitive` is applied to all paths.
 
 To change regex modifier value from `case_sensitive` to `case_insensitive` update the `nginx.org/path-regex` annotation.
 
-The config `cafe-ingress.tmpl` file below shows the change.
+The config `cafe-ingress.yaml` file below shows the change.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -421,17 +416,17 @@ spec:
               number: 80
 ```
 
-Apply changes to the Minion Ingress
+Apply changes to the Minion Ingress:
 
-```console
+```shell
 kubectl apply -f coffee-minion.yaml
 
 ingress.networking.k8s.io/cafe-ingress-coffee-minion created
 ```
 
-Verify applied changes
+Verify the applied changes:
 
-```console
+```shell
 kubectl describe ingress cafe-ingress-coffee-minion
 
 Name:             cafe-ingress-coffee-minion
@@ -453,5 +448,6 @@ Events:
   Normal  AddedOrUpdated  11m   nginx-ingress-controller  Configuration for default/cafe-ingress-coffee-minion was added or updated
 ```
 
-The new annotation `nginx.org/path-regex` was added. It updates the path `/coffee/[A-Za-z0-9]` using `case_sensitive`
-regex modifier. Updated path (location) in the NGINX config file: `location ~ "^/coffee/[A-Za-z0-9]"`.
+The new annotation `nginx.org/path-regex` was added.
+It updates the path `/coffee/[A-Za-z0-9]` using  the `case_sensitive` regex modifier.
+Updated path (location) in the NGINX config file: `location ~ "^/coffee/[A-Za-z0-9]"`.
