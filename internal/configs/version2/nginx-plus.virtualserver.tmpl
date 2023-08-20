@@ -1,3 +1,4 @@
+{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version2.VirtualServerConfig*/ -}}
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
     zone {{ $u.Name }} {{ if ne $u.UpstreamZoneSize "0" }}{{ $u.UpstreamZoneSize }}{{ else }}512k{{ end }};
@@ -18,7 +19,7 @@ upstream {{ $u.Name }} {
 
     {{ with $u.SessionCookie }}
         {{ if .Enable }}
-    sticky cookie {{ .Name }}{{ if .Expires }} expires={{ .Expires }}{{ end }}{{ if .Domain }} domain={{ .Domain }}{{ end }}{{ if .HTTPOnly }} httponly{{ end }}{{ if .Secure }} secure{{ end }}{{ if .Path }} path={{ .Path }}{{ end }};
+    sticky cookie {{ .Name }}{{ if .Expires }} expires={{ .Expires }}{{ end }}{{ if .Domain }} domain={{ .Domain }}{{ end }}{{ if .HTTPOnly }} httponly{{ end }}{{ if .SameSite}} samesite={{.SameSite | toLower }}{{ end }}{{ if .Secure }} secure{{ end }}{{ if .Path }} path={{ .Path }}{{ end }};
         {{ end }}
     {{ end }}
 
@@ -337,6 +338,7 @@ server {
     {{ range $l := $s.Locations }}
     location {{ $l.Path }} {
         set $service "{{ $l.ServiceName }}";
+        status_zone "{{ $l.ServiceName }}";
         {{ if $l.IsVSR }}
         set $resource_type "virtualserverroute";
         set $resource_name "{{ $l.VSRName }}";

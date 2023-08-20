@@ -1,4 +1,4 @@
-
+{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.MainConfig*/ -}}
 worker_processes  {{.WorkerProcesses}};
 {{- if .WorkerRlimitNofile}}
 worker_rlimit_nofile {{.WorkerRlimitNofile}};{{end}}
@@ -21,6 +21,7 @@ load_module modules/ngx_http_app_protect_module.so;
 {{- if .AppProtectDosLoadModule}}
 load_module modules/ngx_http_app_protect_dos_module.so;
 {{- end}}
+load_module modules/ngx_fips_check_module.so;
 {{- if .MainSnippets}}
 {{range $value := .MainSnippets}}
 {{$value}}{{end}}
@@ -316,8 +317,8 @@ stream {
     }
 
     server {
-        listen 443{{if .ProxyProtocol}} proxy_protocol{{end}};
-        {{if not .DisableIPV6}}listen [::]:443{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+        listen {{.TLSPassthroughPort}}{{if .ProxyProtocol}} proxy_protocol{{end}};
+        {{if not .DisableIPV6}}listen [::]:{{.TLSPassthroughPort}}{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
 
         {{if .ProxyProtocol}}
         {{range $setRealIPFrom := .SetRealIPFrom}}

@@ -1,22 +1,28 @@
 # Custom Annotations
 
-Custom annotations enable you to quickly extend the Ingress resource to support many advanced features of NGINX, such as rate limiting, caching, etc.
+Custom annotations enable you to quickly extend the Ingress resource to support many advanced features of NGINX, such as
+rate limiting, caching, etc.
 
-Let's create a set of custom annotations to support [rate-limiting](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html):
-* `custom.nginx.org/rate-limiting` - enables rate-limiting.
-* `custom.nginx.org/rate-limiting-rate` - configures the rate of rate-limiting, with the default of `1r/s`.
-* `custom.nginx.org/rate-limiting-burst` - configures the maximum bursts size of requests with the default of `3`.
+Let's create a set of custom annotations to support
+[rate-limiting](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html):
+
+- `custom.nginx.org/rate-limiting` - enables rate-limiting.
+- `custom.nginx.org/rate-limiting-rate` - configures the rate of rate-limiting, with the default of `1r/s`.
+- `custom.nginx.org/rate-limiting-burst` - configures the maximum bursts size of requests with the default of `3`.
 
 ## Prerequisites
 
-* Read the [custom annotations doc](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/) before going through this example first.
-* Read about [custom templates](../custom-templates).
+- Read the [custom annotations
+  doc](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/) before going
+  through this example first.
+- Read about [custom templates](../custom-templates).
 
 ## Step 1 - Customize the Template
 
 Customize the template for Ingress resources to include the logic to handle and apply the annotations.
 
 1. Create a ConfigMap file with the customized template (`nginx-config.yaml`):
+
     ```yaml
     kind: ConfigMap
     apiVersion: v1
@@ -56,30 +62,41 @@ Customize the template for Ingress resources to include the logic to handle and 
     ```
 
     The customization above consists of two parts:
-    * handling the `custom.nginx.org/rate-limiting` and `custom.nginx.org/rate-limiting-rate` annotations in the `http` context.
-    * handling the `custom.nginx.org/rate-limiting` and `custom.nginx.org/rate-limiting-burst` annotation in the `location` context.
+    - handling the `custom.nginx.org/rate-limiting` and `custom.nginx.org/rate-limiting-rate` annotations in the `http`
+      context.
+    - handling the `custom.nginx.org/rate-limiting` and `custom.nginx.org/rate-limiting-burst` annotation in the
+      `location` context.
 
     **Note**: for the brevity, the unimportant for the example parts of the template are replaced with `. . .`.
 
 1. Apply the customized template:
-    ```
-    $ kubectl apply -f nginx-config.yaml
+
+    ```console
+    kubectl apply -f nginx-config.yaml
     ```
 
-1. If the Ingress Controller fails to parse the customized template, it will attach an error event with the corresponding ConfigMap resource. You can see the events by running:
+1. If the Ingress Controller fails to parse the customized template, it will attach an error event with the
+   corresponding ConfigMap resource. You can see the events by running:
+
+    ```console
+    kubectl describe configmap nginx-config -n nginx-ingress
     ```
-    $ kubectl describe configmap nginx-config -n nginx-ingress
+
+    ```text
     . . .
     Events:
     Type     Reason            Age                From                      Message
     ----     ------            ----               ----                      -------
     Normal   Updated           12s (x2 over 25s)  nginx-ingress-controller  Configuration from nginx-ingress/nginx-config was updated
     ```
+
     In this case, we got the `Updated` event meaning that the template was parsed successfully.
 
 ### Step 2 - Use Custom Annotations in an Ingress Resource
 
-1. Create a file with the following Ingress resource (`cafe-ingress.yaml`) and use the custom annotations to enable rate-limiting:
+1. Create a file with the following Ingress resource (`cafe-ingress.yaml`) and use the custom annotations to enable
+   rate-limiting:
+
     ```yaml
     apiVersion: networking.k8s.io/v1
     kind: Ingress
@@ -112,25 +129,36 @@ Customize the template for Ingress resources to include the logic to handle and 
     ```
 
 1. Apply the Ingress resource:
-    ```
-    $ kubectl apply -f cafe-ingress.yaml
+
+    ```console
+    kubectl apply -f cafe-ingress.yaml
     ```
 
-1. Since it is possible that the value we put in `custom.nginx.org/rate-limiting-rate` or `custom.nginx.org/rate-limiting-burst` annotation might be considered invalid by NGINX, make sure to run the following command to check if the configuration for the Ingress resource was successfully applied. As with the ConfigMap resource, in case of an error, the Ingress Controller will attach an error event to the Ingress resource:
+1. Since it is possible that the value we put in `custom.nginx.org/rate-limiting-rate` or
+   `custom.nginx.org/rate-limiting-burst` annotation might be considered invalid by NGINX, make sure to run the
+   following command to check if the configuration for the Ingress resource was successfully applied. As with the
+   ConfigMap resource, in case of an error, the Ingress Controller will attach an error event to the Ingress resource:
+
+    ```console
+    kubectl describe ingress cafe-ingress
     ```
-    $ kubectl describe ingress cafe-ingress
+
+    ```text
     Events:
     Type    Reason          Age   From                      Message
     ----    ------          ----  ----                      -------
     Normal  AddedOrUpdated  2m    nginx-ingress-controller  Configuration for default/cafe-ingress was added or updated
     ```
+
     In this case, the config was successfully applied.
 
 ### Step 3 -- Take a Look at the Generated NGINX Config
 
-Take a look at the generated config for the cafe-ingress Ingress resource to see how the rate-limiting feature is enabled:
-```
-$ kubectl exec <nginx-ingress-pod> -n nginx-ingress -- cat /etc/nginx/conf.d/default-cafe-ingress.conf
+Take a look at the generated config for the cafe-ingress Ingress resource to see how the rate-limiting feature is
+enabled:
+
+```console
+kubectl exec <nginx-ingress-pod> -n nginx-ingress -- cat /etc/nginx/conf.d/default-cafe-ingress.conf
 ```
 
 ```nginx
@@ -162,4 +190,5 @@ server {
 . . .
 }
 ```
+
 **Note**: the unimportant parts are replaced with `. . .`.

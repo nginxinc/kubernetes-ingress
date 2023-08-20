@@ -283,6 +283,7 @@ type SessionCookie struct {
 	Domain   string
 	HTTPOnly bool
 	Secure   bool
+	SameSite string
 }
 
 // Distribution maps weight to a value in a SplitClient.

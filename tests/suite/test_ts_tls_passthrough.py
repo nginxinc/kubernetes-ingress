@@ -24,14 +24,18 @@ class TransportServerTlsSetup:
 
     Attributes:
         public_endpoint (object):
+        tls_passthrough_port (int):
         ts_resource (dict):
         name (str):
         namespace (str):
         ts_host (str):
     """
 
-    def __init__(self, public_endpoint: PublicEndpoint, ts_resource, name, namespace, ts_host):
+    def __init__(
+        self, public_endpoint: PublicEndpoint, tls_passthrough_port: int, ts_resource, name, namespace, ts_host
+    ):
         self.public_endpoint = public_endpoint
+        self.tls_passthrough_port = tls_passthrough_port
         self.ts_resource = ts_resource
         self.name = name
         self.namespace = namespace
@@ -72,6 +76,7 @@ def transport_server_tls_passthrough_setup(
 
     return TransportServerTlsSetup(
         ingress_controller_endpoint,
+        request.param["tls_passthrough_port"],
         ts_resource,
         ts_resource["metadata"]["name"],
         test_namespace,
@@ -91,10 +96,23 @@ def transport_server_tls_passthrough_setup(
                     "-enable-tls-passthrough=true",
                 ],
             },
-            {"example": "transport-server-tls-passthrough"},
-        )
+            {"example": "transport-server-tls-passthrough", "tls_passthrough_port": 443},
+        ),
+        (
+            {
+                "type": "tls-passthrough-custom-port",
+                # set publicEndpoint.port_ssl to 8443 when checking connection to public endpoint and in all tests
+                "extra_args": [
+                    "-enable-leader-election=false",
+                    "-enable-tls-passthrough=true",
+                    "-tls-passthrough-port=8443",
+                ],
+            },
+            {"example": "transport-server-tls-passthrough", "tls_passthrough_port": 8443},
+        ),
     ],
     indirect=True,
+    ids=["tls_passthrough_with_default_port", "tls_passthrough_with_custom_port"],
 )
 class TestTransportServerTlsPassthrough:
     def restore_ts(self, kube_apis, transport_server_tls_passthrough_setup) -> None:
@@ -154,8 +172,8 @@ class TestTransportServerTlsPassthrough:
         )
         wait_before_test(1)
         config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
-        assert "listen 443 proxy_protocol;" in config
-        assert "listen [::]:443 proxy_protocol;" in config
+        assert f"listen {transport_server_tls_passthrough_setup.tls_passthrough_port} proxy_protocol;" in config
+        assert f"listen [::]:{transport_server_tls_passthrough_setup.tls_passthrough_port} proxy_protocol;" in config
         std_cm_src = f"{DEPLOYMENTS}/common/nginx-config.yaml"
         replace_configmap_from_yaml(
             kube_apis.v1,

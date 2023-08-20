@@ -74,9 +74,8 @@ def crd_ingress_controller(
     :param ingress_controller_prerequisites
     :param ingress_controller_endpoint:
     :param request: pytest fixture to parametrize this method
-        {type: complete|rbac-without-vs, extra_args: }
-        'type' type of test pre-configuration
-        'extra_args' list of IC cli arguments
+        {type: complete|rbac-without-vs,
+        'extra_args': list of IC cli arguments }
     :return:
     """
     namespace = ingress_controller_prerequisites.namespace
@@ -94,6 +93,8 @@ def crd_ingress_controller(
             namespace,
             request.param.get("extra_args", None),
         )
+        if request.param["type"] == "tls-passthrough-custom-port":
+            ingress_controller_endpoint.port_ssl = ingress_controller_endpoint.custom_ssl_port
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
             ingress_controller_endpoint.port,

@@ -1,0 +1,39 @@
+name: Mend
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+    paths-ignore:
+      - docs/**
+      - examples/**
+
+concurrency:
+  group: ${{ github.ref_name }}-mend
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Mend
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.repository.fork == false }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
+      - name: Download agent
+        run: curl -fsSLJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
+
+      - name: Verify JAR
+        run: jarsigner -verify wss-unified-agent.jar
+
+      - name: Scan and upload
+        env:
+          PRODUCT_NAME: kubernetes-ingress-controller_${{ github.ref_name }}
+          PROJECT_NAME: nic
+        run: java -jar wss-unified-agent.jar -noConfig true -wss.url ${{ secrets.WSS_URL }} -apiKey ${{ secrets.WSS_NGINX_TOKEN }} -product $PRODUCT_NAME -project $PROJECT_NAME -d .
