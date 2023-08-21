@@ -1,6 +1,6 @@
 # Custom HTTP Listeners
 
-In this example, we will configure a [VirtualServer](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/) resource with custom HTTP listeners. 
+In this example, we will configure a [VirtualServer](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/) resource with custom HTTP listeners.
 This will allow HTTP and/or HTTPs based requests to be made on non-default ports.
 
 ## Prerequisites
@@ -110,7 +110,7 @@ spec:
     ```console
     kubectl describe virtualserver cafe
     ```
-   
+
    Below you will see the events as well as the new `Listeners` field
     ```console
    . . .
