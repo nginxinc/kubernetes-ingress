@@ -92,10 +92,14 @@ spec:
 {{ toYaml .Values.controller.lifecycle | indent 10 }}
 {{- end }}
         ports:
-        - name: http
-          containerPort: 80
-        - name: https
-          containerPort: 443
+{{- range $key, $value := .Values.controller.containerPort }}
+        - name: {{ $key }}
+          containerPort: {{ $value }}
+          protocol: TCP
+          {{- if and $.Values.controller.hostPort.enable (index $.Values.controller.hostPort $key) }}
+          hostPort: {{ index $.Values.controller.hostPort $key }}
+          {{- end }}
+{{- end }}
 {{- if .Values.controller.customPorts }}
 {{ toYaml .Values.controller.customPorts | indent 8 }}
 {{- end }}
