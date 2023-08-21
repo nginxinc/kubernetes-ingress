@@ -1,4 +1,4 @@
-
+{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.MainConfig*/ -}}
 worker_processes  {{.WorkerProcesses}};
 {{- if .WorkerRlimitNofile}}
 worker_rlimit_nofile {{.WorkerRlimitNofile}};{{end}}
