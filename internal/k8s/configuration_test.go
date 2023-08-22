@@ -1,7 +1,6 @@
 package k8s
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -1887,8 +1886,8 @@ func TestAddTransportServer(t *testing.T) {
 			Protocol: "TCP",
 		},
 	}
-	gc := createTestGlobalConfiguration(listeners)
-	mustInitGlobalConfiguration(configuration, gc)
+
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
 
 	ts := createTestTransportServer("transportserver", "tcp-7777", "TCP")
 
@@ -2069,8 +2068,7 @@ func TestListenerFlip(t *testing.T) {
 			Protocol: "TCP",
 		},
 	}
-	gc := createTestGlobalConfiguration(listeners)
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
 
 	ts := createTestTransportServer("transportserver", "tcp-7777", "TCP")
 
@@ -2247,8 +2245,7 @@ func TestAddTransportServerWithIncorrectClass(t *testing.T) {
 func TestAddTransportServerWithNonExistingListener(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	gc := createTestGlobalConfiguration([]conf_v1alpha1.Listener{})
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, []conf_v1alpha1.Listener{}, noChanges, noProblems)
 
 	ts := createTestTransportServer("transportserver", "tcp-7777", "TCP")
 
@@ -2318,6 +2315,7 @@ func TestAddOrUpdateGlobalConfiguration(t *testing.T) {
 	}
 }
 
+//gocyclo:ignore
 func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	configuration := createTestConfiguration()
 
@@ -2433,7 +2431,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 
 	// Swap listeners
 
-	// We need to handle this case in Controller properly - update config for all TransportServers and reload once
+	// We need to handle this case in Controller propoperly - update config for all TransportServers and reload once
 	// to avoid any race conditions
 	// and errors like nginx: [emerg] duplicate "0.0.0.0:8888" address and port pair in /etc/nginx/nginx.conf:73
 
@@ -2604,27 +2602,10 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 }
 
 func TestAddGlobalConfigurationThenAddVirtualServerWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -2632,32 +2613,23 @@ func TestAddGlobalConfigurationThenAddVirtualServerWithValidCustomListeners(t *t
 		"http-8082",
 		"https-8442")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems := configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithValidCustomListenersFirstThenAddGlobalConfiguration(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -2665,71 +2637,37 @@ func TestAddVirtualServerWithValidCustomListenersFirstThenAddGlobalConfiguration
 		"http-8082",
 		"https-8442")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     0,
+				HTTPPort:      0,
+				HTTPSPort:     0,
 				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems := configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithValidCustomListenersAndNoGlobalConfiguration(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -2737,51 +2675,26 @@ func TestAddVirtualServerWithValidCustomListenersAndNoGlobalConfiguration(t *tes
 		"http-8082",
 		"https-8442")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     0,
+				HTTPPort:      0,
+				HTTPSPort:     0,
 				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems := configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithCustomHttpListenerThatDoNotExistInGlobalConfiguration(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -2789,51 +2702,26 @@ func TestAddVirtualServerWithCustomHttpListenerThatDoNotExistInGlobalConfigurati
 		"http-bogus",
 		"https-8442")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     8442,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
 				Warnings:      []string{"Listener http-bogus is not defined in GlobalConfiguration"},
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems := configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithCustomHttpsListenerThatDoNotExistInGlobalConfiguration(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -2841,653 +2729,270 @@ func TestAddVirtualServerWithCustomHttpsListenerThatDoNotExistInGlobalConfigurat
 		"http-8082",
 		"https-bogus")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     0,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
 				Warnings:      []string{"Listener https-bogus is not defined in GlobalConfiguration"},
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems := configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestDeleteHttpListenerFromExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
-			},
-		},
-	}
-	expectedProblems = nil
-
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	listeners = []conf_v1alpha1.Listener{
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     8442,
-				Warnings:      []string{"Listener http-8082 is not defined in GlobalConfiguration"},
-			},
-		},
-	}
-	expectedProblems = nil
-
-	updatedGlobalConfiguration := createTestGlobalConfiguration(listeners)
-
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGlobalConfiguration)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-}
-
-func TestDeleteHttpsListenerFromExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
-	configuration := createTestConfiguration()
-
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
-			},
-		},
-	}
-	expectedProblems = nil
-
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	listeners = []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-	}
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     0,
-				Warnings:      []string{"Listener https-8442 is not defined in GlobalConfiguration"},
-			},
-		},
-	}
-	expectedProblems = nil
-
-	updatedGlobalConfiguration := createTestGlobalConfiguration(listeners)
-
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGlobalConfiguration)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-}
-
-func TestDeleteGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
-	configuration := createTestConfiguration()
-
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
-			},
-		},
-	}
-	expectedProblems = nil
-
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     0,
-				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
-			},
-		},
-	}
-	expectedProblems = nil
-
-	changes, problems = configuration.DeleteGlobalConfiguration()
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-}
-
-func TestRenameHttpListenerInExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
-	configuration := createTestConfiguration()
-
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
-			},
-		},
-	}
-	expectedProblems = nil
-
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	listenersWithRenamedHttpListener := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-bogus",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     8442,
-				Warnings:      []string{"Listener http-8082 is not defined in GlobalConfiguration"},
-			},
-		},
-	}
-	expectedProblems = nil
-
-	updatedGlobalConfiguration := createTestGlobalConfiguration(listenersWithRenamedHttpListener)
-
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGlobalConfiguration)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-}
-
-func TestRenameHttpsListenerInExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
-	configuration := createTestConfiguration()
-
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
-			},
-		},
-	}
-	expectedProblems = nil
-
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	listenersWithRenamedHttpsListener := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-bogus",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-
-	expectedChanges = []ResourceChange{
-		{
-			Op: AddOrUpdate,
-			Resource: &VirtualServerConfiguration{
-				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     0,
-				Warnings:      []string{"Listener https-8442 is not defined in GlobalConfiguration"},
-			},
-		},
-	}
-	expectedProblems = nil
-
-	updatedGlobalConfiguration := createTestGlobalConfiguration(listenersWithRenamedHttpsListener)
-
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGlobalConfiguration)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
-
-}
-
-func TestAddVirtualServerWithCustomHttpListenerInHttpsBlock(t *testing.T) {
-	configuration := createTestConfiguration()
-
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-		{
-			Name:     "http-8083",
-			Port:     8083,
-			Protocol: "HTTP",
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
 		"cafe.example.com",
 		"http-8082",
-		"http-8083")
+		"https-8442")
 
-	expectedWarningMsg :=
-		"Listener http-8083 can't be use in `listener.https` context as SSL is not enabled for that listener."
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     0,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
+				Warnings:      []string{"Listener http-8082 is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPSListener, expectedChanges, noProblems)
+}
+
+func TestDeleteHttpsListenerFromExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listener https-8442 is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPListener, expectedChanges, noProblems)
+}
+
+func TestDeleteGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
+			},
+		},
+	}
+	deleteGlobalConfiguration(t, configuration, expectedChanges, noProblems)
+}
+
+func TestRenameHttpListenerInExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
+				Warnings:      []string{"Listener http-8082 is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, bogusHTTPListener, expectedChanges, noProblems)
+}
+
+func TestRenameHttpsListenerInExistingGlobalConfigurationWithVirtualServerDeployedWithValidCustomListeners(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners("cafe", "cafe.example.com", "http-8082", "https-8442")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
+			},
+		},
+	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
+				Warnings:      []string{"Listener https-8442 is not defined in GlobalConfiguration"},
+			},
+		},
+	}
+	addOrUpdateGlobalConfiguration(t, configuration, bogusHTTPSListener, expectedChanges, noProblems)
+}
+
+func TestAddVirtualServerWithCustomHttpListenerInHttpsBlock(t *testing.T) {
+	t.Parallel()
+	configuration := createTestConfiguration()
+
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
+
+	virtualServer := createTestVirtualServerWithListeners(
+		"cafe",
+		"cafe.example.com",
+		"http-8082",
+		"http-8082")
+
+	expectedWarningMsg := "Listener http-8082 can't be use in `listener.https` context as SSL is not enabled for that listener."
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer: virtualServer,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
 				Warnings:      []string{expectedWarningMsg},
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithCustomHttpsListenerInHttpBlock(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-		{
-			Name:     "https-8443",
-			Port:     8443,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
 		"cafe.example.com",
 		"https-8442",
-		"https-8443")
+		"https-8442")
 
-	expectedWarningMsg :=
-		"Listener https-8442 can't be use in `listener.http` context as SSL is enabled for that listener."
+	expectedWarningMsg := "Listener https-8442 can't be use in `listener.http` context as SSL is enabled for that listener."
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     8443,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
 				Warnings:      []string{expectedWarningMsg},
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithNoHttpsListener(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -3495,59 +3000,25 @@ func TestAddVirtualServerWithNoHttpsListener(t *testing.T) {
 		"http-8082",
 		"")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     0,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithNoHttpListener(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -3555,59 +3026,25 @@ func TestAddVirtualServerWithNoHttpListener(t *testing.T) {
 		"",
 		"https-8442")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     8442,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithNoHttpOrHttpsListener(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -3615,59 +3052,25 @@ func TestAddVirtualServerWithNoHttpOrHttpsListener(t *testing.T) {
 		"",
 		"")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     0,
+				HTTPPort:      0,
+				HTTPSPort:     0,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithValidCustomListenersAndChangeValueOfSslToFalseInGlobalConfiguration(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -3675,102 +3078,41 @@ func TestAddVirtualServerWithValidCustomListenersAndChangeValueOfSslToFalseInGlo
 		"http-8082",
 		"https-8442")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	listeners = []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      false,
-		},
-	}
-
-	expectedWarningMsg :=
-		"Listener https-8442 can't be use in `listener.https` context as SSL is not enabled for that listener."
+	expectedWarningMsg := "Listener https-8442 can't be use in `listener.https` context as SSL is not enabled for that listener."
 
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     0,
+				HTTPPort:      8082,
+				HTTPSPort:     0,
 				Warnings:      []string{expectedWarningMsg},
 			},
 		},
 	}
-	expectedProblems = nil
 
-	updatedGlobalConfiguration := createTestGlobalConfiguration(listeners)
-
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGlobalConfiguration)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPSListenerSSLFalse, expectedChanges, noProblems)
 }
 
 func TestAddVirtualServerWithValidCustomListenersAndChangeValueOfSslToTrueInGlobalConfiguration(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServerWithListeners(
 		"cafe",
@@ -3778,94 +3120,41 @@ func TestAddVirtualServerWithValidCustomListenersAndChangeValueOfSslToTrueInGlob
 		"http-8082",
 		"https-8442")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      8082,
-				HttpsPort:     8442,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServer)
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	listeners = []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-
-	expectedWarningMsg :=
-		"Listener http-8082 can't be use in `listener.http` context as SSL is enabled for that listener."
+	expectedWarningMsg := "Listener http-8082 can't be use in `listener.http` context as SSL is enabled for that listener."
 
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     8442,
+				HTTPPort:      0,
+				HTTPSPort:     8442,
 				Warnings:      []string{expectedWarningMsg},
 			},
 		},
 	}
-	expectedProblems = nil
 
-	updatedGlobalConfiguration := createTestGlobalConfiguration(listeners)
-
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGlobalConfiguration)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPListenerSSLTrue, expectedChanges, noProblems)
 }
 
 func TestAddMultipleVirtualServersWithTheSameCustomListeners(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServerCafe := createTestVirtualServerWithListeners(
 		"cafe",
@@ -3879,188 +3168,87 @@ func TestAddMultipleVirtualServersWithTheSameCustomListeners(t *testing.T) {
 		"http-8082",
 		"https-8442")
 
-	expectedChanges = []ResourceChange{
+	expectedChangesForVsCafe := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServerCafe,
-				HttpPort:      8082,
-				HttpsPort:     8442,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
 			},
 		},
 	}
-	expectedProblems = nil
+	addOrUpdateVirtualServer(t, configuration, virtualServerCafe, expectedChangesForVsCafe, noProblems)
 
-	changes, problems := configuration.AddOrUpdateVirtualServer(virtualServerCafe)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-
-	expectedChanges = []ResourceChange{
+	expectedChangesForVsFoo := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServerFoo,
-				HttpPort:      8082,
-				HttpsPort:     8442,
+				HTTPPort:      8082,
+				HTTPSPort:     8442,
 			},
 		},
 	}
-	expectedProblems = nil
-
-	changes, problems = configuration.AddOrUpdateVirtualServer(virtualServerFoo)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServerFoo, expectedChangesForVsFoo, noProblems)
 }
 
 func TestUpdateGlobalConfigurationWithVirtualServerDeployedWithNoCustomListeners(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServer(
 		"cafe",
 		"cafe.example.com")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     0,
+				HTTPPort:      0,
+				HTTPSPort:     0,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems := configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 
 	// Update GlobalConfiguration by removing a listener
-	// Since our VirtualServer does not have any listeners
+	// Since our VirtualServer does not have any listener
 	// we do not want to see any VirtualServerConfiguration events
-
-	listeners = []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-	}
-
-	expectedChanges = nil
-	expectedProblems = nil
-
-	updatedGlobalConfiguration := createTestGlobalConfiguration(listeners)
-
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(updatedGlobalConfiguration)
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if err != nil {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
-	}
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPListener, noChanges, noProblems)
 }
 
 func TestDeleteGlobalConfigurationWithVirtualServerDeployedWithNoCustomListeners(t *testing.T) {
+	t.Parallel()
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
-		{
-			Name:     "http-8082",
-			Port:     8082,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "https-8442",
-			Port:     8442,
-			Protocol: "HTTP",
-			Ssl:      true,
-		},
-	}
-	gc := createTestGlobalConfiguration(listeners)
-
-	var expectedChanges []ResourceChange
-	var expectedProblems []ConfigurationProblem
-
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, customHTTPAndHTTPSListeners, noChanges, noProblems)
 
 	virtualServer := createTestVirtualServer(
 		"cafe",
 		"cafe.example.com")
 
-	expectedChanges = []ResourceChange{
+	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
 			Resource: &VirtualServerConfiguration{
 				VirtualServer: virtualServer,
-				HttpPort:      0,
-				HttpsPort:     0,
+				HTTPPort:      0,
+				HTTPSPort:     0,
 			},
 		},
 	}
-	expectedProblems = nil
 
-	changes, problems := configuration.AddOrUpdateVirtualServer(virtualServer)
-
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s", diff)
-	}
+	addOrUpdateVirtualServer(t, configuration, virtualServer, expectedChanges, noProblems)
 
 	// Delete the existing GlobalConfiguration
 	// Since our VirtualServer does not have any listeners
 	// we do not want to see any VirtualServerConfiguration events
-
-	expectedChanges = nil
-	expectedProblems = nil
-
-	changes, problems = configuration.DeleteGlobalConfiguration()
-	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
-		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
-	}
+	deleteGlobalConfiguration(t, configuration, noChanges, noProblems)
 }
 
 func TestPortCollisions(t *testing.T) {
@@ -4073,8 +3261,7 @@ func TestPortCollisions(t *testing.T) {
 			Protocol: "TCP",
 		},
 	}
-	gc := createTestGlobalConfiguration(listeners)
-	mustInitGlobalConfiguration(configuration, gc)
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
 
 	var expectedChanges []ResourceChange
 	var expectedProblems []ConfigurationProblem
@@ -4285,19 +3472,50 @@ func TestChallengeIngressNoVSR(t *testing.T) {
 	}
 }
 
-func mustInitGlobalConfiguration(c *Configuration, gc *conf_v1alpha1.GlobalConfiguration) {
+func addOrUpdateGlobalConfiguration(t *testing.T, c *Configuration, listeners []conf_v1alpha1.Listener, expectedChanges []ResourceChange, expectedProblems []ConfigurationProblem) {
+	t.Helper()
+	gc := createTestGlobalConfiguration(listeners)
 	changes, problems, err := c.AddOrUpdateGlobalConfiguration(gc)
 
-	// when adding a valid GlobalConfiguration to a new Configuration, no changes, problems and errors are expected
-
-	if len(changes) > 0 {
-		panic(fmt.Sprintf("AddOrUpdateGlobalConfiguration() returned %d changes, expected 0", len(changes)))
+	if !cmp.Equal(expectedChanges, changes) {
+		t.Fatalf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedChanges, changes))
 	}
-	if len(problems) > 0 {
-		panic(fmt.Sprintf("AddOrUpdateGlobalConfiguration() returned %d problems, expected 0", len(problems)))
+
+	if !cmp.Equal(expectedProblems, problems) {
+		t.Fatalf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedProblems, problems))
 	}
 	if err != nil {
-		panic(fmt.Sprintf("AddOrUpdateGlobalConfiguration() returned an unexpected error %v", err))
+		t.Fatalf("AddOrUpdateGlobalConfiguration() returned an unexpected error %v", err)
+	}
+}
+
+func deleteGlobalConfiguration(t *testing.T, c *Configuration, expectedChanges []ResourceChange, expectedProblems []ConfigurationProblem) {
+	t.Helper()
+	changes, problems := c.DeleteGlobalConfiguration()
+	if !cmp.Equal(expectedChanges, changes) {
+		t.Fatalf("DeleteGlobalConfiguration() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedChanges, changes))
+	}
+
+	if !cmp.Equal(expectedProblems, problems) {
+		t.Fatalf("DeleteGlobalConfiguration() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedProblems, problems))
+	}
+}
+
+func addOrUpdateVirtualServer(t *testing.T, c *Configuration, virtualServer *conf_v1.VirtualServer, expectedChanges []ResourceChange, expectedProblems []ConfigurationProblem) {
+	changes, problems := c.AddOrUpdateVirtualServer(virtualServer)
+
+	if !cmp.Equal(expectedChanges, changes) {
+		t.Fatalf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(expectedChanges, changes))
+	}
+
+	if !cmp.Equal(expectedProblems, problems) {
+		t.Fatalf("AddOrUpdateVirtualServer() returned unexpected result (-want +got):\n%s",
+			cmp.Diff(noProblems, problems))
 	}
 }
 
@@ -4416,8 +3634,8 @@ func createTestVirtualServerWithListeners(name string, host string, httpListener
 		},
 		Spec: conf_v1.VirtualServerSpec{
 			Listener: &conf_v1.Listener{
-				Http:  httpListener,
-				Https: httpsListener,
+				HTTP:  httpListener,
+				HTTPS: httpsListener,
 			},
 			IngressClass: "nginx",
 			Host:         host,
@@ -5313,3 +4531,104 @@ func TestCompareConfigurationProblems(t *testing.T) {
 		}
 	}
 }
+
+var (
+	noChanges  []ResourceChange
+	noProblems []ConfigurationProblem
+
+	// customHTTPAndHTTPSListeners defines a custom HTTP and HTTPS listener on port 8082 and 8442
+	customHTTPAndHTTPSListeners = []conf_v1alpha1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+
+	// customHTTPSListener defines a customHTTPS listener on port 8442
+	customHTTPSListener = []conf_v1alpha1.Listener{
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+
+	// customHTTPListener defines a custom HTTP listener on port 8082
+	customHTTPListener = []conf_v1alpha1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+		},
+	}
+
+	// customHTTPListenerSSLTrue defines a custom HTTP listener on port 8082 with SSL set to true
+	customHTTPListenerSSLTrue = []conf_v1alpha1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+
+	// customHTTPSListenerSSLFalse defines a custom HTTPS listener on port 8442 with SSL set to false
+	customHTTPSListenerSSLFalse = []conf_v1alpha1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+			Ssl:      false,
+		},
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      false,
+		},
+	}
+
+	// bogusHTTPListener defines a HTTP listener with an invalid name
+	bogusHTTPListener = []conf_v1alpha1.Listener{
+		{
+			Name:     "http-bogus",
+			Port:     8082,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "https-8442",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+
+	// bogusHTTPsListener defines a HTTPs listener with an invalid name
+	bogusHTTPSListener = []conf_v1alpha1.Listener{
+		{
+			Name:     "http-8082",
+			Port:     8082,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "https-bogus",
+			Port:     8442,
+			Protocol: "HTTP",
+			Ssl:      true,
+		},
+	}
+)

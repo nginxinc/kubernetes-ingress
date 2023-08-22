@@ -199,8 +199,8 @@ type VirtualServerConfiguration struct {
 	VirtualServer       *conf_v1.VirtualServer
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	Warnings            []string
-	HttpPort            int
-	HttpsPort           int
+	HTTPPort            int
+	HTTPSPort           int
 }
 
 // NewVirtualServerConfiguration creates a VirtualServerConfiguration.
@@ -818,15 +818,15 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfiguration) {
 	vs := vsc.VirtualServer
 	if vs.Spec.Listener != nil && c.globalConfiguration != nil {
-		if gcListener, ok := c.listenerMap[vs.Spec.Listener.Http]; ok {
-			if gcListener.Protocol == conf_v1.HttpProtocol && !gcListener.Ssl {
-				vsc.HttpPort = gcListener.Port
+		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTP]; ok {
+			if gcListener.Protocol == conf_v1.HTTPProtocol && !gcListener.Ssl {
+				vsc.HTTPPort = gcListener.Port
 			}
 		}
 
-		if gcListener, ok := c.listenerMap[vs.Spec.Listener.Https]; ok {
-			if gcListener.Protocol == conf_v1.HttpProtocol && gcListener.Ssl {
-				vsc.HttpsPort = gcListener.Port
+		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTPS]; ok {
+			if gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl {
+				vsc.HTTPSPort = gcListener.Port
 			}
 		}
 	}
@@ -1138,35 +1138,33 @@ func (c *Configuration) addWarningsForVirtualServersWithMissConfiguredListeners(
 				continue
 			}
 
-			if !c.isListenerInCorrectBlock(vsc.VirtualServer.Spec.Listener.Http, false) {
-				warningMsg :=
-					fmt.Sprintf("Listener %s can't be use in `listener.http` context as SSL is enabled for that listener.",
-						vsc.VirtualServer.Spec.Listener.Http)
+			if !c.isListenerInCorrectBlock(vsc.VirtualServer.Spec.Listener.HTTP, false) {
+				warningMsg := fmt.Sprintf("Listener %s can't be use in `listener.http` context as SSL is enabled for that listener.",
+					vsc.VirtualServer.Spec.Listener.HTTP)
 				c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
 				continue
 			}
 
-			if !c.isListenerInCorrectBlock(vsc.VirtualServer.Spec.Listener.Https, true) {
-				warningMsg :=
-					fmt.Sprintf("Listener %s can't be use in `listener.https` context as SSL is not enabled for that listener.",
-						vsc.VirtualServer.Spec.Listener.Https)
+			if !c.isListenerInCorrectBlock(vsc.VirtualServer.Spec.Listener.HTTPS, true) {
+				warningMsg := fmt.Sprintf("Listener %s can't be use in `listener.https` context as SSL is not enabled for that listener.",
+					vsc.VirtualServer.Spec.Listener.HTTPS)
 				c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
 				continue
 			}
 
-			if vsc.VirtualServer.Spec.Listener.Http != "" {
-				if _, exists := c.listenerMap[vsc.VirtualServer.Spec.Listener.Http]; !exists {
+			if vsc.VirtualServer.Spec.Listener.HTTP != "" {
+				if _, exists := c.listenerMap[vsc.VirtualServer.Spec.Listener.HTTP]; !exists {
 					warningMsg := fmt.Sprintf("Listener %s is not defined in GlobalConfiguration",
-						vsc.VirtualServer.Spec.Listener.Http)
+						vsc.VirtualServer.Spec.Listener.HTTP)
 					c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
 					continue
 				}
 			}
 
-			if vsc.VirtualServer.Spec.Listener.Https != "" {
-				if _, exists := c.listenerMap[vsc.VirtualServer.Spec.Listener.Https]; !exists {
+			if vsc.VirtualServer.Spec.Listener.HTTPS != "" {
+				if _, exists := c.listenerMap[vsc.VirtualServer.Spec.Listener.HTTPS]; !exists {
 					warningMsg := fmt.Sprintf("Listener %s is not defined in GlobalConfiguration",
-						vsc.VirtualServer.Spec.Listener.Https)
+						vsc.VirtualServer.Spec.Listener.HTTPS)
 					c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
 					continue
 				}
@@ -1781,7 +1779,7 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 			continue
 		}
 
-		if newVsc.HttpPort != oldVsc.HttpPort || newVsc.HttpsPort != oldVsc.HttpsPort {
+		if newVsc.HTTPPort != oldVsc.HTTPPort || newVsc.HTTPSPort != oldVsc.HTTPSPort {
 			updatedHosts = append(updatedHosts, h)
 		}
 	}

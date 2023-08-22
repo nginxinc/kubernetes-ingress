@@ -46,9 +46,9 @@ server {
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
         {{ else }}
-        {{ if (gt $s.HttpPort 0) }}
-    listen {{ $s.HttpPort }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
-    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HttpPort }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+        {{ if (gt $s.HTTPPort 0) }}
+    listen {{ $s.HTTPPort }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HTTPPort }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
         {{ end }}
         {{ end }}
 
@@ -69,9 +69,9 @@ server {
     listen 443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
         {{ else }}
-        {{ if (gt $s.HttpsPort 0) }}
-    listen {{ $s.HttpsPort }} ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
-    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HttpsPort }} ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+        {{ if (gt $s.HTTPSPort 0) }}
+    listen {{ $s.HTTPSPort }} ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HTTPSPort }} ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
         {{ end }}
         {{ end }}
         {{ end }}

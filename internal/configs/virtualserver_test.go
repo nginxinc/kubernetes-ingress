@@ -1272,8 +1272,8 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
-			HttpPort:        0,
-			HttpsPort:       0,
+			HTTPPort:        0,
+			HTTPSPort:       0,
 			CustomListeners: false,
 			VSNamespace:     "default",
 			VSName:          "cafe",
@@ -1449,13 +1449,13 @@ func TestGenerateVirtualServerConfigWithCustomHttpAndHttpsListeners(t *testing.T
 		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
-			ServerName:      virtualServerExWithCustomHttpAndHttpsListeners.VirtualServer.Spec.Host,
-			StatusZone:      virtualServerExWithCustomHttpAndHttpsListeners.VirtualServer.Spec.Host,
-			VSNamespace:     virtualServerExWithCustomHttpAndHttpsListeners.VirtualServer.ObjectMeta.Namespace,
-			VSName:          virtualServerExWithCustomHttpAndHttpsListeners.VirtualServer.ObjectMeta.Name,
+			ServerName:      virtualServerExWithCustomHTTPAndHTTPSListeners.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPAndHTTPSListeners.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPAndHTTPSListeners.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPAndHTTPSListeners.VirtualServer.ObjectMeta.Name,
 			DisableIPV6:     true,
-			HttpPort:        virtualServerExWithCustomHttpAndHttpsListeners.HttpPort,
-			HttpsPort:       virtualServerExWithCustomHttpAndHttpsListeners.HttpsPort,
+			HTTPPort:        virtualServerExWithCustomHTTPAndHTTPSListeners.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPAndHTTPSListeners.HTTPSPort,
 			CustomListeners: true,
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
@@ -1476,7 +1476,7 @@ func TestGenerateVirtualServerConfigWithCustomHttpAndHttpsListeners(t *testing.T
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(
-		&virtualServerExWithCustomHttpAndHttpsListeners,
+		&virtualServerExWithCustomHTTPAndHTTPSListeners,
 		nil,
 		nil)
 
@@ -1497,13 +1497,13 @@ func TestGenerateVirtualServerConfigWithCustomHttpListener(t *testing.T) {
 		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
-			ServerName:      virtualServerExWithCustomHttpListener.VirtualServer.Spec.Host,
-			StatusZone:      virtualServerExWithCustomHttpListener.VirtualServer.Spec.Host,
-			VSNamespace:     virtualServerExWithCustomHttpListener.VirtualServer.ObjectMeta.Namespace,
-			VSName:          virtualServerExWithCustomHttpListener.VirtualServer.ObjectMeta.Name,
+			ServerName:      virtualServerExWithCustomHTTPListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPListener.VirtualServer.ObjectMeta.Name,
 			DisableIPV6:     true,
-			HttpPort:        virtualServerExWithCustomHttpListener.HttpPort,
-			HttpsPort:       virtualServerExWithCustomHttpListener.HttpsPort,
+			HTTPPort:        virtualServerExWithCustomHTTPListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPListener.HTTPSPort,
 			CustomListeners: true,
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
@@ -1524,7 +1524,7 @@ func TestGenerateVirtualServerConfigWithCustomHttpListener(t *testing.T) {
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(
-		&virtualServerExWithCustomHttpListener,
+		&virtualServerExWithCustomHTTPListener,
 		nil,
 		nil)
 
@@ -1545,13 +1545,13 @@ func TestGenerateVirtualServerConfigWithCustomHttpsListener(t *testing.T) {
 		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
-			ServerName:      virtualServerExWithCustomHttpsListener.VirtualServer.Spec.Host,
-			StatusZone:      virtualServerExWithCustomHttpsListener.VirtualServer.Spec.Host,
-			VSNamespace:     virtualServerExWithCustomHttpsListener.VirtualServer.ObjectMeta.Namespace,
-			VSName:          virtualServerExWithCustomHttpsListener.VirtualServer.ObjectMeta.Name,
+			ServerName:      virtualServerExWithCustomHTTPSListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPSListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPSListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPSListener.VirtualServer.ObjectMeta.Name,
 			DisableIPV6:     true,
-			HttpPort:        virtualServerExWithCustomHttpsListener.HttpPort,
-			HttpsPort:       virtualServerExWithCustomHttpsListener.HttpsPort,
+			HTTPPort:        virtualServerExWithCustomHTTPSListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPSListener.HTTPSPort,
 			CustomListeners: true,
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
@@ -1572,7 +1572,7 @@ func TestGenerateVirtualServerConfigWithCustomHttpsListener(t *testing.T) {
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(
-		&virtualServerExWithCustomHttpsListener,
+		&virtualServerExWithCustomHTTPSListener,
 		nil,
 		nil)
 
@@ -1598,8 +1598,8 @@ func TestGenerateVirtualServerConfigWithNilListener(t *testing.T) {
 			VSNamespace:     virtualServerExWithNilListener.VirtualServer.ObjectMeta.Namespace,
 			VSName:          virtualServerExWithNilListener.VirtualServer.ObjectMeta.Name,
 			DisableIPV6:     true,
-			HttpPort:        virtualServerExWithNilListener.HttpPort,
-			HttpsPort:       virtualServerExWithNilListener.HttpsPort,
+			HTTPPort:        virtualServerExWithNilListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithNilListener.HTTPSPort,
 			CustomListeners: false,
 			ProxyProtocol:   true,
 			ServerTokens:    baseCfgParams.ServerTokens,
@@ -11202,9 +11202,9 @@ var (
 		},
 	}
 
-	virtualServerExWithCustomHttpAndHttpsListeners = VirtualServerEx{
-		HttpPort:  8083,
-		HttpsPort: 8443,
+	virtualServerExWithCustomHTTPAndHTTPSListeners = VirtualServerEx{
+		HTTPPort:  8083,
+		HTTPSPort: 8443,
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "cafe",
@@ -11213,15 +11213,15 @@ var (
 			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
 				Listener: &conf_v1.Listener{
-					Http:  "http-8083",
-					Https: "https-8443",
+					HTTP:  "http-8083",
+					HTTPS: "https-8443",
 				},
 			},
 		},
 	}
 
-	virtualServerExWithCustomHttpListener = VirtualServerEx{
-		HttpPort: 8083,
+	virtualServerExWithCustomHTTPListener = VirtualServerEx{
+		HTTPPort: 8083,
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "cafe",
@@ -11230,14 +11230,14 @@ var (
 			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
 				Listener: &conf_v1.Listener{
-					Http: "http-8083",
+					HTTP: "http-8083",
 				},
 			},
 		},
 	}
 
-	virtualServerExWithCustomHttpsListener = VirtualServerEx{
-		HttpsPort: 8443,
+	virtualServerExWithCustomHTTPSListener = VirtualServerEx{
+		HTTPSPort: 8443,
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "cafe",
@@ -11246,7 +11246,7 @@ var (
 			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
 				Listener: &conf_v1.Listener{
-					Https: "https-8443",
+					HTTPS: "https-8443",
 				},
 			},
 		},

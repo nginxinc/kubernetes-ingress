@@ -51,8 +51,8 @@ type Server struct {
 	ServerName                string
 	StatusZone                string
 	CustomListeners           bool
-	HttpPort                  int
-	HttpsPort                 int
+	HTTPPort                  int
+	HTTPSPort                 int
 	ProxyProtocol             bool
 	SSL                       *SSL
 	ServerTokens              string

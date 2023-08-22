@@ -11,8 +11,8 @@ const (
 	StateValid = "Valid"
 	// StateInvalid is used when the resource failed validation or NGINX failed to reload the corresponding config.
 	StateInvalid = "Invalid"
-	// HttpProtocol defines a constant for the HTTP protocol in GlobalConfinguration.
-	HttpProtocol = "HTTP"
+	// HTTPProtocol defines a constant for the HTTP protocol in GlobalConfinguration.
+	HTTPProtocol = "HTTP"
 )
 
 // +genclient
@@ -54,9 +54,10 @@ type VirtualServerSpec struct {
 	InternalRoute bool `json:"internalRoute"`
 }
 
+// Listener references a custom http and/or https listener defined in GlobalConfiguration.
 type Listener struct {
-	Http  string `json:"http"`
-	Https string `json:"https"`
+	HTTP  string `json:"http"`
+	HTTPS string `json:"https"`
 }
 
 // ExternalDNS defines externaldns sub-resource of a virtual server.
