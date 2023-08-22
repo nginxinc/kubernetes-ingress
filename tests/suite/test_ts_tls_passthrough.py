@@ -1,7 +1,7 @@
 from pprint import pprint
 
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
 from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, read_ts
 from suite.utils.resources_utils import (
@@ -174,7 +174,7 @@ class TestTransportServerTlsPassthrough:
         config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert f"listen {transport_server_tls_passthrough_setup.tls_passthrough_port} proxy_protocol;" in config
         assert f"listen [::]:{transport_server_tls_passthrough_setup.tls_passthrough_port} proxy_protocol;" in config
-        std_cm_src = f"{DEPLOYMENTS}/common/nginx-config.yaml"
+        std_cm_src = f"{TEST_DATA}/common/nginx-config.yaml"
         replace_configmap_from_yaml(
             kube_apis.v1,
             ingress_controller_prerequisites.config_map["metadata"]["name"],

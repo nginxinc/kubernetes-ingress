@@ -1,0 +1,3 @@
+controller:
+  name: controller
+  enableExternalDNS: true

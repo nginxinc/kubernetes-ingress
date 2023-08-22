@@ -1,0 +1,20 @@
+# This is generated from https://github.com/nginxinc/nap-dos-arbitrator-helm-chart
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-appprotect-dos-arbitrator
+  namespace: nginx-ingress
+  labels:
+    app.kubernetes.io/name: nginx-appprotect-dos-arbitrator
+    app.kubernetes.io/instance: nginx-appprotect-dos-arbitrator
+    app.kubernetes.io/version: "1.1.1"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: nginx-appprotect-dos-arbitrator
+    app.kubernetes.io/instance: nginx-appprotect-dos-arbitrator

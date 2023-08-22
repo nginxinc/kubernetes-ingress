@@ -1,7 +1,7 @@
 import pytest
 import yaml
 from kubernetes.client import NetworkingV1Api
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
 from suite.utils.custom_assertions import assert_event_count_increased
 from suite.utils.resources_utils import (
@@ -145,7 +145,7 @@ def annotations_setup(
                 kube_apis.v1,
                 ingress_controller_prerequisites.config_map["metadata"]["name"],
                 ingress_controller_prerequisites.namespace,
-                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+                f"{TEST_DATA}/common/nginx-config.yaml",
             )
             delete_common_app(kube_apis, "simple", test_namespace)
             delete_items_from_yaml(

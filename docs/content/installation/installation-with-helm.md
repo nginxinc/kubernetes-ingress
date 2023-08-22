@@ -1,7 +1,7 @@
 ---
 title: Installation with Helm
 description: This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using Helm.
-weight: 1900
+weight: 1800
 doctypes: [""]
 toc: true
 docs: "DOCS-602"

@@ -1,0 +1,43 @@
+# This is generated from https://github.com/nginxinc/nap-dos-arbitrator-helm-chart
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-appprotect-dos-arbitrator
+  namespace: nginx-ingress
+  labels:
+    app.kubernetes.io/name: nginx-appprotect-dos-arbitrator
+    app.kubernetes.io/instance: nginx-appprotect-dos-arbitrator
+    app.kubernetes.io/version: "1.1.1"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nginx-appprotect-dos-arbitrator
+      app.kubernetes.io/instance: nginx-appprotect-dos-arbitrator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nginx-appprotect-dos-arbitrator
+        app.kubernetes.io/instance: nginx-appprotect-dos-arbitrator
+    spec:
+      serviceAccountName: default
+      securityContext:
+        {}
+      containers:
+        - name: nginx-appprotect-dos-arbitrator
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            runAsUser: 1001
+          image: "docker-registry.nginx.com/nap-dos/app_protect_dos_arb:1.1.1"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: arb
+              containerPort: 3000
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi

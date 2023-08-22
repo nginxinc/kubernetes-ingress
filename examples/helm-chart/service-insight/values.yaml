@@ -1,0 +1,5 @@
+controller:
+  name: controller
+  nginxplus: true
+  serviceInsight:
+    create: true

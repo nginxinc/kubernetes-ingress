@@ -1,5 +1,5 @@
 import pytest
-from settings import CRDS, DEPLOYMENTS, TEST_DATA
+from settings import CRDS, TEST_DATA
 from suite.utils.custom_assertions import wait_and_assert_status_code
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.resources_utils import (
@@ -143,7 +143,7 @@ class TestVirtualServer:
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("Step 11: restore ClusterRole and check")
-        patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+        patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/rbac/rbac.yaml")
         wait_before_test(1)
         wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
@@ -225,6 +225,6 @@ class TestVirtualServerInitialRBACMisconfiguration:
         wait_and_assert_status_code(404, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("Step 2: configure RBAC and check")
-        patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+        patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/rbac/rbac.yaml")
         wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)

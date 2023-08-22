@@ -9,7 +9,7 @@ import pytest
 import requests
 import yaml
 from kubernetes.client import V1ContainerPort
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,

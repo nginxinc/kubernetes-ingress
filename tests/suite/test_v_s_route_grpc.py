@@ -1,5 +1,5 @@
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.utils.custom_assertions import (
     assert_event_starts_with_text_and_contains_errors,
     assert_grpc_entries_exist,
@@ -48,7 +48,7 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
             kube_apis.v1,
             ingress_controller_prerequisites.config_map["metadata"]["name"],
             ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            f"{TEST_DATA}/common/nginx-config.yaml",
         )
         delete_common_app(kube_apis, app_name, test_namespace)
         pytest.fail(f"VSR GRPC setup failed")
@@ -60,7 +60,7 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
                 kube_apis.v1,
                 ingress_controller_prerequisites.config_map["metadata"]["name"],
                 ingress_controller_prerequisites.namespace,
-                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+                f"{TEST_DATA}/common/nginx-config.yaml",
             )
             delete_common_app(kube_apis, app_name, test_namespace)
 

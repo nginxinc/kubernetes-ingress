@@ -1,6 +1,6 @@
 import pytest
 import requests
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.utils.custom_resources_utils import read_custom_resource
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import (
@@ -17,7 +17,7 @@ from suite.utils.vs_vsr_resources_utils import (
     patch_virtual_server_from_yaml,
 )
 
-std_cm_src = f"{DEPLOYMENTS}/common/nginx-config.yaml"
+std_cm_src = f"{TEST_DATA}/common/nginx-config.yaml"
 test_cm_src = f"{TEST_DATA}/access-control/configmap/nginx-config.yaml"
 std_vs_src = f"{TEST_DATA}/access-control/standard/virtual-server.yaml"
 deny_pol_src = f"{TEST_DATA}/access-control/policies/access-control-policy-deny.yaml"

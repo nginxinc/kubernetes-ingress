@@ -53,7 +53,7 @@ You will need the following information from [MyF5](https://my.f5.com) for these
 
  ```shell
     kubectl get secret regcred --output=yaml
-    ```
+ ```
 
 1. You can now use the newly created Kubernetes secret in `helm` and `manifest` deployments.
 
@@ -71,7 +71,7 @@ spec:
     seccompProfile:
       type: RuntimeDefault
   containers:
-  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.3.0
+  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.3.2
     imagePullPolicy: IfNotPresent
     name: nginx-plus-ingress
 ```
@@ -87,7 +87,7 @@ If you are using `helm` for deployment, there are two main methods: using *sourc
 The [Helm installation page for NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/#managing-the-chart-via-sources) has a section describing how to use sources: these are the unique steps for Docker secrets using JWT tokens.
 
 1. Clone the NGINX [`kubernetes-ingress` repository](https://github.com/nginxinc/kubernetes-ingress).
-1. Navigate to the `deployments/helm-chart` folder of your local clone.
+1. Navigate to the `charts/nginx-ingress` folder of your local clone.
 1. Open the `values.yaml` file in an editor.
 
 You must change a few lines NGINX Ingress Controller with NGINX Plus to be deployed.
@@ -109,7 +109,7 @@ image:
   repository: private-registry.nginx.com/nginx-ic/nginx-plus-ingress
 
   ## The version tag
-  tag: 3.3.0
+  tag: 3.3.2
 
   serviceAccount:
     ## The annotations of the service account of the Ingress Controller pods.
@@ -139,7 +139,7 @@ If the namespace does not exist, `--create-namespace` will create it. Using `-f 
 If you want to install NGINX Ingress Controller using the charts method, the following is an example of using the command line to pass the required arguments using the `set` parameter.
 
 ```shell
-helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.0 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.3.0 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
+helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.3.2 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
 ```
 
 Checking the validation that the .crts/key and .jwt are able to successfully authenticate to the repo to pull NGINX Ingress controller images:

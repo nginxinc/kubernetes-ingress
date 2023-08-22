@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 import requests
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
 from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, read_ts
 from suite.utils.resources_utils import (

@@ -173,14 +173,14 @@ spec:
           - -enable-app-protect={{ .Values.controller.appprotect.enable }}
 {{- if and .Values.controller.appprotect.enable .Values.controller.appprotect.logLevel }}
           - -app-protect-log-level={{ .Values.controller.appprotect.logLevel }}
-{{ end }}
+{{- end }}
           - -enable-app-protect-dos={{ .Values.controller.appprotectdos.enable }}
 {{- if .Values.controller.appprotectdos.enable }}
           - -app-protect-dos-debug={{ .Values.controller.appprotectdos.debug }}
           - -app-protect-dos-max-daemons={{ .Values.controller.appprotectdos.maxDaemons }}
           - -app-protect-dos-max-workers={{ .Values.controller.appprotectdos.maxWorkers }}
           - -app-protect-dos-memory={{ .Values.controller.appprotectdos.memory }}
-{{ end }}
+{{- end }}
           - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
 {{- if .Values.controller.defaultTLS.secret }}
           - -default-server-tls-secret={{ .Values.controller.defaultTLS.secret }}
@@ -237,9 +237,9 @@ spec:
           - -disable-ipv6={{ .Values.controller.disableIPV6 }}
 {{- if .Values.controller.enableCustomResources }}
           - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
-{{ if .Values.controller.enableTLSPassthrough }}
+{{- if .Values.controller.enableTLSPassthrough }}
           - -tls-passthrough-port={{ .Values.controller.tlsPassthroughPort }}
-{{ end }}
+{{- end }}
           - -enable-cert-manager={{ .Values.controller.enableCertManager }}
           - -enable-oidc={{ .Values.controller.enableOIDC }}
           - -enable-external-dns={{ .Values.controller.enableExternalDNS }}
