@@ -42,7 +42,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.54.1
+    rev: v1.54.2
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
@@ -72,7 +72,7 @@ repos:
         args: ['--schemafile', 'deployments/helm-chart/values.schema.json']
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.8.1
+    rev: v0.9.0
     hooks:
     - id: markdownlint-cli2
 
