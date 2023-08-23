@@ -189,7 +189,7 @@ The steps you should follow depend on the Helm release name:
 
 {{%tab name="Helm release name is `nginx-ingress`"%}}
 
-1. Use `kubectl describe deployments` to get the `Selector` value:
+1. Use `kubectl describe` on deployment/daemonset to get the `Selector` value:
 
     ```shell
     kubectl describe deployments -n <namespace>
@@ -200,14 +200,16 @@ The steps you should follow depend on the Helm release name:
     Selector:               app=nginx-ingress-nginx-ingress
     ```
 
-1. Checkout the latest available tag using `git checkout v3.3.0`
+2. Checkout the latest available tag using `git checkout v3.3.0`
 
-1. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
+3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
     ```shell
     selectorLabels: {app: nginx-ingress-nginx-ingress}
     ```
 
-1. Run `helm upgrade` with following arguments set:
+5. Run `helm upgrade` with following arguments set:
     ```shell
     --set controller.serviceNameOverride="nginx-ingress-nginx-ingress"
     --set controller.name=""
@@ -216,10 +218,10 @@ The steps you should follow depend on the Helm release name:
     It could look as follows:
 
     ```shell
-    helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress--version 0.18 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress"
+    helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
     ```
 
-1. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
+6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
     ```shell
         Type    Reason             Age    From                   Message
     ----    ------             ----   ----                   -------
@@ -231,10 +233,10 @@ The steps you should follow depend on the Helm release name:
 
 {{%tab name="Helm release name is not `nginx-ingress`"%}}
 
-1. Use `kubectl describe deployments` to get the `Selector` value:
+1. Use `kubectl describe` on deployment/daemonset to get the `Selector` value:
 
     ```shell
-    kubectl describe deployments -n <namespace>
+    kubectl describe deployment/daemonset -n <namespace>
     ```
     Copy the key=value under ```Selector```, such as:
 
@@ -242,14 +244,16 @@ The steps you should follow depend on the Helm release name:
     Selector:               app=<helm_release_name>-nginx-ingress
     ```
 
-1. Checkout the latest available tag using `git checkout v3.3.0`
+2. Checkout the latest available tag using `git checkout v3.3.0`
 
-1. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
+3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
     ```shell
     selectorLabels: {app: <helm_release_name>-nginx-ingress}
     ```
 
-1. Run `helm upgrade` with following arguments set:
+5. Run `helm upgrade` with following arguments set:
     ```shell
     --set controller.serviceNameOverride="<helm_release_name>-nginx-ingress"
     --set controller.name=""
@@ -257,10 +261,10 @@ The steps you should follow depend on the Helm release name:
     It could look as follows:
 
     ```shell
-    helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress--version 0.18 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="test-release-nginx-ingress" --set controller.name=""
+    helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
     ```
 
-1. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
+6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
     ```shell
         Type    Reason             Age    From                   Message
     ----    ------             ----   ----                   -------
