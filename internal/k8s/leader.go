@@ -31,7 +31,7 @@ func newLeaderElector(client kubernetes.Interface, callbacks leaderelection.Lead
 		EventRecorder: recorder,
 	}
 
-	lock, err := resourcelock.New(resourcelock.ConfigMapsLeasesResourceLock,
+	lock, err := resourcelock.New(resourcelock.LeasesResourceLock,
 		namespace,
 		lockName,
 		client.CoreV1(),

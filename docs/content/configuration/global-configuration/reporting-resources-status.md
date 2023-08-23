@@ -55,6 +55,7 @@ $ kubectl get virtualservers -o wide
 > Note: If there are multiple addresses, only the first one is shown.
 
 In order to see additional addresses or extra information about the `Status` of the resource, use the following command:
+
 ```
 $ kubectl describe virtualserver <NAME>
 . . .
@@ -68,6 +69,7 @@ Status:
 ```
 
 ### Status Specification
+
 The following fields are reported in both VirtualServer and VirtualServerRoute status:
 
 {{% table %}}
@@ -88,6 +90,7 @@ The following field is reported in the VirtualServerRoute status only:
 {{% /table %}}
 
 ### ExternalEndpoint
+
 {{% table %}}
 |Field | Description | Type |
 | ---| ---| --- |
@@ -110,12 +113,15 @@ Notes: The Ingress Controller does not clear the status of VirtualServer and Vir
 
 A Policy resource includes the status field with information about the state of the resource.
 You can see the status in the output of the `kubectl get policy` command as shown below:
+
 ```
 $ kubectl get policy
   NAME              STATE   AGE
   webapp-policy     Valid   30s
 ```
+
 In order to see additional addresses or extra information about the `Status` of the resource, use the following command:
+
 ```
 $ kubectl describe policy <NAME>
 . . .
@@ -126,6 +132,7 @@ Status:
 ```
 
 ### Status Specification
+
 The following fields are reported in Policy status:
 
 {{% table %}}
@@ -136,17 +143,19 @@ The following fields are reported in Policy status:
 |``Message`` | Additional information about the state. | ``string`` |
 {{% /table %}}
 
-
 ## TransportServer Resources
 
 A TransportServer resource includes the status field with information about the state of the resource.
 You can see the status in the output of the `kubectl get transportserver` command as shown below:
+
 ```
 $ kubectl get transportserver
   NAME      STATE   REASON           AGE
   dns-tcp   Valid   AddedOrUpdated   47m
 ```
+
 In order to see additional addresses or extra information about the `Status` of the resource, use the following command:
+
 ```
 $ kubectl describe transportserver <NAME>
 . . .
@@ -157,6 +166,7 @@ Status:
 ```
 
 ### Status Specification
+
 The following fields are reported in TransportServer status:
 
 {{% table %}}

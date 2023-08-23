@@ -23,7 +23,7 @@ Custom annotations allow you to add an annotation for an NGINX feature that is n
 
 ## Usage
 
-The Ingress Controller generates NGINX configuration for Ingress resources by executing a configuration template. See [NGINX template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.0/internal/configs/version1/nginx.ingress.tmpl) or [NGINX Plus template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.0/internal/configs/version1/nginx-plus.ingress.tmpl).
+The Ingress Controller generates NGINX configuration for Ingress resources by executing a configuration template. See [NGINX template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.1/internal/configs/version1/nginx.ingress.tmpl) or [NGINX Plus template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.1/internal/configs/version1/nginx-plus.ingress.tmpl).
 
 To support custom annotations, the template has access to the information about the Ingress resource - its *name*, *namespace* and *annotations*. It is possible to check if a particular annotation present in the Ingress resource and conditionally insert NGINX configuration directives at multiple NGINX contexts - `http`, `server`, `location` or `upstream`. Additionally, you can get the value that is set to the annotation.
 
@@ -74,8 +74,8 @@ Assuming that the Ingress Controller is using that customized template, it will 
 
 **Notes**:
 
-* You can customize the template to insert you custom annotations via [custom templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates).
-* The Ingress Controller uses go templates to generate NGINX config. You can read more information about go templates [here](https://golang.org/pkg/text/template/).
+- You can customize the template to insert you custom annotations via [custom templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates).
+- The Ingress Controller uses go templates to generate NGINX config. You can read more information about go templates [here](https://golang.org/pkg/text/template/).
 
 See the examples in the next section that use custom annotations to configure NGINX features.
 
@@ -85,7 +85,7 @@ A Mergeable Ingress resource consists of multiple Ingress resources - one master
 
 If you'd like to use custom annotations with Mergeable Ingress resources, please keep the following in mind:
 
-* Custom annotations can be used in the Master and in Minions. For Minions, you can access them in the template only when processing locations.
+- Custom annotations can be used in the Master and in Minions. For Minions, you can access them in the template only when processing locations.
 
     If you access `$.Ingress` anywhere in the Ingress template, you will get the master Ingress resource. To access a Minion Ingress resource, use `$location.MinionIngress`. However, it is only available when processing locations:
 
@@ -100,7 +100,7 @@ If you'd like to use custom annotations with Mergeable Ingress resources, please
 
     **Note**: `$location.MinionIngress` is a pointer. When a regular Ingress resource is processed in the template, the value of the pointer is `nil`. Thus, it is important that you check that `$location.MinionIngress` is not `nil` as in the example above using the `with` action.
 
-* Minions do not inherent custom annotations of the master.
+- Minions do not inherent custom annotations of the master.
 
 ### Helper Functions
 
@@ -139,4 +139,4 @@ deny all;
 
 ## Example
 
-See the [custom annotations example](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.0/examples/ingress-resources/custom-annotations).
+See the [custom annotations example](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.1/examples/ingress-resources/custom-annotations).

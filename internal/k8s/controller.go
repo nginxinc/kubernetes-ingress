@@ -199,6 +199,7 @@ type NewLoadBalancerControllerInput struct {
 	IsPrometheusEnabled          bool
 	IsLatencyMetricsEnabled      bool
 	IsTLSPassthroughEnabled      bool
+	TLSPassthroughPort           int
 	SnippetsEnabled              bool
 	CertManagerEnabled           bool
 	ExternalDNSEnabled           bool

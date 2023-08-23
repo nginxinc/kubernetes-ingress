@@ -5,6 +5,9 @@ controller:
   ## The kind of the Ingress Controller installation - deployment or daemonset.
   kind: deployment
 
+  ## The selectorLabels used to override the default values.
+  selectorLabels: {}
+
   ## Annotations for deployments and daemonsets
   annotations: {}
 
@@ -37,6 +40,24 @@ controller:
   ## Enables the Ingress Controller pods to use the host's network namespace.
   hostNetwork: false
 
+  ## The hostPort configuration for the Ingress Controller pods.
+  hostPort:
+    ## Enables hostPort for the Ingress Controller pods.
+    enable: false
+
+    ## The HTTP hostPort configuration for the Ingress Controller pods.
+    http: 80
+
+    ## The HTTPS hostPort configuration for the Ingress Controller pods.
+    https: 443
+
+  containerPort:
+    ## The HTTP containerPort configuration for the Ingress Controller pods.
+    http: 80
+
+    ## The HTTPS containerPort configuration for the Ingress Controller pods.
+    https: 443
+
   ## DNS policy for the Ingress Controller pods
   dnsPolicy: ClusterFirst
 
@@ -54,7 +75,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
-    # tag: "3.2.0"
+    # tag: "3.2.1"
 
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
@@ -82,11 +103,11 @@ controller:
 
   ## It is recommended to use your own TLS certificates and keys
   defaultTLS:
-    ## The base64-encoded TLS certificate for the default HTTPS server. By default, a pre-generated self-signed certificate is used.
+    ## The base64-encoded TLS certificate for the default HTTPS server.
     ## Note: It is recommended that you specify your own certificate. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
     cert: ""
 
-    ## The base64-encoded TLS key for the default HTTPS server. By default, a pre-generated key is used.
+    ## The base64-encoded TLS key for the default HTTPS server.
     ## Note: It is recommended that you specify your own key. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
     key: ""
 
@@ -236,6 +257,9 @@ controller:
   ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
   enableTLSPassthrough: false
 
+  ## Set the port for TLS Passthrough. Requires controller.enableCustomResources and controller.enableTLSPassthrough.
+  tlsPassthroughPort: 443
+
   ## Enable cert manager for Virtual Server resources. Requires controller.enableCustomResources.
   enableCertManager: false
 
@@ -294,6 +318,9 @@ controller:
 
     ## The static IP address for the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature.
     loadBalancerIP: ""
+
+    ## The ClusterIP for the Ingress Controller service, autoassigned if not specified.
+    clusterIP: ""
 
     ## The list of external IPs for the Ingress Controller service.
     externalIPs: []

@@ -16,7 +16,7 @@ updates:
       interval: daily
 
   - package-ecosystem: docker
-    directory: /tests/docker
+    directory: /tests
     schedule:
       interval: daily
 
@@ -25,7 +25,7 @@ updates:
     schedule:
       interval: weekly
 
-  - package-ecosystem: pip
-    directory: /perf-tests
+  - package-ecosystem: gomod
+    directory: /docs
     schedule:
       interval: weekly

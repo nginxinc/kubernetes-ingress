@@ -12,7 +12,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.0/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.1/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -298,8 +298,8 @@ data:
 
 A VirtualServer that references an IngressMTLS policy must:
 
-* Enable [TLS termination](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualservertls).
-* Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroutesubroute).
+- Enable [TLS termination](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualservertls).
+- Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroutesubroute).
 
 If the conditions above are not met, NGINX will send the `500` status code to clients.
 
@@ -459,7 +459,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 #### Prerequisites
 
 In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
-You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.0/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.2.1/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 
@@ -569,7 +569,7 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 
 You can apply policies to both VirtualServer and VirtualServerRoute resources. For example:
 
-* VirtualServer:
+- VirtualServer:
 
     ```yaml
     apiVersion: k8s.nginx.org/v1
@@ -609,7 +609,7 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
 
       The overriding is enforced by NGINX: the spec policies are implemented in the `server` context of the config, and the route policies are implemented in the `location` context. As a result, the route policies of the same type win.
 
-* VirtualServerRoute, which is referenced by the VirtualServer above:
+- VirtualServerRoute, which is referenced by the VirtualServer above:
 
     ```yaml
     apiVersion: k8s.nginx.org/v1
@@ -642,14 +642,14 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
 
 NGINX will treat a policy as invalid if one of the following conditions is met:
 
-* The policy doesn't pass the [comprehensive validation](#comprehensive-validation).
-* The policy isn't present in the cluster.
-* The policy doesn't meet its type-specific requirements. For example, an `ingressMTLS` policy requires TLS termination enabled in the VirtualServer.
+- The policy doesn't pass the [comprehensive validation](#comprehensive-validation).
+- The policy isn't present in the cluster.
+- The policy doesn't meet its type-specific requirements. For example, an `ingressMTLS` policy requires TLS termination enabled in the VirtualServer.
 
 For an invalid policy, NGINX returns the 500 status code for client requests with the following rules:
 
-* If a policy is referenced in a VirtualServer `route` or a VirtualServerRoute `subroute`, then NGINX will return the 500 status code for requests for the URIs of that route/subroute.
-* If a policy is referenced in the VirtualServer `spec`, then NGINX will return the 500 status code for requests for all URIs of that VirtualServer.
+- If a policy is referenced in a VirtualServer `route` or a VirtualServerRoute `subroute`, then NGINX will return the 500 status code for requests for the URIs of that route/subroute.
+- If a policy is referenced in the VirtualServer `spec`, then NGINX will return the 500 status code for requests for all URIs of that VirtualServer.
 
 If a policy is invalid, the VirtualServer or VirtualServerRoute will have the [status](/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status#virtualserver-and-virtualserverroute-resources) with the state `Warning` and the message explaining why the policy wasn't considered invalid.
 
@@ -657,8 +657,8 @@ If a policy is invalid, the VirtualServer or VirtualServerRoute will have the [s
 
 Two types of validation are available for the Policy resource:
 
-* *Structural validation*, done by `kubectl` and the Kubernetes API server.
-* *Comprehensive validation*, done by NGINX Ingress Controller.
+- *Structural validation*, done by `kubectl` and the Kubernetes API server.
+- *Comprehensive validation*, done by NGINX Ingress Controller.
 
 #### Structural Validation
 
@@ -666,7 +666,7 @@ The custom resource definition for the Policy includes a structural OpenAPI sche
 
 If you try to create (or update) a resource that violates the structural schema -- for example, the resource uses a string value instead of an array of strings in the `allow` field -- `kubectl` and the Kubernetes API server will reject the resource.
 
-* Example of `kubectl` validation:
+- Example of `kubectl` validation:
 
     ```console
     kubectl apply -f access-control-policy-allow.yaml
@@ -674,7 +674,7 @@ If you try to create (or update) a resource that violates the structural schema 
     error: error validating "access-control-policy-allow.yaml": error validating data: ValidationError(Policy.spec.accessControl.allow): invalid type for org.nginx.k8s.v1.Policy.spec.accessControl.allow: got "string", expected "array"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
-* Example of Kubernetes API server validation:
+- Example of Kubernetes API server validation:
 
     ```console
     kubectl apply -f access-control-policy-allow.yaml --validate=false

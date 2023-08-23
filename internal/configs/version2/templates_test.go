@@ -5,23 +5,31 @@ import (
 	"testing"
 )
 
-const (
-	nginxPlusVirtualServerTmpl   = "nginx-plus.virtualserver.tmpl"
-	nginxVirtualServerTmpl       = "nginx.virtualserver.tmpl"
-	nginxPlusTransportServerTmpl = "nginx-plus.transportserver.tmpl"
-	nginxTransportServerTmpl     = "nginx.transportserver.tmpl"
-)
-
 func createPointerFromInt(n int) *int {
 	return &n
 }
 
+func newTmplExecutorNGINXPlus(t *testing.T) *TemplateExecutor {
+	t.Helper()
+	executor, err := NewTemplateExecutor("nginx-plus.virtualserver.tmpl", "nginx-plus.transportserver.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return executor
+}
+
+func newTmplExecutorNGINX(t *testing.T) *TemplateExecutor {
+	t.Helper()
+	executor, err := NewTemplateExecutor("nginx.virtualserver.tmpl", "nginx.transportserver.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return executor
+}
+
 func TestVirtualServerForNginxPlus(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
-	}
+	executor := newTmplExecutorNGINXPlus(t)
 	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -31,10 +39,7 @@ func TestVirtualServerForNginxPlus(t *testing.T) {
 
 func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOn(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithGunzipOn)
 	if err != nil {
 		t.Error(err)
@@ -47,10 +52,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOn(t *testi
 
 func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOff(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithGunzipOff)
 	if err != nil {
 		t.Error(err)
@@ -63,10 +65,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOff(t *test
 
 func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithGunzipNotSet)
 	if err != nil {
 		t.Error(err)
@@ -79,10 +78,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *t
 
 func TestExecuteVirtualServerTemplate_RendersTemplateWithSessionCookieSameSite(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithSessionCookieSameSite)
 	if err != nil {
 		t.Error(err)
@@ -95,10 +91,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithSessionCookieSameSite(t
 
 func TestVirtualServerForNginxPlusWithWAFApBundle(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
-	}
+	executor := newTmplExecutorNGINXPlus(t)
 	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithWAFApBundle)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -108,11 +101,7 @@ func TestVirtualServerForNginxPlusWithWAFApBundle(t *testing.T) {
 
 func TestVirtualServerForNginx(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
-	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
-	}
-
+	executor := newTmplExecutorNGINX(t)
 	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -122,11 +111,7 @@ func TestVirtualServerForNginx(t *testing.T) {
 
 func TestTransportServerForNginxPlus(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
-	}
-
+	executor := newTmplExecutorNGINXPlus(t)
 	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -136,11 +121,8 @@ func TestTransportServerForNginxPlus(t *testing.T) {
 
 func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
+	executor := newTmplExecutorNGINXPlus(t)
+	_, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
@@ -148,11 +130,7 @@ func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 
 func TestTransportServerForNginx(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
-	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
-	}
-
+	executor := newTmplExecutorNGINX(t)
 	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfg)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
@@ -162,10 +140,7 @@ func TestTransportServerForNginx(t *testing.T) {
 
 func TestTLSPassthroughHosts(t *testing.T) {
 	t.Parallel()
-	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
-	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
-	}
+	executor := newTmplExecutorNGINX(t)
 
 	unixSocketsCfg := TLSPassthroughHostsConfig{
 		"app.example.com": "unix:/var/lib/nginx/passthrough-default_secure-app.sock",
@@ -176,6 +151,44 @@ func TestTLSPassthroughHosts(t *testing.T) {
 		t.Errorf("Failed to execute template: %v", err)
 	}
 	t.Log(string(data))
+}
+
+func TestExecuteVirtualServerTemplateWithJWKSWithToken(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINXPlus(t)
+	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithJWTPolicyJWKSWithToken)
+	if err != nil {
+		t.Error(err)
+	}
+	if !bytes.Contains(got, []byte("token=$http_token")) {
+		t.Error("want `token=$http_token` in generated template")
+	}
+	if !bytes.Contains(got, []byte("proxy_cache jwks_uri_")) {
+		t.Error("want `proxy_cache` in generated template")
+	}
+	if !bytes.Contains(got, []byte("proxy_cache_valid 200 12h;")) {
+		t.Error("want `proxy_cache_valid 200 12h;` in generated template")
+	}
+	t.Log(string(got))
+}
+
+func TestExecuteVirtualServerTemplateWithJWKSWithoutToken(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINXPlus(t)
+	got, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfgWithJWTPolicyJWKSWithoutToken)
+	if err != nil {
+		t.Error(err)
+	}
+	if bytes.Contains(got, []byte("token=$http_token")) {
+		t.Error("want no `token=$http_token` string in generated template")
+	}
+	if !bytes.Contains(got, []byte("proxy_cache jwks_uri_")) {
+		t.Error("want `proxy_cache` in generated template")
+	}
+	if !bytes.Contains(got, []byte("proxy_cache_valid 200 12h;")) {
+		t.Error("want `proxy_cache_valid 200 12h;` in generated template")
+	}
+	t.Log(string(got))
 }
 
 var (
@@ -2252,6 +2265,281 @@ var (
 					Return: Return{
 						Code: 200,
 						Text: "Hello!",
+					},
+				},
+			},
+		},
+	}
+
+	// VirtualServer Config data for JWT Policy tests
+
+	virtualServerCfgWithJWTPolicyJWKSWithToken = VirtualServerConfig{
+		Upstreams: []Upstream{
+			{
+				UpstreamLabels: UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []LimitReqZone{},
+		Server: Server{
+			JWTAuthList: map[string]*JWTAuth{
+				"default/jwt-policy": {
+					Key:      "default/jwt-policy",
+					Realm:    "Spec Realm API",
+					Token:    "$http_token",
+					KeyCache: "1h",
+					JwksURI: JwksURI{
+						JwksScheme: "https",
+						JwksHost:   "idp.spec.example.com",
+						JwksPort:   "443",
+						JwksPath:   "/spec-keys",
+					},
+				},
+				"default/jwt-policy-route": {
+					Key:      "default/jwt-policy-route",
+					Realm:    "Route Realm API",
+					Token:    "$http_token",
+					KeyCache: "1h",
+					JwksURI: JwksURI{
+						JwksScheme: "http",
+						JwksHost:   "idp.route.example.com",
+						JwksPort:   "80",
+						JwksPath:   "/route-keys",
+					},
+				},
+			},
+			JWTAuth: &JWTAuth{
+				Key:      "default/jwt-policy",
+				Realm:    "Spec Realm API",
+				Token:    "$http_token",
+				KeyCache: "1h",
+				JwksURI: JwksURI{
+					JwksScheme: "https",
+					JwksHost:   "idp.spec.example.com",
+					JwksPort:   "443",
+					JwksPath:   "/spec-keys",
+				},
+			},
+			JWKSAuthEnabled: true,
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			RealIPHeader:    "X-Real-IP",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			Locations: []Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+					JWTAuth: &JWTAuth{
+						Key:      "default/jwt-policy-route",
+						Realm:    "Route Realm API",
+						Token:    "$http_token",
+						KeyCache: "1h",
+						JwksURI: JwksURI{
+							JwksScheme: "http",
+							JwksHost:   "idp.route.example.com",
+							JwksPort:   "80",
+							JwksPath:   "/route-keys",
+						},
+					},
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					JWTAuth: &JWTAuth{
+						Key:      "default/jwt-policy-route",
+						Realm:    "Route Realm API",
+						Token:    "$http_token",
+						KeyCache: "1h",
+						JwksURI: JwksURI{
+							JwksScheme: "http",
+							JwksHost:   "idp.route.example.com",
+							JwksPort:   "80",
+							JwksPath:   "/route-keys",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	virtualServerCfgWithJWTPolicyJWKSWithoutToken = VirtualServerConfig{
+		Upstreams: []Upstream{
+			{
+				UpstreamLabels: UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []LimitReqZone{},
+		Server: Server{
+			JWTAuthList: map[string]*JWTAuth{
+				"default/jwt-policy": {
+					Key:      "default/jwt-policy",
+					Realm:    "Spec Realm API",
+					KeyCache: "1h",
+					JwksURI: JwksURI{
+						JwksScheme: "https",
+						JwksHost:   "idp.spec.example.com",
+						JwksPort:   "443",
+						JwksPath:   "/spec-keys",
+					},
+				},
+				"default/jwt-policy-route": {
+					Key:      "default/jwt-policy-route",
+					Realm:    "Route Realm API",
+					KeyCache: "1h",
+					JwksURI: JwksURI{
+						JwksScheme: "http",
+						JwksHost:   "idp.route.example.com",
+						JwksPort:   "80",
+						JwksPath:   "/route-keys",
+					},
+				},
+			},
+			JWTAuth: &JWTAuth{
+				Key:      "default/jwt-policy",
+				Realm:    "Spec Realm API",
+				KeyCache: "1h",
+				JwksURI: JwksURI{
+					JwksScheme: "https",
+					JwksHost:   "idp.spec.example.com",
+					JwksPort:   "443",
+					JwksPath:   "/spec-keys",
+				},
+			},
+			JWKSAuthEnabled: true,
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			RealIPHeader:    "X-Real-IP",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			Locations: []Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+					JWTAuth: &JWTAuth{
+						Key:      "default/jwt-policy-route",
+						Realm:    "Route Realm API",
+						KeyCache: "1h",
+						JwksURI: JwksURI{
+							JwksScheme: "http",
+							JwksHost:   "idp.route.example.com",
+							JwksPort:   "80",
+							JwksPath:   "/route-keys",
+						},
+					},
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					JWTAuth: &JWTAuth{
+						Key:      "default/jwt-policy-route",
+						Realm:    "Route Realm API",
+						KeyCache: "1h",
+						JwksURI: JwksURI{
+							JwksScheme: "http",
+							JwksHost:   "idp.route.example.com",
+							JwksPort:   "80",
+							JwksPath:   "/route-keys",
+						},
 					},
 				},
 			},

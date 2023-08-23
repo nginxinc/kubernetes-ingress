@@ -17,15 +17,22 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+
 jobs:
   send-notifications:
     name: Send Notifications
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read # for 8398a7/action-slack
     steps:
       - name: Checkout Repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           ref: refs/tags/v${{ inputs.tag }}
+
       - name: Get variables for Slack
         id: slack
         run: |
@@ -33,6 +40,7 @@ jobs:
           echo "date=$(date +%s)" >> $GITHUB_OUTPUT
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "sha_long=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
       - name: Send Notification
         uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8 # v3.15.1
         with:

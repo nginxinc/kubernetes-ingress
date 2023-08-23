@@ -7,6 +7,8 @@ description = "Enterprise-grade Ingress load balancing on Kubernetes platforms."
 refLinksErrorLevel = "ERROR"
 enableRobotsTXT = "true"
 canonifyURLs = true
+pygmentsCodeFences = true
+pygmentsUseClasses = true
 
 [caches]
   [caches.modules]
@@ -24,7 +26,6 @@ canonifyURLs = true
     lineNoStart = 1
     lineNos = false
     lineNumbersInTable = true
-    noClasses = false
     style = "monokai"
     tabWidth = 4
   [markup.goldmark]

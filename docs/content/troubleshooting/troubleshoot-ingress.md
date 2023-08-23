@@ -7,6 +7,7 @@ toc: true
 ---
 
 ## Ingress Resources
+
 After you create or update an Ingress resource, you can immediately check if the NGINX configuration for that Ingress resource was successfully applied by NGINX:
 
 ```shell

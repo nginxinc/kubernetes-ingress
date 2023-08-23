@@ -1,0 +1,19 @@
+# Rule configuration.
+# For rule descriptions and how to fix: https://github.com/DavidAnson/markdownlint/tree/main#rules--aliases
+config:
+  ul-style:
+    style: dash
+  no-duplicate-heading:
+    siblings_only: true
+  line-length:
+    line_length: 120
+    code_blocks: false
+    tables: false
+
+# Define glob expressions to ignore
+ignores:
+  - ".github/"
+  - "docs/" # Ignore docs folder for now
+
+# Fix any fixable errors
+fix: true
