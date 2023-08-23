@@ -35,7 +35,7 @@ If you do not use the custom resources that require those CRDs (which correspond
 
 To upgrade the CRDs, pull the chart sources as described in [Pulling the Chart](#pulling-the-chart) and then run:
 
-```console
+```shell
 kubectl apply -f crds/
 ```
 
@@ -49,7 +49,7 @@ kubectl apply -f crds/
 
 To remove the CRDs, pull the chart sources as described in [Pulling the Chart](#pulling-the-chart) and then run:
 
-```console
+```shell
 kubectl delete -f crds/
 ```
 
@@ -65,13 +65,13 @@ To install the chart with the release name my-release (my-release is the name th
 
 For NGINX:
 
-```console
+```shell
 helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.18.1
 ```
 
 For NGINX Plus: (assuming you have pushed the Ingress Controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
 
-```console
+```shell
 helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.18.1 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
 ```
 
@@ -83,7 +83,7 @@ Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a re
 
 To upgrade the release `my-release`:
 
-```console
+```shell
 helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.18.1
 ```
 
@@ -91,7 +91,7 @@ helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.
 
 To uninstall/delete the release `my-release`:
 
-```console
+```shell
 helm uninstall my-release
 ```
 
@@ -104,7 +104,7 @@ Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Unin
 To test the latest changes in NGINX Ingress Controller before a new release, you can install the `edge` version. This version is built from the `main` branch of the NGINX Ingress Controller repository.
 You can install the `edge` version by specifying the `--version` flag with the value `0.0.0-edge`:
 
-```console
+```shell
 helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.0.0-edge
 ```
 
@@ -120,13 +120,13 @@ This step is required if you're installing the chart using its sources. Addition
 
 1. Pull the chart sources:
 
-    ```console
+    ```shell
     helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 0.18.1
     ```
 
 2. Change your working directory to nginx-ingress:
 
-    ```console
+    ```shell
     cd nginx-ingress
     ```
 
@@ -136,13 +136,13 @@ To install the chart with the release name my-release (my-release is the name th
 
 For NGINX:
 
-```console
+```shell
 helm install my-release .
 ```
 
 For NGINX Plus:
 
-```console
+```shell
 helm install my-release -f values-plus.yaml .
 ```
 
@@ -154,7 +154,7 @@ Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a re
 
 To upgrade the release `my-release`:
 
-```console
+```shell
 helm upgrade my-release .
 ```
 
@@ -162,13 +162,120 @@ helm upgrade my-release .
 
 To uninstall/delete the release `my-release`:
 
-```console
+```shell
 helm uninstall my-release
 ```
 
 The command removes all the Kubernetes components associated with the release and deletes the release.
 
 Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Uninstalling the CRDs](#uninstalling-the-crds).
+
+
+## Upgrading without downtime
+
+### Background
+
+In NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to fit with Helm best practices.
+When using Helm to upgrade from a version prior to 3.1.0, certain resources like Deployment, DaemonSet and Service will be recreated due to the aforementioned changes, which will result in downtime.
+
+Although the advisory is to update all resources in accordance with new naming convention, to avoid the downtime please follow the steps listed in this page.
+
+### Upgrade Steps
+{{<note>}} The following steps apply to both 2.x and 3.0.x releases.{{</note>}}
+
+The steps you should follow depend on the Helm release name:
+
+{{<tabs name="upgrade-helm">}}
+
+{{%tab name="Helm release name is `nginx-ingress`"%}}
+
+1. Use `kubectl describe` on deployment/daemonset to get the `Selector` value:
+
+    ```shell
+    kubectl describe deployments -n <namespace>
+    ```
+    Copy the key=value under `Selector`, such as:
+
+    ```shell
+    Selector:               app=nginx-ingress-nginx-ingress
+    ```
+
+2. Checkout the latest available tag using `git checkout v3.3.0`
+
+3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
+    ```shell
+    selectorLabels: {app: nginx-ingress-nginx-ingress}
+    ```
+
+5. Run `helm upgrade` with following arguments set:
+    ```shell
+    --set controller.serviceNameOverride="nginx-ingress-nginx-ingress"
+    --set controller.name=""
+    --set fullnameOverride="nginx-ingress-nginx-ingress"
+    ```
+    It could look as follows:
+
+    ```shell
+    helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
+    ```
+
+6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
+    ```shell
+        Type    Reason             Age    From                   Message
+    ----    ------             ----   ----                   -------
+    Normal  ScalingReplicaSet  9m11s  deployment-controller  Scaled up replica set nginx-ingress-nginx-ingress-<old_version> to 1
+    Normal  ScalingReplicaSet  101s   deployment-controller  Scaled up replica set nginx-ingress-nginx-ingress-<new_version> to 1
+    Normal  ScalingReplicaSet  98s    deployment-controller  Scaled down replica set nginx-ingress-nginx-ingress-<old_version> to 0 from 1
+    ```
+{{%/tab%}}
+
+{{%tab name="Helm release name is not `nginx-ingress`"%}}
+
+1. Use `kubectl describe` on deployment/daemonset to get the `Selector` value:
+
+    ```shell
+    kubectl describe deployment/daemonset -n <namespace>
+    ```
+    Copy the key=value under ```Selector```, such as:
+
+    ```shell
+    Selector:               app=<helm_release_name>-nginx-ingress
+    ```
+
+2. Checkout the latest available tag using `git checkout v3.3.0`
+
+3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
+    ```shell
+    selectorLabels: {app: <helm_release_name>-nginx-ingress}
+    ```
+
+5. Run `helm upgrade` with following arguments set:
+    ```shell
+    --set controller.serviceNameOverride="<helm_release_name>-nginx-ingress"
+    --set controller.name=""
+    ```
+    It could look as follows:
+
+    ```shell
+    helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
+    ```
+
+6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
+    ```shell
+        Type    Reason             Age    From                   Message
+    ----    ------             ----   ----                   -------
+    Normal  ScalingReplicaSet  9m11s  deployment-controller  Scaled up replica set test-release-nginx-ingress-<old_version> to 1
+    Normal  ScalingReplicaSet  101s   deployment-controller  Scaled up replica set test-release-nginx-ingress-<new_version> to 1
+    Normal  ScalingReplicaSet  98s    deployment-controller  Scaled down replica set test-release-nginx-ingress-<old_version> to 0 from 1
+    ```
+{{%/tab%}}
+
+{{</tabs>}}
+
 
 ## Running Multiple Ingress Controllers
 
