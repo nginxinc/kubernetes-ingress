@@ -176,7 +176,7 @@ Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Unin
 ### Background
 
 In NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to fit with Helm best practices.
-When using Helm to upgrade from a version prior to to 3.1.0, certain resources like Deployment, DaemonSet and Service will be recreated due to the aforementioned changes, which will result in downtime.
+When using Helm to upgrade from a version prior to 3.1.0, certain resources like Deployment, DaemonSet and Service will be recreated due to the aforementioned changes, which will result in downtime.
 
 Although the advisory is to update all resources in accordance with new naming convention, to avoid the downtime please follow the steps listed in this page.
 
@@ -228,7 +228,7 @@ The steps you should follow depend on the Helm release name:
     Normal  ScalingReplicaSet  9m11s  deployment-controller  Scaled up replica set nginx-ingress-nginx-ingress-<old_version> to 1
     Normal  ScalingReplicaSet  101s   deployment-controller  Scaled up replica set nginx-ingress-nginx-ingress-<new_version> to 1
     Normal  ScalingReplicaSet  98s    deployment-controller  Scaled down replica set nginx-ingress-nginx-ingress-<old_version> to 0 from 1
-
+    ```
 {{%/tab%}}
 
 {{%tab name="Helm release name is not `nginx-ingress`"%}}
