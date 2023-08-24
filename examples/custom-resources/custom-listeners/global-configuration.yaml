@@ -5,34 +5,10 @@ metadata:
   namespace: nginx-ingress
 spec:
   listeners:
-  - name: dns-udp
-    port: 5353
-    protocol: UDP
-  - name: dns-tcp
-    port: 5353
-    protocol: TCP
-  - name: http-8082
-    port: 8082
-    protocol: HTTP
-  - name: https-8442
-    port: 8442
-    protocol: HTTP
-    ssl: true
   - name: http-8083
     port: 8083
     protocol: HTTP
   - name: https-8443
     port: 8443
-    protocol: HTTP
-    ssl: true
-  - name: http-8084
-    port: 8084
-    protocol: HTTP
-  - name: https-8444
-    port: 8444
-    protocol: HTTP
-    ssl: true
-  - name: https-444
-    port: 444
     protocol: HTTP
     ssl: true
