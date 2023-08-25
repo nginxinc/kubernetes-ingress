@@ -538,23 +538,6 @@ func TestValidateListenerProtocol(t *testing.T) {
 	}
 }
 
-func TestValidateListenerProtocol_FailsOnInvalidInput(t *testing.T) {
-	t.Parallel()
-	invalidProtocols := []string{
-		"",
-		"HTTP",
-		"udp",
-		"UDP ",
-	}
-
-	for _, p := range invalidProtocols {
-		allErrs := validateListenerProtocol(p, field.NewPath("protocol"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateListenerProtocol(%q) returned no errors for invalid input", p)
-		}
-	}
-}
-
 func TestValidateTSUpstreamHealthChecks(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

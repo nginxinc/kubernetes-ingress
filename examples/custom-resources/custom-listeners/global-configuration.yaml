@@ -1,0 +1,14 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: GlobalConfiguration
+metadata:
+  name: nginx-configuration
+  namespace: nginx-ingress
+spec:
+  listeners:
+  - name: http-8083
+    port: 8083
+    protocol: HTTP
+  - name: https-8443
+    port: 8443
+    protocol: HTTP
+    ssl: true

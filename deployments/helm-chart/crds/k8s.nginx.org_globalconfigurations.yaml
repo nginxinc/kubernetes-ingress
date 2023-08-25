@@ -45,5 +45,7 @@ spec:
                         type: integer
                       protocol:
                         type: string
+                      ssl:
+                        type: boolean
       served: true
       storage: true
