@@ -209,3 +209,211 @@ func TestGeneratePortProtocolKey(t *testing.T) {
 		t.Errorf("generatePortProtocolKey(%d, %q) returned %q but expected %q", port, protocol, result, expected)
 	}
 }
+
+func TestValidateListenerProtocol_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
+	invalidProtocols := []string{
+		"",
+		"udp",
+		"UDP ",
+	}
+
+	for _, p := range invalidProtocols {
+		allErrs := validateListenerProtocol(p, field.NewPath("protocol"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateListenerProtocol(%q) returned no errors for invalid input", p)
+		}
+	}
+}
+
+func TestValidateListenerProtocol_PassesOnValidInput(t *testing.T) {
+	t.Parallel()
+	validProtocols := []string{
+		"TCP",
+		"HTTP",
+		"UDP",
+	}
+
+	for _, p := range validProtocols {
+		allErrs := validateListenerProtocol(p, field.NewPath("protocol"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateListenerProtocol(%q) returned errors for valid input", p)
+		}
+	}
+}
+
+func TestValidateListenerProtocol_PassesOnHttpListenerUsingDiffPortToTCPAndUDPListenerWithTCPAndUDPDefinedFirst(t *testing.T) {
+	t.Parallel()
+	listeners := []v1alpha1.Listener{
+		{
+			Name:     "tcp-listener",
+			Port:     53,
+			Protocol: "TCP",
+		},
+		{
+			Name:     "udp-listener",
+			Port:     53,
+			Protocol: "UDP",
+		},
+		{
+			Name:     "http-listener",
+			Port:     63,
+			Protocol: "HTTP",
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	if len(allErrs) > 0 {
+		t.Errorf("validateListeners() returned errors %v for valid input", allErrs)
+	}
+}
+
+func TestValidateListenerProtocol_PassesOnHttpListenerUsingDiffPortToTCPAndUDPListenerWithHTTPDefinedFirst(t *testing.T) {
+	t.Parallel()
+	listeners := []v1alpha1.Listener{
+		{
+			Name:     "http-listener",
+			Port:     63,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "tcp-listener",
+			Port:     53,
+			Protocol: "TCP",
+		},
+		{
+			Name:     "udp-listener",
+			Port:     53,
+			Protocol: "UDP",
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	if len(allErrs) > 0 {
+		t.Errorf("validateListeners() returned errors %v for valid input", allErrs)
+	}
+}
+
+func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPListener(t *testing.T) {
+	t.Parallel()
+	listeners := []v1alpha1.Listener{
+		{
+			Name:     "tcp-listener",
+			Port:     53,
+			Protocol: "TCP",
+		},
+		{
+			Name:     "http-listener",
+			Port:     53,
+			Protocol: "HTTP",
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+	}
+}
+
+func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsUDPListener(t *testing.T) {
+	t.Parallel()
+	listeners := []v1alpha1.Listener{
+		{
+			Name:     "udp-listener",
+			Port:     53,
+			Protocol: "UDP",
+		},
+		{
+			Name:     "http-listener",
+			Port:     53,
+			Protocol: "HTTP",
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+	}
+}
+
+func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPAndUDPListener(t *testing.T) {
+	t.Parallel()
+	listeners := []v1alpha1.Listener{
+		{
+			Name:     "tcp-listener",
+			Port:     53,
+			Protocol: "TCP",
+		},
+		{
+			Name:     "udp-listener",
+			Port:     53,
+			Protocol: "UDP",
+		},
+		{
+			Name:     "http-listener",
+			Port:     53,
+			Protocol: "HTTP",
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+	}
+}
+
+func TestValidateListenerProtocol_FailsOnTCPListenerUsingSamePortAsHTTPListener(t *testing.T) {
+	t.Parallel()
+	listeners := []v1alpha1.Listener{
+		{
+			Name:     "http-listener",
+			Port:     53,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "tcp-listener",
+			Port:     53,
+			Protocol: "TCP",
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+	}
+}
+
+func TestValidateListenerProtocol_FailsOnUDPListenerUsingSamePortAsHTTPListener(t *testing.T) {
+	t.Parallel()
+	listeners := []v1alpha1.Listener{
+		{
+			Name:     "http-listener",
+			Port:     53,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "udp-listener",
+			Port:     53,
+			Protocol: "UDP",
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+	}
+}

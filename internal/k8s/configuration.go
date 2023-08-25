@@ -199,6 +199,8 @@ type VirtualServerConfiguration struct {
 	VirtualServer       *conf_v1.VirtualServer
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	Warnings            []string
+	HTTPPort            int
+	HTTPSPort           int
 }
 
 // NewVirtualServerConfiguration creates a VirtualServerConfiguration.
@@ -325,8 +327,9 @@ type TransportServerMetrics struct {
 // The IC needs to ensure that at any point in time the NGINX config on the filesystem reflects the state
 // of the objects in the Configuration.
 type Configuration struct {
-	hosts     map[string]Resource
-	listeners map[string]*TransportServerConfiguration
+	hosts       map[string]Resource
+	listeners   map[string]*TransportServerConfiguration
+	listenerMap map[string]conf_v1alpha1.Listener
 
 	// only valid resources with the matching IngressClass are stored
 	ingresses           map[string]*networking.Ingress
@@ -595,6 +598,9 @@ func (c *Configuration) AddOrUpdateGlobalConfiguration(gc *conf_v1alpha1.GlobalC
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
+	var changes []ResourceChange
+	var problems []ConfigurationProblem
+
 	validationErr := c.globalConfigurationValidator.ValidateGlobalConfiguration(gc)
 	if validationErr != nil {
 		c.globalConfiguration = nil
@@ -602,7 +608,15 @@ func (c *Configuration) AddOrUpdateGlobalConfiguration(gc *conf_v1alpha1.GlobalC
 		c.globalConfiguration = gc
 	}
 
-	changes, problems := c.rebuildListeners()
+	c.setGlobalConfigListenerMap()
+
+	listenerChanges, listenerProblems := c.rebuildListeners()
+	changes = append(changes, listenerChanges...)
+	problems = append(problems, listenerProblems...)
+
+	hostChanges, hostProblems := c.rebuildHosts()
+	changes = append(changes, hostChanges...)
+	problems = append(problems, hostProblems...)
 
 	return changes, problems, validationErr
 }
@@ -612,8 +626,18 @@ func (c *Configuration) DeleteGlobalConfiguration() ([]ResourceChange, []Configu
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
+	var changes []ResourceChange
+	var problems []ConfigurationProblem
+
 	c.globalConfiguration = nil
-	changes, problems := c.rebuildListeners()
+	c.setGlobalConfigListenerMap()
+	listenerChanges, listenerProblems := c.rebuildListeners()
+	changes = append(changes, listenerChanges...)
+	problems = append(problems, listenerProblems...)
+
+	hostChanges, hostProblems := c.rebuildHosts()
+	changes = append(changes, hostChanges...)
+	problems = append(problems, hostProblems...)
 
 	return changes, problems
 }
@@ -791,6 +815,23 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 	return newListeners, newTSConfigs
 }
 
+func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfiguration) {
+	vs := vsc.VirtualServer
+	if vs.Spec.Listener != nil && c.globalConfiguration != nil {
+		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTP]; ok {
+			if gcListener.Protocol == conf_v1.HTTPProtocol && !gcListener.Ssl {
+				vsc.HTTPPort = gcListener.Port
+			}
+		}
+
+		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTPS]; ok {
+			if gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl {
+				vsc.HTTPSPort = gcListener.Port
+			}
+		}
+	}
+}
+
 // GetResources returns all configuration resources.
 func (c *Configuration) GetResources() []Resource {
 	return c.GetResourcesWithFilter(resourceFilter{
@@ -961,12 +1002,12 @@ func (c *Configuration) rebuildHosts() ([]ResourceChange, []ConfigurationProblem
 			changes[i].Resource = r
 		}
 	}
-
 	newProblems := make(map[string]ConfigurationProblem)
 
 	c.addProblemsForResourcesWithoutActiveHost(newResources, newProblems)
 	c.addProblemsForOrphanMinions(newProblems)
 	c.addProblemsForOrphanOrIgnoredVsrs(newProblems)
+	c.addWarningsForVirtualServersWithMissConfiguredListeners(newResources)
 
 	newOrUpdatedProblems := detectChangesInProblems(newProblems, c.hostProblems)
 
@@ -1082,6 +1123,61 @@ func (c *Configuration) addProblemsForResourcesWithoutActiveHost(resources map[s
 			}
 		}
 	}
+}
+
+func (c *Configuration) addWarningsForVirtualServersWithMissConfiguredListeners(resources map[string]Resource) {
+	for _, r := range resources {
+		vsc, ok := r.(*VirtualServerConfiguration)
+		if !ok {
+			continue
+		}
+		if vsc.VirtualServer.Spec.Listener != nil {
+			if c.globalConfiguration == nil {
+				warningMsg := "Listeners defined, but no GlobalConfiguration is deployed"
+				c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
+				continue
+			}
+
+			if !c.isListenerInCorrectBlock(vsc.VirtualServer.Spec.Listener.HTTP, false) {
+				warningMsg := fmt.Sprintf("Listener %s can't be use in `listener.http` context as SSL is enabled for that listener.",
+					vsc.VirtualServer.Spec.Listener.HTTP)
+				c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
+				continue
+			}
+
+			if !c.isListenerInCorrectBlock(vsc.VirtualServer.Spec.Listener.HTTPS, true) {
+				warningMsg := fmt.Sprintf("Listener %s can't be use in `listener.https` context as SSL is not enabled for that listener.",
+					vsc.VirtualServer.Spec.Listener.HTTPS)
+				c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
+				continue
+			}
+
+			if vsc.VirtualServer.Spec.Listener.HTTP != "" {
+				if _, exists := c.listenerMap[vsc.VirtualServer.Spec.Listener.HTTP]; !exists {
+					warningMsg := fmt.Sprintf("Listener %s is not defined in GlobalConfiguration",
+						vsc.VirtualServer.Spec.Listener.HTTP)
+					c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
+					continue
+				}
+			}
+
+			if vsc.VirtualServer.Spec.Listener.HTTPS != "" {
+				if _, exists := c.listenerMap[vsc.VirtualServer.Spec.Listener.HTTPS]; !exists {
+					warningMsg := fmt.Sprintf("Listener %s is not defined in GlobalConfiguration",
+						vsc.VirtualServer.Spec.Listener.HTTPS)
+					c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
+					continue
+				}
+			}
+		}
+	}
+}
+
+func (c *Configuration) isListenerInCorrectBlock(listenerName string, expectedSsl bool) bool {
+	if listener, ok := c.listenerMap[listenerName]; listener.Ssl != expectedSsl && ok {
+		return false
+	}
+	return true
 }
 
 func (c *Configuration) addProblemsForOrphanMinions(problems map[string]ConfigurationProblem) {
@@ -1346,6 +1442,8 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 		}
 		resource := NewVirtualServerConfiguration(vs, vsrs, warnings)
 
+		c.buildListenersForVSConfiguration(resource)
+
 		newResources[resource.GetKeyWithKind()] = resource
 
 		holder, exists := newHosts[vs.Spec.Host]
@@ -1556,6 +1654,16 @@ func (c *Configuration) GetTransportServerMetrics() *TransportServerMetrics {
 	return &metrics
 }
 
+func (c *Configuration) setGlobalConfigListenerMap() {
+	c.listenerMap = make(map[string]conf_v1alpha1.Listener)
+
+	if c.globalConfiguration != nil {
+		for _, listener := range c.globalConfiguration.Spec.Listeners {
+			c.listenerMap[listener.Name] = listener
+		}
+	}
+}
+
 func getSortedIngressKeys(m map[string]*networking.Ingress) []string {
 	var keys []string
 
@@ -1660,8 +1768,18 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 		if !exists {
 			continue
 		}
-
 		if !oldR.IsEqual(newHosts[h]) {
+			updatedHosts = append(updatedHosts, h)
+			continue
+		}
+
+		newVsc, newHostOk := newHosts[h].(*VirtualServerConfiguration)
+		oldVsc, oldHostOk := oldHosts[h].(*VirtualServerConfiguration)
+		if !newHostOk || !oldHostOk {
+			continue
+		}
+
+		if newVsc.HTTPPort != oldVsc.HTTPPort || newVsc.HTTPSPort != oldVsc.HTTPSPort {
 			updatedHosts = append(updatedHosts, h)
 		}
 	}

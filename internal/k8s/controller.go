@@ -994,6 +994,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 	case globalConfiguration:
 		lbc.syncGlobalConfiguration(task)
 		lbc.updateTransportServerMetrics()
+		lbc.updateVirtualServerMetrics()
 	case transportserver:
 		lbc.syncTransportServer(task)
 		lbc.updateTransportServerMetrics()
@@ -1615,30 +1616,55 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 // Such changes need to be processed at once to prevent any inconsistencies in the generated NGINX config.
 func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes []ResourceChange) error {
 	var updatedTSExes []*configs.TransportServerEx
-	var deletedKeys []string
+	var updatedVSExes []*configs.VirtualServerEx
+	var deletedTSKeys []string
+	var deletedVSKeys []string
 
 	var updatedResources []Resource
 
 	for _, c := range changes {
-		tsConfig := c.Resource.(*TransportServerConfiguration)
+		switch impl := c.Resource.(type) {
+		case *VirtualServerConfiguration:
+			if c.Op == AddOrUpdate {
+				vsEx := lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes)
 
-		if c.Op == AddOrUpdate {
-			tsEx := lbc.createTransportServerEx(tsConfig.TransportServer, tsConfig.ListenerPort)
+				updatedVSExes = append(updatedVSExes, vsEx)
+				updatedResources = append(updatedResources, impl)
+			} else if c.Op == Delete {
+				key := getResourceKey(&impl.VirtualServer.ObjectMeta)
 
-			updatedTSExes = append(updatedTSExes, tsEx)
-			updatedResources = append(updatedResources, tsConfig)
-		} else if c.Op == Delete {
-			key := getResourceKey(&tsConfig.TransportServer.ObjectMeta)
+				deletedVSKeys = append(deletedVSKeys, key)
+			}
+		case *TransportServerConfiguration:
+			if c.Op == AddOrUpdate {
+				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
 
-			deletedKeys = append(deletedKeys, key)
+				updatedTSExes = append(updatedTSExes, tsEx)
+				updatedResources = append(updatedResources, impl)
+			} else if c.Op == Delete {
+				key := getResourceKey(&impl.TransportServer.ObjectMeta)
+
+				deletedTSKeys = append(deletedTSKeys, key)
+			}
 		}
 	}
 
 	var updateErr error
-	updateErrs := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedKeys)
 
-	if len(updateErrs) > 0 {
-		updateErr = fmt.Errorf("errors received from updating TransportServers after GlobalConfiguration change: %v", updateErrs)
+	if len(updatedTSExes) > 0 || len(deletedTSKeys) > 0 {
+		tsUpdateErrs := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedTSKeys)
+
+		if len(tsUpdateErrs) > 0 {
+			updateErr = fmt.Errorf("errors received from updating TransportServers after GlobalConfiguration change: %v", tsUpdateErrs)
+		}
+	}
+
+	if len(updatedVSExes) > 0 || len(deletedVSKeys) > 0 {
+		vsUpdateErrs := lbc.configurator.UpdateVirtualServers(updatedVSExes, deletedVSKeys)
+
+		if len(vsUpdateErrs) > 0 {
+			updateErr = fmt.Errorf("errors received from updating VirtualSrvers after GlobalConfiguration change: %v", vsUpdateErrs)
+		}
 	}
 
 	lbc.updateResourcesStatusAndEvents(updatedResources, configs.Warnings{}, updateErr)
@@ -2926,6 +2952,12 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		ApPolRefs:      make(map[string]*unstructured.Unstructured),
 		LogConfRefs:    make(map[string]*unstructured.Unstructured),
 		DosProtectedEx: make(map[string]*configs.DosEx),
+	}
+
+	resource := lbc.configuration.hosts[virtualServer.Spec.Host]
+	if vsc, ok := resource.(*VirtualServerConfiguration); ok {
+		virtualServerEx.HTTPPort = vsc.HTTPPort
+		virtualServerEx.HTTPSPort = vsc.HTTPSPort
 	}
 
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
