@@ -76,7 +76,7 @@ spec:
 
 ### HELM
 1. Add the below content to your `values.yaml` file in `controller.globalConfiguration`:
-```yaml 
+```yaml
 spec:
   listeners:
   - name: http-8083
@@ -169,5 +169,3 @@ Server name: coffee-7dd75bc79b-qmhmv
 URI: /coffee
 ...
 ```
-
-
