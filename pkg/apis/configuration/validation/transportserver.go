@@ -129,15 +129,6 @@ func validateListenerName(name string, fieldPath *field.Path) field.ErrorList {
 	return validateDNS1035Label(name, fieldPath)
 }
 
-func validateListenerProtocol(protocol string, fieldPath *field.Path) field.ErrorList {
-	switch protocol {
-	case "TCP", "UDP":
-		return nil
-	default:
-		return field.ErrorList{field.Invalid(fieldPath, protocol, "must specify protocol. Accepted values: TCP, UDP.")}
-	}
-}
-
 func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.Set[string]) {
 	allErrs = field.ErrorList{}
 	upstreamNames = sets.Set[string]{}

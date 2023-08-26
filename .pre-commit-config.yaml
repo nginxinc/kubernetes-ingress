@@ -42,13 +42,13 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.53.3
+    rev: v1.54.2
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.9.0
+    rev: v3.10.1
     hooks:
       - id: pyupgrade
 
@@ -63,7 +63,7 @@ repos:
       - id: black
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.23.3
+    rev: 0.24.1
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
@@ -72,7 +72,7 @@ repos:
         args: ['--schemafile', 'deployments/helm-chart/values.schema.json']
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.8.1
+    rev: v0.9.0
     hooks:
     - id: markdownlint-cli2
 

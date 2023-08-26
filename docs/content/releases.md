@@ -7,6 +7,26 @@ toc: true
 docs: "DOCS-616"
 ---
 
+## NGINX Ingress Controller 3.2.1
+
+17 Aug 2023
+
+CHANGES:
+
+- Update NGINX version to 1.25.2.
+- Update NGINX Plus version to R30.
+- Update Go to 1.21 and Go dependencies.
+
+HELM CHART:
+
+- The version of the Helm chart is now 0.18.1.
+
+UPGRADE:
+
+- For NGINX, use the 3.2.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.2.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.2.1 images from the F5 Container registry, the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE), the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking) or build your own image using the 3.2.1 source code
+- For Helm, use version 0.18.1 of the chart.
+
 ## NGINX Ingress Controller 3.2.0
 
 27 June 2023

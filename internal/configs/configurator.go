@@ -1241,6 +1241,30 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 	return allWarnings, nil
 }
 
+// UpdateVirtualServers updates VirtualServers.
+func (cnf *Configurator) UpdateVirtualServers(updatedVSExes []*VirtualServerEx, deletedKeys []string) []error {
+	var errList []error
+	for _, vsEx := range updatedVSExes {
+		_, err := cnf.addOrUpdateVirtualServer(vsEx)
+		if err != nil {
+			errList = append(errList, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err))
+		}
+	}
+
+	for _, key := range deletedKeys {
+		err := cnf.DeleteVirtualServer(key, true)
+		if err != nil {
+			errList = append(errList, fmt.Errorf("error when removing VirtualServer %v: %w", key, err))
+		}
+	}
+
+	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+		errList = append(errList, fmt.Errorf("error when updating VirtualServer: %w", err))
+	}
+
+	return errList
+}
+
 // UpdateTransportServers updates TransportServers.
 func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) []error {
 	var errList []error

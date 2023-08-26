@@ -121,6 +121,7 @@ type StaticConfigParams struct {
 	NginxStatusPort                int
 	StubStatusOverUnixSocketForOSS bool
 	TLSPassthrough                 bool
+	TLSPassthroughPort             int
 	EnableSnippets                 bool
 	NginxServiceMesh               bool
 	EnableInternalRoutes           bool

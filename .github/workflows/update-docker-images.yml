@@ -52,6 +52,7 @@ jobs:
       - name: Set other variables
         id: vars
         run: |
+          # TODO fix test folder after v3.3.0
           echo "k8s_version=$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
 
   check:
@@ -97,7 +98,7 @@ jobs:
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
+        uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
         with:
           go-version-file: go.mod
 
@@ -106,10 +107,10 @@ jobs:
         run: echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
 
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@336e29918d653399e599bfca99fadc1d7ffbc9f7 # v4.3.0
+        uses: goreleaser/goreleaser-action@3fa32b8bb5620a2c1afe798654bbad59f9da4906 # v4.4.0
         with:
           version: latest
-          args: build --rm-dist --id kubernetes-ingress
+          args: build --clean --id kubernetes-ingress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ steps.go.outputs.go_path }}

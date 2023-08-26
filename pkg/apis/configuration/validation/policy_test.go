@@ -7,6 +7,247 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+func TestValidatePolicy_JWTIsNotValidOn(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name   string
+		policy *v1.Policy
+	}{
+		{
+			name: "missing realm when using secret",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:  "",
+						Secret: "my-jwk",
+					},
+				},
+			},
+		},
+		{
+			name: "missing realm when using jwks from remote location",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "",
+						JwksURI:  "https://mystore-jsonwebkeys.com",
+						KeyCache: "1h",
+					},
+				},
+			},
+		},
+		{
+			name: "missing secret and Jwks at the same time",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm: "my-realm",
+					},
+				},
+			},
+		},
+		{
+			name: "provided both Secret and JWKs at the same time",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:   "my-realm",
+						Secret:  "my-secret",
+						JwksURI: "https://mystore-jsonwebkey.com",
+					},
+				},
+			},
+		},
+
+		{
+			name: "keyCache must not be present when using Secret",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "My Product API",
+						Secret:   "my-jwk",
+						KeyCache: "1h",
+					},
+				},
+			},
+		},
+		{
+			name: "invalid keyCache time syntax",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "My Product API",
+						JwksURI:  "https://myjwksuri.com",
+						KeyCache: "bogus-time-value",
+					},
+				},
+			},
+		},
+		{
+			name: "missing keyCache when using JWKS",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:   "My Product API",
+						JwksURI: "https://myjwksuri.com",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := ValidatePolicy(tc.policy, true, false, false)
+			if err == nil {
+				t.Errorf("got no errors on invalid JWTAuth policy spec input")
+			}
+		})
+	}
+}
+
+func TestValidatePolicy_IsValidOnJWTPolicy(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name   string
+		policy *v1.Policy
+	}{
+		{
+			name: "with Secret and Token",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:  "My Product API",
+						Secret: "my-secret",
+						Token:  "$http_token",
+					},
+				},
+			},
+		},
+		{
+			name: "with Secret and without Token",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:  "My Product API",
+						Secret: "my-jwk",
+					},
+				},
+			},
+		},
+		{
+			name: "with JWKS and Token",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "My Product API",
+						KeyCache: "1h",
+						JwksURI:  "https://login.mydomain.com/keys",
+						Token:    "$http_token",
+					},
+				},
+			},
+		},
+		{
+			name: "with JWKS and without Token",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "My Product API",
+						KeyCache: "1h",
+						JwksURI:  "https://login.mydomain.com/keys",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := ValidatePolicy(tc.policy, true, false, false)
+			if err != nil {
+				t.Errorf("want no errors, got %+v\n", err)
+			}
+		})
+	}
+}
+
+func TestValidatePolicy_RequiresKeyCacheValueForJWTPolicy(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name   string
+		policy *v1.Policy
+	}{
+		{
+			name: "keyCache in hours",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "My Product API",
+						JwksURI:  "https://foo.bar/certs",
+						KeyCache: "1h",
+					},
+				},
+			},
+		},
+		{
+			name: "keyCache in minutes",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "My Product API",
+						JwksURI:  "https://foo.bar/certs",
+						KeyCache: "120m",
+					},
+				},
+			},
+		},
+		{
+			name: "keyCache in seconds",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "My Product API",
+						JwksURI:  "https://foo.bar/certs",
+						KeyCache: "60000s",
+					},
+				},
+			},
+		},
+		{
+			name: "keyCache in days",
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:    "My Product API",
+						JwksURI:  "https://foo.bar/certs",
+						KeyCache: "3d",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := ValidatePolicy(tc.policy, true, false, false)
+			if err != nil {
+				t.Errorf("got error on valid JWT policy: %+v\n", err)
+			}
+			t.Log(err)
+		})
+	}
+}
+
 func TestValidatePolicy_PassesOnValidInput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -557,10 +798,14 @@ func TestValidateJWT_FailsOnInvalidInput(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		allErrs := validateJWT(test.jwt, field.NewPath("jwt"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateJWT() returned no errors for invalid input for the case of %v", test.msg)
-		}
+		test := test
+		t.Run(test.msg, func(t *testing.T) {
+			t.Parallel()
+			allErrs := validateJWT(test.jwt, field.NewPath("jwt"))
+			if len(allErrs) == 0 {
+				t.Errorf("validateJWT() returned no errors for invalid input for the case of %v", test.msg)
+			}
+		})
 	}
 }
 
@@ -635,6 +880,7 @@ func TestValidateRate_ErrorsOnInvalidInput(t *testing.T) {
 
 func TestValidatePositiveInt_PassesOnValidInput(t *testing.T) {
 	t.Parallel()
+
 	validInput := []int{1, 2}
 
 	for _, input := range validInput {
@@ -658,16 +904,8 @@ func TestValidatePositiveInt_ErrorsOnInvalidInput(t *testing.T) {
 	}
 }
 
-func TestValidateRateLimitZoneSize_PassesOnValidInput(t *testing.T) {
+func TestValidateRateLimitZoneSize_ErrorsOnInvalidInput(t *testing.T) {
 	t.Parallel()
-	validInput := []string{"32", "32k", "32K", "10m"}
-
-	for _, test := range validInput {
-		allErrs := validateRateLimitZoneSize(test, field.NewPath("size"))
-		if len(allErrs) != 0 {
-			t.Errorf("validateRateLimitZoneSize(%q) returned an error for valid input", test)
-		}
-	}
 
 	invalidInput := []string{"", "31", "31k", "0", "0M"}
 
@@ -679,8 +917,22 @@ func TestValidateRateLimitZoneSize_PassesOnValidInput(t *testing.T) {
 	}
 }
 
+func TestValidateRateLimitZoneSize_PassesOnValidInput(t *testing.T) {
+	t.Parallel()
+
+	validInput := []string{"32", "32k", "32K", "10m"}
+
+	for _, test := range validInput {
+		allErrs := validateRateLimitZoneSize(test, field.NewPath("size"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateRateLimitZoneSize(%q) returned an error for valid input", test)
+		}
+	}
+}
+
 func TestValidateRateLimitZoneSize_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
+
 	invalidInput := []string{"", "31", "31k", "0", "0M"}
 
 	for _, test := range invalidInput {
