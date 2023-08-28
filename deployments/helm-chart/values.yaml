@@ -271,14 +271,15 @@ controller:
     create: false
 
     ## The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.
-    spec: {}
-      # listeners:
-      # - name: dns-udp
-      #   port: 5353
-      #   protocol: UDP
-      # - name: dns-tcp
-      #   port: 5353
-      #   protocol: TCP
+    spec: {} ## Ensure both curly brackets are removed when adding listeners in YAML format.
+    # listeners:
+    # - name: dns-udp
+    #   port: 5353
+    #   protocol: UDP
+    # - name: dns-tcp
+    #   port: 5353
+    #   protocol: TCP
+
 
   ## Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
   enableSnippets: false
