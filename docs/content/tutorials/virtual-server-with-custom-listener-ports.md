@@ -35,7 +35,7 @@ spec:
 ```
 
 2. Deploy `nginx-configuration.yaml` file:
-```console
+```shell
 kubectl apply -f nginx-configuration.yaml
 ```
 
@@ -149,7 +149,7 @@ server {
 Since the VirtualServer resource is deployed with non-default ports, these ports must be explicitly specified when sending requests.
 
 `curl` using port `8443`:
-```console
+```shell
 curl -k https://cafe.example.com:8443/coffee
 
 Server address: 10.32.0.40:8080
@@ -160,7 +160,7 @@ URI: /coffee
 ```
 
 `curl` using port `8083`:
-```console
+```shell
 curl -k http://cafe.example.com:8083/coffee
 
 Server address: 10.32.0.40:8080
