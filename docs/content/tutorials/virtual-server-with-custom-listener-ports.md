@@ -1,17 +1,14 @@
 ---
-title: VirtualServer with Custom listener ports
+title: Configuring VirtualServer with custom HTTP and HTTPS listener ports
 description: |
-  How to configure a VirtualServer with custom HTTP and HTTPS listener ports.
+  This tutorial outlines how to configure and deploy a VirtualServer resource with custom HTTP and HTTPS listener ports.
 weight: 1800
 doctypes: ["concept"]
 toc: true
 ---
 ## Configuring a VirtualServer with custom HTTP and HTTPS listener ports.
 
-This tutorial outlines how to configure and deploy a VirtualServer resource to with custom HTTP and HTTPS listener ports.
-Previously this was task had to be performed manually as documented in [Customizing NGINX Ingress Controller Ports](/nginx-ingress-controller/tutorials/custom-listen-ports/).
-
-VirtualServer now explicitly defines custom HTTP and HTTPS listener ports using the `spec.listener.http` and `spec.listener.https` fields.
+VirtualServer can explicitly define custom HTTP and HTTPS listener ports using the `spec.listener.http` and `spec.listener.https` fields.
 Each field must reference a valid listener defined by in a [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/) resource.
 
 ## Deploy GlobalConfiguration
@@ -73,9 +70,6 @@ kubectl apply -f nginx-configuration.yaml
         protocol: TCP
         targetPort: 8443
     ```
-
-
-
 
 {{%/tab%}}
 
