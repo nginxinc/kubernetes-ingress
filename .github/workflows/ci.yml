@@ -46,14 +46,14 @@ jobs:
         id: vars
         run: |
           echo "k8s_latest=$(grep -m1 'FROM kindest/node' <tests/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
-          echo "chart_version=$(yq '.version' <deployments/helm-chart/Chart.yaml)" >> $GITHUB_OUTPUT
+          echo "chart_version=$(yq '.version' <charts/nginx-ingress/Chart.yaml)" >> $GITHUB_OUTPUT
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
 
       - name: Check if go.mod and go.sum are up to date
         run: go mod tidy && git diff --exit-code -- go.mod go.sum
 
       - name: Check if CRDs changed
-        run: make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
+        run: make update-crds && git diff --name-only --exit-code deployments/common/crds*
 
       - name: Check if Codegen changed
         run: |
@@ -127,7 +127,7 @@ jobs:
             ## Resources
             - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
             - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/examples
-            - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/deployments/helm-chart
+            - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/charts/nginx-ingress
             - Operator -- https://github.com/nginxinc/nginx-ingress-helm-operator
         if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
@@ -215,7 +215,7 @@ jobs:
           --set controller.service.type=NodePort
           --set controller.nginxplus=${{ contains(matrix.type, 'plus') && 'true' || 'false' }}
           --wait
-        working-directory: ${{ github.workspace }}/deployments/helm-chart
+        working-directory: ${{ github.workspace }}/charts/nginx-ingress
 
       - name: Expose Test Ingresses
         run: |
@@ -419,7 +419,7 @@ jobs:
       - name: Package
         id: package
         run: |
-          output=$(helm package ${{ github.ref_type != 'tag' && '--app-version edge --version 0.0.0-edge' || '' }} kic/deployments/helm-chart)
+          output=$(helm package ${{ github.ref_type != 'tag' && '--app-version edge --version 0.0.0-edge' || '' }} kic/charts/nginx-ingress)
           echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
 
       - name: Push to OCI registries

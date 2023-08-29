@@ -16,17 +16,17 @@ FILES_TO_UPDATE_IC_VERSION=(
     deployments/daemon-set/nginx-plus-ingress.yaml
     deployments/deployment/nginx-ingress.yaml
     deployments/deployment/nginx-plus-ingress.yaml
-    deployments/helm-chart/Chart.yaml
-    deployments/helm-chart/README.md
-    deployments/helm-chart/values-icp.yaml
-    deployments/helm-chart/values-nsm.yaml
-    deployments/helm-chart/values-plus.yaml
-    deployments/helm-chart/values.yaml
+    charts/nginx-ingress/Chart.yaml
+    charts/nginx-ingress/README.md
+    charts/nginx-ingress/values-icp.yaml
+    charts/nginx-ingress/values-nsm.yaml
+    charts/nginx-ingress/values-plus.yaml
+    charts/nginx-ingress/values.yaml
 )
 
 FILE_TO_UPDATE_HELM_CHART_VERSION=(
-    deployments/helm-chart/Chart.yaml
-    deployments/helm-chart/README.md
+    charts/nginx-ingress/Chart.yaml
+    charts/nginx-ingress/README.md
 )
 
 DOCS_TO_UPDATE_FOLDER=docs/content
@@ -42,7 +42,7 @@ sed -i "" "s/$prev_helm_chart_version/$helm_chart_version/g" ${FILE_TO_UPDATE_HE
 # copy the helm chart README to the docs
 {
     sed -n '1,10p' docs/content/installation/installation-with-helm.md
-    sed -n '3,$p' deployments/helm-chart/README.md
+    sed -n '3,$p' charts/nginx-ingress/README.md
 } >file2.new && mv file2.new docs/content/installation/installation-with-helm.md
 
 sed -i '' '/^|Parameter | Description | Default |/i\
