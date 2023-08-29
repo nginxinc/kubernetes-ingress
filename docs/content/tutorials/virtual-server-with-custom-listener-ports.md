@@ -41,72 +41,87 @@ kubectl apply -f nginx-configuration.yaml
 
 ## Deploying NGINX Ingress Controller with GlobalConfiguration resource
 
-### Manifest
+{{<tabs name="deploy-config-resource">}}
+
+{{%tab name="Using Helm"%}}
+
+1. Add the below arguments to the `values.yaml` file in `controller.globalConfiguration`:
+    ```yaml
+    spec:
+      listeners:
+      - name: http-8083
+        port: 8083
+        protocol: HTTP
+      - name: https-8443
+        port: 8443
+        protocol: HTTP
+        ssl: true
+    ```
+
+1. Follow the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm/) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
+
+1. Ensure your NodePort or LoadBalancer service is configured to expose the custom listener ports. This is set in the `customPorts` section under `controller.service.customPorts`:
+
+    ```yaml
+    customPorts:
+      - name: http-8083
+        port: 8083
+        protocol: TCP
+        targetPort: 8083
+      - name: https-8443
+        port: 8443
+        protocol: TCP
+        targetPort: 8443
+    ```
+
+
+
+
+{{%/tab%}}
+
+{{%tab name="Using Manifests"%}}
 
 1. Add the below argument to the manifest file of the NGINX Ingress Controller:
-```yaml
-args:
-  - -$(POD_NAMESPACE)/nginx-configuration
-```
 
-2. Follow the [installation](/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
+    ```yaml
+    args:
+      - -$(POD_NAMESPACE)/nginx-configuration
+    ```
 
-3. If you have a NodePort service or Loabalancer service deployed, these will need to be configured to expose the custom listener ports. Below is an example yaml using NodePort. This same configuration will also apply to a Loadbalancer service:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-ingress
-  namespace: nginx-ingress
-spec:
-  type: NodePort
-  ports:
-  - port: 8083
-    targetPort: 8083 # Custom HTTP listener port
-    protocol: TCP
-    name: http-8083
-  - port: 8443
-    targetPort: 8443 # Custom HTTPS listener port
-    protocol: TCP
-    name: https-8443
-  selector:
-    app: nginx-ingress
+2. Follow the [Installation with Manifests](/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
 
-```
+3. Ensure your NodePort or LoadBalancer service is configured to expose the custom listener ports. Below is an example yaml configuration using NodePort, which would also apply to a LoadBalancer service:
 
-### HELM
-1. Add the below content to your `values.yaml` file in `controller.globalConfiguration`:
-```yaml
-spec:
-  listeners:
-  - name: http-8083
-    port: 8083
-    protocol: HTTP
-  - name: https-8443
-    port: 8443
-    protocol: HTTP
-    ssl: true
-```
+    ```yaml
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: nginx-ingress
+      namespace: nginx-ingress
+    spec:
+      type: NodePort
+      ports:
+      - port: 8083
+        targetPort: 8083 # Custom HTTP listener port
+        protocol: TCP
+        name: http-8083
+      - port: 8443
+        targetPort: 8443 # Custom HTTPS listener port
+        protocol: TCP
+        name: https-8443
+      selector:
+        app: nginx-ingress
+    ```
 
-2. Ensure your NodePort or Loadbalancer service is configured to expose the custom listener ports. This is set in the `customPorts` section under `controller.service.customPorts`
-```yaml
-customPorts:
-  - name: http-8083
-    port: 8083
-    protocol: TCP
-    targetPort: 8083
-  - name: https-8443
-    port: 8443
-    protocol: TCP
-    targetPort: 8443
-```
+{{%/tab%}}
 
-3. Follow the [HELM installation](/nginx-ingress-controller/installation/installation-with-helm/) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
+{{</tabs>}}
 
 ## Deploying VirtualServer with custom listeners
-Deploy the example resources in the [custom listeners](/examples/custom-resources/custom-listeners/) folder. This will deploy all the required resources, including the VirtualServer.
+Deploy the example resources in the [custom listeners](/examples/custom-resources/custom-listeners/) folder. This will deploy all required resources, including the VirtualServer.
 
 Below is a snippet of the VirtualServer resource that will be deployed:
+
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: VirtualServer
@@ -146,9 +161,10 @@ server {
 
 ## Testing custom listener ports
 
-Since the VirtualServer resource is deployed with non-default ports, these ports must be explicitly specified when sending requests.
+You can test that the VirtualServer resource is deployed with non-default port configuration by explicitly defining them when sending requests.
 
 `curl` using port `8443`:
+
 ```shell
 curl -k https://cafe.example.com:8443/coffee
 
@@ -160,6 +176,7 @@ URI: /coffee
 ```
 
 `curl` using port `8083`:
+
 ```shell
 curl -k http://cafe.example.com:8083/coffee
 
