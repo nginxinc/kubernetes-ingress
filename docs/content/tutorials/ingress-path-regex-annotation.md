@@ -9,7 +9,7 @@ toc: true
 ## Customizing NGINX Ingress Controller with Path-Regex Annotations
 
 We suggest reading the NGINX [documentation on resolve location priority](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority)
-to gain additional contenx about NGINX and NGINX Plus before using the ``path-regex`` annotation.
+to gain additional context about NGINX and NGINX Plus before using the ``path-regex`` annotation.
 
 ## Ingress Type
 

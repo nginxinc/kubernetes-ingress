@@ -27,7 +27,7 @@ To begin, Istio needs to be installed into your cluster.
 ## Install Istio
 
 Link to Istio install guide:
-[Installing istio](https://istio.io/latest/docs/setup/install/)
+[Installing Istio](https://istio.io/latest/docs/setup/install/)
 
 It is crucial to make sure you install Istio **BEFORE** installing NGINX Ingress Controller. This ensures that the Istio sidecar is injected correctly into the NGINX Ingress controller pod.
 

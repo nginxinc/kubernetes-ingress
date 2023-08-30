@@ -335,7 +335,7 @@ kubectl apply -f osm-nginx-client-cert.yaml
 
 ```
 
-Ensure the secrets exisit in the `nginx-ingress` namespace:
+Ensure the secrets exist in the `nginx-ingress` namespace:
 
 ```console
 kubectl get secrets -n nginx-ingress
