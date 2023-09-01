@@ -262,7 +262,7 @@ class TestVirtualServerCustomListeners:
                 "expected_error_msg": "Listener http-8085 can't be use in `listener.http` context as SSL is enabled",
             },
         ],
-        # ids=["delete_gc", "update_gc_https_listener_ssl_false", "update_gc_http_listener_ssl_true"],
+        ids=["delete_gc", "update_gc_https_listener_ssl_false","update_gc_http_listener_ssl_true"],
     )
     def test_custom_listeners_update(
         self,
@@ -290,33 +290,20 @@ class TestVirtualServerCustomListeners:
         )
         wait_before_test()
 
-        resp_default_http_port = requests.get(
+        urls = [
             virtual_server_setup.backend_1_url,
-            headers={"host": virtual_server_setup.vs_host},
-        )
-        assert resp_default_http_port.status_code == 404
-
-        resp_default_https_port = requests.get(
             virtual_server_setup.backend_1_url_ssl,
-            headers={"host": virtual_server_setup.vs_host},
-            allow_redirects=False,
-            verify=False,
-        )
-        assert resp_default_https_port.status_code == 404
-
-        resp_custom_http_port = requests.get(
             virtual_server_setup.backend_1_url_custom,
-            headers={"host": virtual_server_setup.vs_host},
-        )
-        assert resp_custom_http_port.status_code == 200
-
-        resp_custom_https_port = requests.get(
             virtual_server_setup.backend_1_url_custom_ssl,
-            headers={"host": virtual_server_setup.vs_host},
-            allow_redirects=False,
-            verify=False,
-        )
-        assert resp_custom_https_port.status_code == 200
+        ]
+
+        for expected_response, url in zip([404, 404, 200, 200], urls):
+            if expected_response > 0:
+                res = make_request(url, virtual_server_setup.vs_host)
+                assert res.status_code == expected_response
+            else:
+                with pytest.raises(ConnectionError, match="Connection refused"):
+                    make_request(url, virtual_server_setup.vs_host)
 
         print("\nStep 3: Apply gc or vs update")
         if test_setup["gc_yaml"]:
@@ -337,7 +324,6 @@ class TestVirtualServerCustomListeners:
             ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
-
         print(vs_config)
 
         if test_setup["http_listener_in_config"]:
@@ -355,15 +341,7 @@ class TestVirtualServerCustomListeners:
             assert "listen [::]:8445 ssl;" not in vs_config
 
         print("\nStep 5: Test HTTP responses")
-        for expected_response, url in zip(
-            test_setup["expected_response_codes"],
-            [
-                virtual_server_setup.backend_1_url,
-                virtual_server_setup.backend_1_url_ssl,
-                virtual_server_setup.backend_1_url_custom,
-                virtual_server_setup.backend_1_url_custom_ssl,
-            ],
-        ):
+        for expected_response, url in zip(test_setup["expected_response_codes"], urls):
             if expected_response > 0:
                 res = make_request(url, virtual_server_setup.vs_host)
                 assert res.status_code == expected_response
