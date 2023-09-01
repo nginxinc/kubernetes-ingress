@@ -369,7 +369,7 @@ class TestVirtualServerCustomListeners:
                 assert res.status_code == expected_response
             else:
                 with pytest.raises(ConnectionError, match="Connection refused"):
-                    make_request(url,virtual_server_setup.vs_host)
+                    make_request(url, virtual_server_setup.vs_host)
 
         print("\nStep 6: Test Kubernetes VirtualServer warning events")
         if test_setup["expected_error_msg"]:
