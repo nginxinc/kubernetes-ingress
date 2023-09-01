@@ -51,6 +51,7 @@ docs:
 netlify: clean
 	netlify deploy --build -d public --alias $(shell git branch --show-current)-branch
 
-deploy-preview: git lfs install
-	hugo-mod
+deploy-preview: 
+	git lfs install
+	hugo mod get $(THEME_MODULE)@v$(THEME_VERSION)
 	hugo --gc -b ${NETLIFY_DEPLOY_URL}/nginx-ingress-controller
