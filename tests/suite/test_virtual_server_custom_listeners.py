@@ -1424,8 +1424,7 @@ class TestVirtualServerCustomListeners:
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 200, 0],
                 "expected_error_msg": "Listener https-8445 can't be use in `listener.https` context as SSL is not "
-                                      "enabled for that listener.",
-
+                "enabled for that listener.",
             },
             {
                 "gc_yaml": "global-configuration-http-listener-with-ssl",
