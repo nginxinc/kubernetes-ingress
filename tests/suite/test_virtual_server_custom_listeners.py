@@ -1280,7 +1280,7 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 0, 0],
-                "expected_error_msg": "Listener https-8445 can't be use in `listener.http` context as SSL is enabled "
+                "expected_error_msg": "Listener https-8445 can't be use in `listener.http` context as SSL is enabled"
                 "for that listener.",
             },
             {
@@ -1289,7 +1289,7 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 0, 0],
-                "expected_error_msg": "Listener https-8445 can't be use in `listener.http` context as SSL is enabled "
+                "expected_error_msg": "Listener https-8445 can't be use in `listener.http` context as SSL is enabled"
                 "for that listener.",
             },
             {
@@ -1400,7 +1400,170 @@ class TestVirtualServerCustomListeners:
                 and test_setup["expected_error_msg"] in response["status"]["message"]
             )
 
-        print("\nStep 6: Restore test enviroments")
+        print("\nStep 6: Restore test environments")
+        delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)
+        self.restore_default_vs(kube_apis, virtual_server_setup)
+        if test_setup["gc_yaml"]:
+            delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
+
+    @pytest.mark.parametrize(
+        "test_setup",
+        [
+            {
+                "gc_yaml": "",  # delete gc if empty
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": False,
+                "https_listener_in_config": False,
+                "expected_response_codes": [404, 404, 0, 0],
+                "expected_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
+            },
+            {
+                "gc_yaml": "global-configuration-https-listener-without-ssl",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": False,
+                "expected_response_codes": [404, 404, 200, 0],
+                "expected_error_msg": "Listener https-8445 can't be use in `listener.https` context as SSL is not "
+                                      "enabled for that listener.",
+
+            },
+            {
+                "gc_yaml": "global-configuration-http-listener-with-ssl",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": False,
+                "https_listener_in_config": False,
+                "expected_response_codes": [404, 404, 0, 0],
+                "expected_error_msg": "Listener http-8085 can't be use in `listener.http` context as SSL is enabled",
+            },
+        ],
+        ids=["delete_gc", "update_gc_https_listener_ssl_false", "update_gc_http_listener_ssl_true"],
+    )
+    def test_custom_listeners_update(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_setup: TestSetup,
+    ) -> None:
+        print("\nStep 1: Create GC resource")
+        secret_name = create_secret_from_yaml(
+            kube_apis.v1, virtual_server_setup.namespace, f"{TEST_DATA}/virtual-server-tls/tls-secret.yaml"
+        )
+        global_config_file = f"{TEST_DATA}/virtual-server-custom-listeners/global-configuration.yaml"
+        gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
+        vs_custom_listeners = f"{TEST_DATA}/virtual-server-custom-listeners/virtual-server.yaml"
+
+        print("\nStep 2: Create VS with custom listener (http-8085, https-8445)")
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            vs_custom_listeners,
+            virtual_server_setup.namespace,
+        )
+        wait_before_test()
+
+        resp_default_http_port = requests.get(
+            virtual_server_setup.backend_1_url,
+            headers={"host": virtual_server_setup.vs_host},
+        )
+        assert resp_default_http_port.status_code == 404
+
+        resp_default_https_port = requests.get(
+            virtual_server_setup.backend_1_url_ssl,
+            headers={"host": virtual_server_setup.vs_host},
+            allow_redirects=False,
+            verify=False,
+        )
+        assert resp_default_https_port.status_code == 404
+
+        resp_custom_http_port = requests.get(
+            virtual_server_setup.backend_1_url_custom,
+            headers={"host": virtual_server_setup.vs_host},
+        )
+        assert resp_custom_http_port.status_code == 200
+
+        resp_custom_https_port = requests.get(
+            virtual_server_setup.backend_1_url_custom_ssl,
+            headers={"host": virtual_server_setup.vs_host},
+            allow_redirects=False,
+            verify=False,
+        )
+        assert resp_custom_https_port.status_code == 200
+
+        print("\nStep 3: Apply gc or vs update")
+        if test_setup["gc_yaml"]:
+            global_config_file = f"{TEST_DATA}/virtual-server-custom-listeners/{test_setup['gc_yaml']}.yaml"
+            patch_gc_from_yaml(
+                kube_apis.custom_objects, gc_resource["metadata"]["name"], global_config_file, "nginx-ingress"
+            )
+        else:
+            delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
+        wait_before_test()
+
+        print("\nStep 4: Test generated VS configs")
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        vs_config = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            ic_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
+
+        print(vs_config)
+
+        if test_setup["http_listener_in_config"]:
+            assert "listen 8085;" in vs_config
+            assert "listen 8085;" in vs_config
+        else:
+            assert "listen 8085;" not in vs_config
+            assert "listen 8085;" not in vs_config
+
+        if test_setup["https_listener_in_config"]:
+            assert "listen 8445 ssl;" in vs_config
+            assert "listen [::]:8445 ssl;" in vs_config
+        else:
+            assert "listen 8445 ssl;" not in vs_config
+            assert "listen [::]:8445 ssl;" not in vs_config
+
+        print("\nStep 5: Test HTTP responses")
+        for expected_response, url in zip(
+            test_setup["expected_response_codes"],
+            [
+                virtual_server_setup.backend_1_url,
+                virtual_server_setup.backend_1_url_ssl,
+                virtual_server_setup.backend_1_url_custom,
+                virtual_server_setup.backend_1_url_custom_ssl,
+            ],
+        ):
+
+            def make_request(url):
+                return requests.get(
+                    url,
+                    headers={"host": virtual_server_setup.vs_host},
+                    allow_redirects=False,
+                    verify=False,
+                )
+
+            if expected_response > 0:
+                res = make_request(url)
+                assert res.status_code == expected_response
+            else:
+                with pytest.raises(ConnectionError, match="Connection refused") as e:
+                    make_request(url)
+
+        print("\nStep 6: Test Kubernetes VirtualServer warning events")
+        if test_setup["expected_error_msg"]:
+            response = read_vs(kube_apis.custom_objects, virtual_server_setup.namespace, virtual_server_setup.vs_name)
+            print(response)
+            assert (
+                response["status"]["reason"] == "AddedOrUpdatedWithWarning"
+                and response["status"]["state"] == "Warning"
+                and test_setup["expected_error_msg"] in response["status"]["message"]
+            )
+
+        print("\nStep 7: Restore test environments")
         delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
         if test_setup["gc_yaml"]:
