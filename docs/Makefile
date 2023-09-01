@@ -18,21 +18,25 @@ hugo-mod:
 	hugo mod get $(THEME_MODULE)@v$(THEME_VERSION)
 
 hugo-mod-tidy:
+	git lfs install
 	hugo mod tidy && hugo mod verify
 
 # Builds using the Hugo "production" environment
 # For deploys to docs.nginx.com only
 build-production:
+	git lfs install
 	hugo --gc -e production
 
 # Builds using the Hugo "staging" environment
 # For deploys to docs-staging.nginx.com only
 build-staging:
+	git lfs install
 	hugo --gc -e staging
 
 # Builds using the Hugo "development" environment
 # For deploys to docs-dev.nginx.com only
 build-dev:
+	git lfs install
 	hugo --gc -e development
 
 # Runs the Hugo server with content marked as draft
@@ -43,6 +47,7 @@ docs-drafts:
 # Runs the Hugo server
 # Serves docs at localhost:1313
 docs:
+	git lfs install
 	hugo server --disableFastRender
 
 # Can be used to deploy to netlify from your local
