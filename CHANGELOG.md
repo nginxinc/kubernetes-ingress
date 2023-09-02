@@ -1,7 +1,4 @@
 # Changelog
-## Changed
-
-Unable to use CRDs imported as modules [#3770](https://github.com/nginxinc/kubernetes-ingress/issues/3770)
 
 ## 3.2.1
 
