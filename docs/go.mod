@@ -2,4 +2,4 @@ module github.com/nginxinc/kubernetes-ingress/docs
 
 go 1.19
 
-require github.com/nginxinc/nginx-hugo-theme v0.35.0
+require github.com/nginxinc/nginx-hugo-theme v0.37.0 // indirect

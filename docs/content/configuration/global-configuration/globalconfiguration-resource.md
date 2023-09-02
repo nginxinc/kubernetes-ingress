@@ -58,7 +58,8 @@ protocol: TCP
 | ---| ---| ---| --- |
 |``name`` | The name of the listener. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``listener-123`` are valid. The name must be unique among all listeners. The name ``tls-passthrough`` is reserved for the built-in TLS Passthrough listener and cannot be used. | ``string`` | Yes |
 |``port`` | The port of the listener. The port must fall into the range ``1..65535`` with the following exceptions: ``80``, ``443``, the [status port](/nginx-ingress-controller/logging-and-monitoring/status-page), the [Prometheus metrics port](/nginx-ingress-controller/logging-and-monitoring/prometheus). Among all listeners, only a single combination of a port-protocol is allowed. | ``int`` | Yes |
-|``protocol`` | The protocol of the listener. Supported values: ``TCP`` and ``UDP``. | ``string`` | Yes |
+|``protocol`` | The protocol of the listener. Supported values: ``TCP``, ``UDP`` and ``HTTP``. | ``string`` | Yes |
+|``ssl`` | Configures the listener with SSL. This is currently only supported for ``HTTP`` listeners. Default value is ``false`` | ``bool`` | No |
 {{% /table %}}
 
 ## Using GlobalConfiguration

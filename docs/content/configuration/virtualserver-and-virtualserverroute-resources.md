@@ -25,6 +25,9 @@ metadata:
   name: cafe
 spec:
   host: cafe.example.com
+  listener:
+    http: http-8083
+    https: https-8443
   tls:
     secret: cafe-secret
   gunzip: on
@@ -54,6 +57,7 @@ spec:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
+|``listener`` | Sets a custom HTTP and/or HTTPS listener. Valid fields are `listener.http` and `listener.https`. Each field must reference the name of a valid listener defined in a GlobalConfiguration resource | [listener](#virtualserverlistener) | No |
 |``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
 |``gunzip`` | Enables or disables [decompression](https://docs.nginx.com/nginx/admin-guide/web-server/compression/) of gzipped responses for clients. Allowed values “on”/“off”, “true”/“false” or “yes”/“no”. If the ``gunzip`` value is not set, it defaults to ``off``.   | ``boolean`` | No |
 |``externalDNS`` | The externalDNS configuration for a VirtualServer. | [externalDNS](#virtualserverexternaldns) | No |
@@ -123,6 +127,22 @@ cert-manager:
 |``duration`` | This field allows you to configure spec.duration field for the Certificate to be generated. Must be specified using a [Go time.Duration](https://pkg.go.dev/time#ParseDuration) string format, which does not allow the d (days) suffix. You must specify these values using s, m, and h suffixes instead. | ``string`` | No |
 |``renew-before`` |  this annotation allows you to configure spec.renewBefore field for the Certificate to be generated. Must be specified using a [Go time.Duration](https://pkg.go.dev/time#ParseDuration) string format, which does not allow the d (days) suffix. You must specify these values using s, m, and h suffixes instead. | ``string`` | No |
 |``usages`` |  This field allows you to configure spec.usages field for the Certificate to be generated. Pass a string with comma-separated values i.e. ``key agreement,digital signature, server auth``. An exhaustive list of supported key usages can be found in the [the cert-manager api documentation](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.KeyUsage). | ``string`` | No |
+{{% /table %}}
+
+### VirtualServer.Listener
+The listener field defines a custom HTTP and/or HTTPS listener.
+The respective listeners used must reference the name of a listener defined using a [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/) resource.
+For example:
+```yaml
+http: http-8083
+https: https-8443
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``http`` |  The name of am HTTP listener defined in a [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/) resource. | ``string`` | No |
+|``https`` |  The name of an HTTPS listener defined in a [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/) resource. | ``string`` | No |
 {{% /table %}}
 
 ### VirtualServer.ExternalDNS
