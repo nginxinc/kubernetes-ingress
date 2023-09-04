@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/validation"
+	v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/externaldns/v1"
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/externaldns/validation"
 )
 
 func TestValidateDNSEndpoint(t *testing.T) {

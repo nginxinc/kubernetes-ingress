@@ -3,9 +3,9 @@ package k8s
 import (
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
+	v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
 	networking "k8s.io/api/networking/v1"
 )
 

@@ -37,7 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 
-	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	vsapi "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
 )
 
 const (

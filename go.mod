@@ -1,4 +1,4 @@
-module github.com/nginxinc/kubernetes-ingress
+module github.com/nginxinc/kubernetes-ingress/v3
 
 go 1.21
 

@@ -3,7 +3,7 @@ package validation
 import (
 	"testing"
 
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
