@@ -7,16 +7,16 @@ import (
 
 	discovery_v1 "k8s.io/api/discovery/v1"
 
-	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/secrets"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/client-go/tools/cache"
 
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )

@@ -11,11 +11,11 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version1"
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version2"
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/nginx"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 )
 
 func createTestStaticConfigParams() *StaticConfigParams {

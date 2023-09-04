@@ -5,10 +5,10 @@ package externalversions
 import (
 	"fmt"
 
-	configurationv1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
-	v1alpha1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
-	v1beta1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
-	v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/externaldns/v1"
+	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	v1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )

@@ -7,27 +7,27 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/secrets"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version2"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 
 	"github.com/golang/glog"
 	api_v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version1"
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/nginx"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	latCollector "github.com/nginxinc/kubernetes-ingress/v3/internal/metrics/collectors"
+	latCollector "github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 )
 
 const (
