@@ -202,8 +202,8 @@ class TestVirtualServerCustomListeners:
 
         assert "listen 80;" not in vs_config
         assert "listen [::]:80;" not in vs_config
-        assert "listen 443;" not in vs_config
-        assert "listen [::]:443;" not in vs_config
+        assert "listen 443 ssl;" not in vs_config
+        assert "listen [::]:443 ssl;" not in vs_config
 
         print("\nStep 4: Test HTTP responses")
         for expected_response, url in zip(
@@ -347,8 +347,8 @@ class TestVirtualServerCustomListeners:
 
         assert "listen 80;" not in vs_config
         assert "listen [::]:80;" not in vs_config
-        assert "listen 443;" not in vs_config
-        assert "listen [::]:443;" not in vs_config
+        assert "listen 443 ssl;" not in vs_config
+        assert "listen [::]:443 ssl;" not in vs_config
 
         print("\nStep 5: Test HTTP responses")
         for expected_response, url in zip(test_setup["expected_response_codes"], urls):
