@@ -262,7 +262,7 @@ class TestVirtualServerCustomListeners:
                 "gc_yaml": "global-configuration-http-listener-with-ssl",
                 "vs_yaml": "virtual-server",
                 "http_listener_in_config": False,
-                "https_listener_in_config": False,
+                "https_listener_in_config": True,
                 "expected_response_codes": [404, 404, 0, 200],
                 "expected_error_msg": "Listener http-8085 can't be use in `listener.http` context as SSL is enabled",
             },
