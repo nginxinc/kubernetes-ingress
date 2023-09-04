@@ -33,7 +33,6 @@ def restore_default_vs(kube_apis, virtual_server_setup) -> None:
 
 
 @pytest.mark.vs
-@pytest.mark.customlisteners
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -188,10 +187,11 @@ class TestVirtualServerCustomListeners:
 
         if test_setup["http_listener_in_config"]:
             assert "listen 8085;" in vs_config
-            assert "listen 8085;" in vs_config
+            assert "listen [::]:8085;" in vs_config
+
         else:
             assert "listen 8085;" not in vs_config
-            assert "listen 8085;" not in vs_config
+            assert "listen [::]:8085;" not in vs_config
 
         if test_setup["https_listener_in_config"]:
             assert "listen 8445 ssl;" in vs_config
@@ -199,6 +199,11 @@ class TestVirtualServerCustomListeners:
         else:
             assert "listen 8445 ssl;" not in vs_config
             assert "listen [::]:8445 ssl;" not in vs_config
+
+        assert "listen 80;" not in vs_config
+        assert "listen [::]:80;" not in vs_config
+        assert "listen 443;" not in vs_config
+        assert "listen [::]:443;" not in vs_config
 
         print("\nStep 4: Test HTTP responses")
         for expected_response, url in zip(
@@ -258,7 +263,7 @@ class TestVirtualServerCustomListeners:
                 "vs_yaml": "virtual-server",
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
-                "expected_response_codes": [404, 404, 0, 0],
+                "expected_response_codes": [404, 404, 0, 200],
                 "expected_error_msg": "Listener http-8085 can't be use in `listener.http` context as SSL is enabled",
             },
         ],
@@ -328,10 +333,10 @@ class TestVirtualServerCustomListeners:
 
         if test_setup["http_listener_in_config"]:
             assert "listen 8085;" in vs_config
-            assert "listen 8085;" in vs_config
+            assert "listen [::]:8085;" in vs_config
         else:
             assert "listen 8085;" not in vs_config
-            assert "listen 8085;" not in vs_config
+            assert "listen [::]:8085;" not in vs_config
 
         if test_setup["https_listener_in_config"]:
             assert "listen 8445 ssl;" in vs_config
@@ -339,6 +344,11 @@ class TestVirtualServerCustomListeners:
         else:
             assert "listen 8445 ssl;" not in vs_config
             assert "listen [::]:8445 ssl;" not in vs_config
+
+        assert "listen 80;" not in vs_config
+        assert "listen [::]:80;" not in vs_config
+        assert "listen 443;" not in vs_config
+        assert "listen [::]:443;" not in vs_config
 
         print("\nStep 5: Test HTTP responses")
         for expected_response, url in zip(test_setup["expected_response_codes"], urls):

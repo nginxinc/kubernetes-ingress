@@ -18,3 +18,4 @@ spec:
   - name: https-8445
     port: 8445
     protocol: HTTP
+    ssl: true
