@@ -413,9 +413,9 @@ pytest==7.4.0 \
     #   pytest-html
     #   pytest-metadata
     #   pytest-profiling
-pytest-html==3.2.0 \
-    --hash=sha256:868c08564a68d8b2c26866f1e33178419bb35b1e127c33784a28622eb827f3f3 \
-    --hash=sha256:c4e2f4bb0bffc437f51ad2174a8a3e71df81bbc2f6894604e604af18fbe687c3
+pytest-html==4.0.0 \
+    --hash=sha256:3b473cc278272f8b5a34cd3bf10f88ac5fcb17cb5af22f9323514af00c310e64 \
+    --hash=sha256:79c4677ed6196417bf290d8b81f706342ae49f726f623728efa3f7dfff09f8eb
     # via -r requirements.txt
 pytest-metadata==3.0.0 \
     --hash=sha256:769a9c65d2884bd583bc626b0ace77ad15dbe02dd91a9106d47fd46d9c2569ca \
