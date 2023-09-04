@@ -262,7 +262,7 @@ class TestVirtualServerCustomListeners:
                 "expected_error_msg": "Listener http-8085 can't be use in `listener.http` context as SSL is enabled",
             },
         ],
-        ids=["delete_gc", "update_gc_https_listener_ssl_false","update_gc_http_listener_ssl_true"],
+        ids=["delete_gc", "update_gc_https_listener_ssl_false", "update_gc_http_listener_ssl_true"],
     )
     def test_custom_listeners_update(
         self,
