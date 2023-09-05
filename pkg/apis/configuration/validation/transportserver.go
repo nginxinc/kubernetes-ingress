@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -127,15 +127,6 @@ func (tsv *TransportServerValidator) validateTLSPassthroughListener(listener *v1
 
 func validateListenerName(name string, fieldPath *field.Path) field.ErrorList {
 	return validateDNS1035Label(name, fieldPath)
-}
-
-func validateListenerProtocol(protocol string, fieldPath *field.Path) field.ErrorList {
-	switch protocol {
-	case "TCP", "UDP":
-		return nil
-	default:
-		return field.ErrorList{field.Invalid(fieldPath, protocol, "must specify protocol. Accepted values: TCP, UDP.")}
-	}
 }
 
 func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.Set[string]) {

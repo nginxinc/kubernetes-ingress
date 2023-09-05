@@ -42,8 +42,15 @@ limit_req_zone {{ $z.Key }} zone={{ $z.ZoneName }}:{{ $z.ZoneSize }} rate={{ $z.
 {{ $s := .Server }}
 server {
     {{ if $s.Gunzip }}gunzip on;{{end}}
+        {{ if not $s.CustomListeners }}
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+        {{ else }}
+        {{ if (gt $s.HTTPPort 0) }}
+    listen {{ $s.HTTPPort }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HTTPPort }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+        {{ end }}
+        {{ end }}
 
     server_name {{ $s.ServerName }};
 
@@ -58,8 +65,15 @@ server {
     set_real_ip_from unix:;
     real_ip_header proxy_protocol;
         {{ else }}
+        {{ if not $s.CustomListeners }}
     listen 443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
     {{ if not $s.DisableIPV6 }}listen [::]:443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+        {{ else }}
+        {{ if (gt $s.HTTPSPort 0) }}
+    listen {{ $s.HTTPSPort }} ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HTTPSPort }} ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+        {{ end }}
+        {{ end }}
         {{ end }}
 
         {{ if $ssl.RejectHandshake }}

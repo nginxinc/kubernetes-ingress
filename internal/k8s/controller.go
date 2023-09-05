@@ -25,17 +25,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectcommon"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/appprotect"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/appprotectcommon"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/appprotectdos"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/rest"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/secrets"
 	"github.com/nginxinc/nginx-service-mesh/pkg/spiffe"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 
@@ -49,21 +49,21 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/record"
 
-	cm_controller "github.com/nginxinc/kubernetes-ingress/internal/certmanager"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	ed_controller "github.com/nginxinc/kubernetes-ingress/internal/externaldns"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+	cm_controller "github.com/nginxinc/kubernetes-ingress/v3/internal/certmanager"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
+	ed_controller "github.com/nginxinc/kubernetes-ingress/v3/internal/externaldns"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/metrics/collectors"
 
 	api_v1 "k8s.io/api/core/v1"
 	discovery_v1 "k8s.io/api/discovery/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	k8s_nginx_informers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/validation"
+	k8s_nginx "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/clientset/versioned"
+	k8s_nginx_informers "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/informers/externalversions"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -934,7 +934,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 // If we don't add Secrets, there is a chance that during the IC start
 // syncing an Ingress or other resource that references a Secret will happen before that Secret was synced.
 // As a result, the IC will generate configuration for that resource assuming that the Secret is missing and
-// it will report warnings. (See https://github.com/nginxinc/kubernetes-ingress/issues/1448 )
+// it will report warnings. (See https://github.com/nginxinc/kubernetes-ingress/v3/issues/1448 )
 func (lbc *LoadBalancerController) preSyncSecrets() {
 	for _, ni := range lbc.namespacedInformers {
 		if !ni.isSecretsEnabledNamespace {
@@ -994,6 +994,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 	case globalConfiguration:
 		lbc.syncGlobalConfiguration(task)
 		lbc.updateTransportServerMetrics()
+		lbc.updateVirtualServerMetrics()
 	case transportserver:
 		lbc.syncTransportServer(task)
 		lbc.updateTransportServerMetrics()
@@ -1615,30 +1616,55 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 // Such changes need to be processed at once to prevent any inconsistencies in the generated NGINX config.
 func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes []ResourceChange) error {
 	var updatedTSExes []*configs.TransportServerEx
-	var deletedKeys []string
+	var updatedVSExes []*configs.VirtualServerEx
+	var deletedTSKeys []string
+	var deletedVSKeys []string
 
 	var updatedResources []Resource
 
 	for _, c := range changes {
-		tsConfig := c.Resource.(*TransportServerConfiguration)
+		switch impl := c.Resource.(type) {
+		case *VirtualServerConfiguration:
+			if c.Op == AddOrUpdate {
+				vsEx := lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes)
 
-		if c.Op == AddOrUpdate {
-			tsEx := lbc.createTransportServerEx(tsConfig.TransportServer, tsConfig.ListenerPort)
+				updatedVSExes = append(updatedVSExes, vsEx)
+				updatedResources = append(updatedResources, impl)
+			} else if c.Op == Delete {
+				key := getResourceKey(&impl.VirtualServer.ObjectMeta)
 
-			updatedTSExes = append(updatedTSExes, tsEx)
-			updatedResources = append(updatedResources, tsConfig)
-		} else if c.Op == Delete {
-			key := getResourceKey(&tsConfig.TransportServer.ObjectMeta)
+				deletedVSKeys = append(deletedVSKeys, key)
+			}
+		case *TransportServerConfiguration:
+			if c.Op == AddOrUpdate {
+				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
 
-			deletedKeys = append(deletedKeys, key)
+				updatedTSExes = append(updatedTSExes, tsEx)
+				updatedResources = append(updatedResources, impl)
+			} else if c.Op == Delete {
+				key := getResourceKey(&impl.TransportServer.ObjectMeta)
+
+				deletedTSKeys = append(deletedTSKeys, key)
+			}
 		}
 	}
 
 	var updateErr error
-	updateErrs := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedKeys)
 
-	if len(updateErrs) > 0 {
-		updateErr = fmt.Errorf("errors received from updating TransportServers after GlobalConfiguration change: %v", updateErrs)
+	if len(updatedTSExes) > 0 || len(deletedTSKeys) > 0 {
+		tsUpdateErrs := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedTSKeys)
+
+		if len(tsUpdateErrs) > 0 {
+			updateErr = fmt.Errorf("errors received from updating TransportServers after GlobalConfiguration change: %v", tsUpdateErrs)
+		}
+	}
+
+	if len(updatedVSExes) > 0 || len(deletedVSKeys) > 0 {
+		vsUpdateErrs := lbc.configurator.UpdateVirtualServers(updatedVSExes, deletedVSKeys)
+
+		if len(vsUpdateErrs) > 0 {
+			updateErr = fmt.Errorf("errors received from updating VirtualSrvers after GlobalConfiguration change: %v", vsUpdateErrs)
+		}
 	}
 
 	lbc.updateResourcesStatusAndEvents(updatedResources, configs.Warnings{}, updateErr)
@@ -2926,6 +2952,12 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		ApPolRefs:      make(map[string]*unstructured.Unstructured),
 		LogConfRefs:    make(map[string]*unstructured.Unstructured),
 		DosProtectedEx: make(map[string]*configs.DosEx),
+	}
+
+	resource := lbc.configuration.hosts[virtualServer.Spec.Host]
+	if vsc, ok := resource.(*VirtualServerConfiguration); ok {
+		virtualServerEx.HTTPPort = vsc.HTTPPort
+		virtualServerEx.HTTPSPort = vsc.HTTPSPort
 	}
 
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {

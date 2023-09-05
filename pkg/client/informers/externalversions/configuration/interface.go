@@ -3,9 +3,9 @@
 package configuration
 
 import (
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions/configuration/v1"
-	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions/configuration/v1alpha1"
-	internalinterfaces "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions/internalinterfaces"
+	v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/informers/externalversions/configuration/v1"
+	v1alpha1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/informers/externalversions/configuration/v1alpha1"
+	internalinterfaces "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

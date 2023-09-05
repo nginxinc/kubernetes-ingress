@@ -97,6 +97,14 @@ spec:
                 internalRoute:
                   description: InternalRoute allows for the configuration of internal routing.
                   type: boolean
+                listener:
+                  description: Listener references a custom http and/or https listener defined in GlobalConfiguration.
+                  type: object
+                  properties:
+                    http:
+                      type: string
+                    https:
+                      type: string
                 policies:
                   type: array
                   items:

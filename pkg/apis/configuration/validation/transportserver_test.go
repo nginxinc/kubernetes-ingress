@@ -3,7 +3,7 @@ package validation
 import (
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -534,23 +534,6 @@ func TestValidateListenerProtocol(t *testing.T) {
 		allErrs := validateListenerProtocol(p, field.NewPath("protocol"))
 		if len(allErrs) > 0 {
 			t.Errorf("validateListenerProtocol(%q) returned errors %v for valid input", p, allErrs)
-		}
-	}
-}
-
-func TestValidateListenerProtocol_FailsOnInvalidInput(t *testing.T) {
-	t.Parallel()
-	invalidProtocols := []string{
-		"",
-		"HTTP",
-		"udp",
-		"UDP ",
-	}
-
-	for _, p := range invalidProtocols {
-		allErrs := validateListenerProtocol(p, field.NewPath("protocol"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateListenerProtocol(%q) returned no errors for invalid input", p)
 		}
 	}
 }
