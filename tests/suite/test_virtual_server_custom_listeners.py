@@ -300,7 +300,7 @@ class TestVirtualServerCustomListeners:
             virtual_server_setup.backend_1_url_custom_ssl,
         ]
 
-        for expected_response, url in zip(urls, [404, 404, 200, 200]):
+        for url, expected_response in zip(urls, [404, 404, 200, 200]):
             if expected_response > 0:
                 res = make_request(url, virtual_server_setup.vs_host)
                 assert res.status_code == expected_response
@@ -349,7 +349,7 @@ class TestVirtualServerCustomListeners:
         assert "listen [::]:443 ssl;" not in vs_config
 
         print("\nStep 5: Test HTTP responses")
-        for expected_response, url in zip(urls, test_setup["expected_response_codes"]):
+        for url, expected_response in zip(urls, test_setup["expected_response_codes"]):
             if expected_response > 0:
                 res = make_request(url, virtual_server_setup.vs_host)
                 assert res.status_code == expected_response
