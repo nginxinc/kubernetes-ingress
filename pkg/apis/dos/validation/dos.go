@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	validation2 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/validation"
-	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
+	validation2 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"

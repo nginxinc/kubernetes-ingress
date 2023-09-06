@@ -6,7 +6,7 @@ import (
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version1"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.

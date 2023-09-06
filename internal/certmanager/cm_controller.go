@@ -36,10 +36,10 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/clientset/versioned"
-	vsinformers "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/informers/externalversions"
-	listers_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/listers/configuration/v1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
+	vsinformers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
+	listers_v1 "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/configuration/v1"
 )
 
 const (

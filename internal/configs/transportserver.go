@@ -6,9 +6,9 @@ import (
 
 	api_v1 "k8s.io/api/core/v1"
 
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version2"
-	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/secrets"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 )
 
 const nginxNonExistingUnixSocket = "unix:/var/lib/nginx/non-existing-unix-socket.sock"

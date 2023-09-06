@@ -3,7 +3,7 @@
 package v1beta1
 
 import (
-	v1beta1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
+	v1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"

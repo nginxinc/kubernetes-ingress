@@ -5,8 +5,8 @@ package v1beta1
 import (
 	"net/http"
 
-	v1beta1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
-	"github.com/nginxinc/kubernetes-ingress/v3/pkg/client/clientset/versioned/scheme"
+	v1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	"github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
