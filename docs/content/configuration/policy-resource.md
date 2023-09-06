@@ -143,7 +143,7 @@ When you reference more than one rate limit policy, NGINX Ingress Controller wil
 
 ### BasicAuth
 
-The basic auth policy configures NGINX to authenticate cllient requests using the [HTTP Basic authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+The basic auth policy configures NGINX to authenticate client requests using the [HTTP Basic authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 
 For example, the following policy will reject all requests that do not include a valid username/password combination in the HTTP header `Authentication`
 

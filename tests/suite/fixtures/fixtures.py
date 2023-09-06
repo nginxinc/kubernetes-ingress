@@ -87,6 +87,8 @@ class PublicEndpoint:
         udp_server_port=3334,
         service_insight_port=9114,
         custom_ssl_port=8443,
+        custom_http=8085,
+        custom_https=8445,
     ):
         self.public_ip = public_ip
         self.port = port
@@ -97,6 +99,8 @@ class PublicEndpoint:
         self.udp_server_port = udp_server_port
         self.service_insight_port = service_insight_port
         self.custom_ssl_port = custom_ssl_port
+        self.custom_http = custom_http
+        self.custom_https = custom_https
 
 
 class IngressControllerPrerequisites:
@@ -185,6 +189,8 @@ def ingress_controller_endpoint(cli_arguments, kube_apis, ingress_controller_pre
             udp_server_port,
             service_insight_port,
             custom_ssl_port,
+            custom_http,
+            custom_https,
         ) = get_service_node_ports(kube_apis.v1, service_name, namespace)
         return PublicEndpoint(
             public_ip,
@@ -196,6 +202,8 @@ def ingress_controller_endpoint(cli_arguments, kube_apis, ingress_controller_pre
             udp_server_port,
             service_insight_port,
             custom_ssl_port,
+            custom_http,
+            custom_https,
         )
     else:
         create_service_from_yaml(

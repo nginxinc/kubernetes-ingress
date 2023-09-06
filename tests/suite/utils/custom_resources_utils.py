@@ -149,7 +149,21 @@ def create_gc_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespa
     :param namespace:
     :return: a dictionary representing the resource
     """
+    print(f"Load {yaml_manifest}")
     return create_resource_from_yaml(custom_objects, yaml_manifest, namespace, "globalconfigurations")
+
+
+def patch_gc_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace) -> dict:
+    """
+    Patch a GlobalConfiguration Resource based on yaml file.
+
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return: a dictionary representing the resource
+    """
+    print(f"Load {yaml_manifest}")
+    return patch_custom_resource_v1alpha1(custom_objects, name, yaml_manifest, namespace, "globalconfigurations")
 
 
 def create_resource_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace, plural) -> dict:

@@ -61,7 +61,7 @@ oidc.conf:
     # Rest of configuration file truncated
 ```
 
-## Step 2 - Customising the default configuration
+## Step 2 - Customizing the default configuration
 
 Once the contents of the `oidc.conf` file has been added to the ConfigMap, you are free to customize the contents of this ConfigMap.
 This example demonstrates adding a comment to the top of the file. The comment will be shown at the top of the `oidc.conf` file.

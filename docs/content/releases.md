@@ -48,7 +48,7 @@ FIXES:
 - [3798](https://github.com/nginxinc/kubernetes-ingress/pull/3798) Update VirtualServer template to generate an internal jwt auth location per policy applied.
 - [3844](https://github.com/nginxinc/kubernetes-ingress/pull/3844) Fix gunzip support for VS and add python tests.
 - [3870](https://github.com/nginxinc/kubernetes-ingress/pull/3870) Add Funcs() method to UpdateVirtualServerTemplate method. Thanks to [Bryan Hendryx](https://github.com/coolbry95).
-- [3933](https://github.com/nginxinc/kubernetes-ingress/pull/3933) fix --enternal-service flag when using serviceNameOverride. Thanks to [Tim N](https://github.com/timnee).
+- [3933](https://github.com/nginxinc/kubernetes-ingress/pull/3933) fix --external-service flag when using serviceNameOverride. Thanks to [Tim N](https://github.com/timnee).
 
 CHANGES:
 
@@ -368,7 +368,7 @@ FEATURES:
 - [2914](https://github.com/nginxinc/kubernetes-ingress/pull/2914) Support watching multiple namespaces.
 - [2884](https://github.com/nginxinc/kubernetes-ingress/pull/2884) Include year in logs.
 - [2993](https://github.com/nginxinc/kubernetes-ingress/pull/2993) Accept proxy protocol when TLS passthrough enabled.
-- [3041](https://github.com/nginxinc/kubernetes-ingress/pull/3041) Support external name service for TansportServer.
+- [3041](https://github.com/nginxinc/kubernetes-ingress/pull/3041) Support external name service for TransportServer.
 - [2939](https://github.com/nginxinc/kubernetes-ingress/pull/2939) Add support for wildcard hostname in VirtualServer.
 
 IMPROVEMENTS:

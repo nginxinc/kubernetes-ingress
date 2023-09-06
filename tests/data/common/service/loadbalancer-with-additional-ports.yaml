@@ -23,6 +23,14 @@ spec:
     targetPort: 8443
     protocol: TCP
     name: custom-tls-port
+  - port: 8085
+    targetPort: 8085
+    protocol: TCP
+    name: custom-http
+  - port: 8445
+    targetPort: 8445
+    protocol: TCP
+    name: custom-https
   - port: 9113
     targetPort: 9113
     protocol: TCP
