@@ -577,20 +577,36 @@
           ]
         },
         "ingressClass": {
-          "type": "string",
-          "default": "",
+          "type": "object",
+          "default": {},
           "title": "The ingressClass",
-          "examples": [
-            "nginx"
-          ]
-        },
-        "setAsDefaultIngress": {
-          "type": "boolean",
-          "default": false,
-          "title": "The setAsDefaultIngress",
-          "examples": [
-            false
-          ]
+          "required": [],
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": true,
+              "title": "The create",
+              "examples": [
+                true
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The ingressClass name",
+              "examples": [
+                "nginx"
+              ]
+            },
+            "setAsDefaultIngress": {
+              "type": "boolean",
+              "default": false,
+              "title": "The setAsDefaultIngress",
+              "examples": [
+                false
+              ]
+            }
+          }
         },
         "watchNamespace": {
           "type": "string",

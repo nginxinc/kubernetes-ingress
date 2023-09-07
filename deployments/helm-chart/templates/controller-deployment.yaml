@@ -187,7 +187,7 @@ spec:
 {{ else if and (.Values.controller.defaultTLS.cert) (.Values.controller.defaultTLS.key) }}
           - -default-server-tls-secret=$(POD_NAMESPACE)/{{ include "nginx-ingress.defaultTLSName" . }}
 {{- end }}
-          - -ingress-class={{ .Values.controller.ingressClass }}
+          - -ingress-class={{ .Values.controller.ingressClass.name }}
 {{- if .Values.controller.watchNamespace }}
           - -watch-namespace={{ .Values.controller.watchNamespace }}
 {{- end }}
