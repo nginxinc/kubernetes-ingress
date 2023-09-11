@@ -161,7 +161,7 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
     ]
     }
 
-   $ curl <https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
@@ -170,7 +170,7 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
     ]
     }
 
-   $ curl <https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   $ curl https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-dos/nginx-plus-ingress",
     "tags": [
