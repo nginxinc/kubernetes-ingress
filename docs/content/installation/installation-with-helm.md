@@ -211,14 +211,14 @@ The steps you should follow depend on the Helm release name:
 
 5. Run `helm upgrade` with following arguments set:
     ```shell
-    --set controller.serviceNameOverride="nginx-ingress-nginx-ingress"
+    --set serviceNameOverride="nginx-ingress-nginx-ingress"
     --set controller.name=""
     --set fullnameOverride="nginx-ingress-nginx-ingress"
     ```
     It could look as follows:
 
     ```shell
-    helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
+    helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
     ```
 
 6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
@@ -255,13 +255,13 @@ The steps you should follow depend on the Helm release name:
 
 5. Run `helm upgrade` with following arguments set:
     ```shell
-    --set controller.serviceNameOverride="<helm_release_name>-nginx-ingress"
+    --set serviceNameOverride="<helm_release_name>-nginx-ingress"
     --set controller.name=""
     ```
     It could look as follows:
 
     ```shell
-    helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set controller.serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
+    helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
     ```
 
 6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by reviewing its events:
@@ -415,6 +415,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`serviceInsight.port` | Configures the port to expose endpoints. | 9114 |
 |`serviceInsight.scheme` | Configures the HTTP scheme to use for connections to the Service Insight endpoint. | http |
 |`serviceInsight.secret` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Service Insight endpoint with TLS connections. | "" |
+|`serviceNameOverride` | Used to prevent cloud load balancers from being replaced due to service name change during helm upgrades. | "" |
 |`nginxServiceMesh.enable` | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false |
 |`nginxServiceMesh.enableEgress` | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress Controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false |
 {{% /table %}}
