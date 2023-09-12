@@ -127,7 +127,7 @@ jobs:
             - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
             - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/examples
             - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/deployments/helm-chart
-            - Operator -- https://github.com/nginxinc/nginx-ingress-operator/
+            - Operator -- https://github.com/nginxinc/nginx-ingress-helm-operator
         if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
       - name: Build binaries
