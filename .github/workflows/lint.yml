@@ -65,7 +65,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
-      - uses: DavidAnson/markdownlint-cli2-action@8f3516061301755c97ff833a8e933f09282cc5b5 # v11.0.0
+      - uses: DavidAnson/markdownlint-cli2-action@3aaa38e446fbd2c288af4291aa0f55d64651050f # v12.0.0
         with:
           config: .markdownlint-cli2.yaml
           globs: "**/*.md"
