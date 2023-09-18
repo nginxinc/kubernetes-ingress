@@ -1046,7 +1046,9 @@ func (lbc *LoadBalancerController) sync(task task) {
 		if lbc.updateAllConfigsOnBatch {
 			lbc.updateAllConfigs()
 		} else {
-			lbc.configurator.ReloadForBatchUpdates(lbc.enableBatchReload)
+			if err := lbc.configurator.ReloadForBatchUpdates(lbc.enableBatchReload); err != nil {
+				glog.Errorf("error reloading for batch updates: %v", err)
+			}
 		}
 
 		glog.V(3).Infof("Batch sync completed")

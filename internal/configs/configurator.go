@@ -1243,7 +1243,7 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 
 // ReloadForBatchUpdates reloads NGINX after a batch event.
 func (cnf *Configurator) ReloadForBatchUpdates(batchReloadsEnabled bool) error {
-	if !batchReloadsEnabled{
+	if !batchReloadsEnabled {
 		return nil
 	}
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
