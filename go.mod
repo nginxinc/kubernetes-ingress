@@ -1,6 +1,6 @@
 module github.com/nginxinc/kubernetes-ingress
 
-go 1.21
+go 1.21.1
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.35
@@ -86,7 +86,7 @@ require (
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.10.1 // indirect
-	github.com/rogpeppe/go-internal v1.11.0 // indirect
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
