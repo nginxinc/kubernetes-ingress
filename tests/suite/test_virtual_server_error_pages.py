@@ -42,7 +42,7 @@ class TestVSErrorPages:
                 )
                 print(f"redirect to uri: {resp.next.url}")
             except AttributeError as e:
-                print(f"Exception occured: {e}")
+                print(f"Exception occurred: {e}")
                 retry = +1
                 continue
             break
