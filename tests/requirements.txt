@@ -205,9 +205,9 @@ forcediphttpsadapter==1.1.0 \
     --hash=sha256:0d224cf6e8e50eb788c9f5994a7afa6d389bac6dbe540b7dfd77a32590ad0153 \
     --hash=sha256:5e7662ece61735585332d09b87d94fffe4752469d5c0d3feff48746e5d70744b
     # via -r requirements.txt
-google-auth==2.22.0 \
-    --hash=sha256:164cba9af4e6e4e40c3a4f90a1a6c12ee56f14c0b4868d1ca91b32826ab334ce \
-    --hash=sha256:d61d1b40897407b574da67da1a833bdc10d5a11642566e506565d1b1a46ba873
+google-auth==2.23.0 \
+    --hash=sha256:2cec41407bd1e207f5b802638e32bb837df968bb5c05f413d0fa526fac4cf7a7 \
+    --hash=sha256:753a26312e6f1eaeec20bc6f2644a10926697da93446e1f8e24d6d32d45a922a
     # via
     #   -r requirements.txt
     #   kubernetes
@@ -325,9 +325,9 @@ iniconfig==2.0.0 \
     # via
     #   -r requirements.txt
     #   pytest
-kubernetes==27.2.0 \
-    --hash=sha256:0f9376329c85cf07615ed6886bf9bf21eb1cbfc05e14ec7b0f74ed8153cd2815 \
-    --hash=sha256:d479931c6f37561dbfdf28fc5f46384b1cb8b28f9db344ed4a232ce91990825a
+kubernetes==28.1.0 \
+    --hash=sha256:10f56f8160dcb73647f15fafda268e7f60cf7dbc9f8e46d52fcd46d3beb0c18d \
+    --hash=sha256:1468069a573430fb1cb5ad22876868f57977930f80a6749405da31cd6086a7e9
     # via -r requirements.txt
 mock==5.1.0 \
     --hash=sha256:18c694e5ae8a208cdb3d2c20a993ca1a7b0efa258c247a1e565150f477f83744 \
@@ -355,20 +355,20 @@ pluggy==1.3.0 \
     # via
     #   -r requirements.txt
     #   pytest
-protobuf==4.24.2 \
-    --hash=sha256:237b9a50bd3b7307d0d834c1b0eb1a6cd47d3f4c2da840802cd03ea288ae8880 \
-    --hash=sha256:25ae91d21e3ce8d874211110c2f7edd6384816fb44e06b2867afe35139e1fd1c \
-    --hash=sha256:2b23bd6e06445699b12f525f3e92a916f2dcf45ffba441026357dea7fa46f42b \
-    --hash=sha256:3b7b170d3491ceed33f723bbf2d5a260f8a4e23843799a3906f16ef736ef251e \
-    --hash=sha256:4e69965e7e54de4db989289a9b971a099e626f6167a9351e9d112221fc691bc1 \
-    --hash=sha256:58e12d2c1aa428ece2281cef09bbaa6938b083bcda606db3da4e02e991a0d924 \
-    --hash=sha256:6bd26c1fa9038b26c5c044ee77e0ecb18463e957fefbaeb81a3feb419313a54e \
-    --hash=sha256:77700b55ba41144fc64828e02afb41901b42497b8217b558e4a001f18a85f2e3 \
-    --hash=sha256:7fda70797ddec31ddfa3576cbdcc3ddbb6b3078b737a1a87ab9136af0570cd6e \
-    --hash=sha256:839952e759fc40b5d46be319a265cf94920174d88de31657d5622b5d8d6be5cd \
-    --hash=sha256:bb7aa97c252279da65584af0456f802bd4b2de429eb945bbc9b3d61a42a8cd16 \
-    --hash=sha256:c00c3c7eb9ad3833806e21e86dca448f46035242a680f81c3fe068ff65e79c74 \
-    --hash=sha256:c5cdd486af081bf752225b26809d2d0a85e575b80a84cde5172a05bbb1990099
+protobuf==4.24.3 \
+    --hash=sha256:067f750169bc644da2e1ef18c785e85071b7c296f14ac53e0900e605da588719 \
+    --hash=sha256:12e9ad2ec079b833176d2921be2cb24281fa591f0b119b208b788adc48c2561d \
+    --hash=sha256:1b182c7181a2891e8f7f3a1b5242e4ec54d1f42582485a896e4de81aa17540c2 \
+    --hash=sha256:20651f11b6adc70c0f29efbe8f4a94a74caf61b6200472a9aea6e19898f9fcf4 \
+    --hash=sha256:2da777d34b4f4f7613cdf85c70eb9a90b1fbef9d36ae4a0ccfe014b0b07906f1 \
+    --hash=sha256:3d42e9e4796a811478c783ef63dc85b5a104b44aaaca85d4864d5b886e4b05e3 \
+    --hash=sha256:6e514e8af0045be2b56e56ae1bb14f43ce7ffa0f68b1c793670ccbe2c4fc7d2b \
+    --hash=sha256:b0271a701e6782880d65a308ba42bc43874dabd1a0a0f41f72d2dac3b57f8e76 \
+    --hash=sha256:ba53c2f04798a326774f0e53b9c759eaef4f6a568ea7072ec6629851c8435959 \
+    --hash=sha256:e29d79c913f17a60cf17c626f1041e5288e9885c8579832580209de8b75f2a52 \
+    --hash=sha256:f631bb982c5478e0c1c70eab383af74a84be66945ebf5dd6b06fc90079668d0b \
+    --hash=sha256:f6ccbcf027761a2978c1406070c3788f6de4a4b2cc20800cc03d52df716ad675 \
+    --hash=sha256:f6f8dc65625dadaad0c8545319c2e2f0424fede988368893ca3844261342c11a
     # via
     #   -r requirements.txt
     #   grpcio-tools

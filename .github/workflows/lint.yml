@@ -44,7 +44,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
 
-      - uses: reviewdog/action-actionlint@67ec075cacebd361442f6e3ef7671f74c6548909 # v1.38.0
+      - uses: reviewdog/action-actionlint@17ea0452ae2cd009a22ca629732a9ce7f49a55e6 # v1.39.0
         with:
           actionlint_flags: -shellcheck ""
 
