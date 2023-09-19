@@ -159,7 +159,7 @@ jobs:
         if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
 
       - name: Publish to AWS Marketplace
-        uses: nginxinc/aws-marketplace-publish@93e03c5ce4baa842a8e5baad0a3f35d07b38460c # v0.1.2
+        uses: nginxinc/aws-marketplace-publish@a8ec3f49d7bc1d5a0c529ab81e803275344403bf # v1.0.0
         continue-on-error: true
         with:
           version: ${{ steps.aws.outputs.version }}
@@ -204,7 +204,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@04daf014b50eaf774287bf3f0f1869d4b4c4b913 # v2.21.7
+        uses: github/codeql-action/upload-sarif@6a28655e3dcb49cb0840ea372fd6d17733edd8a4 # v2.21.8
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
