@@ -444,19 +444,6 @@ controller:
   ## Configure root filesystem as read-only and add volumes for temporary data.
   readOnlyRootFilesystem: false
 
-  serviceMonitor:
-    ## Creates a serviceMonitor to expose statistics on the kubernetes pods.
-    create: false
-
-    ## Kubernetes object labels to attach to the serviceMonitor object.
-    labels: {}
-
-    ## A set of labels to allow the selection of endpoints for the ServiceMonitor.
-    selectorMatchLabels: {}
-
-    ## A list of endpoints allowed as part of this ServiceMonitor.
-    endpoints: []
-
 rbac:
   ## Configures RBAC.
   create: true
@@ -479,7 +466,24 @@ prometheus:
     ## Requires prometheus.create=true
     create: false
 
+    labels:
+      service: "nginx-ingress-prometheus-service"
+
+  serviceMonitor:
+    ## Creates a serviceMonitor to expose statistics on the kubernetes pods.
+    create: false
+
+    ## Kubernetes object labels to attach to the serviceMonitor object.
     labels: {}
+
+    ## A set of labels to allow the selection of endpoints for the ServiceMonitor.
+    selectorMatchLabels:
+      service: "nginx-ingress-prometheus-service"
+
+    ## A list of endpoints allowed as part of this ServiceMonitor.
+    ## Matches on the name of a Service port.
+    endpoints:
+     - port: prometheus
 
 serviceInsight:
   ## Expose NGINX Plus Service Insight endpoint.

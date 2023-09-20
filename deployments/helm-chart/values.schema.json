@@ -1077,49 +1077,6 @@
             }
           ]
         },
-        "serviceMonitor": {
-          "type": "object",
-          "default": {},
-          "title": "The serviceMonitor Schema",
-          "required": [],
-          "properties": {
-            "create": {
-              "type": "boolean",
-              "default": false,
-              "title": "The create",
-              "examples": [
-                false
-              ]
-            },
-            "labels": {
-              "type": "object",
-              "default": {},
-              "title": "The labels Schema",
-              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
-            },
-            "selectorMatchLabels": {
-              "type": "object",
-              "default": {},
-              "title": "The selectorMatchLabels Schema",
-              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector/properties/matchLabels"
-            },
-            "endpoints": {
-              "type": "array",
-              "default": [],
-              "title": "The endpoints",
-              "required": [],
-              "items": {}
-            }
-          },
-          "examples": [
-            {
-              "create": false,
-              "labels": {},
-              "selectorMatchLabels": {},
-              "endpoints": []
-            }
-          ]
-        },
         "reportIngressStatus": {
           "type": "object",
           "default": {},
@@ -1540,6 +1497,49 @@
               "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
             }
           }
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "default": {},
+          "title": "The serviceMonitor Schema",
+          "required": [],
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": false,
+              "title": "The create",
+              "examples": [
+                false
+              ]
+            },
+            "labels": {
+              "type": "object",
+              "default": {},
+              "title": "The labels Schema",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
+            },
+            "selectorMatchLabels": {
+              "type": "object",
+              "default": {},
+              "title": "The selectorMatchLabels Schema",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector/properties/matchLabels"
+            },
+            "endpoints": {
+              "type": "array",
+              "default": [],
+              "title": "The endpoints",
+              "required": [],
+              "items": {}
+            }
+          },
+          "examples": [
+            {
+              "create": false,
+              "labels": {},
+              "selectorMatchLabels": {},
+              "endpoints": []
+            }
+          ]
         }
       },
       "examples": [
@@ -1756,12 +1756,6 @@
           "minAvailable": 0,
           "minUnavailable": 0
         },
-        "serviceMonitor": {
-          "create": false,
-          "labels": {},
-          "selectorMatchLabels": {},
-          "endpoints": {}
-        },
         "reportIngressStatus": {
           "enable": true,
           "externalService": "",
@@ -1795,6 +1789,12 @@
         "service": {
           "create": false,
           "labels": {}
+        },
+        "serviceMonitor": {
+          "create": false,
+          "labels": {},
+          "selectorMatchLabels": {},
+          "endpoints": {}
         }
       },
       "serviceInsight": {
