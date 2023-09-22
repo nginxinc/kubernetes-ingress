@@ -446,3 +446,24 @@ jobs:
           commit -m "NGINX Ingress Controller - Release ${{ needs.checks.outputs.chart_version }}"
           git push -u origin master
         if: github.ref_type == 'tag'
+
+  operator:
+    name: Trigger PR for Operator
+    runs-on: ubuntu-22.04
+    needs: [checks, publish-helm]
+    steps:
+      - name:
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
+        with:
+          github-token: ${{ secrets.NGINX_PAT }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'nginx-ingress-helm-operator',
+              workflow_id: 'sync-chart.yml',
+              ref: 'main',
+              inputs: {
+                chart_version: '${{ needs.checks.outputs.chart_version }}'
+              },
+            })
+    if: github.ref_type == 'tag'
