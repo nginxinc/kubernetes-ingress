@@ -3,9 +3,9 @@ title: Prometheus
 
 description: "The Ingress Controller exposes a number of metrics in the Prometheus format."
 weight: 2000
-doctypes: [""]
+doctypes: ["concept"]
 aliases:
-    - /prometheus/
+  - /prometheus/
 toc: true
 docs: "DOCS-614"
 ---
@@ -14,6 +14,10 @@ docs: "DOCS-614"
 The Ingress Controller exposes a number of metrics in the [Prometheus](https://prometheus.io/) format. Those include NGINX/NGINX Plus and the Ingress Controller metrics.
 
 ## Enabling Metrics
+
+{{<tabs name="apply-and-configure-prometheus-resource">}}
+
+{{%tab name="Using Manifest"%}}
 
 If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the Ingress Controller, to enable Prometheus metrics:
 
@@ -35,7 +39,26 @@ If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the 
         prometheus.io/scheme: http
     ```
 
+{{%/tab%}}
+
+{{%tab name="Using Helm"%}}
+
 If you're using *Helm* to install the Ingress Controller, to enable Prometheus metrics, configure the `prometheus.*` parameters of the Helm chart. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
+
+When deploying with *Helm*, you can also choose to deploy a `Service` and `ServiceMonitor` resource using the `prometheus.service.*` and `prometheus.serviceMonitor.*` parameters.
+When these resources are deployed, Prometheus metrics exposed by the NGINX Ingress Controller can be captured and enumerated using a `Prometheus` resource alongside a Prometheus Operator deployment
+
+To view metrics captured this way, the following is required:
+* The latest ServiceMonitor CRD from the [prometheus-operator](https://github.com/prometheus-operator/prometheus-operator) repository:
+```shell
+LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
+curl https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/$LATEST/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml | kubectl create -f -
+```
+* A working [Prometheus resource and Prometheus Operator](https://prometheus-operator.dev/docs/user-guides/getting-started/)
+
+{{%/tab%}}
+
+{{</tabs>}}
 
 ## Available Metrics
 
