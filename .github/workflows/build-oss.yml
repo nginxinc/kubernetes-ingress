@@ -151,6 +151,20 @@ jobs:
             BUILD_OS=${{ inputs.image }}
             IC_VERSION=${{ (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release-')) && 'CI' || steps.meta.outputs.version }}
 
+      - name: Certify Images
+        continue-on-error: true
+        run: |
+          curl -fsSL https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/1.6.11/preflight-linux-amd64 --output preflight
+          chmod +x preflight
+
+          IFS=',' read -ra arch_list <<< "${{ inputs.platforms }}"
+
+          for arch in "${arch_list[@]}"; do
+              architecture=("${arch#*/}")
+              ./preflight check container quay.io/nginx/nginx-ingress:${{ steps.meta.outputs.version }} --pyxis-api-token ${{ secrets.PYXIS_API_TOKEN }} --certification-project-id ${{ secrets.CERTIFICATION_PROJECT_ID }} --platform $architecture --submit
+          done
+        if: ${{ github.ref_type == 'tag' && contains(inputs.image, 'ubi') }}
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f # 0.12.0
         continue-on-error: true
