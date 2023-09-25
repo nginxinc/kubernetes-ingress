@@ -6,7 +6,7 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
-## NGINX Ingress Controller 3.3.0
+## 3.3.0
 
 26 Sep 2023
 
@@ -40,7 +40,7 @@ docs: "DOCS-616"
 
 <hr>
 
-## NGINX Ingress Controller 3.2.1
+## 3.2.1
 
 17 Aug 2023
 
@@ -60,7 +60,7 @@ UPGRADE:
 - For NGINX Plus, use the 3.2.1 images from the F5 Container registry, the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE), the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking) or build your own image using the 3.2.1 source code
 - For Helm, use version 0.18.1 of the chart.
 
-## NGINX Ingress Controller 3.2.0
+## 3.2.0
 
 27 June 2023
 
@@ -104,7 +104,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.22-1.27.
 
-## NGINX Ingress Controller 3.1.1
+## 3.1.1
 
 04 May 2023
 
@@ -147,7 +147,7 @@ UPGRADE:
 - For NGINX Plus, use the 3.1.1 images from the F5 Container registry or build your own image using the 3.1.1 source code.
 - For Helm, use version 0.17.1 of the chart.
 
-## NGINX Ingress Controller 3.1.0
+## 3.1.0
 
 29 Mar 2023
 
@@ -217,7 +217,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.22-1.26.
 
-## NGINX Ingress Controller 3.0.2
+## 3.0.2
 
 13 Feb 2023
 
@@ -237,7 +237,7 @@ UPGRADE:
 - For NGINX Plus, use the 3.0.2 images from the F5 Container registry or build your own image using the 3.0.2 source code.
 - For Helm, use version 0.16.2 of the chart.
 
-## NGINX Ingress Controller 3.0.1
+## 3.0.1
 
 25 Jan 2023
 
@@ -258,7 +258,7 @@ UPGRADE:
 - For NGINX Plus, use the 3.0.1 images from the F5 Container registry or build your own image using the 3.0.1 source code.
 - For Helm, use version 0.16.1 of the chart.
 
-## NGINX Ingress Controller 3.0.0
+## 3.0.0
 
 12 January 2023
 
@@ -316,7 +316,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.21-1.26.
 
-## NGINX Ingress Controller 2.4.2
+## 2.4.2
 
 30 Nov 2022
 
@@ -336,7 +336,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.4.2 images from the F5 Container registry or build your own image using the 2.4.2 source code.
 - For Helm, use version 0.15.2 of the chart.
 
-## NGINX Ingress Controller 2.4.1
+## 2.4.1
 
 19 October 2022
 
@@ -360,7 +360,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.4.1 images from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the 2.4.1 source code.
 - For Helm, use version 0.15.1 of the chart.
 
-## NGINX Ingress Controller 1.12.5
+## 1.12.5
 
 19 October 2022
 
@@ -381,7 +381,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.12.5 source code.
 - For Helm, use version 0.10.5 of the chart.
 
-## NGINX Ingress Controller 2.4.0
+## 2.4.0
 
 04 October 2022
 
@@ -432,7 +432,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.25.
 
-## NGINX Ingress Controller 2.3.1
+## 2.3.1
 
 16 September 2022
 
@@ -452,7 +452,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.3.1 images from the F5 Container registry or build your own image using the 2.3.1 source code.
 - For Helm, use version 0.14.1 of the chart.
 
-## NGINX Ingress Controller 2.3.0
+## 2.3.0
 
 12 July 2022
 
@@ -515,7 +515,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.24.
 
-## NGINX Ingress Controller 2.2.2
+## 2.2.2
 
 23 May 2022
 
@@ -533,7 +533,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.2.2 images from the F5 Container registry or build your own image using the 2.2.2 source code.
 - For Helm, use version 0.13.2 of the chart.
 
-## NGINX Ingress Controller 2.2.1
+## 2.2.1
 
 17 May 2022
 
@@ -555,7 +555,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.2.1 images from the F5 Container registry or build your own image using the 2.2.1 source code.
 - For Helm, use version 0.13.1 of the chart.
 
-## NGINX Ingress Controller 2.2.0
+## 2.2.0
 
 12 April 2022
 
@@ -611,7 +611,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.23.
 
-## NGINX Ingress Controller 2.1.2
+## 2.1.2
 
 29 March 2022
 
@@ -629,7 +629,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.1.2 images from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the 2.1.2 source code.
 - For Helm, use version 0.12.2 of the chart.
 
-## NGINX Ingress Controller 1.12.4
+## 1.12.4
 
 23 March 2022
 
@@ -656,7 +656,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.12.4 source code.
 - For Helm, use version 0.10.4 of the chart.
 
-## NGINX Ingress Controller 2.1.1
+## 2.1.1
 
 17 February 2022
 
@@ -675,7 +675,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.1.1 images from the F5 Container registry or build your own image using the 2.1.1 source code.
 - For Helm, use version 0.12.1 of the chart.
 
-## NGINX Ingress Controller 2.1.0
+## 2.1.0
 
 06 January 2022
 
@@ -741,7 +741,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.23.
 
-## NGINX Ingress Controller 2.0.3
+## 2.0.3
 
 28 October 2021
 
@@ -761,7 +761,7 @@ UPGRADE:
 - For Helm, use version 0.11.3 of the chart.
 - We changed the behaviour of snippets in Ingress resources by extending the existing -enable-snippets cli argument to apply to Ingress resources as well as VirtualServer, VirtualServerRoute and TransportServer resources. Because the default value of -enable-snippets is false, if you are using snippets in Ingress resources, you must explicitly set the -enable-snippets to true before upgrading the Ingress Controller, so that the new version of the Ingress Controller doesn't reject Ingresses with snippets annotations.
 
-## NGINX Ingress Controller 1.12.3
+## 1.12.3
 
 28 October 2021
 
@@ -781,7 +781,7 @@ UPGRADE:
 - For Helm, use version 0.10.3 of the chart.
 - We changed the behaviour of snippets in Ingress resources by extending the existing -enable-snippets cli argument to apply to Ingress resources as well as VirtualServer, VirtualServerRoute and TransportServer resources. Because the default value of -enable-snippets is false, if you are using snippets in Ingress resources, you must explicitly set the -enable-snippets to true before upgrading the Ingress Controller, so that the new version of the Ingress Controller doesn't reject Ingresses with snippets annotations.
 
-## NGINX Ingress Controller 2.0.2
+## 2.0.2
 
 13 October 2021
 
@@ -801,7 +801,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.0.2 from the F5 Container registry or build your own image using the 2.0.2 source code.
 - For Helm, use version 0.11.2 of the chart.
 
-## NGINX Ingress Controller 2.0.1
+## 2.0.1
 
 07 October 2021
 
@@ -824,7 +824,7 @@ UPGRADE:
 - For NGINX Plus, use the 2.0.1 from the F5 Container registry or build your own image using the 2.0.1 source code.
 - For Helm, use version 0.11.1 of the chart.
 
-## NGINX Ingress Controller 1.12.2
+## 1.12.2
 
 7 October 2021
 
@@ -842,7 +842,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.12.2 source code.
 - For Helm, use version 0.10.2 of the chart.
 
-## NGINX Ingress Controller 2.0.0
+## 2.0.0
 
 28 September 2021
 
@@ -939,7 +939,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.22.
 
-## NGINX Ingress Controller 1.12.1
+## 1.12.1
 
 8 September 2021
 
@@ -958,7 +958,7 @@ UPGRADE:
 - Alternatively, you can also build your own image using the 1.12.1 source code.
 - For Helm, use version 0.10.1 of the chart.
 
-## NGINX Ingress Controller 1.12.0
+## 1.12.0
 
 30 June 2021
 
@@ -1029,7 +1029,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests.  This release was fully tested on the following Kubernetes versions: 1.16-1.21.
 
-## NGINX Ingress Controller 1.11.3
+## 1.11.3
 
 25 May 2021
 
@@ -1047,7 +1047,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.11.3 source code.
 - For Helm, use version 0.9.3 of the chart.
 
-## NGINX Ingress Controller 1.11.2
+## 1.11.2
 
 19 May 2021
 
@@ -1065,7 +1065,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.11.2 source code.
 - For Helm, use version 0.9.2 of the chart.
 
-## NGINX Ingress Controller 1.11.1
+## 1.11.1
 
 7 April 2021
 
@@ -1085,7 +1085,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.11.1 source code.
 - For Helm, use version 0.9.1 of the chart.
 
-## NGINX Ingress Controller 1.11.0
+## 1.11.0
 
 31 March 2021
 
@@ -1156,7 +1156,7 @@ SUPPORTED PLATFORMS:
 
 We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests.  This release was fully tested on the following Kubernetes versions: 1.16-1.20.
 
-## NGINX Ingress Controller 1.10.1
+## 1.10.1
 
 16 March 2021
 
@@ -1176,7 +1176,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.10.1 source code.
 - For Helm, use version 0.8.1 of the chart.
 
-## NGINX Ingress Controller 1.10.0
+## 1.10.0
 
 26 January 2021
 
@@ -1282,7 +1282,7 @@ NOTES:
 
 - Helm 2 clients are no longer supported due to reaching End of Life: <https://helm.sh/blog/helm-2-becomes-unsupported/>
 
-## NGINX Ingress Controller 1.9.1
+## 1.9.1
 
 23 November 2020
 
@@ -1303,7 +1303,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.9.1 source code.
 - For Helm, use version 0.7.1 of the chart.
 
-## NGINX Ingress Controller 1.9.0
+## 1.9.0
 
 20 October 2020
 
@@ -1386,7 +1386,7 @@ NOTES:
 - When using Kubernetes >= 1.18, the `-use-ingress-class-only` command-line argument is now ignored, and the Ingress Controller will only process resources that belong to its class. See [IngressClass doc](https://docs.nginx.com/nginx-ingress-controller/installation/running-multiple-ingress-controllers/#ingress-class) for more details.
 - For Kubernetes >= 1.18, a dedicated IngressClass resource, which is configured by `controller.ingressClass`, is required per helm release. When upgrading or installing releases, ensure `controller.ingressClass` is not set to the name of the IngressClass of other releases or Ingress Controllers.
 
-## NGINX Ingress Controller 1.8.1
+## 1.8.1
 
 14 August 2020
 
@@ -1404,7 +1404,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.8.1 source code.
 - For Helm, use version 0.6.1 of the chart.
 
-## NGINX Ingress Controller 1.8.0
+## 1.8.0
 
 22 July 2020
 
@@ -1470,7 +1470,7 @@ NOTES:
 
 - As part of installing a release, Helm will install the CRDs unless that step is disabled (see the [corresponding doc](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/)). The installed CRDs include the CRDs for all Ingress Controller features, including the ones disabled by default (like App Protect with `aplogconfs.appprotect.f5.com` and `appolicies.appprotect.f5.com` CRDs).
 
-## NGINX Ingress Controller 1.7.2
+## 1.7.2
 
 23 June 2020
 
@@ -1488,7 +1488,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.7.2 source code.
 - For Helm, use version 0.5.2 of the chart.
 
-## NGINX Ingress Controller 1.7.1
+## 1.7.1
 
 4 June 2020
 
@@ -1506,7 +1506,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.7.1 source code.
 - For Helm, use version 0.5.1 of the chart.
 
-## NGINX Ingress Controller 1.7.0
+## 1.7.0
 
 30 April 2020
 
@@ -1570,7 +1570,7 @@ UPGRADE:
 
 When upgrading using the [manifests](/nginx-ingress-controller/installation/installation-with-manifests/), make sure to deploy the new TransportServer CRD (`common/ts-definition.yaml`), as it is required by the Ingress Controller. Otherwise, you will get error messages in the Ingress Controller logs.
 
-## NGINX Ingress Controller 1.6.3
+## 1.6.3
 
 6 March 2020
 
@@ -1588,7 +1588,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.6.3 source code.
 - For Helm, use version 0.4.3 of the chart.
 
-## NGINX Ingress Controller 1.6.2
+## 1.6.2
 
 6 February 2020
 
@@ -1606,7 +1606,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.6.2 source code.
 - For Helm, use version 0.4.2 of the chart.
 
-## NGINX Ingress Controller 1.6.1
+## 1.6.1
 
 14 January 2020
 
@@ -1624,7 +1624,7 @@ UPGRADE:
 - For NGINX Plus, please build your own image using the 1.6.1 source code.
 - For Helm, use version 0.4.1 of the chart.
 
-## NGINX Ingress Controller 1.6.0
+## 1.6.0
 
 19 December 2019
 
