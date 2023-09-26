@@ -6,11 +6,13 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+<hr>
+
 ## 3.3.0
 
 26 Sep 2023
 
-<i class="fa-regular fa-rocket"></i> FEATURES:
+<i class="fa-regular fa-rocket"></i> Features:
 
 - [4023](https://github.com/nginxinc/kubernetes-ingress/pull/4023) Read Prometheus key/cert from memory.
 - [4080](https://github.com/nginxinc/kubernetes-ingress/pull/4080) Expose Location Zones metrics.
@@ -18,12 +20,12 @@ docs: "DOCS-616"
 - [4108](https://github.com/nginxinc/kubernetes-ingress/pull/4108) Add command line argument for custom TLS Passthrough port.
 - [4271](https://github.com/nginxinc/kubernetes-ingress/pull/4271) Add custom listener controls to VirtualServer.
 
-<i class="fa-regular fa-bug-slash"></i> FIXES:
+<i class="fa-regular fa-bug-slash"></i> Fixes:
 
 - [4160](https://github.com/nginxinc/kubernetes-ingress/pull/4160) Update JWT/JWKS policy validation.
 - [4371](https://github.com/nginxinc/kubernetes-ingress/pull/4371) Improve runtime batch reloads.
 
-<i class="fa-regular fa-box"></i> HELM CHART:
+<i class="fa-regular fa-box"></i> Helm Chart:
 
 - [3977](https://github.com/nginxinc/kubernetes-ingress/pull/3977) Add support for controller.selectorLabels. Thanks to [Youqing Han](https://github.com/hanyouqing).
 - [4058](https://github.com/nginxinc/kubernetes-ingress/pull/4058) Add clusterIP to service if specified in values. Thanks to [EutiziStefano](https://github.com/EutiziStefano).
@@ -32,11 +34,15 @@ docs: "DOCS-616"
 - [4351](https://github.com/nginxinc/kubernetes-ingress/pull/4351) Update helm values file to move controller.serviceMonitor to prometheus.serviceMonitor.
 - [4333](https://github.com/nginxinc/kubernetes-ingress/pull/4333) Allow installing IC without creating a new ingress class.
 
-<i class="fa-regular fa-download"></i> UPGRADE:
+<i class="fa-regular fa-download"></i> Upgrade:
 
 - For NGINX, use the 3.3.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.3.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 - For NGINX Plus, use the 3.3.0 images from the F5 Container registry, the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE), the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking) or build your own image using the 3.3.0 source code
 - For Helm, use version 1.0.0 of the chart.
+
+<i class="fa-regular fa-life-ring"></i> Supported Platforms:
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.22-1.28.
 
 <hr>
 
