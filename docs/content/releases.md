@@ -29,7 +29,7 @@ Prometheus continues to be the most popular metrics platform for Kubernetes user
 integration with Prometheus we have finalized support for the Prometheus serviceMonitor capability. Providing better
 scraping controls for Prometheus admins.
 
-For our most demanding customers performing a blue / green upgrade of the ingress controller itself supports the ability
+For our most demanding customers performing a blue / green upgrade of the Ingress Controller itself supports the ability
 to provide their business customers an enhanced experience with no loss of session fidelity. Support for this pattern
 and others has been added through Helm chart enhancement that allows two deployments to share a single ingressClass
 resource and duplicate the same configuration.
@@ -39,7 +39,7 @@ existing values. Due to the potential impacts of these changes we have issued a 
 advancing to v1.0.0
 
 To better align with the demands of supporting additional protocols such as MQTT and QUIC, the NGINX Ingress Controller
-is changing how listeners are defined for HTTP released traffic. You have always had controls over the ports defined for
+is changing how listeners are defined for HTTP traffic. You have always had controls over the ports defined for
 TCP/UDP traffic through the GlobalConfiguration and TransportServer objects. That same flexibility has been introduced
 for HTTP/S traffic and the VirtualServer. This area will continue to expand to give customers full control over NGINX
 listeners so they can tailor to their specific needs and policies.
