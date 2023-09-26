@@ -12,6 +12,37 @@ docs: "DOCS-616"
 
 26 Sep 2023
 
+OVERVIEW:
+With release 3.3 the NGINX Ingress Controller continues to advance capabilities for an ever-demanding set of use cases
+that go beyond simple layer 7 routing for services running exclusively in Kubernetes.
+
+When involved in diagnostic operations and viewing the NGINX Plus console or when viewing the enhanced NGINX Plus
+metrics through Prometheus, customers now enjoy the added dimension of the backend service being available to aide in
+identification of issues as well as observing performance.
+
+50% of our users continue to rely heavily on the Ingress resource and its "mergeable Ingress" usage pattern, to enhance
+the experience for these customers we have added the path-regex annotation with support for case sensitive, case
+insensitive, as well as exact regex match patterns.
+
+Prometheus continues to be the most popular metrics platform for Kubernetes users. To further enhance ease of setting up
+integration with Prometheus we have finalized support for the Prometheus serviceMonitor capability. Providing better
+scraping controls for Prometheus admins.
+
+For our most demanding customers performing a blue / green upgrade of the ingress controller itself supports the ability
+to provide their business customers an enhanced experience with no loss of session fidelity. Support for this pattern
+and others has been added through Helm chart enhancement that allows two deployments to share a single ingressClass
+resource and duplicate the same configuration.
+
+To accommodate these enhancements, several new values have been added to our Helm chart, as well as modifications to
+existing values. Due to the potential impacts of these changes we have issued a major release to the Helm chart,
+advancing to v1.0.0
+
+To better align with the demands of supporting additional protocols such as MQTT and QUIC, the NGINX Ingress Controller
+is changing how listeners are defined for HTTP released traffic. You have always had controls over the ports defined for
+TCP/UDP traffic through the GlobalConfiguration and TransportServer objects. That same flexibility has been introduced
+for HTTP/S traffic and the VirtualServer. This area will continue to expand to give customers full control over NGINX
+listeners so they can tailor to their specific needs and policies.
+
 ### <i class="fa-solid fa-rocket"></i> Features
 
 - [4023](https://github.com/nginxinc/kubernetes-ingress/pull/4023) Read Prometheus key/cert from memory.
