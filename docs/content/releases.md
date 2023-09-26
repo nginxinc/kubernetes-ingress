@@ -12,7 +12,8 @@ docs: "DOCS-616"
 
 26 Sep 2023
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
+
 With release 3.3 the NGINX Ingress Controller continues to advance capabilities for an ever-demanding set of use cases
 that go beyond simple layer 7 routing for services running exclusively in Kubernetes.
 
@@ -145,7 +146,8 @@ We will provide technical support for NGINX Ingress Controller on any Kubernetes
 
 04 May 2023
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
+
 This release reverts the changes made in 3.1.0 to use sysctls to bind to lower level ports without the NET_BIND_SERVICE capability. It also adds support for serviceNameOverride in the Helm chart, that can be used to override the service name for the NGINX Ingress Controller. This is useful especially during an upgrade from versions prior to 3.1.0, to avoid downtime due to the service name change. To use this feature, set the `serviceNameOverride` value in the Helm chart to the name of the existing service.
 
 For example, if the existing service name is `my-release-nginx-ingress`, you can use `--set serviceNameOverride=my-release-nginx-ingress` when running the upgrade command.
@@ -190,7 +192,7 @@ helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.
 
 29 Mar 2023
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 - Beginning with release 3.1.0 the NET_BIND_SERVICE capability is no longer used, and instead relies on net.ipv4.ip_unprivileged_port_start sysctl to allow port binding. Kubernetes 1.22 or later is required for this sysctl to be [classified as safe](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/#safe-and-unsafe-sysctls). **Ensure that you are using the latest updated `deployment` and `daemonset` example yaml files available in the repo.**
 - *The minimum supported version of Kubernetes is now 1.22*. The NGINX Ingress Controller now uses `sysctls` to [bind to lower level ports without additional privileges](https://github.com/nginxinc/kubernetes-ingress/pull/3573/). This removes the need to use `NET_BIND_SERVICE` to bind to these ports. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
@@ -296,7 +298,7 @@ We will provide technical support for NGINX Ingress Controller on any Kubernetes
 
 12 January 2023
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 - Added support for [Deep Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight) for VirtualServer and TransportServer using the [-enable-service-insight](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-service-insight) cli argument.
 - *The minimum supported version of Kubernetes is now 1.21*. NGINX Ingress Controller 3.0.0 removes support for `k8s.io/v1/Endpoints` API in favor of `discovery.k8s.io/v1/EndpointSlices`. For older Kubernetes versions, use the 2.4.x release of the Ingress Controller.
@@ -415,7 +417,7 @@ We will provide technical support for NGINX Ingress Controller on any Kubernetes
 
 04 October 2022
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 - Added support for enabling [proxy_protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/shared-examples/proxy-protocol) when port 443 is being used for both HTTPS traffic and [TLS Passthrough traffic](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/tls-passthrough).
 - Updates to the TransportServer resource to support using [ExternalName services](https://kubernetes.io/docs/concepts/services-networking/service/#externalname). For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/externalname-services).
@@ -486,7 +488,7 @@ We will provide technical support for NGINX Ingress Controller on any Kubernetes
 
 12 July 2022
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 - Support making VirtualServer resources discoverable via public DNS servers using [external-dns](https://kubernetes-sigs.github.io/external-dns). Examples for configuring external-dns with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/external-dns).
 - Resolves [CVE-2022-30535](https://support.f5.com/csp/article/K52125139). This vulnerability impacted the visibility of secrets accessible by NGINX Ingress Controller. In some cases, secrets visible to NGINX Ingress Controller could be exposed to any authenticated user with permission to create and update Ingress objects. This vulnerability affected Ingress objects only - our Custom Resources (VirtualServer and TransportServer) were not affected. Customers unable to upgrade should migrate any Ingress resources to VirtualServer resources where possible, and use RBAC to restrict write access for users for Ingress objects.
@@ -584,7 +586,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 12 April 2022
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 - Support for automatic provisioning and management of Certificate resources for VirtualServer resources using [cert-manager](https://cert-manager.io/docs/). Examples for configuring cert-manager with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/custom-resources/certmanager). Please note that HTTP01 type ACME Issuers are not yet supported for use with VirtualServer resources.
 
@@ -694,7 +696,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 06 January 2022
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 - Support for NGINX App Protect Denial of Service protection with NGINX Ingress Controller. More information about [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect/denial-of-service/). Examples for configuring NGINX App Protect DoS with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/appprotect-dos).
 
@@ -847,7 +849,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 28 September 2021
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 Release 2.0.0 includes:
 
@@ -962,7 +964,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 30 June 2021
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 Release 1.12.0 includes:
 
@@ -1076,7 +1078,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 31 March 2021
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 Release 1.11.0 includes:
 
@@ -1160,7 +1162,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 26 January 2021
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 Release 1.10.0 includes:
 
@@ -1280,7 +1282,7 @@ NOTES:
 
 20 October 2020
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 Release 1.9.0 includes:
 
@@ -1371,7 +1373,7 @@ For Kubernetes >= 1.18, when upgrading using the [manifests](https://docs.nginx.
 
 22 July 2020
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 Release 1.8.0 includes:
 
@@ -1467,7 +1469,7 @@ If you're using custom resources like VirtualServer and TransportServer (`contro
 
 30 April 2020
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 Release 1.7.0 includes:
 
@@ -1577,7 +1579,7 @@ When upgrading using the [manifests](/nginx-ingress-controller/installation/inst
 
 19 December 2019
 
-OVERVIEW:
+### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 Release 1.6.0 includes:
 
