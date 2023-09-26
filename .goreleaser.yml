@@ -97,28 +97,26 @@ changelog:
   skip: true
 
 archives:
-  - id: kubernetes-ingress
+  - id: archives
     builds: [kubernetes-ingress]
 
 sboms:
-  - artifacts: archive
-    ids: [kubernetes-ingress]
+  - id: sboms
+    artifacts: archive
+    ids: [archives]
     documents:
       - "${artifact}.spdx.json"
 
 release:
-  ids: [kubernetes-ingress]
-  extra_files:
-    - glob: ./dist/**.spdx.json
+  ids: [archives, sboms, signs]
 
 blobs:
   - provider: azblob
     bucket: '{{.Env.AZURE_BUCKET_NAME}}'
-    extra_files:
-      - glob: ./dist/**.spdx.json
 
 signs:
-  - cmd: cosign
+  - id: signs
+    cmd: cosign
     artifacts: checksum
     output: true
     certificate: '${artifact}.pem'
