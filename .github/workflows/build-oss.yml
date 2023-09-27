@@ -165,27 +165,27 @@ jobs:
           done
         if: ${{ github.ref_type == 'tag' && contains(inputs.image, 'ubi') }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@f78e9ecf42a1271402d4f484518b9313235990e1 # 0.13.1
-        continue-on-error: true
+      - name: Run Grype vulnerability scanner
+        uses: anchore/scan-action@24fd7c9060f3c96848dd1929fac8d796fb5ae4b4 # v3.3.6
+        id: scan
         with:
-          image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
-          format: "sarif"
-          output: "trivy-results-${{ inputs.image }}.sarif"
-          ignore-unfixed: "true"
+          image: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
+          only-fixed: true
+          add-cpes-if-none: true
+          severity-cutoff: low
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@74483a38d39275f33fcff5f35b679b5ca4a26a99 # v2.22.5
+      - name: Upload Grype SARIF report to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@6a28655e3dcb49cb0840ea372fd6d17733edd8a4 # v2.21.8
         continue-on-error: true
         with:
-          sarif_file: "trivy-results-${{ inputs.image }}.sarif"
+          sarif_file: ${{ steps.scan.outputs.sarif }}
 
       - name: Upload Scan Results
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
         continue-on-error: true
         with:
-          name: "trivy-results-${{ inputs.image }}.sarif"
-          path: "trivy-results-${{ inputs.image }}.sarif"
+          name: ${{ steps.scan.outputs.sarif }}
+          path: "scan-results-${{ inputs.image }}.sarif"
         if: always()
 
   send-notification:
