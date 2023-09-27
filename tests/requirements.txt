@@ -205,9 +205,9 @@ forcediphttpsadapter==1.1.0 \
     --hash=sha256:0d224cf6e8e50eb788c9f5994a7afa6d389bac6dbe540b7dfd77a32590ad0153 \
     --hash=sha256:5e7662ece61735585332d09b87d94fffe4752469d5c0d3feff48746e5d70744b
     # via -r requirements.txt
-google-auth==2.23.0 \
-    --hash=sha256:2cec41407bd1e207f5b802638e32bb837df968bb5c05f413d0fa526fac4cf7a7 \
-    --hash=sha256:753a26312e6f1eaeec20bc6f2644a10926697da93446e1f8e24d6d32d45a922a
+google-auth==2.23.1 \
+    --hash=sha256:9800802266366a2a87890fb2d04923fc0c0d4368af0b86db18edd94a62386ea1 \
+    --hash=sha256:d38bdf4fa1e7c5a35e574861bce55784fd08afadb4e48f99f284f1e487ce702d
     # via
     #   -r requirements.txt
     #   kubernetes
