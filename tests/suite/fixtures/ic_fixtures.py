@@ -4,7 +4,7 @@ import time
 
 import pytest
 from kubernetes.client.rest import ApiException
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import CRDS, DEPLOYMENTS, TEST_DATA
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.resources_utils import (
     cleanup_rbac,
@@ -141,23 +141,23 @@ def crd_ingress_controller_with_ap(
         rbac = configure_rbac_with_ap(kube_apis.rbac_v1)
 
         print("------------------------- Register AP CRD -----------------------------------")
-        ap_pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_appolicies.yaml")
-        ap_log_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_aplogconfs.yaml")
-        ap_uds_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml")
+        ap_pol_crd_name = get_name_from_yaml(f"{CRDS}/appprotect.f5.com_appolicies.yaml")
+        ap_log_crd_name = get_name_from_yaml(f"{CRDS}/appprotect.f5.com_aplogconfs.yaml")
+        ap_uds_crd_name = get_name_from_yaml(f"{CRDS}/appprotect.f5.com_apusersigs.yaml")
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             ap_pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_appolicies.yaml",
+            f"{CRDS}/appprotect.f5.com_appolicies.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             ap_log_crd_name,
-            f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_aplogconfs.yaml",
+            f"{CRDS}/appprotect.f5.com_aplogconfs.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             ap_uds_crd_name,
-            f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml",
+            f"{CRDS}/appprotect.f5.com_apusersigs.yaml",
         )
 
         print("------------------------- Create IC -----------------------------------")
@@ -242,25 +242,23 @@ def crd_ingress_controller_with_dos(
         rbac = configure_rbac_with_dos(kube_apis.rbac_v1)
 
         print("------------------------- Register AP CRD -----------------------------------")
-        dos_pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdospolicy.yaml")
-        dos_log_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdoslogconfs.yaml")
-        dos_protected_crd_name = get_name_from_yaml(
-            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_dosprotectedresources.yaml"
-        )
+        dos_pol_crd_name = get_name_from_yaml(f"{CRDS}/appprotectdos.f5.com_apdospolicy.yaml")
+        dos_log_crd_name = get_name_from_yaml(f"{CRDS}/appprotectdos.f5.com_apdoslogconfs.yaml")
+        dos_protected_crd_name = get_name_from_yaml(f"{CRDS}/appprotectdos.f5.com_dosprotectedresources.yaml")
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             dos_pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdospolicy.yaml",
+            f"{CRDS}/appprotectdos.f5.com_apdospolicy.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             dos_log_crd_name,
-            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdoslogconfs.yaml",
+            f"{CRDS}/appprotectdos.f5.com_apdoslogconfs.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             dos_protected_crd_name,
-            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_dosprotectedresources.yaml",
+            f"{CRDS}/appprotectdos.f5.com_dosprotectedresources.yaml",
         )
 
         print("------------------------- Create syslog svc -----------------------")
@@ -366,11 +364,11 @@ def crd_ingress_controller_with_ed(
     name = "nginx-ingress"
 
     print("---------------------- Register DNSEndpoint CRD ------------------------------")
-    external_dns_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/externaldns.nginx.org_dnsendpoints.yaml")
+    external_dns_crd_name = get_name_from_yaml(f"{CRDS}/externaldns.nginx.org_dnsendpoints.yaml")
     create_crd_from_yaml(
         kube_apis.api_extensions_v1,
         external_dns_crd_name,
-        f"{DEPLOYMENTS}/common/crds/externaldns.nginx.org_dnsendpoints.yaml",
+        f"{CRDS}/externaldns.nginx.org_dnsendpoints.yaml",
     )
 
     try:
