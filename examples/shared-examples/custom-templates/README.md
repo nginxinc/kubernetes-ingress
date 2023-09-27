@@ -42,9 +42,9 @@ data:
 - The templates are truncated for the clarity of the example.
 - The templates for NGINX (the main `nginx.tmpl` and the Ingress `nginx.ingress.tmpl`) and NGINX Plus (the main
   `nginx-plus.tmpl` and the Ingress `nginx-plus.ingress.tmpl`) are located at
-  [internal/configs/version1](../../internal/configs/version1/). The VirtualServer templates for NGINX
+  [internal/configs/version1](../../../internal/configs/version1/). The VirtualServer templates for NGINX
   (`nginx.virtualserver.tmpl`) and NGINX Plus (`nginx-plus.virtualserver.tmpl`) are located at
-  [internal/configs/version2](../../internal/configs/version2/).
+  [internal/configs/version2](../../../internal/configs/version2/).
 
 ## Troubleshooting
 
