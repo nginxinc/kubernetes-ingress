@@ -155,27 +155,27 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "3.2.1-alpine",
-        "3.2.1-ubi",
-        "3.2.1"
+        "3.3.0-alpine",
+        "3.3.0-ubi",
+        "3.3.0"
     ]
     }
 
-   $ curl <https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "3.2.1-ubi",
-        "3.2.1"
+        "3.3.0-ubi",
+        "3.3.0"
     ]
     }
 
-   $ curl <https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list> --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   $ curl https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-dos/nginx-plus-ingress",
     "tags": [
-        "3.2.1-ubi",
-        "3.2.1"
+        "3.3.0-ubi",
+        "3.3.0"
     ]
     }
 ```

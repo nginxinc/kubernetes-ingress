@@ -1,6 +1,6 @@
-{{- if eq .Values.controller.kind "deployment" }}
+{{- if eq .Values.controller.kind "daemonset" }}
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: {{ include "nginx-ingress.controller.fullname" . }}
   namespace: {{ .Release.Namespace }}
@@ -10,9 +10,6 @@ metadata:
   annotations: {{ toYaml .Values.controller.annotations | nindent 4 }}
 {{- end }}
 spec:
-  {{- if not .Values.controller.autoscaling.enabled }}
-  replicas: {{ .Values.controller.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "nginx-ingress.selectorLabels" . | nindent 6 }}
@@ -23,7 +20,7 @@ spec:
 {{- if .Values.nginxServiceMesh.enable }}
         nsm.nginx.com/enable-ingress: "true"
         nsm.nginx.com/enable-egress: "{{ .Values.nginxServiceMesh.enableEgress }}"
-        nsm.nginx.com/deployment: {{ include "nginx-ingress.controller.fullname" . }}
+        nsm.nginx.com/daemonset: {{ include "nginx-ingress.controller.fullname" . }}
 {{- end }}
 {{- if .Values.controller.pod.extraLabels }}
 {{ toYaml .Values.controller.pod.extraLabels | indent 8 }}
@@ -40,6 +37,12 @@ spec:
 {{- end }}
 {{- end }}
     spec:
+      serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
+      automountServiceAccountToken: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.controller.nodeSelector | indent 8 }}
@@ -51,10 +54,6 @@ spec:
 {{- if .Values.controller.affinity }}
       affinity:
 {{ toYaml .Values.controller.affinity | indent 8 }}
-{{- end }}
-{{- if .Values.controller.topologySpreadConstraints }}
-      topologySpreadConstraints:
-{{ toYaml .Values.controller.topologySpreadConstraints | indent 8 }}
 {{- end }}
 {{- if or .Values.controller.readOnlyRootFilesystem .Values.controller.volumes }}
       volumes:
@@ -75,17 +74,11 @@ spec:
 {{- if .Values.controller.priorityClassName }}
       priorityClassName: {{ .Values.controller.priorityClassName }}
 {{- end }}
-      serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
-      automountServiceAccountToken: true
-      securityContext:
-        seccompProfile:
-          type: RuntimeDefault
-      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       dnsPolicy: {{ .Values.controller.dnsPolicy }}
       containers:
-      - image: {{ include "nginx-ingress.image" . }}
-        name: {{ include "nginx-ingress.name" . }}
+      - name: {{ include "nginx-ingress.name" . }}
+        image: {{ include "nginx-ingress.image" . }}
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
 {{- if .Values.controller.lifecycle }}
         lifecycle:
@@ -100,9 +93,9 @@ spec:
           hostPort: {{ index $.Values.controller.hostPort $key }}
           {{- end }}
 {{- end }}
-{{- if .Values.controller.customPorts }}
+{{ if .Values.controller.customPorts }}
 {{ toYaml .Values.controller.customPorts | indent 8 }}
-{{- end }}
+{{ end }}
 {{- if .Values.prometheus.create }}
         - name: prometheus
           containerPort: {{ .Values.prometheus.port }}
@@ -121,8 +114,6 @@ spec:
           periodSeconds: 1
           initialDelaySeconds: {{ .Values.controller.readyStatus.initialDelaySeconds }}
 {{- end }}
-        resources:
-{{ toYaml .Values.controller.resources | indent 10 }}
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: {{ .Values.controller.readOnlyRootFilesystem }}
@@ -146,7 +137,7 @@ spec:
         - mountPath: /var/log/nginx
           name: nginx-log
 {{- end }}
-{{- if .Values.controller.volumeMounts}}
+{{- if .Values.controller.volumeMounts }}
 {{ toYaml .Values.controller.volumeMounts | indent 8 }}
 {{- end }}
         env:
@@ -167,6 +158,8 @@ spec:
             fieldRef:
               fieldPath: spec.serviceAccountName
 {{- end }}
+        resources:
+{{ toYaml .Values.controller.resources | indent 10 }}
         args:
           - -nginx-plus={{ .Values.controller.nginxplus }}
           - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
@@ -175,19 +168,19 @@ spec:
           - -app-protect-log-level={{ .Values.controller.appprotect.logLevel }}
 {{ end }}
           - -enable-app-protect-dos={{ .Values.controller.appprotectdos.enable }}
-{{- if .Values.controller.appprotectdos.enable }}
+  {{- if .Values.controller.appprotectdos.enable }}
           - -app-protect-dos-debug={{ .Values.controller.appprotectdos.debug }}
           - -app-protect-dos-max-daemons={{ .Values.controller.appprotectdos.maxDaemons }}
           - -app-protect-dos-max-workers={{ .Values.controller.appprotectdos.maxWorkers }}
           - -app-protect-dos-memory={{ .Values.controller.appprotectdos.memory }}
-{{ end }}
+  {{ end }}
           - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
 {{- if .Values.controller.defaultTLS.secret }}
           - -default-server-tls-secret={{ .Values.controller.defaultTLS.secret }}
 {{ else if and (.Values.controller.defaultTLS.cert) (.Values.controller.defaultTLS.key) }}
           - -default-server-tls-secret=$(POD_NAMESPACE)/{{ include "nginx-ingress.defaultTLSName" . }}
 {{- end }}
-          - -ingress-class={{ .Values.controller.ingressClass }}
+          - -ingress-class={{ .Values.controller.ingressClass.name }}
 {{- if .Values.controller.watchNamespace }}
           - -watch-namespace={{ .Values.controller.watchNamespace }}
 {{- end }}
@@ -278,7 +271,7 @@ spec:
 {{ toYaml .Values.controller.initContainers | indent 6 }}
 {{- end }}
 {{- if .Values.controller.strategy }}
-  strategy:
+  updateStrategy:
 {{ toYaml .Values.controller.strategy | indent 4 }}
 {{- end }}
 {{- if .Values.controller.minReadySeconds }}

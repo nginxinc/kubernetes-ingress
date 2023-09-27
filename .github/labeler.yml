@@ -26,4 +26,4 @@ dependencies:
   - changed-files: ['go.mod', 'go.sum']
 
 helm_chart:
-  - changed-files: ['deployments/helm-chart/**/*']
+  - changed-files: ['charts/nginx-ingress/**/*']

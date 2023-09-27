@@ -158,6 +158,8 @@ type LoadBalancerController struct {
 	certManagerController         *cm_controller.CmController
 	externalDNSController         *ed_controller.ExtDNSController
 	batchSyncEnabled              bool
+	updateAllConfigsOnBatch       bool
+	enableBatchReload             bool
 	isIPV6Disabled                bool
 	namespaceWatcherController    cache.Controller
 }
@@ -768,23 +770,23 @@ func (lbc *LoadBalancerController) getNamespacedInformer(ns string) *namespacedI
 	return nsi
 }
 
-func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
+func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 	key := task.Key
 	var obj interface{}
 	var endpointSliceExists bool
 	var err error
-	glog.V(3).Infof("Syncing EndpointSlices %v", key)
+	var resourcesFound bool
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, endpointSliceExists, err = lbc.getNamespacedInformer(ns).endpointSliceLister.GetByKey(key)
 
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
-		return
+		return false
 	}
 
 	if !endpointSliceExists {
-		return
+		return false
 	}
 
 	endpointSlice := obj.(*discovery_v1.EndpointSlice)
@@ -793,6 +795,7 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 	resourceExes := lbc.createExtendedResources(svcResource)
 
 	if len(resourceExes.IngressExes) > 0 {
+		resourcesFound = true
 		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
 		err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
 		if err != nil {
@@ -801,6 +804,7 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 	}
 
 	if len(resourceExes.MergeableIngresses) > 0 {
+		resourcesFound = true
 		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
 		err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
 		if err != nil {
@@ -810,6 +814,7 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 
 	if lbc.areCustomResourcesEnabled {
 		if len(resourceExes.VirtualServerExes) > 0 {
+			resourcesFound = true
 			glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.VirtualServerExes)
 			err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
 			if err != nil {
@@ -818,6 +823,7 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 		}
 
 		if len(resourceExes.TransportServerExes) > 0 {
+			resourcesFound = true
 			glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.TransportServerExes)
 			err := lbc.configurator.UpdateEndpointsForTransportServers(resourceExes.TransportServerExes)
 			if err != nil {
@@ -825,6 +831,7 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) {
 			}
 		}
 	}
+	return resourcesFound
 }
 
 func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) configs.ExtendedResources {
@@ -969,15 +976,24 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncLock.Lock()
 		defer lbc.syncLock.Unlock()
 	}
+	if lbc.batchSyncEnabled && task.Kind != endpointslice {
+		lbc.enableBatchReload = true
+	}
 	switch task.Kind {
 	case ingress:
 		lbc.syncIngress(task)
 		lbc.updateIngressMetrics()
 		lbc.updateTransportServerMetrics()
 	case configMap:
+		if lbc.batchSyncEnabled {
+			lbc.updateAllConfigsOnBatch = true
+		}
 		lbc.syncConfigMap(task)
 	case endpointslice:
-		lbc.syncEndpointSlices(task)
+		resourcesFound := lbc.syncEndpointSlices(task)
+		if lbc.batchSyncEnabled && resourcesFound {
+			lbc.enableBatchReload = true
+		}
 	case secret:
 		lbc.syncSecret(task)
 	case service:
@@ -1027,7 +1043,13 @@ func (lbc *LoadBalancerController) sync(task task) {
 	if lbc.batchSyncEnabled && lbc.syncQueue.Len() == 0 {
 		lbc.batchSyncEnabled = false
 		lbc.configurator.EnableReloads()
-		lbc.updateAllConfigs()
+		if lbc.updateAllConfigsOnBatch {
+			lbc.updateAllConfigs()
+		} else {
+			if err := lbc.configurator.ReloadForBatchUpdates(lbc.enableBatchReload); err != nil {
+				glog.Errorf("error reloading for batch updates: %v", err)
+			}
+		}
 
 		glog.V(3).Infof("Batch sync completed")
 	}
@@ -2299,7 +2321,6 @@ func (lbc *LoadBalancerController) updateTransportServerMetrics() {
 
 func (lbc *LoadBalancerController) syncService(task task) {
 	key := task.Key
-	glog.V(3).Infof("Syncing service %v", key)
 
 	var obj interface{}
 	var exists bool
@@ -2317,6 +2338,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	// In that case we need to update the statuses of all resources
 
 	if lbc.IsExternalServiceKeyForStatus(key) {
+		glog.V(3).Infof("Syncing service %v", key)
 
 		if !exists {
 			// service got removed
@@ -2361,6 +2383,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	if len(resources) == 0 {
 		return
 	}
+	glog.V(3).Infof("Syncing service %v", key)
 
 	glog.V(3).Infof("Updating %v resources", len(resources))
 

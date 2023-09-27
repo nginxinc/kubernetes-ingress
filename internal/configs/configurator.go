@@ -1241,6 +1241,17 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 	return allWarnings, nil
 }
 
+// ReloadForBatchUpdates reloads NGINX after a batch event.
+func (cnf *Configurator) ReloadForBatchUpdates(batchReloadsEnabled bool) error {
+	if !batchReloadsEnabled {
+		return nil
+	}
+	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+		return fmt.Errorf("error when reloading NGINX after a batch event: %w", err)
+	}
+	return nil
+}
+
 // UpdateVirtualServers updates VirtualServers.
 func (cnf *Configurator) UpdateVirtualServers(updatedVSExes []*VirtualServerEx, deletedKeys []string) []error {
 	var errList []error

@@ -53,7 +53,7 @@ Here is a breakdown of what this Ingress resource definition means:
   - The rule with the path `/coffee` instructs NGINX to distribute the requests with the `/coffee` URI among the pods of the *coffee* service, which is deployed with the name `coffee‑svc` in the cluster.
   - Both rules instruct NGINX to distribute the requests to `port 80` of the corresponding service (the `servicePort` field).
 
-> For complete instructions on deploying the Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.2.1/examples/ingress-resources/complete-example) in our GitHub repository.
+> For complete instructions on deploying the Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.0/examples/ingress-resources/complete-example) in our GitHub repository.
 
 > To learn more about the Ingress resource, see the [Ingress resource documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/) in the Kubernetes docs.
 
@@ -113,7 +113,7 @@ The NGINX Ingress Controller imposes the following restrictions on Ingress resou
 - When defining an Ingress resource, the `host` field is required.
 - The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions).
 - The `path` field in `spec.rules[].http.paths[]` is required for `Exact` and `Prefix` `pathTypes`.
-- The ImplementationSpecific `pathType` is treated as equivilent to `Prefix` `pathType`, with the exception that when this `pathType` is configured, the `path` field in `spec.rules[].http.paths[]` is not mandatory. `path` defaults to `/` if not set but the `pathType` is set to ImplementationSpecific.
+- The ImplementationSpecific `pathType` is treated as equivalent to `Prefix` `pathType`, with the exception that when this `pathType` is configured, the `path` field in `spec.rules[].http.paths[]` is not mandatory. `path` defaults to `/` if not set but the `pathType` is set to ImplementationSpecific.
 
 ## Advanced Configuration
 

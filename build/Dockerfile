@@ -197,7 +197,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	dnf --nodocs install -y app-protect-dos; \
 	fi \
 	# fix for CVEs
-	&& dnf upgrade -y curl dbus libcap libssh platform-python python3-requests libxml2 systemd sqlite-libs \
+	&& dnf upgrade -y curl dbus libcap libssh platform-python python3-requests libxml2 systemd sqlite-libs dmidecode dnf-plugin-subscription-manager ncurses \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
 	&& dnf clean all && rm -rf /var/cache/dnf

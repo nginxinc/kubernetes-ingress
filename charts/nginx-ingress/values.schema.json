@@ -577,20 +577,36 @@
           ]
         },
         "ingressClass": {
-          "type": "string",
-          "default": "",
+          "type": "object",
+          "default": {},
           "title": "The ingressClass",
-          "examples": [
-            "nginx"
-          ]
-        },
-        "setAsDefaultIngress": {
-          "type": "boolean",
-          "default": false,
-          "title": "The setAsDefaultIngress",
-          "examples": [
-            false
-          ]
+          "required": [],
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": true,
+              "title": "The create",
+              "examples": [
+                true
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The ingressClass name",
+              "examples": [
+                "nginx"
+              ]
+            },
+            "setAsDefaultIngress": {
+              "type": "boolean",
+              "default": false,
+              "title": "The setAsDefaultIngress",
+              "examples": [
+                false
+              ]
+            }
+          }
         },
         "watchNamespace": {
           "type": "string",
@@ -1061,49 +1077,6 @@
             }
           ]
         },
-        "serviceMonitor": {
-          "type": "object",
-          "default": {},
-          "title": "The serviceMonitor Schema",
-          "required": [],
-          "properties": {
-            "create": {
-              "type": "boolean",
-              "default": false,
-              "title": "The create",
-              "examples": [
-                false
-              ]
-            },
-            "labels": {
-              "type": "object",
-              "default": {},
-              "title": "The labels Schema",
-              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
-            },
-            "selectorMatchLabels": {
-              "type": "object",
-              "default": {},
-              "title": "The selectorMatchLabels Schema",
-              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector/properties/matchLabels"
-            },
-            "endpoints": {
-              "type": "array",
-              "default": [],
-              "title": "The endpoints",
-              "required": [],
-              "items": {}
-            }
-          },
-          "examples": [
-            {
-              "create": false,
-              "labels": {},
-              "selectorMatchLabels": {},
-              "endpoints": []
-            }
-          ]
-        },
         "reportIngressStatus": {
           "type": "object",
           "default": {},
@@ -1504,6 +1477,69 @@
           "examples": [
             "http"
           ]
+        },
+        "service": {
+          "type": "object",
+          "default": {},
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": false,
+              "title": "The create",
+              "examples": [
+                true
+              ]
+            },
+            "labels": {
+              "type": "object",
+              "default": {},
+              "title": "The labels Schema",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
+            }
+          }
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "default": {},
+          "title": "The serviceMonitor Schema",
+          "required": [],
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": false,
+              "title": "The create",
+              "examples": [
+                false
+              ]
+            },
+            "labels": {
+              "type": "object",
+              "default": {},
+              "title": "The labels Schema",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
+            },
+            "selectorMatchLabels": {
+              "type": "object",
+              "default": {},
+              "title": "The selectorMatchLabels Schema",
+              "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector/properties/matchLabels"
+            },
+            "endpoints": {
+              "type": "array",
+              "default": [],
+              "title": "The endpoints",
+              "required": [],
+              "items": {}
+            }
+          },
+          "examples": [
+            {
+              "create": false,
+              "labels": {},
+              "selectorMatchLabels": {},
+              "endpoints": []
+            }
+          ]
         }
       },
       "examples": [
@@ -1720,12 +1756,6 @@
           "minAvailable": 0,
           "minUnavailable": 0
         },
-        "serviceMonitor": {
-          "create": false,
-          "labels": {},
-          "selectorMatchLabels": {},
-          "endpoints": {}
-        },
         "reportIngressStatus": {
           "enable": true,
           "externalService": "",
@@ -1755,7 +1785,17 @@
         "create": true,
         "port": 9113,
         "secret": "",
-        "scheme": "http"
+        "scheme": "http",
+        "service": {
+          "create": false,
+          "labels": {}
+        },
+        "serviceMonitor": {
+          "create": false,
+          "labels": {},
+          "selectorMatchLabels": {},
+          "endpoints": {}
+        }
       },
       "serviceInsight": {
         "create": true,
