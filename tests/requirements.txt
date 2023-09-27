@@ -506,9 +506,9 @@ six==1.16.0 \
     #   kubernetes
     #   pytest-profiling
     #   python-dateutil
-urllib3==1.26.15 \
-    --hash=sha256:8a388717b9476f934a21484e8c8e61875ab60644d29b9b39e11e4b9dc1c6b305 \
-    --hash=sha256:aa751d169e23c7479ce47a0cb0da579e3ede798f994f5816a74e4f4500dcea42
+urllib3==2.0.5 \
+    --hash=sha256:13abf37382ea2ce6fb744d4dad67838eec857c9f4f57009891805e0b5e123594 \
+    --hash=sha256:ef16afa8ba34a1f989db38e1dbbe0c302e4289a47856990d0682e374563ce35e
     # via
     #   -r requirements.txt
     #   kubernetes
