@@ -369,7 +369,7 @@ jobs:
 
   build-docker-nap:
     name: Build Docker NAP
-    needs: build-docker-plus
+    needs: [binaries, build-docker-plus]
     strategy:
       fail-fast: false
       matrix:
@@ -383,6 +383,7 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       nap_modules: ${{ matrix.nap_modules }}
+      release-url: ${{ needs.binaries.outputs.release-url }}
     permissions:
       contents: read
       security-events: write
