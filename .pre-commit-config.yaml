@@ -9,7 +9,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
         args: [--allow-multiple-documents]
-        exclude: ^(deployments/helm-chart.*/templates|deployments/helm-chart/crds)
+        exclude: ^(charts/nginx-ingress/templates)
       - id: check-ast
       - id: check-added-large-files
       - id: check-merge-conflict
@@ -48,7 +48,7 @@ repos:
         args: [--new-from-patch=/tmp/diff.patch]
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.11.0
+    rev: v3.13.0
     hooks:
       - id: pyupgrade
 
@@ -67,9 +67,9 @@ repos:
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
-        files: deployments/helm-chart/values.yaml
+        files: charts/nginx-ingress/values.yaml
         types: [yaml]
-        args: ['--schemafile', 'deployments/helm-chart/values.schema.json']
+        args: ['--schemafile', 'charts/nginx-ingress/values.schema.json']
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.10.0

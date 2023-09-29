@@ -26,7 +26,7 @@ We strongly recommend using the [RBAC configuration](https://github.com/nginxinc
 It is configured with the least amount of privilege required for the Ingress Controller to work.
 
 We strongly recommend inspecting the RBAC configuration (for [manifests installation](https://github.com/nginxinc/kubernetes-ingress/blob/main/deployments/rbac/rbac.yaml)
-or for [helm](https://github.com/nginxinc/kubernetes-ingress/blob/main/deployments/helm-chart/templates/rbac.yaml))
+or for [helm](https://github.com/nginxinc/kubernetes-ingress/blob/main/charts/nginx-ingress/templates/rbac.yaml))
 to understand what access the Ingress Controller service account has and to which resources.
 For example, by default the service account has access to all Secret resources in the cluster.
 

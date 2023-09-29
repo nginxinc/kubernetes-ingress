@@ -48,8 +48,6 @@ func newTestHealthServer(t *testing.T) *healthcheck.HealthServer {
 }
 
 func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.UpstreamsForHost = getUpstreamsForHost
 	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
@@ -66,8 +64,6 @@ func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.UpstreamsForHost = getUpstreamsForHost
 	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
@@ -97,8 +93,6 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.UpstreamsForHost = getUpstreamsForHost
 	hs.NginxUpstreams = getUpstreamsFromNGINXAllUnhealthy
@@ -129,8 +123,6 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testi
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.UpstreamsForHost = getUpstreamsForHost
 	hs.NginxUpstreams = getUpstreamsFromNGINXPartiallyUp
@@ -161,8 +153,6 @@ func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(
 }
 
 func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.UpstreamsForHost = getUpstreamsForHost
 	hs.NginxUpstreams = getUpstreamsFromNGINXNotExistingHost
@@ -179,8 +169,6 @@ func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
 }
 
 func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.UpstreamsForHost = getUpstreamsForHost
 	hs.NginxUpstreams = getUpstreamsFromNGINXErrorFromAPI
@@ -197,8 +185,6 @@ func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
 }
 
 func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.StreamUpstreamsForName = streamUpstreamsForName
 	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
@@ -215,8 +201,6 @@ func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testi
 }
 
 func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.StreamUpstreamsForName = streamUpstreamsForName
 	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
@@ -233,8 +217,6 @@ func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.StreamUpstreamsForName = streamUpstreamsForName
 	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
@@ -264,8 +246,6 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersUpSomeDown(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.StreamUpstreamsForName = streamUpstreamsForName
 	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXPartiallyUp
@@ -295,8 +275,6 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersU
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersDown(t *testing.T) {
-	t.Parallel()
-
 	hs := newTestHealthServer(t)
 	hs.StreamUpstreamsForName = streamUpstreamsForName
 	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllPeersDown
