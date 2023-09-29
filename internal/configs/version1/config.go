@@ -165,6 +165,8 @@ type MainConfig struct {
 	DefaultServerAccessLogOff          bool
 	DefaultServerReturn                string
 	DisableIPV6                        bool
+	DefaultServerHTTPPort              int
+	DefaultServerHTTPSPort             int
 	ErrorLogLevel                      string
 	HealthStatus                       bool
 	HealthStatusURI                    string

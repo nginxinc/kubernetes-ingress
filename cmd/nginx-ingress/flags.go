@@ -194,6 +194,10 @@ var (
 	disableIPV6 = flag.Bool("disable-ipv6", false,
 		`Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack`)
 
+	defaultServerHTTPPort = flag.Int("default-server-http-port", 80, "Sets a custom port for the HTTP NGINX `default_server`. [1024 - 65535]")
+
+	defaultServerHTTPSPort = flag.Int("default-server-https-port", 443, "Sets a custom port for the HTTPS `default_server`. [1024 - 65535]")
+
 	startupCheckFn func() error
 )
 
