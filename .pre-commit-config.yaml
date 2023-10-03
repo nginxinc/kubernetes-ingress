@@ -48,7 +48,7 @@ repos:
         args: [--new-from-patch=/tmp/diff.patch]
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.13.0
+    rev: v3.14.0
     hooks:
       - id: pyupgrade
 
@@ -63,7 +63,7 @@ repos:
       - id: black
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.26.3
+    rev: 0.27.0
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
