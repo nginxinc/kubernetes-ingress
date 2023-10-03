@@ -116,7 +116,7 @@ controller:
     ## Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters.
     ## Note: Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
     ## Format: <namespace>/<secret_name>
-    secret: "default/default-server-secret"
+    secret: ""
 
   wildcardTLS:
     ## The base64-encoded TLS certificate for every Ingress/VirtualServer host that has TLS enabled but no secret specified.
@@ -373,11 +373,7 @@ controller:
       targetPort: 443
 
     ## A list of custom ports to expose through the Ingress Controller service. Follows the conventional Kubernetes yaml syntax for service ports.
-    customPorts:
-      - port: 8000
-        targetPort: 8000
-        protocol: TCP
-        name: http-8000
+    customPorts: []
 
   serviceAccount:
     ## The annotations of the service account of the Ingress Controller pods.
