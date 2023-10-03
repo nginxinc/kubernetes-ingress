@@ -441,71 +441,41 @@ func TestExecuteTemplate_ForMainForNGINXPlusTLSPassthroughPortDisabled(t *testin
 	}
 }
 
-func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultServerHTTPAndHTTPSPorts(t *testing.T) {
+func TestExecuteTemplate_ForMainForNGINXDisableDefaultListenersTrue(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXMainTmpl(t)
 	buf := &bytes.Buffer{}
 
-	err := tmpl.Execute(buf, mainCfgCustomDefaultServerHTTPAndHTTPSPorts)
+	err := tmpl.Execute(buf, mainCfgWithDisableDefaultListenersTrue)
 	t.Log(buf.String())
-
 	if err != nil {
 		t.Fatalf("Failed to write template %v", err)
 	}
 
-	wantDirectives := []string{
-		"listen 8083 default_server;",
-		"listen [::]:8083 default_server;",
-		"listen 8443 ssl default_server;",
-		"listen [::]:8443 ssl default_server;",
+	unwantDirectives := []string{
+		"listen 80 default_server;",
+		"listen [::]:80 default_server;",
+		"listen 443 ssl default_server;",
+		"listen [::]:443 ssl default_server;",
 	}
 
 	mainConf := buf.String()
-	for _, want := range wantDirectives {
-		if !strings.Contains(mainConf, want) {
-			t.Errorf("want %q in generated config", want)
+	for _, want := range unwantDirectives {
+		if strings.Contains(mainConf, want) {
+			t.Errorf("unwant %q in generated config", want)
 		}
 	}
 }
 
-func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultServerHTTPAndHTTPSPorts(t *testing.T) {
-	t.Parallel()
-
-	tmpl := newNGINXPlusMainTmpl(t)
-	buf := &bytes.Buffer{}
-
-	err := tmpl.Execute(buf, mainCfgCustomDefaultServerHTTPAndHTTPSPorts)
-	t.Log(buf.String())
-
-	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
-	}
-
-	wantDirectives := []string{
-		"listen 8083 default_server;",
-		"listen [::]:8083 default_server;",
-		"listen 8443 ssl default_server;",
-		"listen [::]:8443 ssl default_server;",
-	}
-
-	mainConf := buf.String()
-	for _, want := range wantDirectives {
-		if !strings.Contains(mainConf, want) {
-			t.Errorf("want %q in generated config", want)
-		}
-	}
-}
-
-func TestExecuteTemplate_ForMainForNGINXWithoutCustomDefaultServerHTTPAndHTTPSPorts(t *testing.T) {
+func TestExecuteTemplate_ForMainForNGINXDisableDefaultListenersFalse(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXMainTmpl(t)
 	buf := &bytes.Buffer{}
 
-	err := tmpl.Execute(buf, mainCfg)
+	err := tmpl.Execute(buf, mainCfgWithDisableDefaultListenersFalse)
 	t.Log(buf.String())
-
 	if err != nil {
 		t.Fatalf("Failed to write template %v", err)
 	}
@@ -525,15 +495,41 @@ func TestExecuteTemplate_ForMainForNGINXWithoutCustomDefaultServerHTTPAndHTTPSPo
 	}
 }
 
-func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomDefaultServerHTTPAndHTTPSPorts(t *testing.T) {
+func TestExecuteTemplate_ForMainForNGINXPlusDisableDefaultListenersTrue(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newNGINXPlusMainTmpl(t)
 	buf := &bytes.Buffer{}
 
-	err := tmpl.Execute(buf, mainCfg)
+	err := tmpl.Execute(buf, mainCfgWithDisableDefaultListenersTrue)
 	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
 
+	unwantDirectives := []string{
+		"listen 80 default_server;",
+		"listen [::]:80 default_server;",
+		"listen 443 ssl default_server;",
+		"listen [::]:443 ssl default_server;",
+	}
+
+	mainConf := buf.String()
+	for _, want := range unwantDirectives {
+		if strings.Contains(mainConf, want) {
+			t.Errorf("unwant %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXPlusDisableDefaultListenersFalse(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfgWithDisableDefaultListenersFalse)
+	t.Log(buf.String())
 	if err != nil {
 		t.Fatalf("Failed to write template %v", err)
 	}
@@ -543,118 +539,6 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomDefaultServerHTTPAndHTT
 		"listen [::]:80 default_server;",
 		"listen 443 ssl default_server;",
 		"listen [::]:443 ssl default_server;",
-	}
-
-	mainConf := buf.String()
-	for _, want := range wantDirectives {
-		if !strings.Contains(mainConf, want) {
-			t.Errorf("want %q in generated config", want)
-		}
-	}
-}
-
-func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultServerHTTPPort(t *testing.T) {
-	t.Parallel()
-
-	tmpl := newNGINXMainTmpl(t)
-	buf := &bytes.Buffer{}
-
-	err := tmpl.Execute(buf, mainCfgCustomDefaultServerHTTPPort)
-	t.Log(buf.String())
-
-	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
-	}
-
-	wantDirectives := []string{
-		"listen 8083 default_server;",
-		"listen [::]:8083 default_server;",
-		"listen 443 ssl default_server;",
-		"listen [::]:443 ssl default_server;",
-	}
-
-	mainConf := buf.String()
-	for _, want := range wantDirectives {
-		if !strings.Contains(mainConf, want) {
-			t.Errorf("want %q in generated config", want)
-		}
-	}
-}
-
-func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultServerHTTPSPort(t *testing.T) {
-	t.Parallel()
-
-	tmpl := newNGINXMainTmpl(t)
-	buf := &bytes.Buffer{}
-
-	err := tmpl.Execute(buf, mainCfgCustomDefaultServerHTTPSPort)
-	t.Log(buf.String())
-
-	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
-	}
-
-	wantDirectives := []string{
-		"listen 80 default_server;",
-		"listen [::]:80 default_server;",
-		"listen 8443 ssl default_server;",
-		"listen [::]:8443 ssl default_server;",
-	}
-
-	mainConf := buf.String()
-	for _, want := range wantDirectives {
-		if !strings.Contains(mainConf, want) {
-			t.Errorf("want %q in generated config", want)
-		}
-	}
-}
-
-func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultServerHTTPPort(t *testing.T) {
-	t.Parallel()
-
-	tmpl := newNGINXPlusMainTmpl(t)
-	buf := &bytes.Buffer{}
-
-	err := tmpl.Execute(buf, mainCfgCustomDefaultServerHTTPPort)
-	t.Log(buf.String())
-
-	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
-	}
-
-	wantDirectives := []string{
-		"listen 8083 default_server;",
-		"listen [::]:8083 default_server;",
-		"listen 443 ssl default_server;",
-		"listen [::]:443 ssl default_server;",
-	}
-
-	mainConf := buf.String()
-	for _, want := range wantDirectives {
-		if !strings.Contains(mainConf, want) {
-			t.Errorf("want %q in generated config", want)
-		}
-	}
-}
-
-func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultServerHTTPSPort(t *testing.T) {
-	t.Parallel()
-
-	tmpl := newNGINXPlusMainTmpl(t)
-	buf := &bytes.Buffer{}
-
-	err := tmpl.Execute(buf, mainCfgCustomDefaultServerHTTPSPort)
-	t.Log(buf.String())
-
-	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
-	}
-
-	wantDirectives := []string{
-		"listen 80 default_server;",
-		"listen [::]:80 default_server;",
-		"listen 8443 ssl default_server;",
-		"listen [::]:8443 ssl default_server;",
 	}
 
 	mainConf := buf.String()
@@ -977,8 +861,6 @@ var (
 	}
 
 	mainCfg = MainConfig{
-		DefaultServerHTTPPort:   80,
-		DefaultServerHTTPSPort:  443,
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",
@@ -1076,9 +958,8 @@ var (
 		TLSPassthroughPort:      443,
 	}
 
-	mainCfgCustomDefaultServerHTTPAndHTTPSPorts = MainConfig{
-		DefaultServerHTTPPort:   8083,
-		DefaultServerHTTPSPort:  8443,
+	mainCfgWithDisableDefaultListenersTrue = MainConfig{
+		DisableDefaultListeners: true,
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",
@@ -1101,34 +982,8 @@ var (
 		VariablesHashMaxSize:    1024,
 	}
 
-	mainCfgCustomDefaultServerHTTPPort = MainConfig{
-		DefaultServerHTTPPort:   8083,
-		DefaultServerHTTPSPort:  443,
-		ServerNamesHashMaxSize:  "512",
-		ServerTokens:            "off",
-		WorkerProcesses:         "auto",
-		WorkerCPUAffinity:       "auto",
-		WorkerShutdownTimeout:   "1m",
-		WorkerConnections:       "1024",
-		WorkerRlimitNofile:      "65536",
-		LogFormat:               []string{"$remote_addr", "$remote_user"},
-		LogFormatEscaping:       "default",
-		StreamSnippets:          []string{"# comment"},
-		StreamLogFormat:         []string{"$remote_addr", "$remote_user"},
-		StreamLogFormatEscaping: "none",
-		ResolverAddresses:       []string{"example.com", "127.0.0.1"},
-		ResolverIPV6:            false,
-		ResolverValid:           "10s",
-		ResolverTimeout:         "15s",
-		KeepaliveTimeout:        "65s",
-		KeepaliveRequests:       100,
-		VariablesHashBucketSize: 256,
-		VariablesHashMaxSize:    1024,
-	}
-
-	mainCfgCustomDefaultServerHTTPSPort = MainConfig{
-		DefaultServerHTTPPort:   80,
-		DefaultServerHTTPSPort:  8443,
+	mainCfgWithDisableDefaultListenersFalse = MainConfig{
+		DisableDefaultListeners: false,
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",

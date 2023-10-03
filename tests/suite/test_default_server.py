@@ -1,6 +1,8 @@
 from ssl import SSLError
 
 import pytest
+import requests
+from requests.exceptions import ConnectionError
 from settings import BASEDIR, DEPLOYMENTS, TEST_DATA
 from suite.utils.resources_utils import (
     create_secret_from_yaml,
@@ -95,3 +97,47 @@ class TestDefaultServer:
     def test_without_default_tls_secret(self, ingress_controller_endpoint, default_server_setup):
         print("Ensure connection to HTTPS cannot be established")
         assert_unrecognized_name_error(ingress_controller_endpoint)
+
+
+    @pytest.mark.parametrize(
+        "ingress_controller",
+        [
+            pytest.param(
+                {"extra_args": ["-disable-default-listeners"]},
+            ),
+        ],
+        indirect=True,
+    )
+    @pytest.mark.disableDefaultListeners
+    def test_disable_default_listeners_true(self, ingress_controller_endpoint, ingress_controller):
+            print("Ensure ports 80 and 443 return result in an ERR_CONNECTION_REFUSED")
+            wait_before_test()
+            request_url_80 = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/"
+            with pytest.raises(ConnectionError, match="Connection refused") as e:
+                 requests.get(request_url_80, headers={})
+
+            request_url_443 = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/"
+            with pytest.raises(ConnectionError, match="Connection refused") as e:
+                 requests.get(request_url_443, headers={}, verify=False)
+
+
+    @pytest.mark.parametrize(
+        "ingress_controller",
+        [
+            pytest.param(
+                {"extra_args": ["-disable-default-listeners=false"]},
+            ),
+        ],
+        indirect=True,
+    )
+    @pytest.mark.disableDefaultListeners
+    def test_disable_default_listeners_false(self, kube_apis, ingress_controller_endpoint, ingress_controller):
+            print("Ensure ports 80 and 443 return 404")
+            wait_before_test()
+            request_url_80 = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/"
+            resp = requests.get(request_url_80, headers={})
+            assert resp.status_code == 404
+
+            request_url_443 = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/"
+            resp = requests.get(request_url_443, headers={}, verify=False)
+            assert resp.status_code == 404

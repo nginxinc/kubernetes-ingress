@@ -508,3 +508,11 @@ Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack.
 Default `false`.
 &nbsp;
 <a name="cmdoption-disable-ipv6"></a>
+
+### -disable-default-listeners
+
+Disable both HTTP and HTTPS default server listeners.
+
+Default `false`.
+&nbsp;
+<a name="cmdoption-disable-default-listeners"></a>

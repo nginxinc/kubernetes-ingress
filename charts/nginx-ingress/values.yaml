@@ -116,7 +116,7 @@ controller:
     ## Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters.
     ## Note: Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
     ## Format: <namespace>/<secret_name>
-    secret: ""
+    secret: "default/default-server-secret"
 
   wildcardTLS:
     ## The base64-encoded TLS certificate for every Ingress/VirtualServer host that has TLS enabled but no secret specified.
@@ -273,17 +273,18 @@ controller:
 
   globalConfiguration:
     ## Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.
-    create: false
+    create: true
 
     ## The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.
-    spec: {} ## Ensure both curly brackets are removed when adding listeners in YAML format.
-    # listeners:
-    # - name: dns-udp
-    #   port: 5353
-    #   protocol: UDP
-    # - name: dns-tcp
-    #   port: 5353
-    #   protocol: TCP
+    spec:  ## Ensure both curly brackets are removed when adding listeners in YAML format.
+      listeners:
+      - name: http-8083
+        port: 8083
+        protocol: HTTP
+      - name: https-8443
+        port: 8443
+        protocol: HTTP
+        ssl: true
 
 
   ## Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
@@ -373,7 +374,19 @@ controller:
       targetPort: 443
 
     ## A list of custom ports to expose through the Ingress Controller service. Follows the conventional Kubernetes yaml syntax for service ports.
-    customPorts: []
+    customPorts:
+      - port: 8000
+        targetPort: 8000
+        protocol: TCP
+        name: http-8000
+      - port: 8083
+        targetPort: 8083
+        protocol: TCP
+        name: http-8083
+      - port: 8443
+        targetPort: 8443
+        protocol: TCP
+        name: http-8443
 
   serviceAccount:
     ## The annotations of the service account of the Ingress Controller pods.
@@ -440,6 +453,9 @@ controller:
 
   ## Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack.
   disableIPV6: false
+
+  ## Disable both HTTP and HTTPS default server listeners.
+  disableDefaultListeners: false
 
   ## Configure root filesystem as read-only and add volumes for temporary data.
   readOnlyRootFilesystem: false
