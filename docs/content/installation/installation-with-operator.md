@@ -38,7 +38,8 @@ spec:
       pullPolicy: IfNotPresent
       repository: nginx/nginx-ingress
       tag: 3.3.0-ubi
-    ingressClass: nginx
+    ingressClass:
+      name: nginx
     kind: deployment
     nginxplus: false
     replicaCount: 1
