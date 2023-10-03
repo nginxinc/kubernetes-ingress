@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/dlclark/regexp2"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	ap_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
@@ -871,8 +872,11 @@ func validatePath(path string, pathType *networking.PathType, fieldPath *field.P
 	return allErrs
 }
 
+// validateRegexPath validates correctness of the string representing the path.
+//
+// Internally it uses Perl5 compatible regexp2 package.
 func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
-	if _, err := regexp.Compile(path); err != nil {
+	if _, err := regexp2.Compile(path, 0); err != nil {
 		return field.ErrorList{field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err))}
 	}
 	if err := ValidateEscapedString(path, "*.jpg", "^/images/image_*.png$"); err != nil {
