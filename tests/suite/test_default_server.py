@@ -108,7 +108,6 @@ class TestDefaultServer:
         ],
         indirect=True,
     )
-    @pytest.mark.disableDefaultListeners
     def test_disable_default_listeners_true(self, ingress_controller_endpoint, ingress_controller):
             print("Ensure ports 80 and 443 return result in an ERR_CONNECTION_REFUSED")
             wait_before_test()
@@ -130,10 +129,8 @@ class TestDefaultServer:
         ],
         indirect=True,
     )
-    @pytest.mark.disableDefaultListeners
-    def test_disable_default_listeners_false(self, kube_apis, ingress_controller_endpoint, ingress_controller):
+    def test_disable_default_listeners_false(self, kube_apis, ingress_controller_endpoint, ingress_controller, default_server_setup):
             print("Ensure ports 80 and 443 return 404")
-            wait_before_test()
             request_url_80 = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/"
             resp = requests.get(request_url_80, headers={})
             assert resp.status_code == 404

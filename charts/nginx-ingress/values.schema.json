@@ -1262,6 +1262,14 @@
             false
           ]
         },
+        "disableDefaultListeners": {
+          "type": "boolean",
+          "default": false,
+          "title": "The disableDefaultListeners",
+          "examples": [
+            false
+          ]
+        },
         "readOnlyRootFilesystem": {
           "type": "boolean",
           "default": false,
@@ -1411,6 +1419,7 @@
           },
           "enableLatencyMetrics": false,
           "disableIPV6": false,
+          "disableDefaultListeners": false,
           "readOnlyRootFilesystem": false
         }
       ]
@@ -1776,6 +1785,7 @@
         },
         "enableLatencyMetrics": false,
         "disableIPV6": false,
+        "disableDefaultListeners": false,
         "readOnlyRootFilesystem": false
       },
       "rbac": {

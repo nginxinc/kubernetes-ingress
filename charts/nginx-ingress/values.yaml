@@ -273,18 +273,17 @@ controller:
 
   globalConfiguration:
     ## Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.
-    create: true
+    create: false
 
     ## The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.
-    spec:  ## Ensure both curly brackets are removed when adding listeners in YAML format.
-      listeners:
-      - name: http-8083
-        port: 8083
-        protocol: HTTP
-      - name: https-8443
-        port: 8443
-        protocol: HTTP
-        ssl: true
+    spec: {} ## Ensure both curly brackets are removed when adding listeners in YAML format.
+    # listeners:
+    # - name: dns-udp
+    #   port: 5353
+    #   protocol: UDP
+    # - name: dns-tcp
+    #   port: 5353
+    #   protocol: TCP
 
 
   ## Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
@@ -379,14 +378,6 @@ controller:
         targetPort: 8000
         protocol: TCP
         name: http-8000
-      - port: 8083
-        targetPort: 8083
-        protocol: TCP
-        name: http-8083
-      - port: 8443
-        targetPort: 8443
-        protocol: TCP
-        name: http-8443
 
   serviceAccount:
     ## The annotations of the service account of the Ingress Controller pods.
