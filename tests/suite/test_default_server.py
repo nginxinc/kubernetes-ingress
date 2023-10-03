@@ -107,7 +107,6 @@ class TestDefaultServer:
         ],
         indirect=True,
     )
-    @pytest.mark.dsl
     def test_disable_default_listeners_true(self, ingress_controller_endpoint, ingress_controller):
         print("Ensure ports 80 and 443 return result in an ERR_CONNECTION_REFUSED")
         request_url_80 = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/"
