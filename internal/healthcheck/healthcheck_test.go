@@ -22,9 +22,10 @@ func testHandler(hs *healthcheck.HealthServer) http.Handler {
 }
 
 func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXAllUp,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -41,9 +42,10 @@ func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXAllUp,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -73,9 +75,10 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXAllUnhealthy
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXAllUnhealthy,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -106,9 +109,10 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testi
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXPartiallyUp
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXPartiallyUp,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -139,9 +143,10 @@ func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(
 }
 
 func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXNotExistingHost
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXNotExistingHost,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -158,9 +163,10 @@ func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
 }
 
 func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXErrorFromAPI
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXErrorFromAPI,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -177,9 +183,10 @@ func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
 }
 
 func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -196,9 +203,10 @@ func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testi
 }
 
 func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -215,9 +223,10 @@ func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -247,9 +256,10 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersUpSomeDown(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXPartiallyUp
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXPartiallyUp,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
@@ -279,9 +289,10 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersU
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersDown(t *testing.T) {
-	hs := healthcheck.HealthServer{}
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllPeersDown
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllPeersDown,
+	}
 
 	ts := httptest.NewServer(testHandler(&hs))
 	defer ts.Close()
