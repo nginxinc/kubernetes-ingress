@@ -1,58 +1,36 @@
 package healthcheck_test
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
-	"log"
-	"net"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
 	"github.com/nginxinc/nginx-plus-go-client/client"
 )
 
-// newTestHealthServer is a helper func responsible for creating,
-// starting and shutting down healthcheck server for each test.
-func newTestHealthServer(t *testing.T) *healthcheck.HealthServer {
-	t.Helper()
-
-	l, err := net.Listen("tcp", ":0") //nolint:gosec
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer l.Close() //nolint:errcheck
-
-	addr := l.Addr().String()
-	hs, err := healthcheck.NewHealthServer(addr, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	go func() {
-		err := hs.ListenAndServe()
-		if !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal(err)
-		}
-	}()
-
-	t.Cleanup(func() {
-		err := hs.Shutdown(context.Background())
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-	return hs
+// testHandler creates http handler for testing HealthServer.
+func testHandler(hs *healthcheck.HealthServer) http.Handler {
+	mux := chi.NewRouter()
+	mux.Get("/probe/{hostname}", hs.UpstreamStats)
+	mux.Get("/probe/ts/{name}", hs.StreamStats)
+	return mux
 }
 
 func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXAllUp,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,11 +42,15 @@ func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXAllUp,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/bar.tea.com") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/bar.tea.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,11 +75,15 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXAllUnhealthy
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXAllUnhealthy,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/bar.tea.com") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/bar.tea.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,11 +109,15 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testi
 }
 
 func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXPartiallyUp
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXPartiallyUp,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/bar.tea.com") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/bar.tea.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,11 +143,15 @@ func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(
 }
 
 func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXNotExistingHost
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXNotExistingHost,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/foo.mocha.com") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/foo.mocha.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,11 +163,15 @@ func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
 }
 
 func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.UpstreamsForHost = getUpstreamsForHost
-	hs.NginxUpstreams = getUpstreamsFromNGINXErrorFromAPI
+	hs := healthcheck.HealthServer{
+		UpstreamsForHost: getUpstreamsForHost,
+		NginxUpstreams:   getUpstreamsFromNGINXErrorFromAPI,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/foo.tea.com") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/foo.tea.com") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,11 +183,15 @@ func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
 }
 
 func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/ts/") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/ts/") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -201,11 +203,15 @@ func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testi
 }
 
 func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/ts/bogusname") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/ts/bogusname") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,11 +223,15 @@ func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllUp
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/ts/foo-app") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/ts/foo-app") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,11 +256,15 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersUpSomeDown(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXPartiallyUp
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXPartiallyUp,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/ts/foo-app") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/ts/foo-app") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -275,11 +289,15 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersU
 }
 
 func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersDown(t *testing.T) {
-	hs := newTestHealthServer(t)
-	hs.StreamUpstreamsForName = streamUpstreamsForName
-	hs.NginxStreamUpstreams = streamUpstreamsFromNGINXAllPeersDown
+	hs := healthcheck.HealthServer{
+		StreamUpstreamsForName: streamUpstreamsForName,
+		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllPeersDown,
+	}
 
-	resp, err := http.Get(hs.URL + "probe/ts/foo-app") //nolint:noctx
+	ts := httptest.NewServer(testHandler(&hs))
+	defer ts.Close()
+
+	resp, err := ts.Client().Get(ts.URL + "/probe/ts/foo-app") //nolint:noctx
 	if err != nil {
 		t.Fatal(err)
 	}
