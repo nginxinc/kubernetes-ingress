@@ -88,7 +88,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx/nginx-ingress:3.2.0
+      - image: nginx/nginx-ingress:3.3.0
         imagePullPolicy: IfNotPresent
         name: nginx-ingress
         ports:

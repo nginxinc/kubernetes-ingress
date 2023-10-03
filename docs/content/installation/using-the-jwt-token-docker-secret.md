@@ -18,8 +18,8 @@ To list the available image tags using the Docker registry API, you will also ne
 
 You can also get the image using alternative methods:
 
-* You can use Docker to pull an NGINX Ingress Controller image with NGINX Plus and push it to your private registry by following the ["Pulling the Ingress Controller Image"](https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/) documentation.
-* You can also build an NGINX Ingress Controller image by following the ["Information on how to build an Ingress Controller image"](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image/) documentation.
+- You can use Docker to pull an NGINX Ingress Controller image with NGINX Plus and push it to your private registry by following the ["Pulling the Ingress Controller Image"](https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/) documentation.
+- You can also build an NGINX Ingress Controller image by following the ["Information on how to build an Ingress Controller image"](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image/) documentation.
 
 If you would like an NGINX Ingress Controller image using NGINX open source, we provide the image through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
 
@@ -27,8 +27,8 @@ If you would like an NGINX Ingress Controller image using NGINX open source, we 
 
 You will need the following information from [MyF5](https://my.f5.com) for these steps:
 
-* A JWT Access Token (Per instance) for NGINX Ingress Controller from an active NGINX Ingress Controller subscription.
-* The certificate (`nginx-repo.crt`) and key (`nginx-repo.key`) for each NGINX Ingress Controller instance, used to list the available image tags from the Docker registry API.
+- A JWT Access Token (Per instance) for NGINX Ingress Controller from an active NGINX Ingress Controller subscription.
+- The certificate (`nginx-repo.crt`) and key (`nginx-repo.key`) for each NGINX Ingress Controller instance, used to list the available image tags from the Docker registry API.
 
 ## Prepare NGINX Ingress Controller
 
@@ -43,19 +43,17 @@ You will need the following information from [MyF5](https://my.f5.com) for these
 
 1. Create a Kubernetes `docker-registry` secret type on the cluster, using the JWT token as the username and `none` for password (Password is unused).  The name of the docker server is `private-registry.nginx.com`.
 
-
-	```shell
+ ```shell
     kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
     ```
-   It is important that the `--docker-username=<JWT Token>` contains the contents of the token and is not pointing to the token itself. Ensure that when you copy the contents of the JWT token, there are no additional characters or extra whitespaces. This can invalidate the token and cause 401 errors when trying to authenticate to the registry.
 
+   It is important that the `--docker-username=<JWT Token>` contains the contents of the token and is not pointing to the token itself. Ensure that when you copy the contents of the JWT token, there are no additional characters or extra whitespaces. This can invalidate the token and cause 401 errors when trying to authenticate to the registry.
 
 1. Confirm the details of the created secret by running:
 
-	```shell
+ ```shell
     kubectl get secret regcred --output=yaml
     ```
-
 
 1. You can now use the newly created Kubernetes secret in `helm` and `manifest` deployments.
 
@@ -73,7 +71,7 @@ spec:
     seccompProfile:
       type: RuntimeDefault
   containers:
-  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.2.0
+  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.3.0
     imagePullPolicy: IfNotPresent
     name: nginx-plus-ingress
 ```
@@ -111,7 +109,7 @@ image:
   repository: private-registry.nginx.com/nginx-ic/nginx-plus-ingress
 
   ## The version tag
-  tag: 3.2.0
+  tag: 3.3.0
 
   serviceAccount:
     ## The annotations of the service account of the Ingress Controller pods.
@@ -136,13 +134,12 @@ The above command will install NGINX Ingress Controller in the `nginx-ingress` n
 
 If the namespace does not exist, `--create-namespace` will create it. Using `-f values.yaml` tells `helm` to use the `values.yaml` file that you modified earlier with the settings you want to apply for your NGINX Ingress Controller deployment.
 
-
 ### Helm Chart
 
 If you want to install NGINX Ingress Controller using the charts method, the following is an example of using the command line to pass the required arguments using the `set` parameter.
 
 ```shell
-helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.18.0 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.2.0 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
+helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.0 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.3.0 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
 ```
 
 Checking the validation that the .crts/key and .jwt are able to successfully authenticate to the repo to pull NGINX Ingress controller images:
