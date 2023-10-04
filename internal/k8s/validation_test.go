@@ -3630,6 +3630,10 @@ func TestValidateRegexPath(t *testing.T) {
 			regexPath: "/[0-9a-z]{4}[0-9]+",
 			msg:       "regexp with curly braces",
 		},
+		{
+			regexPath: "~ ^/coffee/(?!.*\\/latte)(?!.*\\/americano)(.*)",
+			msg:       "regexp with Perl5 regex",
+		},
 	}
 
 	for _, test := range tests {
