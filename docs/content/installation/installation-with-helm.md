@@ -219,6 +219,8 @@ please follow the steps listed in this page.
 
 The steps you should follow depend on the Helm release name:
 
+{{<tabs>}}
+
 {{%tab name="Helm release name is `nginx-ingress`"%}}
 
 1. Use `kubectl describe` on deployment/daemonset to get the `Selector` value:
