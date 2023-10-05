@@ -219,7 +219,7 @@ please follow the steps listed in this page.
 
 The steps you should follow depend on the Helm release name:
 
-{{<tabs>}}
+{{<tabs>}}<!-- markdownlint-disable-line MD033 -->
 
 {{%tab name="Helm release name is `nginx-ingress`"%}}
 
@@ -324,7 +324,7 @@ reviewing its events:
 
 {{%/tab%}}
 
-{{</tabs>}}
+{{</tabs>}}<!-- markdownlint-disable-line MD033 -->
 
 ## Running Multiple Ingress Controllers
 
