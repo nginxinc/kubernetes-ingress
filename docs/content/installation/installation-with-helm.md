@@ -467,11 +467,11 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`prometheus.scheme` | Configures the HTTP scheme to use for connections to the Prometheus endpoint. | http |
 |`prometheus.secret` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Prometheus endpoint with TLS connections. | "" |
 |`prometheus.service.create` | Create a Headless service to expose prometheus metrics. Requires `prometheus.create`. | false |
-|`prometheus.service.labels` | Kubernetes object labels to attach to the service object. | "" |
+|`prometheus.service.labels` | Kubernetes object labels to attach to the service object. | {service: "nginx-ingress-prometheus-service"} |
 |`prometheus.serviceMonitor.create` | Create a ServiceMonitor custom resource. Requires ServiceMonitor CRD to be installed. For the latest CRD, check the latest release on the [prometheus-operator](https://github.com/prometheus-operator/prometheus-operator) GitHub repo under `example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml` | false |
-|`prometheus.serviceMonitor.labels` | Kubernetes object labels to attach to the serviceMonitor object. | "" |
-|`prometheus.serviceMonitor.selectorMatchLabels` | A set of labels to allow the selection of endpoints for the ServiceMonitor. | "" |
-|`prometheus.serviceMonitor.endpoints` | A list of endpoints allowed as part of this ServiceMonitor. | "" |
+|`prometheus.serviceMonitor.labels` | Kubernetes object labels to attach to the serviceMonitor object. | {} |
+|`prometheus.serviceMonitor.selectorMatchLabels` | A set of labels to allow the selection of endpoints for the ServiceMonitor. | {service: "nginx-ingress-prometheus-service"} |
+|`prometheus.serviceMonitor.endpoints` | A list of endpoints allowed as part of this ServiceMonitor. | [port: prometheus] |
 |`serviceInsight.create` | Expose NGINX Plus Service Insight endpoint. | false |
 |`serviceInsight.port` | Configures the port to expose endpoints. | 9114 |
 |`serviceInsight.scheme` | Configures the HTTP scheme to use for connections to the Service Insight endpoint. | http |
