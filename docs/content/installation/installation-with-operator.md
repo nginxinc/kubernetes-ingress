@@ -58,7 +58,7 @@ should be associated with the ServiceAccount.
 
 ## 2. Create the NginxIngressController
 
-```shell
+```console
 kubectl apply -f nginx-ingress-controller.yaml
 ```
 
