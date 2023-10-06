@@ -6,6 +6,9 @@ This chart deploys the NGINX Ingress Controller in your Kubernetes cluster.
 
 ## Prerequisites
 
+**Note** All documentation should only be used with the latest stable release, indicated on
+[the releases page](https://github.com/nginxinc/kubernetes-ingress/releases) of the GitHub repository.
+
 - A [Kubernetes Version Supported by the Ingress
   Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
 - Helm 3.0+.
@@ -190,6 +193,131 @@ The command removes all the Kubernetes components associated with the release an
 Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Uninstalling the
 CRDs](#uninstalling-the-crds).
 
+## Upgrading without downtime
+
+### Background
+
+In NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606)
+to Helm resource names, labels and annotations to fit with Helm best practices.
+When using Helm to upgrade from a version prior to 3.1.0, certain resources like Deployment, DaemonSet and Service will
+be recreated due to the aforementioned changes, which will result in downtime.
+
+Although the advisory is to update all resources in accordance with new naming convention, to avoid the downtime
+please follow the steps listed in this page.
+
+### Upgrade Steps
+
+**Note** The following steps apply to both 2.x and 3.0.x releases.
+
+The steps you should follow depend on the Helm release name:
+
+{{<tabs>}}<!-- markdownlint-disable-line MD033 -->
+
+{{%tab name="Helm release name is `nginx-ingress`"%}}
+
+1. Use `kubectl describe` on deployment/daemonset to get the `Selector` value:
+
+    ```shell
+    kubectl describe deployments -n <namespace>
+    ```
+
+    Copy the key=value under `Selector`, such as:
+
+    ```shell
+    Selector:               app=nginx-ingress-nginx-ingress
+    ```
+
+2. Checkout the latest available tag using `git checkout v3.3.0`
+
+3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart`
+with the copied `Selector` value.
+
+    ```shell
+    selectorLabels: {app: nginx-ingress-nginx-ingress}
+    ```
+
+5. Run `helm upgrade` with following arguments set:
+
+    ```shell
+    --set serviceNameOverride="nginx-ingress-nginx-ingress"
+    --set controller.name=""
+    --set fullnameOverride="nginx-ingress-nginx-ingress"
+    ```
+
+    It could look as follows:
+
+    ```shell
+    helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
+    ```
+
+6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by
+reviewing its events:
+
+    ```shell
+        Type    Reason             Age    From                   Message
+    ----    ------             ----   ----                   -------
+    Normal  ScalingReplicaSet  9m11s  deployment-controller  Scaled up replica set nginx-ingress-nginx-ingress-<old_version> to 1
+    Normal  ScalingReplicaSet  101s   deployment-controller  Scaled up replica set nginx-ingress-nginx-ingress-<new_version> to 1
+    Normal  ScalingReplicaSet  98s    deployment-controller  Scaled down replica set nginx-ingress-nginx-ingress-<old_version> to 0 from 1
+    ```
+
+{{%/tab%}}
+
+{{%tab name="Helm release name is not `nginx-ingress`"%}}
+
+1. Use `kubectl describe` on deployment/daemonset to get the `Selector` value:
+
+    ```shell
+    kubectl describe deployment/daemonset -n <namespace>
+    ```
+
+    Copy the key=value under ```Selector```, such as:
+
+    ```shell
+    Selector:               app=<helm_release_name>-nginx-ingress
+    ```
+
+2. Checkout the latest available tag using `git checkout v3.3.0`
+
+3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart`
+with the copied `Selector` value.
+
+    ```shell
+    selectorLabels: {app: <helm_release_name>-nginx-ingress}
+    ```
+
+5. Run `helm upgrade` with following arguments set:
+
+    ```shell
+    --set serviceNameOverride="<helm_release_name>-nginx-ingress"
+    --set controller.name=""
+    ```
+
+    It could look as follows:
+
+    ```shell
+    helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
+    ```
+
+6. Once the upgrade process has finished, use `kubectl describe` on the deployment to verify the change by
+reviewing its events:
+
+    ```shell
+        Type    Reason             Age    From                   Message
+    ----    ------             ----   ----                   -------
+    Normal  ScalingReplicaSet  9m11s  deployment-controller  Scaled up replica set test-release-nginx-ingress-<old_version> to 1
+    Normal  ScalingReplicaSet  101s   deployment-controller  Scaled up replica set test-release-nginx-ingress-<new_version> to 1
+    Normal  ScalingReplicaSet  98s    deployment-controller  Scaled down replica set test-release-nginx-ingress-<old_version> to 0 from 1
+    ```
+
+{{%/tab%}}
+
+{{</tabs>}}<!-- markdownlint-disable-line MD033 -->
+
 ## Running Multiple Ingress Controllers
 
 If you are running multiple Ingress Controller releases in your cluster with enabled custom resources, the releases will
@@ -225,8 +353,8 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.config.annotations` | The annotations of the Ingress Controller configmap. | {} |
 |`controller.config.entries` | The entries of the ConfigMap for customizing NGINX configuration. See [ConfigMap resource docs](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) for the list of supported ConfigMap keys. | {} |
 |`controller.customPorts` | A list of custom ports to expose on the NGINX Ingress Controller pod. Follows the conventional Kubernetes yaml syntax for container ports. | [] |
-|`controller.defaultTLS.cert` | The base64-encoded TLS certificate for the default HTTPS server. **Note:** By default, a pre-generated self-signed certificate is used. It is recommended that you specify your own certificate. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. | A pre-generated self-signed certificate. |
-|`controller.defaultTLS.key` | The base64-encoded TLS key for the default HTTPS server. **Note:** By default, a pre-generated key is used. It is recommended that you specify your own key. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. | A pre-generated key. |
+|`controller.defaultTLS.cert` | The base64-encoded TLS certificate for the default HTTPS server. **Note:** It is recommended that you specify your own certificate. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. |
+|`controller.defaultTLS.key` | The base64-encoded TLS key for the default HTTPS server. **Note:** It is recommended that you specify your own key. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. |
 |`controller.defaultTLS.secret` | The secret with a TLS certificate and key for the default HTTPS server. The value must follow the following format: `<namespace>/<name>`. Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters. **Note:** Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server. | None |
 |`controller.wildcardTLS.cert` | The base64-encoded TLS certificate for every Ingress/VirtualServer host that has TLS enabled but no secret specified. If the parameter is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection. | None |
 |`controller.wildcardTLS.key` | The base64-encoded TLS key for every Ingress/VirtualServer host that has TLS enabled but no secret specified. If the parameter is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection. | None |
@@ -329,10 +457,17 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`prometheus.port` | Configures the port to scrape the metrics. | 9113 |
 |`prometheus.scheme` | Configures the HTTP scheme to use for connections to the Prometheus endpoint. | http |
 |`prometheus.secret` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Prometheus endpoint with TLS connections. | "" |
+|`prometheus.service.create` | Create a Headless service to expose prometheus metrics. Requires `prometheus.create`. | false |
+|`prometheus.service.labels` | Kubernetes object labels to attach to the service object. | {service: "nginx-ingress-prometheus-service"} |
+|`prometheus.serviceMonitor.create` | Create a ServiceMonitor custom resource. Requires ServiceMonitor CRD to be installed. For the latest CRD, check the latest release on the [prometheus-operator](https://github.com/prometheus-operator/prometheus-operator) GitHub repo under `example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml` | false |
+|`prometheus.serviceMonitor.labels` | Kubernetes object labels to attach to the serviceMonitor object. | {} |
+|`prometheus.serviceMonitor.selectorMatchLabels` | A set of labels to allow the selection of endpoints for the ServiceMonitor. | {service: "nginx-ingress-prometheus-service"} |
+|`prometheus.serviceMonitor.endpoints` | A list of endpoints allowed as part of this ServiceMonitor. | [port: prometheus] |
 |`serviceInsight.create` | Expose NGINX Plus Service Insight endpoint. | false |
 |`serviceInsight.port` | Configures the port to expose endpoints. | 9114 |
 |`serviceInsight.scheme` | Configures the HTTP scheme to use for connections to the Service Insight endpoint. | http |
 |`serviceInsight.secret` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Service Insight endpoint with TLS connections. | "" |
+|`serviceNameOverride` | Used to prevent cloud load balancers from being replaced due to service name change during helm upgrades. | "" |
 |`nginxServiceMesh.enable` | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false |
 |`nginxServiceMesh.enableEgress` | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress Controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false |
 
