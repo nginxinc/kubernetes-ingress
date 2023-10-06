@@ -6,8 +6,8 @@ resource. The application, called cafe, lets you get either tea via the tea serv
 You indicate your drink preference with the URI of your HTTP request: URIs ending with `/tea` get you tea and URIs
 ending with `/coffee` get you coffee.
 
-The example is similar to the [complete example](../../examples/complete-example/README.md). However, instead of the
-Ingress resource, we use the VirtualServer.
+The example is similar to the [complete example](../../ingress-resources/complete-example/README.md).
+However, instead of the Ingress resource, we use the VirtualServer.
 
 ## Prerequisites
 
