@@ -608,12 +608,14 @@ class TestTransportServerTcpLoadBalance:
 
         host = host.strip("[]")
         with socket.create_connection((host, port)) as sock:
-            with ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLS) as ssock:
-                print(ssock.version())
-                ssock.sendall(b"connect")
-                response = ssock.recv(4096)
-                endpoint = response.decode()
-                print(f"Connected securely to: {endpoint}")
+            ctx = ssl.SSLContext()
+            ctx.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # only secure TLSv1_2+ is allowed
+            ssock = ctx.wrap_socket(sock)
+            print(ssock.version())
+            ssock.sendall(b"connect")
+            response = ssock.recv(4096)
+            endpoint = response.decode()
+            print(f"Connected securely to: {endpoint}")
 
         self.restore_ts(kube_apis, transport_server_setup)
         delete_items_from_yaml(kube_apis, src_sec_yaml, transport_server_setup.namespace)
