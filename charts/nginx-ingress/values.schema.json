@@ -1262,12 +1262,20 @@
             false
           ]
         },
-        "disableDefaultListeners": {
-          "type": "boolean",
-          "default": false,
-          "title": "The disableDefaultListeners",
+        "defaultHTTPListenerPort": {
+          "type": "integer",
+          "default": 80,
+          "title": "The defaultHTTPListenerPort",
           "examples": [
-            false
+            80
+          ]
+        },
+        "defaultHTTPSListenerPort": {
+          "type": "integer",
+          "default": 443,
+          "title": "The defaultHTTPSListenerPort",
+          "examples": [
+            443
           ]
         },
         "readOnlyRootFilesystem": {
@@ -1419,7 +1427,8 @@
           },
           "enableLatencyMetrics": false,
           "disableIPV6": false,
-          "disableDefaultListeners": false,
+          "defaultHTTPListenerPort": 80,
+          "defaultHTTPSListenerPort": 443,
           "readOnlyRootFilesystem": false
         }
       ]
@@ -1785,7 +1794,8 @@
         },
         "enableLatencyMetrics": false,
         "disableIPV6": false,
-        "disableDefaultListeners": false,
+        "defaultHTTPListenerPort": 80,
+        "defaultHTTPSListenerPort": 443,
         "readOnlyRootFilesystem": false
       },
       "rbac": {
