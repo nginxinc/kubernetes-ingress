@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dlclark/regexp2"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -1233,8 +1234,11 @@ func validateRoutePath(path string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
+// validateRegexPath validates correctness of the string representing the path.
+//
+// Internally it uses Perl5 compatible regexp2 package.
 func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
-	if _, err := regexp.Compile(path); err != nil {
+	if _, err := regexp2.Compile(path, 0); err != nil {
 		return field.ErrorList{field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err))}
 	}
 	if err := ValidateEscapedString(path, "*.jpg", "^/images/image_*.png$"); err != nil {

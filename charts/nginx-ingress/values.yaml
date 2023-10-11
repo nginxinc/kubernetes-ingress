@@ -153,6 +153,8 @@ controller:
     targetCPUUtilizationPercentage: 50
     ## The target memory utilization percentage.
     targetMemoryUtilizationPercentage: 50
+    ## Custom behavior policies
+    behavior: {}
 
   ## The resources of the Ingress Controller pods.
   resources:
