@@ -43,6 +43,7 @@ secret_namespace = "nginx-ingress"
 def default_server_setup(ingress_controller_endpoint, ingress_controller):
     ensure_connection(f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/")
 
+
 @pytest.fixture(scope="class")
 def default_server_setup_custom_port(ingress_controller_endpoint, ingress_controller):
     ensure_connection(f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.custom_http}/")
@@ -132,12 +133,15 @@ class TestDefaultServer:
         indirect=True,
     )
     def test_custom_default_listeners(
-        self, kube_apis, ingress_controller_endpoint, ingress_controller, default_server_setup_custom_port):
+        self, kube_apis, ingress_controller_endpoint, ingress_controller, default_server_setup_custom_port
+    ):
         print("Ensure custom ports for default listeners return 404")
         request_url_http = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.custom_http}/"
         resp = requests.get(request_url_http, headers={})
         assert resp.status_code == 404
 
-        request_url_https = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.custom_https}/"
+        request_url_https = (
+            f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.custom_https}/"
+        )
         resp = requests.get(request_url_https, headers={}, verify=False)
         assert resp.status_code == 404
