@@ -11,7 +11,8 @@ docs: "DOCS-588"
 
 The GlobalConfiguration resource allows you to define the global configuration parameters of the Ingress Controller. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-The resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources](/nginx-ingress-controller/configuration/transportserver-resource).
+The resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources](/nginx-ingress-controller/configuration/transportserver-resource) and
+can be used to configure custom listerners for VirtualServers as specified [here](/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports).
 
 ## Prerequisites
 
@@ -35,6 +36,13 @@ spec:
   - name: dns-tcp
     port: 5353
     protocol: TCP
+  - name: http-8083
+    port: 8083
+    protocol: HTTP
+  - name: https-8443
+    port: 8443
+    protocol: HTTP
+    ssl: true
 ```
 
 {{% table %}}
@@ -45,12 +53,15 @@ spec:
 
 ### Listener
 
-The listener defines a listener (a combination of a protocol and a port) that NGINX will use to accept traffic for a [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource):
+The listener defines a listener (a combination of a protocol and a port) that NGINX will use to accept traffic for a [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and a [VirtualServer](nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources):
 
 ```yaml
-name: dns-tcp
-port: 5353
-protocol: TCP
+- name: dns-tcp
+  port: 5353
+  protocol: TCP
+- name: http-8083
+  port: 8083
+  protocol: HTTP
 ```
 
 {{% table %}}
