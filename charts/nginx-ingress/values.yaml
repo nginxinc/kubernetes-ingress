@@ -443,6 +443,12 @@ controller:
   ## Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack.
   disableIPV6: false
 
+  ## Sets the port for the HTTP `default_server` listener.
+  defaultHTTPListenerPort: 80
+
+  ## Sets the port for the HTTPS `default_server` listener.
+  defaultHTTPSListenerPort: 443
+
   ## Configure root filesystem as read-only and add volumes for temporary data.
   readOnlyRootFilesystem: false
 

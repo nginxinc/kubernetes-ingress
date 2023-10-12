@@ -508,3 +508,19 @@ Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack.
 Default `false`.
 &nbsp;
 <a name="cmdoption-disable-ipv6"></a>
+
+### -default-http-listener-port
+
+Sets the port for the HTTP `default_server` listener.
+
+Default `80`.
+&nbsp;
+<a name="cmdoption-default-http-listener-port"></a>
+
+### -default-https-listener-port
+
+Sets the port for the HTTPS `default_server` listener.
+
+Default `443`.
+&nbsp;
+<a name="cmdoption-default-https-listener-port"></a>

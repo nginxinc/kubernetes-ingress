@@ -90,6 +90,8 @@ func main() {
 
 	staticCfgParams := &configs.StaticConfigParams{
 		DisableIPV6:                    *disableIPV6,
+		DefaultHTTPListenerPort:        *defaultHTTPListenerPort,
+		DefaultHTTPSListenerPort:       *defaultHTTPSListenerPort,
 		HealthStatus:                   *healthStatus,
 		HealthStatusURI:                *healthStatusURI,
 		NginxStatus:                    *nginxStatus,

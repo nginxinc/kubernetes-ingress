@@ -1262,6 +1262,22 @@
             false
           ]
         },
+        "defaultHTTPListenerPort": {
+          "type": "integer",
+          "default": 80,
+          "title": "The defaultHTTPListenerPort",
+          "examples": [
+            80
+          ]
+        },
+        "defaultHTTPSListenerPort": {
+          "type": "integer",
+          "default": 443,
+          "title": "The defaultHTTPSListenerPort",
+          "examples": [
+            443
+          ]
+        },
         "readOnlyRootFilesystem": {
           "type": "boolean",
           "default": false,
@@ -1411,6 +1427,8 @@
           },
           "enableLatencyMetrics": false,
           "disableIPV6": false,
+          "defaultHTTPListenerPort": 80,
+          "defaultHTTPSListenerPort": 443,
           "readOnlyRootFilesystem": false
         }
       ]
@@ -1776,6 +1794,8 @@
         },
         "enableLatencyMetrics": false,
         "disableIPV6": false,
+        "defaultHTTPListenerPort": 80,
+        "defaultHTTPSListenerPort": 443,
         "readOnlyRootFilesystem": false
       },
       "rbac": {
