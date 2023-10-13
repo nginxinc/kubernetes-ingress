@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.5
+# syntax=docker/dockerfile:1.6
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=R30
 ARG DOWNLOAD_TAG=edge
@@ -27,8 +27,8 @@ FROM nginx:1.25.2-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
-	# temp fix for CVE-2023-3138
-	&& apk upgrade --no-cache libx11 \
+	# temp fix for CVE-2023-38545 and CVE-2023-44487
+	&& apk upgrade --no-cache curl nghttp2-libs \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
 	&& ldconfig /usr/local/lib/
@@ -181,6 +181,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
 	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
 	## end of duplicated code
+	## fix for CVEs
+	&& dnf upgrade -y curl dbus libcap libssh platform-python python3-requests libxml2 systemd sqlite-libs dnf-plugin-subscription-manager dmidecode subscription-manager-rhsm-certificates glibc subscription-manager \
 	&& sed -i 's/\(def in_container():\)/\1\n    return False/g' /usr/lib64/python*/*-packages/rhsm/config.py \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
@@ -197,7 +199,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	dnf --nodocs install -y app-protect-dos; \
 	fi \
 	# fix for CVEs
-	&& dnf upgrade -y curl dbus libcap libssh platform-python python3-requests libxml2 systemd sqlite-libs dmidecode dnf-plugin-subscription-manager ncurses \
+	&& dnf upgrade -y curl ncurses \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
 	&& dnf clean all && rm -rf /var/cache/dnf
