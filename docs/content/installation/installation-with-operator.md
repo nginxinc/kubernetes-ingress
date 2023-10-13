@@ -42,7 +42,7 @@ spec:
     image:
       pullPolicy: IfNotPresent
       repository: nginx/nginx-ingress
-      tag: 3.3.0-ubi
+      tag: 3.3.1-ubi
     ingressClass:
       name: nginx
     kind: deployment
