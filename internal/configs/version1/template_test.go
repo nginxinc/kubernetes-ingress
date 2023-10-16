@@ -665,6 +665,290 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPSListenerPort(t
 	}
 }
 
+func TestExecuteTemplate_ForMainForNGINXWithHTTP2On(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfgHTTP2On)
+	t.Log(buf.String())
+
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	wantDirectives := []string{
+		"http2 on;",
+	}
+
+	unwantDirectives := []string{
+		"listen 443 ssl http2",
+		"listen [::]:443 ssl http2",
+	}
+
+	mainConf := buf.String()
+	for _, want := range wantDirectives {
+		if !strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+
+	for _, want := range unwantDirectives {
+		if strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2On(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfgHTTP2On)
+	t.Log(buf.String())
+
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	wantDirectives := []string{
+		"http2 on;",
+	}
+
+	unwantDirectives := []string{
+		"listen 443 ssl http2",
+		"listen [::]:443 ssl http2",
+	}
+
+	mainConf := buf.String()
+	for _, want := range wantDirectives {
+		if !strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+
+	for _, want := range unwantDirectives {
+		if strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXWithHTTP2Off(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfg)
+	t.Log(buf.String())
+
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	wantDirectives := []string{
+		"listen 443 ssl",
+		"listen [::]:443 ssl",
+	}
+
+	unwantDirectives := []string{
+		"http2 on;",
+	}
+
+	mainConf := buf.String()
+	for _, want := range wantDirectives {
+		if !strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+
+	for _, want := range unwantDirectives {
+		if strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfg)
+	t.Log(buf.String())
+
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	wantDirectives := []string{
+		"listen 443 ssl",
+		"listen [::]:443 ssl",
+	}
+
+	unwantDirectives := []string{
+		"http2 on;",
+	}
+
+	mainConf := buf.String()
+	for _, want := range wantDirectives {
+		if !strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+
+	for _, want := range unwantDirectives {
+		if strings.Contains(mainConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2On(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusIngressTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, ingressCfgHTTP2On)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ingConf := buf.String()
+
+	wantDirectives := []string{
+		"http2 on;",
+	}
+
+	unwantDirectives := []string{
+		"listen 443 ssl http2",
+		"listen [::]:443 ssl http2",
+	}
+
+	for _, want := range wantDirectives {
+		if !strings.Contains(ingConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+
+	for _, want := range unwantDirectives {
+		if strings.Contains(ingConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForIngressForNGINXWithHTTP2On(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, ingressCfgHTTP2On)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ingConf := buf.String()
+
+	wantDirectives := []string{
+		"http2 on;",
+	}
+
+	unwantDirectives := []string{
+		"listen 443 ssl http2",
+		"listen [::]:443 ssl http2",
+	}
+
+	for _, want := range wantDirectives {
+		if !strings.Contains(ingConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+
+	for _, want := range unwantDirectives {
+		if strings.Contains(ingConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2Off(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusIngressTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, ingressCfg)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ingConf := buf.String()
+
+	wantDirectives := []string{
+		"listen 443 ssl",
+		"listen [::]:443 ssl",
+	}
+
+	unwantDirectives := []string{
+		"http2 on;",
+	}
+
+	for _, want := range wantDirectives {
+		if !strings.Contains(ingConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+
+	for _, want := range unwantDirectives {
+		if strings.Contains(ingConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
+func TestExecuteTemplate_ForIngressForNGINXWithHTTP2Off(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, ingressCfg)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ingConf := buf.String()
+
+	wantDirectives := []string{
+		"listen 443 ssl",
+		"listen [::]:443 ssl",
+	}
+
+	unwantDirectives := []string{
+		"http2 on;",
+	}
+
+	for _, want := range wantDirectives {
+		if !strings.Contains(ingConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+
+	for _, want := range unwantDirectives {
+		if strings.Contains(ingConf, want) {
+			t.Errorf("want %q in generated config", want)
+		}
+	}
+}
+
 func newNGINXPlusIngressTmpl(t *testing.T) *template.Template {
 	t.Helper()
 	tmpl, err := template.New("nginx-plus.ingress.tmpl").Funcs(helperFunctions).ParseFiles("nginx-plus.ingress.tmpl")
@@ -979,6 +1263,32 @@ var (
 	mainCfg = MainConfig{
 		DefaultHTTPListenerPort:  80,
 		DefaultHTTPSListenerPort: 443,
+		ServerNamesHashMaxSize:   "512",
+		ServerTokens:             "off",
+		WorkerProcesses:          "auto",
+		WorkerCPUAffinity:        "auto",
+		WorkerShutdownTimeout:    "1m",
+		WorkerConnections:        "1024",
+		WorkerRlimitNofile:       "65536",
+		LogFormat:                []string{"$remote_addr", "$remote_user"},
+		LogFormatEscaping:        "default",
+		StreamSnippets:           []string{"# comment"},
+		StreamLogFormat:          []string{"$remote_addr", "$remote_user"},
+		StreamLogFormatEscaping:  "none",
+		ResolverAddresses:        []string{"example.com", "127.0.0.1"},
+		ResolverIPV6:             false,
+		ResolverValid:            "10s",
+		ResolverTimeout:          "15s",
+		KeepaliveTimeout:         "65s",
+		KeepaliveRequests:        100,
+		VariablesHashBucketSize:  256,
+		VariablesHashMaxSize:     1024,
+	}
+
+	mainCfgHTTP2On = MainConfig{
+		DefaultHTTPListenerPort:  80,
+		DefaultHTTPSListenerPort: 443,
+		HTTP2:                    true,
 		ServerNamesHashMaxSize:   "512",
 		ServerTokens:             "off",
 		WorkerProcesses:          "auto",
@@ -1706,6 +2016,50 @@ var (
 			Annotations: map[string]string{
 				"nginx.org/mergeable-ingress-type": "master",
 			},
+		},
+	}
+
+	// Ingress Config example without added annotations
+	ingressCfgHTTP2On = IngressNginxConfig{
+		Servers: []Server{
+			{
+				Name:              "test.example.com",
+				ServerTokens:      "off",
+				StatusZone:        "test.example.com",
+				SSL:               true,
+				HTTP2:             true,
+				SSLCertificate:    "secret.pem",
+				SSLCertificateKey: "secret.pem",
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				Locations: []Location{
+					{
+						Path:                "/tea",
+						Upstream:            testUpstream,
+						ProxyConnectTimeout: "10s",
+						ProxyReadTimeout:    "10s",
+						ProxySendTimeout:    "10s",
+						ClientMaxBodySize:   "2m",
+						MinionIngress: &Ingress{
+							Name:      "tea-minion",
+							Namespace: "default",
+						},
+					},
+				},
+				HealthChecks: map[string]HealthCheck{"test": healthCheck},
+				JWTRedirectLocations: []JWTRedirectLocation{
+					{
+						Name:     "@login_url-default-cafe-ingress",
+						LoginURL: "https://test.example.com/login",
+					},
+				},
+			},
+		},
+		Upstreams: []Upstream{testUpstream},
+		Keepalive: "16",
+		Ingress: Ingress{
+			Name:      "cafe-ingress",
+			Namespace: "default",
 		},
 	}
 )

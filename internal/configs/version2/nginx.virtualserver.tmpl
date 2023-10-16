@@ -61,20 +61,25 @@ server {
 
     {{ with $ssl := $s.SSL }}
         {{ if $s.TLSPassthrough }}
-    listen unix:/var/lib/nginx/passthrough-https.sock{{ if $ssl.HTTP2 }} http2{{ end }} proxy_protocol;
+    listen unix:/var/lib/nginx/passthrough-https.sock proxy_protocol;
     set_real_ip_from unix:;
     real_ip_header proxy_protocol;
         {{ else }}
         {{ if not $s.CustomListeners }}
-    listen 443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
-    {{ if not $s.DisableIPV6 }}listen [::]:443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+    listen 443 ssl{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+    {{ if not $s.DisableIPV6 }}listen [::]:443 ssl{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
         {{ else }}
         {{ if (gt $s.HTTPSPort 0) }}
-    listen {{ $s.HTTPSPort }} ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
-    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HTTPSPort }} ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
+    listen {{ $s.HTTPSPort }} ssl{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HTTPSPort }} ssl{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
         {{ end }}
         {{ end }}
         {{ end }}
+
+    {{ if $ssl.HTTP2 }}
+    http2 on;
+    {{ end }}
+
 
         {{ if $ssl.RejectHandshake }}
     ssl_reject_handshake on;

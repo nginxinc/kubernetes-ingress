@@ -157,12 +157,16 @@ http {
         {{if not .DisableIPV6}}listen [::]:{{ .DefaultHTTPListenerPort }} default_server{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
 
         {{if .TLSPassthrough}}
-        listen unix:/var/lib/nginx/passthrough-https.sock ssl default_server{{if .HTTP2}} http2{{end}} proxy_protocol;
+        listen unix:/var/lib/nginx/passthrough-https.sock ssl default_server proxy_protocol;
         set_real_ip_from unix:;
         real_ip_header proxy_protocol;
         {{else}}
-        listen {{ .DefaultHTTPSListenerPort }} ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
-        {{if not .DisableIPV6}}listen [::]:{{ .DefaultHTTPSListenerPort }} ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+        listen {{ .DefaultHTTPSListenerPort }} ssl default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
+        {{if not .DisableIPV6}}listen [::]:{{ .DefaultHTTPSListenerPort }} ssl default_server{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+        {{end}}
+
+        {{if .HTTP2}}
+        http2 on;
         {{end}}
 
         {{if .SSLRejectHandshake}}
