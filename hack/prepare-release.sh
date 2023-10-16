@@ -47,7 +47,6 @@ find $DOCS_TO_UPDATE_FOLDER -type f -name "*.md" ! -name releases.md ! -name CHA
 
 # update CHANGELOGs
 sed -i "" "8r hack/changelog-template.txt" $DOCS_TO_UPDATE_FOLDER/releases.md
-sed -i "" "1r hack/repo-changelog-template.txt" CHANGELOG.md
 sed -i "" -e "s/%%TITLE%%/## $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" $DOCS_TO_UPDATE_FOLDER/releases.md CHANGELOG.md
 
 # copy the helm chart README to the docs
