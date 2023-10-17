@@ -33,7 +33,7 @@ spec:
 #      - name: nginx-log
 #        emptyDir: {}
       containers:
-      - image: nginx-plus-ingress:http2
+      - image: nginx-plus-ingress:3.3.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -90,7 +90,6 @@ spec:
         args:
           - -nginx-plus
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
-          - -enable-tls-passthrough
          #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
          #- -include-year
          #- -enable-cert-manager
@@ -102,7 +101,7 @@ spec:
          #- -external-service=nginx-ingress
          #- -enable-prometheus-metrics
          #- -enable-service-insight
-          - -global-configuration=$(POD_NAMESPACE)/nginx-configuration
+         #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
 #      initContainers:
 #      - image: nginx/nginx-ingress:3.3.0
 #        imagePullPolicy: IfNotPresent
