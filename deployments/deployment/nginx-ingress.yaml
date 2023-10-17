@@ -87,7 +87,6 @@ spec:
               fieldPath: metadata.name
         args:
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
-          - -enable-tls-passthrough
          #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
          #- -include-year
          #- -enable-cert-manager
