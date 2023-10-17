@@ -33,7 +33,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 1. Clone the NGINX Ingress Controller repo:
 
     ```console
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.3.0
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.3.1
     cd kubernetes-ingress
     ```
 
@@ -52,7 +52,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-ingress:3.3.0** is built. Note that the tag `3.3.0` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-ingress:3.3.1** is built. Note that the tag `3.3.1` comes from the `VERSION` variable, defined in the Makefile.
 
     - For **NGINX Plus**, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
 
@@ -69,7 +69,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-plus-ingress:3.3.0** is built. Note that the tag `3.3.0` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-plus-ingress:3.3.1** is built. Note that the tag `3.3.1` comes from the `VERSION` variable, defined in the Makefile.
 
       **Note**: In the event of a patch version of [NGINX Plus being released](/nginx/releases/), make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the `make` command.
 

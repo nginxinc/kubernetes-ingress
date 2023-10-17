@@ -1,7 +1,7 @@
 import pytest
 import requests
 import yaml
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import CRDS, DEPLOYMENTS, TEST_DATA
 from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
@@ -38,7 +38,7 @@ from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
 ap_policy = "dataguard-alarm"
 ap_policy_uds = "dataguard-alarm-uds"
-uds_crd = f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml"
+uds_crd = f"{CRDS}/appprotect.f5.com_apusersigs.yaml"
 uds_crd_resource = f"{TEST_DATA}/appprotect/ap-ic-uds.yaml"
 valid_resp_addr = "Server address:"
 valid_resp_name = "Server name:"

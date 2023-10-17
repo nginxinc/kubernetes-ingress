@@ -14,6 +14,7 @@ COPY --link tests/requirements.txt /workspace/tests/
 RUN pip install --require-hashes -r requirements.txt --no-deps
 
 COPY --link deployments /workspace/deployments
+COPY --link config /workspace/config
 
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
 	&& install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \

@@ -16,7 +16,7 @@ from kubernetes.client import (
     RbacAuthorizationV1Api,
 )
 from kubernetes.client.rest import ApiException
-from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, BASEDIR, DEPLOYMENTS, TEST_DATA
+from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, CRDS, DEPLOYMENTS, TEST_DATA
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.utils.resources_utils import (
@@ -355,38 +355,38 @@ def crds(kube_apis, request) -> None:
         'extra_args' list of IC cli arguments
     :return:
     """
-    vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml")
-    vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml")
-    pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml")
-    ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml")
-    gc_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml")
+    vs_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_virtualservers.yaml")
+    vsr_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_virtualserverroutes.yaml")
+    pol_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_policies.yaml")
+    ts_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_transportservers.yaml")
+    gc_crd_name = get_name_from_yaml(f"{CRDS}/k8s.nginx.org_globalconfigurations.yaml")
 
     try:
         print("------------------------- Register CRDs -----------------------------------")
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             vs_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml",
+            f"{CRDS}/k8s.nginx.org_virtualservers.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             vsr_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml",
+            f"{CRDS}/k8s.nginx.org_virtualserverroutes.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml",
+            f"{CRDS}/k8s.nginx.org_policies.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             ts_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml",
+            f"{CRDS}/k8s.nginx.org_transportservers.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             gc_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml",
+            f"{CRDS}/k8s.nginx.org_globalconfigurations.yaml",
         )
     except ApiException as ex:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
