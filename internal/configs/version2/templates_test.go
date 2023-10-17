@@ -174,6 +174,8 @@ func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2On(t *testing.
 		t.Error(err)
 	}
 	wantStrings := []string{
+		"listen 443 ssl proxy_protocol;",
+		"listen [::]:443 ssl proxy_protocol;",
 		"http2 on;",
 	}
 	for _, want := range wantStrings {
@@ -183,8 +185,8 @@ func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2On(t *testing.
 	}
 
 	unwantStrings := []string{
-		"listen 443 ssl http2",
-		"listen [::]:443 ssl http2",
+		"listen 443 ssl http2 proxy_protocol;",
+		"listen [::]:443 ssl http2 proxy_protocol;",
 	}
 
 	for _, want := range unwantStrings {
@@ -204,8 +206,8 @@ func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2Off(t *testing
 		t.Error(err)
 	}
 	wantStrings := []string{
-		"listen 443 ssl",
-		"listen [::]:443 ssl",
+		"listen 443 ssl proxy_protocol;",
+		"listen [::]:443 ssl proxy_protocol;",
 	}
 	for _, want := range wantStrings {
 		if !bytes.Contains(got, []byte(want)) {
@@ -234,6 +236,8 @@ func TestExecuteVirtualServerTemplate_RendersOSSTemplateWithHTTP2On(t *testing.T
 		t.Error(err)
 	}
 	wantStrings := []string{
+		"listen 443 ssl proxy_protocol;",
+		"listen [::]:443 ssl proxy_protocol;",
 		"http2 on;",
 	}
 	for _, want := range wantStrings {
@@ -243,8 +247,8 @@ func TestExecuteVirtualServerTemplate_RendersOSSTemplateWithHTTP2On(t *testing.T
 	}
 
 	unwantStrings := []string{
-		"listen 443 ssl http2",
-		"listen [::]:443 ssl http2",
+		"listen 443 ssl http2 proxy_protocol;",
+		"listen [::]:443 ssl http2 proxy_protocol;",
 	}
 
 	for _, want := range unwantStrings {
@@ -264,8 +268,8 @@ func TestExecuteVirtualServerTemplate_RendersOSSTemplateWithHTTP2Off(t *testing.
 		t.Error(err)
 	}
 	wantStrings := []string{
-		"listen 443 ssl",
-		"listen [::]:443 ssl",
+		"listen 443 ssl proxy_protocol;",
+		"listen [::]:443 ssl proxy_protocol;",
 	}
 	for _, want := range wantStrings {
 		if !bytes.Contains(got, []byte(want)) {

@@ -114,13 +114,14 @@ def assert_defaults_of_keys_with_validation_in_main_config(config, unexpected_va
 def assert_ssl_keys(config):
     # based on f"{TEST_DATA}/virtual-server-configmap-keys/configmap-ssl-keys.yaml"
     assert "if ($schema = 'http') {" not in config
-    assert "listen 443 ssl http2 proxy_protocol;" in config
+    assert "listen 443 ssl proxy_protocol;" in config
+    assert "http2 on;" in config
 
 
 def assert_defaults_of_ssl_keys(config):
     assert "if ($schema = 'http') {" not in config
     assert "listen 443 ssl;" in config
-    assert "http2" not in config
+    assert "http2 on;" not in config
 
 
 @pytest.fixture(scope="function")

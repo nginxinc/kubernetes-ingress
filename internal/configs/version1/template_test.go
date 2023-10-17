@@ -679,12 +679,14 @@ func TestExecuteTemplate_ForMainForNGINXWithHTTP2On(t *testing.T) {
 	}
 
 	wantDirectives := []string{
+		"listen 443 ssl default_server;",
+		"listen [::]:443 ssl default_server;",
 		"http2 on;",
 	}
 
 	unwantDirectives := []string{
-		"listen 443 ssl http2",
-		"listen [::]:443 ssl http2",
+		"listen 443 ssl default_server http2;",
+		"listen [::]:443 ssl default_server http2;",
 	}
 
 	mainConf := buf.String()
@@ -715,12 +717,14 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2On(t *testing.T) {
 	}
 
 	wantDirectives := []string{
+		"listen 443 ssl default_server;",
+		"listen [::]:443 ssl default_server;",
 		"http2 on;",
 	}
 
 	unwantDirectives := []string{
-		"listen 443 ssl http2",
-		"listen [::]:443 ssl http2",
+		"listen 443 ssl default_server http2;",
+		"listen [::]:443 ssl default_server http2;",
 	}
 
 	mainConf := buf.String()
@@ -751,8 +755,8 @@ func TestExecuteTemplate_ForMainForNGINXWithHTTP2Off(t *testing.T) {
 	}
 
 	wantDirectives := []string{
-		"listen 443 ssl",
-		"listen [::]:443 ssl",
+		"listen 443 ssl default_server;",
+		"listen [::]:443 ssl default_server;",
 	}
 
 	unwantDirectives := []string{
@@ -787,8 +791,8 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
 	}
 
 	wantDirectives := []string{
-		"listen 443 ssl",
-		"listen [::]:443 ssl",
+		"listen 443 ssl default_server;",
+		"listen [::]:443 ssl default_server;",
 	}
 
 	unwantDirectives := []string{
@@ -823,12 +827,14 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2On(t *testing.T) {
 	ingConf := buf.String()
 
 	wantDirectives := []string{
+		"listen 443 ssl;",
+		"listen [::]:443 ssl;",
 		"http2 on;",
 	}
 
 	unwantDirectives := []string{
-		"listen 443 ssl http2",
-		"listen [::]:443 ssl http2",
+		"listen 443 ssl http2;",
+		"listen [::]:443 ssl http2;",
 	}
 
 	for _, want := range wantDirectives {
@@ -858,12 +864,14 @@ func TestExecuteTemplate_ForIngressForNGINXWithHTTP2On(t *testing.T) {
 	ingConf := buf.String()
 
 	wantDirectives := []string{
+		"listen 443 ssl;",
+		"listen [::]:443 ssl;",
 		"http2 on;",
 	}
 
 	unwantDirectives := []string{
-		"listen 443 ssl http2",
-		"listen [::]:443 ssl http2",
+		"listen 443 ssl http2;",
+		"listen [::]:443 ssl http2;",
 	}
 
 	for _, want := range wantDirectives {
@@ -893,8 +901,8 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2Off(t *testing.T) {
 	ingConf := buf.String()
 
 	wantDirectives := []string{
-		"listen 443 ssl",
-		"listen [::]:443 ssl",
+		"listen 443 ssl;",
+		"listen [::]:443 ssl;",
 	}
 
 	unwantDirectives := []string{
@@ -928,8 +936,8 @@ func TestExecuteTemplate_ForIngressForNGINXWithHTTP2Off(t *testing.T) {
 	ingConf := buf.String()
 
 	wantDirectives := []string{
-		"listen 443 ssl",
-		"listen [::]:443 ssl",
+		"listen 443 ssl;",
+		"listen [::]:443 ssl;",
 	}
 
 	unwantDirectives := []string{
