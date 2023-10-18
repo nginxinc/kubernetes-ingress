@@ -70,6 +70,9 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https \
+	&& sed -i -e '/^FIRST_SYSTEM_UID\s*=/d' -e '/^FIRST_SYSTEM_GID\s*=/d' /etc/adduser.conf \
+	&& echo FIRST_SYSTEM_UID=101 >> /etc/adduser.conf \
+	&& echo FIRST_SYSTEM_GID=101 >> /etc/adduser.conf \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
@@ -95,6 +98,9 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	apt-get update \
 	## the code below is duplicated from the debian-plus image because NAP doesn't support debian 12
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https \
+	&& sed -i -e '/^FIRST_SYSTEM_UID\s*=/d' -e '/^FIRST_SYSTEM_GID\s*=/d' /etc/adduser.conf \
+	&& echo FIRST_SYSTEM_UID=101 >> /etc/adduser.conf \
+	&& echo FIRST_SYSTEM_GID=101 >> /etc/adduser.conf \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
