@@ -164,8 +164,8 @@ Sets the URI of health status location in the default server. Requires [-health-
 
 ### -ingress-class `<string>`
 
-This argument refers to the name of resource `kind: IngressClass`. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start.
-The Ingress Controller will process Ingress resources that belong to its class i.e. have the `ingressClassName` field equal to the value of `-ingress-class` and skip the ones without it, but processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the `ingressClassName` field.
+The `-ingress-class` argument refers to the name of the resource `kind: IngressClass`. An IngressClass resource with a name equal to the class must be deployed. Otherwise, NGINX Ingress Controller will fail to start.
+NGINX Ingress Controller will process Ingress resources that belong to its class, that is, those that have the `ingressClassName` field equal to the value of `-ingress-class` and skip the ones without it. It will also process all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the `ingressClassName` field.
 
 Default `nginx`.
 &nbsp;
