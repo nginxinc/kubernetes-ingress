@@ -125,7 +125,7 @@
       "pluginVersion": "7.2.0",
       "targets": [
         {
-          "expr": "sum(nginx_ingress_controller_nginx_last_reload_status{kubernetes_pod_name=\"$controller\"})",
+          "expr": "sum(nginx_ingress_controller_nginx_last_reload_status{instance=~\"$instance\"})",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -199,7 +199,7 @@
       "pluginVersion": "7.2.0",
       "targets": [
         {
-          "expr": "sum(nginx_ingress_controller_nginx_reloads_total{kubernetes_pod_name=\"$controller\"})",
+          "expr": "sum(nginx_ingress_controller_nginx_reloads_total{instance=~\"$instance\"})",
           "instant": true,
           "interval": "",
           "legendFormat": "",
@@ -275,7 +275,7 @@
       "pluginVersion": "7.2.0",
       "targets": [
         {
-          "expr": "sum(nginx_ingress_controller_nginx_reload_errors_total{kubernetes_pod_name=\"$controller\"})",
+          "expr": "sum(nginx_ingress_controller_nginx_reload_errors_total{instance=~\"$instance\"})",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -468,7 +468,7 @@
       "pluginVersion": "7.2.0",
       "targets": [
         {
-          "expr": "avg(nginx_ingress_controller_nginx_last_reload_milliseconds{kubernetes_pod_name=\"$controller\"})",
+          "expr": "avg(nginx_ingress_controller_nginx_last_reload_milliseconds{instance=~\"$instance\"})",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -549,7 +549,7 @@
           "pluginVersion": "7.2.0",
           "targets": [
             {
-              "expr": "sum( irate(nginx_ingress_nginxplus_http_requests_total{kubernetes_pod_name=\"$controller\"}[5m]))",
+              "expr": "sum( irate(nginx_ingress_nginxplus_http_requests_total{instance=~\"$instance\"}[5m]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -668,7 +668,7 @@
           "repeatDirection": "h",
           "targets": [
             {
-              "expr": "sum( irate(nginx_ingress_nginxplus_server_zone_requests{kubernetes_pod_name=\"$controller\"}[5m]))",
+              "expr": "sum( irate(nginx_ingress_nginxplus_server_zone_requests{instance=~\"$instance\"}[5m]))",
               "format": "time_series",
               "hide": false,
               "instant": false,
@@ -1116,7 +1116,7 @@
           "pluginVersion": "7.2.0",
           "targets": [
             {
-              "expr": "sum(nginx_ingress_nginxplus_up{kubernetes_pod_name=\"$controller\"})",
+              "expr": "sum(nginx_ingress_nginxplus_up{instance=~\"$instance\"})",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1764,21 +1764,16 @@
       },
       {
         "allValue": ".*",
-        "current": {
-          "isNone": true,
-          "selected": false,
-          "text": "None",
-          "value": ""
-        },
+        "current": {},
         "datasource": "Prometheus",
-        "definition": "label_values(nginx_ingress_controller_ingress_resources_total, kubernetes_pod_name) ",
+        "definition": "",
         "hide": 0,
-        "includeAll": false,
-        "label": "NGINX Plus Controller",
-        "multi": false,
-        "name": "controller",
+        "includeAll": true,
+        "label": "Instance",
+        "multi": true,
+        "name": "instance",
         "options": [],
-        "query": "label_values(nginx_ingress_controller_ingress_resources_total, kubernetes_pod_name) ",
+        "query": "label_values(nginx_ingress_nginxplus_up{class=~\"$class\"}, instance)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
