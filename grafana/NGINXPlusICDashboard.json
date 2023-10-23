@@ -351,7 +351,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_received{class=~\"$class\", instance=~\"$instance\"}[5m]))",
+          "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_received{class=~\"$class\", instance=~\"$instance\", server_zone=~\"$server_zone\"}[5m]))",
           "format": "time_series",
           "instant": false,
           "interval": "10s",
@@ -362,7 +362,7 @@
           "step": 10
         },
         {
-          "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_sent{class=~\"$class\", instance=~\"$instance\"}[5m]))",
+          "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_sent{class=~\"$class\", instance=~\"$instance\", server_zone=~\"$server_zone\"}[5m]))",
           "format": "time_series",
           "hide": false,
           "interval": "10s",
@@ -668,7 +668,7 @@
           "repeatDirection": "h",
           "targets": [
             {
-              "expr": "sum(irate(nginx_ingress_nginxplus_server_zone_requests{class=~\"$class\", instance=~\"$instance\"}[5m]))",
+              "expr": "sum(irate(nginx_ingress_nginxplus_server_zone_requests{class=~\"$class\", instance=~\"$instance\", server_zone=~\"$server_zone\"}[5m]))",
               "format": "time_series",
               "hide": false,
               "instant": false,
@@ -831,19 +831,19 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=\"1xx\"}[5m])) by (ingress)",
+              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=\"1xx\", server_zone=~\"$server_zone\"}[5m])) by (ingress)",
               "interval": "",
               "legendFormat": "Informational",
               "refId": "A"
             },
             {
-              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=\"2xx\"}[5m]))",
+              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=\"2xx\", server_zone=~\"$server_zone\"}[5m]))",
               "interval": "",
               "legendFormat": "Success",
               "refId": "B"
             },
             {
-              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=\"3xx\"}[5m]))",
+              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=\"3xx\", server_zone=~\"$server_zone\"}[5m]))",
               "format": "time_series",
               "hide": false,
               "instant": false,
@@ -967,7 +967,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=~\"[4].*\"}[2m]))",
+              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=~\"[4].*\", server_zone=~\"$server_zone\"}[2m]))",
               "format": "time_series",
               "instant": false,
               "interval": "",
@@ -978,7 +978,7 @@
               "step": 10
             },
             {
-              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=~\"[5].*\"}[2m]))",
+              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code=~\"[5].*\", server_zone=~\"$server_zone\"}[2m]))",
               "format": "time_series",
               "instant": false,
               "interval": "",
@@ -993,7 +993,7 @@
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "Error Rates Over Time",
+          "title": "Zone Error Rates Over Time",
           "tooltip": {
             "msResolution": false,
             "shared": true,
@@ -1196,7 +1196,7 @@
           "pluginVersion": "7.2.0",
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code!~\"[4-5].*\"}[5m])) / sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\"}[5m]))",
+              "expr": "sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", code!~\"[4-5].*\", server_zone=~\"$server_zone\"}[5m])) / sum(rate(nginx_ingress_nginxplus_server_zone_responses{class=~\"$class\", instance=~\"$instance\", server_zone=~\"$server_zone\"}[5m]))",
               "format": "time_series",
               "hide": false,
               "interval": "",
@@ -1779,24 +1779,16 @@
       },
       {
         "allValue": ".*",
-        "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
-        },
+        "current": {},
         "datasource": "Prometheus",
-        "definition": "label_values(nginx_ingress_nginxplus_server_zone_processing,server_zone)",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "Server Zone",
         "multi": true,
         "name": "server_zone",
         "options": [],
-        "query": "label_values(nginx_ingress_nginxplus_server_zone_processing,server_zone)",
+        "query": "label_values(nginx_ingress_nginxplus_server_zone_processing{class=~\"$class\"}, server_zone)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
