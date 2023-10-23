@@ -1742,24 +1742,16 @@
     "list": [
       {
         "allValue": ".*",
-        "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
-        },
+        "current": {},
         "datasource": "Prometheus",
-        "definition": "label_values(container_memory_usage_bytes{namespace=~\".+\",container_name!=\"POD\"},namespace)",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
-        "label": "Namespace",
+        "label": "Class",
         "multi": true,
-        "name": "namespace",
+        "name": "class",
         "options": [],
-        "query": "label_values(container_memory_usage_bytes{namespace=~\".+\",container_name!=\"POD\"},namespace)",
+        "query": "label_values(nginx_ingress_nginxplus_up, class)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
