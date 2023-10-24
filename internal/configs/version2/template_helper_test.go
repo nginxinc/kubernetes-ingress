@@ -7,15 +7,14 @@ import (
 )
 
 func TestContainsSubstring(t *testing.T) {
-	type testCase struct {
-		InputString string
-		Substring   string
-		expected    string
-	}
 	t.Parallel()
 
 	tmpl := newContainsTemplate(t)
-	testCases := []testCase{
+	testCases := []struct {
+		InputString string
+		Substring   string
+		expected    string
+	}{
 		{InputString: "foo", Substring: "foo", expected: "true"},
 		{InputString: "foobar", Substring: "foo", expected: "true"},
 		{InputString: "foo", Substring: "", expected: "true"},
@@ -37,15 +36,14 @@ func TestContainsSubstring(t *testing.T) {
 }
 
 func TestHasPrefix(t *testing.T) {
-	type testCase struct {
-		InputString string
-		Prefix      string
-		expected    string
-	}
 	t.Parallel()
 
 	tmpl := newHasPrefixTemplate(t)
-	testCases := []testCase{
+	testCases := []struct {
+		InputString string
+		Prefix      string
+		expected    string
+	}{
 		{InputString: "foo", Prefix: "foo", expected: "true"},
 		{InputString: "foo", Prefix: "f", expected: "true"},
 		{InputString: "foo", Prefix: "", expected: "true"},
@@ -67,15 +65,14 @@ func TestHasPrefix(t *testing.T) {
 }
 
 func TestHasSuffix(t *testing.T) {
-	type testCase struct {
-		InputString string
-		Suffix      string
-		expected    string
-	}
 	t.Parallel()
 
 	tmpl := newHasSuffixTemplate(t)
-	testCases := []testCase{
+	testCases := []struct {
+		InputString string
+		Suffix      string
+		expected    string
+	}{
 		{InputString: "bar", Suffix: "bar", expected: "true"},
 		{InputString: "bar", Suffix: "r", expected: "true"},
 		{InputString: "bar", Suffix: "", expected: "true"},
@@ -97,14 +94,13 @@ func TestHasSuffix(t *testing.T) {
 }
 
 func TestToLowerInputString(t *testing.T) {
-	type testCase struct {
-		InputString string
-		expected    string
-	}
 	t.Parallel()
 
 	tmpl := newToLowerTemplate(t)
-	testCases := []testCase{
+	testCases := []struct {
+		InputString string
+		expected    string
+	}{
 		{InputString: "foobar", expected: "foobar"},
 		{InputString: "FOOBAR", expected: "foobar"},
 		{InputString: "fOoBaR", expected: "foobar"},
@@ -124,14 +120,13 @@ func TestToLowerInputString(t *testing.T) {
 }
 
 func TestToUpperInputString(t *testing.T) {
-	type testCase struct {
-		InputString string
-		expected    string
-	}
 	t.Parallel()
 
 	tmpl := newToUpperTemplate(t)
-	testCases := []testCase{
+	testCases := []struct {
+		InputString string
+		expected    string
+	}{
 		{InputString: "foobar", expected: "FOOBAR"},
 		{InputString: "FOOBAR", expected: "FOOBAR"},
 		{InputString: "fOoBaR", expected: "FOOBAR"},
