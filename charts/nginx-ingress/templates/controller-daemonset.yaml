@@ -79,7 +79,6 @@ spec:
       {{- if .Values.controller.sharedProcessNamespace }}
       shareProcessNamespace: true
       {{- end }}
-      {{- end }}
       containers:
       - name: {{ include "nginx-ingress.name" . }}
         image: {{ include "nginx-ingress.image" . }}
