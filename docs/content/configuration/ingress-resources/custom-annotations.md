@@ -107,10 +107,15 @@ If you'd like to use custom annotations with Mergeable Ingress resources, please
 Helper functions can be used in the Ingress template to parse the values of custom annotations.
 
 {{% table %}}
-|Function | Input Arguments | Return Arguments | Description |
+| Function | Input Arguments | Return Arguments | Description |
 | ---| ---| ---| --- |
-|``split`` | ``s, sep string`` | ``[]string`` | Splits the string ``s`` into a slice of strings separated by the ``sep``. |
-|``trim`` | ``s string`` | ``string`` | Trims the trailing and leading whitespace from the string ``s``. |
+| ``split`` | ``s, sep string`` | ``[]string`` | Splits the string ``s`` into a slice of strings separated by the ``sep``. |
+| ``trim`` | ``s string`` | ``string`` | Trims the trailing and leading whitespace from the string ``s``. |
+| ``contains`` | ``s, substr string`` | ``bool`` | Tests whether the string ``substr`` is a substring of the string ``s``. |
+| ``hasPrefix`` | ``s, prefix string`` | ``bool`` | Tests whether the string ``prefix`` is a prefix of the string ``s``. |
+| ``hasSuffix`` | ``s, suffix string`` | ``bool`` | Tests whether the string ``suffix`` is a suffix of the string ``s``. |
+| ``toLower`` | ``s string`` | ``bool`` | Converts all letters in the string ``s`` to their lower case. |
+| ``toUpper`` | ``s string`` | ``bool`` | Converts all letters in the string ``s`` to their upper case. |
 {{% /table %}}
 
 Consider the following custom annotation `custom.nginx.org/allowed-ips`, which expects a comma-separated list of IP addresses:
