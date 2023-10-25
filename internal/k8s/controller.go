@@ -3980,7 +3980,7 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 		class = obj.Annotations[ingressClassKey]
 		if class == "" && obj.Spec.IngressClassName != nil {
 			class = *obj.Spec.IngressClassName
-		} else {
+		} else if class != "" {
 			// the annotation takes precedence over the field
 			glog.Warningln("Using the DEPRECATED annotation 'kubernetes.io/ingress.class'. The 'ingressClassName' field will be ignored.")
 		}

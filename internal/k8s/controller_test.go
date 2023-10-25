@@ -139,6 +139,16 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			},
 			true,
 		},
+		{
+			&LoadBalancerController{
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
+			},
+			&networking.Ingress{
+				Spec: networking.IngressSpec{},
+			},
+			false,
+		},
 	}
 
 	for _, test := range tests {
