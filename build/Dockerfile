@@ -5,8 +5,8 @@ ARG DOWNLOAD_TAG=edge
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM opentracing/nginx-opentracing:nginx-1.25.2 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.25.2-alpine as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.3 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.3-alpine as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.1-alpine3.18 as alpine-fips
 
 
