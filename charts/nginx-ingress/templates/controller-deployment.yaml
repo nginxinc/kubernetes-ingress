@@ -83,7 +83,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       dnsPolicy: {{ .Values.controller.dnsPolicy }}
-      {{- if .Values.controller.sharedProcessNamespace }}
+      {{- if .Values.controller.shareProcessNamespace }}
       shareProcessNamespace: true
       {{- end }}
       containers:

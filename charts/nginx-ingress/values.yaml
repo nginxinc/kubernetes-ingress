@@ -64,8 +64,8 @@ controller:
   ## Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.
   nginxDebug: false
 
-  ## Shared process namespace between containers in the Ingress Controller pod.
-  sharedProcessNamespace: false
+  ## Share process namespace between containers in the Ingress Controller pod.
+  shareProcessNamespace: false
 
   ## The log level of the Ingress Controller.
   logLevel: 1
