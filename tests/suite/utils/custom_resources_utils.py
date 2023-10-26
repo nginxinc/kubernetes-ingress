@@ -400,9 +400,7 @@ def patch_ts(custom_objects: CustomObjectsApi, namespace, body) -> None:
     print(f"Update a Resource: {name}")
 
     try:
-        custom_objects.patch_namespaced_custom_object(
-            "k8s.nginx.org", "v1", namespace, "transportservers", name, body
-        )
+        custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "transportservers", name, body)
     except ApiException:
         logging.exception(f"Failed with exception while patching custom resource: {name}")
         raise
