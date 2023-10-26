@@ -100,7 +100,7 @@ def is_dnsendpoint_present(custom_objects: CustomObjectsApi, name, namespace) ->
     return True
 
 
-def read_custom_resource_v1(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
+def read_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
     """
     Get CRD information (kubectl describe output)
 
@@ -125,7 +125,7 @@ def read_ts(custom_objects: CustomObjectsApi, namespace, name) -> object:
     """
     Read TransportService resource.
     """
-    return read_custom_resource_v1(custom_objects, namespace, "transportservers", name)
+    return read_custom_resource(custom_objects, namespace, "transportservers", name)
 
 
 def create_ts_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> dict:
