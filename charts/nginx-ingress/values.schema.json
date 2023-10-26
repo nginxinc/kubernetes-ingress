@@ -241,6 +241,15 @@
             true
           ]
         },
+        "shareProcessNamespace": {
+          "type": "boolean",
+          "default": false,
+          "title": "Enables sharing of the process namespace between pods within the Ingress Controller",
+          "examples": [
+            false,
+            true
+          ]
+        },
         "logLevel": {
           "type": "integer",
           "default": 1,
@@ -1298,6 +1307,7 @@
           },
           "hostNetwork": false,
           "nginxDebug": false,
+          "shareProcessNamespace": false,
           "logLevel": 1,
           "customPorts": [],
           "image": {
