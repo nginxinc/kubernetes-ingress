@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -29,12 +29,12 @@ func NewTransportServerValidator(tlsPassthrough bool, snippetsEnabled bool, isPl
 }
 
 // ValidateTransportServer validates a TransportServer.
-func (tsv *TransportServerValidator) ValidateTransportServer(transportServer *v1alpha1.TransportServer) error {
+func (tsv *TransportServerValidator) ValidateTransportServer(transportServer *conf_v1.TransportServer) error {
 	allErrs := tsv.validateTransportServerSpec(&transportServer.Spec, field.NewPath("spec"))
 	return allErrs.ToAggregate()
 }
 
-func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.TransportServerSpec, fieldPath *field.Path) field.ErrorList {
+func (tsv *TransportServerValidator) validateTransportServerSpec(spec *conf_v1.TransportServerSpec, fieldPath *field.Path) field.ErrorList {
 	allErrs := tsv.validateTransportListener(&spec.Listener, fieldPath.Child("listener"))
 
 	isTLSPassthroughListener := isPotentialTLSPassthroughListener(&spec.Listener)
@@ -62,7 +62,7 @@ func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.
 	return allErrs
 }
 
-func validateTLS(tls *v1alpha1.TLS, isTLSPassthrough bool, fieldPath *field.Path) field.ErrorList {
+func validateTLS(tls *conf_v1.TransportServerTLS, isTLSPassthrough bool, fieldPath *field.Path) field.ErrorList {
 	if tls == nil {
 		return nil
 	}
@@ -92,7 +92,7 @@ func validateTransportServerHost(host string, fieldPath *field.Path, isTLSPassth
 	return validateHost(host, fieldPath)
 }
 
-func (tsv *TransportServerValidator) validateTransportListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
+func (tsv *TransportServerValidator) validateTransportListener(listener *conf_v1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
 	if isPotentialTLSPassthroughListener(listener) {
 		return tsv.validateTLSPassthroughListener(listener, fieldPath)
 	}
@@ -100,26 +100,26 @@ func (tsv *TransportServerValidator) validateTransportListener(listener *v1alpha
 	return validateRegularListener(listener, fieldPath)
 }
 
-func validateRegularListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
+func validateRegularListener(listener *conf_v1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
 	allErrs := validateListenerName(listener.Name, fieldPath.Child("name"))
 	allErrs = append(allErrs, validateListenerProtocol(listener.Protocol, fieldPath.Child("protocol"))...)
 	return allErrs
 }
 
-func isPotentialTLSPassthroughListener(listener *v1alpha1.TransportServerListener) bool {
-	return listener.Name == v1alpha1.TLSPassthroughListenerName || listener.Protocol == v1alpha1.TLSPassthroughListenerProtocol
+func isPotentialTLSPassthroughListener(listener *conf_v1.TransportServerListener) bool {
+	return listener.Name == conf_v1.TLSPassthroughListenerName || listener.Protocol == conf_v1.TLSPassthroughListenerProtocol
 }
 
-func (tsv *TransportServerValidator) validateTLSPassthroughListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
+func (tsv *TransportServerValidator) validateTLSPassthroughListener(listener *conf_v1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
 	if !tsv.tlsPassthrough {
 		return field.ErrorList{field.Forbidden(fieldPath, "TLS Passthrough is not enabled")}
 	}
-	if listener.Name == v1alpha1.TLSPassthroughListenerName && listener.Protocol != v1alpha1.TLSPassthroughListenerProtocol {
-		msg := fmt.Sprintf("must be '%s' for the built-in %s listener", v1alpha1.TLSPassthroughListenerProtocol, v1alpha1.TLSPassthroughListenerName)
+	if listener.Name == conf_v1.TLSPassthroughListenerName && listener.Protocol != conf_v1.TLSPassthroughListenerProtocol {
+		msg := fmt.Sprintf("must be '%s' for the built-in %s listener", conf_v1.TLSPassthroughListenerProtocol, conf_v1.TLSPassthroughListenerName)
 		return field.ErrorList{field.Invalid(fieldPath.Child("protocol"), listener.Protocol, msg)}
 	}
-	if listener.Protocol == v1alpha1.TLSPassthroughListenerProtocol && listener.Name != v1alpha1.TLSPassthroughListenerName {
-		msg := fmt.Sprintf("must be '%s' for a listener with the protocol %s", v1alpha1.TLSPassthroughListenerName, v1alpha1.TLSPassthroughListenerProtocol)
+	if listener.Protocol == conf_v1.TLSPassthroughListenerProtocol && listener.Name != conf_v1.TLSPassthroughListenerName {
+		msg := fmt.Sprintf("must be '%s' for a listener with the protocol %s", conf_v1.TLSPassthroughListenerName, conf_v1.TLSPassthroughListenerProtocol)
 		return field.ErrorList{field.Invalid(fieldPath.Child("name"), listener.Name, msg)}
 	}
 	return nil
@@ -129,7 +129,7 @@ func validateListenerName(name string, fieldPath *field.Path) field.ErrorList {
 	return validateDNS1035Label(name, fieldPath)
 }
 
-func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.Set[string]) {
+func validateTransportServerUpstreams(upstreams []conf_v1.TransportServerUpstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.Set[string]) {
 	allErrs = field.ErrorList{}
 	upstreamNames = sets.Set[string]{}
 
@@ -229,7 +229,7 @@ func validateHashLoadBalancingMethod(method string, fieldPath *field.Path, isPlu
 	return allErrs
 }
 
-func validateTSUpstreamHealthChecks(hc *v1alpha1.HealthCheck, fieldPath *field.Path) field.ErrorList {
+func validateTSUpstreamHealthChecks(hc *conf_v1.TransportServerHealthCheck, fieldPath *field.Path) field.ErrorList {
 	if hc == nil {
 		return nil
 	}
@@ -248,7 +248,7 @@ func validateTSUpstreamHealthChecks(hc *v1alpha1.HealthCheck, fieldPath *field.P
 	return allErrs
 }
 
-func validateHealthCheckMatch(match *v1alpha1.Match, fieldPath *field.Path) field.ErrorList {
+func validateHealthCheckMatch(match *conf_v1.TransportServerMatch, fieldPath *field.Path) field.ErrorList {
 	if match == nil {
 		return nil
 	}
@@ -323,7 +323,7 @@ func validateHexString(s string) error {
 	return nil
 }
 
-func validateTransportServerUpstreamParameters(upstreamParameters *v1alpha1.UpstreamParameters, fieldPath *field.Path, protocol string) field.ErrorList {
+func validateTransportServerUpstreamParameters(upstreamParameters *conf_v1.UpstreamParameters, fieldPath *field.Path, protocol string) field.ErrorList {
 	if upstreamParameters == nil {
 		return nil
 	}
@@ -336,7 +336,7 @@ func validateTransportServerUpstreamParameters(upstreamParameters *v1alpha1.Upst
 	return allErrs
 }
 
-func validateSessionParameters(sessionParameters *v1alpha1.SessionParameters, fieldPath *field.Path) field.ErrorList {
+func validateSessionParameters(sessionParameters *conf_v1.SessionParameters, fieldPath *field.Path) field.ErrorList {
 	if sessionParameters == nil {
 		return nil
 	}
@@ -350,7 +350,7 @@ func validateUDPUpstreamParameter(parameter *int, fieldPath *field.Path, protoco
 	return validatePositiveIntOrZeroFromPointer(parameter, fieldPath)
 }
 
-func validateTransportServerAction(action *v1alpha1.Action, fieldPath *field.Path, upstreamNames sets.Set[string]) field.ErrorList {
+func validateTransportServerAction(action *conf_v1.TransportServerAction, fieldPath *field.Path, upstreamNames sets.Set[string]) field.ErrorList {
 	if action.Pass == "" {
 		return field.ErrorList{field.Required(fieldPath, "must specify pass")}
 	}

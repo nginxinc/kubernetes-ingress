@@ -15,7 +15,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 )
 
 func createTestStaticConfigParams() *StaticConfigParams {
@@ -234,7 +233,7 @@ func TestGetFileNameForVirtualServerFromKey(t *testing.T) {
 
 func TestGetFileNameForTransportServer(t *testing.T) {
 	t.Parallel()
-	transportServer := &conf_v1alpha1.TransportServer{
+	transportServer := &conf_v1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Namespace: "default",
 			Name:      "test-server",
@@ -863,13 +862,13 @@ func TestUpdateTransportServerMetricsLabels(t *testing.T) {
 	cnf.labelUpdater = newFakeLabelUpdater()
 
 	tsEx := &TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "test-transportserver",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "dns-tcp",
 					Protocol: "TCP",
 				},
@@ -994,13 +993,13 @@ func TestUpdateTransportServerMetricsLabels(t *testing.T) {
 	}
 
 	tsExTLS := &TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "test-transportserver-tls",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tls-passthrough",
 					Protocol: "TLS_PASSTHROUGH",
 				},
@@ -1374,25 +1373,25 @@ var (
 		},
 	}
 	validTransportServerExWithUpstreams = &TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "secure-app",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tls-passthrough",
 					Protocol: "TLS_PASSTHROUGH",
 				},
 				Host: "example.com",
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:    "secure-app",
 						Service: "secure-app",
 						Port:    8443,
 					},
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "secure-app",
 				},
 			},

@@ -102,7 +102,7 @@ Consider the following two resources:
 - `tcp-1` TransportServer:
 
     ```yaml
-    apiVersion: k8s.nginx.org/v1alpha1
+    apiVersion: k8s.nginx.org/v1
     kind: TransportServer
     metadata:
       name: tcp-1
@@ -116,7 +116,7 @@ Consider the following two resources:
 - `tcp-2` TransportServer:
 
     ```yaml
-    apiVersion: k8s.nginx.org/v1alpha1
+    apiVersion: k8s.nginx.org/v1
     kind: TransportServer
     metadata:
       name: tcp-2
