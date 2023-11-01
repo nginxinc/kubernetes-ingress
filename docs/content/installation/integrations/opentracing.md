@@ -101,7 +101,7 @@ Consider the following two cases:
 
 ## Customize OpenTracing
 
-You can customize OpenTracing though the supported [OpenTracing module directives](https://github.com/opentracing-contrib/nginx-opentracing/blob/master/doc/Reference.md). Use the snippets ConfigMap keys or annotations to insert those directives into the `http`, `server` or `location` contexts of the generated NGINX configuration.
+You can customize OpenTracing through the supported [OpenTracing module directives](https://github.com/opentracing-contrib/nginx-opentracing/blob/master/doc/Reference.md). Use the location-snippets ConfigMap keys or annotations to insert those directives into the generated NGINX configuration.
 
 For example, to propagate the active span context for upstream requests, you need to set the `opentracing_propagate_context` directive, which you can add to an Ingress resource using the location snippets annotation:
 
