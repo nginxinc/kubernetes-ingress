@@ -293,7 +293,7 @@ Reloading takes time, usually at least 200ms. The time depends on the configurat
 Most of the time, if `nginx -s reload` succeeds, the reload will also succeed. In rare cases the reload fails, the NGINX master will print the error message to the error log. For example:
 
 ```
-2022/07/09 00:56:42 [emerg] 13.3.2353: limit_req "one" uses the "$remote_addr" key while previously it used the "$binary_remote_addr" key
+2022/07/09 00:56:42 [emerg] 1353#1353: limit_req "one" uses the "$remote_addr" key while previously it used the "$binary_remote_addr" key
 ```
 
 The operation is graceful; reloading doesn't lead to any traffic loss by NGINX. However, frequent reloads can lead to high memory utilization and potentially NGINX stopping with an OOM (Out-Of-Memory) error, resulting in traffic loss. This can happen if you (1) proxy traffic that utilizes long-lived connections (ex: Websockets, gRPC) and (2) reload frequently. In this case, you can end up with multiple generations of NGINX worker processes that are shutting down (old NGINX workers will not shut down until all connections are terminated either by clients or backends, unless you configure [worker_shutdown_timeout](https://nginx.org/en/docs/ngx_core_module.html#worker_shutdown_timeout) which will force old workers to shut down after the timeout). Eventually, all those worker processes can exhaust the system's available memory.
