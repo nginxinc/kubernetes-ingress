@@ -21,7 +21,7 @@ docs: "DOCS-603"
 2. Clone the NGINX Ingress Controller repository and change into the deployments folder:
 
     ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.3.1
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.3.2
     cd kubernetes-ingress/deployments
     ```
 
