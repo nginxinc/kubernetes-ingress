@@ -23,7 +23,7 @@ We explicitly test the NGINX Ingress Controller (NIC) on a range of Kubernetes p
 {{% table %}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| 3.3.2 | 1.28 - 1.22 | 1.0.1 | 2.0.1| 1.25.2 / R30 |
+| 3.3.2 | 1.28 - 1.22 | 1.0.2 | 2.0.2 | 1.25.3 / R30 |
 | 3.2.1 | 1.27 - 1.22 | 0.18.1 | 1.5.1 | 1.25.2 / R30 |
 | 3.1.1 | 1.26 - 1.22 | 0.17.1 | 1.4.2 | 1.23.4 / R29 |
 | 3.0.2 | 1.26 - 1.21 | 0.16.2 | 1.3.1 | 1.23.3 / R28 |
@@ -47,14 +47,14 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX
 
-All images include NGINX 1.25.2.
+All images include NGINX 1.25.3.
 
 {{% table %}}
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
 | ---| ---| ---| --- | --- |
-|Alpine-based image | ``nginx:1.25.2-alpine``, which is based on ``alpine:3.18`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:3.3.2-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image | ``nginx:1.25.2``, which is based on ``debian:12-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:3.3.2`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Ubi-based image | ``nginxcontrib/nginx:1.25.2-ubi``, which is based on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.3.2-ubi`` | arm64, amd64, ppc64le, s390x |
+|Alpine-based image | ``nginx:1.25.3-alpine``, which is based on ``alpine:3.18`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:3.3.2-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.25.3``, which is based on ``debian:12-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:3.3.2`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Ubi-based image | ``nginxcontrib/nginx:1.25.3-ubi``, which is based on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.3.2-ubi`` | arm64, amd64, ppc64le, s390x |
 {{% /table %}}
 
 ### Images with NGINX Plus

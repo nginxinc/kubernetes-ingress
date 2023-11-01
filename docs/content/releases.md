@@ -6,19 +6,20 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+<hr>
+
 ## 3.3.2
 
-%%RELEASE_DATE%%
-
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
-### <i class="fa-solid fa-rocket"></i> Features
+1 Nov 2023
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
 
-### <i class="fa-solid fa-box"></i> Helm Chart
+- [4578](https://github.com/nginxinc/kubernetes-ingress/pull/4578) Update Dockerfile to add user creation for NGINX Plus images.
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+
+- [4572](https://github.com/nginxinc/kubernetes-ingress/pull/4572) Update NGINX version to 1.25.3.
+- [4569](https://github.com/nginxinc/kubernetes-ingress/pull/4569), [4591](https://github.com/nginxinc/kubernetes-ingress/pull/4591) Bump Go dependencies.
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
@@ -32,11 +33,6 @@ the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter
 or build your own image using the 3.3.2 source code
 - For Helm, use version 1.0.2 of the chart.
 
-### <i class="fa-solid fa-life-ring"></i> Supported Platforms
-
-We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
-its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
-versions: x.xx-x.xx.
 <hr>
 
 ## 3.3.1

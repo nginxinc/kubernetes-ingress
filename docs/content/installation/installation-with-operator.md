@@ -24,8 +24,8 @@ NGINX Ingress Operator.
     by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
     - It is also possible to build your own image and push it to your private Docker registry by following the instructions
     from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
-2. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/v2.0.0/docs/installation.md).
-3. Create the SecurityContextConstraint as outlined in the ["Getting Started" instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/v2.0.0/README.md#getting-started).
+2. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/v2.0.2/docs/installation.md).
+3. Create the SecurityContextConstraint as outlined in the ["Getting Started" instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/v2.0.2/README.md#getting-started).
 
 ## 1. Create the NginxIngressController manifest
 
@@ -65,7 +65,7 @@ kubectl apply -f nginx-ingress-controller.yaml
 A new instance of the NGINX Ingress Controller will be deployed by the NGINX Ingress Operator in the `default`
 namespace with default parameters.
 
-To configure other parameters of the NginxIngressController resource, check the [documentation](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/v2.0.0/docs/nginx-ingress-controller.md).
+To configure other parameters of the NginxIngressController resource, check the [documentation](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/v2.0.2/docs/nginx-ingress-controller.md).
 
 **Note:** Some users reported an `OOMkilled` error when they deployed the NGINX Ingress Operator in a large cluster with
 multiple namespaces and Kubernetes objects. This is due to the helm operator caching every Kubernetes object in the cluster,
