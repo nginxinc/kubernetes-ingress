@@ -59,7 +59,6 @@ def to_base64(b64_string):
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-preview-policies",
                     f"-enable-leader-election=false",
                 ],
             },

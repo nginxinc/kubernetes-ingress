@@ -378,7 +378,6 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.watchNamespaceLabel` | Configures the Ingress Controller to watch only those namespaces with label foo=bar. By default the Ingress Controller watches all namespaces. Mutually exclusive with `controller.watchNamespace`. | "" |
 |`controller.watchSecretNamespace` | Comma separated list of namespaces the Ingress Controller should watch for resources of type Secret. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See `controller.watchNamespace` and `controller.watchNamespaceLabel`. Please note that if configuring multiple namespaces using the Helm cli `--set` option, the string needs to wrapped in double quotes and the commas escaped using a backslash - e.g. `--set controller.watchSecretNamespace="default\,nginx-ingress"`. | "" |
 |`controller.enableCustomResources` | Enable the custom resources. | true |
-|`controller.enablePreviewPolicies` | Enable preview policies. This parameter is deprecated. To enable OIDC Policies please use `controller.enableOIDC` instead. | false |
 |`controller.enableOIDC` | Enable OIDC policies. | false |
 |`controller.enableTLSPassthrough` | Enable TLS Passthrough on default port 443. Requires `controller.enableCustomResources`. | false |
 |`controller.tlsPassThroughPort` | Set the port for the TLS Passthrough. Requires `controller.enableCustomResources` and `controller.enableTLSPassthrough`.  | 443 |
