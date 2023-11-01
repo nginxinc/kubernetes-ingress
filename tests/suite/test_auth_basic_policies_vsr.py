@@ -39,6 +39,7 @@ invalid_credentials = f"{TEST_DATA}/auth-basic-policy/invalid-credentials.txt"
 def to_base64(b64_string):
     return b64encode(b64_string.encode("ascii")).decode("ascii")
 
+
 @pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
