@@ -1,0 +1,83 @@
+name: Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release"
+        required: true
+        default: "0.0.0"
+      helm_version:
+        description: "Helm version to release"
+        required: true
+        default: "0.0.0"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Branch
+        id: branch
+        run: |
+          version=${{ github.event.inputs.version }}
+          version=${version%.*}
+          echo "branch=release-$version" >> $GITHUB_OUTPUT
+
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ steps.branch.outputs.branch }}
+          token: ${{ secrets.NGINX_PAT }}
+
+      - name: Replace
+        run: |
+
+          DOCS_TO_UPDATE_FOLDER=docs/content
+
+          FILES_TO_UPDATE_IC_VERSION=(
+              README.md
+              deployments/daemon-set/nginx-ingress.yaml
+              deployments/daemon-set/nginx-plus-ingress.yaml
+              deployments/deployment/nginx-ingress.yaml
+              deployments/deployment/nginx-plus-ingress.yaml
+              deployments/helm-chart/Chart.yaml
+              deployments/helm-chart/README.md
+              deployments/helm-chart/values-icp.yaml
+              deployments/helm-chart/values-nsm.yaml
+              deployments/helm-chart/values-plus.yaml
+              deployments/helm-chart/values.yaml
+          )
+
+          FILE_TO_UPDATE_HELM_CHART_VERSION=(
+              deployments/helm-chart/Chart.yaml
+              deployments/helm-chart/README.md
+          )
+
+          ic_version=${{ github.event.inputs.version }}
+          helm_chart_version=${{ github.event.inputs.helm_version }}
+
+          current_ic_version=$(yq '.appVersion' <deployments/helm-chart/Chart.yaml)
+          current_helm_chart_version=$(yq '.version' <deployments/helm-chart/Chart.yaml)
+
+          sed -i "s/$current_ic_version/$ic_version/g" ${FILES_TO_UPDATE_IC_VERSION[*]}
+          sed -i "s/$current_helm_chart_version/$helm_chart_version/g" ${FILE_TO_UPDATE_HELM_CHART_VERSION[*]}
+          find $DOCS_TO_UPDATE_FOLDER -type f -name "*.md" ! -name releases.md ! -name CHANGELOG.md -exec sed -i "s/$current_ic_version/$ic_version/g" {} +
+
+          # update CHANGELOGs
+          sed -i "8r hack/changelog-template.txt" $DOCS_TO_UPDATE_FOLDER/releases.md
+          sed -i -e "s/%%TITLE%%/## $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" $DOCS_TO_UPDATE_FOLDER/releases.md CHANGELOG.md
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5.0.2
+        with:
+          token: ${{ secrets.NGINX_PAT }}
+          commit-message: Release ${{ github.event.inputs.version }}
+          title: Release ${{ github.event.inputs.version }}
+          branch: docs/release-${{ github.event.inputs.version }}
+          author: nginx-bot <integrations@nginx.com>
+          body: |
+            This automated PR updates the docs for ${{ github.event.inputs.version }} release.

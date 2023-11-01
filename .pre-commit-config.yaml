@@ -42,7 +42,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.54.2
+    rev: v1.55.1
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
@@ -58,7 +58,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 23.10.1
     hooks:
       - id: black
 

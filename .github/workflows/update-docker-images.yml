@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 1 * * *" # run every day at 01:00 UTC
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Force update of all images"
+        required: false
+        default: "false"
 
 defaults:
   run:
@@ -23,7 +28,6 @@ jobs:
     outputs:
       kic-tag: ${{ steps.kic.outputs.tag }}
       versions: ${{ steps.versions.outputs.matrix }}
-      k8s_version: ${{ steps.vars.outputs.k8s_version }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -48,12 +52,6 @@ jobs:
           nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx:.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
           nginx_ubi=$(grep -m1 "FROM nginxcontrib/nginx:" < build/Dockerfile | awk -F" " '{print $2}')
           echo "matrix=[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]" >> $GITHUB_OUTPUT
-
-      - name: Set other variables
-        id: vars
-        run: |
-          # TODO fix test folder after v3.3.0
-          echo "k8s_version=$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
 
   check:
     name: Check if updates are needed
@@ -86,7 +84,7 @@ jobs:
         run: echo "${{ matrix.base_image.distro }}=${{ steps.update.outputs.needs-updating }}" >> $GITHUB_OUTPUT
 
   binary:
-    if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' || needs.check.outputs.needs-updating-ubi == 'true' }}
+    if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' || needs.check.outputs.needs-updating-ubi == 'true' || inputs.force == 'true' }}
     name: Build binaries
     runs-on: ubuntu-22.04
     needs: [check, variables]
@@ -121,52 +119,6 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
-  test:
-    name: Run tests
-    runs-on: ubuntu-22.04
-    needs: [check, variables, binary]
-    strategy:
-      matrix:
-        include:
-          - image: debian
-            marker: ingresses
-            needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
-          - image: alpine
-            marker: "vs vsr"
-            needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - image: ubi
-            marker: "policies ts"
-            needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
-        if: ${{ matrix.needs-updating == 'true' }}
-
-      - name: Fetch Cached Artifacts
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
-        if: ${{ matrix.needs-updating == 'true' }}
-
-      - name: Run Smoke Tests
-        id: smoke-tests
-        uses: ./.github/actions/smoke-tests
-        with:
-          image: ${{ matrix.image }}
-          marker: ${{ matrix.marker }}
-          k8s-version: ${{ needs.variables.outputs.k8s_version }}
-        if: ${{ matrix.needs-updating == 'true' }}
-
-      - name: Upload Test Results
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
-        with:
-          name: ${{ steps.smoke-tests.outputs.test-results-name }}
-          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
-        if: always()
-
   release-docker-debian:
     name: Release Debian Image
     needs: [binary, check, variables]
@@ -182,7 +134,7 @@ jobs:
       id-token: write
       packages: write
     secrets: inherit
-    if: ${{ needs.check.outputs.needs-updating-debian == 'true' }}
+    if: ${{ needs.check.outputs.needs-updating-debian == 'true' || inputs.force == 'true' }}
 
   release-docker-alpine:
     name: Release Alpine Image
@@ -199,7 +151,7 @@ jobs:
       id-token: write
       packages: write
     secrets: inherit
-    if: ${{ needs.check.outputs.needs-updating-alpine == 'true' }}
+    if: ${{ needs.check.outputs.needs-updating-alpine == 'true' || inputs.force == 'true' }}
 
   release-docker-ubi:
     name: Release UBI Image
@@ -216,4 +168,4 @@ jobs:
       id-token: write
       packages: write
     secrets: inherit
-    if: ${{ needs.check.outputs.needs-updating-ubi == 'true' }}
+    if: ${{ needs.check.outputs.needs-updating-ubi == 'true' || inputs.force == 'true' }}
