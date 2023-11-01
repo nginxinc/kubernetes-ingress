@@ -418,9 +418,9 @@ pycparser==2.21 \
     # via
     #   -r requirements.txt
     #   cffi
-pyopenssl==23.2.0 \
-    --hash=sha256:24f0dc5227396b3e831f4c7f602b950a5e9833d292c8e4a2e06b709292806ae2 \
-    --hash=sha256:276f931f55a452e7dea69c7173e984eb2a4407ce413c918aa34b55f82f9b8bac
+pyopenssl==23.3.0 \
+    --hash=sha256:6756834481d9ed5470f4a9393455154bc92fe7a64b7bc6ee2c804e78c52099b2 \
+    --hash=sha256:6b2cba5cc46e822750ec3e5a81ee12819850b11303630d575e98108a079c2b12
     # via -r requirements.txt
 pyparsing==3.1.1 \
     --hash=sha256:32c7c0b711493c72ff18a981d24f28aaf9c1fb7ed5e9667c9e84e3db623bdbfb \
