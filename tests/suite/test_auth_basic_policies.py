@@ -49,7 +49,6 @@ valid_credentials = valid_credentials_list[0]
 def to_base64(b64_string):
     return b64encode(b64_string.encode("ascii")).decode("ascii")
 
-
 @pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
@@ -59,7 +58,6 @@ def to_base64(b64_string):
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-preview-policies",
                     f"-enable-leader-election=false",
                 ],
             },
