@@ -632,14 +632,6 @@
             true
           ]
         },
-        "enablePreviewPolicies": {
-          "type": "boolean",
-          "default": false,
-          "title": "The enablePreviewPolicies",
-          "examples": [
-            false
-          ]
-        },
         "enableOIDC": {
           "type": "boolean",
           "default": false,
@@ -1354,7 +1346,6 @@
           "setAsDefaultIngress": false,
           "watchNamespace": "",
           "enableCustomResources": true,
-          "enablePreviewPolicies": false,
           "enableOIDC": false,
           "includeYear": false,
           "enableTLSPassthrough": false,
@@ -1720,7 +1711,6 @@
         "setAsDefaultIngress": false,
         "watchNamespace": "",
         "enableCustomResources": true,
-        "enablePreviewPolicies": false,
         "enableOIDC": false,
         "includeYear": false,
         "enableTLSPassthrough": false,
