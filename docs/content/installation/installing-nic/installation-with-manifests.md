@@ -1,5 +1,5 @@
 ---
-title: Installing with Manifests
+title: Installation with Manifests
 description: "This guide explains how to install NGINX Ingress Controller in a Kubernetes cluster using manifests. In addition, it provides instructions on how to set up role-based access control, create both common and custom resources, and uninstall NGINX Ingress Controller."
 weight: 100
 doctypes: [""]

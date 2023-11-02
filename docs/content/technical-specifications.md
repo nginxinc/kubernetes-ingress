@@ -62,7 +62,7 @@ _NGINX Plus images include NGINX Plus R30._
 
 #### **F5 Container registry**
 
-NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Using the NGINX IC Plus JWT token in a Docker Config Secret]({{< relref "/installation/nic-images/using-the-jwt-token-docker-secret.md" >}}) and [Pulling the NGINX Ingress Controller image]({{< relref "/installation/nic-images/pulling-ingress-controller-image.md" >}}).
+NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Getting the NGINX Ingress Controller Image with JWT]({{<relref "/installation/nic-images/using-the-jwt-token-docker-secret.md">}}) and [Getting the F5 Registry NGINX Ingress Controller Image]({{<relref "/installation/nic-images/pulling-ingress-controller-image.md">}}).
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | F5 Container Registry Image | Architectures |
@@ -93,7 +93,7 @@ We also provide NGINX Plus images through the AWS Marketplace. Please see [Using
 {{% /bootstrap-table %}}
 
 #### **Google Cloud Marketplace**
-We also provide NGINX Plus images through the Google Cloud Marketplace. Please see [Using GCP Marketplace Ingress Controller]({{< relref "/installation/nic-images/using-gcp-marketplace-package.md" >}}) for details on how use them.
+We also provide NGINX Plus images through the Google Cloud Marketplace. Please see [Using the GCP Marketplace NGINX Ingress Controller Image]({{< relref "/installation/nic-images/using-gcp-marketplace-package.md" >}}) for details on how to use them.
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | GCP Marketplace Link | Architectures |

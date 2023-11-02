@@ -18,8 +18,8 @@ docs: "DOCS-585"
 
 NGINX Ingress Controller supports several command-line arguments. Setting the arguments depends on how you install NGINX Ingress Controller:
 
-- If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install NGINX Ingress Controller, to set the command-line arguments, modify those manifests accordingly. See the [Installation with Manifests](/nginx-ingress-controller/installation/installation-with-manifests) doc.
-- If you're using *Helm* to install NGINX Ingress Controller, modify the parameters of the Helm chart that correspond to the command-line arguments. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
+- If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install NGINX Ingress Controller, to set the command-line arguments, modify those manifests accordingly. See the [Installation with Manifests]({{<relref "/installation/installing-nic/installation-with-manifests.md">}}) documentation.
+- If you're using *Helm* to install NGINX Ingress Controller, modify the parameters of the Helm chart that correspond to the command-line arguments. See the [Installation with Helm]({{<relref "/installation/installing-nic/installation-with-helm.md">}}) documentation.
 
 Below we describe the available command-line arguments:
 
