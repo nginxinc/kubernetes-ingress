@@ -69,6 +69,10 @@ update-crds: ## Update CRDs
 	kustomize build config/crd/app-protect-dos --load-restrictor='LoadRestrictionsNone' >deploy/crds-nap-dos.yaml
 	kustomize build config/crd/app-protect-waf --load-restrictor='LoadRestrictionsNone' >deploy/crds-nap-waf.yaml
 
+.PHONY: generate-manifests
+generate-manifests: ## Generate manifests
+	./hack/generate-manifests.sh
+
 .PHONY: certificate-and-key
 certificate-and-key: ## Create default cert and key
 	./build/generate_default_cert_and_key.sh

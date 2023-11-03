@@ -1,5 +1,5 @@
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.utils.resources_utils import (
     get_events,
     get_file_contents,
@@ -142,7 +142,7 @@ def clean_up(request, kube_apis, ingress_controller_prerequisites, test_namespac
                 kube_apis.v1,
                 ingress_controller_prerequisites.config_map["metadata"]["name"],
                 ingress_controller_prerequisites.namespace,
-                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+                f"{TEST_DATA}/common/nginx-config.yaml",
             )
 
     request.addfinalizer(fin)

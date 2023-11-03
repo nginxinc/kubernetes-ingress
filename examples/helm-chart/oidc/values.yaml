@@ -1,0 +1,9 @@
+controller:
+  name: controller
+  kind: deployment
+  nginxplus: true
+  enableOIDC: true
+  image:
+    repository: private-registry.nginx.com/nginx-ic/nginx-plus-ingress
+  serviceAccount:
+    imagePullSecretName: nginx-registry-credentials

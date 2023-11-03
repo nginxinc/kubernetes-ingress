@@ -1,0 +1,13 @@
+controller:
+  name: controller
+  kind: deployment
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+  config:
+    entries:
+      proxy-protocol: "True"
+      real-ip-header: "proxy_protocol"
+      set-real-ip-from: "0.0.0.0/0"

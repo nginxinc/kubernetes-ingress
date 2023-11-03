@@ -1,6 +1,6 @@
 import grpc
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.fixtures.custom_resource_fixtures import VirtualServerRoute, VirtualServerRouteSetup, VirtualServerSetup
 from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
@@ -155,7 +155,7 @@ def cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name, test_name
         kube_apis.v1,
         ingress_controller_prerequisites.config_map["metadata"]["name"],
         ingress_controller_prerequisites.namespace,
-        f"{DEPLOYMENTS}/common/nginx-config.yaml",
+        f"{TEST_DATA}/common/nginx-config.yaml",
     )
     delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
     delete_ap_policy(kube_apis.custom_objects, ap_pol_name, test_namespace)

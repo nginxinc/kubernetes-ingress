@@ -1,0 +1,4 @@
+controller:
+  name: controller
+  service:
+    type: NodePort

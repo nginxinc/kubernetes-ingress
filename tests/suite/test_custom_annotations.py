@@ -1,5 +1,5 @@
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
 from suite.utils.resources_utils import (
     create_items_from_yaml,
@@ -60,7 +60,7 @@ def custom_annotations_setup(
                 kube_apis.v1,
                 ingress_controller_prerequisites.config_map["metadata"]["name"],
                 ingress_controller_prerequisites.namespace,
-                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+                f"{TEST_DATA}/common/nginx-config.yaml",
             )
             delete_items_from_yaml(kube_apis, ing_src, test_namespace)
 

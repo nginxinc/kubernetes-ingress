@@ -15,14 +15,14 @@ Open Service Mesh will work with both versions of [F5 NGINX Ingress controller](
 Below is a link to the official F5 NGINX Ingress Controller documentation.
 [F5 NGINX Ingress controller](https://docs.nginx.com/nginx-ingress-controller/)
 
-# Integrating NGINX Ingress Controller with Open Service Mesh
+## Integrating NGINX Ingress Controller with Open Service Mesh
 
 There are two ways to integrate the NGINX Ingress Controller with Open Service Mesh (OSM):
 
 1. Injecting an envoy sidecar directly with NGINX Ingress Controller.
 2. Using the Open Service Mesh `ingressBackend` "proxy" feature.
 
-# NGINX Ingress controller and OSM with sidecar proxy injected
+## NGINX Ingress controller and OSM with sidecar proxy injected
 
 Install OSM in the cluster
 
@@ -49,7 +49,7 @@ osm namespace add nginx-ingress --mesh-name osm-nginx
 
 The above command will use the mark the `nginx-ingress` namespace, where OSM will be installed (sidecar)
 
-# Install F5 NGINX Ingress controller
+## Install F5 NGINX Ingress controller
 
 Links to the complete install guides:
 
@@ -58,7 +58,7 @@ Links to the complete install guides:
 
 When using the sidecar method, ensure that you add the correct annotations listed below. This ensures proper integration of NGINX Ingress Controller with the envoy sidecar proxy.
 
-## Helm installs
+### Helm installs
 
 If using `helm`, add the following `annotation` to your `values.yaml` file:
 
@@ -79,13 +79,19 @@ helm install nic01 nginx-stable/nginx-ingress -n nginx-ingress --create-namespac
 
 Change your `release` accordingly to match your environment.
 
-## Manifest installs
+### Manifest installs
 
 For your `manifest` deployments, add the following `annotation`.
 
 ```yaml
 annotations:
   openservicemesh.io/inbound-port-exclusion-list: "80,443"
+```
+
+or you can use the provided `yaml` file in the `deploy` directory.
+
+```console
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/openservicemesh/deploy.yaml
 ```
 
 ### Sample deployment file with required annotation
@@ -220,7 +226,7 @@ Once OSM has been installed, this next command will mark the NGINX Ingress Contr
 osm namespace add nginx-ingress --mesh-name osm-nginx --disable-sidecar-injection
 ```
 
-# Install F5 NGINX Ingress controller
+## Install F5 NGINX Ingress controller
 
 Links to the complete install guides:
 

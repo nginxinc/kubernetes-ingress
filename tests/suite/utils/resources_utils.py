@@ -12,7 +12,7 @@ from kubernetes.client import AppsV1Api, CoreV1Api, NetworkingV1Api, RbacAuthori
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from more_itertools import first
-from settings import DEPLOYMENTS, PROJECT_ROOT, RECONFIGURATION_DELAY, TEST_DATA
+from settings import PROJECT_ROOT, RECONFIGURATION_DELAY, TEST_DATA
 from suite.utils.ssl_utils import create_sni_session
 
 
@@ -37,7 +37,7 @@ def configure_rbac(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorization:
     :param rbac_v1: RbacAuthorizationV1Api
     :return: RBACAuthorization
     """
-    with open(f"{DEPLOYMENTS}/rbac/rbac.yaml") as f:
+    with open(f"{TEST_DATA}/rbac/rbac.yaml") as f:
         docs = yaml.safe_load_all(f)
         role_name = ""
         binding_name = ""
@@ -61,7 +61,7 @@ def configure_rbac_with_ap(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorization
     :param rbac_v1: RbacAuthorizationV1Api
     :return: RBACAuthorization
     """
-    with open(f"{DEPLOYMENTS}/rbac/ap-rbac.yaml") as f:
+    with open(f"{TEST_DATA}/rbac/ap-rbac.yaml") as f:
         docs = yaml.safe_load_all(f)
         role_name = ""
         binding_name = ""
@@ -85,7 +85,7 @@ def configure_rbac_with_dos(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorizatio
     :param rbac_v1: RbacAuthorizationV1Api
     :return: RBACAuthorization
     """
-    with open(f"{DEPLOYMENTS}/rbac/apdos-rbac.yaml") as f:
+    with open(f"{TEST_DATA}/rbac/apdos-rbac.yaml") as f:
         docs = yaml.safe_load_all(f)
         role_name = ""
         binding_name = ""
@@ -1138,7 +1138,7 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     :return: str
     """
     print(f"Create an Ingress Controller as {cli_arguments['ic-type']}")
-    yaml_manifest = f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
+    yaml_manifest = f"{TEST_DATA}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     dep["spec"]["replicas"] = int(cli_arguments["replicas"])

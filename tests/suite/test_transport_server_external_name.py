@@ -1,5 +1,5 @@
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.utils.custom_assertions import assert_event
 from suite.utils.resources_utils import (
     create_items_from_yaml,
@@ -64,7 +64,7 @@ def ts_externalname_setup(
                 kube_apis.v1,
                 config_map_name,
                 ingress_controller_prerequisites.namespace,
-                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+                f"{TEST_DATA}/common/nginx-config.yaml",
             )
 
     request.addfinalizer(fin)
@@ -143,7 +143,7 @@ class TestTransportServerStatus:
             kube_apis.v1,
             ingress_controller_prerequisites.config_map["metadata"]["name"],
             ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            f"{TEST_DATA}/common/nginx-config.yaml",
         )
         wait_before_test(5)
         events = get_events(kube_apis.v1, transport_server_setup.namespace)

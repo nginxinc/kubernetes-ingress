@@ -16,7 +16,7 @@ from kubernetes.client import (
     RbacAuthorizationV1Api,
 )
 from kubernetes.client.rest import ApiException
-from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, CRDS, DEPLOYMENTS, TEST_DATA
+from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, BASEDIR, CRDS, TEST_DATA
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.utils.resources_utils import (
@@ -228,9 +228,9 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
     """
     print("------------------------- Create IC Prerequisites  -----------------------------------")
     rbac = configure_rbac(kube_apis.rbac_v1)
-    namespace = create_ns_and_sa_from_yaml(kube_apis.v1, f"{DEPLOYMENTS}/common/ns-and-sa.yaml")
+    namespace = create_ns_and_sa_from_yaml(kube_apis.v1, f"{TEST_DATA}/common/ns-and-sa.yaml")
     print("Create IngressClass resources:")
-    subprocess.run(["kubectl", "apply", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
+    subprocess.run(["kubectl", "apply", "-f", f"{TEST_DATA}/common/ingress-class.yaml"])
     subprocess.run(
         [
             "kubectl",
@@ -239,7 +239,7 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
             f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
         ]
     )
-    config_map_yaml = f"{DEPLOYMENTS}/common/nginx-config.yaml"
+    config_map_yaml = f"{TEST_DATA}/common/nginx-config.yaml"
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
     with open(config_map_yaml) as f:
         config_map = yaml.safe_load(f)
@@ -250,7 +250,7 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
             print("Clean up prerequisites")
             delete_namespace(kube_apis.v1, namespace)
             print("Delete IngressClass resources:")
-            subprocess.run(["kubectl", "delete", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
+            subprocess.run(["kubectl", "delete", "-f", f"{TEST_DATA}/common/ingress-class.yaml"])
             subprocess.run(
                 [
                     "kubectl",
@@ -427,7 +427,7 @@ def restore_configmap(request, kube_apis, ingress_controller_prerequisites, test
                 kube_apis.v1,
                 ingress_controller_prerequisites.config_map["metadata"]["name"],
                 ingress_controller_prerequisites.namespace,
-                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+                f"{TEST_DATA}/common/nginx-config.yaml",
             )
 
     request.addfinalizer(fin)

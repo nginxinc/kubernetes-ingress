@@ -1,0 +1,11 @@
+controller:
+  name: controller
+  kind: deployment
+  nginxplus: true
+  appprotect:
+    enable: true
+    logLevel: error
+  image:
+    repository: private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress
+  serviceAccount:
+    imagePullSecretName: nginx-registry-credentials

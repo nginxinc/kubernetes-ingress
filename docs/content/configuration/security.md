@@ -22,12 +22,10 @@ In addition, the following relating more specifically to Ingress Controller.
 The Ingress Controller is deployed within a Kubernetes environment, this environment must be secured.
 Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users.
 The Ingress Controller requires a service account which is configured using RBAC.
-We strongly recommend using the [RBAC configuration](https://github.com/nginxinc/kubernetes-ingress/blob/main/deployments/rbac/rbac.yaml) provided in our standard deployment configuration.
+We strongly recommend using the RBAC configuration provided in our deployment configurations.
 It is configured with the least amount of privilege required for the Ingress Controller to work.
 
-We strongly recommend inspecting the RBAC configuration (for [manifests installation](https://github.com/nginxinc/kubernetes-ingress/blob/main/deployments/rbac/rbac.yaml)
-or for [helm](https://github.com/nginxinc/kubernetes-ingress/blob/main/charts/nginx-ingress/templates/rbac.yaml))
-to understand what access the Ingress Controller service account has and to which resources.
+We strongly recommend inspecting the RBAC configuration in the deployment file or Helm chart to understand what access the Ingress Controller service account has and to which resources.
 For example, by default the service account has access to all Secret resources in the cluster.
 
 ### Certificates and Privacy Keys
@@ -58,58 +56,11 @@ Snippets are disabled by default. To use snippets, set the [`enable-snippets`](/
 
 The F5 Nginx Ingress Controller (NIC) has various protections against attacks, such as running the service as non-root to avoid changes to files. An additional industry best practice is having root filesystems set as read-only so that the attack surface is further reduced by limiting changes to binaries and libraries.
 
-Currently, we do not set read-only root filesystem as default. Instead, this is an opt-in feature available on the [helm-chart](/nginx-ingress-controller/installation/installation-with-helm/#configuration) via `controller.readOnlyRootFilesystem`.
-When using manifests instead of Helm, uncomment the following sections of the deployment:
+Currently, we do not set read-only root filesystem as default. Instead, this is an opt-in feature available on the [Helm Chart](/nginx-ingress-controller/installation/installation-with-helm/#configuration)
+via `controller.readOnlyRootFilesystem`.
 
-- `readOnlyRootFilesystem: true`,
-- The entire `volumeMounts` section,
-- The entire `initContiners` section,
-- For `initContainers:image:`, use exact same image used for regular NIC installation.
-Refer to the below code-block for guidance:
+If you prefer to use manifests instead of Helm, you can use the following manifest to enable this feature:
 
-```
-#      volumes:
-#      - name: nginx-etc
-#        emptyDir: {}
-#      - name: nginx-cache
-#        emptyDir: {}
-#      - name: nginx-lib
-#        emptyDir: {}
-#      - name: nginx-log
-#        emptyDir: {}
-.
-.
-.
-#          readOnlyRootFilesystem: true
-.
-.
-.
-#        volumeMounts:
-#        - mountPath: /etc/nginx
-#          name: nginx-etc
-#        - mountPath: /var/cache/nginx
-#          name: nginx-cache
-#        - mountPath: /var/lib/nginx
-#          name: nginx-lib
-#        - mountPath: /var/log/nginx
-#          name: nginx-log
-.
-.
-.
-#      initContainers:
-#      - image: <repository>:<tag>
-#        imagePullPolicy: IfNotPresent
-#        name: init-nginx-ingress
-#        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
-#        securityContext:
-#          allowPrivilegeEscalation: false
-#          readOnlyRootFilesystem: true
-#          runAsUser: 101 #nginx
-#          runAsNonRoot: true
-#          capabilities:
-#            drop:
-#            - ALL
-#        volumeMounts:
-#        - mountPath: /mnt/etc
-#          name: nginx-etc
+```shell
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/read-only-fs/deploy.yaml
 ```

@@ -1,6 +1,6 @@
 import grpc
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
 from suite.utils.custom_assertions import (
@@ -59,7 +59,7 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
             kube_apis.v1,
             ingress_controller_prerequisites.config_map["metadata"]["name"],
             ingress_controller_prerequisites.namespace,
-            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+            f"{TEST_DATA}/common/nginx-config.yaml",
         )
         delete_common_app(kube_apis, app_name, test_namespace)
         pytest.fail(f"VS GRPC setup failed")
@@ -72,7 +72,7 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
                 kube_apis.v1,
                 ingress_controller_prerequisites.config_map["metadata"]["name"],
                 ingress_controller_prerequisites.namespace,
-                f"{DEPLOYMENTS}/common/nginx-config.yaml",
+                f"{TEST_DATA}/common/nginx-config.yaml",
             )
             delete_common_app(kube_apis, app_name, test_namespace)
 

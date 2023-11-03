@@ -1,0 +1,5 @@
+controller:
+  name: controller
+  kind: deployment
+  nodeSelector:
+    kubernetes.io/os: linux
