@@ -42,8 +42,7 @@ Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/mai
   - The internal code is found at `internal/`
   - Build files for Docker are found at `build/`
   - CI files are found at `.github/workflows/`
-  - Deployment yaml files are found at `deploy/`
-  - Helm files are found at `charts/`
+  - Deployment yaml files, and Helm files are found at `deployments/`
   - We use [Go modules](https://github.com/golang/go/wiki/Modules) for managing dependencies.
 
 ## Contributing

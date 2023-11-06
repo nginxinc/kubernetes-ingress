@@ -1,7 +1,0 @@
-controller:
-  name: controller
-  kind: deployment
-  image:
-    tag: edge
-  service:
-    type: NodePort

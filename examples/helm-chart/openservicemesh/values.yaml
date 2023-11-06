@@ -1,5 +1,0 @@
-controller:
-  name: controller
-  pod:
-    annotations:
-      openservicemesh.io/inbound-port-exclusion-list: "80, 443"

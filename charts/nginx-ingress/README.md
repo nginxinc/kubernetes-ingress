@@ -78,14 +78,14 @@ To install the chart with the release name my-release (my-release is the name th
 For NGINX:
 
 ```console
-helm install my-release -n nginx-ingress --create-namespace oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2
+helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2
 ```
 
 For NGINX Plus: (assuming you have pushed the Ingress Controller image `nginx-plus-ingress` to your private registry
 `myregistry.example.com`)
 
 ```console
-helm install my-release -n nginx-ingress --create-namespace oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
 ```
 
 This will install the latest `edge` version of the Ingress Controller from GitHub Container Registry. If you prefer to
@@ -100,7 +100,7 @@ CRDs](#upgrading-the-crds).
 To upgrade the release `my-release`:
 
 ```console
-helm upgrade my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2
 ```
 
 ### Uninstalling the Chart
@@ -108,7 +108,7 @@ helm upgrade my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ing
 To uninstall/delete the release `my-release`:
 
 ```console
-helm uninstall my-release -n nginx-ingress
+helm uninstall my-release
 ```
 
 The command removes all the Kubernetes components associated with the release and deletes the release.
@@ -123,7 +123,7 @@ version is built from the `main` branch of the NGINX Ingress Controller reposito
 by specifying the `--version` flag with the value `0.0.0-edge`:
 
 ```console
-helm install my-release -n nginx-ingress --create-namespace oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.0.0-edge
+helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.0.0-edge
 ```
 
 > **Warning**
@@ -157,13 +157,13 @@ To install the chart with the release name my-release (my-release is the name th
 For NGINX:
 
 ```console
-helm install my-release -n nginx-ingress --create-namespace .
+helm install my-release .
 ```
 
 For NGINX Plus:
 
 ```console
-helm install my-release -f values-plus.yaml -n nginx-ingress --create-namespace .
+helm install my-release -f values-plus.yaml .
 ```
 
 The command deploys the Ingress Controller in your Kubernetes cluster in the default configuration. The configuration
@@ -177,7 +177,7 @@ CRDs](#upgrading-the-crds).
 To upgrade the release `my-release`:
 
 ```console
-helm upgrade my-release -n nginx-ingress .
+helm upgrade my-release .
 ```
 
 ### Uninstalling the Chart
@@ -185,7 +185,7 @@ helm upgrade my-release -n nginx-ingress .
 To uninstall/delete the release `my-release`:
 
 ```console
-helm uninstall my-release -n nginx-ingress
+helm uninstall my-release
 ```
 
 The command removes all the Kubernetes components associated with the release and deletes the release.
@@ -379,8 +379,8 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.watchSecretNamespace` | Comma separated list of namespaces the Ingress Controller should watch for resources of type Secret. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See `controller.watchNamespace` and `controller.watchNamespaceLabel`. Please note that if configuring multiple namespaces using the Helm cli `--set` option, the string needs to wrapped in double quotes and the commas escaped using a backslash - e.g. `--set controller.watchSecretNamespace="default\,nginx-ingress"`. | "" |
 |`controller.enableCustomResources` | Enable the custom resources. | true |
 |`controller.enableOIDC` | Enable OIDC policies. | false |
-|`controller.enableTLSPassthrough` | Enable TLS Passthrough on port 443. Requires `controller.enableCustomResources`. | false |
-|`controller.tlsPassThroughPort` | Set the port for the TLS Passthrough. Requires `controller.enableCustomResources` and `controller.enableTLSPassthrough`. | 443 |
+|`controller.enableTLSPassthrough` | Enable TLS Passthrough on default port 443. Requires `controller.enableCustomResources`. | false |
+|`controller.tlsPassThroughPort` | Set the port for the TLS Passthrough. Requires `controller.enableCustomResources` and `controller.enableTLSPassthrough`.  | 443 |
 |`controller.enableCertManager` | Enable x509 automated certificate management for VirtualServer resources using cert-manager (cert-manager.io). Requires `controller.enableCustomResources`. | false |
 |`controller.enableExternalDNS` | Enable integration with ExternalDNS for configuring public DNS entries for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Requires `controller.enableCustomResources`. | false |
 |`controller.globalConfiguration.create` | Creates the GlobalConfiguration custom resource. Requires `controller.enableCustomResources`. | false |

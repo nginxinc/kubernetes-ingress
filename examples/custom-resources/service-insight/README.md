@@ -3,11 +3,12 @@
   > The Service Insight feature is available only for F5 NGINX Plus.
 
 To use the [Service Insight](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/)
-feature provided by F5 NGINX Ingress Controller you must enable it by setting `serviceInsight.create` to `true` when
-using the Helm Chart or by using the [manifest](../../../deploy/service-insight/deploy.yaml) depending on your
+feature provided by F5 NGINX Ingress Controller you must enable it by setting `serviceInsight.create=true` in your `helm
+install/upgrade...` command OR  [manifest](../../../deployments/deployment/nginx-plus-ingress.yaml) depending on your
 preferred installation method.
 
-The following example is an extract of the Service Insight Deployment for NGINX Ingress Controller using the manifest above:
+The following example demonstrates how to enable the Service Insight for NGINX Ingress Controller using [manifests
+(Deployment)](../../../deployments/deployment/nginx-plus-ingress.yaml):
 
 ```yaml
 apiVersion: apps/v1
@@ -31,7 +32,7 @@ spec:
       securityContext:
       ...
       containers:
-      - image: nginx-plus-ingress:3.3.2
+      - image: nginx-plus-ingress:3.3.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -66,11 +67,9 @@ spec:
 
 ## Deployment
 
-Install NGINX Ingress Controller with:
-
-```console
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/main/deploy/service-insight/deploy.yaml
-```
+[Install NGINX Ingress
+Controller](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), and uncomment
+the `-enable-service-insight` option: this will allow Service Insight to interact with it.
 
 The examples below use the `nodeport` service.
 
@@ -298,7 +297,7 @@ Response:
 ## Service Insight with TLS
 
 The following example demonstrates how to enable the Service Insight for NGINX Ingress Controller with **TLS** using
-manifests (Deployment):
+[manifests (Deployment)](../../../deployments/deployment/nginx-plus-ingress.yaml):
 
 ```yaml
 apiVersion: apps/v1
@@ -322,7 +321,7 @@ spec:
       securityContext:
       ...
       containers:
-      - image: nginx-plus-ingress:3.3.2
+      - image: nginx-plus-ingress:3.3.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
