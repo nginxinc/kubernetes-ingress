@@ -13,11 +13,16 @@ This document provides an overview of the steps required to use NGINX App Protec
 
 ## Prerequisites
 
-Make sure you have access to the Ingress Controller image:
+1. Make sure you have access to the Ingress Controller image:
+    - For NGINX Plus Ingress Controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
+    - To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
+    - It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
+2. Clone the Ingress Controller repo:
 
-- For NGINX Plus Ingress Controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
-- To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
-- It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
+    ```
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.3.2
+    cd kubernetes-ingress/deployments
+    ```
 
 ## Install the App Protect DoS Arbitrator
 

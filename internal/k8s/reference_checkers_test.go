@@ -5,7 +5,6 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	networking "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -579,19 +578,19 @@ func TestServiceIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) 
 func TestIsServiceReferencedByTransportServer(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		ts               *conf_v1alpha1.TransportServer
+		ts               *conf_v1.TransportServer
 		serviceNamespace string
 		serviceName      string
 		expected         bool
 		msg              string
 	}{
 		{
-			ts: &conf_v1alpha1.TransportServer{
+			ts: &conf_v1.TransportServer{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.TransportServerSpec{
-					Upstreams: []conf_v1alpha1.Upstream{
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
 						{
 							Service: "test-service",
 						},
@@ -604,12 +603,12 @@ func TestIsServiceReferencedByTransportServer(t *testing.T) {
 			msg:              "service is referenced in an upstream",
 		},
 		{
-			ts: &conf_v1alpha1.TransportServer{
+			ts: &conf_v1.TransportServer{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.TransportServerSpec{
-					Upstreams: []conf_v1alpha1.Upstream{
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
 						{
 							Service: "test-service",
 						},
@@ -622,12 +621,12 @@ func TestIsServiceReferencedByTransportServer(t *testing.T) {
 			msg:              "wrong namespace for service in an upstream",
 		},
 		{
-			ts: &conf_v1alpha1.TransportServer{
+			ts: &conf_v1.TransportServer{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.TransportServerSpec{
-					Upstreams: []conf_v1alpha1.Upstream{
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
 						{
 							Service: "test-service",
 						},

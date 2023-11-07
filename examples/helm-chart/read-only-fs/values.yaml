@@ -1,5 +1,0 @@
-controller:
-  name: controller
-  kind: deployment
-  enableCustomResources: false
-  readOnlyRootFilesystem: true

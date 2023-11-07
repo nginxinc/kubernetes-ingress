@@ -1,6 +1,6 @@
 package configs
 
-import conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+import conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 
 // ConfigParams holds NGINX configuration parameters that affect the main NGINX config
 // as well as configs for Ingress resources.
@@ -196,8 +196,8 @@ func NewDefaultGlobalConfigParams() *GlobalConfigParams {
 func NewGlobalConfigParamsWithTLSPassthrough() *GlobalConfigParams {
 	return &GlobalConfigParams{
 		Listeners: map[string]Listener{
-			conf_v1alpha1.TLSPassthroughListenerName: {
-				Protocol: conf_v1alpha1.TLSPassthroughListenerProtocol,
+			conf_v1.TLSPassthroughListenerName: {
+				Protocol: conf_v1.TLSPassthroughListenerProtocol,
 			},
 		},
 	}

@@ -12,7 +12,7 @@ KUBE_CONFIG_FOLDER = $${HOME}/.kube
 KIND_KUBE_CONFIG_FOLDER = $${HOME}/.kube/kind
 SHOW_IC_LOGS = no
 PYTEST_ARGS =
-DOCKERFILEPATH = Dockerfile
+DOCKERFILEPATH = docker/Dockerfile
 IP_FAMILY=dual
 
 

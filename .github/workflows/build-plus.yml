@@ -48,7 +48,7 @@ jobs:
       - name: Setup QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
         with:
-          platforms: arm64
+          platforms: arm64,s390x
         if: github.event_name != 'pull_request'
 
       - name: Docker Buildx
@@ -171,7 +171,7 @@ jobs:
             This is the official implementation of NGINX Ingress Controller (based on NGINX Plus) from NGINX.
           usage-instructions: |
             This container requires Kubernetes and can be deployed to EKS.
-            Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/main/deploy
+            Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments
             Use this image instead of building your own.
         if: ${{ github.ref_type == 'tag' && contains(inputs.target, 'aws') }}
 

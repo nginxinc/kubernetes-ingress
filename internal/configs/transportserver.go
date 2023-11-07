@@ -8,7 +8,7 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
 const nginxNonExistingUnixSocket = "unix:/var/lib/nginx/non-existing-unix-socket.sock"
@@ -16,7 +16,7 @@ const nginxNonExistingUnixSocket = "unix:/var/lib/nginx/non-existing-unix-socket
 // TransportServerEx holds a TransportServer along with the resources referenced by it.
 type TransportServerEx struct {
 	ListenerPort     int
-	TransportServer  *conf_v1alpha1.TransportServer
+	TransportServer  *conf_v1.TransportServer
 	Endpoints        map[string][]string
 	PodsByIP         map[string]string
 	ExternalNameSvcs map[string]bool
@@ -34,7 +34,7 @@ func (tsEx *TransportServerEx) String() string {
 	return fmt.Sprintf("%s/%s", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name)
 }
 
-func newUpstreamNamerForTransportServer(transportServer *conf_v1alpha1.TransportServer) *upstreamNamer {
+func newUpstreamNamerForTransportServer(transportServer *conf_v1.TransportServer) *upstreamNamer {
 	return &upstreamNamer{
 		prefix: fmt.Sprintf("ts_%s_%s", transportServer.Namespace, transportServer.Name),
 	}
@@ -83,13 +83,13 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 	streamSnippets := generateSnippets(true, transportServerEx.TransportServer.Spec.StreamSnippets, []string{})
 
 	statusZone := transportServerEx.TransportServer.Spec.Listener.Name
-	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName {
+	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName {
 		statusZone = transportServerEx.TransportServer.Spec.Host
 	}
 
 	tsConfig := &version2.TransportServerConfig{
 		Server: version2.StreamServer{
-			TLSPassthrough:           transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName,
+			TLSPassthrough:           transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName,
 			UnixSocket:               generateUnixSocket(transportServerEx),
 			Port:                     listenerPort,
 			UDP:                      transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
@@ -117,13 +117,13 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 }
 
 func generateUnixSocket(transportServerEx *TransportServerEx) string {
-	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName {
+	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName {
 		return fmt.Sprintf("unix:/var/lib/nginx/passthrough-%s_%s.sock", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name)
 	}
 	return ""
 }
 
-func generateSSLConfig(ts *conf_v1alpha1.TransportServer, tls *conf_v1alpha1.TLS, namespace string, secretRefs map[string]*secrets.SecretReference) (*version2.StreamSSL, Warnings) {
+func generateSSLConfig(ts *conf_v1.TransportServer, tls *conf_v1.TransportServerTLS, namespace string, secretRefs map[string]*secrets.SecretReference) (*version2.StreamSSL, Warnings) {
 	if tls == nil {
 		return &version2.StreamSSL{Enabled: false}, nil
 	}
@@ -185,7 +185,7 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 	return upstreams, warnings
 }
 
-func generateTransportServerHealthCheck(upstreamName string, generatedUpstreamName string, upstreams []conf_v1alpha1.Upstream) (*version2.StreamHealthCheck, *version2.Match) {
+func generateTransportServerHealthCheck(upstreamName string, generatedUpstreamName string, upstreams []conf_v1.TransportServerUpstream) (*version2.StreamHealthCheck, *version2.Match) {
 	var hc *version2.StreamHealthCheck
 	var match *version2.Match
 
@@ -234,7 +234,7 @@ func generateTransportServerHealthCheckWithDefaults() *version2.StreamHealthChec
 	}
 }
 
-func generateHealthCheckMatch(match *conf_v1alpha1.Match, name string) *version2.Match {
+func generateHealthCheckMatch(match *conf_v1.TransportServerMatch, name string) *version2.Match {
 	var modifier string
 	var expect string
 
@@ -256,7 +256,7 @@ func generateHealthCheckMatch(match *conf_v1alpha1.Match, name string) *version2
 	}
 }
 
-func generateStreamUpstream(upstream conf_v1alpha1.Upstream, upstreamNamer *upstreamNamer, endpoints []string, isPlus bool) version2.StreamUpstream {
+func generateStreamUpstream(upstream conf_v1.TransportServerUpstream, upstreamNamer *upstreamNamer, endpoints []string, isPlus bool) version2.StreamUpstream {
 	var upsServers []version2.StreamUpstreamServer
 
 	name := upstreamNamer.GetNameForUpstream(upstream.Name)

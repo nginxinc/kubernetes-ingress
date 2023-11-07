@@ -9,7 +9,6 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -261,12 +260,12 @@ func (vsc *VirtualServerConfiguration) IsEqual(resource Resource) bool {
 // TransportServerConfiguration holds a TransportServer resource.
 type TransportServerConfiguration struct {
 	ListenerPort    int
-	TransportServer *conf_v1alpha1.TransportServer
+	TransportServer *conf_v1.TransportServer
 	Warnings        []string
 }
 
 // NewTransportServerConfiguration creates a new TransportServerConfiguration.
-func NewTransportServerConfiguration(ts *conf_v1alpha1.TransportServer) *TransportServerConfiguration {
+func NewTransportServerConfiguration(ts *conf_v1.TransportServer) *TransportServerConfiguration {
 	return &TransportServerConfiguration{
 		TransportServer: ts,
 	}
@@ -329,15 +328,15 @@ type TransportServerMetrics struct {
 type Configuration struct {
 	hosts       map[string]Resource
 	listeners   map[string]*TransportServerConfiguration
-	listenerMap map[string]conf_v1alpha1.Listener
+	listenerMap map[string]conf_v1.Listener
 
 	// only valid resources with the matching IngressClass are stored
 	ingresses           map[string]*networking.Ingress
 	virtualServers      map[string]*conf_v1.VirtualServer
 	virtualServerRoutes map[string]*conf_v1.VirtualServerRoute
-	transportServers    map[string]*conf_v1alpha1.TransportServer
+	transportServers    map[string]*conf_v1.TransportServer
 
-	globalConfiguration *conf_v1alpha1.GlobalConfiguration
+	globalConfiguration *conf_v1.GlobalConfiguration
 
 	hostProblems     map[string]ConfigurationProblem
 	listenerProblems map[string]ConfigurationProblem
@@ -388,7 +387,7 @@ func NewConfiguration(
 		ingresses:                    make(map[string]*networking.Ingress),
 		virtualServers:               make(map[string]*conf_v1.VirtualServer),
 		virtualServerRoutes:          make(map[string]*conf_v1.VirtualServerRoute),
-		transportServers:             make(map[string]*conf_v1alpha1.TransportServer),
+		transportServers:             make(map[string]*conf_v1.TransportServer),
 		hostProblems:                 make(map[string]ConfigurationProblem),
 		hasCorrectIngressClass:       hasCorrectIngressClass,
 		virtualServerValidator:       virtualServerValidator,
@@ -594,7 +593,7 @@ func (c *Configuration) DeleteVirtualServerRoute(key string) ([]ResourceChange, 
 }
 
 // AddOrUpdateGlobalConfiguration adds or updates the GlobalConfiguration.
-func (c *Configuration) AddOrUpdateGlobalConfiguration(gc *conf_v1alpha1.GlobalConfiguration) ([]ResourceChange, []ConfigurationProblem, error) {
+func (c *Configuration) AddOrUpdateGlobalConfiguration(gc *conf_v1.GlobalConfiguration) ([]ResourceChange, []ConfigurationProblem, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -643,7 +642,7 @@ func (c *Configuration) DeleteGlobalConfiguration() ([]ResourceChange, []Configu
 }
 
 // GetGlobalConfiguration returns the current GlobalConfiguration.
-func (c *Configuration) GetGlobalConfiguration() *conf_v1alpha1.GlobalConfiguration {
+func (c *Configuration) GetGlobalConfiguration() *conf_v1.GlobalConfiguration {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
@@ -651,7 +650,7 @@ func (c *Configuration) GetGlobalConfiguration() *conf_v1alpha1.GlobalConfigurat
 }
 
 // AddOrUpdateTransportServer adds or updates the TransportServer.
-func (c *Configuration) AddOrUpdateTransportServer(ts *conf_v1alpha1.TransportServer) ([]ResourceChange, []ConfigurationProblem) {
+func (c *Configuration) AddOrUpdateTransportServer(ts *conf_v1.TransportServer) ([]ResourceChange, []ConfigurationProblem) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -769,7 +768,7 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 	newTSConfigs = make(map[string]*TransportServerConfiguration)
 
 	for key, ts := range c.transportServers {
-		if ts.Spec.Listener.Protocol == conf_v1alpha1.TLSPassthroughListenerProtocol {
+		if ts.Spec.Listener.Protocol == conf_v1.TLSPassthroughListenerProtocol {
 			continue
 		}
 
@@ -781,7 +780,7 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 		}
 
 		found := false
-		var listener conf_v1alpha1.Listener
+		var listener conf_v1.Listener
 		for _, l := range c.globalConfiguration.Spec.Listeners {
 			if ts.Spec.Listener.Name == l.Name && ts.Spec.Listener.Protocol == l.Protocol {
 				listener = l
@@ -1468,7 +1467,7 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 		for _, key := range getSortedTransportServerKeys(c.transportServers) {
 			ts := c.transportServers[key]
 
-			if ts.Spec.Listener.Name != conf_v1alpha1.TLSPassthroughListenerName && ts.Spec.Listener.Protocol != conf_v1alpha1.TLSPassthroughListenerProtocol {
+			if ts.Spec.Listener.Name != conf_v1.TLSPassthroughListenerName && ts.Spec.Listener.Protocol != conf_v1.TLSPassthroughListenerProtocol {
 				continue
 			}
 
@@ -1655,7 +1654,7 @@ func (c *Configuration) GetTransportServerMetrics() *TransportServerMetrics {
 }
 
 func (c *Configuration) setGlobalConfigListenerMap() {
-	c.listenerMap = make(map[string]conf_v1alpha1.Listener)
+	c.listenerMap = make(map[string]conf_v1.Listener)
 
 	if c.globalConfiguration != nil {
 		for _, listener := range c.globalConfiguration.Spec.Listeners {
@@ -1724,7 +1723,7 @@ func getSortedResourceKeys(m map[string]Resource) []string {
 	return keys
 }
 
-func getSortedTransportServerKeys(m map[string]*conf_v1alpha1.TransportServer) []string {
+func getSortedTransportServerKeys(m map[string]*conf_v1.TransportServer) []string {
 	var keys []string
 
 	for k := range m {
