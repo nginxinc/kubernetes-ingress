@@ -12,7 +12,7 @@ KUBE_CONFIG_FOLDER = $${HOME}/.kube
 KIND_KUBE_CONFIG_FOLDER = $${HOME}/.kube/kind
 SHOW_IC_LOGS = no
 PYTEST_ARGS =
-DOCKERFILEPATH = docker/Dockerfile
+DOCKERFILEPATH = Dockerfile
 IP_FAMILY=dual
 
 
@@ -64,7 +64,7 @@ run-tests-in-kind: update-test-kind-config ## Run tests in Kind
 
 .PHONY: create-kind-cluster
 create-kind-cluster: ## Create Kind cluster
-	$(eval KIND_IMAGE=$(shell grep -m1 'FROM kindest/node' <docker/Dockerfile | awk -F'[ ]' '{print $$2}'))
+	$(eval KIND_IMAGE=$(shell grep -m1 'FROM kindest/node' <Dockerfile | awk -F'[ ]' '{print $$2}'))
 	kind create cluster --image $(KIND_IMAGE) --config=<(sed 's/dual/${IP_FAMILY}/' ./ci-files/ci-kind-config.yaml)
 	kind export kubeconfig --kubeconfig $(KIND_KUBE_CONFIG_FOLDER)/config
 
