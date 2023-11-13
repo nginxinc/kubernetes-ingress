@@ -3,7 +3,7 @@ package validation
 import (
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -15,20 +15,20 @@ func createTransportServerValidator() *TransportServerValidator {
 func TestValidateTransportServer(t *testing.T) {
 	t.Parallel()
 
-	ts := v1alpha1.TransportServer{
-		Spec: v1alpha1.TransportServerSpec{
-			Listener: v1alpha1.TransportServerListener{
+	ts := conf_v1.TransportServer{
+		Spec: conf_v1.TransportServerSpec{
+			Listener: conf_v1.TransportServerListener{
 				Name:     "tcp-listener",
 				Protocol: "TCP",
 			},
-			Upstreams: []v1alpha1.Upstream{
+			Upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "upstream1",
 					Service: "test-1",
 					Port:    5501,
 				},
 			},
-			Action: &v1alpha1.Action{
+			Action: &conf_v1.TransportServerAction{
 				Pass: "upstream1",
 			},
 		},
@@ -44,13 +44,13 @@ func TestValidateTransportServer(t *testing.T) {
 
 func TestValidateTransportServer_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
-	ts := v1alpha1.TransportServer{
-		Spec: v1alpha1.TransportServerSpec{
-			Listener: v1alpha1.TransportServerListener{
+	ts := conf_v1.TransportServer{
+		Spec: conf_v1.TransportServerSpec{
+			Listener: conf_v1.TransportServerListener{
 				Name:     "tcp-listener",
 				Protocol: "TCP",
 			},
-			Upstreams: []v1alpha1.Upstream{
+			Upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "upstream1",
 					Service: "test-1",
@@ -72,17 +72,17 @@ func TestValidateTransportServer_FailsOnInvalidInput(t *testing.T) {
 func TestValidateTransportServerUpstreams(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		upstreams             []v1alpha1.Upstream
+		upstreams             []conf_v1.TransportServerUpstream
 		expectedUpstreamNames sets.Set[string]
 		msg                   string
 	}{
 		{
-			upstreams:             []v1alpha1.Upstream{},
+			upstreams:             []conf_v1.TransportServerUpstream{},
 			expectedUpstreamNames: sets.Set[string]{},
 			msg:                   "no upstreams",
 		},
 		{
-			upstreams: []v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "upstream1",
 					Service: "test-1",
@@ -116,12 +116,12 @@ func TestValidateTransportServerUpstreams(t *testing.T) {
 func TestValidateTransportServerUpstreams_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		upstreams             []v1alpha1.Upstream
+		upstreams             []conf_v1.TransportServerUpstream
 		expectedUpstreamNames sets.Set[string]
 		msg                   string
 	}{
 		{
-			upstreams: []v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "@upstream1",
 					Service: "test-1",
@@ -132,7 +132,7 @@ func TestValidateTransportServerUpstreams_FailsOnInvalidInput(t *testing.T) {
 			msg:                   "invalid upstream name",
 		},
 		{
-			upstreams: []v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "upstream1",
 					Service: "@test-1",
@@ -145,7 +145,7 @@ func TestValidateTransportServerUpstreams_FailsOnInvalidInput(t *testing.T) {
 			msg: "invalid service",
 		},
 		{
-			upstreams: []v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "upstream1",
 					Service: "test-1",
@@ -158,7 +158,7 @@ func TestValidateTransportServerUpstreams_FailsOnInvalidInput(t *testing.T) {
 			msg: "invalid port",
 		},
 		{
-			upstreams: []v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "upstream1",
 					Service: "test-1",
@@ -393,25 +393,25 @@ func TestValidateTransportServerHost_FailsOnInvalidInput(t *testing.T) {
 func TestValidateTransportListener(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		listener       *v1alpha1.TransportServerListener
+		listener       *conf_v1.TransportServerListener
 		tlsPassthrough bool
 	}{
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "tcp-listener",
 				Protocol: "TCP",
 			},
 			tlsPassthrough: false,
 		},
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "tcp-listener",
 				Protocol: "TCP",
 			},
 			tlsPassthrough: true,
 		},
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "tls-passthrough",
 				Protocol: "TLS_PASSTHROUGH",
 			},
@@ -434,39 +434,39 @@ func TestValidateTransportListener(t *testing.T) {
 func TestValidateTransportListener_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		listener       *v1alpha1.TransportServerListener
+		listener       *conf_v1.TransportServerListener
 		tlsPassthrough bool
 	}{
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "tls-passthrough",
 				Protocol: "TLS_PASSTHROUGH",
 			},
 			tlsPassthrough: false,
 		},
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "tls-passthrough",
 				Protocol: "abc",
 			},
 			tlsPassthrough: true,
 		},
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "tls-passthrough",
 				Protocol: "abc",
 			},
 			tlsPassthrough: false,
 		},
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "abc",
 				Protocol: "TLS_PASSTHROUGH",
 			},
 			tlsPassthrough: true,
 		},
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "abc",
 				Protocol: "TLS_PASSTHROUGH",
 			},
@@ -489,25 +489,25 @@ func TestValidateTransportListener_FailsOnInvalidInput(t *testing.T) {
 func TestValidateIsPotentialTLSPassthroughListener(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		listener *v1alpha1.TransportServerListener
+		listener *conf_v1.TransportServerListener
 		expected bool
 	}{
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "tls-passthrough",
 				Protocol: "abc",
 			},
 			expected: true,
 		},
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "abc",
 				Protocol: "TLS_PASSTHROUGH",
 			},
 			expected: true,
 		},
 		{
-			listener: &v1alpha1.TransportServerListener{
+			listener: &conf_v1.TransportServerListener{
 				Name:     "tcp",
 				Protocol: "TCP",
 			},
@@ -541,7 +541,7 @@ func TestValidateListenerProtocol(t *testing.T) {
 func TestValidateTSUpstreamHealthChecks(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		healthCheck *v1alpha1.HealthCheck
+		healthCheck *conf_v1.TransportServerHealthCheck
 		msg         string
 	}{
 		{
@@ -549,11 +549,11 @@ func TestValidateTSUpstreamHealthChecks(t *testing.T) {
 			msg:         "nil health check",
 		},
 		{
-			healthCheck: &v1alpha1.HealthCheck{},
+			healthCheck: &conf_v1.TransportServerHealthCheck{},
 			msg:         "non nil health check",
 		},
 		{
-			healthCheck: &v1alpha1.HealthCheck{
+			healthCheck: &conf_v1.TransportServerHealthCheck{
 				Enabled:  true,
 				Timeout:  "30s",
 				Jitter:   "5s",
@@ -576,11 +576,11 @@ func TestValidateTSUpstreamHealthChecks(t *testing.T) {
 func TestValidateTSUpstreamHealthChecks_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		healthCheck *v1alpha1.HealthCheck
+		healthCheck *conf_v1.TransportServerHealthCheck
 		msg         string
 	}{
 		{
-			healthCheck: &v1alpha1.HealthCheck{
+			healthCheck: &conf_v1.TransportServerHealthCheck{
 				Enabled:  true,
 				Timeout:  "-30s",
 				Jitter:   "5s",
@@ -592,7 +592,7 @@ func TestValidateTSUpstreamHealthChecks_FailsOnInvalidInput(t *testing.T) {
 			msg: "invalid timeout",
 		},
 		{
-			healthCheck: &v1alpha1.HealthCheck{
+			healthCheck: &conf_v1.TransportServerHealthCheck{
 				Enabled:  true,
 				Timeout:  "30s",
 				Jitter:   "5s",
@@ -604,7 +604,7 @@ func TestValidateTSUpstreamHealthChecks_FailsOnInvalidInput(t *testing.T) {
 			msg: "invalid port number",
 		},
 		{
-			healthCheck: &v1alpha1.HealthCheck{
+			healthCheck: &conf_v1.TransportServerHealthCheck{
 				Enabled:  true,
 				Timeout:  "30s",
 				Jitter:   "5s",
@@ -616,7 +616,7 @@ func TestValidateTSUpstreamHealthChecks_FailsOnInvalidInput(t *testing.T) {
 			msg: "invalid passes value",
 		},
 		{
-			healthCheck: &v1alpha1.HealthCheck{
+			healthCheck: &conf_v1.TransportServerHealthCheck{
 				Enabled:  true,
 				Timeout:  "30s",
 				Jitter:   "5s",
@@ -628,7 +628,7 @@ func TestValidateTSUpstreamHealthChecks_FailsOnInvalidInput(t *testing.T) {
 			msg: "invalid fails value",
 		},
 		{
-			healthCheck: &v1alpha1.HealthCheck{
+			healthCheck: &conf_v1.TransportServerHealthCheck{
 				Enabled:  true,
 				Timeout:  "30s",
 				Jitter:   "5s",
@@ -640,7 +640,7 @@ func TestValidateTSUpstreamHealthChecks_FailsOnInvalidInput(t *testing.T) {
 			msg: "invalid interval value",
 		},
 		{
-			healthCheck: &v1alpha1.HealthCheck{
+			healthCheck: &conf_v1.TransportServerHealthCheck{
 				Enabled:  true,
 				Timeout:  "30s",
 				Jitter:   "5sec",
@@ -664,7 +664,7 @@ func TestValidateTSUpstreamHealthChecks_FailsOnInvalidInput(t *testing.T) {
 func TestValidateUpstreamParameters(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		parameters *v1alpha1.UpstreamParameters
+		parameters *conf_v1.UpstreamParameters
 		msg        string
 	}{
 		{
@@ -672,7 +672,7 @@ func TestValidateUpstreamParameters(t *testing.T) {
 			msg:        "nil parameters",
 		},
 		{
-			parameters: &v1alpha1.UpstreamParameters{},
+			parameters: &conf_v1.UpstreamParameters{},
 			msg:        "Non-nil parameters",
 		},
 	}
@@ -688,7 +688,7 @@ func TestValidateUpstreamParameters(t *testing.T) {
 func TestValidateSessionParameters(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		parameters *v1alpha1.SessionParameters
+		parameters *conf_v1.SessionParameters
 		msg        string
 	}{
 		{
@@ -696,11 +696,11 @@ func TestValidateSessionParameters(t *testing.T) {
 			msg:        "nil parameters",
 		},
 		{
-			parameters: &v1alpha1.SessionParameters{},
+			parameters: &conf_v1.SessionParameters{},
 			msg:        "Non-nil parameters",
 		},
 		{
-			parameters: &v1alpha1.SessionParameters{
+			parameters: &conf_v1.SessionParameters{
 				Timeout: "60s",
 			},
 			msg: "valid parameters",
@@ -718,11 +718,11 @@ func TestValidateSessionParameters(t *testing.T) {
 func TestValidateSessionParameters_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		parameters *v1alpha1.SessionParameters
+		parameters *conf_v1.SessionParameters
 		msg        string
 	}{
 		{
-			parameters: &v1alpha1.SessionParameters{
+			parameters: &conf_v1.SessionParameters{
 				Timeout: "-1s",
 			},
 			msg: "invalid timeout",
@@ -799,7 +799,7 @@ func TestValidateTransportServerAction(t *testing.T) {
 		"test": {},
 	}
 
-	action := &v1alpha1.Action{
+	action := &conf_v1.TransportServerAction{
 		Pass: "test",
 	}
 
@@ -814,17 +814,17 @@ func TestValidateTransportServerAction_FailsOnInvalidInput(t *testing.T) {
 	upstreamNames := map[string]sets.Empty{}
 
 	tests := []struct {
-		action *v1alpha1.Action
+		action *conf_v1.TransportServerAction
 		msg    string
 	}{
 		{
-			action: &v1alpha1.Action{
+			action: &conf_v1.TransportServerAction{
 				Pass: "",
 			},
 			msg: "missing pass field",
 		},
 		{
-			action: &v1alpha1.Action{
+			action: &conf_v1.TransportServerAction{
 				Pass: "non-existing",
 			},
 			msg: "pass references a non-existing upstream",
@@ -952,7 +952,7 @@ func TestValidateMatchExpect_FailsOnInvalidInput(t *testing.T) {
 
 func TestValidateTsTLS(t *testing.T) {
 	t.Parallel()
-	validTLSes := []*v1alpha1.TLS{
+	validTLSes := []*conf_v1.TransportServerTLS{
 		nil,
 		{
 			Secret: "my-secret",
@@ -970,29 +970,29 @@ func TestValidateTsTLS(t *testing.T) {
 func TestValidateTsTLS_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	invalidTLSes := []struct {
-		tls              *v1alpha1.TLS
+		tls              *conf_v1.TransportServerTLS
 		isTLSPassthrough bool
 	}{
 		{
-			tls: &v1alpha1.TLS{
+			tls: &conf_v1.TransportServerTLS{
 				Secret: "-",
 			},
 			isTLSPassthrough: false,
 		},
 		{
-			tls: &v1alpha1.TLS{
+			tls: &conf_v1.TransportServerTLS{
 				Secret: "a/b",
 			},
 			isTLSPassthrough: false,
 		},
 		{
-			tls: &v1alpha1.TLS{
+			tls: &conf_v1.TransportServerTLS{
 				Secret: "my-secret",
 			},
 			isTLSPassthrough: true,
 		},
 		{
-			tls: &v1alpha1.TLS{
+			tls: &conf_v1.TransportServerTLS{
 				Secret: "",
 			},
 			isTLSPassthrough: false,

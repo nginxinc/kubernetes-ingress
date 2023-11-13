@@ -3,7 +3,7 @@ package validation
 import (
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -13,9 +13,9 @@ func createGlobalConfigurationValidator() *GlobalConfigurationValidator {
 
 func TestValidateGlobalConfiguration(t *testing.T) {
 	t.Parallel()
-	globalConfiguration := v1alpha1.GlobalConfiguration{
-		Spec: v1alpha1.GlobalConfigurationSpec{
-			Listeners: []v1alpha1.Listener{
+	globalConfiguration := conf_v1.GlobalConfiguration{
+		Spec: conf_v1.GlobalConfigurationSpec{
+			Listeners: []conf_v1.Listener{
 				{
 					Name:     "tcp-listener",
 					Port:     53,
@@ -61,7 +61,7 @@ func TestValidateListenerPort(t *testing.T) {
 
 func TestValidateListeners(t *testing.T) {
 	t.Parallel()
-	listeners := []v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-listener",
 			Port:     53,
@@ -85,11 +85,11 @@ func TestValidateListeners(t *testing.T) {
 func TestValidateListenersFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		listeners []v1alpha1.Listener
+		listeners []conf_v1.Listener
 		msg       string
 	}{
 		{
-			listeners: []v1alpha1.Listener{
+			listeners: []conf_v1.Listener{
 				{
 					Name:     "tcp-listener",
 					Port:     2201,
@@ -104,7 +104,7 @@ func TestValidateListenersFails(t *testing.T) {
 			msg: "duplicated name",
 		},
 		{
-			listeners: []v1alpha1.Listener{
+			listeners: []conf_v1.Listener{
 				{
 					Name:     "tcp-listener-1",
 					Port:     2201,
@@ -132,7 +132,7 @@ func TestValidateListenersFails(t *testing.T) {
 
 func TestValidateListener(t *testing.T) {
 	t.Parallel()
-	listener := v1alpha1.Listener{
+	listener := conf_v1.Listener{
 		Name:     "tcp-listener",
 		Port:     53,
 		Protocol: "TCP",
@@ -149,11 +149,11 @@ func TestValidateListener(t *testing.T) {
 func TestValidateListenerFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		Listener v1alpha1.Listener
+		Listener conf_v1.Listener
 		msg      string
 	}{
 		{
-			Listener: v1alpha1.Listener{
+			Listener: conf_v1.Listener{
 				Name:     "@",
 				Port:     2201,
 				Protocol: "TCP",
@@ -161,7 +161,7 @@ func TestValidateListenerFails(t *testing.T) {
 			msg: "invalid name",
 		},
 		{
-			Listener: v1alpha1.Listener{
+			Listener: conf_v1.Listener{
 				Name:     "tcp-listener",
 				Port:     -1,
 				Protocol: "TCP",
@@ -169,7 +169,7 @@ func TestValidateListenerFails(t *testing.T) {
 			msg: "invalid port",
 		},
 		{
-			Listener: v1alpha1.Listener{
+			Listener: conf_v1.Listener{
 				Name:     "name",
 				Port:     2201,
 				Protocol: "IP",
@@ -177,7 +177,7 @@ func TestValidateListenerFails(t *testing.T) {
 			msg: "invalid protocol",
 		},
 		{
-			Listener: v1alpha1.Listener{
+			Listener: conf_v1.Listener{
 				Name:     "tls-passthrough",
 				Port:     2201,
 				Protocol: "TCP",
@@ -244,7 +244,7 @@ func TestValidateListenerProtocol_PassesOnValidInput(t *testing.T) {
 
 func TestValidateListenerProtocol_PassesOnHttpListenerUsingDiffPortToTCPAndUDPListenerWithTCPAndUDPDefinedFirst(t *testing.T) {
 	t.Parallel()
-	listeners := []v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-listener",
 			Port:     53,
@@ -272,7 +272,7 @@ func TestValidateListenerProtocol_PassesOnHttpListenerUsingDiffPortToTCPAndUDPLi
 
 func TestValidateListenerProtocol_PassesOnHttpListenerUsingDiffPortToTCPAndUDPListenerWithHTTPDefinedFirst(t *testing.T) {
 	t.Parallel()
-	listeners := []v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "http-listener",
 			Port:     63,
@@ -300,7 +300,7 @@ func TestValidateListenerProtocol_PassesOnHttpListenerUsingDiffPortToTCPAndUDPLi
 
 func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPListener(t *testing.T) {
 	t.Parallel()
-	listeners := []v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-listener",
 			Port:     53,
@@ -323,7 +323,7 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPListener(
 
 func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsUDPListener(t *testing.T) {
 	t.Parallel()
-	listeners := []v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "udp-listener",
 			Port:     53,
@@ -346,7 +346,7 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsUDPListener(
 
 func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPAndUDPListener(t *testing.T) {
 	t.Parallel()
-	listeners := []v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-listener",
 			Port:     53,
@@ -374,7 +374,7 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPAndUDPLis
 
 func TestValidateListenerProtocol_FailsOnTCPListenerUsingSamePortAsHTTPListener(t *testing.T) {
 	t.Parallel()
-	listeners := []v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "http-listener",
 			Port:     53,
@@ -397,7 +397,7 @@ func TestValidateListenerProtocol_FailsOnTCPListenerUsingSamePortAsHTTPListener(
 
 func TestValidateListenerProtocol_FailsOnUDPListenerUsingSamePortAsHTTPListener(t *testing.T) {
 	t.Parallel()
-	listeners := []v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "http-listener",
 			Port:     53,

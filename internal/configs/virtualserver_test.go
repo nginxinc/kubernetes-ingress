@@ -11212,7 +11212,7 @@ var (
 			},
 			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
-				Listener: &conf_v1.Listener{
+				Listener: &conf_v1.VirtualServerListener{
 					HTTP:  "http-8083",
 					HTTPS: "https-8443",
 				},
@@ -11229,7 +11229,7 @@ var (
 			},
 			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
-				Listener: &conf_v1.Listener{
+				Listener: &conf_v1.VirtualServerListener{
 					HTTP: "http-8083",
 				},
 			},
@@ -11245,7 +11245,7 @@ var (
 			},
 			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
-				Listener: &conf_v1.Listener{
+				Listener: &conf_v1.VirtualServerListener{
 					HTTPS: "https-8443",
 				},
 			},

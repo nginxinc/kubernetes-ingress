@@ -23,7 +23,7 @@ When [installing](/nginx-ingress-controller/installation/installation-with-manif
 The GlobalConfiguration resource defines the global configuration parameters of the Ingress Controller. Below is an example:
 
 ```yaml
-apiVersion: k8s.nginx.org/v1alpha1
+apiVersion: k8s.nginx.org/v1
 kind: GlobalConfiguration
 metadata:
   name: nginx-configuration
@@ -111,7 +111,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
     ```
     $ kubectl apply -f global-configuration.yaml
-    error: error validating "global-configuration.yaml": error validating data: ValidationError(GlobalConfiguration.spec.listeners[0].port): invalid type for org.nginx.k8s.v1alpha1.GlobalConfiguration.spec.listeners.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
+    error: error validating "global-configuration.yaml": error validating data: ValidationError(GlobalConfiguration.spec.listeners[0].port): invalid type for org.nginx.k8s.v1.GlobalConfiguration.spec.listeners.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
 - Example of Kubernetes API server validation:

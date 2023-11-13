@@ -65,5 +65,10 @@ func makePathWithRegex(path, regexType string) string {
 var helperFunctions = template.FuncMap{
 	"split":            split,
 	"trim":             trim,
+	"contains":         strings.Contains,
+	"hasPrefix":        strings.HasPrefix,
+	"hasSuffix":        strings.HasSuffix,
+	"toLower":          strings.ToLower,
+	"toUpper":          strings.ToUpper,
 	"makeLocationPath": makeLocationPath,
 }

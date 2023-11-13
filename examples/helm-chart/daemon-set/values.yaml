@@ -1,3 +1,0 @@
-controller:
-  name: controller
-  kind: daemonset

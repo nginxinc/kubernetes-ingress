@@ -48,8 +48,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Externaldns().V1().DNSEndpoints().Informer()}, nil
 
 		// Group=k8s.nginx.org, Version=v1
+	case configurationv1.SchemeGroupVersion.WithResource("globalconfigurations"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().GlobalConfigurations().Informer()}, nil
 	case configurationv1.SchemeGroupVersion.WithResource("policies"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().Policies().Informer()}, nil
+	case configurationv1.SchemeGroupVersion.WithResource("transportservers"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().TransportServers().Informer()}, nil
 	case configurationv1.SchemeGroupVersion.WithResource("virtualservers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().VirtualServers().Informer()}, nil
 	case configurationv1.SchemeGroupVersion.WithResource("virtualserverroutes"):

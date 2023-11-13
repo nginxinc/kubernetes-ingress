@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -30,16 +30,16 @@ func NewGlobalConfigurationValidator(forbiddenListenerPorts map[int]bool) *Globa
 }
 
 // ValidateGlobalConfiguration validates a GlobalConfiguration.
-func (gcv *GlobalConfigurationValidator) ValidateGlobalConfiguration(globalConfiguration *v1alpha1.GlobalConfiguration) error {
+func (gcv *GlobalConfigurationValidator) ValidateGlobalConfiguration(globalConfiguration *conf_v1.GlobalConfiguration) error {
 	allErrs := gcv.validateGlobalConfigurationSpec(&globalConfiguration.Spec, field.NewPath("spec"))
 	return allErrs.ToAggregate()
 }
 
-func (gcv *GlobalConfigurationValidator) validateGlobalConfigurationSpec(spec *v1alpha1.GlobalConfigurationSpec, fieldPath *field.Path) field.ErrorList {
+func (gcv *GlobalConfigurationValidator) validateGlobalConfigurationSpec(spec *conf_v1.GlobalConfigurationSpec, fieldPath *field.Path) field.ErrorList {
 	return gcv.validateListeners(spec.Listeners, fieldPath.Child("listeners"))
 }
 
-func (gcv *GlobalConfigurationValidator) validateListeners(listeners []v1alpha1.Listener, fieldPath *field.Path) field.ErrorList {
+func (gcv *GlobalConfigurationValidator) validateListeners(listeners []conf_v1.Listener, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	listenerNames := sets.Set[string]{}
@@ -91,7 +91,7 @@ func generatePortProtocolKey(port int, protocol string) string {
 	return fmt.Sprintf("%d/%s", port, protocol)
 }
 
-func (gcv *GlobalConfigurationValidator) validateListener(listener v1alpha1.Listener, fieldPath *field.Path) field.ErrorList {
+func (gcv *GlobalConfigurationValidator) validateListener(listener conf_v1.Listener, fieldPath *field.Path) field.ErrorList {
 	allErrs := validateGlobalConfigurationListenerName(listener.Name, fieldPath.Child("name"))
 	allErrs = append(allErrs, gcv.validateListenerPort(listener.Port, fieldPath.Child("port"))...)
 	allErrs = append(allErrs, validateListenerProtocol(listener.Protocol, fieldPath.Child("protocol"))...)
@@ -100,7 +100,7 @@ func (gcv *GlobalConfigurationValidator) validateListener(listener v1alpha1.List
 }
 
 func validateGlobalConfigurationListenerName(name string, fieldPath *field.Path) field.ErrorList {
-	if name == v1alpha1.TLSPassthroughListenerName {
+	if name == conf_v1.TLSPassthroughListenerName {
 		return field.ErrorList{field.Forbidden(fieldPath, "is the name of a built-in listener")}
 	}
 	return validateListenerName(name, fieldPath)

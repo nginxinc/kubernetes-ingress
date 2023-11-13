@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	fake_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
@@ -20,12 +19,12 @@ import (
 
 func TestUpdateTransportServerStatus(t *testing.T) {
 	t.Parallel()
-	ts := &conf_v1alpha1.TransportServer{
+	ts := &conf_v1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
 			Namespace: "default",
 		},
-		Status: conf_v1alpha1.TransportServerStatus{
+		Status: conf_v1.TransportServerStatus{
 			State:   "before status",
 			Reason:  "before reason",
 			Message: "before message",
@@ -33,8 +32,8 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 	}
 
 	fakeClient := fake_v1alpha1.NewSimpleClientset(
-		&conf_v1alpha1.TransportServerList{
-			Items: []conf_v1alpha1.TransportServer{
+		&conf_v1.TransportServerList{
+			Items: []conf_v1.TransportServer{
 				*ts,
 			},
 		})
@@ -57,9 +56,9 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 	if err != nil {
 		t.Errorf("error updating transportserver status: %v", err)
 	}
-	updatedTs, _ := fakeClient.K8sV1alpha1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
+	updatedTs, _ := fakeClient.K8sV1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
 
-	expectedStatus := conf_v1alpha1.TransportServerStatus{
+	expectedStatus := conf_v1.TransportServerStatus{
 		State:   "after status",
 		Reason:  "after reason",
 		Message: "after message",
@@ -72,12 +71,12 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 
 func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 	t.Parallel()
-	ts := &conf_v1alpha1.TransportServer{
+	ts := &conf_v1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
 			Namespace: "default",
 		},
-		Status: conf_v1alpha1.TransportServerStatus{
+		Status: conf_v1.TransportServerStatus{
 			State:   "same status",
 			Reason:  "same reason",
 			Message: "same message",
@@ -85,20 +84,20 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 	}
 
 	fakeClient := fake_v1alpha1.NewSimpleClientset(
-		&conf_v1alpha1.TransportServerList{
-			Items: []conf_v1alpha1.TransportServer{
+		&conf_v1.TransportServerList{
+			Items: []conf_v1.TransportServer{
 				*ts,
 			},
 		})
 
 	tsLister, _ := cache.NewInformer(
 		cache.NewListWatchFromClient(
-			fakeClient.K8sV1alpha1().RESTClient(),
+			fakeClient.K8sV1().RESTClient(),
 			"transportservers",
 			"nginx-ingress",
 			fields.Everything(),
 		),
-		&conf_v1alpha1.TransportServer{},
+		&conf_v1.TransportServer{},
 		2,
 		nil,
 	)
@@ -119,7 +118,7 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 	if err != nil {
 		t.Errorf("error updating transportserver status: %v", err)
 	}
-	updatedTs, _ := fakeClient.K8sV1alpha1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
+	updatedTs, _ := fakeClient.K8sV1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
 
 	if updatedTs.Status.State != "same status" {
 		t.Errorf("expected: %v actual: %v", "same status", updatedTs.Status.State)
@@ -134,12 +133,12 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 
 func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 	t.Parallel()
-	ts := &conf_v1alpha1.TransportServer{
+	ts := &conf_v1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ts-1",
 			Namespace: "default",
 		},
-		Status: conf_v1alpha1.TransportServerStatus{
+		Status: conf_v1.TransportServerStatus{
 			State:   "before status",
 			Reason:  "before reason",
 			Message: "before message",
@@ -147,18 +146,18 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 	}
 
 	fakeClient := fake_v1alpha1.NewSimpleClientset(
-		&conf_v1alpha1.TransportServerList{
-			Items: []conf_v1alpha1.TransportServer{},
+		&conf_v1.TransportServerList{
+			Items: []conf_v1.TransportServer{},
 		})
 
 	tsLister, _ := cache.NewInformer(
 		cache.NewListWatchFromClient(
-			fakeClient.K8sV1alpha1().RESTClient(),
+			fakeClient.K8sV1().RESTClient(),
 			"transportservers",
 			"nginx-ingress",
 			fields.Everything(),
 		),
-		&conf_v1alpha1.TransportServer{},
+		&conf_v1.TransportServer{},
 		2,
 		nil,
 	)
@@ -183,7 +182,7 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 		t.Errorf("unexpected error: %v, result should be empty as no matching TransportServer is present", err)
 	}
 
-	updatedTs, _ := fakeClient.K8sV1alpha1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
+	updatedTs, _ := fakeClient.K8sV1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
 	if updatedTs != nil {
 		t.Errorf("expected TransportServer Store would be empty as provided TransportServer was not found. Unexpected updated TransportServer: %v", updatedTs)
 	}

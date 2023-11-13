@@ -13,6 +13,10 @@ const (
 	StateInvalid = "Invalid"
 	// HTTPProtocol defines a constant for the HTTP protocol in GlobalConfinguration.
 	HTTPProtocol = "HTTP"
+	// TLSPassthroughListenerName is the name of a built-in TLS Passthrough listener.
+	TLSPassthroughListenerName = "tls-passthrough"
+	// TLSPassthroughListenerProtocol is the protocol of a built-in TLS Passthrough listener.
+	TLSPassthroughListenerProtocol = "TLS_PASSTHROUGH"
 )
 
 // +genclient
@@ -38,24 +42,24 @@ type VirtualServer struct {
 
 // VirtualServerSpec is the spec of the VirtualServer resource.
 type VirtualServerSpec struct {
-	IngressClass   string            `json:"ingressClassName"`
-	Host           string            `json:"host"`
-	Listener       *Listener         `json:"listener"`
-	TLS            *TLS              `json:"tls"`
-	Gunzip         bool              `json:"gunzip"`
-	Policies       []PolicyReference `json:"policies"`
-	Upstreams      []Upstream        `json:"upstreams"`
-	Routes         []Route           `json:"routes"`
-	HTTPSnippets   string            `json:"http-snippets"`
-	ServerSnippets string            `json:"server-snippets"`
-	Dos            string            `json:"dos"`
-	ExternalDNS    ExternalDNS       `json:"externalDNS"`
+	IngressClass   string                 `json:"ingressClassName"`
+	Host           string                 `json:"host"`
+	Listener       *VirtualServerListener `json:"listener"`
+	TLS            *TLS                   `json:"tls"`
+	Gunzip         bool                   `json:"gunzip"`
+	Policies       []PolicyReference      `json:"policies"`
+	Upstreams      []Upstream             `json:"upstreams"`
+	Routes         []Route                `json:"routes"`
+	HTTPSnippets   string                 `json:"http-snippets"`
+	ServerSnippets string                 `json:"server-snippets"`
+	Dos            string                 `json:"dos"`
+	ExternalDNS    ExternalDNS            `json:"externalDNS"`
 	// InternalRoute allows for the configuration of internal routing.
 	InternalRoute bool `json:"internalRoute"`
 }
 
-// Listener references a custom http and/or https listener defined in GlobalConfiguration.
-type Listener struct {
+// VirtualServerListener references a custom http and/or https listener defined in GlobalConfiguration.
+type VirtualServerListener struct {
 	HTTP  string `json:"http"`
 	HTTPS string `json:"https"`
 }
@@ -380,6 +384,155 @@ type VirtualServerRouteStatus struct {
 	Message           string             `json:"message"`
 	ReferencedBy      string             `json:"referencedBy"`
 	ExternalEndpoints []ExternalEndpoint `json:"externalEndpoints,omitempty"`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
+// +kubebuilder:validation:Optional
+// +kubebuilder:resource:shortName=gc
+
+// GlobalConfiguration defines the GlobalConfiguration resource.
+type GlobalConfiguration struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec GlobalConfigurationSpec `json:"spec"`
+}
+
+// GlobalConfigurationSpec is the spec of the GlobalConfiguration resource.
+type GlobalConfigurationSpec struct {
+	Listeners []Listener `json:"listeners"`
+}
+
+// Listener defines a listener.
+type Listener struct {
+	Name     string `json:"name"`
+	Port     int    `json:"port"`
+	Protocol string `json:"protocol"`
+	Ssl      bool   `json:"ssl"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// GlobalConfigurationList is a list of the GlobalConfiguration resources.
+type GlobalConfigurationList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []GlobalConfiguration `json:"items"`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:validation:Optional
+// +kubebuilder:resource:shortName=ts
+// +kubebuilder:subresource:status
+// +kubebuilder:storageversion
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="Current state of the TransportServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller."
+// +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.reason`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+
+// TransportServer defines the TransportServer resource.
+type TransportServer struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   TransportServerSpec   `json:"spec"`
+	Status TransportServerStatus `json:"status"`
+}
+
+// TransportServerSpec is the spec of the TransportServer resource.
+type TransportServerSpec struct {
+	IngressClass       string                    `json:"ingressClassName"`
+	TLS                *TransportServerTLS       `json:"tls"`
+	Listener           TransportServerListener   `json:"listener"`
+	ServerSnippets     string                    `json:"serverSnippets"`
+	StreamSnippets     string                    `json:"streamSnippets"`
+	Host               string                    `json:"host"`
+	Upstreams          []TransportServerUpstream `json:"upstreams"`
+	UpstreamParameters *UpstreamParameters       `json:"upstreamParameters"`
+	SessionParameters  *SessionParameters        `json:"sessionParameters"`
+	Action             *TransportServerAction    `json:"action"`
+}
+
+// TransportServerTLS defines TransportServerTLS configuration for a TransportServer.
+type TransportServerTLS struct {
+	Secret string `json:"secret"`
+}
+
+// TransportServerListener defines a listener for a TransportServer.
+type TransportServerListener struct {
+	Name     string `json:"name"`
+	Protocol string `json:"protocol"`
+}
+
+// TransportServerUpstream defines an upstream.
+type TransportServerUpstream struct {
+	Name                string                      `json:"name"`
+	Service             string                      `json:"service"`
+	Port                int                         `json:"port"`
+	FailTimeout         string                      `json:"failTimeout"`
+	MaxFails            *int                        `json:"maxFails"`
+	MaxConns            *int                        `json:"maxConns"`
+	HealthCheck         *TransportServerHealthCheck `json:"healthCheck"`
+	LoadBalancingMethod string                      `json:"loadBalancingMethod"`
+}
+
+// TransportServerHealthCheck defines the parameters for active Upstream HealthChecks.
+type TransportServerHealthCheck struct {
+	Enabled  bool                  `json:"enable"`
+	Timeout  string                `json:"timeout"`
+	Jitter   string                `json:"jitter"`
+	Port     int                   `json:"port"`
+	Interval string                `json:"interval"`
+	Passes   int                   `json:"passes"`
+	Fails    int                   `json:"fails"`
+	Match    *TransportServerMatch `json:"match"`
+}
+
+// TransportServerMatch defines the parameters of a custom health check.
+type TransportServerMatch struct {
+	Send   string `json:"send"`
+	Expect string `json:"expect"`
+}
+
+// UpstreamParameters defines parameters for an upstream.
+type UpstreamParameters struct {
+	UDPRequests  *int `json:"udpRequests"`
+	UDPResponses *int `json:"udpResponses"`
+
+	ConnectTimeout      string `json:"connectTimeout"`
+	NextUpstream        bool   `json:"nextUpstream"`
+	NextUpstreamTimeout string `json:"nextUpstreamTimeout"`
+	NextUpstreamTries   int    `json:"nextUpstreamTries"`
+}
+
+// SessionParameters defines session parameters.
+type SessionParameters struct {
+	Timeout string `json:"timeout"`
+}
+
+// TransportServerAction defines an action.
+type TransportServerAction struct {
+	Pass string `json:"pass"`
+}
+
+// TransportServerStatus defines the status for the TransportServer resource.
+type TransportServerStatus struct {
+	State   string `json:"state"`
+	Reason  string `json:"reason"`
+	Message string `json:"message"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// TransportServerList is a list of the TransportServer resources.
+type TransportServerList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []TransportServer `json:"items"`
 }
 
 // +genclient

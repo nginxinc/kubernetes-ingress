@@ -4,7 +4,7 @@ import time
 
 import pytest
 from kubernetes.client.rest import ApiException
-from settings import CRDS, TEST_DATA
+from settings import CRDS, DEPLOYMENTS, TEST_DATA
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.resources_utils import (
     cleanup_rbac,
@@ -103,7 +103,7 @@ def crd_ingress_controller(
     except ApiException as ex:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print("Restore the ClusterRole:")
-        patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/rbac/rbac.yaml")
+        patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
         delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
         pytest.fail("IC setup failed")
@@ -111,7 +111,7 @@ def crd_ingress_controller(
     def fin():
         if request.config.getoption("--skip-fixture-teardown") == "no":
             print("Restore the ClusterRole:")
-            patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/rbac/rbac.yaml")
+            patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
             print("Remove the IC:")
             delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
 
@@ -276,8 +276,8 @@ def crd_ingress_controller_with_dos(
             kube_apis.v1,
             kube_apis.apps_v1_api,
             namespace,
-            f"{TEST_DATA}/deployment/appprotect-dos-arb.yaml",
-            f"{TEST_DATA}/service/appprotect-dos-arb-svc.yaml",
+            f"{DEPLOYMENTS}/deployment/appprotect-dos-arb.yaml",
+            f"{DEPLOYMENTS}/service/appprotect-dos-arb-svc.yaml",
         )
 
         print("------------------------- Create IC -----------------------------------")
@@ -396,7 +396,7 @@ def crd_ingress_controller_with_ed(
     except ApiException as ex:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print("Restore the ClusterRole:")
-        patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/rbac/rbac.yaml")
+        patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the DNSEndpoint CRD:")
         delete_crd(
             kube_apis.api_extensions_v1,
@@ -408,14 +408,14 @@ def crd_ingress_controller_with_ed(
             kube_apis.v1,
             ingress_controller_prerequisites.config_map["metadata"]["name"],
             ingress_controller_prerequisites.namespace,
-            f"{TEST_DATA}/common/nginx-config.yaml",
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
         )
         pytest.fail("IC setup failed")
 
     def fin():
         if request.config.getoption("--skip-fixture-teardown") == "no":
             print("Restore the ClusterRole:")
-            patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/rbac/rbac.yaml")
+            patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
             print("Remove the DNSEndpoint CRD:")
             delete_crd(
                 kube_apis.api_extensions_v1,
@@ -427,7 +427,7 @@ def crd_ingress_controller_with_ed(
                 kube_apis.v1,
                 ingress_controller_prerequisites.config_map["metadata"]["name"],
                 ingress_controller_prerequisites.namespace,
-                f"{TEST_DATA}/common/nginx-config.yaml",
+                f"{DEPLOYMENTS}/common/nginx-config.yaml",
             )
 
     request.addfinalizer(fin)

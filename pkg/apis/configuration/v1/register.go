@@ -34,6 +34,10 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&VirtualServerList{},
 		&VirtualServerRoute{},
 		&VirtualServerRouteList{},
+		&TransportServer{},
+		&TransportServerList{},
+		&GlobalConfiguration{},
+		&GlobalConfigurationList{},
 		&Policy{},
 		&PolicyList{},
 	)

@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/glog"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	api_v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
@@ -360,14 +359,14 @@ func (su *statusUpdater) ClearStatusFromIngressLink() {
 	su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
 }
 
-func (su *statusUpdater) retryUpdateTransportServerStatus(tsCopy *conf_v1alpha1.TransportServer) error {
-	ts, err := su.confClient.K8sV1alpha1().TransportServers(tsCopy.Namespace).Get(context.TODO(), tsCopy.Name, metav1.GetOptions{})
+func (su *statusUpdater) retryUpdateTransportServerStatus(tsCopy *conf_v1.TransportServer) error {
+	ts, err := su.confClient.K8sV1().TransportServers(tsCopy.Namespace).Get(context.TODO(), tsCopy.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
 	ts.Status = tsCopy.Status
-	_, err = su.confClient.K8sV1alpha1().TransportServers(ts.Namespace).UpdateStatus(context.TODO(), ts, metav1.UpdateOptions{})
+	_, err = su.confClient.K8sV1().TransportServers(ts.Namespace).UpdateStatus(context.TODO(), ts, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -422,7 +421,7 @@ func hasVsStatusChanged(vs *conf_v1.VirtualServer, state string, reason string, 
 }
 
 // UpdateTransportServerStatus updates the status of a TransportServer.
-func (su *statusUpdater) UpdateTransportServerStatus(ts *conf_v1alpha1.TransportServer, state string, reason string, message string) error {
+func (su *statusUpdater) UpdateTransportServerStatus(ts *conf_v1.TransportServer, state string, reason string, message string) error {
 	var tsLatest interface{}
 	var exists bool
 	var err error
@@ -438,16 +437,16 @@ func (su *statusUpdater) UpdateTransportServerStatus(ts *conf_v1alpha1.Transport
 		return nil
 	}
 
-	if !hasTsStatusChanged(tsLatest.(*conf_v1alpha1.TransportServer), state, reason, message) {
+	if !hasTsStatusChanged(tsLatest.(*conf_v1.TransportServer), state, reason, message) {
 		return nil
 	}
 
-	tsCopy := tsLatest.(*conf_v1alpha1.TransportServer).DeepCopy()
+	tsCopy := tsLatest.(*conf_v1.TransportServer).DeepCopy()
 	tsCopy.Status.State = state
 	tsCopy.Status.Reason = reason
 	tsCopy.Status.Message = message
 
-	_, err = su.confClient.K8sV1alpha1().TransportServers(tsCopy.Namespace).UpdateStatus(context.TODO(), tsCopy, metav1.UpdateOptions{})
+	_, err = su.confClient.K8sV1().TransportServers(tsCopy.Namespace).UpdateStatus(context.TODO(), tsCopy, metav1.UpdateOptions{})
 	if err != nil {
 		glog.V(3).Infof("error setting TransportServer %v/%v status, retrying: %v", tsCopy.Namespace, tsCopy.Name, err)
 		return su.retryUpdateTransportServerStatus(tsCopy)
@@ -455,7 +454,7 @@ func (su *statusUpdater) UpdateTransportServerStatus(ts *conf_v1alpha1.Transport
 	return err
 }
 
-func hasTsStatusChanged(ts *conf_v1alpha1.TransportServer, state string, reason string, message string) bool {
+func hasTsStatusChanged(ts *conf_v1.TransportServer, state string, reason string, message string) bool {
 	if ts.Status.State != state {
 		return true
 	}
