@@ -434,6 +434,8 @@ spec:
                               - none-value
                               - strict
                             type: string
+                          maskValueInLogs:
+                            type: boolean
                           name:
                             type: string
                           securedOverHttpsConnection:
@@ -1867,6 +1869,8 @@ spec:
                                   type: string
                               type: object
                             type: array
+                          useXmlResponsePage:
+                            type: boolean
                         type: object
                       type: array
                     xml-validation-files:
