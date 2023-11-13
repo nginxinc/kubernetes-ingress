@@ -109,6 +109,8 @@ spec:
                                   - IIS backslashes
                                   - IIS Unicode codepoints
                                   - Multiple decoding
+                                  - Multiple slashes
+                                  - Semicolon path parameters
                                 type: string
                               enabled:
                                 type: boolean
@@ -394,7 +396,7 @@ spec:
                       properties:
                         maximumCookieHeaderLength:
                           pattern: any|\d+
-                          type: string
+                          type: integer
                       type: object
                     cookieReference:
                       properties:
@@ -434,6 +436,8 @@ spec:
                               - none-value
                               - strict
                             type: string
+                          maskValueInLogs:
+                            type: boolean
                           name:
                             type: string
                           securedOverHttpsConnection:
@@ -640,7 +644,7 @@ spec:
                                 type: boolean
                               maximumDataLength:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                             type: object
                           description:
                             type: string
@@ -689,7 +693,7 @@ spec:
                       properties:
                         maximumHttpHeaderLength:
                           pattern: any|\d+
-                          type: string
+                          type: integer
                       type: object
                     headerReference:
                       properties:
@@ -795,16 +799,16 @@ spec:
                             properties:
                               maximumArrayLength:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumStructureDepth:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumTotalLengthOfJSONData:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumValueLength:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               tolerateJSONParsingWarnings:
                                 type: boolean
                             type: object
@@ -1814,31 +1818,31 @@ spec:
                                 type: boolean
                               maximumAttributeValueLength:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumAttributesPerElement:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumChildrenPerElement:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumDocumentDepth:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumDocumentSize:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumElements:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumNSDeclarations:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumNameLength:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               maximumNamespaceLength:
                                 pattern: any|\d+
-                                type: string
+                                type: integer
                               tolerateCloseTagShorthand:
                                 type: boolean
                               tolerateLeadingWhiteSpace:
@@ -1867,6 +1871,8 @@ spec:
                                   type: string
                               type: object
                             type: array
+                          useXmlResponsePage:
+                            type: boolean
                         type: object
                       type: array
                     xml-validation-files:
