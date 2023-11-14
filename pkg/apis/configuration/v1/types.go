@@ -125,8 +125,8 @@ type Upstream struct {
 	UseClusterIP             bool              `json:"use-cluster-ip"`
 	NTLM                     bool              `json:"ntlm"`
 	Type                     string            `json:"type"`
-	Backup                   string            `json:"backup"`
-	BackupPort               uint16            `json:"backupPort"`
+	Backup                   *string           `json:"backup"`
+	BackupPort               *uint16           `json:"backupPort"`
 }
 
 // UpstreamBuffers defines Buffer Configuration for an Upstream.
