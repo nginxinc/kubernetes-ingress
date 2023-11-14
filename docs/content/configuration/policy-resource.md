@@ -519,7 +519,7 @@ webapp-policy   27m
 
 For `kubectl get` and similar commands, you can also use the short name `pol` instead of `policy`.
 
-### WAF
+### WAF {#waf}
 
 > Note: This feature is only available in NGINX Plus with AppProtect.
 
