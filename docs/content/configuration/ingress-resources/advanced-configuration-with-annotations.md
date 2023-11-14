@@ -183,7 +183,7 @@ The table below summarizes the available annotations.
 |``nginx.org/server-snippets`` | ``server-snippets`` | Sets a custom snippet in server context. | N/A |  |
 {{% /table %}}
 
-### App Protect
+### App Protect {#app-protect}
 
 **Note**: The App Protect annotations only work if App Protect WAF module is [installed](/nginx-ingress-controller/app-protect/installation/).
 
