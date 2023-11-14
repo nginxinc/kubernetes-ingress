@@ -295,6 +295,7 @@ See [running multiple Ingress Controllers]({{< relref "installation/running-mult
 
 The following tables lists the configurable parameters of the NGINX Ingress Controller chart and their default values.
 
+{{< table >}}
 {{<bootstrap-table "table table-striped table-bordered">}}
 |Parameter | Description | Default |
 | --- | --- | --- |
@@ -435,6 +436,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **nginxServiceMesh.enable** | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false |
 | **nginxServiceMesh.enableEgress** | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress Controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false |
 {{</bootstrap-table>}}
+{{< /table >}}
 
 ## Notes
 

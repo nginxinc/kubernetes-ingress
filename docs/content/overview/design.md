@@ -22,7 +22,7 @@ For conciseness in diagrams, NGINX Ingress Controller is often labelled "IC" on 
 
 This figure depicts an example of NGINX Ingress Controller exposing two web applications within a Kubernetes cluster to clients on the internet:
 
-{{<img src="./img/ic-high-level.png">}}
+{{<img src="img/ic-high-level.png" alt="">}}
 
 {{<note>}} For simplicity, necessary Kubernetes resources like Deployments and Services aren't shown, which Admin and the users also need to create.{{</note>}}
 
@@ -48,7 +48,7 @@ The NGINX Ingress Controller pod consists of a single container, which includes 
 
 The following is an architectural diagram depicting how those processes interact together and with some external entities:
 
-{{<img src="./img/ic-pod.png">}}
+{{<img src="img/ic-pod.png" alt="">}}
 
 This table describes each connection, starting with its type:
 
@@ -99,7 +99,7 @@ This section covers the architecture of the NGINX Ingress Controller process, in
 
 The following diagram depicts how NGINX Ingress Controller processes a new Ingress resource. The the NGINX master and worker processes are represented as a single rectangle, _NGINX_ for simplicity. VirtualServer and VirtualServerRoute resources are indicated similarly.
 
-{{<img src="./img/ic-process.png">}}
+{{<img src="img/ic-process.png" alt="">}}
 
 Processing a new Ingress resource involves the following steps: each step corresponds to the arrow on the diagram with the same number:
 
@@ -164,7 +164,7 @@ In an earlier section, [Processing a New Ingress Resource](#processing-a-new-ing
 
 We also mentioned that once the cache is updated, it notifies the control loop about the changed resources. The cache is actually a collection of *informers*. The following diagram shows how changes to resources are processed by NGINX Ingress Controller.
 
-{{<img src="./img/ic-process-components.png">}}
+{{<img src="img/ic-process-components.png" alt="">}}
 
 - For every resource type that NGINX Ingress Controller monitors, it creates an [_Informer_](https://pkg.go.dev/k8s.io/client-go@v0.21.0/tools/cache#SharedInformer). The _Informer_ includes a _Store_ that holds the resources of that type. To keep the _Store_ in sync with the latest versions of the resources in the cluster, the _Informer_ calls the Watch and List _Kubernetes APIs_ for that resource type (see the arrow _1. Watch and List_ on the diagram).
 - When a change happens in the cluster (for example, a new resource is created), the _Informer_ updates its _Store_ and invokes [_Handlers_](https://pkg.go.dev/k8s.io/client-go@v0.21.0/tools/cache#ResourceEventHandler) (See the arrow _2. Invoke_) for that _Informer_.
@@ -190,7 +190,7 @@ This section discusses the main components of NGINX Ingress Controller, which co
 
 The following diagram shows how the three components interact:
 
-{{<img src="./img/control-loop.png">}}
+{{<img src="img/control-loop.png" alt="">}}
 
 #### The Controller Sync Method
 
@@ -198,7 +198,7 @@ The Controller [sync](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.
 
 To explain how the sync methods work, we will examine the most important one: the _syncIngress_ method, and describe how it processes a new Ingress resource.
 
-{{<img src="img/controller-sync.png">}}
+{{<img src="img/controller-sync.png" alt="">}}
 
 1. The _Workqueue_ calls the _sync_ method and passes a workqueue element to it that includes the changed resource _kind_ and _key_ (The key is the resource namespace/name such as “default/cafe-ingress”).
 1. Using the _kind_, the _sync_ method calls the appropriate sync method and passes the resource key. For Ingress resources, the method is _syncIngress_.
