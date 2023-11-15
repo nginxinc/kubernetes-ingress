@@ -259,6 +259,10 @@ spec:
         image: {{ include "nginx-ingress.image" . }}
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
         command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
+{{- if .Values.controller.initContainerResources }}
+        resources:
+{{ toYaml .Values.controller.initContainerResources | indent 10 }}
+{{- end }}
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
