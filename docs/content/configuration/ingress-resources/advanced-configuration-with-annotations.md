@@ -175,6 +175,18 @@ The table below summarizes the available annotations.
 |``nginx.org/use-cluster-ip`` | N/A | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as NGINX Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP.   | ``False`` |  |
 {{% /table %}}
 
+### Rate limiting
+
+{{% table %}}
+|Annotation | ConfigMap Key | Description | Default | Example |
+| ---| ---| ---| ---| --- |
+|``nginx.org/limit-req`` | N/A | Enables request-rate-limiting for this ingress by creating a [limit_req_zone](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) and matching [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) for each location. All servers/locations of one ingress share the same zone. | N/A | 200r/s |
+|``nginx.org/limit-req-zone-size`` | N/A | Configures the size of the created [limit_req_zone](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone). | 10m | 20m |
+|``nginx.org/limit-req-burst`` | N/A | Configures the burst-parameter of the [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) directive. | N/A | 100 |
+|``nginx.org/limit-req-delay`` | N/A | Configures the delay-parameter of the [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) directive. 0 means nodelay. | 0 | 100 |
+|``nginx.org/limit-req-status`` | N/A | Configures the [limit_req_status](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_status) directive.  | 429 | 503 |
+{{% /table %}}
+
 ### Snippets and Custom Templates
 
 {{% table %}}

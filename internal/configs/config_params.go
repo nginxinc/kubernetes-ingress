@@ -113,6 +113,12 @@ type ConfigParams struct {
 	SSLPorts []int
 
 	SpiffeServerCerts bool
+
+	LimitReqRate     string
+	LimitReqZoneSize string
+	LimitReqBurst    int
+	LimitReqDelay    int
+	LimitReqStatus   int
 }
 
 // StaticConfigParams holds immutable NGINX configuration parameters that affect the main NGINX config.
@@ -191,6 +197,8 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		MainKeepaliveRequests:         100,
 		VariablesHashBucketSize:       256,
 		VariablesHashMaxSize:          1024,
+		LimitReqZoneSize:              "10m",
+		LimitReqStatus:                429,
 	}
 }
 

@@ -910,6 +910,136 @@ func TestGenerateNginxCfgWithUseClusterIP(t *testing.T) {
 	}
 }
 
+func TestGenerateNginxCfgForLimitReq(t *testing.T) {
+	t.Parallel()
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req"] = "200r/s"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-burst"] = "100"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-delay"] = "80"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-status"] = "429"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-zone-size"] = "11m"
+
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expectedZones := []version1.LimitReqZone{
+		{
+			Name: "default/cafe-ingress",
+			Size: "11m",
+			Rate: "200r/s",
+		},
+	}
+
+	expectedReqs := &version1.LimitReq{
+		Zone:   "default/cafe-ingress",
+		Burst:  100,
+		Delay:  80,
+		Status: 429,
+	}
+
+	result, warnings := generateNginxCfg(NginxCfgParams{
+		ingEx:         &cafeIngressEx,
+		baseCfgParams: configParams,
+		staticParams:  &StaticConfigParams{},
+		isPlus:        isPlus,
+	})
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+
+	for _, server := range result.Servers {
+		for _, location := range server.Locations {
+			if !reflect.DeepEqual(location.LimitReq, expectedReqs) {
+				t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+			}
+		}
+	}
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForMergeableIngressesForLimitReq(t *testing.T) {
+	t.Parallel()
+	mergeableIngresses := createMergeableCafeIngress()
+
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req"] = "200r/s"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-burst"] = "100"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-delay"] = "80"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-status"] = "429"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-zone-size"] = "11m"
+
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req"] = "400r/s"
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-burst"] = "200"
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-delay"] = "160"
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-status"] = "503"
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-zone-size"] = "12m"
+
+	expectedZones := []version1.LimitReqZone{
+		{
+			Name: "default/cafe-ingress-coffee-minion",
+			Size: "11m",
+			Rate: "200r/s",
+		},
+		{
+			Name: "default/cafe-ingress-tea-minion",
+			Size: "12m",
+			Rate: "400r/s",
+		},
+	}
+
+	expectedReqs := map[string]*version1.LimitReq{
+		"cafe-ingress-coffee-minion": {
+			Zone:   "default/cafe-ingress-coffee-minion",
+			Burst:  100,
+			Delay:  80,
+			Status: 429,
+		},
+		"cafe-ingress-tea-minion": {
+			Zone:   "default/cafe-ingress-tea-minion",
+			Burst:  200,
+			Delay:  160,
+			Status: 503,
+		},
+	}
+
+	isPlus := false
+
+	configParams := NewDefaultConfigParams(isPlus)
+
+	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
+		mergeableIngs: mergeableIngresses,
+		baseCfgParams: configParams,
+		isPlus:        isPlus,
+		staticParams:  &StaticConfigParams{},
+	})
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+
+	for _, server := range result.Servers {
+		for _, location := range server.Locations {
+			expectedLimitReq := expectedReqs[location.MinionIngress.Name]
+			if !reflect.DeepEqual(location.LimitReq, expectedLimitReq) {
+				t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", location.LimitReq, expectedLimitReq)
+			}
+		}
+	}
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
+	}
+}
+
 func createMergeableCafeIngress() *MergeableIngresses {
 	master := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{

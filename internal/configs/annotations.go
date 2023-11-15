@@ -78,6 +78,11 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/max-fails":                true,
 	"nginx.org/max-conns":                true,
 	"nginx.org/fail-timeout":             true,
+	"nginx.org/limit-req":                true,
+	"nginx.org/limit-req-zone-size":      true,
+	"nginx.org/limit-req-burst":          true,
+	"nginx.org/limit-req-delay":          true,
+	"nginx.org/limit-req-status":         true,
 }
 
 var validPathRegex = map[string]bool{
@@ -413,6 +418,35 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 			cfgParams.UseClusterIP = useClusterIP
 		}
 	}
+
+	if requestRateLimit, exists := ingEx.Ingress.Annotations["nginx.org/limit-req"]; exists {
+		cfgParams.LimitReqRate = requestRateLimit
+	}
+	if requestRateZoneSize, exists := ingEx.Ingress.Annotations["nginx.org/limit-req-zone-size"]; exists {
+		cfgParams.LimitReqZoneSize = requestRateZoneSize
+	}
+	if requestRateBurst, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/limit-req-burst", ingEx.Ingress); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfgParams.LimitReqBurst = requestRateBurst
+		}
+	}
+	if requestRateDelay, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/limit-req-delay", ingEx.Ingress); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfgParams.LimitReqDelay = requestRateDelay
+		}
+	}
+	if requestRateStatus, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/limit-req-status", ingEx.Ingress); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfgParams.LimitReqStatus = requestRateStatus
+		}
+	}
+
 	return cfgParams
 }
 
