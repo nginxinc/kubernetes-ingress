@@ -342,6 +342,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.hostNetwork` | Enables the Ingress Controller pods to use the host's network namespace. | false |
 |`controller.dnsPolicy` | DNS policy for the Ingress Controller pods. | ClusterFirst |
 |`controller.nginxDebug` | Enables debugging for NGINX. Uses the `nginx-debug` binary. Requires `error-log-level: debug` in the ConfigMap via `controller.config.entries`. | false |
+| `controller.shareProcessNamespace` | Enables process namespace sharing. When process namespace sharing is enabled, processes in a container are visible to all other containers in the same pod. [docs](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) | false |
 |`controller.logLevel` | The log level of the Ingress Controller. | 1 |
 |`controller.image.digest` | The image digest of the Ingress Controller. | None |
 |`controller.image.repository` | The image repository of the Ingress Controller. | nginx/nginx-ingress |
