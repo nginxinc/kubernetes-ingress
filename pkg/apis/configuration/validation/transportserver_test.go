@@ -108,22 +108,7 @@ func TestValidateTransportServer_FailsOnMissingBackupPort(t *testing.T) {
 	}
 }
 
-func TestValidateTransportServer_FailsOnNotSupportedLoadBalanceMethodWhenBackupDefined(t *testing.T) {
-	t.Parallel()
-
-	ts := makeTransportServer()
-	ts.Spec.Upstreams[0].Backup = createPointerFromString("backup-service-ts")
-	// backup port not created, it's nil
-
-	tsv := createTransportServerValidator()
-
-	err := tsv.ValidateTransportServer(&ts)
-	if err == nil {
-		t.Error("want error on missing backup port")
-	}
-}
-
-func TestValidateTransportServerFailsOnNotSupportedLBMethodForBackup(t *testing.T) {
+func TestValidateTransportServer_FailsOnNotSupportedLBMethodForBackup(t *testing.T) {
 	t.Parallel()
 
 	notSupportedLBMethods := []string{"hash", "hash_ip", "random"}
