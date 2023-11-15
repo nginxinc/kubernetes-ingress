@@ -103,7 +103,7 @@ The [Installation with Helm ]({{< relref "installation/installing-nic/installati
 
     1. Change the `nginxplus` argument to `true`.
     1. Change the `repository` argument to the NGINX Ingress Controller image you intend to use.
-    1. Add an argument to `imagePullSecretName` to allow Docker to pull the image from the private registry.
+    2. Add an argument to `imagePullSecretName` or `imagePullSecretsNames` to allow Docker to pull the image from the private registry.
 
     The following code block shows snippets of the parameters you will need to change, and an example of their contents:
 
@@ -130,6 +130,7 @@ The [Installation with Helm ]({{< relref "installation/installing-nic/installati
 
         ## The name of the secret containing docker registry credentials.
         ## Secret must exist in the same namespace as the helm release.
+        ## Note that also imagePullSecretsNames can be used here if multiple secrets need to be set.
         imagePullSecretName: regcred
     ```
 

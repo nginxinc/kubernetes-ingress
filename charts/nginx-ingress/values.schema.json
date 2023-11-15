@@ -1069,12 +1069,21 @@
               "examples": [
                 ""
               ]
+            },
+            "imagePullSecretsNames": {
+              "type": "array",
+              "default": [],
+              "title": "The imagePullSecretName list",
+              "examples": [
+                []
+              ]
             }
           },
           "examples": [
             {
               "name": "",
-              "imagePullSecretName": ""
+              "imagePullSecretName": "",
+              "imagePullSecretsNames": []
             }
           ]
         },
@@ -1400,7 +1409,8 @@
           },
           "serviceAccount": {
             "name": "",
-            "imagePullSecretName": ""
+            "imagePullSecretName": "",
+            "imagePullSecretsNames": []
           },
           "serviceMonitor": {
             "create": false,
@@ -1766,7 +1776,8 @@
         },
         "serviceAccount": {
           "name": "",
-          "imagePullSecretName": ""
+          "imagePullSecretName": "",
+          "imagePullSecretsNames": []
         },
         "podDisruptionBudget": {
           "enabled": false,
