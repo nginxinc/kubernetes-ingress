@@ -1194,7 +1194,7 @@ func (vsv *VirtualServerValidator) validateSplits(splits []v1.Split, fieldPath *
 	for i, s := range splits {
 		idxPath := fieldPath.Index(i)
 
-		for _, msg := range validation.IsInRange(s.Weight, 1, 99) {
+		for _, msg := range validation.IsInRange(s.Weight, 0, 100) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("weight"), s.Weight, msg))
 		}
 

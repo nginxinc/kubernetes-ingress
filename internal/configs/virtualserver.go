@@ -1985,6 +1985,9 @@ func generateSplits(
 	var distributions []version2.Distribution
 
 	for i, s := range splits {
+		if s.Weight == 0 {
+			continue
+		}
 		d := version2.Distribution{
 			Weight: fmt.Sprintf("%d%%", s.Weight),
 			Value:  fmt.Sprintf("/%vsplits_%d_split_%d", internalLocationPrefix, scIndex, i),

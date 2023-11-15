@@ -731,7 +731,7 @@ splits:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``weight`` | The weight of an action. Must fall into the range ``1..99``. The sum of the weights of all splits must be equal to ``100``. | ``int`` | Yes |
+|``weight`` | The weight of an action. Must fall into the range ``0..100``. The sum of the weights of all splits must be equal to ``100``. | ``int`` | Yes |
 |``action`` | The action to perform for a request. | [action](#action) | Yes |
 {{% /table %}}
 
