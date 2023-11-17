@@ -1774,6 +1774,27 @@ func TestValidateSplitsFails(t *testing.T) {
 			},
 			msg: "invalid action with non-existing upstream",
 		},
+		{
+			splits: []v1.Split{
+				{
+					Weight: 100,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: -2,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "invalid negative weight",
+		},
 	}
 
 	vsv := &VirtualServerValidator{isPlus: false}
