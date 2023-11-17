@@ -13,6 +13,7 @@ import (
 	listersV1 "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/configuration/v1"
 	extdnslisters "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/externaldns/v1"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/cache"
@@ -165,10 +166,11 @@ func (c *ExtDNSController) runWorker(ctx context.Context) {
 
 			if err := c.processItem(ctx, key); err != nil {
 				glog.V(3).Infof("Re-queuing item due to error processing: %v", err)
-				c.queue.Add(obj)
+				c.queue.AddRateLimited(obj)
 				return
 			}
 			glog.V(3).Infof("finished processing work item")
+			c.queue.Forget(obj)
 		}()
 	}
 }
@@ -182,6 +184,11 @@ func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
 	var vs *conf_v1.VirtualServer
 	nsi := getNamespacedInformer(namespace, c.informerGroup)
 	vs, err = nsi.vsLister.VirtualServers(namespace).Get(name)
+
+	// VS has been deleted
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
 
 	if err != nil {
 		return err
