@@ -229,9 +229,9 @@ The steps you should follow depend on the Helm release name:
 
 2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart`
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress`
 with the copied `Selector` value.
 
     ```shell
@@ -281,9 +281,9 @@ reviewing its events:
 
 2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart`
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress`
 with the copied `Selector` value.
 
     ```shell
