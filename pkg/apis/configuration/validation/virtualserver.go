@@ -636,11 +636,10 @@ func validateBackup(backup *string, backupPort *uint16, lbMethod string, idxPath
 		allErrs = append(allErrs, field.Invalid(idxPath.Child("backup"), backup, "both backup and backup port must be specified"))
 	}
 
-	if lbMethod == "hash" || lbMethod == "hash_ip" || lbMethod == "random" {
+	if strings.Contains(lbMethod, "hash") || strings.Contains(lbMethod, "hash_ip") || strings.Contains(lbMethod, "random") {
 		allErrs = append(allErrs, field.Forbidden(idxPath.Child("backup"),
 			"backup cannot be used along with the 'hash', 'hash_ip' and 'random' load balancing methods",
-		),
-		)
+		))
 	}
 
 	allErrs = append(allErrs, validateBackupNameFromPointer(backup, idxPath.Child("backup"))...)

@@ -158,7 +158,7 @@ func TestValidateFailsOnMissingBackupName(t *testing.T) {
 func TestValidateFailsOnNotSupportedLBMethodForBackup(t *testing.T) {
 	t.Parallel()
 
-	notSupportedLBMethods := []string{"hash", "hash_ip", "random"}
+	notSupportedLBMethods := []string{"hash", "hash_ip", "random", "random two least_conn"}
 	for _, lbMethod := range notSupportedLBMethods {
 		lbMethod := lbMethod
 		t.Run(lbMethod, func(t *testing.T) {
