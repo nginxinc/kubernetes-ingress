@@ -111,7 +111,7 @@ func TestValidateTransportServer_FailsOnMissingBackupPort(t *testing.T) {
 func TestValidateTransportServer_FailsOnNotSupportedLBMethodForBackup(t *testing.T) {
 	t.Parallel()
 
-	notSupportedLBMethods := []string{"hash", "hash_ip", "random"}
+	notSupportedLBMethods := []string{"hash", "hash_ip", "random", "random two least"}
 	for _, lbMethod := range notSupportedLBMethods {
 		lbMethod := lbMethod
 		t.Run(lbMethod, func(t *testing.T) {
