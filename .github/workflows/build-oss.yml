@@ -23,7 +23,7 @@ permissions:
 jobs:
   build:
     runs-on:
-      labels: kic-plus
+      group: kic
     permissions:
       contents: read # for docker/build-push-action to read repo content
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
