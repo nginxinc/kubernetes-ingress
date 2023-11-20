@@ -22,7 +22,8 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on:
+      labels: kic-plus
     permissions:
       contents: read # for docker/build-push-action to read repo content
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
