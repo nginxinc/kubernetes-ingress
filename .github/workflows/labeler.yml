@@ -12,6 +12,11 @@ jobs:
       pull-requests: write # for actions/labeler to add labels
     runs-on: ubuntu-22.04
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
+          
       - uses: actions/labeler@4f052778de9a9b80cb16cfb9079b02287285a4cb # v5.0.0-alpha.1
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
