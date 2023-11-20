@@ -1,4 +1,4 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env bash
 
 set -o pipefail
 
@@ -27,10 +27,10 @@ FILE_TO_UPDATE_HELM_CHART_VERSION=(
     ${HELM_CHART_PATH}/README.md
 )
 
- usage() {  
-    echo "Usage: $0 <ic_version> <helm_chart_version>"  
-    exit 1  
- } 
+ usage() {
+    echo "Usage: $0 <ic_version> <helm_chart_version>"
+    exit 1
+ }
 
 if ! command -v yq 2>&1 > /dev/null; then
     echo "ERROR: yq command not found in \$PATH, cannot continue, exiting..."
