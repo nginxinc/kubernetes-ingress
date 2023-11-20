@@ -483,6 +483,12 @@
           "title": "The resources Schema",
           "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements"
         },
+        "initContainerResources": {
+          "type": "object",
+          "default": {},
+          "title": "The resources Schema",
+          "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements"
+        },
         "tolerations": {
           "type": "array",
           "default": [],
@@ -1341,6 +1347,12 @@
               "memory": "128Mi"
             }
           },
+          "initContainerResources": {
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          },
           "tolerations": [],
           "affinity": {},
           "topologySpreadConstraints": {},
@@ -1701,6 +1713,12 @@
         "nodeSelector": {},
         "terminationGracePeriodSeconds": 30,
         "resources": {
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "initContainerResources": {
           "requests": {
             "cpu": "100m",
             "memory": "128Mi"
