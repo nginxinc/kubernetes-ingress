@@ -10,21 +10,21 @@ DEBUG=${DEBUG:-"false"}
 
 DOCS_TO_UPDATE_FOLDER=${ROOTDIR}/docs/content
 FILES_TO_UPDATE_IC_VERSION=(
-    ${ROOTDIR}/README.md
-    ${DEPLOYMENT_PATH}/daemon-set/nginx-ingress.yaml
-    ${DEPLOYMENT_PATH}/daemon-set/nginx-plus-ingress.yaml
-    ${DEPLOYMENT_PATH}/deployment/nginx-ingress.yaml
-    ${DEPLOYMENT_PATH}/deployment/nginx-plus-ingress.yaml
-    ${HELM_CHART_PATH}/Chart.yaml
-    ${HELM_CHART_PATH}/README.md
-    ${HELM_CHART_PATH}/values-icp.yaml
-    ${HELM_CHART_PATH}/values-nsm.yaml
-    ${HELM_CHART_PATH}/values-plus.yaml
-    ${HELM_CHART_PATH}/values.yaml
+    "${ROOTDIR}/README.md"
+    "${DEPLOYMENT_PATH}/daemon-set/nginx-ingress.yaml"
+    "${DEPLOYMENT_PATH}/daemon-set/nginx-plus-ingress.yaml"
+    "${DEPLOYMENT_PATH}/deployment/nginx-ingress.yaml"
+    "${DEPLOYMENT_PATH}/deployment/nginx-plus-ingress.yaml"
+    "${HELM_CHART_PATH}/Chart.yaml"
+    "${HELM_CHART_PATH}/README.md"
+    "${HELM_CHART_PATH}/values-icp.yaml"
+    "${HELM_CHART_PATH}/values-nsm.yaml"
+    "${HELM_CHART_PATH}/values-plus.yaml"
+    "${HELM_CHART_PATH}/values.yaml"
 )
 FILE_TO_UPDATE_HELM_CHART_VERSION=(
-    ${HELM_CHART_PATH}/Chart.yaml
-    ${HELM_CHART_PATH}/README.md
+    "${HELM_CHART_PATH}/Chart.yaml"
+    "${HELM_CHART_PATH}/README.md"
 )
 
  usage() {
@@ -32,7 +32,7 @@ FILE_TO_UPDATE_HELM_CHART_VERSION=(
     exit 1
  }
 
-if ! command -v yq 2>&1 > /dev/null; then
+if ! command -v yq > /dev/null 2>&1; then
     echo "ERROR: yq command not found in \$PATH, cannot continue, exiting..."
     exit 2
 fi
@@ -70,14 +70,15 @@ fi
 # update helm chart & deployment files with IC version
 for i in "${FILES_TO_UPDATE_IC_VERSION[@]}"; do
     if [ "${DEBUG}" != "false" ]; then
-        echo "Processing $i"
+        echo "Processing ${i}"
     fi
-    file_name=$(basename $i)
-    mv ${i} $TMPDIR/$file_name
+    file_name=$(basename "${i}")
+    mv "${i}" "${TMPDIR}/${file_name}"
     regex="s#$current_ic_version#$ic_version#g"
-    cat $TMPDIR/$file_name | sed -e "$regex" > $i
+    cat "${TMPDIR}/${file_name}" | sed -e "$regex" > "${i}"
     if [ $? -ne 0 ]; then
-        echo "ERROR: failed processing $i"
+        echo "ERROR: failed processing ${i}"
+        mv "${TMPDIR}/${file_name}" "${i}"
         exit 2
     fi
 done
@@ -85,14 +86,15 @@ done
 # update helm chart files with helm chart version
 for i in "${FILE_TO_UPDATE_HELM_CHART_VERSION[@]}"; do
     if [ "${DEBUG}" != "false" ]; then
-        echo "Processing $i"
+        echo "Processing ${i}"
     fi
-    file_name=$(basename $i)
-    mv ${i} $TMPDIR/$file_name
+    file_name=$(basename "${i}")
+    mv "${i}" "${TMPDIR}/${file_name}"
     regex="s#$current_ic_version#$ic_version#g"
-    cat $TMPDIR/$file_name | sed -e "$regex" > $i
+    cat "${TMPDIR}/${file_name}" | sed -e "$regex" > "${i}"
     if [ $? -ne 0 ]; then
-        echo "ERROR: failed processing $i"
+        echo "ERROR: failed processing ${i}"
+        mv "${TMPDIR}/${file_name}" "${i}"
         exit 2
     fi
 done
@@ -101,14 +103,15 @@ done
 docs_files=$(find "${DOCS_TO_UPDATE_FOLDER}" -type f -name "*.md" ! -name releases.md ! -name CHANGELOG.md)
 for i in ${docs_files}; do
     if [ "${DEBUG}" != "false" ]; then
-        echo "Processing $i"
+        echo "Processing ${i}"
     fi
-    file_name=$(basename $i)
-    mv ${i} $TMPDIR/$file_name
+    file_name=$(basename "${i}")
+    mv "${i}" "${TMPDIR}/${file_name}"
     regex="s#$current_ic_version#$ic_version#g"
-    cat $TMPDIR/$file_name | sed -e "$regex" > $i
+    cat "${TMPDIR}/${file_name}" | sed -e "$regex" > "${i}"
     if [ $? -ne 0 ]; then
-        echo "ERROR: failed processing $i"
+        echo "ERROR: failed processing ${i}"
+        mv "${TMPDIR}/${file_name}" "${i}"
         exit 2
     fi
 done
@@ -116,12 +119,13 @@ done
 # update releases docs
 file_path=${DOCS_TO_UPDATE_FOLDER}/releases.md
 if [ "${DEBUG}" != "false" ]; then
-    echo "Processing $file_path"
+    echo "Processing ${file_path}"
 fi
-file_name=$(basename $file_path)
-mv ${file_path} $TMPDIR/$file_name
-cat $TMPDIR/$file_name | sed -e "8r ${ROOTDIR}/hack/changelog-template.txt" | sed -e "s/%%TITLE%%/## ${ic_version}/g" -e "s/%%IC_VERSION%%/${ic_version}/g" -e "s/%%HELM_CHART_VERSION%%/${helm_chart_version}/g" > $file_path
+file_name=$(basename "${file_path}")
+mv "${file_path}" "${TMPDIR}/${file_name}"
+cat "${TMPDIR}/${file_name}" | sed -e "8r ${ROOTDIR}/hack/changelog-template.txt" | sed -e "s/%%TITLE%%/## $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" > ${file_path}
 if [ $? -ne 0 ]; then
-    echo "ERROR: failed processing $file_path"
+    echo "ERROR: failed processing ${file_path}"
+    mv "${TMPDIR}/${file_name}" "${file_path}"
     exit 2
 fi
