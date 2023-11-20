@@ -18,6 +18,8 @@ defaults:
 
 jobs:
   release:
+    permissions:
+      contents: read
     runs-on: ubuntu-22.04
     steps:
       - name: Branch
