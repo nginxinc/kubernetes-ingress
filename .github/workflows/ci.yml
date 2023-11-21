@@ -63,7 +63,8 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-22.04
+    runs-on:
+      group: kic
     needs: checks
     steps:
       - name: Checkout Repository
@@ -81,7 +82,8 @@ jobs:
 
   binaries:
     name: Build Binaries
-    runs-on: ubuntu-22.04
+    runs-on:
+      group: kic
     needs: [checks, unit-tests]
     outputs:
       release-url: ${{ steps.release-notes.outputs.release-url }}
@@ -291,7 +293,8 @@ jobs:
 
   smoke-tests:
     name: Smoke Tests
-    runs-on: ubuntu-22.04
+    runs-on:
+      group: kic
     needs: setup-matrix
     strategy:
       fail-fast: false
