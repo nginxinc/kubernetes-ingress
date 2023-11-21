@@ -33,6 +33,7 @@ markers =[
     "ts",
     "vs",
     "vsr",
+    "failing",
 ]
 testpaths = [
     "tests",
