@@ -6,17 +6,17 @@ import (
 	"text/template"
 )
 
-type Protocol int
+type protocol int
 
 const (
-	http Protocol = iota
+	http protocol = iota
 	https
 )
 
-type ListenType int
+type listenerType int
 
 const (
-	ipv4 ListenType = iota
+	ipv4 listenerType = iota
 	ipv6
 )
 
@@ -35,7 +35,7 @@ func hasCIKey(key string, d map[string]string) bool {
 	return ok
 }
 
-func makeListener(listenerType Protocol, s Server) string {
+func makeListener(listenerType protocol, s Server) string {
 	var directives string
 
 	if !s.CustomListeners {
@@ -47,7 +47,7 @@ func makeListener(listenerType Protocol, s Server) string {
 	return directives
 }
 
-func buildDefaultListenerDirectives(listenerType Protocol, s Server) string {
+func buildDefaultListenerDirectives(listenerType protocol, s Server) string {
 	var directives string
 	port := getDefaultPort(listenerType)
 
@@ -60,7 +60,7 @@ func buildDefaultListenerDirectives(listenerType Protocol, s Server) string {
 	return directives
 }
 
-func buildCustomListenerDirectives(listenerType Protocol, s Server) string {
+func buildCustomListenerDirectives(listenerType protocol, s Server) string {
 	var directives string
 
 	if (listenerType == http && s.HTTPPort > 0) || (listenerType == https && s.HTTPSPort > 0) {
@@ -75,7 +75,7 @@ func buildCustomListenerDirectives(listenerType Protocol, s Server) string {
 	return directives
 }
 
-func getDefaultPort(listenerType Protocol) string {
+func getDefaultPort(listenerType protocol) string {
 	if listenerType == http {
 		return "80"
 	} else if listenerType == https {
@@ -84,7 +84,7 @@ func getDefaultPort(listenerType Protocol) string {
 	return ""
 }
 
-func getCustomPort(listenerType Protocol, s Server) string {
+func getCustomPort(listenerType protocol, s Server) string {
 	if listenerType == http {
 		return strconv.Itoa(s.HTTPPort)
 	} else if listenerType == https {
@@ -93,7 +93,7 @@ func getCustomPort(listenerType Protocol, s Server) string {
 	return ""
 }
 
-func buildListenDirective(port string, proxyProtocol bool, listenType ListenType) string {
+func buildListenDirective(port string, proxyProtocol bool, listenType listenerType) string {
 	base := "listen"
 	var directive string
 

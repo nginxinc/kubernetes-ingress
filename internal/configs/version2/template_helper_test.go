@@ -199,7 +199,7 @@ func TestMakeHTTPListener(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		var got = makeHTTPListener(tc.server)
+		got := makeHTTPListener(tc.server)
 		if got != tc.expected {
 			t.Errorf("Function generated wrong config, got %v but expected %v.", got, tc.expected)
 		}
@@ -259,7 +259,7 @@ func TestMakeHTTPSListener(t *testing.T) {
 		}, expected: "listen 444 ssl proxy_protocol;\nlisten [::]:444 ssl proxy_protocol;\n"},
 	}
 	for _, tc := range testCases {
-		var got = makeHTTPSListener(tc.server)
+		got := makeHTTPSListener(tc.server)
 		if got != tc.expected {
 			t.Errorf("Function generated wrong config, got %v but expected %v.", got, tc.expected)
 		}
