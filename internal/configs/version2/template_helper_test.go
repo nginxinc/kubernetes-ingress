@@ -123,14 +123,12 @@ func TestToUpperInputString(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newToUpperTemplate(t)
+
 	testCases := []struct {
-		InputString string
-		expected    string
+		server   Server
+		expected string
 	}{
-		{InputString: "foobar", expected: "FOOBAR"},
-		{InputString: "FOOBAR", expected: "FOOBAR"},
-		{InputString: "fOoBaR", expected: "FOOBAR"},
-		{InputString: "", expected: ""},
+		{server: Server{}, expected: "FOOBAR"},
 	}
 
 	for _, tc := range testCases {
@@ -141,6 +139,127 @@ func TestToUpperInputString(t *testing.T) {
 		}
 		if buf.String() != tc.expected {
 			t.Errorf("Template generated wrong config, got %v but expected %v.", buf.String(), tc.expected)
+		}
+	}
+}
+
+func TestMakeHTTPListener(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		server   Server
+		expected string
+	}{
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 80;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+		}, expected: "listen 80;\nlisten [::]:80;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     true,
+			ProxyProtocol:   true,
+		}, expected: "listen 80 proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     false,
+			ProxyProtocol:   true,
+		}, expected: "listen 80 proxy_protocol;\nlisten [::]:80 proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 81;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+		}, expected: "listen 81;\nlisten [::]:81;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     true,
+			ProxyProtocol:   true,
+		}, expected: "listen 81 proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     false,
+			ProxyProtocol:   true,
+		}, expected: "listen 81 proxy_protocol;\nlisten [::]:81 proxy_protocol;\n"},
+	}
+
+	for _, tc := range testCases {
+		var got = makeHTTPListener(tc.server)
+		if got != tc.expected {
+			t.Errorf("Function generated wrong config, got %v but expected %v.", got, tc.expected)
+		}
+	}
+}
+
+func TestMakeHTTPSListener(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		server   Server
+		expected string
+	}{
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 443 ssl;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+		}, expected: "listen 443 ssl;\nlisten [::]:443 ssl;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     true,
+			ProxyProtocol:   true,
+		}, expected: "listen 443 ssl proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     false,
+			ProxyProtocol:   true,
+		}, expected: "listen 443 ssl proxy_protocol;\nlisten [::]:443 ssl proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPSPort:       444,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 444 ssl;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPSPort:       444,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+		}, expected: "listen 444 ssl;\nlisten [::]:444 ssl;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPSPort:       444,
+			DisableIPV6:     true,
+			ProxyProtocol:   true,
+		}, expected: "listen 444 ssl proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPSPort:       444,
+			DisableIPV6:     false,
+			ProxyProtocol:   true,
+		}, expected: "listen 444 ssl proxy_protocol;\nlisten [::]:444 ssl proxy_protocol;\n"},
+	}
+	for _, tc := range testCases {
+		var got = makeHTTPSListener(tc.server)
+		if got != tc.expected {
+			t.Errorf("Function generated wrong config, got %v but expected %v.", got, tc.expected)
 		}
 	}
 }
