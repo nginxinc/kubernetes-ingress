@@ -7400,32 +7400,101 @@ func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
 
 func TestGenerateSplits(t *testing.T) {
 	t.Parallel()
-	originalPath := "/path"
-	splits := []conf_v1.Split{
+	tests := []struct {
+		splits              []conf_v1.Split
+		expectedSplitClient version2.SplitClient
+		msg                 string
+	}{
 		{
-			Weight: 90,
-			Action: &conf_v1.Action{
-				Proxy: &conf_v1.ActionProxy{
-					Upstream:    "coffee-v1",
-					RewritePath: "/rewrite",
+			splits: []conf_v1.Split{
+				{
+					Weight: 90,
+					Action: &conf_v1.Action{
+						Proxy: &conf_v1.ActionProxy{
+							Upstream:    "coffee-v1",
+							RewritePath: "/rewrite",
+						},
+					},
+				},
+				{
+					Weight: 9,
+					Action: &conf_v1.Action{
+						Pass: "coffee-v2",
+					},
+				},
+				{
+					Weight: 1,
+					Action: &conf_v1.Action{
+						Return: &conf_v1.ActionReturn{
+							Body: "hello",
+						},
+					},
 				},
 			},
-		},
-		{
-			Weight: 9,
-			Action: &conf_v1.Action{
-				Pass: "coffee-v2",
-			},
-		},
-		{
-			Weight: 1,
-			Action: &conf_v1.Action{
-				Return: &conf_v1.ActionReturn{
-					Body: "hello",
+			expectedSplitClient: version2.SplitClient{
+				Source:   "$request_id",
+				Variable: "$vs_default_cafe_splits_1",
+				Distributions: []version2.Distribution{
+					{
+						Weight: "90%",
+						Value:  "/internal_location_splits_1_split_0",
+					},
+					{
+						Weight: "9%",
+						Value:  "/internal_location_splits_1_split_1",
+					},
+					{
+						Weight: "1%",
+						Value:  "/internal_location_splits_1_split_2",
+					},
 				},
 			},
+			msg: "Normal Split",
+		},
+		{
+			splits: []conf_v1.Split{
+				{
+					Weight: 90,
+					Action: &conf_v1.Action{
+						Proxy: &conf_v1.ActionProxy{
+							Upstream:    "coffee-v1",
+							RewritePath: "/rewrite",
+						},
+					},
+				},
+				{
+					Weight: 0,
+					Action: &conf_v1.Action{
+						Pass: "coffee-v2",
+					},
+				},
+				{
+					Weight: 10,
+					Action: &conf_v1.Action{
+						Return: &conf_v1.ActionReturn{
+							Body: "hello",
+						},
+					},
+				},
+			},
+			expectedSplitClient: version2.SplitClient{
+				Source:   "$request_id",
+				Variable: "$vs_default_cafe_splits_1",
+				Distributions: []version2.Distribution{
+					{
+						Weight: "90%",
+						Value:  "/internal_location_splits_1_split_0",
+					},
+					{
+						Weight: "10%",
+						Value:  "/internal_location_splits_1_split_2",
+					},
+				},
+			},
+			msg: "Split with 0 weight",
 		},
 	}
+	originalPath := "/path"
 
 	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -7473,24 +7542,6 @@ func TestGenerateSplits(t *testing.T) {
 					URL:  "http://nginx.com",
 					Code: 301,
 				},
-			},
-		},
-	}
-	expectedSplitClient := version2.SplitClient{
-		Source:   "$request_id",
-		Variable: "$vs_default_cafe_splits_1",
-		Distributions: []version2.Distribution{
-			{
-				Weight: "90%",
-				Value:  "/internal_location_splits_1_split_0",
-			},
-			{
-				Weight: "9%",
-				Value:  "/internal_location_splits_1_split_1",
-			},
-			{
-				Weight: "1%",
-				Value:  "/internal_location_splits_1_split_2",
 			},
 		},
 	}
@@ -7589,33 +7640,36 @@ func TestGenerateSplits(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			resultSplitClient, resultLocations, resultReturnLocations := generateSplits(
+				test.splits,
+				upstreamNamer,
+				crUpstreams,
+				variableNamer,
+				scIndex,
+				&cfgParams,
+				errorPageDetails,
+				originalPath,
+				locSnippet,
+				enableSnippets,
+				returnLocationIndex,
+				true,
+				"coffee",
+				"default",
+				vsc.warnings,
+			)
 
-	resultSplitClient, resultLocations, resultReturnLocations := generateSplits(
-		splits,
-		upstreamNamer,
-		crUpstreams,
-		variableNamer,
-		scIndex,
-		&cfgParams,
-		errorPageDetails,
-		originalPath,
-		locSnippet,
-		enableSnippets,
-		returnLocationIndex,
-		true,
-		"coffee",
-		"default",
-		vsc.warnings,
-	)
-
-	if diff := cmp.Diff(expectedSplitClient, resultSplitClient); diff != "" {
-		t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedLocations, resultLocations); diff != "" {
-		t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(expectedReturnLocations, resultReturnLocations); diff != "" {
-		t.Errorf("generateSplits() resultReturnLocations mismatch (-want +got):\n%s", diff)
+			if !cmp.Equal(test.expectedSplitClient, resultSplitClient) {
+				t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", cmp.Diff(test.expectedSplitClient, resultSplitClient))
+			}
+			if !cmp.Equal(expectedLocations, resultLocations) {
+				t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", cmp.Diff(expectedLocations, resultLocations))
+			}
+			if !cmp.Equal(expectedReturnLocations, resultReturnLocations) {
+				t.Errorf("generateSplits() resultReturnLocations mismatch (-want +got):\n%s", cmp.Diff(expectedReturnLocations, resultReturnLocations))
+			}
+		})
 	}
 }
 

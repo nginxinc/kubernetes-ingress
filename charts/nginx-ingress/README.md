@@ -229,9 +229,9 @@ The steps you should follow depend on the Helm release name:
 
 2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart`
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress`
 with the copied `Selector` value.
 
     ```shell
@@ -281,9 +281,9 @@ reviewing its events:
 
 2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart`
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress`
 with the copied `Selector` value.
 
     ```shell
@@ -371,6 +371,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.initContainers` | InitContainers for the Ingress Controller pods. | [] |
 |`controller.extraContainers` | Extra (eg. sidecar) containers for the Ingress Controller pods. | [] |
 |`controller.resources` | The resources of the Ingress Controller pods. | requests: cpu=100m,memory=128Mi |
+|`controller.initContainerResources` | The resources of the init container which is used when `controller.readOnlyRootFilesystem` is set to `true` | requests: cpu=100m,memory=128Mi |
 |`controller.replicaCount` | The number of replicas of the Ingress Controller deployment. | 1 |
 |`controller.ingressClass.name` | A class of the Ingress Controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of Kubernetes. | nginx |
 |`controller.ingressClass.create` | Creates a new IngressClass object with the name `controller.ingressClass.name`. Set to `false` to use an existing ingressClass created using `kubectl` with the same name. If you use `helm upgrade`, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.3.2, do not set the value to false. | true |

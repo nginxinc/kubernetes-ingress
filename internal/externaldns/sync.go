@@ -155,13 +155,16 @@ func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.Vi
 		return nil, nil, err
 	}
 	var controllerGVK schema.GroupVersionKind = vsGVK
+	ownerRef := *metav1.NewControllerRef(vs, controllerGVK)
+	blockOwnerDeletion := false
+	ownerRef.BlockOwnerDeletion = &blockOwnerDeletion
 
 	dnsEndpoint := &extdnsapi.DNSEndpoint{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            vs.ObjectMeta.Name,
 			Namespace:       vs.Namespace,
 			Labels:          vs.Labels,
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(vs, controllerGVK)},
+			OwnerReferences: []metav1.OwnerReference{ownerRef},
 		},
 		Spec: extdnsapi.DNSEndpointSpec{
 			Endpoints: []*extdnsapi.Endpoint{

@@ -168,6 +168,15 @@ controller:
   #   cpu: 1
   #   memory: 1Gi
 
+  ## The resources for the Ingress Controller init container which is used when readOnlyRootFilesystem is set to true.
+  initContainerResources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    # limits:
+    #   cpu: 1
+    #   memory: 1Gi
+
   ## The tolerations of the Ingress Controller pods.
   tolerations: []
 
@@ -286,7 +295,6 @@ controller:
     # - name: dns-tcp
     #   port: 5353
     #   protocol: TCP
-
 
   ## Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
   enableSnippets: false
@@ -490,7 +498,7 @@ prometheus:
     ## A list of endpoints allowed as part of this ServiceMonitor.
     ## Matches on the name of a Service port.
     endpoints:
-     - port: prometheus
+      - port: prometheus
 
 serviceInsight:
   ## Expose NGINX Plus Service Insight endpoint.
