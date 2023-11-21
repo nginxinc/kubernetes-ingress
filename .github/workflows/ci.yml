@@ -254,25 +254,25 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
-            echo "matrix={\"images\": \
-                                                [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
-                                                {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
-                                                {\"image\": \"alpine\", \"marker\":\"policies\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"vs\"}, \
-                                                {\"image\": \"ubi\", \"marker\": \"ts\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
-                                                {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
-                                                {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}, \
-                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}, \
-                                                {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
-                                              \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
-          else
+          # if [ "${{ github.event_name }}" != "schedule" ]; then
+          #   echo "matrix={\"images\": \
+          #                                       [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
+          #                                       {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
+          #                                       {\"image\": \"alpine\", \"marker\":\"policies\"}, \
+          #                                       {\"image\": \"debian\", \"marker\": \"vs\"}, \
+          #                                       {\"image\": \"ubi\", \"marker\": \"ts\"}, \
+          #                                       {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
+          #                                       {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
+          #                                       {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
+          #                                       {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
+          #                                       {\"image\": \"ubi-plus\", \"marker\": \"policies\"}, \
+          #                                       {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}, \
+          #                                       {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
+          #                                     \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
+          # else
             echo "matrix={\"k8s\": [\"1.22.17\", \"1.23.17\", \"1.24.15\", \"1.25.11\", \"1.26.6\", \"1.27.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
                                              \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}" >> $GITHUB_OUTPUT
-          fi
+          # fi
 
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
