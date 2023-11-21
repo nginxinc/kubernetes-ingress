@@ -277,9 +277,9 @@ func initialChecks() {
 		glog.Fatalf("Error setting logtostderr to true: %v", err)
 	}
 
-	err = flag.Lookup("include-year").Value.Set(strconv.FormatBool(*includeYearInLogs))
+	err = flag.Lookup("include_year").Value.Set(strconv.FormatBool(*includeYearInLogs))
 	if err != nil {
-		glog.Fatalf("Error setting include-year flag: %v", err)
+		glog.Fatalf("Error setting include_year flag: %v", err)
 	}
 
 	if startupCheckFn != nil {
