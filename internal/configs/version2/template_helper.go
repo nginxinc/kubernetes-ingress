@@ -9,8 +9,8 @@ import (
 type ListenerType int
 
 const (
-	HTTP ListenerType = iota
-	HTTPS
+	http ListenerType = iota
+	https
 )
 
 func headerListToCIMap(headers []Header) map[string]string {
@@ -33,9 +33,9 @@ func makeListener(listenerType ListenerType, s Server) string {
 
 	if !s.CustomListeners {
 		directives += "listen"
-		if listenerType == HTTP {
+		if listenerType == http {
 			directives += " 80"
-		} else if listenerType == HTTPS {
+		} else if listenerType == https {
 			directives += " 443 ssl"
 		}
 		if s.ProxyProtocol {
@@ -45,9 +45,9 @@ func makeListener(listenerType ListenerType, s Server) string {
 
 		if !s.DisableIPV6 {
 			directives += "listen [::]:"
-			if listenerType == HTTP {
+			if listenerType == http {
 				directives += "80"
-			} else if listenerType == HTTPS {
+			} else if listenerType == https {
 				directives += "443 ssl"
 			}
 			if s.ProxyProtocol {
@@ -56,11 +56,11 @@ func makeListener(listenerType ListenerType, s Server) string {
 			directives += ";\n"
 		}
 	} else {
-		if listenerType == HTTP && s.HTTPPort > 0 || listenerType == HTTPS && s.HTTPSPort > 0 {
+		if listenerType == http && s.HTTPPort > 0 || listenerType == https && s.HTTPSPort > 0 {
 			directives += "listen"
-			if listenerType == HTTP {
+			if listenerType == http {
 				directives += " " + strconv.Itoa(s.HTTPPort)
-			} else if listenerType == HTTPS {
+			} else if listenerType == https {
 				directives += " " + strconv.Itoa(s.HTTPSPort) + " ssl"
 			}
 
@@ -71,9 +71,9 @@ func makeListener(listenerType ListenerType, s Server) string {
 
 			if !s.DisableIPV6 {
 				directives += "listen [::]:"
-				if listenerType == HTTP {
+				if listenerType == http {
 					directives += strconv.Itoa(s.HTTPPort)
-				} else if listenerType == HTTPS {
+				} else if listenerType == https {
 					directives += strconv.Itoa(s.HTTPSPort) + " ssl"
 				}
 				if s.ProxyProtocol {
@@ -88,11 +88,11 @@ func makeListener(listenerType ListenerType, s Server) string {
 }
 
 func makeHTTPListener(s Server) string {
-	return makeListener(HTTP, s)
+	return makeListener(http, s)
 }
 
 func makeHTTPSListener(s Server) string {
-	return makeListener(HTTPS, s)
+	return makeListener(https, s)
 }
 
 var helperFunctions = template.FuncMap{

@@ -123,12 +123,14 @@ func TestToUpperInputString(t *testing.T) {
 	t.Parallel()
 
 	tmpl := newToUpperTemplate(t)
-
 	testCases := []struct {
-		server   Server
-		expected string
+		InputString string
+		expected    string
 	}{
-		{server: Server{}, expected: "FOOBAR"},
+		{InputString: "foobar", expected: "FOOBAR"},
+		{InputString: "FOOBAR", expected: "FOOBAR"},
+		{InputString: "fOoBaR", expected: "FOOBAR"},
+		{InputString: "", expected: ""},
 	}
 
 	for _, tc := range testCases {
