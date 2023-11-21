@@ -6,11 +6,18 @@ import (
 	"text/template"
 )
 
-type ListenerType int
+type Protocol int
 
 const (
-	http ListenerType = iota
+	http Protocol = iota
 	https
+)
+
+type ListenType int
+
+const (
+	ipv4 ListenType = iota
+	ipv6
 )
 
 func headerListToCIMap(headers []Header) map[string]string {
@@ -28,63 +35,80 @@ func hasCIKey(key string, d map[string]string) bool {
 	return ok
 }
 
-func makeListener(listenerType ListenerType, s Server) string {
+func makeListener(listenerType Protocol, s Server) string {
 	var directives string
 
 	if !s.CustomListeners {
-		directives += "listen"
-		if listenerType == http {
-			directives += " 80"
-		} else if listenerType == https {
-			directives += " 443 ssl"
-		}
-		if s.ProxyProtocol {
-			directives += " proxy_protocol"
-		}
-		directives += ";\n"
+		directives += buildDefaultListenerDirectives(listenerType, s)
+	} else {
+		directives += buildCustomListenerDirectives(listenerType, s)
+	}
+
+	return directives
+}
+
+func buildDefaultListenerDirectives(listenerType Protocol, s Server) string {
+	var directives string
+	port := getDefaultPort(listenerType)
+
+	directives += buildListenDirective(port, s.ProxyProtocol, ipv4)
+
+	if !s.DisableIPV6 {
+		directives += buildListenDirective(port, s.ProxyProtocol, ipv6)
+	}
+
+	return directives
+}
+
+func buildCustomListenerDirectives(listenerType Protocol, s Server) string {
+	var directives string
+
+	if (listenerType == http && s.HTTPPort > 0) || (listenerType == https && s.HTTPSPort > 0) {
+		port := getCustomPort(listenerType, s)
+		directives += buildListenDirective(port, s.ProxyProtocol, ipv4)
 
 		if !s.DisableIPV6 {
-			directives += "listen [::]:"
-			if listenerType == http {
-				directives += "80"
-			} else if listenerType == https {
-				directives += "443 ssl"
-			}
-			if s.ProxyProtocol {
-				directives += " proxy_protocol"
-			}
-			directives += ";\n"
-		}
-	} else {
-		if listenerType == http && s.HTTPPort > 0 || listenerType == https && s.HTTPSPort > 0 {
-			directives += "listen"
-			if listenerType == http {
-				directives += " " + strconv.Itoa(s.HTTPPort)
-			} else if listenerType == https {
-				directives += " " + strconv.Itoa(s.HTTPSPort) + " ssl"
-			}
-
-			if s.ProxyProtocol {
-				directives += " proxy_protocol"
-			}
-			directives += ";\n"
-
-			if !s.DisableIPV6 {
-				directives += "listen [::]:"
-				if listenerType == http {
-					directives += strconv.Itoa(s.HTTPPort)
-				} else if listenerType == https {
-					directives += strconv.Itoa(s.HTTPSPort) + " ssl"
-				}
-				if s.ProxyProtocol {
-					directives += " proxy_protocol"
-				}
-				directives += ";\n"
-			}
+			directives += buildListenDirective(port, s.ProxyProtocol, ipv6)
 		}
 	}
 
 	return directives
+}
+
+func getDefaultPort(listenerType Protocol) string {
+	if listenerType == http {
+		return "80"
+	} else if listenerType == https {
+		return "443 ssl"
+	}
+	return ""
+}
+
+func getCustomPort(listenerType Protocol, s Server) string {
+	if listenerType == http {
+		return strconv.Itoa(s.HTTPPort)
+	} else if listenerType == https {
+		return strconv.Itoa(s.HTTPSPort) + " ssl"
+	}
+	return ""
+}
+
+func buildListenDirective(port string, proxyProtocol bool, listenType ListenType) string {
+	base := "listen"
+	var directive string
+
+	if listenType == ipv6 {
+		directive = base + " [::]:" + port
+	} else {
+		directive = base + " " + port
+	}
+
+	if proxyProtocol {
+		directive += " proxy_protocol"
+	}
+
+	directive += ";\n"
+	return directive
 }
 
 func makeHTTPListener(s Server) string {
