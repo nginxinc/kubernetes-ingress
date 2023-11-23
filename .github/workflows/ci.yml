@@ -246,7 +246,7 @@ jobs:
           done
 
   setup-matrix-smoke:
-    if: ${{ github.event_name  != "schedule" }}
+    if: ${{ github.event_name  != 'schedule' }}
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
     needs: [checks, binaries]
@@ -293,7 +293,7 @@ jobs:
           load: true
 
   smoke-tests:
-    if: ${{ github.event_name  != "schedule" }}
+    if: ${{ github.event_name  != 'schedule' }}
     name: Smoke Tests
     runs-on:
       group: kic
@@ -324,7 +324,7 @@ jobs:
         if: always()
 
   setup-matrix-regression:
-    if: ${{ github.ref_name == 'main' && github.event_name  == "schedule" }}
+    if: ${{ github.ref_name == 'main' && github.event_name  == 'schedule' }}
     name: Setup Matrix for Regression Tests
     runs-on: ubuntu-22.04
     needs: [checks, binaries]
@@ -361,7 +361,7 @@ jobs:
           load: true
 
   regression-tests:
-    if: ${{ github.ref_name == 'main' && github.event_name  == "schedule" }}
+    if: ${{ github.ref_name == 'main' && github.event_name  == 'schedule' }}
     name: Regression Tests
     runs-on:
       group: kic
