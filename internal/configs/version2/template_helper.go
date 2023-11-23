@@ -78,19 +78,17 @@ func buildCustomListenerDirectives(listenerType protocol, s Server) string {
 func getDefaultPort(listenerType protocol) string {
 	if listenerType == http {
 		return "80"
-	} else if listenerType == https {
+	} else {
 		return "443 ssl"
 	}
-	return ""
 }
 
 func getCustomPort(listenerType protocol, s Server) string {
 	if listenerType == http {
 		return strconv.Itoa(s.HTTPPort)
-	} else if listenerType == https {
+	} else {
 		return strconv.Itoa(s.HTTPSPort) + " ssl"
 	}
-	return ""
 }
 
 func buildListenDirective(port string, proxyProtocol bool, listenType listenerType) string {
