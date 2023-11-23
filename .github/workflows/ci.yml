@@ -335,13 +335,13 @@ jobs:
         run: |
           echo "matrix={\"k8s\": [\"1.24.15\", \"1.25.11\", \"1.26.6\", \"1.27.3\"], \
             \"images\": [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
-            \"images\": [{\"image\": \"debian\", \"marker\": \"vsr\"}, \
-            \"images\": [{\"image\": \"debian\", \"marker\": \"policies\"}, \
-            \"images\": [{\"image\": \"debian\", \"marker\": \"vs\"}, \
-            \"images\": [{\"image\": \"debian-plus\", \"marker\": \"ingresses\"}, \
-            \"images\": [{\"image\": \"debian-plus\", \"marker\": \"vsr\"}, \
-            \"images\": [{\"image\": \"debian-plus\", \"marker\": \"policies\"}, \
-            \"images\": [{\"image\": \"debian-plus\", \"marker\": \"vs\"}]}" >> $GITHUB_OUTPUT
+            {\"image\": \"debian\", \"marker\": \"vsr\"}, \
+            {\"image\": \"debian\", \"marker\": \"policies\"}, \
+            {\"image\": \"debian\", \"marker\": \"vs\"}, \
+            {\"image\": \"debian-plus\", \"marker\": \"ingresses\"}, \
+            {\"image\": \"debian-plus\", \"marker\": \"vsr\"}, \
+            {\"image\": \"debian-plus\", \"marker\": \"policies\"}, \
+            {\"image\": \"debian-plus\", \"marker\": \"vs\"}]}" >> $GITHUB_OUTPUT
 
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
