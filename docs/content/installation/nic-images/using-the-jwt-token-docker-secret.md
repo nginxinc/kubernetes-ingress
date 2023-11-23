@@ -78,7 +78,7 @@ spec:
     seccompProfile:
       type: RuntimeDefault
   containers:
-  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.2.0
+  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.3.2
     imagePullPolicy: IfNotPresent
     name: nginx-plus-ingress
 ```
@@ -96,7 +96,7 @@ If you are using Helm for deployment, there are two main methods: using *sources
 The [Installation with Helm ]({{< relref "installation/installing-nic/installation-with-helm.md#managing-the-chart-via-sources" >}}) documentation has a section describing how to use sources: these are the unique steps for Docker secrets using JWT tokens.
 
 1. Clone the NGINX [`kubernetes-ingress` repository](https://github.com/nginxinc/kubernetes-ingress).
-1. Navigate to the `deployments/helm-chart` folder of your local clone.
+1. Navigate to the `charts/nginx-ingress` folder of your local clone.
 1. Open the `values.yaml` file in an editor.
 
     You must change a few lines NGINX Ingress Controller with NGINX Plus to be deployed.
