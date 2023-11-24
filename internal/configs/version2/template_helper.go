@@ -20,6 +20,8 @@ const (
 	ipv6
 )
 
+const spacing = "    "
+
 func headerListToCIMap(headers []Header) map[string]string {
 	ret := make(map[string]string)
 
@@ -54,6 +56,7 @@ func buildDefaultListenerDirectives(listenerType protocol, s Server) string {
 	directives += buildListenDirective(port, s.ProxyProtocol, ipv4)
 
 	if !s.DisableIPV6 {
+		directives += spacing
 		directives += buildListenDirective(port, s.ProxyProtocol, ipv6)
 	}
 
@@ -68,6 +71,7 @@ func buildCustomListenerDirectives(listenerType protocol, s Server) string {
 		directives += buildListenDirective(port, s.ProxyProtocol, ipv4)
 
 		if !s.DisableIPV6 {
+			directives += spacing
 			directives += buildListenDirective(port, s.ProxyProtocol, ipv6)
 		}
 	}
