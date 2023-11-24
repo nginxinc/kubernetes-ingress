@@ -12,7 +12,7 @@ require (
 	github.com/golang/glog v1.1.2
 	github.com/google/go-cmp v0.6.0
 	github.com/kr/pretty v0.3.1
-	github.com/nginxinc/nginx-plus-go-client v1.1.0
+	github.com/nginxinc/nginx-plus-go-client v1.2.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.11.0
 	github.com/nginxinc/nginx-service-mesh v1.7.0
 	github.com/prometheus/client_golang v1.17.0
@@ -53,7 +53,7 @@ require (
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/go-ldap/ldap/v3 v3.4.5 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
