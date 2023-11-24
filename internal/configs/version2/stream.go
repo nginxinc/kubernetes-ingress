@@ -16,6 +16,7 @@ type StreamUpstream struct {
 	UpstreamLabels      UpstreamLabels
 	LoadBalancingMethod string
 	Resolve             bool
+	BackupServer        string
 }
 
 // StreamUpstreamServer defines a stream upstream server.

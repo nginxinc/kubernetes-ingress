@@ -9,6 +9,10 @@ upstream {{ $u.Name }} {
     server {{ $s.Address }} max_fails={{ $u.MaxFails }} fail_timeout={{ $u.FailTimeout }} max_conns={{ $u.MaxConns }};
     {{ end }}
 
+    {{ if $u.BackupServer }}
+    server {{ $u.BackupServer }} backup;
+    {{ end }}
+
     {{ if $u.Keepalive }}
     keepalive {{ $u.Keepalive }};
     {{ end }}
