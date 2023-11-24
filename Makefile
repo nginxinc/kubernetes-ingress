@@ -184,5 +184,5 @@ delete-kind: ## Create a Kind K8S cluster
 	@rm -f kube-$(K8S_CLUSTER_NAME)
 
 .PHONY: image-load
-image-load: alpine-image ## Load the image into the Kind K8S cluster
+image-load: ## Load the image into the Kind K8S cluster
 	@kind load docker-image docker.io/$(strip $(PREFIX)):$(strip $(TAG)) --name $(K8S_CLUSTER_NAME)
