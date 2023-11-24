@@ -161,7 +161,7 @@ func TestMakeHTTPListener(t *testing.T) {
 			CustomListeners: false,
 			DisableIPV6:     false,
 			ProxyProtocol:   false,
-		}, expected: "listen 80;\nlisten [::]:80;\n"},
+		}, expected: "listen 80;\n    listen [::]:80;\n"},
 		{server: Server{
 			CustomListeners: false,
 			DisableIPV6:     true,
@@ -171,7 +171,7 @@ func TestMakeHTTPListener(t *testing.T) {
 			CustomListeners: false,
 			DisableIPV6:     false,
 			ProxyProtocol:   true,
-		}, expected: "listen 80 proxy_protocol;\nlisten [::]:80 proxy_protocol;\n"},
+		}, expected: "listen 80 proxy_protocol;\n    listen [::]:80 proxy_protocol;\n"},
 		{server: Server{
 			CustomListeners: true,
 			HTTPPort:        81,
@@ -183,7 +183,7 @@ func TestMakeHTTPListener(t *testing.T) {
 			HTTPPort:        81,
 			DisableIPV6:     false,
 			ProxyProtocol:   false,
-		}, expected: "listen 81;\nlisten [::]:81;\n"},
+		}, expected: "listen 81;\n    listen [::]:81;\n"},
 		{server: Server{
 			CustomListeners: true,
 			HTTPPort:        81,
@@ -195,7 +195,7 @@ func TestMakeHTTPListener(t *testing.T) {
 			HTTPPort:        81,
 			DisableIPV6:     false,
 			ProxyProtocol:   true,
-		}, expected: "listen 81 proxy_protocol;\nlisten [::]:81 proxy_protocol;\n"},
+		}, expected: "listen 81 proxy_protocol;\n    listen [::]:81 proxy_protocol;\n"},
 	}
 
 	for _, tc := range testCases {
@@ -222,7 +222,7 @@ func TestMakeHTTPSListener(t *testing.T) {
 			CustomListeners: false,
 			DisableIPV6:     false,
 			ProxyProtocol:   false,
-		}, expected: "listen 443 ssl;\nlisten [::]:443 ssl;\n"},
+		}, expected: "listen 443 ssl;\n    listen [::]:443 ssl;\n"},
 		{server: Server{
 			CustomListeners: false,
 			DisableIPV6:     true,
@@ -232,7 +232,7 @@ func TestMakeHTTPSListener(t *testing.T) {
 			CustomListeners: false,
 			DisableIPV6:     false,
 			ProxyProtocol:   true,
-		}, expected: "listen 443 ssl proxy_protocol;\nlisten [::]:443 ssl proxy_protocol;\n"},
+		}, expected: "listen 443 ssl proxy_protocol;\n    listen [::]:443 ssl proxy_protocol;\n"},
 		{server: Server{
 			CustomListeners: true,
 			HTTPSPort:       444,
@@ -244,7 +244,7 @@ func TestMakeHTTPSListener(t *testing.T) {
 			HTTPSPort:       444,
 			DisableIPV6:     false,
 			ProxyProtocol:   false,
-		}, expected: "listen 444 ssl;\nlisten [::]:444 ssl;\n"},
+		}, expected: "listen 444 ssl;\n    listen [::]:444 ssl;\n"},
 		{server: Server{
 			CustomListeners: true,
 			HTTPSPort:       444,
@@ -256,7 +256,7 @@ func TestMakeHTTPSListener(t *testing.T) {
 			HTTPSPort:       444,
 			DisableIPV6:     false,
 			ProxyProtocol:   true,
-		}, expected: "listen 444 ssl proxy_protocol;\nlisten [::]:444 ssl proxy_protocol;\n"},
+		}, expected: "listen 444 ssl proxy_protocol;\n    listen [::]:444 ssl proxy_protocol;\n"},
 	}
 	for _, tc := range testCases {
 		got := makeHTTPSListener(tc.server)
