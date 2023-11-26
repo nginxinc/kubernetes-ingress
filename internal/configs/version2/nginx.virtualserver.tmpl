@@ -42,7 +42,6 @@ limit_req_zone {{ $z.Key }} zone={{ $z.ZoneName }}:{{ $z.ZoneSize }} rate={{ $z.
 {{- $s := .Server }}
 server {
     {{- if $s.Gunzip }}gunzip on;{{end}}
-
     {{ makeHTTPListener $s | printf }}
 
     server_name {{ $s.ServerName }};
@@ -50,9 +49,6 @@ server {
     set $resource_type "virtualserver";
     set $resource_name "{{$s.VSName}}";
     set $resource_namespace "{{$s.VSNamespace}}";
-
-
-
 
     {{- with $ssl := $s.SSL }}
         {{- if $s.TLSPassthrough }}
@@ -64,8 +60,7 @@ server {
         {{- end }}
         {{- if $ssl.HTTP2 }}
     http2 on;
-    {{- end }}
-
+        {{- end }}
 
         {{- if $ssl.RejectHandshake }}
     ssl_reject_handshake on;
