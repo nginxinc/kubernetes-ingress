@@ -203,8 +203,8 @@ When logging hits line `file:N`, emit a stack trace.
 
 Path to the main NGINX configuration template.
 
-- Default for NGINX is `nginx.ingress.tmpl`.
-- Default for NGINX Plus is `nginx-plus.ingress.tmpl`.
+- Default for NGINX is `nginx.tmpl`.
+- Default for NGINX Plus is `nginx-plus.tmpl`.
 
 <a name="cmdoption-nginx-configmaps"></a>
 
@@ -302,8 +302,8 @@ Print the version, git-commit hash and build date and exit.
 
 Path to the VirtualServer NGINX configuration template for a VirtualServer resource.
 
-- Default for NGINX is `nginx.ingress.tmpl`.
-- Default for NGINX Plus is `nginx-plus.ingress.tmpl`.
+- Default for NGINX is `nginx.virtualserver.tmpl`.
+- Default for NGINX Plus is `nginx-plus.virtualserver.tmpl`.
 
 
 <a name="cmdoption-vmodule"></a>
