@@ -1,7 +1,6 @@
 SHELL=/bin/bash
 ROOT_DIR = $(shell git rev-parse --show-toplevel)
 CONTEXT =
-BUILD_IMAGE = nginx/nginx-ingress:edge
 PULL_POLICY = IfNotPresent
 DEPLOYMENT_TYPE = deployment
 IC_TYPE = nginx-ingress
@@ -15,13 +14,12 @@ SHOW_IC_LOGS = no
 PYTEST_ARGS =
 DOCKERFILEPATH := ${ROOT_DIR}/tests/Dockerfile
 IP_FAMILY=dual
-VERSION = $(GIT_TAG)-SNAPSHOT
 PREFIX ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
-TAG ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
+TAG ?= edge ## The tag of the image. For example, edge
 K8S_CLUSTER_NAME ?= "local" ## The name used when creating/using a Kind Kubernetes cluster
 K8S_CLUSTER_VERSION ?= $(shell grep -m1 'FROM kindest/node' < ${DOCKERFILEPATH} | cut -d ':' -f 2 | sed -e 's/^v//') ## The version used when creating a Kind Kubernetes cluster
 K8S_TIMEOUT ?= 75s ## The timeout used when creating a Kind Kubernetes cluster
-
+BUILD_IMAGE := $(PREFIX):$(TAG)
 
 .PHONY: help ## Show this help
 help: ## Show available make targets
