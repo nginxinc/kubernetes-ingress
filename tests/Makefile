@@ -66,7 +66,7 @@ create-kind-cluster: $(KIND_KUBE_CONFIG_FOLDER) ## Create a Kind K8S cluster
 	@kind create cluster \
 		--name $(K8S_CLUSTER_NAME) \
 		--image=kindest/node:v$(K8S_CLUSTER_VERSION) \
-		--config=<(sed 's/dual/${IP_FAMILY}/' $(ROOT_DIR)/tests/ci-files/ci-kind-config.yaml \
+		--config=<(sed 's/dual/${IP_FAMILY}/' $(ROOT_DIR)/tests/ci-files/ci-kind-config.yaml) \
 		--kubeconfig $(KIND_KUBE_CONFIG_FOLDER)/config \
 		--wait $(K8S_TIMEOUT)
 
