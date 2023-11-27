@@ -1,56 +1,48 @@
 {{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version2.VirtualServerConfig*/ -}}
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
-    {{ if ne $u.UpstreamZoneSize "0" }}zone {{ $u.Name }} {{ $u.UpstreamZoneSize }};{{ end }}
+    {{- if ne $u.UpstreamZoneSize "0" }}zone {{ $u.Name }} {{ $u.UpstreamZoneSize }};{{ end }}
 
-    {{ if $u.LBMethod }}{{ $u.LBMethod }};{{ end }}
+    {{- if $u.LBMethod }}{{ $u.LBMethod }};{{ end }}
 
-    {{ range $s := $u.Servers }}
+    {{- range $s := $u.Servers }}
     server {{ $s.Address }} max_fails={{ $u.MaxFails }} fail_timeout={{ $u.FailTimeout }} max_conns={{ $u.MaxConns }};
-    {{ end }}
+    {{- end }}
 
-    {{ if $u.Keepalive }}
+    {{- if $u.Keepalive }}
     keepalive {{ $u.Keepalive }};
-    {{ end }}
+    {{- end }}
 }
 {{ end }}
 
-{{ range $sc := .SplitClients }}
+{{- range $sc := .SplitClients }}
 split_clients {{ $sc.Source }} {{ $sc.Variable }} {
-    {{ range $d := $sc.Distributions }}
+    {{- range $d := $sc.Distributions }}
     {{ $d.Weight }} {{ $d.Value }};
-    {{ end }}
+    {{- end }}
 }
-{{ end }}
+{{- end }}
 
-{{ range $m := .Maps }}
+{{- range $m := .Maps }}
 map {{ $m.Source }} {{ $m.Variable }} {
-    {{ range $p := $m.Parameters }}
+    {{- range $p := $m.Parameters }}
     {{ $p.Value }} {{ $p.Result }};
-    {{ end }}
+    {{- end }}
 }
-{{ end }}
+{{- end }}
 
-{{ range $snippet := .HTTPSnippets }}
+{{- range $snippet := .HTTPSnippets }}
 {{- $snippet }}
-{{ end }}
+{{- end }}
 
-{{ range $z := .LimitReqZones }}
+{{- range $z := .LimitReqZones }}
 limit_req_zone {{ $z.Key }} zone={{ $z.ZoneName }}:{{ $z.ZoneSize }} rate={{ $z.Rate }};
-{{ end }}
+{{- end }}
 
-{{ $s := .Server }}
+{{- $s := .Server }}
 server {
-    {{ if $s.Gunzip }}gunzip on;{{end}}
-        {{ if not $s.CustomListeners }}
-    listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
-    {{ if not $s.DisableIPV6 }}listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
-        {{ else }}
-        {{ if (gt $s.HTTPPort 0) }}
-    listen {{ $s.HTTPPort }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
-    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HTTPPort }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
-        {{ end }}
-        {{ end }}
+    {{- if $s.Gunzip }}gunzip on;{{end}}
+    {{ makeHTTPListener $s | printf }}
 
     server_name {{ $s.ServerName }};
 
@@ -58,122 +50,111 @@ server {
     set $resource_name "{{$s.VSName}}";
     set $resource_namespace "{{$s.VSNamespace}}";
 
-
-    {{ with $ssl := $s.SSL }}
-        {{ if $s.TLSPassthrough }}
+    {{- with $ssl := $s.SSL }}
+        {{- if $s.TLSPassthrough }}
     listen unix:/var/lib/nginx/passthrough-https.sock proxy_protocol;
     set_real_ip_from unix:;
     real_ip_header proxy_protocol;
-        {{ else }}
-        {{ if not $s.CustomListeners }}
-    listen 443 ssl{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
-    {{ if not $s.DisableIPV6 }}listen [::]:443 ssl{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
-        {{ else }}
-        {{ if (gt $s.HTTPSPort 0) }}
-    listen {{ $s.HTTPSPort }} ssl{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
-    {{ if not $s.DisableIPV6 }}listen [::]:{{ $s.HTTPSPort }} ssl{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};{{ end }}
-        {{ end }}
-        {{ end }}
-        {{ end }}
-
-    {{ if $ssl.HTTP2 }}
+        {{- else }}
+    {{ makeHTTPSListener $s | printf }}
+        {{- end }}
+        {{- if $ssl.HTTP2 }}
     http2 on;
-    {{ end }}
+        {{- end }}
 
-
-        {{ if $ssl.RejectHandshake }}
+        {{- if $ssl.RejectHandshake }}
     ssl_reject_handshake on;
-        {{ else if $.SpiffeCerts }}
+        {{- else if $.SpiffeCerts }}
     ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
     ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
-        {{ else }}
+        {{- else }}
     ssl_certificate {{ $ssl.Certificate }};
     ssl_certificate_key {{ $ssl.CertificateKey }};
-        {{ end }}
-    {{ else }}
-      {{ if $.SpiffeCerts }}
+        {{- end }}
+    {{- else }}
+      {{- if $.SpiffeCerts }}
     listen 443 ssl;
     {{if not $s.DisableIPV6}}listen [::]:443 ssl;{{end}}
     ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
     ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
-      {{ end }}
-    {{ end }}
+      {{- end }}
+    {{- end }}
 
-    {{ with $s.IngressMTLS }}
+    {{- with $s.IngressMTLS }}
     ssl_client_certificate {{ .ClientCert }};
-    {{ if .ClientCrl }}
+    {{- if .ClientCrl }}
     ssl_crl {{ .ClientCrl }};
-    {{ end }}
+    {{- end }}
     ssl_verify_client {{ .VerifyClient }};
     ssl_verify_depth {{ .VerifyDepth }};
-    {{ end }}
+    {{- end }}
 
-    {{ with $s.TLSRedirect }}
+    {{- with $s.TLSRedirect }}
     if ({{ .BasedOn }} = 'http') {
         return {{ .Code }} https://$host$request_uri;
     }
-    {{ end }}
+    {{- end }}
 
     server_tokens "{{ $s.ServerTokens }}";
 
-    {{ range $setRealIPFrom := $s.SetRealIPFrom }}
+    {{- range $setRealIPFrom := $s.SetRealIPFrom }}
     set_real_ip_from {{ $setRealIPFrom }};
-    {{ end }}
-    {{ if $s.RealIPHeader }}
+    {{- end }}
+    {{- if $s.RealIPHeader }}
     real_ip_header {{ $s.RealIPHeader }};
-    {{ end }}
-    {{ if $s.RealIPRecursive }}
+    {{- end }}
+    {{- if $s.RealIPRecursive }}
     real_ip_recursive on;
-    {{ end }}
+    {{- end }}
 
-    {{ with $s.PoliciesErrorReturn }}
+    {{- with $s.PoliciesErrorReturn }}
     return {{ .Code }};
-    {{ end }}
+    {{- end }}
 
-    {{ range $allow := $s.Allow }}
+    {{- range $allow := $s.Allow }}
     allow {{ $allow }};
-    {{ end }}
-    {{ if gt (len $s.Allow) 0 }}
+    {{- end }}
+    {{- if gt (len $s.Allow) 0 }}
     deny all;
-    {{ end }}
+    {{- end }}
 
-    {{ range $deny := $s.Deny }}
+    {{- range $deny := $s.Deny }}
     deny {{ $deny }};
-    {{ end }}
-    {{ if gt (len $s.Deny) 0 }}
+    {{- end }}
+    {{- if gt (len $s.Deny) 0 }}
     allow all;
-    {{ end }}
+    {{- end }}
 
-    {{ if $s.LimitReqOptions.DryRun }}
+    {{- if $s.LimitReqOptions.DryRun }}
     limit_req_dry_run on;
-    {{ end }}
+    {{- end }}
 
-    {{ with $level := $s.LimitReqOptions.LogLevel }}
+    {{- with $level := $s.LimitReqOptions.LogLevel }}
     limit_req_log_level {{ $level }};
-    {{ end }}
+    {{- end }}
 
-    {{ with $code := $s.LimitReqOptions.RejectCode }}
+    {{- with $code := $s.LimitReqOptions.RejectCode }}
     limit_req_status {{ $code }};
-    {{ end }}
+    {{- end }}
 
-    {{ range $rl := $s.LimitReqs }}
+    {{- range $rl := $s.LimitReqs }}
     limit_req zone={{ $rl.ZoneName }}{{ if $rl.Burst }} burst={{ $rl.Burst }}{{ end }}
         {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
-    {{ end }}
+    {{- end }}
 
-    {{ with $s.BasicAuth }}
+    {{- with $s.BasicAuth }}
     auth_basic {{ printf "%q" .Realm }};
     auth_basic_user_file {{ .Secret }};
-    {{ end }}
+    {{- end }}
 
-    {{ with $s.EgressMTLS }}
-        {{ if .Certificate }}
+    {{- with $s.EgressMTLS }}
+        {{- if .Certificate }}
     proxy_ssl_certificate {{ .Certificate }};
     proxy_ssl_certificate_key {{ .CertificateKey }};
-        {{ end }}
-        {{ if .TrustedCert }}
+        {{- end }}
+        {{- if .TrustedCert }}
     proxy_ssl_trusted_certificate {{ .TrustedCert }};
-        {{ end }}
+        {{- end }}
 
     proxy_ssl_verify {{ if .VerifyServer }}on{{else}}off{{end}};
     proxy_ssl_verify_depth {{ .VerifyDepth }};
@@ -182,19 +163,19 @@ server {
     proxy_ssl_session_reuse {{ if .SessionReuse }}on{{else}}off{{end}};
     proxy_ssl_server_name {{ if .ServerName }}on{{else}}off{{end}};
     proxy_ssl_name {{ .SSLName }};
-    {{ end }}
+    {{- end }}
 
-    {{ range $snippet := $s.Snippets }}
+    {{- range $snippet := $s.Snippets }}
     {{- $snippet }}
-    {{ end }}
+    {{- end }}
 
-    {{ range $l := $s.InternalRedirectLocations }}
+    {{- range $l := $s.InternalRedirectLocations }}
     location {{ $l.Path }} {
         rewrite ^ {{ $l.Destination }} last;
     }
-    {{ end }}
+    {{- end }}
 
-    {{ range $e := $s.ErrorPageLocations }}
+    {{- range $e := $s.ErrorPageLocations }}
     location {{ $e.Name }} {
         {{ if $e.DefaultType }}
         default_type "{{ $e.DefaultType }}";
@@ -218,69 +199,68 @@ server {
     {{ range $l := $s.Locations }}
     location {{ $l.Path }} {
         set $service "{{ $l.ServiceName }}";
-        {{ if $l.IsVSR }}
+        {{- if $l.IsVSR }}
         set $resource_type "virtualserverroute";
         set $resource_name "{{ $l.VSRName }}";
         set $resource_namespace "{{ $l.VSRNamespace }}";
-        {{ end }}
-        {{ if $l.Internal }}
+        {{- end }}
+        {{- if $l.Internal }}
         internal;
-        {{ end }}
-        {{ range $snippet := $l.Snippets }}
+        {{- end }}
+        {{- range $snippet := $l.Snippets }}
         {{- $snippet }}
-        {{ end }}
+        {{- end }}
 
-        {{ with $l.PoliciesErrorReturn }}
+        {{- with $l.PoliciesErrorReturn }}
         return {{ .Code }};
-        {{ end }}
+        {{- end }}
 
-        {{ range $allow := $l.Allow }}
+        {{- range $allow := $l.Allow }}
         allow {{ $allow }};
-        {{ end }}
-        {{ if gt (len $l.Allow) 0 }}
+        {{- end }}
+        {{- if gt (len $l.Allow) 0 }}
         deny all;
-        {{ end }}
+        {{- end }}
 
-        {{ range $deny := $l.Deny }}
+        {{- range $deny := $l.Deny }}
         deny {{ $deny }};
-        {{ end }}
-        {{ if gt (len $l.Deny) 0 }}
+        {{- end }}
+        {{- if gt (len $l.Deny) 0 }}
         allow all;
-        {{ end }}
+        {{- end }}
 
-        {{ if $l.LimitReqOptions.DryRun }}
+        {{- if $l.LimitReqOptions.DryRun }}
         limit_req_dry_run on;
-        {{ end }}
+        {{- end }}
 
-        {{ with $level := $l.LimitReqOptions.LogLevel }}
+        {{- with $level := $l.LimitReqOptions.LogLevel }}
         limit_req_log_level {{ $level }};
-        {{ end }}
+        {{- end }}
 
-        {{ with $code := $l.LimitReqOptions.RejectCode }}
+        {{- with $code := $l.LimitReqOptions.RejectCode }}
         limit_req_status {{ $code }};
-        {{ end }}
+        {{- end }}
 
-        {{ range $rl := $l.LimitReqs }}
+        {{- range $rl := $l.LimitReqs }}
         limit_req zone={{ $rl.ZoneName }}{{ if $rl.Burst }} burst={{ $rl.Burst }}{{ end }}
             {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
-        {{ end }}
+        {{- end }}
 
-        {{ with $l.BasicAuth }}
+        {{- with $l.BasicAuth }}
         auth_basic {{ printf "%q" .Realm }};
         auth_basic_user_file {{ .Secret }};
-        {{ end }}
+        {{- end }}
 
         {{ $proxyOrGRPC := "proxy" }}{{ if $l.GRPCPass }}{{ $proxyOrGRPC = "grpc" }}{{ end }}
 
-        {{ with $l.EgressMTLS }}
-            {{ if .Certificate }}
+        {{- with $l.EgressMTLS }}
+            {{- if .Certificate }}
         {{ $proxyOrGRPC }}_ssl_certificate {{ .Certificate }};
         {{ $proxyOrGRPC }}_ssl_certificate_key {{ .CertificateKey }};
-            {{ end }}
+            {{- end }}
             {{ if .TrustedCert }}
         {{ $proxyOrGRPC }}_ssl_trusted_certificate {{ .TrustedCert }};
-            {{ end }}
-
+            {{- end }}
         {{ $proxyOrGRPC }}_ssl_verify {{ if .VerifyServer }}on{{else}}off{{end}};
         {{ $proxyOrGRPC }}_ssl_verify_depth {{ .VerifyDepth }};
         {{ $proxyOrGRPC }}_ssl_protocols {{ .Protocols }};
@@ -288,9 +268,9 @@ server {
         {{ $proxyOrGRPC }}_ssl_session_reuse {{ if .SessionReuse }}on{{else}}off{{end}};
         {{ $proxyOrGRPC }}_ssl_server_name {{ if .ServerName }}on{{else}}off{{end}};
         {{ $proxyOrGRPC }}_ssl_name {{ .SSLName }};
-        {{ end }}
+        {{- end }}
 
-            {{ if $l.GRPCPass }}
+            {{- if $l.GRPCPass }}
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -310,47 +290,47 @@ server {
         error_page 497 = @grpc_internal;
         error_page 500 = @grpc_internal;
         error_page 501 = @grpc_internal;
-            {{ end }}
+        {{- end }}
 
-        {{ range $e := $l.ErrorPages }}
+        {{- range $e := $l.ErrorPages }}
         error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";
-        {{ end }}
+        {{- end }}
 
-        {{ if $l.ProxyInterceptErrors }}
+        {{- if $l.ProxyInterceptErrors }}
         {{ $proxyOrGRPC }}_intercept_errors on;
-        {{ end }}
+        {{- end }}
 
-        {{ if $l.InternalProxyPass }}
+        {{- if $l.InternalProxyPass }}
         proxy_pass {{ $l.InternalProxyPass }};
-        {{ end }}
+        {{- end }}
 
-        {{ if or $l.ProxyPass $l.GRPCPass}}
-            {{ range $r := $l.Rewrites }}
+        {{- if or $l.ProxyPass $l.GRPCPass }}
+            {{- range $r := $l.Rewrites }}
         rewrite {{ $r }};
-            {{ end }}
+            {{- end }}
         {{ $proxyOrGRPC }}_connect_timeout {{ $l.ProxyConnectTimeout }};
         {{ $proxyOrGRPC }}_read_timeout {{ $l.ProxyReadTimeout }};
         {{ $proxyOrGRPC }}_send_timeout {{ $l.ProxySendTimeout }};
         client_max_body_size {{ $l.ClientMaxBodySize }};
 
-            {{ if $l.ProxyMaxTempFileSize }}
+            {{- if $l.ProxyMaxTempFileSize }}
         proxy_max_temp_file_size {{ $l.ProxyMaxTempFileSize }};
-            {{ end }}
+            {{- end }}
 
         proxy_buffering {{ if $l.ProxyBuffering }}on{{ else }}off{{ end }};
-            {{ if $l.ProxyBuffers }}
+            {{- if $l.ProxyBuffers }}
         proxy_buffers {{ $l.ProxyBuffers }};
-            {{ end }}
-            {{ if $l.ProxyBufferSize }}
+            {{- end }}
+            {{- if $l.ProxyBufferSize }}
         {{ $proxyOrGRPC }}_buffer_size {{ $l.ProxyBufferSize }};
-            {{ end }}
-            {{ if not $l.GRPCPass }}
+            {{- end }}
+            {{- if not $l.GRPCPass }}
         proxy_http_version 1.1;
         set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $vs_connection_header;
         proxy_pass_request_headers {{ if $l.ProxyPassRequestHeaders }}on{{ else }}off{{ end }};
-            {{ end }}
+            {{- end }}
 
         {{- $custom_headers := $l.ProxySetHeaders | headerListToCIMap }}
 
@@ -378,19 +358,19 @@ server {
         {{ $proxyOrGRPC }}_set_header {{ $h.Name }} "{{ $h.Value }}";
         {{- end }}
 
-            {{ range $h := $l.ProxyHideHeaders }}
+            {{- range $h := $l.ProxyHideHeaders }}
         {{ $proxyOrGRPC }}_hide_header {{ $h }};
-            {{ end }}
-            {{ range $h := $l.ProxyPassHeaders }}
+            {{- end }}
+            {{- range $h := $l.ProxyPassHeaders }}
         {{ $proxyOrGRPC }}_pass_header {{ $h }};
-            {{ end }}
-            {{ with $l.ProxyIgnoreHeaders }}
+            {{- end }}
+            {{- with $l.ProxyIgnoreHeaders }}
         {{ $proxyOrGRPC }}_ignore_headers {{ $l.ProxyIgnoreHeaders }};
-            {{ end }}
-            {{ range $h := $l.AddHeaders }}
+            {{- end }}
+            {{- range $h := $l.AddHeaders }}
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
-            {{ end }}
-            {{ if $.SpiffeClientCerts }}
+            {{- end }}
+            {{- if $.SpiffeClientCerts }}
         {{ $proxyOrGRPC }}_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
         {{ $proxyOrGRPC }}_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
         {{ $proxyOrGRPC }}_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
@@ -398,20 +378,20 @@ server {
         {{ $proxyOrGRPC }}_ssl_verify on;
         {{ $proxyOrGRPC }}_ssl_verify_depth 25;
         {{ $proxyOrGRPC }}_ssl_name {{ $l.ProxySSLName }};
-            {{ end }}
-            {{if $l.GRPCPass}}
+            {{- end }}
+            {{-  if $l.GRPCPass }}
         grpc_pass {{ $l.GRPCPass }};
-            {{ else }}
+            {{- else }}
         proxy_pass {{ $l.ProxyPass }}{{ $l.ProxyPassRewrite }};
-            {{ end }}
+            {{- end }}
         {{ $proxyOrGRPC }}_next_upstream {{ $l.ProxyNextUpstream }};
         {{ $proxyOrGRPC }}_next_upstream_timeout {{ $l.ProxyNextUpstreamTimeout }};
         {{ $proxyOrGRPC }}_next_upstream_tries {{ $l.ProxyNextUpstreamTries }};
-        {{ end }}
+        {{- end }}
     }
-    {{ end }}
+    {{- end }}
 
-    {{ with $ssl := $s.SSL }}
+    {{- with $ssl := $s.SSL }}
         {{ if $ssl.HTTP2 }}
 	location @grpc_deadline_exceeded {
         default_type application/grpc;
