@@ -43,7 +43,7 @@ staticcheck: ## Run staticcheck linter
 	staticcheck ./...
 
 .PHONY: test
-test: ## Run tests
+test: ## Run GoLang tests
 	go test -tags=aws -shuffle=on -race ./...
 
 cover: ## Generate coverage report
