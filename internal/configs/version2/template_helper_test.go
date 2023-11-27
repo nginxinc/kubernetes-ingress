@@ -145,6 +145,127 @@ func TestToUpperInputString(t *testing.T) {
 	}
 }
 
+func TestMakeHTTPListener(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		server   Server
+		expected string
+	}{
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 80;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+		}, expected: "listen 80;\n    listen [::]:80;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     true,
+			ProxyProtocol:   true,
+		}, expected: "listen 80 proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     false,
+			ProxyProtocol:   true,
+		}, expected: "listen 80 proxy_protocol;\n    listen [::]:80 proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 81;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+		}, expected: "listen 81;\n    listen [::]:81;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     true,
+			ProxyProtocol:   true,
+		}, expected: "listen 81 proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     false,
+			ProxyProtocol:   true,
+		}, expected: "listen 81 proxy_protocol;\n    listen [::]:81 proxy_protocol;\n"},
+	}
+
+	for _, tc := range testCases {
+		got := makeHTTPListener(tc.server)
+		if got != tc.expected {
+			t.Errorf("Function generated wrong config, got %v but expected %v.", got, tc.expected)
+		}
+	}
+}
+
+func TestMakeHTTPSListener(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		server   Server
+		expected string
+	}{
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 443 ssl;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+		}, expected: "listen 443 ssl;\n    listen [::]:443 ssl;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     true,
+			ProxyProtocol:   true,
+		}, expected: "listen 443 ssl proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: false,
+			DisableIPV6:     false,
+			ProxyProtocol:   true,
+		}, expected: "listen 443 ssl proxy_protocol;\n    listen [::]:443 ssl proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPSPort:       444,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 444 ssl;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPSPort:       444,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+		}, expected: "listen 444 ssl;\n    listen [::]:444 ssl;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPSPort:       444,
+			DisableIPV6:     true,
+			ProxyProtocol:   true,
+		}, expected: "listen 444 ssl proxy_protocol;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPSPort:       444,
+			DisableIPV6:     false,
+			ProxyProtocol:   true,
+		}, expected: "listen 444 ssl proxy_protocol;\n    listen [::]:444 ssl proxy_protocol;\n"},
+	}
+	for _, tc := range testCases {
+		got := makeHTTPSListener(tc.server)
+		if got != tc.expected {
+			t.Errorf("Function generated wrong config, got %v but expected %v.", got, tc.expected)
+		}
+	}
+}
+
 func newContainsTemplate(t *testing.T) *template.Template {
 	t.Helper()
 	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(`{{contains .InputString .Substring}}`)
