@@ -19,8 +19,8 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.6
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	k8s.io/api v0.28.3
-	k8s.io/apimachinery v0.28.3
+	k8s.io/api v0.28.4
+	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.3
 	k8s.io/code-generator v0.28.3
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
@@ -53,7 +53,7 @@ require (
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/go-ldap/ldap/v3 v3.4.5 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

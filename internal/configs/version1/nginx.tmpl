@@ -49,16 +49,16 @@ http {
         '' $sent_http_grpc_status;
     }
 
-    {{if .AccessLogOff}}
+    {{- if .AccessLogOff}}
     access_log off;
-    {{else}}
+    {{- else}}
     access_log  /dev/stdout  main;
-    {{end}}
+    {{- end}}
 
-    {{if .LatencyMetrics}}
+    {{- if .LatencyMetrics}}
     log_format response_time '{"upstreamAddress":"$upstream_addr", "upstreamResponseTime":"$upstream_response_time", "proxyHost":"$proxy_host", "upstreamStatus": "$upstream_status"}';
     access_log syslog:server=unix:/var/lib/nginx/nginx-syslog.sock,nohostname,tag=nginx response_time;
-    {{end}}
+    {{- end}}
 
     sendfile        on;
     #tcp_nopush     on;
@@ -86,17 +86,17 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    {{if .SSLProtocols}}ssl_protocols {{.SSLProtocols}};{{end}}
-    {{if .SSLCiphers}}ssl_ciphers "{{.SSLCiphers}}";{{end}}
-    {{if .SSLPreferServerCiphers}}ssl_prefer_server_ciphers on;{{end}}
-    {{if .SSLDHParam}}ssl_dhparam {{.SSLDHParam}};{{end}}
+    {{- if .SSLProtocols}}ssl_protocols {{.SSLProtocols}};{{end}}
+    {{- if .SSLCiphers}}ssl_ciphers "{{.SSLCiphers}}";{{end}}
+    {{- if .SSLPreferServerCiphers}}ssl_prefer_server_ciphers on;{{end}}
+    {{- if .SSLDHParam}}ssl_dhparam {{.SSLDHParam}};{{end}}
 
-    {{if .OpenTracingEnabled}}
+    {{- if .OpenTracingEnabled}}
     opentracing on;
-    {{end}}
-    {{if .OpenTracingLoadModule}}
+    {{- end}}
+    {{- if .OpenTracingLoadModule}}
     opentracing_load_tracer {{ .OpenTracingTracer }} /var/lib/nginx/tracer-config.json;
-    {{end}}
+    {{- end}}
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -107,44 +107,44 @@ http {
         set $service "";
 
         listen {{ .DefaultHTTPListenerPort}} default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
-        {{if not .DisableIPV6}}listen [::]:{{ .DefaultHTTPListenerPort}} default_server{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
+        {{- if not .DisableIPV6}}listen [::]:{{ .DefaultHTTPListenerPort}} default_server{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
 
-        {{if .TLSPassthrough}}
+        {{- if .TLSPassthrough}}
         listen unix:/var/lib/nginx/passthrough-https.sock ssl default_server proxy_protocol;
         set_real_ip_from unix:;
         real_ip_header proxy_protocol;
-        {{else}}
+        {{- else}}
         listen {{ .DefaultHTTPSListenerPort}} ssl default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
         {{if not .DisableIPV6}}listen [::]:{{ .DefaultHTTPSListenerPort}} ssl default_server{{if .ProxyProtocol}} proxy_protocol{{end}};{{end}}
-        {{end}}
+        {{- end}}
 
-        {{if .HTTP2}}
+        {{- if .HTTP2}}
         http2 on;
-        {{end}}
+        {{- end}}
 
-        {{if .SSLRejectHandshake}}
+        {{- if .SSLRejectHandshake}}
         ssl_reject_handshake on;
-        {{else}}
+        {{- else}}
         ssl_certificate /etc/nginx/secrets/default;
         ssl_certificate_key /etc/nginx/secrets/default;
-        {{end}}
+        {{- end}}
 
-        {{range $setRealIPFrom := .SetRealIPFrom}}
+        {{- range $setRealIPFrom := .SetRealIPFrom}}
         set_real_ip_from {{$setRealIPFrom}};{{end}}
-        {{if .RealIPHeader}}real_ip_header {{.RealIPHeader}};{{end}}
-        {{if .RealIPRecursive}}real_ip_recursive on;{{end}}
+        {{- if .RealIPHeader}}real_ip_header {{.RealIPHeader}};{{end}}
+        {{- if .RealIPRecursive}}real_ip_recursive on;{{end}}
 
         server_name _;
         server_tokens "{{.ServerTokens}}";
-        {{if .DefaultServerAccessLogOff}}
+        {{- if .DefaultServerAccessLogOff}}
         access_log off;
-        {{end}}
+        {{end -}}
 
-        {{if .OpenTracingEnabled}}
+        {{- if .OpenTracingEnabled}}
         opentracing off;
-        {{end}}
+        {{- end}}
 
-        {{if .HealthStatus}}
+        {{- if .HealthStatus}}
         location {{.HealthStatusURI}} {
             default_type text/plain;
             return 200 "healthy\n";
@@ -180,9 +180,9 @@ http {
         listen unix:/var/lib/nginx/nginx-status.sock;
         access_log off;
 
-        {{if .OpenTracingEnabled}}
+        {{- if .OpenTracingEnabled}}
         opentracing off;
-        {{end}}
+        {{- end}}
 
         location /stub_status {
             stub_status;
@@ -208,13 +208,13 @@ http {
         listen unix:/var/lib/nginx/nginx-418-server.sock;
         access_log off;
 
-        {{if .OpenTracingEnabled}}
+        {{- if .OpenTracingEnabled}}
         opentracing off;
-        {{end}}
+        {{- end -}}
 
         return 418;
     }
-    {{if .InternalRouteServer}}
+    {{- if .InternalRouteServer}}
     server {
         listen 443 ssl;
         {{if not .DisableIPV6}}listen [::]:443 ssl;{{end}}
@@ -225,7 +225,7 @@ http {
         ssl_verify_client on;
         ssl_verify_depth 25;
     }
-    {{end}}
+    {{- end}}
 }
 
 stream {
@@ -242,13 +242,13 @@ stream {
 
     access_log  /dev/stdout  stream-main;
 
-    {{range $value := .StreamSnippets}}
+    {{- range $value := .StreamSnippets}}
     {{$value}}{{end}}
 
     map_hash_max_size {{.MapHashMaxSize}};
     {{if .MapHashBucketSize}}map_hash_bucket_size {{.MapHashBucketSize}};{{end}}
 
-    {{if .TLSPassthrough}}
+    {{- if .TLSPassthrough}}
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;
         include /etc/nginx/tls-passthrough-hosts.conf;
