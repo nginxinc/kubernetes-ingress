@@ -1,6 +1,5 @@
 # variables that should not be overridden by the user
-GIT_TAG = $(shell git describe --tags --abbrev=0 || echo "untagged")
-ROOT_DIR = $(shell git rev-parse --show-toplevel || echo ".")
+GIT_TAG = $(shell git describe --tags --abbrev=0 || echo untagged)
 VERSION = $(GIT_TAG)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
@@ -10,9 +9,6 @@ TAG ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
 TARGET ?= local ## The target of the build. Possible values: local, container and download
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
 ARCH ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
-K8S_CLUSTER_NAME ?= "local" ## The name used when creating/using a Kind Kubernetes cluster
-K8S_CLUSTER_VERSION ?= $(shell grep -m1 'FROM kindest/node' < ${ROOT_DIR}/tests/Dockerfile | cut -d ':' -f 2 | sed -e 's/^v//') ## The version used when creating a Kind Kubernetes cluster
-K8S_TIMEOUT ?= 75s ## The timeout used when creating a Kind Kubernetes cluster
 
 # final docker build command
 DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
@@ -173,16 +169,3 @@ deps: ## Add missing and remove unused modules, verify deps and download them to
 .PHONY: clean-cache
 clean-cache: ## Clean go cache
 	@go clean -modcache
-
-.PHONY: create-kind
-create-kind: ## Create a Kind K8S cluster
-	@kind create cluster --name $(K8S_CLUSTER_NAME) --image=kindest/node:v$(K8S_CLUSTER_VERSION) --config $(ROOT_DIR)/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-$(K8S_CLUSTER_NAME) --wait $(K8S_TIMEOUT)
-
-.PHONY: delete-kind
-delete-kind: ## Create a Kind K8S cluster
-	@kind delete cluster --name $(K8S_CLUSTER_NAME)
-	@rm -f kube-$(K8S_CLUSTER_NAME)
-
-.PHONY: image-load
-image-load: ## Load the image into the Kind K8S cluster
-	@kind load docker-image docker.io/$(strip $(PREFIX)):$(strip $(TAG)) --name $(K8S_CLUSTER_NAME)
