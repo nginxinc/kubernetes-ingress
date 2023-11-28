@@ -1,56 +1,57 @@
 {{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.IngressNginxConfig*/ -}}
 # configuration for {{.Ingress.Namespace}}/{{.Ingress.Name}}
-{{range $upstream := .Upstreams}}
+{{- range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {
-	{{if ne $upstream.UpstreamZoneSize "0"}}zone {{$upstream.Name}} {{$upstream.UpstreamZoneSize}};{{end}}
-	{{if $upstream.LBMethod }}{{$upstream.LBMethod}};{{end}}
-	{{range $server := $upstream.UpstreamServers}}
+	{{- if ne $upstream.UpstreamZoneSize "0"}}zone {{$upstream.Name}} {{$upstream.UpstreamZoneSize}};{{end}}
+	{{- if $upstream.LBMethod }}{{$upstream.LBMethod}};{{end}}
+	{{- range $server := $upstream.UpstreamServers}}
 	server {{$server.Address}} max_fails={{$server.MaxFails}} fail_timeout={{$server.FailTimeout}} max_conns={{$server.MaxConns}};{{end}}
-	{{if $.Keepalive}}keepalive {{$.Keepalive}};{{end}}
-}{{end}}
+	{{- if $.Keepalive}}keepalive {{$.Keepalive}};{{end}}
+}
+{{end -}}
 
 {{range $server := .Servers}}
 server {
-	{{if $server.SpiffeCerts}}
+	{{- if $server.SpiffeCerts}}
 	listen 443 ssl;
-	{{if not $server.DisableIPV6}}listen [::]:443 ssl;{{end}}
+	{{- if not $server.DisableIPV6}}listen [::]:443 ssl;{{end}}
 	ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
 	ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
-	{{else}}
-	{{if not $server.GRPCOnly}}
-	{{range $port := $server.Ports}}
+	{{- else}}
+	{{- if not $server.GRPCOnly}}
+	{{- range $port := $server.Ports}}
 	listen {{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
-	{{if not $server.DisableIPV6}}listen [::]:{{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};{{end}}
+	{{- if not $server.DisableIPV6}}listen [::]:{{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};{{end}}
 	{{- end}}
-	{{end}}
+	{{- end}}
 
-	{{if $server.SSL}}
-	{{if $server.TLSPassthrough}}
+	{{- if $server.SSL}}
+	{{- if $server.TLSPassthrough}}
 	listen unix:/var/lib/nginx/passthrough-https.sock ssl proxy_protocol;
 	set_real_ip_from unix:;
 	real_ip_header proxy_protocol;
-	{{else}}
+	{{- else}}
 	{{- range $port := $server.SSLPorts}}
 	listen {{$port}} ssl{{if $server.ProxyProtocol}} proxy_protocol{{end}};
-	{{if not $server.DisableIPV6}}listen [::]:{{$port}} ssl{{if $server.ProxyProtocol}} proxy_protocol{{end}};{{end}}
+	{{- if not $server.DisableIPV6}}listen [::]:{{$port}} ssl{{if $server.ProxyProtocol}} proxy_protocol{{end}};{{end}}
 	{{- end}}
-	{{end}}
-	{{if $server.HTTP2}}
+	{{- end}}
+	{{- if $server.HTTP2}}
 	http2 on;
-	{{end}}
-	{{if $server.SSLRejectHandshake}}
+	{{- end}}
+	{{- if $server.SSLRejectHandshake}}
 	ssl_reject_handshake on;
-	{{else}}
+	{{- else}}
 	ssl_certificate {{$server.SSLCertificate}};
 	ssl_certificate_key {{$server.SSLCertificateKey}};
-	{{end}}
-	{{end}}
-	{{end}}
+	{{- end}}
+	{{- end}}
+	{{- end}}
 
-	{{range $setRealIPFrom := $server.SetRealIPFrom}}
+	{{- range $setRealIPFrom := $server.SetRealIPFrom}}
 	set_real_ip_from {{$setRealIPFrom}};{{end}}
-	{{if $server.RealIPHeader}}real_ip_header {{$server.RealIPHeader}};{{end}}
-	{{if $server.RealIPRecursive}}real_ip_recursive on;{{end}}
+	{{- if $server.RealIPHeader}}real_ip_header {{$server.RealIPHeader}};{{end}}
+	{{- if $server.RealIPRecursive}}real_ip_recursive on;{{end}}
 
 	server_tokens {{$server.ServerTokens}};
 
@@ -60,9 +61,9 @@ server {
 	set $resource_name "{{$.Ingress.Name}}";
 	set $resource_namespace "{{$.Ingress.Namespace}}";
 
-	{{range $proxyHideHeader := $server.ProxyHideHeaders}}
+	{{- range $proxyHideHeader := $server.ProxyHideHeaders}}
 	proxy_hide_header {{$proxyHideHeader}};{{end}}
-	{{range $proxyPassHeader := $server.ProxyPassHeaders}}
+	{{- range $proxyPassHeader := $server.ProxyPassHeaders}}
 	proxy_pass_header {{$proxyPassHeader}};{{end}}
 
 	{{- if and $server.HSTS (or $server.SSL $server.HSTSBehindProxy)}}
@@ -70,23 +71,23 @@ server {
 	proxy_hide_header Strict-Transport-Security;
 	{{- if $server.HSTSBehindProxy}}
 	if ($http_x_forwarded_proto = 'https') {
-	{{else}}
+	{{- else}}
 	if ($https = on) {
 	{{- end}}
 		set $hsts_header_val "max-age={{$server.HSTSMaxAge}}; {{if $server.HSTSIncludeSubdomains}}includeSubDomains; {{end}}preload";
 	}
 
 	add_header Strict-Transport-Security "$hsts_header_val" always;
-	{{end}}
+	{{- end}}
 
-	{{if $server.SSL}}
-	{{if not $server.GRPCOnly}}
+	{{- if $server.SSL}}
+	{{- if not $server.GRPCOnly}}
 	{{- if $server.SSLRedirect}}
 	if ($scheme = http) {
 		return 301 https://$host:{{index $server.SSLPorts 0}}$request_uri;
 	}
 	{{- end}}
-	{{end}}
+	{{- end}}
 	{{- end}}
 
 	{{- if $server.RedirectToHTTPS}}
@@ -101,20 +102,20 @@ server {
 	{{- end }}
 
 	{{- if $server.ServerSnippets}}
-	{{range $value := $server.ServerSnippets}}
+	{{- range $value := $server.ServerSnippets}}
 	{{$value}}{{end}}
 	{{- end}}
 
-	{{range $location := $server.Locations}}
+	{{- range $location := $server.Locations}}
 	location {{  makeLocationPath $location $.Ingress.Annotations | printf }} {
 		set $service "{{$location.ServiceName}}";
-		{{with $location.MinionIngress}}
+		{{- with $location.MinionIngress}}
 		# location for minion {{$location.MinionIngress.Namespace}}/{{$location.MinionIngress.Name}}
 		set $resource_name "{{$location.MinionIngress.Name}}";
 		set $resource_namespace "{{$location.MinionIngress.Namespace}}";
-		{{end}}
-		{{if $location.GRPC}}
-		{{if not $server.GRPCOnly}}
+		{{- end}}
+		{{- if $location.GRPC}}
+		{{- if not $server.GRPCOnly}}
 		error_page 400 @grpcerror400;
 		error_page 401 @grpcerror401;
 		error_page 403 @grpcerror403;
@@ -128,10 +129,10 @@ server {
 		error_page 502 @grpcerror502;
 		error_page 503 @grpcerror503;
 		error_page 504 @grpcerror504;
-		{{end}}
+		{{- end}}
 
 		{{- if $location.LocationSnippets}}
-		{{range $value := $location.LocationSnippets}}
+		{{- range $value := $location.LocationSnippets}}
 		{{$value}}{{end}}
 		{{- end}}
 
@@ -153,7 +154,7 @@ server {
 		{{- if $location.ProxyBufferSize}}
 		grpc_buffer_size {{$location.ProxyBufferSize}};
 		{{- end}}
-		{{if $.SpiffeClientCerts}}
+		{{- if $.SpiffeClientCerts}}
 		grpc_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
 		grpc_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
 		grpc_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
@@ -161,15 +162,15 @@ server {
 		grpc_ssl_verify on;
 		grpc_ssl_verify_depth 25;
 		grpc_ssl_name {{$location.ProxySSLName}};
-		{{end}}
-		{{if $location.SSL}}
+		{{- end}}
+		{{- if $location.SSL}}
 		grpc_pass grpcs://{{$location.Upstream.Name}}{{$location.Rewrite}};
-		{{else}}
+		{{- else}}
 		grpc_pass grpc://{{$location.Upstream.Name}}{{$location.Rewrite}};
-		{{end}}
-		{{else}}
+		{{- end}}
+		{{- else}}
 		proxy_http_version 1.1;
-		{{if $location.Websocket}}
+		{{- if $location.Websocket}}
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header Connection $connection_upgrade;
 		{{- else}}
@@ -207,7 +208,7 @@ server {
 		{{- if $location.ProxyMaxTempFileSize}}
 		proxy_max_temp_file_size {{$location.ProxyMaxTempFileSize}};
 		{{- end}}
-		{{if $.SpiffeClientCerts}}
+		{{- if $.SpiffeClientCerts}}
 		proxy_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
 		proxy_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
 		proxy_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
@@ -215,15 +216,16 @@ server {
 		proxy_ssl_verify on;
 		proxy_ssl_verify_depth 25;
 		proxy_ssl_name {{$location.ProxySSLName}};
-		{{end}}
-		{{if $location.SSL}}
+		{{- end}}
+		{{- if $location.SSL}}
 		proxy_pass https://{{$location.Upstream.Name}}{{$location.Rewrite}};
-		{{else}}
+		{{- else}}
 		proxy_pass http://{{$location.Upstream.Name}}{{$location.Rewrite}};
-		{{end}}
-		{{end}}
-	}{{end}}
-	{{if $server.GRPCOnly}}
+		{{- end}}
+		{{- end}}
+	}
+	{{end -}}
+	{{- if $server.GRPCOnly}}
 	error_page 400 @grpcerror400;
 	error_page 401 @grpcerror401;
 	error_page 403 @grpcerror403;
@@ -237,8 +239,8 @@ server {
 	error_page 502 @grpcerror502;
 	error_page 503 @grpcerror503;
 	error_page 504 @grpcerror504;
-	{{end}}
-	{{if $server.HTTP2}}
+	{{- end}}
+	{{- if $server.HTTP2}}
 	location @grpcerror400 { default_type application/grpc; return 400 "\n"; }
 	location @grpcerror401 { default_type application/grpc; return 401 "\n"; }
 	location @grpcerror403 { default_type application/grpc; return 403 "\n"; }
@@ -252,5 +254,5 @@ server {
 	location @grpcerror502 { default_type application/grpc; return 502 "\n"; }
 	location @grpcerror503 { default_type application/grpc; return 503 "\n"; }
 	location @grpcerror504 { default_type application/grpc; return 504 "\n"; }
-	{{end}}
+	{{- end}}
 }{{end}}
