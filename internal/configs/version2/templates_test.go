@@ -340,6 +340,86 @@ func TestTransportServerForNginx(t *testing.T) {
 	t.Log(string(data))
 }
 
+func tsConfig() TransportServerConfig {
+	return TransportServerConfig{
+		Upstreams: []StreamUpstream{
+			{
+				Name: "udp-upstream",
+				Servers: []StreamUpstreamServer{
+					{
+						Address: "10.0.0.20:5001",
+					},
+				},
+			},
+		},
+		Match: &Match{
+			Name:                "match_udp-upstream",
+			Send:                `GET / HTTP/1.0\r\nHost: localhost\r\n\r\n`,
+			ExpectRegexModifier: "~*",
+			Expect:              "200 OK",
+		},
+		Server: StreamServer{
+			Port:                     1234,
+			UDP:                      true,
+			StatusZone:               "udp-app",
+			ProxyRequests:            createPointerFromInt(1),
+			ProxyResponses:           createPointerFromInt(2),
+			ProxyPass:                "udp-upstream",
+			ProxyTimeout:             "10s",
+			ProxyConnectTimeout:      "10s",
+			ProxyNextUpstream:        true,
+			ProxyNextUpstreamTimeout: "10s",
+			ProxyNextUpstreamTries:   5,
+			HealthCheck: &StreamHealthCheck{
+				Enabled:  false,
+				Timeout:  "5s",
+				Jitter:   "0",
+				Port:     8080,
+				Interval: "5s",
+				Passes:   1,
+				Fails:    1,
+				Match:    "match_udp-upstream",
+			},
+		},
+	}
+}
+
+func TestExecuteTemplateForTransportServerWithBackupServerForNGINX(t *testing.T) {
+	t.Parallel()
+
+	tsCfg := tsConfig()
+	tsCfg.Upstreams[0].BackupServer = "clustertwo.corp.local:8080"
+	e := newTmplExecutorNGINX(t)
+	got, err := e.ExecuteTransportServerTemplate(&tsCfg)
+	if err != nil {
+		t.Error(err)
+	}
+
+	want := fmt.Sprintf("server %s backup;", tsCfg.Upstreams[0].BackupServer)
+	if !bytes.Contains(got, []byte(want)) {
+		t.Errorf("want backup %q in the transport server config", want)
+	}
+	t.Log(string(got))
+}
+
+func TestExecuteTemplateForTransportServerWithBackupServerForNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	tsCfg := tsConfig()
+	tsCfg.Upstreams[0].BackupServer = "clustertwo.corp.local:8080"
+	e := newTmplExecutorNGINXPlus(t)
+	got, err := e.ExecuteTransportServerTemplate(&tsCfg)
+	if err != nil {
+		t.Error(err)
+	}
+
+	want := fmt.Sprintf("server %s resolve backup;", tsCfg.Upstreams[0].BackupServer)
+	if !bytes.Contains(got, []byte(want)) {
+		t.Errorf("want backup %q in the transport server config", want)
+	}
+	t.Log(string(got))
+}
+
 func TestTLSPassthroughHosts(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINX(t)
