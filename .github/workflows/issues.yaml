@@ -16,11 +16,6 @@ jobs:
       contents: read
       issues: write # for actions/github-script to create comments
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
-        with:
-          egress-policy: audit
-
       - name: text
         id: controller
         if: contains(github.event.issue.body, 'nginx.ingress.kubernetes.io')
