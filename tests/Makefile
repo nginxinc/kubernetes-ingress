@@ -10,7 +10,6 @@ TEST_PREFIX             = test-runner
 KUBE_CONFIG_FOLDER      = ${HOME}/.kube
 KIND_KUBE_CONFIG_FOLDER = $(KUBE_CONFIG_FOLDER)/kind
 SHOW_IC_LOGS            = no
-PYTEST_ARGS             =
 DOCKERFILEPATH          := ${ROOT_DIR}/tests/Dockerfile
 IP_FAMILY               = dual
 TEST_TAG                ?= latest ## The Tag to use for the test image. e.g. commitsha
