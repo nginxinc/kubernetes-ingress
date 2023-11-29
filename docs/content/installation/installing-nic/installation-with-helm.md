@@ -202,11 +202,11 @@ The steps you should follow depend on the Helm release name:
     Selector: app=nginx-ingress-nginx-ingress
     ```
 
-2. Checkout the latest available tag using `git checkout v3.3.0`
+2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress` with the copied `Selector` value.
     ```shell
     selectorLabels: {app: nginx-ingress-nginx-ingress}
     ```
@@ -247,11 +247,11 @@ The steps you should follow depend on the Helm release name:
     Selector: app=<helm_release_name>-nginx-ingress
     ```
 
-2. Checkout the latest available tag using `git checkout v3.3.0`
+2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress` with the copied `Selector` value.
 
     ```shell
     selectorLabels: {app: <helm_release_name>-nginx-ingress}
