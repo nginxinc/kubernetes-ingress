@@ -16,8 +16,13 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+
 jobs:
   release:
+    permissions:
+      contents: write
     runs-on: ubuntu-22.04
     steps:
       - name: Branch
