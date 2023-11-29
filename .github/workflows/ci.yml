@@ -255,25 +255,25 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          # if [ "${{ github.event_name }}" != "schedule" ]; then
-          #   echo "matrix={\"images\": \
-          #                                       [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
-          #                                       {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
-          #                                       {\"image\": \"alpine\", \"marker\":\"policies\"}, \
-          #                                       {\"image\": \"debian\", \"marker\": \"vs\"}, \
-          #                                       {\"image\": \"ubi\", \"marker\": \"ts\"}, \
-          #                                       {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
-          #                                       {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
-          #                                       {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
-          #                                       {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
-          #                                       {\"image\": \"ubi-plus\", \"marker\": \"policies\"}, \
-          #                                       {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}, \
-          #                                       {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
-          #                                     \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
-          # else
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "matrix={\"images\": \
+                                                [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
+                                                {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
+                                                {\"image\": \"alpine\", \"marker\":\"policies\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"ubi\", \"marker\": \"ts\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
+                                                {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
+                                                {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
+                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
+                                              \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
+          else
             echo "matrix={\"k8s\": [\"1.24.15\", \"1.25.11\", \"1.26.6\", \"1.27.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
                                              \"images\": [{\"image\": \"debian\", \"marker\": \"vsr\"},{\"image\": \"debian-plus\", \"marker\": \"vsr\"}]}" >> $GITHUB_OUTPUT
-          # fi
+          fi
 
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -292,36 +292,36 @@ jobs:
           pull: true
           load: true
 
-  # smoke-tests:
-  #   if: ${{ github.event_name  != 'schedule' }}
-  #   name: Smoke Tests
-  #   runs-on:
-  #     group: kic
-  #   needs: setup-matrix-smoke
-  #   strategy:
-  #     fail-fast: false
-  #     matrix: ${{ fromJSON(needs.setup-matrix-smoke.outputs.matrix) }}
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+  smoke-tests:
+    if: ${{ github.event_name  != 'schedule' }}
+    name: Smoke Tests
+    runs-on:
+      group: kic
+    needs: setup-matrix-smoke
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.setup-matrix-smoke.outputs.matrix) }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-  #     - name: Run Smoke Tests
-  #       id: smoke-tests
-  #       uses: ./.github/actions/smoke-tests
-  #       with:
-  #         image: ${{ matrix.images.image != '' && matrix.images.image || 'debian' }}
-  #         marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
-  #         k8s-version: ${{ matrix.k8s }}
-  #         nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
-  #         nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
-  #         azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
+      - name: Run Smoke Tests
+        id: smoke-tests
+        uses: ./.github/actions/smoke-tests
+        with:
+          image: ${{ matrix.images.image != '' && matrix.images.image || 'debian' }}
+          marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
+          k8s-version: ${{ matrix.k8s }}
+          nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
+          nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
+          azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
 
-  #     - name: Upload Test Results
-  #       uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
-  #       with:
-  #         name: ${{ steps.smoke-tests.outputs.test-results-name }}
-  #         path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
-  #       if: always()
+      - name: Upload Test Results
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        with:
+          name: ${{ steps.smoke-tests.outputs.test-results-name }}
+          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
+        if: always()
 
   setup-matrix-regression:
     # if: ${{ github.ref_name == 'main' && github.event_name  == 'schedule' }}
@@ -391,135 +391,135 @@ jobs:
           path: ${{ github.workspace }}/tests/${{ steps.regression-tests.outputs.test-results-name }}.html
         if: always()
 
-  # build-docker:
-  #   name: Build Docker OSS
-  #   needs: smoke-tests
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       image: [debian, alpine]
-  #       platforms:
-  #         ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
-  #       include:
-  #         - image: ubi
-  #           platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
-  #   uses: ./.github/workflows/build-oss.yml
-  #   with:
-  #     platforms: ${{ matrix.platforms }}
-  #     image: ${{ matrix.image }}
-  #   permissions:
-  #     contents: read
-  #     actions: read
-  #     security-events: write
-  #     id-token: write
-  #     packages: write
-  #   secrets: inherit
+  build-docker:
+    name: Build Docker OSS
+    needs: smoke-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian, alpine]
+        platforms:
+          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+        include:
+          - image: ubi
+            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
+    secrets: inherit
 
-  # build-docker-plus:
-  #   name: Build Docker Plus
-  #   needs: [binaries, build-docker]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       image: [debian-plus, alpine-plus, alpine-plus-fips]
-  #       platforms: ["linux/arm64, linux/amd64"]
-  #       target: [goreleaser, aws]
-  #       include:
-  #         - image: ubi-plus
-  #           platforms: "linux/arm64, linux/amd64, linux/s390x"
-  #           target: goreleaser
-  #   uses: ./.github/workflows/build-plus.yml
-  #   with:
-  #     platforms: ${{ matrix.platforms }}
-  #     image: ${{ matrix.image }}
-  #     target: ${{ matrix.target }}
-  #     release-url: ${{ needs.binaries.outputs.release-url }}
-  #   permissions:
-  #     contents: read
-  #     security-events: write
-  #     id-token: write
-  #   secrets: inherit
+  build-docker-plus:
+    name: Build Docker Plus
+    needs: [binaries, build-docker]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian-plus, alpine-plus, alpine-plus-fips]
+        platforms: ["linux/arm64, linux/amd64"]
+        target: [goreleaser, aws]
+        include:
+          - image: ubi-plus
+            platforms: "linux/arm64, linux/amd64, linux/s390x"
+            target: goreleaser
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      release-url: ${{ needs.binaries.outputs.release-url }}
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
+    secrets: inherit
 
-  # build-docker-nap:
-  #   name: Build Docker NAP
-  #   needs: [binaries, build-docker-plus]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       image: [debian-plus-nap, ubi-plus-nap]
-  #       platforms: ["linux/amd64"]
-  #       target: [goreleaser, aws]
-  #       nap_modules: [dos, waf, "waf,dos"]
-  #   uses: ./.github/workflows/build-plus.yml
-  #   with:
-  #     platforms: ${{ matrix.platforms }}
-  #     image: ${{ matrix.image }}
-  #     target: ${{ matrix.target }}
-  #     nap_modules: ${{ matrix.nap_modules }}
-  #     release-url: ${{ needs.binaries.outputs.release-url }}
-  #   permissions:
-  #     contents: read
-  #     security-events: write
-  #     id-token: write
-  #   secrets: inherit
+  build-docker-nap:
+    name: Build Docker NAP
+    needs: [binaries, build-docker-plus]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian-plus-nap, ubi-plus-nap]
+        platforms: ["linux/amd64"]
+        target: [goreleaser, aws]
+        nap_modules: [dos, waf, "waf,dos"]
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      nap_modules: ${{ matrix.nap_modules }}
+      release-url: ${{ needs.binaries.outputs.release-url }}
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
+    secrets: inherit
 
-  # publish-helm:
-  #   name: Package and Publish Helm Chart
-  #   runs-on: ubuntu-22.04
-  #   needs: [checks, helm-tests]
-  #   if: ${{ github.event_name == 'push' && ! startsWith(github.ref, 'refs/heads/release-') }}
-  #   permissions:
-  #     contents: write # for pushing to Helm Charts repository
-  #     packages: write # for helm to push to GHCR
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-  #       with:
-  #         path: kic
+  publish-helm:
+    name: Package and Publish Helm Chart
+    runs-on: ubuntu-22.04
+    needs: [checks, helm-tests]
+    if: ${{ github.event_name == 'push' && ! startsWith(github.ref, 'refs/heads/release-') }}
+    permissions:
+      contents: write # for pushing to Helm Charts repository
+      packages: write # for helm to push to GHCR
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          path: kic
 
-  #     - name: Login to GitHub Container Registry
-  #       uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.repository_owner }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  #     - name: DockerHub Login
-  #       uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
-  #       with:
-  #         username: ${{ secrets.DOCKER_USERNAME }}
-  #         password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: DockerHub Login
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-  #     - name: Package
-  #       id: package
-  #       run: |
-  #         output=$(helm package ${{ github.ref_type != 'tag' && '--app-version edge --version 0.0.0-edge' || '' }} kic/charts/nginx-ingress)
-  #         echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
+      - name: Package
+        id: package
+        run: |
+          output=$(helm package ${{ github.ref_type != 'tag' && '--app-version edge --version 0.0.0-edge' || '' }} kic/charts/nginx-ingress)
+          echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
 
-  #     - name: Push to OCI registries
-  #       run: |
-  #         helm push ${{ steps.package.outputs.path }} oci://ghcr.io/nginxinc/charts
-  #         helm push ${{ steps.package.outputs.path }} oci://registry-1.docker.io/nginxcharts
+      - name: Push to OCI registries
+        run: |
+          helm push ${{ steps.package.outputs.path }} oci://ghcr.io/nginxinc/charts
+          helm push ${{ steps.package.outputs.path }} oci://registry-1.docker.io/nginxcharts
 
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-  #       with:
-  #         repository: nginxinc/helm-charts
-  #         fetch-depth: 1
-  #         token: ${{ secrets.NGINX_PAT }}
-  #         path: helm-charts
-  #       if: github.ref_type == 'tag'
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          repository: nginxinc/helm-charts
+          fetch-depth: 1
+          token: ${{ secrets.NGINX_PAT }}
+          path: helm-charts
+        if: github.ref_type == 'tag'
 
-  #     - name: Push Helm Chart to Helm Charts Repository
-  #       run: |
-  #         mv ${{ steps.package.outputs.path }} ${{ github.workspace }}/helm-charts/stable/
-  #         cd ${{ github.workspace }}/helm-charts
-  #         helm repo index stable --url https://helm.nginx.com/stable
-  #         git add -A
-  #         git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
-  #         commit -m "NGINX Ingress Controller - Release ${{ needs.checks.outputs.chart_version }}"
-  #         git push -u origin master
-  #       if: github.ref_type == 'tag'
+      - name: Push Helm Chart to Helm Charts Repository
+        run: |
+          mv ${{ steps.package.outputs.path }} ${{ github.workspace }}/helm-charts/stable/
+          cd ${{ github.workspace }}/helm-charts
+          helm repo index stable --url https://helm.nginx.com/stable
+          git add -A
+          git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
+          commit -m "NGINX Ingress Controller - Release ${{ needs.checks.outputs.chart_version }}"
+          git push -u origin master
+        if: github.ref_type == 'tag'
 
   operator:
     name: Trigger PR for Operator
