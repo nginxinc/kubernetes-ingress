@@ -70,3 +70,4 @@ package.json
 
 # kind kube-config
 kube-local
+venv/
