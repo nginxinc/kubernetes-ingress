@@ -3,8 +3,8 @@ module github.com/nginxinc/kubernetes-ingress
 go 1.21.3
 
 require (
-	github.com/aws/aws-sdk-go-v2/config v1.25.5
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.18.3
+	github.com/aws/aws-sdk-go-v2/config v1.25.6
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.18.4
 	github.com/cert-manager/cert-manager v1.13.2
 	github.com/dlclark/regexp2 v1.10.0
 	github.com/go-chi/chi/v5 v5.0.10
@@ -22,7 +22,7 @@ require (
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4
-	k8s.io/code-generator v0.28.3
+	k8s.io/code-generator v0.28.4
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	sigs.k8s.io/controller-tools v0.13.0
 )
@@ -30,17 +30,17 @@ require (
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.23.1 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.4 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.23.2 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.5 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.4 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.4 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.5 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.7.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.17.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.20.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.25.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.17.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.20.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.25.5 // indirect
 	github.com/aws/smithy-go v1.17.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
