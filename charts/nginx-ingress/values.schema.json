@@ -1084,35 +1084,63 @@
                 []
               ]
             }
-          },     
+          },
           "oneOf": [
             {
               "properties": {
-                "imagePullSecretName": { "minLength": 1 },
-                "imagePullSecretsNames": { "maxItems": 0 }
+                "imagePullSecretName": {
+                  "minLength": 1
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
               },
-              "required": ["imagePullSecretName"]
+              "required": [
+                "imagePullSecretName"
+              ]
             },
             {
               "properties": {
-                "imagePullSecretName": { "maxLength": 0 },
-                "imagePullSecretsNames": { "minItems": 1 }
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "minItems": 1
+                }
               },
-              "required": ["imagePullSecretsNames"]
+              "required": [
+                "imagePullSecretsNames"
+              ]
             },
             {
               "properties": {
-                "imagePullSecretName": { "maxLength": 0 },
-                "imagePullSecretsNames": { "maxItems": 0 }
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
               },
-              "required":  ["imagePullSecretName", "imagePullSecretsNames"]
+              "required": [
+                "imagePullSecretName",
+                "imagePullSecretsNames"
+              ]
             },
             {
               "properties": {
-                "imagePullSecretName": { "maxLength": 0 },
-                "imagePullSecretsNames": { "maxItems": 0 }
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
               },
-              "not" : {"required":  ["imagePullSecretName", "imagePullSecretsNames"]}
+              "not": {
+                "required": [
+                  "imagePullSecretName",
+                  "imagePullSecretsNames"
+                ]
+              }
             }
           ],
           "examples": [
