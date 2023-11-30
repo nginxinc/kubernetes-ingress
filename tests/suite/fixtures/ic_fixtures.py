@@ -80,6 +80,7 @@ def crd_ingress_controller(
     """
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
+    orig_port = 0
 
     try:
         print("------------------------- Update ClusterRole -----------------------------------")
@@ -94,6 +95,7 @@ def crd_ingress_controller(
             request.param.get("extra_args", None),
         )
         if request.param["type"] == "tls-passthrough-custom-port":
+            orig_port = ingress_controller_endpoint.port_ssl
             ingress_controller_endpoint.port_ssl = ingress_controller_endpoint.custom_ssl_port
         ensure_connection_to_public_endpoint(
             ingress_controller_endpoint.public_ip,
@@ -114,6 +116,8 @@ def crd_ingress_controller(
             patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
             print("Remove the IC:")
             delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
+            if request.param["type"] == "tls-passthrough-custom-port":
+                ingress_controller_endpoint.port_ssl = orig_port
 
     request.addfinalizer(fin)
 
