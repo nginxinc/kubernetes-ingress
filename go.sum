@@ -27,8 +27,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.3 h1:e3PCNeE
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.3/go.mod h1:gIeeNyaL8tIEqZrzAnTeyhHcE0yysCtcaP+N9kxLZ+E=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.7 h1:dU+ZyhvqMB/T/TxjGagHMCdyUiqaThRIaMu3YvKiSQI=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.7/go.mod h1:SGORuNqoXyWfTvTp/gBGJfv8jRvW/+nha0XhnIXVI+o=
-github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.18.4 h1:Du/aKtsWdiWsfUhnLsWOxG9gvO1SWbP7pw/kH6SBd78=
-github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.18.4/go.mod h1:2sF7pT0z9zalHaTQ2JeksaK3lOwj8Cu/znj0jONV/Jc=
+github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.19.1 h1:NXbItYHApcIAfFK5rdUEPlbvd7jm29faoWcMk8o+gek=
+github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.19.1/go.mod h1:pi/iFAtvP66NRqyll8iB5N8EXUr6houXmFYJbuI6PHo=
 github.com/aws/aws-sdk-go-v2/service/sso v1.18.1 h1:V40g2daNO3l1J94JYwqfkyvQMYXi5I25fs3fNQW8iDs=
 github.com/aws/aws-sdk-go-v2/service/sso v1.18.1/go.mod h1:0ZWQJP/mBOUxkCvZKybZNz1XmdUKSBxoF0dzgfxtvDs=
 github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.1 h1:uQrj7SpUNC3r55vc1CDh3qV9wJC66lz546xM9dhSo5s=
