@@ -58,26 +58,50 @@ This guide assumes you are using the latest release.
 
 To make sure your NGINX Ingress Controller pods reach the `Ready` state, you'll need to create custom resource definitions (CRDs) for various components. Alternatively, you can disable this requirement by setting the `-enable-custom-resources` command-line argument to `false`.
 
+{{<tabs name="crd-install">}}
+
+{{%tab name="Install CRDs from single YAML"%}}
+
 ### Core custom resource definitions
 
-1. Create CRDs for [VirtualServer and VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md" >}}), [TransportServer]({{< relref "configuration/transportserver-resource.md" >}}), and [Policy]({{< relref "configuration/policy-resource.md" >}}):
+1. Create CRDs for [VirtualServer and VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md" >}}), [TransportServer]({{< relref "configuration/transportserver-resource.md" >}}), [Policy]({{< relref "configuration/policy-resource.md" >}}) and [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}):
+
+    ```shell
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds.yaml
+    ```
+
+### Optional custom resource definitions
+
+1. For the NGINX App Protect WAF module, create CRDs for `APPolicy`, `APLogConf` and `APUserSig`:
+
+    ```shell
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-waf.yaml
+    ```
+
+2. For the NGINX App Protect DoS module, create CRDs for `APDosPolicy`, `APDosLogConf` and `DosProtectedResource`:
+
+    ```shell
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-dos.yaml
+    ```
+
+{{%/tab%}}
+
+{{%tab name="Install CRDs from cloning the repo"%}}
+
+### Core custom resource definitions
+
+1. Create CRDs for [VirtualServer and VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md" >}}), [TransportServer]({{< relref "configuration/transportserver-resource.md" >}}), [Policy]({{< relref "configuration/policy-resource.md" >}}) and [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}):
 
     ```shell
     kubectl apply -f common/crds/k8s.nginx.org_virtualservers.yaml
     kubectl apply -f common/crds/k8s.nginx.org_virtualserverroutes.yaml
     kubectl apply -f common/crds/k8s.nginx.org_transportservers.yaml
     kubectl apply -f common/crds/k8s.nginx.org_policies.yaml
-    ```
-
-### Optional custom resource definitions
-
-1. (Optional) For TCP and UDP load balancing, create a cCRD for [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}):
-
-    ```shell
     kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
     ```
+### Optional custom resource definitions
 
-2. (Optional) For the NGINX App Protect WAF module, create CRDs for `APPolicy`, `APLogConf` and `APUserSig`:
+1. For the NGINX App Protect WAF module, create CRDs for `APPolicy`, `APLogConf` and `APUserSig`:
 
     ```shell
     kubectl apply -f common/crds/appprotect.f5.com_aplogconfs.yaml
@@ -85,13 +109,16 @@ To make sure your NGINX Ingress Controller pods reach the `Ready` state, you'll 
     kubectl apply -f common/crds/appprotect.f5.com_apusersigs.yaml
     ```
 
-3. (Optional) For the NGINX App Protect DoS module, create CRDs for `APDosPolicy`, `APDosLogConf` and `DosProtectedResource`:
+2. For the NGINX App Protect DoS module, create CRDs for `APDosPolicy`, `APDosLogConf` and `DosProtectedResource`:
 
    ```shell
    kubectl apply -f common/crds/appprotectdos.f5.com_apdoslogconfs.yaml
    kubectl apply -f common/crds/appprotectdos.f5.com_apdospolicy.yaml
    kubectl apply -f common/crds/appprotectdos.f5.com_dosprotectedresources.yaml
    ```
+{{%/tab%}}
+
+{{</tabs>}}
 
 ---
 
