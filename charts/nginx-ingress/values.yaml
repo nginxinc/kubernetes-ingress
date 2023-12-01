@@ -397,6 +397,10 @@ controller:
     ## Secret must exist in the same namespace as the helm release.
     imagePullSecretName: ""
 
+    ## A list of secret names containing docker registry credentials.
+    ## Secrets must exist in the same namespace as the helm release.
+    imagePullSecretsNames: []
+
   reportIngressStatus:
     ## Updates the address field in the status of Ingress resources with an external address of the Ingress Controller.
     ## You must also specify the source of the external address either through an external service via controller.reportIngressStatus.externalService,

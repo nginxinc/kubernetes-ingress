@@ -58,7 +58,7 @@ spec:
       imagePullSecretName: ""
 ```
 
-{{<note>}}For NGINX Plus, change the `image.repository` and `image.tag` values and change `nginxPlus` to `True`. If required, set the `serviceAccount.imagePullSecretName` to the name of the pre-created docker config secret that should be associated with the ServiceAccount.{{</note>}}
+{{<note>}}For NGINX Plus, change the `image.repository` and `image.tag` values and change `nginxPlus` to `True`. If required, set the `serviceAccount.imagePullSecretName` or `serviceAccount.imagePullSecretsNames` to the name of the pre-created docker config secret that should be associated with the ServiceAccount.{{</note>}}
 
 ## Deploy NGINX Ingress Controller
 
