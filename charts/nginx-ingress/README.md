@@ -15,8 +15,9 @@ This chart deploys the NGINX Ingress Controller in your Kubernetes cluster.
 - If you’d like to use NGINX Plus:
   - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal
     by following the instructions from
-    [here](https://docs.nginx.com/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret). Make sure to
-    specify the secret using `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames` parameter.
+    [here](https://docs.nginx.com/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
+    Make sure to specify the secret using one of the following parameters:
+    `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames`.
   - Alternatively, pull an Ingress Controller image with NGINX Plus and push it to your private registry by following
     the instructions from
     [here](https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image).
