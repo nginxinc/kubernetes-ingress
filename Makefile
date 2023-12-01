@@ -43,7 +43,7 @@ staticcheck: ## Run staticcheck linter
 	staticcheck ./...
 
 .PHONY: test
-test: ## Run tests
+test: ## Run GoLang tests
 	go test -tags=aws -shuffle=on -race ./...
 
 cover: ## Generate coverage report
@@ -169,3 +169,8 @@ deps: ## Add missing and remove unused modules, verify deps and download them to
 .PHONY: clean-cache
 clean-cache: ## Clean go cache
 	@go clean -modcache
+
+.PHONY: rebuild-test-img ## Rebuild the python e2e test image
+rebuild-test-img:
+	cd tests && \
+	make build

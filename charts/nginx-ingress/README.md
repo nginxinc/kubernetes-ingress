@@ -15,8 +15,9 @@ This chart deploys the NGINX Ingress Controller in your Kubernetes cluster.
 - If you’d like to use NGINX Plus:
   - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal
     by following the instructions from
-    [here](https://docs.nginx.com/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret). Make sure to
-    specify the secret using `controller.serviceAccount.imagePullSecretName` parameter.
+    [here](https://docs.nginx.com/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
+    Make sure to specify the secret using one of the following parameters:
+    `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames`.
   - Alternatively, pull an Ingress Controller image with NGINX Plus and push it to your private registry by following
     the instructions from
     [here](https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image).
@@ -229,9 +230,9 @@ The steps you should follow depend on the Helm release name:
 
 2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart`
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress`
 with the copied `Selector` value.
 
     ```shell
@@ -281,9 +282,9 @@ reviewing its events:
 
 2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart`
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress`
 with the copied `Selector` value.
 
     ```shell
@@ -342,6 +343,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.hostNetwork` | Enables the Ingress Controller pods to use the host's network namespace. | false |
 |`controller.dnsPolicy` | DNS policy for the Ingress Controller pods. | ClusterFirst |
 |`controller.nginxDebug` | Enables debugging for NGINX. Uses the `nginx-debug` binary. Requires `error-log-level: debug` in the ConfigMap via `controller.config.entries`. | false |
+| `controller.shareProcessNamespace` | Enables process namespace sharing. When process namespace sharing is enabled, processes in a container are visible to all other containers in the same pod. [docs](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) | false |
 |`controller.logLevel` | The log level of the Ingress Controller. | 1 |
 |`controller.image.digest` | The image digest of the Ingress Controller. | None |
 |`controller.image.repository` | The image repository of the Ingress Controller. | nginx/nginx-ingress |
@@ -370,6 +372,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.initContainers` | InitContainers for the Ingress Controller pods. | [] |
 |`controller.extraContainers` | Extra (eg. sidecar) containers for the Ingress Controller pods. | [] |
 |`controller.resources` | The resources of the Ingress Controller pods. | requests: cpu=100m,memory=128Mi |
+|`controller.initContainerResources` | The resources of the init container which is used when `controller.readOnlyRootFilesystem` is set to `true` | requests: cpu=100m,memory=128Mi |
 |`controller.replicaCount` | The number of replicas of the Ingress Controller deployment. | 1 |
 |`controller.ingressClass.name` | A class of the Ingress Controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of Kubernetes. | nginx |
 |`controller.ingressClass.create` | Creates a new IngressClass object with the name `controller.ingressClass.name`. Set to `false` to use an existing ingressClass created using `kubectl` with the same name. If you use `helm upgrade`, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.3.2, do not set the value to false. | true |
@@ -414,6 +417,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.serviceAccount.annotations` | The annotations of the Ingress Controller service account. | {} |
 |`controller.serviceAccount.name` | The name of the service account of the Ingress Controller pods. Used for RBAC. | Autogenerated |
 |`controller.serviceAccount.imagePullSecretName` | The name of the secret containing docker registry credentials. Secret must exist in the same namespace as the helm release. | "" |
+|`controller.serviceAccount.imagePullSecretsNames` | The list of secret names containing docker registry credentials. Secret must exist in the same namespace as the helm release. | [] |
 |`controller.serviceMonitor.name` | The name of the serviceMonitor. | Autogenerated |
 |`controller.serviceMonitor.create` | Create a ServiceMonitor custom resource. | false |
 |`controller.serviceMonitor.labels` | Kubernetes object labels to attach to the serviceMonitor object. | "" |

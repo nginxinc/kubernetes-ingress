@@ -83,6 +83,9 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       dnsPolicy: {{ .Values.controller.dnsPolicy }}
+      {{- if .Values.controller.shareProcessNamespace }}
+      shareProcessNamespace: true
+      {{- end }}
       containers:
       - image: {{ include "nginx-ingress.image" . }}
         name: {{ include "nginx-ingress.name" . }}
@@ -263,6 +266,10 @@ spec:
         image: {{ include "nginx-ingress.image" . }}
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
         command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
+{{- if .Values.controller.initContainerResources }}
+        resources:
+{{ toYaml .Values.controller.initContainerResources | indent 10 }}
+{{- end }}
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

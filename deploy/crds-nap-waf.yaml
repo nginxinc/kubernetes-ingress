@@ -198,6 +198,10 @@ spec:
                               - IIS backslashes
                               - IIS Unicode codepoints
                               - Multiple decoding
+                              - Multiple slashes
+                              - Semicolon path parameters
+                              - Trailing dot
+                              - Trailing slash
                               type: string
                             enabled:
                               type: boolean
@@ -223,6 +227,7 @@ spec:
                               - CRLF characters before request start
                               - Content length should be a positive number
                               - Chunked request with Content-Length header
+                              - Check maximum number of cookies
                               - Check maximum number of parameters
                               - Check maximum number of headers
                               - Body in GET or HEAD requests
@@ -233,9 +238,17 @@ spec:
                               type: string
                             enabled:
                               type: boolean
+                            maxCookies:
+                              maximum: 100
+                              minimum: 1
+                              type: integer
                             maxHeaders:
+                              maximum: 150
+                              minimum: 1
                               type: integer
                             maxParams:
+                              maximum: 5000
+                              minimum: 1
                               type: integer
                           type: object
                         type: array
@@ -250,38 +263,44 @@ spec:
                               type: string
                             name:
                               enum:
-                              - VIOL_GRPC_FORMAT
-                              - VIOL_GRPC_MALFORMED
-                              - VIOL_GRPC_METHOD
-                              - VIOL_PARAMETER_ARRAY_VALUE
-                              - VIOL_PARAMETER_VALUE_REGEXP
-                              - VIOL_CSRF
-                              - VIOL_PARAMETER_VALUE_BASE64
-                              - VIOL_MANDATORY_HEADER
-                              - VIOL_HEADER_REPEATED
+                              - VIOL_ACCESS_INVALID
+                              - VIOL_ACCESS_MALFORMED
+                              - VIOL_ACCESS_MISSING
+                              - VIOL_ASM_COOKIE_HIJACKING
                               - VIOL_ASM_COOKIE_MODIFIED
                               - VIOL_BLACKLISTED_IP
                               - VIOL_COOKIE_EXPIRED
                               - VIOL_COOKIE_LENGTH
                               - VIOL_COOKIE_MALFORMED
                               - VIOL_COOKIE_MODIFIED
+                              - VIOL_CSRF
                               - VIOL_DATA_GUARD
                               - VIOL_ENCODING
                               - VIOL_EVASION
                               - VIOL_FILETYPE
                               - VIOL_FILE_UPLOAD
                               - VIOL_FILE_UPLOAD_IN_BODY
+                              - VIOL_GRAPHQL_ERROR_RESPONSE
+                              - VIOL_GRAPHQL_FORMAT
+                              - VIOL_GRAPHQL_INTROSPECTION_QUERY
+                              - VIOL_GRAPHQL_MALFORMED
+                              - VIOL_GRPC_FORMAT
+                              - VIOL_GRPC_MALFORMED
+                              - VIOL_GRPC_METHOD
                               - VIOL_HEADER_LENGTH
                               - VIOL_HEADER_METACHAR
+                              - VIOL_HEADER_REPEATED
                               - VIOL_HTTP_PROTOCOL
                               - VIOL_HTTP_RESPONSE_STATUS
                               - VIOL_JSON_FORMAT
                               - VIOL_JSON_MALFORMED
                               - VIOL_JSON_SCHEMA
+                              - VIOL_MANDATORY_HEADER
                               - VIOL_MANDATORY_PARAMETER
                               - VIOL_MANDATORY_REQUEST_BODY
                               - VIOL_METHOD
                               - VIOL_PARAMETER
+                              - VIOL_PARAMETER_ARRAY_VALUE
                               - VIOL_PARAMETER_DATA_TYPE
                               - VIOL_PARAMETER_EMPTY_VALUE
                               - VIOL_PARAMETER_LOCATION
@@ -290,14 +309,16 @@ spec:
                               - VIOL_PARAMETER_NUMERIC_VALUE
                               - VIOL_PARAMETER_REPEATED
                               - VIOL_PARAMETER_STATIC_VALUE
+                              - VIOL_PARAMETER_VALUE_BASE64
                               - VIOL_PARAMETER_VALUE_LENGTH
                               - VIOL_PARAMETER_VALUE_METACHAR
+                              - VIOL_PARAMETER_VALUE_REGEXP
                               - VIOL_POST_DATA_LENGTH
                               - VIOL_QUERY_STRING_LENGTH
-                              - VIOL_RATING_THREAT
                               - VIOL_RATING_NEED_EXAMINATION
-                              - VIOL_REQUEST_MAX_LENGTH
+                              - VIOL_RATING_THREAT
                               - VIOL_REQUEST_LENGTH
+                              - VIOL_REQUEST_MAX_LENGTH
                               - VIOL_THREAT_CAMPAIGN
                               - VIOL_URL
                               - VIOL_URL_CONTENT_TYPE
@@ -337,8 +358,10 @@ spec:
                                 name:
                                   type: string
                                 scoreThreshold:
-                                  pattern: '[0-9]|[1-9][0-9]|1[0-4][0-9]|150|default'
-                                  type: string
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  x-kubernetes-int-or-string: true
                               type: object
                             type: array
                           browsers:
@@ -354,21 +377,6 @@ spec:
                                   - block
                                   - detect
                                   type: string
-                                browserDefinition:
-                                  properties:
-                                    $action:
-                                      enum:
-                                      - delete
-                                      type: string
-                                    isUserDefined:
-                                      type: boolean
-                                    matchRegex:
-                                      type: string
-                                    matchString:
-                                      type: string
-                                    name:
-                                      type: string
-                                  type: object
                                 maxVersion:
                                   maximum: 2147483647
                                   minimum: 0
@@ -482,8 +490,10 @@ spec:
                   cookie-settings:
                     properties:
                       maximumCookieHeaderLength:
-                        pattern: any|\d+
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        x-kubernetes-int-or-string: true
                     type: object
                   cookieReference:
                     properties:
@@ -523,6 +533,8 @@ spec:
                           - none-value
                           - strict
                           type: string
+                        maskValueInLogs:
+                          type: boolean
                         name:
                           type: string
                         securedOverHttpsConnection:
@@ -712,6 +724,93 @@ spec:
                         pattern: ^http
                         type: string
                     type: object
+                  graphql-profiles:
+                    items:
+                      properties:
+                        $action:
+                          enum:
+                          - delete
+                          type: string
+                        attackSignaturesCheck:
+                          type: boolean
+                        defenseAttributes:
+                          properties:
+                            allowIntrospectionQueries:
+                              type: boolean
+                            maximumBatchedQueries:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumQueryCost:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumStructureDepth:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumTotalLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            maximumValueLength:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
+                            tolerateParsingWarnings:
+                              type: boolean
+                          type: object
+                        description:
+                          type: string
+                        metacharElementCheck:
+                          type: boolean
+                        metacharOverrides:
+                          items:
+                            properties:
+                              isAllowed:
+                                type: boolean
+                              metachar:
+                                type: string
+                            type: object
+                          type: array
+                        name:
+                          type: string
+                        responseEnforcement:
+                          properties:
+                            blockDisallowedPatterns:
+                              type: boolean
+                            disallowedPatterns:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        sensetiveData:
+                          items:
+                            properties:
+                              parameterName:
+                                type: string
+                            type: object
+                          type: array
+                        signatureOverrides:
+                          items:
+                            properties:
+                              enabled:
+                                type: boolean
+                              name:
+                                type: string
+                              signatureId:
+                                type: integer
+                              tag:
+                                type: string
+                            type: object
+                          type: array
+                      type: object
+                    type: array
                   grpc-profiles:
                     items:
                       properties:
@@ -723,13 +822,20 @@ spec:
                           type: boolean
                         attackSignaturesCheck:
                           type: boolean
+                        decodeStringValuesAsBase64:
+                          enum:
+                          - disabled
+                          - enabled
+                          type: string
                         defenseAttributes:
                           properties:
                             allowUnknownFields:
                               type: boolean
                             maximumDataLength:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                           type: object
                         description:
                           type: string
@@ -755,6 +861,8 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        metacharCheck:
+                          type: boolean
                         metacharElementCheck:
                           type: boolean
                         name:
@@ -777,8 +885,10 @@ spec:
                   header-settings:
                     properties:
                       maximumHttpHeaderLength:
-                        pattern: any|\d+
-                        type: string
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        x-kubernetes-int-or-string: true
                     type: object
                   headerReference:
                     properties:
@@ -883,17 +993,25 @@ spec:
                         defenseAttributes:
                           properties:
                             maximumArrayLength:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumStructureDepth:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumTotalLengthOfJSONData:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumValueLength:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             tolerateJSONParsingWarnings:
                               type: boolean
                           type: object
@@ -1154,6 +1272,62 @@ spec:
                           - wildcard
                           type: string
                         url:
+                          properties:
+                            method:
+                              enum:
+                              - ACL
+                              - BCOPY
+                              - BDELETE
+                              - BMOVE
+                              - BPROPFIND
+                              - BPROPPATCH
+                              - CHECKIN
+                              - CHECKOUT
+                              - CONNECT
+                              - COPY
+                              - DELETE
+                              - GET
+                              - HEAD
+                              - LINK
+                              - LOCK
+                              - MERGE
+                              - MKCOL
+                              - MKWORKSPACE
+                              - MOVE
+                              - NOTIFY
+                              - OPTIONS
+                              - PATCH
+                              - POLL
+                              - POST
+                              - PROPFIND
+                              - PROPPATCH
+                              - PUT
+                              - REPORT
+                              - RPC_IN_DATA
+                              - RPC_OUT_DATA
+                              - SEARCH
+                              - SUBSCRIBE
+                              - TRACE
+                              - TRACK
+                              - UNLINK
+                              - UNLOCK
+                              - UNSUBSCRIBE
+                              - VERSION_CONTROL
+                              - X-MS-ENUMATTS
+                              - '*'
+                              type: string
+                            name:
+                              type: string
+                            protocol:
+                              enum:
+                              - http
+                              - https
+                              type: string
+                            type:
+                              enum:
+                              - explicit
+                              - wildcard
+                              type: string
                           type: object
                         valueMetacharOverrides:
                           items:
@@ -1491,8 +1665,10 @@ spec:
                                   originName:
                                     type: string
                                   originPort:
-                                    pattern: any|\d+
-                                    type: string
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    x-kubernetes-int-or-string: true
                                   originProtocol:
                                     enum:
                                     - http
@@ -1765,6 +1941,62 @@ spec:
                                     - wildcard
                                     type: string
                                   url:
+                                    properties:
+                                      method:
+                                        enum:
+                                        - ACL
+                                        - BCOPY
+                                        - BDELETE
+                                        - BMOVE
+                                        - BPROPFIND
+                                        - BPROPPATCH
+                                        - CHECKIN
+                                        - CHECKOUT
+                                        - CONNECT
+                                        - COPY
+                                        - DELETE
+                                        - GET
+                                        - HEAD
+                                        - LINK
+                                        - LOCK
+                                        - MERGE
+                                        - MKCOL
+                                        - MKWORKSPACE
+                                        - MOVE
+                                        - NOTIFY
+                                        - OPTIONS
+                                        - PATCH
+                                        - POLL
+                                        - POST
+                                        - PROPFIND
+                                        - PROPPATCH
+                                        - PUT
+                                        - REPORT
+                                        - RPC_IN_DATA
+                                        - RPC_OUT_DATA
+                                        - SEARCH
+                                        - SUBSCRIBE
+                                        - TRACE
+                                        - TRACK
+                                        - UNLINK
+                                        - UNLOCK
+                                        - UNSUBSCRIBE
+                                        - VERSION_CONTROL
+                                        - X-MS-ENUMATTS
+                                        - '*'
+                                        type: string
+                                      name:
+                                        type: string
+                                      protocol:
+                                        enum:
+                                        - http
+                                        - https
+                                        type: string
+                                      type:
+                                        enum:
+                                        - explicit
+                                        - wildcard
+                                        type: string
                                     type: object
                                   valueMetacharOverrides:
                                     items:
@@ -1830,7 +2062,10 @@ spec:
                               headerName:
                                 type: string
                               headerOrder:
-                                type: string
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                x-kubernetes-int-or-string: true
                               headerValue:
                                 type: string
                               name:
@@ -1902,32 +2137,50 @@ spec:
                             allowProcessingInstructions:
                               type: boolean
                             maximumAttributeValueLength:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumAttributesPerElement:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumChildrenPerElement:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumDocumentDepth:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumDocumentSize:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumElements:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumNSDeclarations:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumNameLength:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             maximumNamespaceLength:
-                              pattern: any|\d+
-                              type: string
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              x-kubernetes-int-or-string: true
                             tolerateCloseTagShorthand:
                               type: boolean
                             tolerateLeadingWhiteSpace:
@@ -1956,6 +2209,8 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        useXmlResponsePage:
+                          type: boolean
                       type: object
                     type: array
                   xml-validation-files:
