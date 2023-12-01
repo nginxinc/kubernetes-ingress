@@ -39,7 +39,7 @@ type Upstream struct {
 	SessionCookie    *SessionCookie
 	UpstreamLabels   UpstreamLabels
 	NTLM             bool
-	BackupServer     string
+	BackupServers    []UpstreamServer
 }
 
 // UpstreamServer defines an upstream server.

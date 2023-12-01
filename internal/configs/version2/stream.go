@@ -16,7 +16,7 @@ type StreamUpstream struct {
 	UpstreamLabels      UpstreamLabels
 	LoadBalancingMethod string
 	Resolve             bool
-	BackupServer        string
+	BackupServers       []StreamUpstreamBackupServer
 }
 
 // StreamUpstreamServer defines a stream upstream server.
@@ -25,6 +25,12 @@ type StreamUpstreamServer struct {
 	MaxFails       int
 	FailTimeout    string
 	MaxConnections int
+}
+
+// StreamUpstreamBackupServer represents Backup Server address
+// or name defined by the ExternalName service.
+type StreamUpstreamBackupServer struct {
+	Address string
 }
 
 // StreamServer defines a server in the stream module.

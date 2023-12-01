@@ -11,8 +11,8 @@ upstream {{ $u.Name }} {
     server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }} max_conns={{ $s.MaxConnections }}{{ if $u.Resolve }} resolve{{ end }};
     {{ end }}
 
-    {{ if $u.BackupServer }}
-    server {{ $u.BackupServer }} resolve backup;
+    {{ range $b := $u.BackupServers }}
+    server {{ $b.Address }} resolve backup;
     {{ end }}
 }
 {{ end }}

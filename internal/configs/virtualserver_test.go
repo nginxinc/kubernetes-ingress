@@ -6262,6 +6262,9 @@ func TestGenerateUpstream(t *testing.T) {
 	endpoints := []string{
 		"192.168.10.10:8080",
 	}
+	backupEndpoints := []string{
+		"backup.service.svc.test.corp.local:8080",
+	}
 	cfgParams := ConfigParams{
 		LBMethod:         "random",
 		MaxFails:         1,
@@ -6287,10 +6290,15 @@ func TestGenerateUpstream(t *testing.T) {
 		LBMethod:         "random",
 		Keepalive:        21,
 		UpstreamZoneSize: "256k",
+		BackupServers: []version2.UpstreamServer{
+			{
+				Address: "backup.service.svc.test.corp.local:8080",
+			},
+		},
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
-	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
+	result := vsc.generateUpstream(nil, name, upstream, false, endpoints, backupEndpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -6369,7 +6377,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{}, false)
-		result := vsc.generateUpstream(nil, name, test.upstream, false, endpoints)
+		result := vsc.generateUpstream(nil, name, test.upstream, false, endpoints, nil)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
@@ -6401,7 +6409,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{}, false)
-	result := vsc.generateUpstream(nil, name, upstream, true, endpoints)
+	result := vsc.generateUpstream(nil, name, upstream, true, endpoints, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -6447,7 +6455,7 @@ func TestGenerateUpstreamWithNTLM(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, true, false, &StaticConfigParams{}, false)
-	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
+	result := vsc.generateUpstream(nil, name, upstream, false, endpoints, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -9442,7 +9450,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{}, false)
-		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{})
+		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{}, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}

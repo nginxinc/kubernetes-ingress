@@ -388,14 +388,18 @@ func TestExecuteTemplateForTransportServerWithBackupServerForNGINX(t *testing.T)
 	t.Parallel()
 
 	tsCfg := tsConfig()
-	tsCfg.Upstreams[0].BackupServer = "clustertwo.corp.local:8080"
+	tsCfg.Upstreams[0].BackupServers = []StreamUpstreamBackupServer{
+		{
+			Address: "clustertwo.corp.local:8080",
+		},
+	}
 	e := newTmplExecutorNGINX(t)
 	got, err := e.ExecuteTransportServerTemplate(&tsCfg)
 	if err != nil {
 		t.Error(err)
 	}
 
-	want := fmt.Sprintf("server %s backup;", tsCfg.Upstreams[0].BackupServer)
+	want := fmt.Sprintf("server %s backup;", tsCfg.Upstreams[0].BackupServers[0].Address)
 	if !bytes.Contains(got, []byte(want)) {
 		t.Errorf("want backup %q in the transport server config", want)
 	}
@@ -406,14 +410,18 @@ func TestExecuteTemplateForTransportServerWithBackupServerForNGINXPlus(t *testin
 	t.Parallel()
 
 	tsCfg := tsConfig()
-	tsCfg.Upstreams[0].BackupServer = "clustertwo.corp.local:8080"
+	tsCfg.Upstreams[0].BackupServers = []StreamUpstreamBackupServer{
+		{
+			Address: "clustertwo.corp.local:8080",
+		},
+	}
 	e := newTmplExecutorNGINXPlus(t)
 	got, err := e.ExecuteTransportServerTemplate(&tsCfg)
 	if err != nil {
 		t.Error(err)
 	}
 
-	want := fmt.Sprintf("server %s resolve backup;", tsCfg.Upstreams[0].BackupServer)
+	want := fmt.Sprintf("server %s resolve backup;", tsCfg.Upstreams[0].BackupServers[0].Address)
 	if !bytes.Contains(got, []byte(want)) {
 		t.Errorf("want backup %q in the transport server config", want)
 	}
@@ -478,7 +486,11 @@ func TestExecuteVirtualServerTemplateWithBackupServerNGINXPlus(t *testing.T) {
 
 	externalName := "clustertwo.corp.local:8080"
 	vscfg := vsConfig()
-	vscfg.Upstreams[0].BackupServer = externalName
+	vscfg.Upstreams[0].BackupServers = []UpstreamServer{
+		{
+			Address: externalName,
+		},
+	}
 
 	e := newTmplExecutorNGINXPlus(t)
 	got, err := e.ExecuteVirtualServerTemplate(&vscfg)
@@ -498,7 +510,11 @@ func TestExecuteVirtualServerTemplateWithBackupServerNGINX(t *testing.T) {
 
 	externalName := "clustertwo.corp.local:8080"
 	vscfg := vsConfig()
-	vscfg.Upstreams[0].BackupServer = externalName
+	vscfg.Upstreams[0].BackupServers = []UpstreamServer{
+		{
+			Address: externalName,
+		},
+	}
 
 	e := newTmplExecutorNGINX(t)
 	got, err := e.ExecuteVirtualServerTemplate(&vscfg)
