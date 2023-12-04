@@ -84,8 +84,8 @@ runs:
     - name: Deploy Kubernetes
       id: k8s
       run: |
-        kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ inputs.k8s-timeout }}
-        kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} --name ${{ github.run_id }}
+        make -f tests/Makefile create-kind-cluster K8S_CLUSTER_NAME=${{ github.run_id }} K8S_CLUSTER_VERSION=${{ inputs.k8s-version }} K8S_TIMEOUT=${{ inputs.k8s-timeout }}
+        make -f tests/Makefile image-load PREFIX=nginx/${{ steps.ingress-type.outputs.name }} TAG=${{ steps.ingress-type.outputs.tag }} K8S_CLUSTER_NAME=${{ github.run_id }}
         marker="${{ inputs.marker }}"
         sanitized_marker="${marker// /_}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
@@ -95,7 +95,7 @@ runs:
 
     - name: Setup Kubeconfig
       run: |
-        sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
+        sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' ~/.kube/kind/config
       shell: bash
 
     - name: Run Smoke Tests
@@ -105,7 +105,7 @@ runs:
         --name test-runner-${{ github.run_id }} \
         --network=kind \
         -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
-        -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
+        -v ~/.kube/kind/config:/root/.kube/config test-runner:${{ github.sha }} \
         --context=kind-${{ github.run_id }} \
         --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} \
         --image-pull-policy=Never \

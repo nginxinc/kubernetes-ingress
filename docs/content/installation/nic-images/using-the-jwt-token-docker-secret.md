@@ -78,7 +78,7 @@ spec:
     seccompProfile:
       type: RuntimeDefault
   containers:
-  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.2.0
+  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.3.2
     imagePullPolicy: IfNotPresent
     name: nginx-plus-ingress
 ```
@@ -96,14 +96,14 @@ If you are using Helm for deployment, there are two main methods: using *sources
 The [Installation with Helm ]({{< relref "installation/installing-nic/installation-with-helm.md#managing-the-chart-via-sources" >}}) documentation has a section describing how to use sources: these are the unique steps for Docker secrets using JWT tokens.
 
 1. Clone the NGINX [`kubernetes-ingress` repository](https://github.com/nginxinc/kubernetes-ingress).
-1. Navigate to the `deployments/helm-chart` folder of your local clone.
+1. Navigate to the `charts/nginx-ingress` folder of your local clone.
 1. Open the `values.yaml` file in an editor.
 
     You must change a few lines NGINX Ingress Controller with NGINX Plus to be deployed.
 
     1. Change the `nginxplus` argument to `true`.
     1. Change the `repository` argument to the NGINX Ingress Controller image you intend to use.
-    1. Add an argument to `imagePullSecretName` to allow Docker to pull the image from the private registry.
+    2. Add an argument to `imagePullSecretName` or `imagePullSecretsNames` to allow Docker to pull the image from the private registry.
 
     The following code block shows snippets of the parameters you will need to change, and an example of their contents:
 
@@ -118,7 +118,7 @@ The [Installation with Helm ]({{< relref "installation/installing-nic/installati
     repository: private-registry.nginx.com/nginx-ic/nginx-plus-ingress
 
     ## The version tag
-    tag: 3.2.0
+    tag: 3.3.2
 
     serviceAccount:
         ## The annotations of the service account of the Ingress Controller pods.
@@ -130,6 +130,7 @@ The [Installation with Helm ]({{< relref "installation/installing-nic/installati
 
         ## The name of the secret containing docker registry credentials.
         ## Secret must exist in the same namespace as the helm release.
+        ## Note that also imagePullSecretsNames can be used here if multiple secrets need to be set.
         imagePullSecretName: regcred
     ```
 
@@ -149,7 +150,7 @@ If the namespace does not exist, `--create-namespace` will create it. Using `-f 
 If you want to install NGINX Ingress Controller using the charts method, the following is an example of using the command line to pass the required arguments using the `set` parameter.
 
 ```shell
-helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.18.0 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.2.0 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
+helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.3.2 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
 ```
 You can also use the certificate and key from the MyF5 portal and the Docker registry API to list the available image tags for the repositories, for example:
 

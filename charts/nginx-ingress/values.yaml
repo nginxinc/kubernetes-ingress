@@ -64,6 +64,9 @@ controller:
   ## Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.
   nginxDebug: false
 
+  ## Share process namespace between containers in the Ingress Controller pod.
+  shareProcessNamespace: false
+
   ## The log level of the Ingress Controller.
   logLevel: 1
 
@@ -164,6 +167,15 @@ controller:
   # limits:
   #   cpu: 1
   #   memory: 1Gi
+
+  ## The resources for the Ingress Controller init container which is used when readOnlyRootFilesystem is set to true.
+  initContainerResources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    # limits:
+    #   cpu: 1
+    #   memory: 1Gi
 
   ## The tolerations of the Ingress Controller pods.
   tolerations: []
@@ -284,7 +296,6 @@ controller:
     #   port: 5353
     #   protocol: TCP
 
-
   ## Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
   enableSnippets: false
 
@@ -385,6 +396,10 @@ controller:
     ## The name of the secret containing docker registry credentials.
     ## Secret must exist in the same namespace as the helm release.
     imagePullSecretName: ""
+
+    ## A list of secret names containing docker registry credentials.
+    ## Secrets must exist in the same namespace as the helm release.
+    imagePullSecretsNames: []
 
   reportIngressStatus:
     ## Updates the address field in the status of Ingress resources with an external address of the Ingress Controller.
@@ -487,7 +502,7 @@ prometheus:
     ## A list of endpoints allowed as part of this ServiceMonitor.
     ## Matches on the name of a Service port.
     endpoints:
-     - port: prometheus
+      - port: prometheus
 
 serviceInsight:
   ## Expose NGINX Plus Service Insight endpoint.

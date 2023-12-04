@@ -16,8 +16,13 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+
 jobs:
   release:
+    permissions:
+      contents: write
     runs-on: ubuntu-22.04
     steps:
       - name: Branch
@@ -34,42 +39,7 @@ jobs:
           token: ${{ secrets.NGINX_PAT }}
 
       - name: Replace
-        run: |
-
-          DOCS_TO_UPDATE_FOLDER=docs/content
-
-          FILES_TO_UPDATE_IC_VERSION=(
-              README.md
-              deployments/daemon-set/nginx-ingress.yaml
-              deployments/daemon-set/nginx-plus-ingress.yaml
-              deployments/deployment/nginx-ingress.yaml
-              deployments/deployment/nginx-plus-ingress.yaml
-              deployments/helm-chart/Chart.yaml
-              deployments/helm-chart/README.md
-              deployments/helm-chart/values-icp.yaml
-              deployments/helm-chart/values-nsm.yaml
-              deployments/helm-chart/values-plus.yaml
-              deployments/helm-chart/values.yaml
-          )
-
-          FILE_TO_UPDATE_HELM_CHART_VERSION=(
-              deployments/helm-chart/Chart.yaml
-              deployments/helm-chart/README.md
-          )
-
-          ic_version=${{ github.event.inputs.version }}
-          helm_chart_version=${{ github.event.inputs.helm_version }}
-
-          current_ic_version=$(yq '.appVersion' <deployments/helm-chart/Chart.yaml)
-          current_helm_chart_version=$(yq '.version' <deployments/helm-chart/Chart.yaml)
-
-          sed -i "s/$current_ic_version/$ic_version/g" ${FILES_TO_UPDATE_IC_VERSION[*]}
-          sed -i "s/$current_helm_chart_version/$helm_chart_version/g" ${FILE_TO_UPDATE_HELM_CHART_VERSION[*]}
-          find $DOCS_TO_UPDATE_FOLDER -type f -name "*.md" ! -name releases.md ! -name CHANGELOG.md -exec sed -i "s/$current_ic_version/$ic_version/g" {} +
-
-          # update CHANGELOGs
-          sed -i "8r hack/changelog-template.txt" $DOCS_TO_UPDATE_FOLDER/releases.md
-          sed -i -e "s/%%TITLE%%/## $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" $DOCS_TO_UPDATE_FOLDER/releases.md CHANGELOG.md
+        run:  .github/scripts/release-version-update.sh ${{ github.event.inputs.version }} ${{ github.event.inputs.helm_version }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5.0.2

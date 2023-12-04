@@ -241,6 +241,15 @@
             true
           ]
         },
+        "shareProcessNamespace": {
+          "type": "boolean",
+          "default": false,
+          "title": "Enables sharing of the process namespace between pods within the Ingress Controller",
+          "examples": [
+            false,
+            true
+          ]
+        },
         "logLevel": {
           "type": "integer",
           "default": 1,
@@ -469,6 +478,12 @@
           "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/terminationGracePeriodSeconds"
         },
         "resources": {
+          "type": "object",
+          "default": {},
+          "title": "The resources Schema",
+          "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.27.4/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements"
+        },
+        "initContainerResources": {
           "type": "object",
           "default": {},
           "title": "The resources Schema",
@@ -1060,12 +1075,79 @@
               "examples": [
                 ""
               ]
+            },
+            "imagePullSecretsNames": {
+              "type": "array",
+              "default": [],
+              "title": "The imagePullSecretName list",
+              "examples": [
+                []
+              ]
             }
           },
+          "oneOf": [
+            {
+              "properties": {
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "imagePullSecretsNames"
+              ]
+            },
+            {
+              "properties": {
+                "imagePullSecretName": {
+                  "minLength": 1
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
+              },
+              "required": [
+                "imagePullSecretName"
+              ]
+            },
+            {
+              "properties": {
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
+              },
+              "required": [
+                "imagePullSecretName",
+                "imagePullSecretsNames"
+              ]
+            },
+            {
+              "properties": {
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
+              },
+              "not": {
+                "required": [
+                  "imagePullSecretName",
+                  "imagePullSecretsNames"
+                ]
+              }
+            }
+          ],
           "examples": [
             {
               "name": "",
-              "imagePullSecretName": ""
+              "imagePullSecretName": "",
+              "imagePullSecretsNames": []
             }
           ]
         },
@@ -1298,6 +1380,7 @@
           },
           "hostNetwork": false,
           "nginxDebug": false,
+          "shareProcessNamespace": false,
           "logLevel": 1,
           "customPorts": [],
           "image": {
@@ -1326,6 +1409,12 @@
           "nodeSelector": {},
           "terminationGracePeriodSeconds": 30,
           "resources": {
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          },
+          "initContainerResources": {
             "requests": {
               "cpu": "100m",
               "memory": "128Mi"
@@ -1390,7 +1479,8 @@
           },
           "serviceAccount": {
             "name": "",
-            "imagePullSecretName": ""
+            "imagePullSecretName": "",
+            "imagePullSecretsNames": []
           },
           "serviceMonitor": {
             "create": false,
@@ -1696,6 +1786,12 @@
             "memory": "128Mi"
           }
         },
+        "initContainerResources": {
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
         "tolerations": [],
         "affinity": {},
         "topologySpreadConstraints": {},
@@ -1756,7 +1852,8 @@
         },
         "serviceAccount": {
           "name": "",
-          "imagePullSecretName": ""
+          "imagePullSecretName": "",
+          "imagePullSecretsNames": []
         },
         "podDisruptionBudget": {
           "enabled": false,

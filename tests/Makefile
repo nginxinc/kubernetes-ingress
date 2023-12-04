@@ -1,77 +1,88 @@
-SHELL=/bin/bash
-CONTEXT =
-BUILD_IMAGE = nginx/nginx-ingress:edge
-PULL_POLICY = IfNotPresent
-DEPLOYMENT_TYPE = deployment
-IC_TYPE = nginx-ingress
-SERVICE = nodeport
-NODE_IP =
-TAG = latest
-PREFIX = test-runner
-KUBE_CONFIG_FOLDER = $${HOME}/.kube
-KIND_KUBE_CONFIG_FOLDER = $${HOME}/.kube/kind
-SHOW_IC_LOGS = no
-PYTEST_ARGS =
-DOCKERFILEPATH = Dockerfile
-IP_FAMILY=dual
-
-
-define PRINT_HELP_PYSCRIPT
-import re, sys
-
-for line in sys.stdin:
-	match = re.match(r'^([a-zA-Z_-]+):.*?## (.*)$$', line)
-	if match:
-		target, help = match.groups()
-		print("%-20s %s" % (target, help))
-endef
-export PRINT_HELP_PYSCRIPT
-
-default: help
+SHELL                   = /bin/bash
+ROOT_DIR                = $(shell git rev-parse --show-toplevel)
+CONTEXT                 =
+PULL_POLICY             = IfNotPresent
+DEPLOYMENT_TYPE         = deployment
+IC_TYPE                 = nginx-ingress
+SERVICE                 = nodeport
+NODE_IP                 =
+TEST_PREFIX             = test-runner
+KUBE_CONFIG_FOLDER      = ${HOME}/.kube
+KIND_KUBE_CONFIG_FOLDER = $(KUBE_CONFIG_FOLDER)/kind
+SHOW_IC_LOGS            = no
+DOCKERFILEPATH          := ${ROOT_DIR}/tests/Dockerfile
+IP_FAMILY               = dual
+TEST_TAG                ?= latest ## The Tag to use for the test image. e.g. commitsha
+PREFIX                  ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
+TAG                     ?= edge ## The tag of the image. For example, edge
+K8S_CLUSTER_NAME        ?= local ## The name used when creating/using a Kind Kubernetes cluster
+K8S_CLUSTER_VERSION     ?= $(shell grep -m1 'FROM kindest/node' < ${DOCKERFILEPATH} | cut -d ':' -f 2 | sed -e 's/^v//') ## The version used when creating a Kind Kubernetes cluster
+K8S_TIMEOUT             ?= 75s ## The timeout used when creating a Kind Kubernetes cluster
+AD_SECRET               ?=
+PYTEST_ARGS             ?=
+BUILD_IMAGE             := $(strip $(PREFIX)):$(strip $(TAG))
 
 .PHONY: help ## Show this help
 help: ## Show available make targets
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "; printf "Usage:\n\n    make \033[36m<target>\033[0m [VARIABLE=value...]\n\nTargets:\n\n"}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 
 .PHONY: build
 build: ## Run build
-	docker build -t $(PREFIX):$(TAG) -f $(DOCKERFILEPATH) ..
+	docker build -t $(TEST_PREFIX):$(TEST_TAG) -f $(DOCKERFILEPATH) ..
+
+
+$(KUBE_CONFIG_FOLDER):
+	@mkdir -p $@
+
+
+$(KIND_KUBE_CONFIG_FOLDER): $(KUBE_CONFIG_FOLDER)
+	@mkdir -p $@
 
 
 .PHONY: run-tests
 run-tests: ## Run tests
-	docker run --rm -v $(KUBE_CONFIG_FOLDER):/root/.kube $(PREFIX):$(TAG) --context=$(CONTEXT) --image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) --deployment-type=$(DEPLOYMENT_TYPE) --ic-type=$(IC_TYPE) --service=$(SERVICE) --node-ip=$(NODE_IP) --show-ic-logs=$(SHOW_IC_LOGS) $(PYTEST_ARGS)
+	docker run --rm -v $(KUBE_CONFIG_FOLDER):/root/.kube $(TEST_PREFIX):$(TEST_TAG) --context=$(CONTEXT) --image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) --deployment-type=$(DEPLOYMENT_TYPE) --ic-type=$(IC_TYPE) --service=$(SERVICE) --node-ip=$(NODE_IP) --show-ic-logs=$(SHOW_IC_LOGS) $(PYTEST_ARGS)
 
 
 .PHONY: update-test-kind-config ## Update Kind config
 update-test-kind-config:
-	sed -ir "s|server:.*|server: https://kind-control-plane:6443|" $(KIND_KUBE_CONFIG_FOLDER)/config
+	sed -ir "s|server:.*|server: https://$(strip $(K8S_CLUSTER_NAME))-control-plane:6443|" $(KIND_KUBE_CONFIG_FOLDER)/config
 
 
 .PHONY: run-tests-in-kind
 run-tests-in-kind: update-test-kind-config ## Run tests in Kind
-	docker run --network=kind --rm -v $(KIND_KUBE_CONFIG_FOLDER):/root/.kube $(PREFIX):$(TAG) \
- 		--context=kind-kind \
+	docker run --network=kind --rm -v $(KIND_KUBE_CONFIG_FOLDER):/root/.kube $(TEST_PREFIX):$(TEST_TAG) \
+ 		--context=kind-$(strip $(K8S_CLUSTER_NAME)) \
  		--image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) \
  		--deployment-type=$(DEPLOYMENT_TYPE) \
  		--ic-type=$(IC_TYPE) \
  		--service=nodeport \
- 		--node-ip=kind-control-plane \
+ 		--node-ip=$(strip $(K8S_CLUSTER_NAME))-control-plane \
  		--show-ic-logs=$(SHOW_IC_LOGS) \
  		$(PYTEST_ARGS)
 
 
 .PHONY: create-kind-cluster
-create-kind-cluster: ## Create Kind cluster
-	$(eval KIND_IMAGE=$(shell grep -m1 'FROM kindest/node' <Dockerfile | awk -F'[ ]' '{print $$2}'))
-	kind create cluster --image $(KIND_IMAGE) --config=<(sed 's/dual/${IP_FAMILY}/' ./ci-files/ci-kind-config.yaml)
-	kind export kubeconfig --kubeconfig $(KIND_KUBE_CONFIG_FOLDER)/config
+create-kind-cluster: $(KIND_KUBE_CONFIG_FOLDER) ## Create a Kind K8S cluster
+	@kind create cluster \
+		--name $(K8S_CLUSTER_NAME) \
+		--image=kindest/node:v$(K8S_CLUSTER_VERSION) \
+		--config=<(sed 's/dual/${IP_FAMILY}/' $(ROOT_DIR)/tests/ci-files/ci-kind-config.yaml) \
+		--kubeconfig $(KIND_KUBE_CONFIG_FOLDER)/config \
+		--wait $(K8S_TIMEOUT)
 
 
 .PHONY: delete-kind-cluster
-delete-kind-cluster: ## Delete Kind cluster
-	kind delete cluster
+delete-kind-cluster: ## Delete a Kind K8S cluster
+	@kind delete cluster --name $(K8S_CLUSTER_NAME)
+	@rm -f $(KIND_KUBE_CONFIG_FOLDER)/config
+
+
+.PHONY: image-load
+image-load: ## Load the image into the Kind K8S cluster
+	@kind load docker-image docker.io/$(strip $(PREFIX)):$(strip $(TAG)) --name $(K8S_CLUSTER_NAME)
+
 
 .PHONY: test-lint
 test-lint: ## Run Python linting tools

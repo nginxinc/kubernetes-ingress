@@ -22,7 +22,7 @@ h2 {
 - A [Kubernetes Version Supported by the Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
 - Helm 3.0+.
 - If you’d like to use NGINX Plus:
-  - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` parameter.
+  - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames` parameter.
   - Alternatively, pull an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
   - Alternatively, you can build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
   - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
@@ -66,13 +66,13 @@ To install the chart with the release name my-release (my-release is the name th
 - For NGINX:
 
     ```shell
-    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.18.1
+    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2
     ```
 
 - For NGINX Plus: (assuming you have pushed the Ingress Controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
 
     ```shell
-    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.18.1 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
     ```
 
 This will install the latest `edge` version of the Ingress Controller from GitHub Container Registry. If you prefer to use Docker Hub, you can replace `ghcr.io/nginxinc/charts/nginx-ingress` with `registry-1.docker.io/nginxcharts/nginx-ingress`.
@@ -84,7 +84,7 @@ Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a re
 To upgrade the release `my-release`:
 
 ```shell
-helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.18.1
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.0.2
 ```
 
 ### Uninstalling the Chart
@@ -121,7 +121,7 @@ This step is required if you're installing the chart using its sources. Addition
 1. Pull the chart sources:
 
     ```shell
-    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 0.18.1
+    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.0.2
     ```
 
 2. Change your working directory to nginx-ingress:
@@ -202,11 +202,11 @@ The steps you should follow depend on the Helm release name:
     Selector: app=nginx-ingress-nginx-ingress
     ```
 
-2. Checkout the latest available tag using `git checkout v3.3.0`
+2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress` with the copied `Selector` value.
     ```shell
     selectorLabels: {app: nginx-ingress-nginx-ingress}
     ```
@@ -244,14 +244,14 @@ The steps you should follow depend on the Helm release name:
     Copy the key=value under ```Selector```, such as:
 
     ```shell
-    Selector:               app=<helm_release_name>-nginx-ingress
+    Selector: app=<helm_release_name>-nginx-ingress
     ```
 
-2. Checkout the latest available tag using `git checkout v3.3.0`
+2. Checkout the latest available tag using `git checkout v3.3.2`
 
-3. Navigate to `/kubernates-ingress/deployments/helm-chart`
+3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
-4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/deployments/helm-chart` with the copied `Selector` value.
+4. Update the `selectorLabels: {}` field in the `values.yaml` file located at `/kubernates-ingress/charts/nginx-ingress` with the copied `Selector` value.
 
     ```shell
     selectorLabels: {app: <helm_release_name>-nginx-ingress}
@@ -380,6 +380,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.serviceAccount.annotations** | The annotations of the Ingress Controller service account. | {} |
 | **controller.serviceAccount.name** | The name of the service account of the Ingress Controller pods. Used for RBAC. | Autogenerated |
 | **controller.serviceAccount.imagePullSecretName** | The name of the secret containing docker registry credentials. Secret must exist in the same namespace as the helm release. | "" |
+| **controller.serviceAccount.imagePullSecretsNames** | The list of secret names containing docker registry credentials. Secret must exist in the same namespace as the helm release. | [] |
 | **controller.serviceMonitor.name** | The name of the serviceMonitor. | Autogenerated |
 | **controller.serviceMonitor.create** | Create a ServiceMonitor custom resource. | false |
 | **controller.serviceMonitor.labels** | Kubernetes object labels to attach to the serviceMonitor object. | "" |
