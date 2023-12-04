@@ -1527,7 +1527,7 @@ func (vsv *VirtualServerValidator) validateVirtualServerRouteSubroutes(routes []
 		isRouteFieldForbidden := true
 		routeErrs := vsv.validateRoute(r, idxPath, upstreamNames, isRouteFieldForbidden, namespace)
 
-		if vsPath != "" && !strings.HasPrefix(r.Path, vsPath) && !isRegexOrExactMatch(r.Path) {
+		if vsPath != "" && !strings.HasPrefix(r.Path, vsPath) {
 			msg := fmt.Sprintf("must start with '%s'", vsPath)
 			routeErrs = append(routeErrs, field.Invalid(idxPath, r.Path, msg))
 		}
