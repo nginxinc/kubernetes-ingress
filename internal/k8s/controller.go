@@ -3083,7 +3083,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 
 		// Backup Service defined on Upstream
 		var backupEndpointsKey string
-		if u.Backup != nil {
+		if u.Backup != nil && u.BackupPort != nil {
 			backupEndpointsKey = configs.GenerateEndpointsKey(virtualServer.Namespace, *u.Backup, u.Subselector, *u.BackupPort)
 			backupEndps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, *u.Backup, *u.BackupPort)
 			if err != nil {
@@ -3585,7 +3585,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		}
 
 		// If backup defined on Upstream retrieve its external name and port.
-		if u.Backup != nil {
+		if u.Backup != nil && u.BackupPort != nil {
 			backupEndpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, *u.Backup, nil, *u.BackupPort)
 			backupEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, *u.Backup, *u.BackupPort)
 			if err != nil {

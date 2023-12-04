@@ -310,7 +310,7 @@ func (vsc *virtualServerConfigurator) generateBackupEndpointsForUpstream(
 	upstream conf_v1.Upstream,
 	virtualServerEx *VirtualServerEx,
 ) []string {
-	if upstream.Backup == nil {
+	if upstream.Backup == nil || upstream.BackupPort == nil {
 		return []string{}
 	}
 	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, *upstream.Backup)

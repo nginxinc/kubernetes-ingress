@@ -174,7 +174,7 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 		}
 
 		var backupEndpoints []string
-		if u.Backup != nil {
+		if u.Backup != nil && u.BackupPort != nil {
 			backupEnpointsKey := GenerateEndpointsKey(transportServerEx.TransportServer.Namespace, *u.Backup, nil, *u.BackupPort)
 			externalNameSvcKey = GenerateExternalNameSvcKey(transportServerEx.TransportServer.Namespace, *u.Backup)
 			_, isExternalNameSvc = transportServerEx.ExternalNameSvcs[externalNameSvcKey]
