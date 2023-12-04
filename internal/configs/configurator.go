@@ -14,7 +14,6 @@ import (
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 
 	"github.com/golang/glog"
 	api_v1 "k8s.io/api/core/v1"
@@ -323,7 +322,7 @@ func (cnf *Configurator) StreamUpstreamsForName(name string) []string {
 
 // transportServerForActionName takes an action name and returns
 // Transport Server obj associated with that name.
-func (cnf *Configurator) transportServerForActionName(name string) *conf_v1alpha1.TransportServer {
+func (cnf *Configurator) transportServerForActionName(name string) *conf_v1.TransportServer {
 	for _, tsEx := range cnf.transportServers {
 		glog.V(3).Infof("Check ts action '%s' for requested name: '%s'", tsEx.TransportServer.Spec.Action.Pass, name)
 		if tsEx.TransportServer.Spec.Action.Pass == name {
@@ -335,7 +334,7 @@ func (cnf *Configurator) transportServerForActionName(name string) *conf_v1alpha
 
 // streamUpstreamsForTransportServer takes TransportServer obj and returns
 // a list of stream upstreams associated with this TransportServer.
-func (cnf *Configurator) streamUpstreamsForTransportServer(ts *conf_v1alpha1.TransportServer) []string {
+func (cnf *Configurator) streamUpstreamsForTransportServer(ts *conf_v1.TransportServer) []string {
 	upstreamNames := make([]string, 0, len(ts.Spec.Upstreams))
 	n := newUpstreamNamerForTransportServer(ts)
 	for _, u := range ts.Spec.Upstreams {
@@ -1350,7 +1349,7 @@ func getFileNameForVirtualServer(virtualServer *conf_v1.VirtualServer) string {
 	return fmt.Sprintf("vs_%s_%s", virtualServer.Namespace, virtualServer.Name)
 }
 
-func getFileNameForTransportServer(transportServer *conf_v1alpha1.TransportServer) string {
+func getFileNameForTransportServer(transportServer *conf_v1.TransportServer) string {
 	return fmt.Sprintf("ts_%s_%s", transportServer.Namespace, transportServer.Name)
 }
 

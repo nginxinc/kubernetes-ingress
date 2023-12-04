@@ -19,7 +19,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -139,6 +138,16 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			},
 			true,
 		},
+		{
+			&LoadBalancerController{
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
+			},
+			&networking.Ingress{
+				Spec: networking.IngressSpec{},
+			},
+			false,
+		},
 	}
 
 	for _, test := range tests {
@@ -163,7 +172,7 @@ func deepCopyWithIngressClass(obj interface{}, class string) interface{} {
 		objCopy := obj.DeepCopy()
 		objCopy.Spec.IngressClass = class
 		return objCopy
-	case *conf_v1alpha1.TransportServer:
+	case *conf_v1.TransportServer:
 		objCopy := obj.DeepCopy()
 		objCopy.Spec.IngressClass = class
 		return objCopy
@@ -207,7 +216,7 @@ func TestIngressClassForCustomResources(t *testing.T) {
 	resources := []interface{}{
 		&conf_v1.VirtualServer{},
 		&conf_v1.VirtualServerRoute{},
-		&conf_v1alpha1.TransportServer{},
+		&conf_v1.TransportServer{},
 	}
 
 	for _, r := range resources {

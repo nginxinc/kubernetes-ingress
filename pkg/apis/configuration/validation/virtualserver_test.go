@@ -1583,32 +1583,89 @@ func TestValidatePath(t *testing.T) {
 
 func TestValidateSplits(t *testing.T) {
 	t.Parallel()
-	splits := []v1.Split{
+	tests := []struct {
+		splits        []v1.Split
+		upstreamNames sets.Set[string]
+		msg           string
+	}{
 		{
-			Weight: 90,
-			Action: &v1.Action{
-				Pass: "test-1",
-			},
-		},
-		{
-			Weight: 10,
-			Action: &v1.Action{
-				Proxy: &v1.ActionProxy{
-					Upstream: "test-2",
+			splits: []v1.Split{
+				{
+					Weight: 90,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: 10,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
 				},
 			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "valid weights",
 		},
-	}
-	upstreamNames := map[string]sets.Empty{
-		"test-1": {},
-		"test-2": {},
+		{
+			splits: []v1.Split{
+				{
+					Weight: 0,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: 100,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "valid weights with 0 and 100",
+		},
+		{
+			splits: []v1.Split{
+				{
+					Weight: 0,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: 50,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+				{
+					Weight: 50,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "valid weights with 0",
+		},
 	}
 
 	vsv := &VirtualServerValidator{isPlus: false}
 
-	allErrs := vsv.validateSplits(splits, field.NewPath("splits"), upstreamNames, "")
-	if len(allErrs) > 0 {
-		t.Errorf("validateSplits() returned errors %v for valid input", allErrs)
+	for _, test := range tests {
+		allErrs := vsv.validateSplits(test.splits, field.NewPath("splits"), test.upstreamNames, "")
+		if len(allErrs) > 0 {
+			t.Errorf("validateSplits() returned errors %v for valid input", allErrs)
+		}
 	}
 }
 
@@ -1716,6 +1773,27 @@ func TestValidateSplitsFails(t *testing.T) {
 				"test-2": {},
 			},
 			msg: "invalid action with non-existing upstream",
+		},
+		{
+			splits: []v1.Split{
+				{
+					Weight: 100,
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Weight: -2,
+					Action: &v1.Action{
+						Pass: "test-2",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "invalid negative weight",
 		},
 	}
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1879,7 +1878,7 @@ func TestHostCollisions(t *testing.T) {
 func TestAddTransportServer(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -2056,7 +2055,7 @@ func TestAddTransportServerForTLSPassthrough(t *testing.T) {
 func TestListenerFlip(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -2245,7 +2244,7 @@ func TestAddTransportServerWithIncorrectClass(t *testing.T) {
 func TestAddTransportServerWithNonExistingListener(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	addOrUpdateGlobalConfiguration(t, configuration, []conf_v1alpha1.Listener{}, noChanges, noProblems)
+	addOrUpdateGlobalConfiguration(t, configuration, []conf_v1.Listener{}, noChanges, noProblems)
 
 	ts := createTestTransportServer("transportserver", "tcp-7777", "TCP")
 
@@ -2286,7 +2285,7 @@ func TestDeleteNonExistingTransportServer(t *testing.T) {
 func TestAddOrUpdateGlobalConfiguration(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -2319,7 +2318,7 @@ func TestAddOrUpdateGlobalConfiguration(t *testing.T) {
 func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -2333,7 +2332,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	}
 	gc := createTestGlobalConfiguration(listeners)
 
-	var nilGC *conf_v1alpha1.GlobalConfiguration
+	var nilGC *conf_v1.GlobalConfiguration
 
 	var expectedChanges []ResourceChange
 	var expectedProblems []ConfigurationProblem
@@ -3254,7 +3253,7 @@ func TestDeleteGlobalConfigurationWithVirtualServerDeployedWithNoCustomListeners
 func TestPortCollisions(t *testing.T) {
 	configuration := createTestConfiguration()
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -3472,7 +3471,7 @@ func TestChallengeIngressNoVSR(t *testing.T) {
 	}
 }
 
-func addOrUpdateGlobalConfiguration(t *testing.T, c *Configuration, listeners []conf_v1alpha1.Listener, expectedChanges []ResourceChange, expectedProblems []ConfigurationProblem) {
+func addOrUpdateGlobalConfiguration(t *testing.T, c *Configuration, listeners []conf_v1.Listener, expectedChanges []ResourceChange, expectedProblems []ConfigurationProblem) {
 	t.Helper()
 	gc := createTestGlobalConfiguration(listeners)
 	changes, problems, err := c.AddOrUpdateGlobalConfiguration(gc)
@@ -3633,7 +3632,7 @@ func createTestVirtualServerWithListeners(name string, host string, httpListener
 			CreationTimestamp: metav1.Now(),
 		},
 		Spec: conf_v1.VirtualServerSpec{
-			Listener: &conf_v1.Listener{
+			Listener: &conf_v1.VirtualServerListener{
 				HTTP:  httpListener,
 				HTTPS: httpsListener,
 			},
@@ -3699,47 +3698,47 @@ func createTestChallengeVirtualServerRoute(name string, host string, path string
 	}
 }
 
-func createTestTransportServer(name string, listenerName string, listenerProtocol string) *conf_v1alpha1.TransportServer {
-	return &conf_v1alpha1.TransportServer{
+func createTestTransportServer(name string, listenerName string, listenerProtocol string) *conf_v1.TransportServer {
+	return &conf_v1.TransportServer{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
 			Namespace:         "default",
 			CreationTimestamp: metav1.Now(),
 			Generation:        1,
 		},
-		Spec: conf_v1alpha1.TransportServerSpec{
-			Listener: conf_v1alpha1.TransportServerListener{
+		Spec: conf_v1.TransportServerSpec{
+			Listener: conf_v1.TransportServerListener{
 				Name:     listenerName,
 				Protocol: listenerProtocol,
 			},
-			Upstreams: []conf_v1alpha1.Upstream{
+			Upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:    "myapp",
 					Service: "myapp-svc",
 					Port:    1234,
 				},
 			},
-			Action: &conf_v1alpha1.Action{
+			Action: &conf_v1.TransportServerAction{
 				Pass: "myapp",
 			},
 		},
 	}
 }
 
-func createTestTLSPassthroughTransportServer(name string, host string) *conf_v1alpha1.TransportServer {
-	ts := createTestTransportServer(name, conf_v1alpha1.TLSPassthroughListenerName, conf_v1alpha1.TLSPassthroughListenerProtocol)
+func createTestTLSPassthroughTransportServer(name string, host string) *conf_v1.TransportServer {
+	ts := createTestTransportServer(name, conf_v1.TLSPassthroughListenerName, conf_v1.TLSPassthroughListenerProtocol)
 	ts.Spec.Host = host
 
 	return ts
 }
 
-func createTestGlobalConfiguration(listeners []conf_v1alpha1.Listener) *conf_v1alpha1.GlobalConfiguration {
-	return &conf_v1alpha1.GlobalConfiguration{
+func createTestGlobalConfiguration(listeners []conf_v1.Listener) *conf_v1.GlobalConfiguration {
+	return &conf_v1.GlobalConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "globalconfiguration",
 			Namespace: "nginx-ingress",
 		},
-		Spec: conf_v1alpha1.GlobalConfigurationSpec{
+		Spec: conf_v1.GlobalConfigurationSpec{
 			Listeners: listeners,
 		},
 	}
@@ -3982,7 +3981,7 @@ func (rc *testReferenceChecker) IsReferencedByVirtualServerRoute(namespace strin
 	return rc.onlyVirtualServerRoutes && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 
-func (rc *testReferenceChecker) IsReferencedByTransportServer(namespace string, name string, _ *conf_v1alpha1.TransportServer) bool {
+func (rc *testReferenceChecker) IsReferencedByTransportServer(namespace string, name string, _ *conf_v1.TransportServer) bool {
 	return rc.onlyTransportServers && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 
@@ -4003,7 +4002,7 @@ func TestFindResourcesForResourceReference(t *testing.T) {
 		})
 	vsr := createTestVirtualServerRoute("virtualserverroute", "asd.example.com", "/")
 	tsPassthrough := createTestTLSPassthroughTransportServer("transportserver-passthrough", "ts.example.com")
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -4117,7 +4116,7 @@ func TestGetResources(t *testing.T) {
 	passTS := createTestTLSPassthroughTransportServer("transportserver", "abc.example.com")
 	ts := createTestTransportServer("transportserver-tcp", "tcp-7777", "TCP")
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -4185,7 +4184,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 	tsUDP := createTestTransportServer("transportserver-udp", "udp-7777", "UDP")
 
 	tests := []struct {
-		tses     []*conf_v1alpha1.TransportServer
+		tses     []*conf_v1.TransportServer
 		expected *TransportServerMetrics
 		msg      string
 	}{
@@ -4199,7 +4198,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 			msg: "no TransportServers",
 		},
 		{
-			tses: []*conf_v1alpha1.TransportServer{
+			tses: []*conf_v1.TransportServer{
 				tsPass,
 			},
 			expected: &TransportServerMetrics{
@@ -4210,7 +4209,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 			msg: "one TLSPassthrough TransportServer",
 		},
 		{
-			tses: []*conf_v1alpha1.TransportServer{
+			tses: []*conf_v1.TransportServer{
 				tsTCP,
 			},
 			expected: &TransportServerMetrics{
@@ -4221,7 +4220,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 			msg: "one TCP TransportServer",
 		},
 		{
-			tses: []*conf_v1alpha1.TransportServer{
+			tses: []*conf_v1.TransportServer{
 				tsUDP,
 			},
 			expected: &TransportServerMetrics{
@@ -4232,7 +4231,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 			msg: "one UDP TransportServer",
 		},
 		{
-			tses: []*conf_v1alpha1.TransportServer{
+			tses: []*conf_v1.TransportServer{
 				tsPass, tsTCP, tsUDP,
 			},
 			expected: &TransportServerMetrics{
@@ -4244,7 +4243,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 		},
 	}
 
-	listeners := []conf_v1alpha1.Listener{
+	listeners := []conf_v1.Listener{
 		{
 			Name:     "tcp-7777",
 			Port:     7777,
@@ -4537,7 +4536,7 @@ var (
 	noProblems []ConfigurationProblem
 
 	// customHTTPAndHTTPSListeners defines a custom HTTP and HTTPS listener on port 8082 and 8442
-	customHTTPAndHTTPSListeners = []conf_v1alpha1.Listener{
+	customHTTPAndHTTPSListeners = []conf_v1.Listener{
 		{
 			Name:     "http-8082",
 			Port:     8082,
@@ -4552,7 +4551,7 @@ var (
 	}
 
 	// customHTTPSListener defines a customHTTPS listener on port 8442
-	customHTTPSListener = []conf_v1alpha1.Listener{
+	customHTTPSListener = []conf_v1.Listener{
 		{
 			Name:     "https-8442",
 			Port:     8442,
@@ -4562,7 +4561,7 @@ var (
 	}
 
 	// customHTTPListener defines a custom HTTP listener on port 8082
-	customHTTPListener = []conf_v1alpha1.Listener{
+	customHTTPListener = []conf_v1.Listener{
 		{
 			Name:     "http-8082",
 			Port:     8082,
@@ -4571,7 +4570,7 @@ var (
 	}
 
 	// customHTTPListenerSSLTrue defines a custom HTTP listener on port 8082 with SSL set to true
-	customHTTPListenerSSLTrue = []conf_v1alpha1.Listener{
+	customHTTPListenerSSLTrue = []conf_v1.Listener{
 		{
 			Name:     "http-8082",
 			Port:     8082,
@@ -4587,7 +4586,7 @@ var (
 	}
 
 	// customHTTPSListenerSSLFalse defines a custom HTTPS listener on port 8442 with SSL set to false
-	customHTTPSListenerSSLFalse = []conf_v1alpha1.Listener{
+	customHTTPSListenerSSLFalse = []conf_v1.Listener{
 		{
 			Name:     "http-8082",
 			Port:     8082,
@@ -4603,7 +4602,7 @@ var (
 	}
 
 	// bogusHTTPListener defines a HTTP listener with an invalid name
-	bogusHTTPListener = []conf_v1alpha1.Listener{
+	bogusHTTPListener = []conf_v1.Listener{
 		{
 			Name:     "http-bogus",
 			Port:     8082,
@@ -4618,7 +4617,7 @@ var (
 	}
 
 	// bogusHTTPsListener defines a HTTPs listener with an invalid name
-	bogusHTTPSListener = []conf_v1alpha1.Listener{
+	bogusHTTPSListener = []conf_v1.Listener{
 		{
 			Name:     "http-8082",
 			Port:     8082,

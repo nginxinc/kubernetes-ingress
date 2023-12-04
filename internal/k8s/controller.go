@@ -60,7 +60,6 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	k8s_nginx_informers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
@@ -594,11 +593,11 @@ func (nsi *namespacedInformer) addPolicyHandler(handlers cache.ResourceEventHand
 func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.ResourceEventHandlerFuncs, namespace string, name string) {
 	lbc.globalConfigurationLister, lbc.globalConfigurationController = cache.NewInformer(
 		cache.NewListWatchFromClient(
-			lbc.confClient.K8sV1alpha1().RESTClient(),
+			lbc.confClient.K8sV1().RESTClient(),
 			"globalconfigurations",
 			namespace,
 			fields.Set{"metadata.name": name}.AsSelector()),
-		&conf_v1alpha1.GlobalConfiguration{},
+		&conf_v1.GlobalConfiguration{},
 		lbc.resync,
 		handlers,
 	)
@@ -606,7 +605,7 @@ func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.
 }
 
 func (nsi *namespacedInformer) addTransportServerHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.confSharedInformerFactory.K8s().V1alpha1().TransportServers().Informer()
+	informer := nsi.confSharedInformerFactory.K8s().V1().TransportServers().Informer()
 	informer.AddEventHandler(handlers)
 	nsi.transportServerLister = informer.GetStore()
 
@@ -1161,7 +1160,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 
 		var delTsList []string
 		for _, obj := range nsi.transportServerLister.List() {
-			ts := obj.(*conf_v1alpha1.TransportServer)
+			ts := obj.(*conf_v1.TransportServer)
 			key := getResourceKey(&ts.ObjectMeta)
 			delTsList = append(delTsList, key)
 			lbc.configuration.DeleteTransportServer(key)
@@ -1403,7 +1402,7 @@ func (lbc *LoadBalancerController) syncTransportServer(task task) {
 		changes, problems = lbc.configuration.DeleteTransportServer(key)
 	} else {
 		glog.V(2).Infof("Adding or Updating TransportServer: %v\n", key)
-		ts := obj.(*conf_v1alpha1.TransportServer)
+		ts := obj.(*conf_v1.TransportServer)
 		changes, problems = lbc.configuration.AddOrUpdateTransportServer(ts)
 	}
 
@@ -1430,7 +1429,7 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 	} else {
 		glog.V(2).Infof("Adding or Updating GlobalConfiguration: %v\n", key)
 
-		gc := obj.(*conf_v1alpha1.GlobalConfiguration)
+		gc := obj.(*conf_v1.GlobalConfiguration)
 		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
 	}
 
@@ -1453,7 +1452,7 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 			eventMessage = fmt.Sprintf("%s; with reload error: %v", eventMessage, updateErr)
 		}
 
-		gc := obj.(*conf_v1alpha1.GlobalConfiguration)
+		gc := obj.(*conf_v1.GlobalConfiguration)
 		lbc.recorder.Eventf(gc, eventType, eventTitle, eventMessage)
 	}
 
@@ -1516,7 +1515,7 @@ func (lbc *LoadBalancerController) processProblems(problems []ConfigurationProbl
 				if err != nil {
 					glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", obj.Namespace, obj.Name, err)
 				}
-			case *conf_v1alpha1.TransportServer:
+			case *conf_v1.TransportServer:
 				err := lbc.statusUpdater.UpdateTransportServerStatus(obj, state, p.Reason, p.Message)
 				if err != nil {
 					glog.Errorf("Error when updating the status for TransportServer %v/%v: %v", obj.Namespace, obj.Name, err)
@@ -2690,7 +2689,7 @@ func (lbc *LoadBalancerController) updateTransportServersStatusFromEvents() erro
 	var allErrs []error
 	for _, nsi := range lbc.namespacedInformers {
 		for _, obj := range nsi.transportServerLister.List() {
-			ts := obj.(*conf_v1alpha1.TransportServer)
+			ts := obj.(*conf_v1.TransportServer)
 
 			events, err := lbc.client.CoreV1().Events(ts.Namespace).List(context.TODO(),
 				meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", ts.Name, ts.UID)})
@@ -3528,7 +3527,7 @@ func isMatchingResourceRef(ownerNs, resRef, key string) bool {
 	return resRef == key
 }
 
-func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1alpha1.TransportServer, listenerPort int) *configs.TransportServerEx {
+func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1.TransportServer, listenerPort int) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
 	externalNameSvcs := make(map[string]bool)
 	podsByIP := make(map[string]string)
@@ -3972,7 +3971,7 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 		class = obj.Spec.IngressClass
 	case *conf_v1.VirtualServerRoute:
 		class = obj.Spec.IngressClass
-	case *conf_v1alpha1.TransportServer:
+	case *conf_v1.TransportServer:
 		class = obj.Spec.IngressClass
 	case *conf_v1.Policy:
 		class = obj.Spec.IngressClass
@@ -3980,7 +3979,7 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 		class = obj.Annotations[ingressClassKey]
 		if class == "" && obj.Spec.IngressClassName != nil {
 			class = *obj.Spec.IngressClassName
-		} else {
+		} else if class != "" {
 			// the annotation takes precedence over the field
 			glog.Warningln("Using the DEPRECATED annotation 'kubernetes.io/ingress.class'. The 'ingressClassName' field will be ignored.")
 		}

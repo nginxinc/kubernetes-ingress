@@ -8,6 +8,33 @@ docs: "DOCS-616"
 ---
 <hr>
 
+## 3.3.2
+
+1 Nov 2023
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+
+- [4578](https://github.com/nginxinc/kubernetes-ingress/pull/4578) Update Dockerfile to add user creation for NGINX Plus images.
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+
+- [4572](https://github.com/nginxinc/kubernetes-ingress/pull/4572) Update NGINX version to 1.25.3.
+- [4569](https://github.com/nginxinc/kubernetes-ingress/pull/4569), [4591](https://github.com/nginxinc/kubernetes-ingress/pull/4591) Bump Go dependencies.
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.3.2 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.3.2),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.3.2 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.3.2 source code
+- For Helm, use version 1.0.2 of the chart.
+
+<hr>
+
 ## 3.3.1
 
 13 Oct 2023

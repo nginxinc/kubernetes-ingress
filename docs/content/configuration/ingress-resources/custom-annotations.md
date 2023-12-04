@@ -23,7 +23,7 @@ Custom annotations allow you to add an annotation for an NGINX feature that is n
 
 ## Usage
 
-The Ingress Controller generates NGINX configuration for Ingress resources by executing a configuration template. See [NGINX template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.3.1/internal/configs/version1/nginx.ingress.tmpl) or [NGINX Plus template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.3.1/internal/configs/version1/nginx-plus.ingress.tmpl).
+The Ingress Controller generates NGINX configuration for Ingress resources by executing a configuration template. See [NGINX template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.3.2/internal/configs/version1/nginx.ingress.tmpl) or [NGINX Plus template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.3.2/internal/configs/version1/nginx-plus.ingress.tmpl).
 
 To support custom annotations, the template has access to the information about the Ingress resource - its *name*, *namespace* and *annotations*. It is possible to check if a particular annotation present in the Ingress resource and conditionally insert NGINX configuration directives at multiple NGINX contexts - `http`, `server`, `location` or `upstream`. Additionally, you can get the value that is set to the annotation.
 
@@ -107,10 +107,15 @@ If you'd like to use custom annotations with Mergeable Ingress resources, please
 Helper functions can be used in the Ingress template to parse the values of custom annotations.
 
 {{% table %}}
-|Function | Input Arguments | Return Arguments | Description |
+| Function | Input Arguments | Return Arguments | Description |
 | ---| ---| ---| --- |
-|``split`` | ``s, sep string`` | ``[]string`` | Splits the string ``s`` into a slice of strings separated by the ``sep``. |
-|``trim`` | ``s string`` | ``string`` | Trims the trailing and leading whitespace from the string ``s``. |
+| ``split`` | ``s, sep string`` | ``[]string`` | Splits the string ``s`` into a slice of strings separated by the ``sep``. |
+| ``trim`` | ``s string`` | ``string`` | Trims the trailing and leading whitespace from the string ``s``. |
+| ``contains`` | ``s, substr string`` | ``bool`` | Tests whether the string ``substr`` is a substring of the string ``s``. |
+| ``hasPrefix`` | ``s, prefix string`` | ``bool`` | Tests whether the string ``prefix`` is a prefix of the string ``s``. |
+| ``hasSuffix`` | ``s, suffix string`` | ``bool`` | Tests whether the string ``suffix`` is a suffix of the string ``s``. |
+| ``toLower`` | ``s string`` | ``bool`` | Converts all letters in the string ``s`` to their lower case. |
+| ``toUpper`` | ``s string`` | ``bool`` | Converts all letters in the string ``s`` to their upper case. |
 {{% /table %}}
 
 Consider the following custom annotation `custom.nginx.org/allowed-ips`, which expects a comma-separated list of IP addresses:
@@ -139,4 +144,4 @@ deny all;
 
 ## Example
 
-See the [custom annotations example](https://github.com/nginxinc/kubernetes-ingress/blob/v3.3.1/examples/ingress-resources/custom-annotations).
+See the [custom annotations example](https://github.com/nginxinc/kubernetes-ingress/blob/v3.3.2/examples/ingress-resources/custom-annotations).

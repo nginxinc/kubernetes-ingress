@@ -67,20 +67,20 @@ type TransportServer struct {
 
 // TransportServerSpec is the spec of the TransportServer resource.
 type TransportServerSpec struct {
-	IngressClass       string                  `json:"ingressClassName"`
-	TLS                *TLS                    `json:"tls"`
-	Listener           TransportServerListener `json:"listener"`
-	ServerSnippets     string                  `json:"serverSnippets"`
-	StreamSnippets     string                  `json:"streamSnippets"`
-	Host               string                  `json:"host"`
-	Upstreams          []Upstream              `json:"upstreams"`
-	UpstreamParameters *UpstreamParameters     `json:"upstreamParameters"`
-	SessionParameters  *SessionParameters      `json:"sessionParameters"`
-	Action             *Action                 `json:"action"`
+	IngressClass       string                    `json:"ingressClassName"`
+	TLS                *TransportServerTLS       `json:"tls"`
+	Listener           TransportServerListener   `json:"listener"`
+	ServerSnippets     string                    `json:"serverSnippets"`
+	StreamSnippets     string                    `json:"streamSnippets"`
+	Host               string                    `json:"host"`
+	Upstreams          []TransportServerUpstream `json:"upstreams"`
+	UpstreamParameters *UpstreamParameters       `json:"upstreamParameters"`
+	SessionParameters  *SessionParameters        `json:"sessionParameters"`
+	Action             *TransportServerAction    `json:"action"`
 }
 
-// TLS defines TLS configuration for a TransportServer.
-type TLS struct {
+// TransportServerTLS defines TransportServerTLS configuration for a TransportServer.
+type TransportServerTLS struct {
 	Secret string `json:"secret"`
 }
 
@@ -90,32 +90,32 @@ type TransportServerListener struct {
 	Protocol string `json:"protocol"`
 }
 
-// Upstream defines an upstream.
-type Upstream struct {
-	Name                string       `json:"name"`
-	Service             string       `json:"service"`
-	Port                int          `json:"port"`
-	FailTimeout         string       `json:"failTimeout"`
-	MaxFails            *int         `json:"maxFails"`
-	MaxConns            *int         `json:"maxConns"`
-	HealthCheck         *HealthCheck `json:"healthCheck"`
-	LoadBalancingMethod string       `json:"loadBalancingMethod"`
+// TransportServerUpstream defines an upstream.
+type TransportServerUpstream struct {
+	Name                string                      `json:"name"`
+	Service             string                      `json:"service"`
+	Port                int                         `json:"port"`
+	FailTimeout         string                      `json:"failTimeout"`
+	MaxFails            *int                        `json:"maxFails"`
+	MaxConns            *int                        `json:"maxConns"`
+	HealthCheck         *TransportServerHealthCheck `json:"healthCheck"`
+	LoadBalancingMethod string                      `json:"loadBalancingMethod"`
 }
 
-// HealthCheck defines the parameters for active Upstream HealthChecks.
-type HealthCheck struct {
-	Enabled  bool   `json:"enable"`
-	Timeout  string `json:"timeout"`
-	Jitter   string `json:"jitter"`
-	Port     int    `json:"port"`
-	Interval string `json:"interval"`
-	Passes   int    `json:"passes"`
-	Fails    int    `json:"fails"`
-	Match    *Match `json:"match"`
+// TransportServerHealthCheck defines the parameters for active Upstream HealthChecks.
+type TransportServerHealthCheck struct {
+	Enabled  bool                  `json:"enable"`
+	Timeout  string                `json:"timeout"`
+	Jitter   string                `json:"jitter"`
+	Port     int                   `json:"port"`
+	Interval string                `json:"interval"`
+	Passes   int                   `json:"passes"`
+	Fails    int                   `json:"fails"`
+	Match    *TransportServerMatch `json:"match"`
 }
 
-// Match defines the parameters of a custom health check.
-type Match struct {
+// TransportServerMatch defines the parameters of a custom health check.
+type TransportServerMatch struct {
 	Send   string `json:"send"`
 	Expect string `json:"expect"`
 }
@@ -136,8 +136,8 @@ type SessionParameters struct {
 	Timeout string `json:"timeout"`
 }
 
-// Action defines an action.
-type Action struct {
+// TransportServerAction defines an action.
+type TransportServerAction struct {
 	Pass string `json:"pass"`
 }
 

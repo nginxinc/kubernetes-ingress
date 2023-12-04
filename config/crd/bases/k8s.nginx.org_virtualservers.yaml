@@ -105,8 +105,8 @@ spec:
                   routing.
                 type: boolean
               listener:
-                description: Listener references a custom http and/or https listener
-                  defined in GlobalConfiguration.
+                description: VirtualServerListener references a custom http and/or
+                  https listener defined in GlobalConfiguration.
                 properties:
                   http:
                     type: string

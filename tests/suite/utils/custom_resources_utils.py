@@ -110,9 +110,9 @@ def read_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, namespace, p
     :param name: the custom object's name
     :return: object
     """
-    print(f"Getting info for v1alpha1 crd {name} in namespace {namespace}")
+    print(f"Getting info for v1 crd {name} in namespace {namespace}")
     try:
-        response = custom_objects.get_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, plural, name)
+        response = custom_objects.get_namespaced_custom_object("k8s.nginx.org", "v1", namespace, plural, name)
         pprint(response)
         return response
 
@@ -125,7 +125,7 @@ def read_ts(custom_objects: CustomObjectsApi, namespace, name) -> object:
     """
     Read TransportService resource.
     """
-    return read_custom_resource_v1alpha1(custom_objects, namespace, "transportservers", name)
+    return read_custom_resource(custom_objects, namespace, "transportservers", name)
 
 
 def create_ts_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> dict:
@@ -163,7 +163,7 @@ def patch_gc_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, na
     :return: a dictionary representing the resource
     """
     print(f"Load {yaml_manifest}")
-    return patch_custom_resource_v1alpha1(custom_objects, name, yaml_manifest, namespace, "globalconfigurations")
+    return patch_custom_resource(custom_objects, name, yaml_manifest, namespace, "globalconfigurations")
 
 
 def create_resource_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace, plural) -> dict:
@@ -373,10 +373,10 @@ def patch_ts_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, na
     """
     Patch a TransportServer based on yaml manifest
     """
-    return patch_custom_resource_v1alpha1(custom_objects, name, yaml_manifest, namespace, "transportservers")
+    return patch_custom_resource(custom_objects, name, yaml_manifest, namespace, "transportservers")
 
 
-def patch_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace, plural) -> None:
+def patch_custom_resource(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace, plural) -> None:
     """
     Patch a custom resource based on yaml manifest
     """
@@ -385,7 +385,7 @@ def patch_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, name, yaml_
         dep = yaml.safe_load(f)
 
     try:
-        custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, plural, name, dep)
+        custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, plural, name, dep)
     except ApiException:
         logging.exception(f"Failed with exception while patching custom resource: {name}")
         raise
@@ -400,9 +400,7 @@ def patch_ts(custom_objects: CustomObjectsApi, namespace, body) -> None:
     print(f"Update a Resource: {name}")
 
     try:
-        custom_objects.patch_namespaced_custom_object(
-            "k8s.nginx.org", "v1alpha1", namespace, "transportservers", name, body
-        )
+        custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "transportservers", name, body)
     except ApiException:
         logging.exception(f"Failed with exception while patching custom resource: {name}")
         raise

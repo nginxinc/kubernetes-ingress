@@ -64,6 +64,9 @@ controller:
   ## Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.
   nginxDebug: false
 
+  ## Share process namespace between containers in the Ingress Controller pod.
+  shareProcessNamespace: false
+
   ## The log level of the Ingress Controller.
   logLevel: 1
 
@@ -75,7 +78,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
-    # tag: "3.3.1"
+    # tag: "3.3.2"
 
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
@@ -165,6 +168,15 @@ controller:
   #   cpu: 1
   #   memory: 1Gi
 
+  ## The resources for the Ingress Controller init container which is used when readOnlyRootFilesystem is set to true.
+  initContainerResources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    # limits:
+    #   cpu: 1
+    #   memory: 1Gi
+
   ## The tolerations of the Ingress Controller pods.
   tolerations: []
 
@@ -234,7 +246,7 @@ controller:
     ## The Ingress Controller processes all the resources that do not have the "ingressClassName" field for all versions of kubernetes.
     name: nginx
 
-    ## Creates a new IngressClass object with the name "controller.ingressClass.name". Set to false to use an existing IngressClass with the same name. If you use helm upgrade, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.3.1, do not set the value to false.
+    ## Creates a new IngressClass object with the name "controller.ingressClass.name". Set to false to use an existing IngressClass with the same name. If you use helm upgrade, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.3.2, do not set the value to false.
     create: true
 
     ## New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`. Requires "controller.ingressClass.create".
@@ -251,9 +263,6 @@ controller:
 
   ## Enable the custom resources.
   enableCustomResources: true
-
-  ## Enable preview policies. This parameter is deprecated. To enable OIDC Policies please use controller.enableOIDC instead.
-  enablePreviewPolicies: false
 
   ## Enable OIDC policies.
   enableOIDC: false
@@ -286,7 +295,6 @@ controller:
     # - name: dns-tcp
     #   port: 5353
     #   protocol: TCP
-
 
   ## Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
   enableSnippets: false
@@ -389,6 +397,10 @@ controller:
     ## Secret must exist in the same namespace as the helm release.
     imagePullSecretName: ""
 
+    ## A list of secret names containing docker registry credentials.
+    ## Secrets must exist in the same namespace as the helm release.
+    imagePullSecretsNames: []
+
   reportIngressStatus:
     ## Updates the address field in the status of Ingress resources with an external address of the Ingress Controller.
     ## You must also specify the source of the external address either through an external service via controller.reportIngressStatus.externalService,
@@ -490,7 +502,7 @@ prometheus:
     ## A list of endpoints allowed as part of this ServiceMonitor.
     ## Matches on the name of a Service port.
     endpoints:
-     - port: prometheus
+      - port: prometheus
 
 serviceInsight:
   ## Expose NGINX Plus Service Insight endpoint.

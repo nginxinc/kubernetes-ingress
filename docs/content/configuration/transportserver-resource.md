@@ -10,7 +10,7 @@ docs: "DOCS-598"
 
 The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.1/examples/custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/custom-resources) folder in our GitHub repo.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 - TCP load balancing:
 
   ```yaml
-  apiVersion: k8s.nginx.org/v1alpha1
+  apiVersion: k8s.nginx.org/v1
   kind: TransportServer
   metadata:
     name: dns-tcp
@@ -45,7 +45,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 - UDP load balancing:
 
   ```yaml
-  apiVersion: k8s.nginx.org/v1alpha1
+  apiVersion: k8s.nginx.org/v1
   kind: TransportServer
   metadata:
     name: dns-udp
@@ -67,7 +67,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 - TLS passthrough load balancing:
 
   ```yaml
-  apiVersion: k8s.nginx.org/v1alpha1
+  apiVersion: k8s.nginx.org/v1
   kind: TransportServer
   metadata:
     name: secure-app
@@ -299,7 +299,7 @@ In the kubectl get and similar commands, you can also use the short name `ts` in
 Snippets allow you to insert raw NGINX config into different contexts of NGINX configuration. In the example below, we use snippets to configure [access control](http://nginx.org/en/docs/stream/ngx_stream_access_module.html) in a TransportServer:
 
 ```yaml
-apiVersion: k8s.nginx.org/v1alpha1
+apiVersion: k8s.nginx.org/v1
 kind: TransportServer
 metadata:
   name: cafe
@@ -317,7 +317,7 @@ spec:
 Snippets can also be specified for a stream. In the example below, we use snippets to [limit the number of connections](https://nginx.org/en/docs/stream/ngx_stream_limit_conn_module.html):
 
 ```yaml
-apiVersion: k8s.nginx.org/v1alpha1
+apiVersion: k8s.nginx.org/v1
 kind: TransportServer
 metadata:
   name: cafe
@@ -365,7 +365,7 @@ If you try to create (or update) a resource that violates the structural schema 
     ```console
     kubectl apply -f transport-server-passthrough.yaml
 
-      error: error validating "transport-server-passthrough.yaml": error validating data: ValidationError(TransportServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1alpha1.TransportServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
+      error: error validating "transport-server-passthrough.yaml": error validating data: ValidationError(TransportServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.TransportServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
 - Example of Kubernetes API server validation:

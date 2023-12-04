@@ -15,7 +15,7 @@ Each field must reference a valid listener defined by in a [GlobalConfiguration]
 
 1. Create a yaml file called `nginx-configuration.yaml` with the below content:
 ```yaml
-apiVersion: k8s.nginx.org/v1alpha1
+apiVersion: k8s.nginx.org/v1
 kind: GlobalConfiguration
 metadata:
   name: nginx-configuration

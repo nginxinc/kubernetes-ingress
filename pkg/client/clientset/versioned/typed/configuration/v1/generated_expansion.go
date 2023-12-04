@@ -2,7 +2,11 @@
 
 package v1
 
+type GlobalConfigurationExpansion interface{}
+
 type PolicyExpansion interface{}
+
+type TransportServerExpansion interface{}
 
 type VirtualServerExpansion interface{}
 

@@ -8,14 +8,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestUpstreamNamerForTransportServer(t *testing.T) {
 	t.Parallel()
-	transportServer := conf_v1alpha1.TransportServer{
+	transportServer := conf_v1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "tcp-app",
 			Namespace: "default",
@@ -40,7 +40,7 @@ func TestTransportServerExString(t *testing.T) {
 	}{
 		{
 			input: &TransportServerEx{
-				TransportServer: &conf_v1alpha1.TransportServer{
+				TransportServer: &conf_v1.TransportServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "test-server",
 						Namespace: "default",
@@ -70,24 +70,24 @@ func TestTransportServerExString(t *testing.T) {
 func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tcp-listener",
 					Protocol: "TCP",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:    "tcp-app",
 						Service: "tcp-app-svc",
 						Port:    5001,
 					},
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 				ServerSnippets: "deny  192.168.1.1;\nallow 192.168.1.0/24;",
@@ -156,24 +156,24 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 func TestGenerateTransportServerConfigForIPV6Disabled(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tcp-listener",
 					Protocol: "TCP",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:    "tcp-app",
 						Service: "tcp-app-svc",
 						Port:    5001,
 					},
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 			},
@@ -240,17 +240,17 @@ func TestGenerateTransportServerConfigForIPV6Disabled(t *testing.T) {
 func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tcp-listener",
 					Protocol: "TCP",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:        "tcp-app",
 						Service:     "tcp-app-svc",
@@ -259,14 +259,14 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 						FailTimeout: "40s",
 					},
 				},
-				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+				UpstreamParameters: &conf_v1.UpstreamParameters{
 					ConnectTimeout: "30s",
 					NextUpstream:   false,
 				},
-				SessionParameters: &conf_v1alpha1.SessionParameters{
+				SessionParameters: &conf_v1.SessionParameters{
 					Timeout: "50s",
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 			},
@@ -332,17 +332,17 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tcp-listener",
 					Protocol: "TCP",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:        "tcp-app",
 						Service:     "tcp-app-svc",
@@ -352,14 +352,14 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 						FailTimeout: "40s",
 					},
 				},
-				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+				UpstreamParameters: &conf_v1.UpstreamParameters{
 					ConnectTimeout: "30s",
 					NextUpstream:   false,
 				},
-				SessionParameters: &conf_v1alpha1.SessionParameters{
+				SessionParameters: &conf_v1.SessionParameters{
 					Timeout: "50s",
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 			},
@@ -427,31 +427,31 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tls-passthrough",
 					Protocol: "TLS_PASSTHROUGH",
 				},
 				Host: "example.com",
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:    "tcp-app",
 						Service: "tcp-app-svc",
 						Port:    5001,
 					},
 				},
-				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+				UpstreamParameters: &conf_v1.UpstreamParameters{
 					ConnectTimeout:      "30s",
 					NextUpstream:        false,
 					NextUpstreamTries:   0,
 					NextUpstreamTimeout: "",
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 			},
@@ -523,25 +523,25 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 	udpResponses := 5
 
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "udp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "udp-listener",
 					Protocol: "UDP",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:        "udp-app",
 						Service:     "udp-app-svc",
 						Port:        5001,
-						HealthCheck: &conf_v1alpha1.HealthCheck{},
+						HealthCheck: &conf_v1.TransportServerHealthCheck{},
 					},
 				},
-				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+				UpstreamParameters: &conf_v1.UpstreamParameters{
 					UDPRequests:         &udpRequests,
 					UDPResponses:        &udpResponses,
 					ConnectTimeout:      "30s",
@@ -549,7 +549,7 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 					NextUpstreamTimeout: "",
 					NextUpstreamTries:   0,
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "udp-app",
 				},
 			},
@@ -618,17 +618,17 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExternalNameServiceAndConfiguredResolver(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tcp-listener",
 					Protocol: "TCP",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:        "tcp-app",
 						Service:     "tcp-app-svc",
@@ -637,14 +637,14 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExterna
 						FailTimeout: "40s",
 					},
 				},
-				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+				UpstreamParameters: &conf_v1.UpstreamParameters{
 					ConnectTimeout: "30s",
 					NextUpstream:   false,
 				},
-				SessionParameters: &conf_v1alpha1.SessionParameters{
+				SessionParameters: &conf_v1.SessionParameters{
 					Timeout: "50s",
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 			},
@@ -708,17 +708,17 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExterna
 func TestGenerateTransportServerConfig_GeneratesWarningOnNotConfiguredResolver(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tcp-listener",
 					Protocol: "TCP",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:        "tcp-app",
 						Service:     "tcp-app-svc",
@@ -727,14 +727,14 @@ func TestGenerateTransportServerConfig_GeneratesWarningOnNotConfiguredResolver(t
 						FailTimeout: "40s",
 					},
 				},
-				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+				UpstreamParameters: &conf_v1.UpstreamParameters{
 					ConnectTimeout: "30s",
 					NextUpstream:   false,
 				},
-				SessionParameters: &conf_v1alpha1.SessionParameters{
+				SessionParameters: &conf_v1.SessionParameters{
 					Timeout: "50s",
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 			},
@@ -792,17 +792,17 @@ func TestGenerateTransportServerConfig_GeneratesWarningOnNotConfiguredResolver(t
 func TestGenerateTransportServerConfig_UsesNotExistignSocketOnNotPlusAndNoEndpoints(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tcp-listener",
 					Protocol: "TCP",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:        "tcp-app",
 						Service:     "tcp-app-svc",
@@ -811,14 +811,14 @@ func TestGenerateTransportServerConfig_UsesNotExistignSocketOnNotPlusAndNoEndpoi
 						FailTimeout: "40s",
 					},
 				},
-				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+				UpstreamParameters: &conf_v1.UpstreamParameters{
 					ConnectTimeout: "30s",
 					NextUpstream:   false,
 				},
-				SessionParameters: &conf_v1alpha1.SessionParameters{
+				SessionParameters: &conf_v1.SessionParameters{
 					Timeout: "50s",
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 			},
@@ -878,20 +878,20 @@ func TestGenerateTransportServerConfig_UsesNotExistignSocketOnNotPlusAndNoEndpoi
 func TestGenerateTransportServerConfigForTCPWithTLS(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name:     "tcp-listener",
 					Protocol: "TCP",
 				},
-				TLS: &conf_v1alpha1.TLS{
+				TLS: &conf_v1.TransportServerTLS{
 					Secret: "my-secret",
 				},
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.TransportServerUpstream{
 					{
 						Name:        "tcp-app",
 						Service:     "tcp-app-svc",
@@ -900,14 +900,14 @@ func TestGenerateTransportServerConfigForTCPWithTLS(t *testing.T) {
 						FailTimeout: "40s",
 					},
 				},
-				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+				UpstreamParameters: &conf_v1.UpstreamParameters{
 					ConnectTimeout: "30s",
 					NextUpstream:   false,
 				},
-				SessionParameters: &conf_v1alpha1.SessionParameters{
+				SessionParameters: &conf_v1.SessionParameters{
 					Timeout: "50s",
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.TransportServerAction{
 					Pass: "tcp-app",
 				},
 			},
@@ -985,13 +985,13 @@ func TestGenerateTransportServerConfigForTCPWithTLS(t *testing.T) {
 func TestGenerateUnixSocket(t *testing.T) {
 	t.Parallel()
 	transportServerEx := &TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
+		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "tcp-server",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
 					Name: "tls-passthrough",
 				},
 			},
@@ -1020,16 +1020,16 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 	generatedUpsteamName := "ts_namespace_name_dns-tcp"
 
 	tests := []struct {
-		upstreams     []conf_v1alpha1.Upstream
+		upstreams     []conf_v1.TransportServerUpstream
 		expectedHC    *version2.StreamHealthCheck
 		expectedMatch *version2.Match
 		msg           string
 	}{
 		{
-			upstreams: []conf_v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name: "dns-tcp",
-					HealthCheck: &conf_v1alpha1.HealthCheck{
+					HealthCheck: &conf_v1.TransportServerHealthCheck{
 						Enabled:  false,
 						Timeout:  "30s",
 						Jitter:   "30s",
@@ -1045,10 +1045,10 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 			msg:           "health checks disabled",
 		},
 		{
-			upstreams: []conf_v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name:        "dns-tcp",
-					HealthCheck: &conf_v1alpha1.HealthCheck{},
+					HealthCheck: &conf_v1.TransportServerHealthCheck{},
 				},
 			},
 			expectedHC:    nil,
@@ -1056,10 +1056,10 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 			msg:           "empty health check",
 		},
 		{
-			upstreams: []conf_v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name: "dns-tcp",
-					HealthCheck: &conf_v1alpha1.HealthCheck{
+					HealthCheck: &conf_v1.TransportServerHealthCheck{
 						Enabled:  true,
 						Timeout:  "40s",
 						Jitter:   "30s",
@@ -1083,10 +1083,10 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 			msg:           "valid health checks",
 		},
 		{
-			upstreams: []conf_v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name: "dns-tcp",
-					HealthCheck: &conf_v1alpha1.HealthCheck{
+					HealthCheck: &conf_v1.TransportServerHealthCheck{
 						Enabled:  true,
 						Timeout:  "40s",
 						Jitter:   "30s",
@@ -1098,7 +1098,7 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 				},
 				{
 					Name: "dns-tcp-2",
-					HealthCheck: &conf_v1alpha1.HealthCheck{
+					HealthCheck: &conf_v1.TransportServerHealthCheck{
 						Enabled:  false,
 						Timeout:  "50s",
 						Jitter:   "60s",
@@ -1122,11 +1122,11 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 			msg:           "valid 2 health checks",
 		},
 		{
-			upstreams: []conf_v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name: "dns-tcp",
 					Port: 90,
-					HealthCheck: &conf_v1alpha1.HealthCheck{
+					HealthCheck: &conf_v1.TransportServerHealthCheck{
 						Enabled: true,
 					},
 				},
@@ -1143,13 +1143,13 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 			msg:           "return default values for health check",
 		},
 		{
-			upstreams: []conf_v1alpha1.Upstream{
+			upstreams: []conf_v1.TransportServerUpstream{
 				{
 					Name: "dns-tcp",
 					Port: 90,
-					HealthCheck: &conf_v1alpha1.HealthCheck{
+					HealthCheck: &conf_v1.TransportServerHealthCheck{
 						Enabled: true,
-						Match: &conf_v1alpha1.Match{
+						Match: &conf_v1.TransportServerMatch{
 							Send:   `GET / HTTP/1.0\r\nHost: localhost\r\n\r\n`,
 							Expect: "~*200 OK",
 						},
@@ -1189,12 +1189,12 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 func TestGenerateHealthCheckMatch(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		match    *conf_v1alpha1.Match
+		match    *conf_v1.TransportServerMatch
 		expected *version2.Match
 		msg      string
 	}{
 		{
-			match: &conf_v1alpha1.Match{
+			match: &conf_v1.TransportServerMatch{
 				Send:   "",
 				Expect: "",
 			},
@@ -1207,7 +1207,7 @@ func TestGenerateHealthCheckMatch(t *testing.T) {
 			msg: "match with empty fields",
 		},
 		{
-			match: &conf_v1alpha1.Match{
+			match: &conf_v1.TransportServerMatch{
 				Send:   "xxx",
 				Expect: "yyy",
 			},
@@ -1220,7 +1220,7 @@ func TestGenerateHealthCheckMatch(t *testing.T) {
 			msg: "match with all fields and no regexp",
 		},
 		{
-			match: &conf_v1alpha1.Match{
+			match: &conf_v1.TransportServerMatch{
 				Send:   "xxx",
 				Expect: "~yyy",
 			},
@@ -1233,7 +1233,7 @@ func TestGenerateHealthCheckMatch(t *testing.T) {
 			msg: "match with all fields and case sensitive regexp",
 		},
 		{
-			match: &conf_v1alpha1.Match{
+			match: &conf_v1.TransportServerMatch{
 				Send:   "xxx",
 				Expect: "~*yyy",
 			},
@@ -1263,7 +1263,7 @@ func intPointer(value int) *int {
 func TestGenerateTsSSLConfig(t *testing.T) {
 	t.Parallel()
 	validTests := []struct {
-		inputTLS        *conf_v1alpha1.TLS
+		inputTLS        *conf_v1.TransportServerTLS
 		inputSecretRefs map[string]*secrets.SecretReference
 		expectedSSL     *version2.StreamSSL
 		msg             string
@@ -1275,7 +1275,7 @@ func TestGenerateTsSSLConfig(t *testing.T) {
 			msg:             "no TLS field",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TransportServerTLS{
 				Secret: "secret",
 			},
 			inputSecretRefs: map[string]*secrets.SecretReference{
@@ -1296,14 +1296,14 @@ func TestGenerateTsSSLConfig(t *testing.T) {
 	}
 
 	invalidTests := []struct {
-		inputTLS         *conf_v1alpha1.TLS
+		inputTLS         *conf_v1.TransportServerTLS
 		inputSecretRefs  map[string]*secrets.SecretReference
 		expectedSSL      *version2.StreamSSL
 		expectedWarnings Warnings
 		msg              string
 	}{
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TransportServerTLS{
 				Secret: "missing",
 			},
 			inputSecretRefs: map[string]*secrets.SecretReference{
@@ -1319,7 +1319,7 @@ func TestGenerateTsSSLConfig(t *testing.T) {
 			msg: "missing doesn't exist in the cluster with HTTPS",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TransportServerTLS{
 				Secret: "mistyped",
 			},
 			inputSecretRefs: map[string]*secrets.SecretReference{
