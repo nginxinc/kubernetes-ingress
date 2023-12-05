@@ -58,7 +58,7 @@ This guide assumes you are using the latest release.
 To make sure your NGINX Ingress Controller pods reach the `Ready` state, you'll need to create custom resource definitions (CRDs) for various components. Alternatively, you can disable this requirement by setting the `-enable-custom-resources` command-line argument to `false`.
 There are two ways you can install the custom resource definitions:
    1. Using a URL to apply a single CRD yaml file. We recommend this approach.
-   2. Applying your local copy of the CRD yaml files. This requires that you [clone the repository](clone-the-repository)
+   2. Applying your local copy of the CRD yaml files. This requires that you [clone the repository](#lone-the-repository).
 
 {{<tabs name="install-crds">}}
 
@@ -66,7 +66,7 @@ There are two ways you can install the custom resource definitions:
 
 ### Core custom resource definitions
 
-1. Create CRDs for [VirtualServer and VirtualServerRoute]({{< relref "" >}}), [TransportServer]({{< relref "configuration/transportserver-resource.md" >}}), [Policy]({{< relref "configuration/policy-resource.md" >}}) and [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}):
+1. Create CRDs for [VirtualServer and VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md" >}}), [TransportServer]({{< relref "configuration/transportserver-resource.md" >}}), [Policy]({{< relref "configuration/policy-resource.md" >}}) and [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}):
 
     ```shell
     kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds.yaml
