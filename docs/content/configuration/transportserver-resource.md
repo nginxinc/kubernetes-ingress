@@ -160,7 +160,6 @@ loadBalancingMethod: least_conn
 |``loadBalancingMethod`` | The method used to load balance the upstream servers. By default, connections are distributed between the servers using a weighted round-robin balancing method. See the [upstream](http://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#upstream) section for available methods and their details. | ``string`` | No |
 |``backup`` | The name of the backup service. For example, ``backup-svc``, ``backup-service`` are valid. Backup service is of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname). Note: The parameter cannot be used along with the ``random`` , ``hash`` or ``ip_hash`` load balancing methods. | ``string`` | No |
 |``backupPort`` | The port of the backup service. The backup port is required if the backup service name is provided. The port must fall into the range ``1..65535``. | ``uint16`` | No |
-
 {{% /table %}}
 
 ### Upstream.Healthcheck
