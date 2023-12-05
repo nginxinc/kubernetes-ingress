@@ -9,13 +9,13 @@ When you deploy NGINX Ingress Controller as a Deployment, Kubernetes automatical
 - For NGINX, run:
 
     ```shell
-    kubectl apply -f deployment/nginx-ingress.yaml
+    kubectl apply -f deployments/deployment/nginx-ingress.yaml
     ```
 
 - For NGINX Plus, run:
 
     ```shell
-    kubectl apply -f deployment/nginx-plus-ingress.yaml
+    kubectl apply -f deployments/deployment/nginx-plus-ingress.yaml
     ```
 
     Update the `nginx-plus-ingress.yaml` file to include your chosen image from the F5 Container registry or your custom container image.
