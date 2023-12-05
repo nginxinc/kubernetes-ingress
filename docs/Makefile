@@ -1,6 +1,46 @@
+HUGO?=hugo
+HUGO_IMG?=hugomods/hugo:0.115.3
+
 THEME_MODULE = github.com/nginxinc/nginx-hugo-theme
 ## Pulls the current theme version from the Netlify settings
 THEME_VERSION = $(NGINX_THEME_VERSION)
+
+# if there's no local hugo, fallback to docker
+ifeq (, $(shell ${HUGO} version 2> /dev/null))
+ifeq (, $(shell docker version 2> /dev/null))
+    $(error Docker and Hugo are not installed. Hugo (<0.91) or Docker are required to build the local preview.)
+else
+    HUGO=docker run --rm -it -v ${CURDIR}:/src -p 1313:1313 ${HUGO_IMG} hugo --bind 0.0.0.0 -p 1313
+endif
+endif
+
+MARKDOWNLINT?=markdownlint
+MARKDOWNLINT_IMG?=ghcr.io/igorshubovych/markdownlint-cli:latest
+
+# if there's no local markdownlint, fallback to docker
+ifeq (, $(shell ${MARKDOWNLINT} version 2> /dev/null))
+ifeq (, $(shell docker version 2> /dev/null))
+ifneq (, $(shell $(NETLIFY) "true"))
+    $(error Docker and markdownlint are not installed. markdownlint or Docker are required to lint.)
+endif
+else
+    MARKDOWNLINT=docker run --rm -i -v ${CURDIR}:/src --workdir /src ${MARKDOWNLINT_IMG}
+endif
+endif
+
+MARKDOWNLINKCHECK?=markdown-link-check
+MARKDOWNLINKCHECK_IMG?=ghcr.io/tcort/markdown-link-check:stable
+# if there's no local markdown-link-check, fallback to docker
+ifeq (, $(shell ${MARKDOWNLINKCHECK} --version 2> /dev/null))
+ifeq (, $(shell docker version 2> /dev/null))
+ifneq (, $(shell $(NETLIFY) "true"))
+    $(error Docker and markdown-link-check are not installed. markdown-link-check or Docker are required to check links.)
+endif
+else
+    MARKDOWNLINKCHECK=docker run --rm -it -v ${CURDIR}:/docs --workdir /docs ${MARKDOWNLINKCHECK_IMG}
+endif
+endif
+
 
 .PHONY: all clean hugo-mod hugo-mod-tidy build-production build-staging hugo-server-drafts hugo-server netlify
 
@@ -38,12 +78,21 @@ build-dev:
 # Runs the Hugo server with content marked as draft
 # Serves docs at localhost:1313
 docs-drafts:
-	hugo server -D --disableFastRender
+	${HUGO} server -D --disableFastRender
 
 # Runs the Hugo server
 # Serves docs at localhost:1313
 docs:
-	hugo server --disableFastRender
+	${HUGO} server --disableFastRender
+
+docs-local: clean
+	${HUGO}
+
+lint-markdown:
+	${MARKDOWNLINT} -c .markdownlint.yaml  -- content
+
+link-check:
+	${MARKDOWNLINKCHECK} $(shell find content -name '*.md')
 
 # Can be used to deploy to netlify from your local
 # development environment.
