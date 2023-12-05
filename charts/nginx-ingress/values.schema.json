@@ -1075,12 +1075,79 @@
               "examples": [
                 ""
               ]
+            },
+            "imagePullSecretsNames": {
+              "type": "array",
+              "default": [],
+              "title": "The imagePullSecretName list",
+              "examples": [
+                []
+              ]
             }
           },
+          "oneOf": [
+            {
+              "properties": {
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "imagePullSecretsNames"
+              ]
+            },
+            {
+              "properties": {
+                "imagePullSecretName": {
+                  "minLength": 1
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
+              },
+              "required": [
+                "imagePullSecretName"
+              ]
+            },
+            {
+              "properties": {
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
+              },
+              "required": [
+                "imagePullSecretName",
+                "imagePullSecretsNames"
+              ]
+            },
+            {
+              "properties": {
+                "imagePullSecretName": {
+                  "maxLength": 0
+                },
+                "imagePullSecretsNames": {
+                  "maxItems": 0
+                }
+              },
+              "not": {
+                "required": [
+                  "imagePullSecretName",
+                  "imagePullSecretsNames"
+                ]
+              }
+            }
+          ],
           "examples": [
             {
               "name": "",
-              "imagePullSecretName": ""
+              "imagePullSecretName": "",
+              "imagePullSecretsNames": []
             }
           ]
         },
@@ -1412,7 +1479,8 @@
           },
           "serviceAccount": {
             "name": "",
-            "imagePullSecretName": ""
+            "imagePullSecretName": "",
+            "imagePullSecretsNames": []
           },
           "serviceMonitor": {
             "create": false,
@@ -1784,7 +1852,8 @@
         },
         "serviceAccount": {
           "name": "",
-          "imagePullSecretName": ""
+          "imagePullSecretName": "",
+          "imagePullSecretsNames": []
         },
         "podDisruptionBudget": {
           "enabled": false,
