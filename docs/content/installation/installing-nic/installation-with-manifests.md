@@ -90,7 +90,7 @@ There are two ways you can install the custom resource definitions:
 
 {{%tab name="Install CRDs after cloning the repo"%}}
 
-If you are installing the CRDs this way, ensure that you have first [cloned the repository](#clone-the-repository) 
+If you are installing the CRDs this way, ensure that you have first [cloned the repository](#clone-the-repository)
 
 ### Core custom resource definitions
 
@@ -255,7 +255,7 @@ Connect to ports 80 and 443 using the IP address of any node in the cluster wher
 3. **Delete the Custom Resource Definitions**:
 
    {{<tabs name="delete-crds">}}
-   
+
    {{%tab name="Deleting CRDs from single YAML"%}}
 
    1. Delete core custom resource definitions:
@@ -266,14 +266,14 @@ Connect to ports 80 and 443 using the IP address of any node in the cluster wher
 
    ```shell
     kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-waf.yaml
-    ```   
+    ```
 
    3. Delete custom resource definitions for the NGINX App Protect DoS module:
    ```shell
     kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-dos.yaml
     ```
    {{%/tab%}}
-   
+
    {{%tab name="Deleting CRDs after cloning the repo"%}}
 
    1. Delete core custom resource definitions:
@@ -284,7 +284,7 @@ Connect to ports 80 and 443 using the IP address of any node in the cluster wher
 
    ```shell
     kubectl apply -f config/crd/bases/crds-nap-waf.yaml
-    ```   
+    ```
 
    3. Delete custom resource definitions for the NGINX App Protect DoS module:
    ```shell
@@ -292,5 +292,5 @@ Connect to ports 80 and 443 using the IP address of any node in the cluster wher
     ```
 
    {{%/tab%}}
-   
+
    {{</tabs>}}
