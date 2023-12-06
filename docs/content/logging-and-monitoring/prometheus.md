@@ -3,9 +3,9 @@ title: Prometheus
 
 description: "The Ingress Controller exposes a number of metrics in the Prometheus format."
 weight: 2000
-doctypes: [""]
+doctypes: ["concept"]
 aliases:
-    - /prometheus/
+  - /prometheus/
 toc: true
 docs: "DOCS-614"
 ---
@@ -15,6 +15,7 @@ The Ingress Controller exposes a number of metrics in the [Prometheus](https://p
 
 ## Enabling Metrics
 
+### Using Manifests
 If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the Ingress Controller, to enable Prometheus metrics:
 
 1. Run the Ingress Controller with the `-enable-prometheus-metrics` [command-line argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments). As a result, the Ingress Controller will expose NGINX or NGINX Plus metrics in the Prometheus format via the path `/metrics` on port `9113` (customizable via the `-prometheus-metrics-listen-port` command-line argument).
@@ -35,7 +36,22 @@ If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the 
         prometheus.io/scheme: http
     ```
 
+### Using Helm
+
 If you're using *Helm* to install the Ingress Controller, to enable Prometheus metrics, configure the `prometheus.*` parameters of the Helm chart. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
+
+### Using ServiceMonitor
+
+When deploying with *Helm*, you can deploy a `Service` and `ServiceMonitor` resource using the `prometheus.service.*` and `prometheus.serviceMonitor.*` parameters.
+When these resources are deployed, Prometheus metrics exposed by the NGINX Ingress Controller can be captured and enumerated using a `Prometheus` resource alongside a Prometheus Operator deployment.
+
+To view metrics captured this way, the following is required:
+* The latest ServiceMonitor CRD from the [prometheus-operator](https://github.com/prometheus-operator/prometheus-operator) repository:
+```shell
+LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
+curl https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/$LATEST/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml | kubectl create -f -
+```
+* A working [Prometheus resource and Prometheus Operator](https://prometheus-operator.dev/docs/user-guides/getting-started/)
 
 ## Available Metrics
 
