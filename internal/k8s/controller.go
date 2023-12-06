@@ -3038,6 +3038,25 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	externalNameSvcs := make(map[string]bool)
 	podsByIP := make(map[string]configs.PodInfo)
 
+	// generateBackupEndpoints takes the Upstream, determines if backup and backup port are defined.
+	// If backup and backup port are defined it generates a backup server entry for the upstream.
+	// Backup Service is of type ExternalName.
+	generateBackupEndpoints := func(endpoints map[string][]string, u conf_v1.Upstream) {
+		if u.Backup == nil || u.BackupPort == nil {
+			return
+		}
+		backupEndpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, *u.Backup, u.Subselector, *u.BackupPort)
+		backupEndps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, *u.Backup, *u.BackupPort)
+		if err != nil {
+			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+		}
+		if err == nil && external {
+			externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, *u.Backup)] = true
+		}
+		bendps := getIPAddressesFromEndpoints(backupEndps)
+		endpoints[backupEndpointsKey] = bendps
+	}
+
 	for _, u := range virtualServer.Spec.Upstreams {
 		endpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, u.Service, u.Subselector, u.Port)
 
@@ -3081,21 +3100,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			}
 		}
 
-		// Backup Service defined on Upstream
-		var backupEndpointsKey string
-		if u.Backup != nil && u.BackupPort != nil {
-			backupEndpointsKey = configs.GenerateEndpointsKey(virtualServer.Namespace, *u.Backup, u.Subselector, *u.BackupPort)
-			backupEndps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, *u.Backup, *u.BackupPort)
-			if err != nil {
-				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-			}
-			if err == nil && external {
-				externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, *u.Backup)] = true
-			}
-			bendps := getIPAddressesFromEndpoints(backupEndps)
-			endpoints[backupEndpointsKey] = bendps
-		}
-
+		generateBackupEndpoints(endpoints, u)
 		endpoints[endpointsKey] = endps
 	}
 
@@ -3221,21 +3226,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 				}
 			}
 
-			// Backup Service defined on Upstream
-			var backupEndpointsKey string
-			if u.Backup != nil && u.BackupPort != nil {
-				backupEndpointsKey = configs.GenerateEndpointsKey(virtualServer.Namespace, *u.Backup, u.Subselector, *u.BackupPort)
-				backupEndps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, *u.Backup, *u.BackupPort)
-				if err != nil {
-					glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-				}
-				if err == nil && external {
-					externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, *u.Backup)] = true
-				}
-				bendps := getIPAddressesFromEndpoints(backupEndps)
-				endpoints[backupEndpointsKey] = bendps
-			}
-
+			generateBackupEndpoints(endpoints, u)
 			endpoints[endpointsKey] = endps
 		}
 	}
