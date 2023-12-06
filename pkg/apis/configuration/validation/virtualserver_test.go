@@ -2519,6 +2519,46 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 			pathPrefix: "/abc",
 			msg:        "invalid prefix",
 		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{	Path: "~^/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			pathPrefix: "/abc",
+			msg:        "invalid prefix",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{	Path: "/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			pathPrefix: "/abc",
+			msg:        "invalid prefix",
+		},
 	}
 
 	vsv := &VirtualServerValidator{isPlus: false}
