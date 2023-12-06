@@ -75,6 +75,8 @@ type MergeableIngresses struct {
 	Minions []*IngressEx
 }
 
+// NginxCfgParams is a collection of parameters
+// used by generateNginxCfg() and generateNginxCfgForMergeableIngresses()
 type NginxCfgParams struct {
 	staticParams         *StaticConfigParams
 	ingEx                *IngressEx

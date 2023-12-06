@@ -129,6 +129,8 @@ type Configurator struct {
 	isReloadsEnabled        bool
 }
 
+// ConfiguratorParams is a collection of parameters used for the
+// NewConfigurator() function
 type ConfiguratorParams struct {
 	NginxManager            nginx.Manager
 	StaticCfgParams         *StaticConfigParams
