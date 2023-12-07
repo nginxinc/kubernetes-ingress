@@ -12,7 +12,7 @@ spec:
     service: cafe-svc
     port: 8443
     loadBalancingMethod: round_robin
-    backup: backup-svc
+    backup: backup-svc-ts
     backupPort: 8443
   action:
     pass: secure-app
