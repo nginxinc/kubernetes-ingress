@@ -105,6 +105,8 @@ If you are installing the CRDs this way, ensure that you have first [cloned the 
     ```
 ### Optional custom resource definitions
 
+{{<  note >}} This step can be skipped if you are using App Protect WAF module with policy bundles. {{<  /note >}}
+
 1. For the NGINX App Protect WAF module, create CRDs for `APPolicy`, `APLogConf` and `APUserSig`:
 
     ```shell

@@ -123,9 +123,20 @@ func main() {
 	plusClient := createPlusClient(*nginxPlus, useFakeNginxManager, nginxManager)
 
 	plusCollector, syslogListener, latencyCollector := createPlusAndLatencyCollectors(registry, constLabels, kubeClient, plusClient, staticCfgParams.NginxServiceMesh)
+	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
+		NginxManager:            nginxManager,
+		StaticCfgParams:         staticCfgParams,
+		Config:                  cfgParams,
+		TemplateExecutor:        templateExecutor,
+		TemplateExecutorV2:      templateExecutorV2,
+		LatencyCollector:        latencyCollector,
+		LabelUpdater:            plusCollector,
+		IsPlus:                  *nginxPlus,
+		IsWildcardEnabled:       isWildcardEnabled,
+		IsPrometheusEnabled:     *enablePrometheusMetrics,
+		IsLatencyMetricsEnabled: *enableLatencyMetrics,
+	})
 
-	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, templateExecutor,
-		templateExecutorV2, *nginxPlus, isWildcardEnabled, plusCollector, *enablePrometheusMetrics, latencyCollector, *enableLatencyMetrics)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
