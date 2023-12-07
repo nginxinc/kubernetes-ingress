@@ -1359,6 +1359,14 @@
           "examples": [
             false
           ]
+        },
+        "enableSSLDynamicReload": {
+          "type": "boolean",
+          "default": true,
+          "title": "Enable dynamic certificate reloads for NGINX Plus",
+          "examples": [
+            true
+          ]
         }
       },
       "examples": [

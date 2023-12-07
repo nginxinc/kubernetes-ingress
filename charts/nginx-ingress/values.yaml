@@ -463,6 +463,9 @@ controller:
   ## Configure root filesystem as read-only and add volumes for temporary data.
   readOnlyRootFilesystem: false
 
+  ## Enable dynamic reloading of certificates for NGINX Plus
+  enableSSLDynamicReload: true
+
 rbac:
   ## Configures RBAC.
   create: true
