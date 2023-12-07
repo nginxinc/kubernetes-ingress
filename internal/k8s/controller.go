@@ -2517,11 +2517,13 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 	var addOrUpdateErr error
 
 	resourceExes := lbc.createExtendedResources(resources)
-	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes)
 
-	if addOrUpdateErr != nil {
-		glog.Errorf("Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
+	if !lbc.configurator.DynamicSSLReloadEnabled() {
+		warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes)
+		if addOrUpdateErr != nil {
+			glog.Errorf("Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
+			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
+		}
 	}
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
@@ -2544,11 +2546,13 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		specialSecretsToUpdate = append(specialSecretsToUpdate, configs.WildcardSecretName)
 	}
 
-	err = lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialSecretsToUpdate)
-	if err != nil {
-		glog.Errorf("Error when updating the special Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
-		return
+	if !lbc.configurator.DynamicSSLReloadEnabled() {
+		err = lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialSecretsToUpdate)
+		if err != nil {
+			glog.Errorf("Error when updating the special Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
+			return
+		}
 	}
 
 	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
