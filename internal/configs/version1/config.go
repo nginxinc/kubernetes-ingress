@@ -230,6 +230,8 @@ type MainConfig struct {
 	InternalRouteServerName            string
 	LatencyMetrics                     bool
 	OIDC                               bool
+	DynamicSSLReloadEnabled            bool
+	StaticSSLPath                      string
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

@@ -370,10 +370,10 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (Warnings, error) 
 	// However, NGINX configuration for an Ingress resource, to handle the case of a missing secret,
 	// relies on the path to be always configured.
 	if jwtKey, exists := ingEx.Ingress.Annotations[JWTKeyAnnotation]; exists {
-		ingEx.SecretRefs[jwtKey].Path = cnf.nginxManager.GetFilenameForSecret(ingEx.Ingress.Namespace + "-" + jwtKey)
+		ingEx.SecretRefs[jwtKey].Path = cnf.nginxManager.GetFileReferenceForSecret(ingEx.Ingress.Namespace + "-" + jwtKey)
 	}
 	if basicAuth, exists := ingEx.Ingress.Annotations[BasicAuthSecretAnnotation]; exists {
-		ingEx.SecretRefs[basicAuth].Path = cnf.nginxManager.GetFilenameForSecret(ingEx.Ingress.Namespace + "-" + basicAuth)
+		ingEx.SecretRefs[basicAuth].Path = cnf.nginxManager.GetFileReferenceForSecret(ingEx.Ingress.Namespace + "-" + basicAuth)
 	}
 
 	isMinion := false
@@ -426,17 +426,17 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	// However, NGINX configuration for an Ingress resource, to handle the case of a missing secret,
 	// relies on the path to be always configured.
 	if jwtKey, exists := mergeableIngs.Master.Ingress.Annotations[JWTKeyAnnotation]; exists {
-		mergeableIngs.Master.SecretRefs[jwtKey].Path = cnf.nginxManager.GetFilenameForSecret(mergeableIngs.Master.Ingress.Namespace + "-" + jwtKey)
+		mergeableIngs.Master.SecretRefs[jwtKey].Path = cnf.nginxManager.GetFileReferenceForSecret(mergeableIngs.Master.Ingress.Namespace + "-" + jwtKey)
 	}
 	if basicAuth, exists := mergeableIngs.Master.Ingress.Annotations[BasicAuthSecretAnnotation]; exists {
-		mergeableIngs.Master.SecretRefs[basicAuth].Path = cnf.nginxManager.GetFilenameForSecret(mergeableIngs.Master.Ingress.Namespace + "-" + basicAuth)
+		mergeableIngs.Master.SecretRefs[basicAuth].Path = cnf.nginxManager.GetFileReferenceForSecret(mergeableIngs.Master.Ingress.Namespace + "-" + basicAuth)
 	}
 	for _, minion := range mergeableIngs.Minions {
 		if jwtKey, exists := minion.Ingress.Annotations[JWTKeyAnnotation]; exists {
-			minion.SecretRefs[jwtKey].Path = cnf.nginxManager.GetFilenameForSecret(minion.Ingress.Namespace + "-" + jwtKey)
+			minion.SecretRefs[jwtKey].Path = cnf.nginxManager.GetFileReferenceForSecret(minion.Ingress.Namespace + "-" + jwtKey)
 		}
 		if basicAuth, exists := minion.Ingress.Annotations[BasicAuthSecretAnnotation]; exists {
-			minion.SecretRefs[basicAuth].Path = cnf.nginxManager.GetFilenameForSecret(minion.Ingress.Namespace + "-" + basicAuth)
+			minion.SecretRefs[basicAuth].Path = cnf.nginxManager.GetFileReferenceForSecret(minion.Ingress.Namespace + "-" + basicAuth)
 		}
 	}
 

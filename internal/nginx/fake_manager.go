@@ -77,7 +77,7 @@ func (*FakeManager) CreateTLSPassthroughHostsConfig(_ []byte) {
 // CreateSecret provides a fake implementation of CreateSecret.
 func (fm *FakeManager) CreateSecret(name string, _ []byte, _ os.FileMode) string {
 	glog.V(3).Infof("Writing secret %v", name)
-	return fm.GetFilenameForSecret(name)
+	return fm.GetFileReferenceForSecret(name)
 }
 
 // DeleteSecret provides a fake implementation of DeleteSecret.
@@ -85,8 +85,8 @@ func (*FakeManager) DeleteSecret(name string) {
 	glog.V(3).Infof("Deleting secret %v", name)
 }
 
-// GetFilenameForSecret provides a fake implementation of GetFilenameForSecret.
-func (fm *FakeManager) GetFilenameForSecret(name string) string {
+// GetFileReferenceForSecret provides a fake implementation of GetFileReferenceForSecret.
+func (fm *FakeManager) GetFileReferenceForSecret(name string) string {
 	return path.Join(fm.secretsPath, name)
 }
 
@@ -99,7 +99,7 @@ func (fm *FakeManager) CreateDHParam(_ string) (string, error) {
 // Version provides a fake implementation of Version.
 func (*FakeManager) Version() string {
 	glog.V(3).Info("Printing nginx version")
-	return "fake version"
+	return "fake version plus"
 }
 
 // Start provides a fake implementation of Start.
@@ -168,4 +168,8 @@ func (*FakeManager) AppProtectDosAgentQuit() {
 // AppProtectDosAgentStart is a fake implementation of AppProtectAgentStart
 func (*FakeManager) AppProtectDosAgentStart(_ chan error, _ bool, _ int, _ int, _ int) {
 	glog.V(3).Infof("Starting FakeAppProtectDosAgent")
+}
+
+func (fm *FakeManager) GetSecretsDir() string {
+	return fm.secretsPath
 }

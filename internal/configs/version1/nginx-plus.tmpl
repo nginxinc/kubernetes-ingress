@@ -27,7 +27,7 @@ load_module modules/ngx_fips_check_module.so;
 {{$value}}{{end}}
 {{- end}}
 
-{{if .OIDC}}
+{{- if .OIDC}}
 load_module modules/ngx_http_js_module.so;
 {{- end}}
 
@@ -59,6 +59,12 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
+
+    {{- if .DynamicSSLReloadEnabled }}
+    map $nginx_version $secret_dir_path {
+        default "{{ .StaticSSLPath }}";
+    }
+    {{- end }}
 
     {{- if .AppProtectDosLoadModule}}
     {{- if .AppProtectDosLogFormat}}

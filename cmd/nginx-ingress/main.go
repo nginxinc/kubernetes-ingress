@@ -67,7 +67,7 @@ func main() {
 
 	managerCollector, controllerCollector, registry := createManagerAndControllerCollectors(constLabels)
 
-	nginxManager, useFakeNginxManager := createNginxManager(managerCollector)
+	nginxManager, useFakeNginxManager := createNginxManager(managerCollector, *enableDynamicSSLReload)
 
 	nginxVersion := getNginxVersionInfo(nginxManager)
 
@@ -108,6 +108,8 @@ func main() {
 		EnableOIDC:                     *enableOIDC,
 		SSLRejectHandshake:             sslRejectHandshake,
 		EnableCertManager:              *enableCertManager,
+		DynamicSSLReload:               *enableDynamicSSLReload,
+		StaticSSLPath:                  nginxManager.GetSecretsDir(),
 	}
 
 	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
@@ -135,7 +137,7 @@ func main() {
 		IsWildcardEnabled:         isWildcardEnabled,
 		IsPrometheusEnabled:       *enablePrometheusMetrics,
 		IsLatencyMetricsEnabled:   *enableLatencyMetrics,
-		IsDynamicSSLReloadEnabled: *dynamicSSLReload,
+		IsDynamicSSLReloadEnabled: *enableDynamicSSLReload,
 	})
 
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
@@ -378,14 +380,14 @@ func createTemplateExecutors() (*version1.TemplateExecutor, *version2.TemplateEx
 	return templateExecutor, templateExecutorV2
 }
 
-func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Manager, bool) {
+func createNginxManager(managerCollector collectors.ManagerCollector, enableDynamicSSLReload bool) (nginx.Manager, bool) {
 	useFakeNginxManager := *proxyURL != ""
 	var nginxManager nginx.Manager
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
 		timeout := time.Duration(*nginxReloadTimeout) * time.Millisecond
-		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, timeout)
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, timeout, enableDynamicSSLReload)
 	}
 	return nginxManager, useFakeNginxManager
 }

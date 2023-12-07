@@ -199,7 +199,7 @@ var (
 
 	defaultHTTPSListenerPort = flag.Int("default-https-listener-port", 443, "Sets a custom port for the HTTPS `default_server`. [1024 - 65535]")
 
-	dynamicSSLReload = flag.Bool(dynamicSSLReloadParam, true, "Enable reloading of SSL Certificates without restarting the NGINX process. Requires -nginx-plus")
+	enableDynamicSSLReload = flag.Bool(dynamicSSLReloadParam, true, "Enable reloading of SSL Certificates without restarting the NGINX process. Requires -nginx-plus")
 
 	startupCheckFn func() error
 )
@@ -276,9 +276,9 @@ func parseFlags() {
 		glog.Fatal("ingresslink and external-service cannot both be set")
 	}
 
-	if *dynamicSSLReload && !*nginxPlus {
+	if *enableDynamicSSLReload && !*nginxPlus {
 		glog.V(3).Infof("%s flag requires -nginx-plus and will not be enabled", dynamicSSLReloadParam)
-		*dynamicSSLReload = false
+		*enableDynamicSSLReload = false
 	}
 }
 

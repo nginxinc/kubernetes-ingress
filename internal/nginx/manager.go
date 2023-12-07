@@ -43,6 +43,8 @@ const (
 	appProtectDosAgentInstallCmd    = "/usr/bin/adminstall"
 	appProtectDosAgentStartCmd      = "/usr/bin/admd -d --standalone"
 	appProtectDosAgentStartDebugCmd = "/usr/bin/admd -d --standalone --log debug"
+
+	secretPathVariable = "$secret_dir_path"
 )
 
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
@@ -67,7 +69,7 @@ type Manager interface {
 	CreateAppProtectResourceFile(name string, content []byte)
 	DeleteAppProtectResourceFile(name string)
 	ClearAppProtectFolder(name string)
-	GetFilenameForSecret(name string) string
+	GetFileReferenceForSecret(name string) string
 	CreateDHParam(content string) (string, error)
 	CreateOpenTracingTracerConfig(content string) error
 	Start(done chan error)
@@ -83,6 +85,7 @@ type Manager interface {
 	AppProtectPluginQuit()
 	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
 	AppProtectDosAgentQuit()
+	GetSecretsDir() string
 }
 
 // LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
@@ -105,10 +108,11 @@ type LocalManager struct {
 	OpenTracing                  bool
 	appProtectPluginPid          int
 	appProtectDosAgentPid        int
+	useDynamicSecretPath         bool
 }
 
 // NewLocalManager creates a LocalManager.
-func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector, timeout time.Duration) *LocalManager {
+func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector, timeout time.Duration, dynamicSecretPath bool) *LocalManager {
 	verifyConfigGenerator, err := newVerifyConfigGenerator()
 	if err != nil {
 		glog.Fatalf("error instantiating a verifyConfigGenerator: %v", err)
@@ -127,6 +131,7 @@ func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector
 		configVersion:               0,
 		verifyClient:                newVerifyClient(timeout),
 		metricsCollector:            mc,
+		useDynamicSecretPath:        dynamicSecretPath,
 	}
 
 	return &manager
@@ -201,18 +206,18 @@ func (lm *LocalManager) CreateTLSPassthroughHostsConfig(content []byte) {
 // CreateSecret creates a secret file with the specified name, content and mode. If the file already exists,
 // it will be overridden.
 func (lm *LocalManager) CreateSecret(name string, content []byte, mode os.FileMode) string {
-	filename := lm.GetFilenameForSecret(name)
+	filename := lm.getAbsoluteFilenameForSecret(name)
 
 	glog.V(3).Infof("Writing secret to %v", filename)
 
 	createFileAndWriteAtomically(filename, lm.secretsPath, mode, content)
 
-	return filename
+	return lm.GetFileReferenceForSecret(name)
 }
 
 // DeleteSecret the file with the secret.
 func (lm *LocalManager) DeleteSecret(name string) {
-	filename := lm.GetFilenameForSecret(name)
+	filename := lm.getAbsoluteFilenameForSecret(name)
 
 	glog.V(3).Infof("Deleting secret from %v", filename)
 
@@ -221,8 +226,15 @@ func (lm *LocalManager) DeleteSecret(name string) {
 	}
 }
 
-// GetFilenameForSecret constructs the filename for the secret.
-func (lm *LocalManager) GetFilenameForSecret(name string) string {
+// GetFileReferenceForSecret constructs the filename for the secret
+// This will include a variable in the path if lm.useDynamicSecretPath is true.
+func (lm *LocalManager) GetFileReferenceForSecret(name string) string {
+	return path.Join(lm.getCurrentSecretReference(), name)
+}
+
+// getAbsoluteFilenameForSecret constructs the absolute filename for the secret
+// This does not include a variable when lm.useDynamicSecretPath is true.
+func (lm *LocalManager) getAbsoluteFilenameForSecret(name string) string {
 	return path.Join(lm.secretsPath, name)
 }
 
@@ -551,4 +563,15 @@ func getBinaryFileName(debug bool) string {
 		return nginxBinaryPathDebug
 	}
 	return nginxBinaryPath
+}
+
+func (lm *LocalManager) getCurrentSecretReference() string {
+	if lm.useDynamicSecretPath {
+		return secretPathVariable
+	}
+	return lm.secretsPath
+}
+
+func (lm *LocalManager) GetSecretsDir() string {
+	return lm.secretsPath
 }
