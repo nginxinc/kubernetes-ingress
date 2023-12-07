@@ -170,6 +170,7 @@ func (*FakeManager) AppProtectDosAgentStart(_ chan error, _ bool, _ int, _ int, 
 	glog.V(3).Infof("Starting FakeAppProtectDosAgent")
 }
 
+// GetSecretsDir is a fake implementation
 func (fm *FakeManager) GetSecretsDir() string {
 	return fm.secretsPath
 }

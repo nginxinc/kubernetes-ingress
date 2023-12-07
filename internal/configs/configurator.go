@@ -1731,6 +1731,7 @@ func (cnf *Configurator) DeleteSecret(key string) {
 	cnf.nginxManager.DeleteSecret(keyToFileName(key))
 }
 
+// Used to check if dynamic reloading of SSL certificates is enabled
 func (cnf *Configurator) DynamicSSLReloadEnabled() bool {
 	return cnf.isDynamicSSLReloadEnabled
 }
