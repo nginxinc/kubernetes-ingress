@@ -129,11 +129,24 @@ type Configurator struct {
 	isReloadsEnabled        bool
 }
 
+// ConfiguratorParams is a collection of parameters used for the
+// NewConfigurator() function
+type ConfiguratorParams struct {
+	NginxManager            nginx.Manager
+	StaticCfgParams         *StaticConfigParams
+	Config                  *ConfigParams
+	TemplateExecutor        *version1.TemplateExecutor
+	TemplateExecutorV2      *version2.TemplateExecutor
+	LabelUpdater            collector.LabelUpdater
+	LatencyCollector        latCollector.LatencyCollector
+	IsPlus                  bool
+	IsPrometheusEnabled     bool
+	IsWildcardEnabled       bool
+	IsLatencyMetricsEnabled bool
+}
+
 // NewConfigurator creates a new Configurator.
-func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams,
-	templateExecutor *version1.TemplateExecutor, templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool,
-	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool,
-) *Configurator {
+func NewConfigurator(p ConfiguratorParams) *Configurator {
 	metricLabelsIndex := &metricLabelsIndex{
 		ingressUpstreams:             make(map[string][]string),
 		virtualServerUpstreams:       make(map[string][]string),
@@ -147,23 +160,23 @@ func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigPa
 	}
 
 	cnf := Configurator{
-		nginxManager:            nginxManager,
-		staticCfgParams:         staticCfgParams,
-		cfgParams:               config,
+		nginxManager:            p.NginxManager,
+		staticCfgParams:         p.StaticCfgParams,
+		cfgParams:               p.Config,
 		ingresses:               make(map[string]*IngressEx),
 		virtualServers:          make(map[string]*VirtualServerEx),
 		transportServers:        make(map[string]*TransportServerEx),
-		templateExecutor:        templateExecutor,
-		templateExecutorV2:      templateExecutorV2,
+		templateExecutor:        p.TemplateExecutor,
+		templateExecutorV2:      p.TemplateExecutorV2,
 		minions:                 make(map[string]map[string]bool),
 		tlsPassthroughPairs:     make(map[string]tlsPassthroughPair),
-		isPlus:                  isPlus,
-		isWildcardEnabled:       isWildcardEnabled,
-		labelUpdater:            labelUpdater,
+		isPlus:                  p.IsPlus,
+		isWildcardEnabled:       p.IsWildcardEnabled,
+		labelUpdater:            p.LabelUpdater,
 		metricLabelsIndex:       metricLabelsIndex,
-		isPrometheusEnabled:     isPrometheusEnabled,
-		latencyCollector:        latencyCollector,
-		isLatencyMetricsEnabled: isLatencyMetricsEnabled,
+		isPrometheusEnabled:     p.IsPrometheusEnabled,
+		latencyCollector:        p.LatencyCollector,
+		isLatencyMetricsEnabled: p.IsLatencyMetricsEnabled,
 		isReloadsEnabled:        false,
 	}
 	return &cnf
@@ -361,8 +374,18 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (Warnings, error) 
 	}
 
 	isMinion := false
-	nginxCfg, warnings := generateNginxCfg(ingEx, apResources, dosResource, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(),
-		cnf.staticCfgParams, cnf.isWildcardEnabled)
+	nginxCfg, warnings := generateNginxCfg(NginxCfgParams{
+		staticParams:         cnf.staticCfgParams,
+		ingEx:                ingEx,
+		apResources:          apResources,
+		dosResource:          dosResource,
+		isMinion:             isMinion,
+		isPlus:               cnf.isPlus,
+		baseCfgParams:        cnf.cfgParams,
+		isResolverConfigured: cnf.IsResolverConfigured(),
+		isWildcardEnabled:    cnf.isWildcardEnabled,
+	})
+
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
 	if err != nil {
@@ -414,8 +437,16 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		}
 	}
 
-	nginxCfg, warnings := generateNginxCfgForMergeableIngresses(mergeableIngs, apResources, dosResource, cnf.cfgParams, cnf.isPlus,
-		cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled)
+	nginxCfg, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
+		mergeableIngs:        mergeableIngs,
+		apResources:          apResources,
+		dosResource:          dosResource,
+		baseCfgParams:        cnf.cfgParams,
+		isPlus:               cnf.isPlus,
+		isResolverConfigured: cnf.IsResolverConfigured(),
+		staticParams:         cnf.staticCfgParams,
+		isWildcardEnabled:    cnf.isWildcardEnabled,
+	})
 
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
