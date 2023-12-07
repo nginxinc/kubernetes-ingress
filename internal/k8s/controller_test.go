@@ -419,7 +419,20 @@ func TestFindProbeForPods(t *testing.T) {
 func TestGetServicePortForIngressPort(t *testing.T) {
 	t.Parallel()
 	fakeClient := fake.NewSimpleClientset()
-	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false, nil, false, nil, false)
+
+	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
+		NginxManager:            &nginx.LocalManager{},
+		StaticCfgParams:         &configs.StaticConfigParams{},
+		Config:                  &configs.ConfigParams{},
+		TemplateExecutor:        &version1.TemplateExecutor{},
+		TemplateExecutorV2:      &version2.TemplateExecutor{},
+		LatencyCollector:        nil,
+		LabelUpdater:            nil,
+		IsPlus:                  false,
+		IsWildcardEnabled:       false,
+		IsPrometheusEnabled:     false,
+		IsLatencyMetricsEnabled: false,
+	})
 	lbc := LoadBalancerController{
 		client:           fakeClient,
 		ingressClass:     "nginx",
