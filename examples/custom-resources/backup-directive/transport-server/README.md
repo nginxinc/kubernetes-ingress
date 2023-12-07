@@ -1,12 +1,8 @@
-# Support for Type ExternalName Services in Transport Server
+# Support for Backup Directive in in Transport Server
 
-The Ingress Controller supports routing requests to services of the type
+The Ingress Controller supports routing requests to a service specified as `Backup`.
+The `backup` service is of type
 [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname).
-
-An ExternalName service is defined by an external DNS name that is resolved into the IP addresses, typically external to
-the cluster. This enables to use the Ingress Controller to route requests to the destinations outside of the cluster.
-
-**Note:** This feature is only available in NGINX Plus.
 
 ## Prerequisites
 
@@ -18,14 +14,20 @@ Any application deployed in other namespaces will be treated as an external serv
 We will use the ```examples/custom-resources/tls-passthrough``` application example as our backend app that will be
 responding to requests.
 
-## Example
+## Example NIC Plus
 
 ### 1. Deploy the tls-passthrough application
 
-1. Deploy the backend application as described in the ```examples/custom-resources/tls-passthrough``` example, and make
-   sure it is working as described.
+1. Deploy the backend application as described in the ```examples/custom-resources/tls-passthrough``` example,
+and make sure it is working as described. The application must use one of supported load balancing
+ methods required by the backup service.
 
-### 2. Deploy external service to external namespace
+TODO:
+
+update loadBalancing method - the backup service of type ExternalName does not work with the following
+load balancing methods: `hash`, 'round_robin', ..... add here methods
+
+### 2. Deploy the second aplication to external namespace
 
 1. Deploy backend application to external namespace (```external-ns```). Note that the namespace is not being watched by
    ```NIC```.

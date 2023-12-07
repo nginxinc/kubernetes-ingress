@@ -15,7 +15,7 @@ spec:
     port: 80
     lb-method: round_robin
     backup: backup-svc
-    backupPort: 8088
+    backupPort: 80
   routes:
   - path: /tea
     action:

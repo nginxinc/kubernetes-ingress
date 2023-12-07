@@ -8,11 +8,11 @@ spec:
     protocol: TLS_PASSTHROUGH
   host: cafe.example.org
   upstreams:
-  - name: cafe-app
+  - name: secure-app
     service: cafe-svc
     port: 8443
     loadBalancingMethod: round_robin
-    backup: backup-svc-bak
+    backup: backup-svc
     backupPort: 8443
   action:
-    pass: cafe-app
+    pass: secure-app
