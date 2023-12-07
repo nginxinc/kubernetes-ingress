@@ -572,6 +572,7 @@ func (lm *LocalManager) getCurrentSecretReference() string {
 	return lm.secretsPath
 }
 
+// GetSecretsDir allows the static config params to reference the secrets directory
 func (lm *LocalManager) GetSecretsDir() string {
 	return lm.secretsPath
 }
