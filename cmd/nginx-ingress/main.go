@@ -74,7 +74,7 @@ func main() {
 	nginxVersion := getNginxVersionInfo(nginxManager)
 
 	var appProtectVersion string
-	if *appProtect || *appProtectDos {
+	if *appProtect {
 		appProtectVersion = getAppProtectVersionInfo()
 	}
 
