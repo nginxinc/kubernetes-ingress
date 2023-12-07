@@ -9,13 +9,13 @@ When you deploy NGINX Ingress Controller as a DaemonSet, Kubernetes creates an I
 - For NGINX, run:
 
     ```shell
-    kubectl apply -f daemon-set/nginx-ingress.yaml
+    kubectl apply -f deployments/daemon-set/nginx-ingress.yaml
     ```
 
 - For NGINX Plus, run:
 
     ```shell
-    kubectl apply -f daemon-set/nginx-plus-ingress.yaml
+    kubectl apply -f deployments/daemon-set/nginx-plus-ingress.yaml
     ```
 
     Update the `nginx-plus-ingress.yaml` file to include your chosen image from the F5 Container registry or your custom container image.
