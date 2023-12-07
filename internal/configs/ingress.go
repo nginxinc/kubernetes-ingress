@@ -90,6 +90,7 @@ type NginxCfgParams struct {
 	isWildcardEnabled    bool
 }
 
+//nolint:gocyclo
 func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) {
 	hasAppProtect := p.staticParams.MainAppProtectLoadModule
 	hasAppProtectDos := p.staticParams.MainAppProtectDosLoadModule
@@ -224,7 +225,8 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 			grpcOnly = false
 		}
 
-		for _, path := range httpIngressRuleValue.Paths {
+		for i := range httpIngressRuleValue.Paths {
+			path := httpIngressRuleValue.Paths[i]
 			// skip invalid paths for minions
 			if p.isMinion && !p.ingEx.ValidMinionPaths[path.Path] {
 				continue
