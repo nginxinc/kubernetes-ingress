@@ -839,8 +839,12 @@ func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, sec
 		cnf.nginxManager.CreateSecret(secretName, data, nginx.TLSSecretFileMode)
 	}
 
-	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error when reloading NGINX when updating the special Secrets: %w", err)
+	if !cnf.DynamicSSLReloadEnabled() {
+		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+			return fmt.Errorf("error when reloading NGINX when updating the special Secrets: %w", err)
+		}
+	} else {
+		glog.V(3).Infof("Skipping reload for %d special Secrets", len(secretNames))
 	}
 
 	return nil

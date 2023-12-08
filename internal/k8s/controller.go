@@ -2548,15 +2548,11 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		specialSecretsToUpdate = append(specialSecretsToUpdate, configs.WildcardSecretName)
 	}
 
-	if !lbc.configurator.DynamicSSLReloadEnabled() {
-		err = lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialSecretsToUpdate)
-		if err != nil {
-			glog.Errorf("Error when updating the special Secret %v: %v", secretNsName, err)
-			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
-			return
-		}
-	} else {
-		glog.V(3).Infof("Skipping reload for special Secret  %v: %v", secretNsName, err)
+	err = lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialSecretsToUpdate)
+	if err != nil {
+		glog.Errorf("Error when updating the special Secret %v: %v", secretNsName, err)
+		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
+		return
 	}
 
 	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
