@@ -695,8 +695,10 @@ func createPlusAndLatencyCollectors(
 
 			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			cacheZoneLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			workerPIDVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
-				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, nil, nil)
+				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, cacheZoneLabels, workerPIDVariableLabels)
 			promlogConfig := &promlog.Config{}
 			logger := promlog.New(promlogConfig)
 			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
