@@ -412,7 +412,7 @@ func getNginxVersionInfo(nginxManager nginx.Manager) string {
 func getAppProtectVersionInfo() string {
 	v, err := os.ReadFile(appProtectVersionPath)
 	if err != nil {
-		glog.Fatalf("Cannot read AppProtect VERSION file, %s", err.Error())
+		glog.Fatalf("Cannot detect the AppProtect version, %s", err.Error())
 	}
 	version := strings.TrimSpace(string(v))
 	glog.Infof("Using AppProtect Version %s", version)
