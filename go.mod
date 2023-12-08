@@ -3,8 +3,8 @@ module github.com/nginxinc/kubernetes-ingress
 go 1.21.3
 
 require (
-	github.com/aws/aws-sdk-go-v2/config v1.25.10
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.19.1
+	github.com/aws/aws-sdk-go-v2/config v1.25.12
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.19.3
 	github.com/cert-manager/cert-manager v1.13.2
 	github.com/dlclark/regexp2 v1.10.0
 	github.com/go-chi/chi/v5 v5.0.10
@@ -30,17 +30,17 @@ require (
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.23.4 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.8 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.7 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.7 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.23.5 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.10 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.9 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.8 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.8 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.7.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.7 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.18.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.26.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.18.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.26.3 // indirect
 	github.com/aws/smithy-go v1.18.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -79,14 +79,14 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
+	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
-	github.com/prometheus/common v0.44.0 // indirect
+	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
