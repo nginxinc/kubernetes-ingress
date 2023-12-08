@@ -278,6 +278,7 @@ func (cnf *Configurator) deleteIngressMetricsLabels(key string) {
 // AddOrUpdateIngress adds or updates NGINX configuration for the Ingress resource.
 func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) (Warnings, error) {
 	_, warnings, err := cnf.addOrUpdateIngress(ingEx)
+	_, warnings, err := cnf.addOrUpdateIngress(ingEx)
 	if err != nil {
 		return warnings, fmt.Errorf("error adding or updating ingress %v/%v: %w", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 	}
@@ -363,6 +364,9 @@ func (cnf *Configurator) streamUpstreamsForTransportServer(ts *conf_v1.Transport
 // addOrUpdateIngress returns a bool that specifies if the underlying config
 // file has changed, and any warnings or errors
 func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (bool, Warnings, error) {
+// addOrUpdateIngress returns a bool that specifies if the underlying config
+// file has changed, and any warnings or errors
+func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (bool, Warnings, error) {
 	apResources := cnf.updateApResources(ingEx)
 
 	cnf.updateDosResource(ingEx.DosEx)
@@ -395,13 +399,16 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (bool, Warnings, e
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
 	if err != nil {
 		return false, warnings, fmt.Errorf("error generating Ingress Config %v: %w", name, err)
+		return false, warnings, fmt.Errorf("error generating Ingress Config %v: %w", name, err)
 	}
+	configChanged := cnf.nginxManager.CreateConfig(name, content)
 	configChanged := cnf.nginxManager.CreateConfig(name, content)
 
 	cnf.ingresses[name] = ingEx
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateIngressMetricsLabels(ingEx, nginxCfg.Upstreams)
 	}
+	return configChanged, warnings, nil
 	return configChanged, warnings, nil
 }
 
@@ -419,6 +426,7 @@ func (cnf *Configurator) AddOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	return warnings, nil
 }
 
+func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIngresses) (bool, Warnings, error) {
 func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIngresses) (bool, Warnings, error) {
 	apResources := cnf.updateApResources(mergeableIngs.Master)
 	cnf.updateDosResource(mergeableIngs.Master.DosEx)
@@ -457,7 +465,9 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
 	if err != nil {
 		return false, warnings, fmt.Errorf("error generating Ingress Config %v: %w", name, err)
+		return false, warnings, fmt.Errorf("error generating Ingress Config %v: %w", name, err)
 	}
+	changed := cnf.nginxManager.CreateConfig(name, content)
 	changed := cnf.nginxManager.CreateConfig(name, content)
 
 	cnf.ingresses[name] = mergeableIngs.Master
@@ -470,6 +480,7 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		cnf.updateIngressMetricsLabels(mergeableIngs.Master, nginxCfg.Upstreams)
 	}
 
+	return changed, warnings, nil
 	return changed, warnings, nil
 }
 
@@ -555,6 +566,7 @@ func (cnf *Configurator) deleteVirtualServerMetricsLabels(key string) {
 // AddOrUpdateVirtualServer adds or updates NGINX configuration for the VirtualServer resource.
 func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
 	_, warnings, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
+	_, warnings, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
 	if err != nil {
 		return warnings, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
 	}
@@ -570,6 +582,7 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 	return cnf.nginxManager.CreateOpenTracingTracerConfig(content)
 }
 
+func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (bool, Warnings, error) {
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (bool, Warnings, error) {
 	apResources := cnf.updateApResourcesForVs(virtualServerEx)
 	dosResources := map[string]*appProtectDosResource{}
@@ -597,6 +610,7 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 		cnf.updateVirtualServerMetricsLabels(virtualServerEx, vsCfg.Upstreams)
 	}
 	return changed, warnings, nil
+	return changed, warnings, nil
 }
 
 // AddOrUpdateVirtualServers adds or updates NGINX configuration for multiple VirtualServer resources.
@@ -604,6 +618,7 @@ func (cnf *Configurator) AddOrUpdateVirtualServers(virtualServerExes []*VirtualS
 	allWarnings := newWarnings()
 
 	for _, vsEx := range virtualServerExes {
+		_, warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
 		_, warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return allWarnings, err
@@ -689,6 +704,7 @@ func (cnf *Configurator) deleteTransportServerMetricsLabels(key string) {
 // It is a responsibility of the caller to check that the TransportServer references an existing listener.
 func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *TransportServerEx) (Warnings, error) {
 	_, warnings, err := cnf.addOrUpdateTransportServer(transportServerEx)
+	_, warnings, err := cnf.addOrUpdateTransportServer(transportServerEx)
 	if err != nil {
 		return nil, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
 	}
@@ -698,6 +714,7 @@ func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *Transport
 	return warnings, nil
 }
 
+func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *TransportServerEx) (bool, Warnings, error) {
 func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *TransportServerEx) (bool, Warnings, error) {
 	name := getFileNameForTransportServer(transportServerEx.TransportServer)
 	tsCfg, warnings := generateTransportServerConfig(transportServerEx, transportServerEx.ListenerPort, cnf.isPlus, cnf.IsResolverConfigured())
@@ -722,11 +739,15 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 			UnixSocket: generateUnixSocket(transportServerEx),
 		}
 		ptChanged, err := cnf.updateTLSPassthroughHostsConfig()
+		ptChanged, err := cnf.updateTLSPassthroughHostsConfig()
 		if err != nil {
+			return false, nil, err
 			return false, nil, err
 		}
 		return (changed || ptChanged), warnings, nil
+		return (changed || ptChanged), warnings, nil
 	}
+	return changed, warnings, nil
 	return changed, warnings, nil
 }
 
@@ -741,13 +762,16 @@ func (cnf *Configurator) GetVirtualServerRoutesForVirtualServer(key string) []*c
 }
 
 func (cnf *Configurator) updateTLSPassthroughHostsConfig() (bool, error) {
+func (cnf *Configurator) updateTLSPassthroughHostsConfig() (bool, error) {
 	cfg := generateTLSPassthroughHostsConfig(cnf.tlsPassthroughPairs)
 
 	content, err := cnf.templateExecutorV2.ExecuteTLSPassthroughHostsTemplate(cfg)
 	if err != nil {
 		return false, fmt.Errorf("error generating config for TLS Passthrough Unix Sockets map: %w", err)
+		return false, fmt.Errorf("error generating config for TLS Passthrough Unix Sockets map: %w", err)
 	}
 
+	return cnf.nginxManager.CreateTLSPassthroughHostsConfig(content), nil
 	return cnf.nginxManager.CreateTLSPassthroughHostsConfig(content), nil
 }
 
@@ -784,6 +808,7 @@ func (cnf *Configurator) addOrUpdateHtpasswdSecret(secret *api_v1.Secret) string
 }
 
 // AddOrUpdateResources adds or updates configuration for resources.
+func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloadIfUnchanged bool) (Warnings, error) {
 func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloadIfUnchanged bool) (Warnings, error) {
 	allWarnings := newWarnings()
 	configsChanged := false
@@ -836,6 +861,10 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 		}
 	}
 
+	if configsChanged || reloadIfUnchanged {
+		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+			return nil, fmt.Errorf("error when reloading NGINX when updating resources: %w", err)
+		}
 	if configsChanged || reloadIfUnchanged {
 		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 			return nil, fmt.Errorf("error when reloading NGINX when updating resources: %w", err)
