@@ -1,15 +1,15 @@
 apiVersion: k8s.nginx.org/v1alpha1
 kind: TransportServer
 metadata:
-  name: cafe
+  name: secure-app
 spec:
   listener:
     name: tls-passthrough
     protocol: TLS_PASSTHROUGH
-  host: cafe.example.org
+  host: app.example.com
   upstreams:
   - name: secure-app
-    service: cafe-svc
+    service: secure-app
     port: 8443
     loadBalancingMethod: round_robin
     backup: backup-svc-ts
