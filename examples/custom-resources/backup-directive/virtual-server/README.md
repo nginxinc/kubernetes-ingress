@@ -1,6 +1,6 @@
 # Support for Backup Directive in Virtual Server
 
-An Backup service is defined by the
+Backup service is defined by the
  [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service type.
 The backup service enables to use the Ingress Controller to route requests to the destinations outside of the cluster.
 
