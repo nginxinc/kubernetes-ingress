@@ -2524,6 +2524,8 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 			glog.Errorf("Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
 			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
 		}
+	} else {
+		glog.V(3).Infof("Skipping reload for Secret  %v: %v", secretNsName, addOrUpdateErr)
 	}
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
@@ -2553,6 +2555,8 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
 			return
 		}
+	} else {
+		glog.V(3).Infof("Skipping reload for special Secret  %v: %v", secretNsName, err)
 	}
 
 	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)

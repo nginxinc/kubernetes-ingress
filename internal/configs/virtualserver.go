@@ -226,17 +226,19 @@ func newHealthCheckWithDefaults(upstream conf_v1.Upstream, upstreamName string, 
 
 // VirtualServerConfigurator generates a VirtualServer configuration
 type virtualServerConfigurator struct {
-	cfgParams            *ConfigParams
-	isPlus               bool
-	isWildcardEnabled    bool
-	isResolverConfigured bool
-	isTLSPassthrough     bool
-	enableSnippets       bool
-	warnings             Warnings
-	spiffeCerts          bool
-	enableInternalRoutes bool
-	oidcPolCfg           *oidcPolicyCfg
-	isIPV6Disabled       bool
+	cfgParams               *ConfigParams
+	isPlus                  bool
+	isWildcardEnabled       bool
+	isResolverConfigured    bool
+	isTLSPassthrough        bool
+	enableSnippets          bool
+	warnings                Warnings
+	spiffeCerts             bool
+	enableInternalRoutes    bool
+	oidcPolCfg              *oidcPolicyCfg
+	isIPV6Disabled          bool
+	DynamicSSLReloadEnabled bool
+	StaticSSLPath           string
 }
 
 type oidcPolicyCfg struct {
@@ -267,17 +269,19 @@ func newVirtualServerConfigurator(
 	isWildcardEnabled bool,
 ) *virtualServerConfigurator {
 	return &virtualServerConfigurator{
-		cfgParams:            cfgParams,
-		isPlus:               isPlus,
-		isWildcardEnabled:    isWildcardEnabled,
-		isResolverConfigured: isResolverConfigured,
-		isTLSPassthrough:     staticParams.TLSPassthrough,
-		enableSnippets:       staticParams.EnableSnippets,
-		warnings:             make(map[runtime.Object][]string),
-		spiffeCerts:          staticParams.NginxServiceMesh,
-		enableInternalRoutes: staticParams.EnableInternalRoutes,
-		oidcPolCfg:           &oidcPolicyCfg{},
-		isIPV6Disabled:       staticParams.DisableIPV6,
+		cfgParams:               cfgParams,
+		isPlus:                  isPlus,
+		isWildcardEnabled:       isWildcardEnabled,
+		isResolverConfigured:    isResolverConfigured,
+		isTLSPassthrough:        staticParams.TLSPassthrough,
+		enableSnippets:          staticParams.EnableSnippets,
+		warnings:                make(map[runtime.Object][]string),
+		spiffeCerts:             staticParams.NginxServiceMesh,
+		enableInternalRoutes:    staticParams.EnableInternalRoutes,
+		oidcPolCfg:              &oidcPolicyCfg{},
+		isIPV6Disabled:          staticParams.DisableIPV6,
+		DynamicSSLReloadEnabled: staticParams.DynamicSSLReload,
+		StaticSSLPath:           staticParams.StaticSSLPath,
 	}
 }
 
@@ -729,8 +733,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			VSName:                    vsEx.VirtualServer.Name,
 			DisableIPV6:               vsc.isIPV6Disabled,
 		},
-		SpiffeCerts:       enabledInternalRoutes,
-		SpiffeClientCerts: vsc.spiffeCerts && !enabledInternalRoutes,
+		SpiffeCerts:             enabledInternalRoutes,
+		SpiffeClientCerts:       vsc.spiffeCerts && !enabledInternalRoutes,
+		DynamicSSLReloadEnabled: vsc.DynamicSSLReloadEnabled,
+		StaticSSLPath:           vsc.StaticSSLPath,
 	}
 
 	return vsCfg, vsc.warnings

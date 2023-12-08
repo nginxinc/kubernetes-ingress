@@ -140,7 +140,7 @@ func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector
 // CreateMainConfig creates the main NGINX configuration file. If the file already exists, it will be overridden.
 func (lm *LocalManager) CreateMainConfig(content []byte) {
 	glog.V(3).Infof("Writing main config to %v", lm.mainConfFilename)
-	glog.V(3).Infof(string(content))
+	// glog.V(3).Infof(string(content))
 
 	err := createFileAndWrite(lm.mainConfFilename, content)
 	if err != nil {
@@ -155,7 +155,7 @@ func (lm *LocalManager) CreateConfig(name string, content []byte) {
 
 func createConfig(filename string, content []byte) {
 	glog.V(3).Infof("Writing config to %v", filename)
-	glog.V(3).Info(string(content))
+	// glog.V(3).Info(string(content))
 
 	err := createFileAndWrite(filename, content)
 	if err != nil {
@@ -212,7 +212,7 @@ func (lm *LocalManager) CreateSecret(name string, content []byte, mode os.FileMo
 
 	createFileAndWriteAtomically(filename, lm.secretsPath, mode, content)
 
-	return lm.GetFileReferenceForSecret(name)
+	return filename
 }
 
 // DeleteSecret the file with the secret.

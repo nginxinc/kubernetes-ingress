@@ -314,7 +314,9 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 			Namespace:   p.ingEx.Ingress.Namespace,
 			Annotations: p.ingEx.Ingress.Annotations,
 		},
-		SpiffeClientCerts: p.staticParams.NginxServiceMesh && !cfgParams.SpiffeServerCerts,
+		SpiffeClientCerts:       p.staticParams.NginxServiceMesh && !cfgParams.SpiffeServerCerts,
+		DynamicSSLReloadEnabled: p.staticParams.DynamicSSLReload,
+		StaticSSLPath:           p.staticParams.StaticSSLPath,
 	}, allWarnings
 }
 
@@ -692,11 +694,13 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 	masterServer.Locations = locations
 
 	return version1.IngressNginxConfig{
-		Servers:           []version1.Server{masterServer},
-		Upstreams:         upstreams,
-		Keepalive:         keepalive,
-		Ingress:           masterNginxCfg.Ingress,
-		SpiffeClientCerts: p.staticParams.NginxServiceMesh && !p.baseCfgParams.SpiffeServerCerts,
+		Servers:                 []version1.Server{masterServer},
+		Upstreams:               upstreams,
+		Keepalive:               keepalive,
+		Ingress:                 masterNginxCfg.Ingress,
+		SpiffeClientCerts:       p.staticParams.NginxServiceMesh && !p.baseCfgParams.SpiffeServerCerts,
+		DynamicSSLReloadEnabled: p.staticParams.DynamicSSLReload,
+		StaticSSLPath:           p.staticParams.StaticSSLPath,
 	}, warnings
 }
 
