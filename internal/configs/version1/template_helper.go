@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/commonhelpers"
 )
 
 func split(s string, delim string) []string {
@@ -71,4 +73,5 @@ var helperFunctions = template.FuncMap{
 	"toLower":          strings.ToLower,
 	"toUpper":          strings.ToUpper,
 	"makeLocationPath": makeLocationPath,
+	"makeSecretPath":   commonhelpers.MakeSecretPath,
 }
