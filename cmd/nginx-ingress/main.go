@@ -43,8 +43,10 @@ import (
 var version string
 
 const (
-	nginxVersionLabel = "app.nginx.org/version"
-	versionLabel      = "app.kubernetes.io/version"
+	nginxVersionLabel      = "app.nginx.org/version"
+	versionLabel           = "app.kubernetes.io/version"
+	appProtectVersionLabel = "appprotect.f5.com/version"
+	appProtectVersionPath  = "/opt/app_protect/VERSION"
 )
 
 func main() {
@@ -71,7 +73,12 @@ func main() {
 
 	nginxVersion := getNginxVersionInfo(nginxManager)
 
-	updateSelfWithVersionInfo(kubeClient, version, nginxVersion)
+	var appProtectVersion string
+	if *appProtect {
+		appProtectVersion = getAppProtectVersionInfo()
+	}
+
+	updateSelfWithVersionInfo(kubeClient, version, nginxVersion, appProtectVersion)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
@@ -400,6 +407,16 @@ func getNginxVersionInfo(nginxManager nginx.Manager) string {
 		glog.Fatal("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
 	}
 	return nginxVersion
+}
+
+func getAppProtectVersionInfo() string {
+	v, err := os.ReadFile(appProtectVersionPath)
+	if err != nil {
+		glog.Fatalf("Cannot detect the AppProtect version, %s", err.Error())
+	}
+	version := strings.TrimSpace(string(v))
+	glog.Infof("Using AppProtect Version %s", version)
+	return version
 }
 
 func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error) {
@@ -766,7 +783,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string, nginxVersion string) {
+func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string, nginxVersion string, appProtectVersion string) {
 	pod, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), os.Getenv("POD_NAME"), meta_v1.GetOptions{})
 	if err != nil {
 		glog.Errorf("Error getting pod: %v", err)
@@ -783,6 +800,9 @@ func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string,
 	replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
 	nginxVer = replacer.Replace(nginxVer)
 	labels[nginxVersionLabel] = nginxVer
+	if appProtectVersion != "" {
+		labels[appProtectVersionLabel] = appProtectVersion
+	}
 	labels[versionLabel] = strings.TrimPrefix(version, "v")
 	newPod.ObjectMeta.Labels = labels
 
