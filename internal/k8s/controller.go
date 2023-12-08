@@ -2388,7 +2388,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 
 	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes)
+	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
 	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 }
 
@@ -2505,7 +2505,7 @@ func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
 func (lbc *LoadBalancerController) handleRegularSecretDeletion(resources []Resource) {
 	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateResources(resourceExes)
+	warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
 }
@@ -2518,14 +2518,10 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 
 	resourceExes := lbc.createExtendedResources(resources)
 
-	if !lbc.configurator.DynamicSSLReloadEnabled() {
-		warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes)
-		if addOrUpdateErr != nil {
-			glog.Errorf("Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
-			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
-		}
-	} else {
-		glog.V(3).Infof("Skipping reload for Secret  %v: %v", secretNsName, addOrUpdateErr)
+	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes, !lbc.configurator.DynamicSSLReloadEnabled())
+	if addOrUpdateErr != nil {
+		glog.Errorf("Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
+		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
 	}
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
