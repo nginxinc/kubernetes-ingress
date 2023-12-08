@@ -9,18 +9,16 @@ The `backup` service is of type
 For illustration purposes, we will run NGINX Ingress Controller (referred to as NIC in the examples) with the following options:
 
 ```shell
-      ...
-    - -enable-custom-resources
-    - -enable-tls-passthrough
-    - -watch-namespace=nginx-ingress,default
-      ...
+-enable-custom-resources
+-enable-tls-passthrough
+-watch-namespace=nginx-ingress,default
 ```
 
 The option `-watch-namespace` enables NIC to watch selected namespaces. Any application deployed in other namespaces
 will be treated as an external service.
 
 We will use two ```examples/custom-resources/tls-passthrough``` applications example as our backend app that will be
-responding to requests. First application will be deployed in the `default` namespace, second application will
+responding to requests. First application will be deployed in the `default` namespace. The second application will
 be deployed in the `external-ns` namespace.
 
 ## Example NIC Plus
