@@ -112,7 +112,7 @@ Run the below curl command to get a response from your application. In this exam
 
    ```shell
    curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
-   ``` 
+   ```
 
    Response form backup service:
 
@@ -123,4 +123,3 @@ Run the below curl command to get a response from your application. In this exam
    URI: /coffee
    Request ID: 8140ea6975983d12feaf56eed203f922
    ```
-
