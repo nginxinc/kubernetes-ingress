@@ -77,11 +77,14 @@ def assert_gb_subject(virtual_server_setup):
     "crd_ingress_controller, virtual_server_setup",
     [
         (
-            {"type": "complete", "extra_args": [
-                f"-enable-custom-resources",
-                f"-enable-prometheus-metrics",
-                f"-ssl-dynamic-reload=false"
-            ]},
+            {
+                "type": "complete",
+                "extra_args": [
+                    f"-enable-custom-resources",
+                    f"-enable-prometheus-metrics",
+                    f"-ssl-dynamic-reload=false",
+                ],
+            },
             {"example": "virtual-server-tls", "app_type": "simple"},
         )
     ],
@@ -154,10 +157,13 @@ class TestVirtualServerTLS:
     "crd_ingress_controller, virtual_server_setup",
     [
         (
-            {"type": "complete", "extra_args": [
-                f"-enable-custom-resources",
-                f"-enable-prometheus-metrics",
-            ]},
+            {
+                "type": "complete",
+                "extra_args": [
+                    f"-enable-custom-resources",
+                    f"-enable-prometheus-metrics",
+                ],
+            },
             {"example": "virtual-server-tls", "app_type": "simple"},
         )
     ],

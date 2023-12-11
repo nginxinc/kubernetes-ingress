@@ -110,7 +110,9 @@ class TransportServerSetup:
         namespace (str):
     """
 
-    def __init__(self, name, namespace, ingress_pod_name, ic_namespace, public_endpoint: PublicEndpoint, resource, metrics_url):
+    def __init__(
+        self, name, namespace, ingress_pod_name, ic_namespace, public_endpoint: PublicEndpoint, resource, metrics_url
+    ):
         self.name = name
         self.namespace = namespace
         self.ingress_pod_name = ingress_pod_name
@@ -171,7 +173,7 @@ def transport_server_setup(
         ic_namespace,
         ingress_controller_endpoint,
         ts_resource,
-        metrics_url
+        metrics_url,
     )
 
 
