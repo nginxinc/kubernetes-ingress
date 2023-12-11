@@ -704,7 +704,7 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 		transportServerEx:      transportServerEx,
 		listenerPort:           transportServerEx.ListenerPort,
 		isPlus:                 cnf.isPlus,
-		isResolverConfigured:   cnf.isReloadsEnabled,
+		isResolverConfigured:   cnf.IsResolverConfigured(),
 		isDynamicReloadEnabled: cnf.staticCfgParams.DynamicSSLReload,
 		staticSSLPath:          cnf.staticCfgParams.StaticSSLPath,
 	})
