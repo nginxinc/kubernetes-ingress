@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -563,8 +564,8 @@ func (lm *LocalManager) GetSecretsDir() string {
 	return lm.secretsPath
 }
 
-//nolint:gosec
 func configContentsChanged(filename string, content []byte) bool {
+	filename = filepath.Clean(filename)
 	if currentContent, err := os.ReadFile(filename); err == nil {
 		if string(content) == string(currentContent) {
 			return false
