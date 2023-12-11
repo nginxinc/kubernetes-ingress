@@ -108,7 +108,6 @@ def tls_setup(
 )
 class TestIngressTLS:
     def test_tls_termination(self, kube_apis, ingress_controller_endpoint, test_namespace, tls_setup):
-        count_before = get_reload_count(tls_setup.metrics_url)
 
         print("Step 1: no secret")
         assert_unrecognized_name_error(ingress_controller_endpoint, tls_setup.ingress_host)
@@ -140,14 +139,18 @@ class TestIngressTLS:
         wait_before_test(1)
         assert_us_subject(ingress_controller_endpoint, tls_setup.ingress_host)
 
+        # for OSS and and Plus with -ssl-dynamic-reload=false, we expect
+        # replacing a secret to trigger a reload
+        count_before_replace = get_reload_count(tls_setup.metrics_url)
+
         print("Step 7: update secret and check")
         replace_secret(kube_apis.v1, tls_setup.secret_name, test_namespace, tls_setup.new_secret_path)
         wait_before_test(1)
         assert_gb_subject(ingress_controller_endpoint, tls_setup.ingress_host)
 
         count_after = get_reload_count(tls_setup.metrics_url)
-        reloads = count_after - count_before
-        expected_reloads = 8
+        reloads = count_after - count_before_replace
+        expected_reloads = 1
         assert reloads == expected_reloads, f"expected {expected_reloads}"
 
 
@@ -171,6 +174,8 @@ class TestIngressTLSDynamicReloads:
         wait_before_test(1)
         assert_us_subject(ingress_controller_endpoint, tls_setup.ingress_host)
 
+        # for Plus with -ssl-dynamic-reload=true, we expect
+        # replacing a secret not to trigger a reload
         count_before_replace = get_reload_count(tls_setup.metrics_url)
 
         print("Step 3: update secret and check")
