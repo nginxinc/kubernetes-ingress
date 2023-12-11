@@ -1,4 +1,4 @@
-# Support for Backup Directive in in Transport Server
+# Support for Backup Directive in Transport Server
 
 NGINX Ingress Controller supports routing requests to a service specified as `Backup`.
 The `backup` service is of type
@@ -14,11 +14,11 @@ For illustration purposes, we will run NGINX Ingress Controller (referred to as 
 -watch-namespace=nginx-ingress,default
 ```
 
-The option `-watch-namespace` enables NIC to watch selected namespaces. Any application deployed in other namespaces
-will be treated as an external service.
+The option `-watch-namespace` enables NIC to watch selected namespaces. Any application deployed not in the listed namespaces
+is treated as an external service.
 
-We will use two ```examples/custom-resources/tls-passthrough``` applications example as our backend app that will be
-responding to requests. First application will be deployed in the `default` namespace. The second application will
+We use two ```examples/custom-resources/tls-passthrough``` application examples as our backends that will be
+responding to HTTP requests. First application will be deployed in the `default` namespace. The second application will
 be deployed in the `external-ns` namespace.
 
 ## Example NIC Plus
@@ -41,7 +41,7 @@ be deployed in the `external-ns` namespace.
 
 ### 3. Deploy TransportServer
 
-1. Deploy TransportServer. Note that the server uses not default load balancing method.
+1. Deploy TransportServer. Note that the server does not use default load balancing method.
 
   ```shell
   kubectl create -f transport-server-passthrough.yaml
@@ -58,12 +58,6 @@ be deployed in the `external-ns` namespace.
 Make sure the application works as described in the ```examples/custom-resources/tls-passthrough``` example.
 
 ### 5. Deploy the second tls-passthrough aplication to the external namespace
-
-1. Create the external namespace `external-ns`.
-
-  ```shell
-  kubectl create -f external-app-ns/external-ns.yaml
-  ```
 
 1. Deploy backend application to external namespace (```external-ns```). Note that the NIC is not watching the namespace.
 
