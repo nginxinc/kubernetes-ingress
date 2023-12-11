@@ -108,7 +108,6 @@ def tls_setup(
 )
 class TestIngressTLS:
     def test_tls_termination(self, kube_apis, ingress_controller_endpoint, test_namespace, tls_setup):
-
         print("Step 1: no secret")
         assert_unrecognized_name_error(ingress_controller_endpoint, tls_setup.ingress_host)
 
