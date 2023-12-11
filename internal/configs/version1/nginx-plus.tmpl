@@ -316,6 +316,12 @@ stream {
     map_hash_max_size {{.MapHashMaxSize}};
     {{if .MapHashBucketSize}}map_hash_bucket_size {{.MapHashBucketSize}};{{end}}
 
+    {{- if .DynamicSSLReloadEnabled }}
+    map $nginx_version $secret_dir_path {
+        default "{{ .StaticSSLPath }}";
+    }
+    {{- end }}
+
     {{- if .TLSPassthrough}}
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;
