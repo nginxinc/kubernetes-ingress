@@ -5,12 +5,15 @@ Backup service is defined by the
 The backup service enables to use the Ingress Controller to route requests to the destinations outside the cluster.
 
 > [!NOTE]
-> Support of the services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)
+> Support of the services of type 
+> [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)
 > is only available in NGINX Plus.
 
-In this example we will deploy two variations of the `cafe` example from our [basic-configuration](/examples/custom-resources/basic-configuration).
+In this example we will deploy two variations of the `cafe` example from our 
+[basic-configuration](/examples/custom-resources/basic-configuration).
 The first is the typical `cafe` application that is configured with a `backup` service for the `coffee` upstream.
-The second is the `external-cafe` that will response to requests sent to `/coffee` if the pods for the `cafe` application go down.
+The second is the `external-cafe` that will response to requests sent to `/coffee` 
+if the pods for the `cafe` application go down.
 In this example, we will replicate this behaviour by scaling down the application to zero pods.
 When this happens, you should get a response from the `external-cafe` instead.
 
@@ -21,8 +24,9 @@ When this happens, you should get a response from the `external-cafe` instead.
    -enable-custom-resources
    -watch-namespace=nginx-ingress,default
    ```
-We configure the `-watch-namespace` flag to only watch the `nginx-ingress` and `default` namespaces.
-This ensures that the NGINX Ingress Controller will treat our service in the `external-ns` namespace as an external service.
+   We configure the `-watch-namespace` flag to only watch the `nginx-ingress` and `default` namespaces.
+   This ensures that the NGINX Ingress Controller will treat our service in the `external-ns` namespace 
+   as an external service.
 
 2. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
    instructions to deploy the NGINX Ingress Controller.
@@ -103,7 +107,8 @@ Run the below curl command to get a response from your application. In this exam
 
 ### 8. Test the configuration using the backup service
 
-1. Scale the coffee deployment to zero pods. This is done to ensure that the external `backup` service will respond to our requests.
+1. Scale the coffee deployment to zero pods. 
+   This is done to ensure that the external `backup` service will respond to our requests.
 
    ```shell
    kubectl scale deployment coffee --replicas=0
