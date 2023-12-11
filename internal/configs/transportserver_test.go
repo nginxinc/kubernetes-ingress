@@ -142,9 +142,17 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 			SSL:                      &version2.StreamSSL{},
 		},
 		StreamSnippets: []string{"limit_conn_zone $binary_remote_addr zone=addr:10m;"},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           listenerPort,
+		isPlus:                 true,
+		isResolverConfigured:   false,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}
@@ -226,9 +234,17 @@ func TestGenerateTransportServerConfigForIPV6Disabled(t *testing.T) {
 			SSL:                      &version2.StreamSSL{},
 		},
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           listenerPort,
+		isPlus:                 true,
+		isResolverConfigured:   false,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}
@@ -318,9 +334,17 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 			SSL:                      &version2.StreamSSL{},
 		},
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           listenerPort,
+		isPlus:                 true,
+		isResolverConfigured:   false,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}
@@ -413,9 +437,17 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 			SSL:                      &version2.StreamSSL{},
 		},
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           listenerPort,
+		isPlus:                 true,
+		isResolverConfigured:   false,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}
@@ -506,9 +538,17 @@ func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
 		},
 		DisableIPV6:    false,
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           listenerPort,
+		isPlus:                 true,
+		isResolverConfigured:   false,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}
@@ -604,9 +644,17 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			SSL:                      &version2.StreamSSL{},
 		},
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           listenerPort,
+		isPlus:                 true,
+		isResolverConfigured:   false,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}
@@ -694,9 +742,17 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExterna
 			SSL:                      &version2.StreamSSL{},
 		},
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, 2020, true, true)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           2020,
+		isPlus:                 true,
+		isResolverConfigured:   true,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}
@@ -778,9 +834,17 @@ func TestGenerateTransportServerConfig_GeneratesWarningOnNotConfiguredResolver(t
 			SSL:                      &version2.StreamSSL{},
 		},
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, 2020, true, false)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           2020,
+		isPlus:                 true,
+		isResolverConfigured:   false,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) == 0 {
 		t.Errorf("want warnings, got %v", warnings)
 	}
@@ -864,9 +928,17 @@ func TestGenerateTransportServerConfig_UsesNotExistignSocketOnNotPlusAndNoEndpoi
 			SSL:                      &version2.StreamSSL{},
 		},
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, 2020, false, true)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           2020,
+		isPlus:                 false,
+		isResolverConfigured:   true,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}
@@ -971,9 +1043,17 @@ func TestGenerateTransportServerConfigForTCPWithTLS(t *testing.T) {
 			},
 		},
 		StreamSnippets: []string{},
+		StaticSSLPath:  "/etc/nginx/secret",
 	}
 
-	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      &transportServerEx,
+		listenerPort:           listenerPort,
+		isPlus:                 true,
+		isResolverConfigured:   false,
+		isDynamicReloadEnabled: false,
+		staticSSLPath:          "/etc/nginx/secret",
+	})
 	if len(warnings) != 0 {
 		t.Errorf("want no warnings, got %v", warnings)
 	}

@@ -700,7 +700,14 @@ func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *Transport
 
 func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *TransportServerEx) (bool, Warnings, error) {
 	name := getFileNameForTransportServer(transportServerEx.TransportServer)
-	tsCfg, warnings := generateTransportServerConfig(transportServerEx, transportServerEx.ListenerPort, cnf.isPlus, cnf.IsResolverConfigured())
+	tsCfg, warnings := generateTransportServerConfig(transportServerConfigParams{
+		transportServerEx:      transportServerEx,
+		listenerPort:           transportServerEx.ListenerPort,
+		isPlus:                 cnf.isPlus,
+		isResolverConfigured:   cnf.isReloadsEnabled,
+		isDynamicReloadEnabled: cnf.staticCfgParams.DynamicSSLReload,
+		staticSSLPath:          cnf.staticCfgParams.StaticSSLPath,
+	})
 
 	content, err := cnf.templateExecutorV2.ExecuteTransportServerTemplate(tsCfg)
 	if err != nil {
