@@ -49,13 +49,11 @@ When this happens, you should get a response from the `external-cafe` instead.
 
 This is the service that will respond to our requests when the `coffee` application goes down
 
-```shell
-kubectl apply -f external-cafe.yaml
-```
+   ```shell
+   kubectl apply -f external-cafe.yaml
+   ```
 
 ### 2. Deploy a ConfigMap configured with a resolved
-
-This will be needed to resolve the external service's domain name
 
    ```shell
    kubectl apply -f nginx-config.yaml
@@ -74,8 +72,6 @@ This will be needed to resolve the external service's domain name
    ```
 
 ### 5. Configure TLS Termination
-
-Create the secret with the TLS certificate and key:
 
    ```shell
    kubectl apply -f cafe-secret.yaml
@@ -119,7 +115,7 @@ Run the below curl command to get a response from your application. In this exam
    curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
    ```
 
-   Response form backup service:
+3. Check response from the backup service
 
    ```shell
    Server address: 10.32.2.19:8080

@@ -70,9 +70,9 @@ The application in the `external-ns` namespace will respond to our requests when
    kubectl create -f transport-server-passthrough.yaml
    ```
 
-## 5. Test the Configuration
+### 5. Test the Configuration
 
-Run the below curl command to get a response from your application:
+   Run the below curl command to get a response from your application:
 
    ```shell
    curl --resolve app.example.com:$IC_HTTPS_PORT:$IC_IP https://app.example.com:$IC_HTTPS_PORT --insecure
@@ -104,7 +104,7 @@ Run the below curl command to get a response from your application:
     curl --resolve app.example.com:$IC_HTTPS_PORT:$IC_IP https://app.example.com:$IC_HTTPS_PORT --insecure
     ```
 
-   Response form backup service:
+3. Check response from the backup service
 
     ```shell
     HELLO FROM EXTERNAL APP pod secure-app-backup-7d98dd8d78-p8q7d
