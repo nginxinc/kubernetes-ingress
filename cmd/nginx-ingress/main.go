@@ -69,7 +69,7 @@ func main() {
 
 	managerCollector, controllerCollector, registry := createManagerAndControllerCollectors(constLabels)
 
-	nginxManager, useFakeNginxManager := createNginxManager(managerCollector, *enableDynamicSSLReload)
+	nginxManager, useFakeNginxManager := createNginxManager(managerCollector)
 
 	nginxVersion := getNginxVersionInfo(nginxManager)
 
@@ -387,14 +387,14 @@ func createTemplateExecutors() (*version1.TemplateExecutor, *version2.TemplateEx
 	return templateExecutor, templateExecutorV2
 }
 
-func createNginxManager(managerCollector collectors.ManagerCollector, enableDynamicSSLReload bool) (nginx.Manager, bool) {
+func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Manager, bool) {
 	useFakeNginxManager := *proxyURL != ""
 	var nginxManager nginx.Manager
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
 		timeout := time.Duration(*nginxReloadTimeout) * time.Millisecond
-		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, timeout, enableDynamicSSLReload)
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, timeout)
 	}
 	return nginxManager, useFakeNginxManager
 }
