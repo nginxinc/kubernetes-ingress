@@ -7,20 +7,20 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: secure-app
+  name: secure-app-backup
   namespace: external-ns
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: secure-app
+      app: secure-app-backup
   template:
     metadata:
       labels:
-        app: secure-app
+        app: secure-app-backup
     spec:
       containers:
-        - name: secure-app
+        - name: secure-app-backup
           image: nginxdemos/nginx-hello:plain-text
           ports:
             - containerPort: 8443
@@ -41,7 +41,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: secure-app
+  name: secure-app-backup
   namespace: external-ns
 spec:
   ports:
@@ -50,7 +50,7 @@ spec:
       protocol: TCP
       name: https
   selector:
-    app: secure-app
+    app: secure-app-backup
 ---
 apiVersion: v1
 kind: ConfigMap

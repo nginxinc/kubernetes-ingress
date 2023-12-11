@@ -4,4 +4,4 @@ metadata:
   name: backup-svc
 spec:
   type: ExternalName
-  externalName: coffee-svc.external-ns.svc.cluster.local
+  externalName: coffee-backup-svc.external-ns.svc.cluster.local

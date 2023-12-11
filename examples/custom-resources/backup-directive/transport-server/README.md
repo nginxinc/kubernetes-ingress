@@ -4,84 +4,104 @@ NGINX Ingress Controller supports routing requests to a service specified as `Ba
 The `backup` service is of type
 [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname).
 
+> [!NOTE]
+> Support of the services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)
+> is only available in NGINX Plus.
+
+In this example, we will use two configurations of the [tls-passthrough](/examples/custom-resources/tls-passthrough) example.
+One will be deployed in the `default` namespace, and the other in the `external-ns` namespace.
+
+The application in the `external-ns` namespace will respond to our requests when main application is unavailable.
+
 ## Prerequisites
 
-For illustration purposes, we will run NGINX Ingress Controller (referred to as NIC in the examples) with the following options:
+1. Configure the F5 NGINX Ingress Controller deployment with the following flags:
 
-```shell
--enable-custom-resources
--enable-tls-passthrough
--watch-namespace=nginx-ingress,default
-```
+   ```shell
+   -enable-custom-resources
+   -enable-tls-passthrough
+   -watch-namespace=nginx-ingress,default
+   ```
 
-The option `-watch-namespace` enables NIC to watch selected namespaces. Any application deployed not in the listed namespaces
-is treated as an external service.
+We configure the `-watch-namespace` flag to only watch the `nginx-ingress` and `default` namespaces.
+This ensures that the F5 NGINX Ingress Controller will treat our service in the `external-ns` namespace as an external service.
 
-We use two ```examples/custom-resources/tls-passthrough``` application examples as our backends that will be
-responding to HTTP requests. First application will be deployed in the `default` namespace. The second application will
-be deployed in the `external-ns` namespace.
+2. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
+   instructions to deploy the F5 NGINX Ingress Controller.
 
-## Example NIC Plus
+3. Save the public IP address of the F5 NGINX Ingress Controller into a shell variable:
+
+    ```shell
+    IC_IP=XXX.YYY.ZZZ.III
+    ```
+
+4. Save the HTTPS port of the F5 NGINX Ingress Controller into a shell variable:
+
+    ```shell
+    IC_HTTPS_PORT=<port number>
+    ```
+
+## Deployment
 
 ### 1. Deploy ConfigMap with defined resolver
 
-1. Deploy resolver
-
-  ```shell
-  kubectl create -f nginx-config-resolver.yaml
-  ```
+   ```shell
+   kubectl create -f nginx-config.yaml
+   ```
 
 ### 2. Deploy Backup ExternalName service
 
-1. Deploy Backup service
+   ```shell
+   kubectl create -f backup-svc.yaml
+   ```
 
-  ```shell
-  kubectl create -f backup-svc-ts.yaml
-  ```
+### 3. Deploy the tls-passthrough application
 
-### 3. Deploy TransportServer
+   ```shell
+   kubectl create -f secure-app.yaml
+   ```
 
-1. Deploy TransportServer. Note that the server does not use default load balancing method.
+### 4. Deploy TransportServer
 
-  ```shell
-  kubectl create -f transport-server-passthrough.yaml
-  ```
+   ```shell
+   kubectl create -f transport-server-passthrough.yaml
+   ```
 
-### 4. Deploy the tls-passthrough application
+## 5. Test the Configuration
 
-1. Deploy tls-passthrough application
+Run the below curl command to get a response from your application:
 
-  ```shell
-  kubectl create -f secure-app.yaml
-  ```
+   ```shell
+   curl --resolve app.example.com:$IC_HTTPS_PORT:$IC_IP https://app.example.com:$IC_HTTPS_PORT --insecure
+   ```
 
-Make sure the application works as described in the ```examples/custom-resources/tls-passthrough``` example.
+   ```shell
+   hello from pod secure-app-694bc784b-qh8ng
+   ```
 
-### 5. Deploy the second tls-passthrough aplication to the external namespace
+### 6. Deploy the second tls-passthrough application to the external namespace
 
-1. Deploy backend application to external namespace (```external-ns```). Note that the NIC is not watching the namespace.
+   ```shell
+   kubectl apply -f external-secure-app.yaml
+   ```
+
+### 7. Test the configuration using the backup service
+
+1. Scale down `secure-app` deployment to 0. This is done to ensure that the external `backup` service will respond to our requests.
 
     ```shell
-    kubectl apply -f external-app-ns/external-secure-app.yaml
+    kubectl scale deployment secure-app --replicas=0
     ```
 
-### 6. Verify the backup service
-
-1. Scale down `secure-app` deployment to 0
-
-    ```shell
-    kubectl scale deployment --replicas=0
-    ```
-
-1. Verify if the application is working by sending a request and check if the response is coming from the "external
-   backend pod" (refer to to the tls-passthrough example)
+2. Verify if the application is working by sending a request and check if the response is coming from the "external
+   backend pod"
 
     ```shell
     curl --resolve app.example.com:$IC_HTTPS_PORT:$IC_IP https://app.example.com:$IC_HTTPS_PORT --insecure
     ```
 
-    Response
+   Response form backup service:
 
     ```shell
-    hello from pod secure-app-external-backend-5fbf4fb494-x7bkl
+    HELLO FROM EXTERNAL APP pod secure-app-backup-7d98dd8d78-p8q7d
     ```

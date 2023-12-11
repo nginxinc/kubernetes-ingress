@@ -1,113 +1,126 @@
 # Support for Backup Directive in Virtual Server
 
 Backup service is defined by the
- [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service type.
-The backup service enables to use the Ingress Controller to route requests to the destinations outside of the cluster.
+[ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service type.
+The backup service enables to use the Ingress Controller to route requests to the destinations outside the cluster.
+
+> [!NOTE]
+> Support of the services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)
+> is only available in NGINX Plus.
+
+In this example we will deploy two variations of the `cafe` example from our [basic-configuration](/examples/custom-resources/basic-configuration).
+The first is the typical `cafe` application that is configured with a `backup` service for the `coffee` upstream.
+The second is the `external-cafe` that will response to requests sent to `/coffee` if the pods for the `cafe` application go down.
+In this example, we will replicate this behaviour by scaling down the application to zero pods.
+When this happens, you should get a response from the `external-cafe` instead.
 
 ## Prerequisites
 
-For illustration purposes, we will run NGINX Ingress Controller (referred to as NIC in the examples) with the
-```-watch-namespace=nginx-ingress,default``` option. The option enables NIC to watch selected namespaces.
+1. Configure the NGINX Ingress Controller deployment with the following flags:
+   ```shell
+   -enable-custom-resources
+   -watch-namespace=nginx-ingress,default
+   ```
+We configure the `-watch-namespace` flag to only watch the `nginx-ingress` and `default` namespaces.
+This ensures that the NGINX Ingress Controller will treat our service in the `external-ns` namespace as an external service.
 
-Any application deployed in other namespaces will be treated as an external service.
+2. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
+   instructions to deploy the NGINX Ingress Controller.
 
-We will use the ```cafe``` application example as our backend app that will be
-responding to requests, and the ```coffee``` app deployed to the ```external-ns``` namespace.
-
-## Example NIC Plus
-
-### 1. Deploy the cafe application
-
-1. Deploy the cafe backend application
-
-  ```shell
-  kubectl apply -f cafe.yaml
-  ```
-
-### 2. Deploy resolver
-
-1. Deploy the resolver
+3. Save the public IP address of the Ingress Controller into a shell variable:
 
     ```shell
-    kubectl apply -f nginx-config.yaml
-    ```
-
-### 3. Deploy Backup Service
-
-1. Deploy the backup service of type external name
-
-    ```shell
-    kubectl apply -f backup-svc.yaml
-    ```
-
-### 4. Deploy NGINX Ingress Controller
-
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
-   instructions to deploy the Ingress Controller with custom resources enabled.
-
-1. Save the public IP address of the Ingress Controller into a shell variable:
-
-    ```console
     IC_IP=XXX.YYY.ZZZ.III
     ```
 
-1. Save the HTTPS port of the Ingress Controller into a shell variable:
+4. Save the HTTPS port of the Ingress Controller into a shell variable:
 
-    ```console
+    ```shell
     IC_HTTPS_PORT=<port number>
     ```
 
-    Response
+## Deployment
 
-    ```console
-    hello from pod secure-app-external-backend-5fbf4fb494-x7bkl
-    ```
+### 1. Deploy the external service
 
-## Example NIC OSS
+This is the service that will respond to our requests when the `coffee` application goes down
 
-### 1. Deploy the cafe application
+```shell
+kubectl apply -f external-cafe.yaml
+```
 
-1. Deploy the cafe backend application
+### 2. Deploy a ConfigMap configured with a resolved
 
-  ```shell
-  kubectl apply -f cafe.yaml
-  ```
+This will be needed to resolve the external service's domain name
 
-### 2. Deploy resolver
+   ```shell
+   kubectl apply -f nginx-config.yaml
+   ```
 
-1. Deploy the resolver
+### 3. Deploy the backup service of type external name
 
-    ```shell
-    kubectl apply -f nginx-config.yaml
-    ```
+   ```shell
+   kubectl apply -f backup-svc.yaml
+   ```
 
-### 3. Deploy Backup Service
+### 4. Deploy the cafe application
 
-1. Deploy the backup service of type external name
+   ```shell
+   kubectl apply -f cafe.yaml
+   ```
 
-    ```shell
-    kubectl apply -f backup-svc.yaml
-    ```
+### 5. Configure TLS Termination
 
-### 4. Deploy NGINX Ingress Controller (OSS)
+Create the secret with the TLS certificate and key:
 
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
-   instructions to deploy the Ingress Controller with custom resources enabled.
+   ```shell
+   kubectl apply -f cafe-secret.yaml
+   ```
 
-1. Save the public IP address of the Ingress Controller into a shell variable:
+### 6. Deploy a VirtualServer configured with a backup service
 
-    ```console
-    IC_IP=XXX.YYY.ZZZ.III
-    ```
+   ```shell
+   kubectl apply -f cafe-virtual-server-backup.yaml
+   ```
 
-1. Save the HTTPS port of the Ingress Controller into a shell variable:
+Note that the backup service is configured with cluster domain name of the external service.
 
-    ```console
-    IC_HTTPS_PORT=<port number>
-    ```
+### 7. Test the configuration
 
-    Response
+Run the below curl command to get a response from your application. In this example we hit the `/coffee` endpoint:
 
-    ```console
-    hello from pod secure-app-external-backend-5fbf4fb494-x7bkl
-    ```
+   ```shell
+   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
+   ```
+
+   ```shell
+   Server address: 10.32.1.9:8080
+   Server name: coffee-7dd75bc79b-rmfp7
+   Date: 09/Dec/2023:16:15:45 +0000
+   URI: /coffee
+   Request ID: 51635a6ab2b359fe91014e43aff75854
+   ```
+
+### 8. Test the configuration using the backup service
+
+1. Scale the coffee deployment to zero pods. This is done to ensure that the external `backup` service will respond to our requests.
+
+   ```shell
+   kubectl scale deployment coffee --replicas=0
+   ```
+2. Run the below curl command. Notice that Server name in the response is `coffee-backup-<id>` instead of `coffee-<id>`
+
+   ```shell
+   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
+   ``` 
+
+   Response form backup service:
+
+   ```shell
+   Server address: 10.32.2.19:8080
+   Server name: coffee-backup-7c64b6b5b6-h4rnx
+   Date: 09/Dec/2023:16:18:17 +0000
+   URI: /coffee
+   Request ID: 8140ea6975983d12feaf56eed203f922
+   ```
+
