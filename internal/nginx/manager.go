@@ -70,6 +70,7 @@ type Manager interface {
 	DeleteAppProtectResourceFile(name string)
 	ClearAppProtectFolder(name string)
 	GetFilenameForSecret(name string) string
+	GetFilenameForSecret(name string) string
 	CreateDHParam(content string) (string, error)
 	CreateOpenTracingTracerConfig(content string) error
 	Start(done chan error)
@@ -209,6 +210,7 @@ func (lm *LocalManager) CreateTLSPassthroughHostsConfig(content []byte) bool {
 // it will be overridden.
 func (lm *LocalManager) CreateSecret(name string, content []byte, mode os.FileMode) string {
 	filename := lm.GetFilenameForSecret(name)
+	filename := lm.GetFilenameForSecret(name)
 
 	glog.V(3).Infof("Writing secret to %v", filename)
 
@@ -219,6 +221,7 @@ func (lm *LocalManager) CreateSecret(name string, content []byte, mode os.FileMo
 
 // DeleteSecret the file with the secret.
 func (lm *LocalManager) DeleteSecret(name string) {
+	filename := lm.GetFilenameForSecret(name)
 	filename := lm.GetFilenameForSecret(name)
 
 	glog.V(3).Infof("Deleting secret from %v", filename)
