@@ -81,7 +81,7 @@ func (*FakeManager) CreateTLSPassthroughHostsConfig(_ []byte) bool {
 // CreateSecret provides a fake implementation of CreateSecret.
 func (fm *FakeManager) CreateSecret(name string, _ []byte, _ os.FileMode) string {
 	glog.V(3).Infof("Writing secret %v", name)
-	return fm.GetFileReferenceForSecret(name)
+	return fm.GetFilenameForSecret(name)
 }
 
 // DeleteSecret provides a fake implementation of DeleteSecret.
@@ -89,8 +89,8 @@ func (*FakeManager) DeleteSecret(name string) {
 	glog.V(3).Infof("Deleting secret %v", name)
 }
 
-// GetFileReferenceForSecret provides a fake implementation of GetFileReferenceForSecret.
-func (fm *FakeManager) GetFileReferenceForSecret(name string) string {
+// GetFilenameForSecret provides a fake implementation of GetFilenameForSecret.
+func (fm *FakeManager) GetFilenameForSecret(name string) string {
 	return path.Join(fm.secretsPath, name)
 }
 
