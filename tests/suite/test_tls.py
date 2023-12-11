@@ -67,7 +67,6 @@ def tls_setup(
     test_data_path = f"{TEST_DATA}/tls"
     metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
 
-
     ingress_path = f"{test_data_path}/{request.param}/ingress.yaml"
     create_ingress_from_yaml(kube_apis.networking_v1, test_namespace, ingress_path)
     wait_before_test(1)
@@ -94,29 +93,17 @@ def tls_setup(
         f"{test_data_path}/tls-secret.yaml",
         f"{test_data_path}/new-tls-secret.yaml",
         f"{test_data_path}/invalid-tls-secret.yaml",
-        metrics_url
+        metrics_url,
     )
 
 
 @pytest.mark.ingresses
 @pytest.mark.parametrize(
-    "ingress_controller, tls_setup",  
+    "ingress_controller, tls_setup",
     [
-        pytest.param(
-            {"extra_args": [
-                "-enable-prometheus-metrics",
-                "-ssl-dynamic-reload=false"
-            ]},
-            "standard"
-        ),
-        pytest.param(
-            {"extra_args": [
-                "-enable-prometheus-metrics",
-                "-ssl-dynamic-reload=false"
-            ]},
-            "mergeable"
-        ),
-    ], 
+        pytest.param({"extra_args": ["-enable-prometheus-metrics", "-ssl-dynamic-reload=false"]}, "standard"),
+        pytest.param({"extra_args": ["-enable-prometheus-metrics", "-ssl-dynamic-reload=false"]}, "mergeable"),
+    ],
     indirect=True,
 )
 class TestIngressTLS:
@@ -157,35 +144,25 @@ class TestIngressTLS:
         replace_secret(kube_apis.v1, tls_setup.secret_name, test_namespace, tls_setup.new_secret_path)
         wait_before_test(1)
         assert_gb_subject(ingress_controller_endpoint, tls_setup.ingress_host)
-        
+
         count_after = get_reload_count(tls_setup.metrics_url)
         reloads = count_after - count_before
         expected_reloads = 8
         assert reloads == expected_reloads, f"expected {expected_reloads}"
 
+
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.ingresses
 @pytest.mark.parametrize(
-    "ingress_controller, tls_setup",  
+    "ingress_controller, tls_setup",
     [
-        pytest.param(
-            {"extra_args": [
-                "-enable-prometheus-metrics"
-            ]},
-            "standard"
-        ),
-        pytest.param(
-            {"extra_args": [
-                "-enable-prometheus-metrics"
-            ]},
-            "mergeable"
-        ),
-    ], 
+        pytest.param({"extra_args": ["-enable-prometheus-metrics"]}, "standard"),
+        pytest.param({"extra_args": ["-enable-prometheus-metrics"]}, "mergeable"),
+    ],
     indirect=True,
 )
 class TestIngressTLSDynamicReloads:
     def test_tls_termination(self, kube_apis, ingress_controller_endpoint, test_namespace, tls_setup):
-
         print("Step 1: no secret")
         assert_unrecognized_name_error(ingress_controller_endpoint, tls_setup.ingress_host)
 
@@ -200,7 +177,7 @@ class TestIngressTLSDynamicReloads:
         replace_secret(kube_apis.v1, tls_setup.secret_name, test_namespace, tls_setup.new_secret_path)
         wait_before_test(1)
         assert_gb_subject(ingress_controller_endpoint, tls_setup.ingress_host)
-        
+
         count_after = get_reload_count(tls_setup.metrics_url)
         reloads = count_after - count_before_replace
         expected_reloads = 0
