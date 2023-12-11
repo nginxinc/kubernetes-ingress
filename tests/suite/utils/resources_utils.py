@@ -524,7 +524,7 @@ def replace_secret(v1: CoreV1Api, name, namespace, yaml_manifest) -> str:
     :param yaml_manifest: an absolute path to file
     :return: str
     """
-    print(f"Replace a secret: '{name}'' in a namespace: '{namespace}'")
+    print(f"Replace a secret: '{name}' in a namespace: '{namespace}'")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
         v1.replace_namespaced_secret(name, namespace, dep)

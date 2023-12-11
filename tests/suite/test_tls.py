@@ -151,7 +151,7 @@ class TestIngressTLS:
         count_after = get_reload_count(tls_setup.metrics_url)
         reloads = count_after - count_before_replace
         expected_reloads = 1
-        assert reloads == expected_reloads, f"expected {expected_reloads}"
+        assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
 
 
 @pytest.mark.skip_for_nginx_oss
@@ -186,4 +186,4 @@ class TestIngressTLSDynamicReloads:
         count_after = get_reload_count(tls_setup.metrics_url)
         reloads = count_after - count_before_replace
         expected_reloads = 0
-        assert reloads == expected_reloads, f"expected {expected_reloads}"
+        assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
