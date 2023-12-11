@@ -43,8 +43,6 @@ const (
 	appProtectDosAgentInstallCmd    = "/usr/bin/adminstall"
 	appProtectDosAgentStartCmd      = "/usr/bin/admd -d --standalone"
 	appProtectDosAgentStartDebugCmd = "/usr/bin/admd -d --standalone --log debug"
-
-	secretPathVariable = "$secret_dir_path"
 )
 
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
