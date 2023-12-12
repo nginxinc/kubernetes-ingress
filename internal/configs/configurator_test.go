@@ -388,6 +388,8 @@ type mockLabelUpdater struct {
 	streamUpstreamServerPeerLabels map[string][]string
 	streamUpstreamServerLabels     map[string][]string
 	streamServerZoneLabels         map[string][]string
+	cacheZoneLabels                map[string][]string
+	workerPIDVariableLabels        map[string][]string
 }
 
 func newFakeLabelUpdater() *mockLabelUpdater {
@@ -398,6 +400,8 @@ func newFakeLabelUpdater() *mockLabelUpdater {
 		streamUpstreamServerPeerLabels: make(map[string][]string),
 		streamUpstreamServerLabels:     make(map[string][]string),
 		streamServerZoneLabels:         make(map[string][]string),
+		cacheZoneLabels:                make(map[string][]string),
+		workerPIDVariableLabels:        make(map[string][]string),
 	}
 }
 
@@ -482,6 +486,34 @@ func (u *mockLabelUpdater) UpdateStreamServerZoneLabels(streamServerZoneLabelVal
 func (u *mockLabelUpdater) DeleteStreamServerZoneLabels(zoneNames []string) {
 	for _, k := range zoneNames {
 		delete(u.streamServerZoneLabels, k)
+	}
+}
+
+// UpdateCacheZoneLabels updates the Cache Zone Labels
+func (u *mockLabelUpdater) UpdateCacheZoneLabels(cacheZoneLabelValues map[string][]string) {
+	for k, v := range cacheZoneLabelValues {
+		u.cacheZoneLabels[k] = v
+	}
+}
+
+// DeleteCacheZoneLabels deletes the Cache Zone Labels
+func (u *mockLabelUpdater) DeleteCacheZoneLabels(cacheZoneNames []string) {
+	for _, k := range cacheZoneNames {
+		delete(u.cacheZoneLabels, k)
+	}
+}
+
+// UpdateWorkerLabels updates the Worker Labels
+func (u *mockLabelUpdater) UpdateWorkerLabels(workerValues map[string][]string) {
+	for k, v := range workerValues {
+		u.workerPIDVariableLabels[k] = v
+	}
+}
+
+// DeleteWorkerLabels deletes the Worker Labels
+func (u *mockLabelUpdater) DeleteWorkerLabels(workerNames []string) {
+	for _, k := range workerNames {
+		delete(u.workerPIDVariableLabels, k)
 	}
 }
 
@@ -613,6 +645,8 @@ func TestUpdateIngressMetricsLabels(t *testing.T) {
 		streamUpstreamServerPeerLabels: make(map[string][]string),
 		streamUpstreamServerLabels:     make(map[string][]string),
 		streamServerZoneLabels:         make(map[string][]string),
+		cacheZoneLabels:                make(map[string][]string),
+		workerPIDVariableLabels:        make(map[string][]string),
 	}
 	expectedLatencyCollector := &mockLatencyCollector{
 		upstreamServerLabels:     upstreamServerLabels,
@@ -661,7 +695,9 @@ func TestUpdateIngressMetricsLabels(t *testing.T) {
 		upstreamServerPeerLabels:       upstreamServerPeerLabels,
 		streamUpstreamServerPeerLabels: make(map[string][]string),
 		streamUpstreamServerLabels:     make(map[string][]string),
-		streamServerZoneLabels:         map[string][]string{},
+		streamServerZoneLabels:         make(map[string][]string),
+		cacheZoneLabels:                make(map[string][]string),
+		workerPIDVariableLabels:        make(map[string][]string),
 	}
 	expectedLatencyCollector = &mockLatencyCollector{
 		upstreamServerLabels:        upstreamServerLabels,
@@ -688,6 +724,8 @@ func TestUpdateIngressMetricsLabels(t *testing.T) {
 		streamUpstreamServerPeerLabels: map[string][]string{},
 		streamUpstreamServerLabels:     map[string][]string{},
 		streamServerZoneLabels:         map[string][]string{},
+		cacheZoneLabels:                map[string][]string{},
+		workerPIDVariableLabels:        map[string][]string{},
 	}
 	expectedLatencyCollector = &mockLatencyCollector{
 		upstreamServerLabels:        upstreamServerLabels,
@@ -780,6 +818,8 @@ func TestUpdateVirtualServerMetricsLabels(t *testing.T) {
 		streamUpstreamServerPeerLabels: map[string][]string{},
 		streamUpstreamServerLabels:     map[string][]string{},
 		streamServerZoneLabels:         map[string][]string{},
+		cacheZoneLabels:                map[string][]string{},
+		workerPIDVariableLabels:        map[string][]string{},
 	}
 
 	expectedLatencyCollector := &mockLatencyCollector{
@@ -829,6 +869,8 @@ func TestUpdateVirtualServerMetricsLabels(t *testing.T) {
 		streamUpstreamServerPeerLabels: map[string][]string{},
 		streamUpstreamServerLabels:     map[string][]string{},
 		streamServerZoneLabels:         map[string][]string{},
+		cacheZoneLabels:                map[string][]string{},
+		workerPIDVariableLabels:        map[string][]string{},
 	}
 
 	expectedLatencyCollector = &mockLatencyCollector{
@@ -853,6 +895,8 @@ func TestUpdateVirtualServerMetricsLabels(t *testing.T) {
 		streamUpstreamServerPeerLabels: map[string][]string{},
 		streamUpstreamServerLabels:     map[string][]string{},
 		streamServerZoneLabels:         map[string][]string{},
+		cacheZoneLabels:                map[string][]string{},
+		workerPIDVariableLabels:        map[string][]string{},
 	}
 
 	expectedLatencyCollector = &mockLatencyCollector{
@@ -948,6 +992,8 @@ func TestUpdateTransportServerMetricsLabels(t *testing.T) {
 		upstreamServerPeerLabels:       make(map[string][]string),
 		upstreamServerLabels:           make(map[string][]string),
 		serverZoneLabels:               make(map[string][]string),
+		cacheZoneLabels:                make(map[string][]string),
+		workerPIDVariableLabels:        make(map[string][]string),
 	}
 
 	cnf.updateTransportServerMetricsLabels(tsEx, streamUpstreams)
@@ -989,6 +1035,8 @@ func TestUpdateTransportServerMetricsLabels(t *testing.T) {
 		upstreamServerPeerLabels:       map[string][]string{},
 		upstreamServerLabels:           map[string][]string{},
 		serverZoneLabels:               map[string][]string{},
+		cacheZoneLabels:                map[string][]string{},
+		workerPIDVariableLabels:        map[string][]string{},
 	}
 
 	cnf.updateTransportServerMetricsLabels(tsEx, updatedStreamUpstreams)
@@ -1003,6 +1051,8 @@ func TestUpdateTransportServerMetricsLabels(t *testing.T) {
 		streamUpstreamServerPeerLabels: map[string][]string{},
 		streamUpstreamServerLabels:     map[string][]string{},
 		streamServerZoneLabels:         map[string][]string{},
+		cacheZoneLabels:                map[string][]string{},
+		workerPIDVariableLabels:        map[string][]string{},
 	}
 
 	cnf.deleteTransportServerMetricsLabels("default/test-transportserver")
@@ -1063,6 +1113,8 @@ func TestUpdateTransportServerMetricsLabels(t *testing.T) {
 		upstreamServerPeerLabels:       make(map[string][]string),
 		upstreamServerLabels:           make(map[string][]string),
 		serverZoneLabels:               make(map[string][]string),
+		cacheZoneLabels:                make(map[string][]string),
+		workerPIDVariableLabels:        make(map[string][]string),
 	}
 
 	cnf.updateTransportServerMetricsLabels(tsExTLS, streamUpstreams)
@@ -1077,6 +1129,8 @@ func TestUpdateTransportServerMetricsLabels(t *testing.T) {
 		streamUpstreamServerPeerLabels: map[string][]string{},
 		streamUpstreamServerLabels:     map[string][]string{},
 		streamServerZoneLabels:         map[string][]string{},
+		cacheZoneLabels:                map[string][]string{},
+		workerPIDVariableLabels:        map[string][]string{},
 	}
 
 	cnf.deleteTransportServerMetricsLabels("default/test-transportserver-tls")
