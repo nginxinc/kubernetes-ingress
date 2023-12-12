@@ -267,8 +267,8 @@ jobs:
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_integration\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_policies\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_policies_grpc\"}, \
-                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_watch\"}, \
-                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_batch\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_watch\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_batch\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
           else
