@@ -3,15 +3,15 @@ ROOT_DIR                = $(shell git rev-parse --show-toplevel)
 CONTEXT                 =
 PULL_POLICY             = IfNotPresent
 DEPLOYMENT_TYPE         = deployment
-IC_TYPE                 = nginx-ingress
 SERVICE                 = nodeport
 NODE_IP                 =
 TEST_PREFIX             = test-runner
 KUBE_CONFIG_FOLDER      = ${HOME}/.kube
 KIND_KUBE_CONFIG_FOLDER = $(KUBE_CONFIG_FOLDER)/kind
-SHOW_IC_LOGS            = no
 DOCKERFILEPATH          := ${ROOT_DIR}/tests/Dockerfile
 IP_FAMILY               = dual
+IC_TYPE                 ?= nginx-ingress ## The Ingress Controller type to use, "nginx-ingress" or "nginx-plus-ingress".  Defaults to "nginx-ingress"
+SHOW_IC_LOGS            ?= no ## Should the tests show the Ingress Controller logs on failure, "yes" or "no". Defaults to "no"
 TEST_TAG                ?= latest ## The Tag to use for the test image. e.g. commitsha
 PREFIX                  ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
 TAG                     ?= edge ## The tag of the image. For example, edge
@@ -52,7 +52,10 @@ update-test-kind-config:
 
 .PHONY: run-tests-in-kind
 run-tests-in-kind: update-test-kind-config ## Run tests in Kind
-	docker run --network=kind --rm -v $(KIND_KUBE_CONFIG_FOLDER):/root/.kube $(TEST_PREFIX):$(TEST_TAG) \
+	docker run --network=kind --rm \
+		-v $(KIND_KUBE_CONFIG_FOLDER):/root/.kube \
+		-v $(ROOT_DIR)/tests:/workspace/tests \
+		$(TEST_PREFIX):$(TEST_TAG) \
  		--context=kind-$(strip $(K8S_CLUSTER_NAME)) \
  		--image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) \
  		--deployment-type=$(DEPLOYMENT_TYPE) \

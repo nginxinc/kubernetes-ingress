@@ -298,3 +298,45 @@ class TestTransportServerMetrics:
         wait_before_test()
 
         assert_ts_total_metric(ingress_controller_endpoint, ts_type, 0)
+
+
+@pytest.mark.ingresses
+@pytest.mark.smoke
+@pytest.mark.skip_for_nginx_oss
+class TestPrometheusExporterPlus:
+    @pytest.mark.parametrize(
+        "ingress_controller, expected_metrics",
+        [
+            pytest.param(
+                {"extra_args": ["-enable-prometheus-metrics", "-enable-oidc"]},
+                [
+                    'nginx_ingress_nginxplus_cache_bypass_bytes{class="nginx",zone="jwk"}',
+                    'nginx_ingress_nginxplus_cache_expired_bytes{class="nginx",zone="jwk"}',
+                    'nginx_ingress_nginxplus_cache_hit_responses{class="nginx",zone="jwk"}',
+                    'nginx_ingress_nginxplus_cache_miss_responses{class="nginx",zone="jwk"}',
+                    'nginx_ingress_nginxplus_cache_size{class="nginx",zone="jwk"}',
+                    'nginxplus_worker_connection_accepted{class="nginx"',
+                    'nginxplus_worker_connection_active{class="nginx"',
+                    'nginxplus_worker_http_requests_total{class="nginx"',
+                ],
+            )
+        ],
+        indirect=["ingress_controller"],
+    )
+    def test_plus_metrics(
+        self,
+        ingress_controller_endpoint,
+        ingress_controller,
+        expected_metrics,
+        ingress_setup,
+    ):
+        ensure_connection(ingress_setup.req_url, 200, {"host": ingress_setup.ingress_host})
+        resp = requests.get(ingress_setup.req_url, headers={"host": ingress_setup.ingress_host}, verify=False)
+        assert resp.status_code == 200
+        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        ensure_connection(req_url, 200)
+        resp = requests.get(req_url)
+        assert resp.status_code == 200, f"Expected 200 code for /metrics but got {resp.status_code}"
+        resp_content = resp.content.decode("utf-8")
+        for item in expected_metrics:
+            assert item in resp_content
