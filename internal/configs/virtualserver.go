@@ -3,6 +3,7 @@ package configs
 import (
 	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -686,6 +687,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		vsEx.VirtualServer.Spec.ServerSnippets,
 		vsc.cfgParams.ServerSnippets,
 	)
+
+	sort.Slice(upstreams, func(i, j int) bool {
+		return upstreams[i].Name < upstreams[j].Name
+	})
 
 	vsCfg := version2.VirtualServerConfig{
 		Upstreams:     upstreams,
@@ -1420,6 +1425,9 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 		}
 		upsServers = append(upsServers, s)
 	}
+	sort.Slice(upsServers, func(i, j int) bool {
+		return upsServers[i].Address < upsServers[j].Address
+	})
 
 	lbMethod := generateLBMethod(upstream.LBMethod, vsc.cfgParams.LBMethod)
 

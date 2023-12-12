@@ -206,6 +206,21 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOn(t *testing.T) {
 		Upstreams: []version2.Upstream{
 			{
 				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "tea-svc",
 					ResourceType:      "virtualserver",
 					ResourceName:      "cafe",
@@ -237,11 +252,11 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOn(t *testing.T) {
 			{
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
-					ResourceType:      "virtualserver",
-					ResourceName:      "cafe",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_coffee",
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -253,10 +268,10 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOn(t *testing.T) {
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
 					ResourceType:      "virtualserverroute",
-					ResourceName:      "coffee",
+					ResourceName:      "subcoffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -275,21 +290,6 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOn(t *testing.T) {
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.50:80",
-					},
-				},
-				Keepalive: 16,
-			},
-			{
-				UpstreamLabels: version2.UpstreamLabels{
-					Service:           "coffee-svc",
-					ResourceType:      "virtualserverroute",
-					ResourceName:      "subcoffee",
-					ResourceNamespace: "default",
-				},
-				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
-				Servers: []version2.UpstreamServer{
-					{
-						Address: "10.0.0.40:80",
 					},
 				},
 				Keepalive: 16,
@@ -464,6 +464,21 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOff(t *testing.T) {
 		Upstreams: []version2.Upstream{
 			{
 				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "tea-svc",
 					ResourceType:      "virtualserver",
 					ResourceName:      "cafe",
@@ -495,11 +510,11 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOff(t *testing.T) {
 			{
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
-					ResourceType:      "virtualserver",
-					ResourceName:      "cafe",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_coffee",
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -511,10 +526,10 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOff(t *testing.T) {
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
 					ResourceType:      "virtualserverroute",
-					ResourceName:      "coffee",
+					ResourceName:      "subcoffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -533,21 +548,6 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOff(t *testing.T) {
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.50:80",
-					},
-				},
-				Keepalive: 16,
-			},
-			{
-				UpstreamLabels: version2.UpstreamLabels{
-					Service:           "coffee-svc",
-					ResourceType:      "virtualserverroute",
-					ResourceName:      "subcoffee",
-					ResourceNamespace: "default",
-				},
-				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
-				Servers: []version2.UpstreamServer{
-					{
-						Address: "10.0.0.40:80",
 					},
 				},
 				Keepalive: 16,
@@ -722,6 +722,21 @@ func TestGenerateVSConfig_GeneratesConfigWithNoGunzip(t *testing.T) {
 		Upstreams: []version2.Upstream{
 			{
 				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "tea-svc",
 					ResourceType:      "virtualserver",
 					ResourceName:      "cafe",
@@ -753,11 +768,11 @@ func TestGenerateVSConfig_GeneratesConfigWithNoGunzip(t *testing.T) {
 			{
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
-					ResourceType:      "virtualserver",
-					ResourceName:      "cafe",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_coffee",
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -769,10 +784,10 @@ func TestGenerateVSConfig_GeneratesConfigWithNoGunzip(t *testing.T) {
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
 					ResourceType:      "virtualserverroute",
-					ResourceName:      "coffee",
+					ResourceName:      "subcoffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -791,21 +806,6 @@ func TestGenerateVSConfig_GeneratesConfigWithNoGunzip(t *testing.T) {
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.50:80",
-					},
-				},
-				Keepalive: 16,
-			},
-			{
-				UpstreamLabels: version2.UpstreamLabels{
-					Service:           "coffee-svc",
-					ResourceType:      "virtualserverroute",
-					ResourceName:      "subcoffee",
-					ResourceNamespace: "default",
-				},
-				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
-				Servers: []version2.UpstreamServer{
-					{
-						Address: "10.0.0.40:80",
 					},
 				},
 				Keepalive: 16,
@@ -1178,6 +1178,21 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		Upstreams: []version2.Upstream{
 			{
 				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "tea-svc",
 					ResourceType:      "virtualserver",
 					ResourceName:      "cafe",
@@ -1209,11 +1224,11 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			{
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
-					ResourceType:      "virtualserver",
-					ResourceName:      "cafe",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_coffee",
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -1225,10 +1240,10 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
 					ResourceType:      "virtualserverroute",
-					ResourceName:      "coffee",
+					ResourceName:      "subcoffee",
 					ResourceNamespace: "default",
 				},
-				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
@@ -1247,21 +1262,6 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.50:80",
-					},
-				},
-				Keepalive: 16,
-			},
-			{
-				UpstreamLabels: version2.UpstreamLabels{
-					Service:           "coffee-svc",
-					ResourceType:      "virtualserverroute",
-					ResourceName:      "subcoffee",
-					ResourceNamespace: "default",
-				},
-				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
-				Servers: []version2.UpstreamServer{
-					{
-						Address: "10.0.0.40:80",
 					},
 				},
 				Keepalive: 16,
@@ -1687,20 +1687,6 @@ func TestGenerateVirtualServerConfigIPV6Disabled(t *testing.T) {
 		Upstreams: []version2.Upstream{
 			{
 				UpstreamLabels: version2.UpstreamLabels{
-					Service:           "tea-svc",
-					ResourceType:      "virtualserver",
-					ResourceName:      "cafe",
-					ResourceNamespace: "default",
-				},
-				Name: "vs_default_cafe_tea",
-				Servers: []version2.UpstreamServer{
-					{
-						Address: "10.0.0.20:80",
-					},
-				},
-			},
-			{
-				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
 					ResourceType:      "virtualserver",
 					ResourceName:      "cafe",
@@ -1710,6 +1696,20 @@ func TestGenerateVirtualServerConfigIPV6Disabled(t *testing.T) {
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.40:80",
+					},
+				},
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
 					},
 				},
 			},
@@ -3974,21 +3974,6 @@ func TestGenerateVirtualServerConfigJWKSPolicy(t *testing.T) {
 		Upstreams: []version2.Upstream{
 			{
 				UpstreamLabels: version2.UpstreamLabels{
-					Service:           "tea-svc",
-					ResourceType:      "virtualserver",
-					ResourceName:      "cafe",
-					ResourceNamespace: "default",
-				},
-				Name: "vs_default_cafe_tea",
-				Servers: []version2.UpstreamServer{
-					{
-						Address: "10.0.0.20:80",
-					},
-				},
-				Keepalive: 16,
-			},
-			{
-				UpstreamLabels: version2.UpstreamLabels{
 					Service:           "coffee-svc",
 					ResourceType:      "virtualserver",
 					ResourceName:      "cafe",
@@ -3998,6 +3983,21 @@ func TestGenerateVirtualServerConfigJWKSPolicy(t *testing.T) {
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
 					},
 				},
 				Keepalive: 16,
