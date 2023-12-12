@@ -7,8 +7,7 @@ The `backup` service is of type
 > [!NOTE]
 > The [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service is only available with NGINX Plus.
 
-In this example, we will use two configurations of the
-[tls-passthrough](/examples/custom-resources/tls-passthrough) example.
+For this example, we will use two [tls-passthrough](/examples/custom-resources/tls-passthrough) configurations.
 One will be deployed in the `default` namespace, and the other in the `external-ns` namespace.
 
 The application in the `external-ns` namespace will respond to our requests when main application is unavailable.
