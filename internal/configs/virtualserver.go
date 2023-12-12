@@ -1464,6 +1464,9 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 		}
 		upsBackupServers = append(upsBackupServers, s)
 	}
+	sort.Slice(upsBackupServers, func(i, j int) bool {
+		return upsBackupServers[i].Address < upsBackupServers[j].Address
+	})
 
 	lbMethod := generateLBMethod(upstream.LBMethod, vsc.cfgParams.LBMethod)
 

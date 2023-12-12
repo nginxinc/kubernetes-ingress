@@ -323,6 +323,10 @@ func generateStreamUpstream(upstream conf_v1.TransportServerUpstream, upstreamNa
 	sort.Slice(upsServers, func(i, j int) bool {
 		return upsServers[i].Address < upsServers[j].Address
 	})
+	sort.Slice(upsBackups, func(i, j int) bool {
+		return upsBackups[i].Address < upsBackups[j].Address
+	})
+
 	return version2.StreamUpstream{
 		Name:                name,
 		Servers:             upsServers,
