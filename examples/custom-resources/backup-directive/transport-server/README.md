@@ -5,9 +5,7 @@ The `backup` service is of type
 [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname).
 
 > [!NOTE]
-> Support of the services of type
-> [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)
-> is only available in NGINX Plus.
+> The [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service is only available with NGINX Plus.
 
 In this example, we will use two configurations of the
 [tls-passthrough](/examples/custom-resources/tls-passthrough) example.
