@@ -661,11 +661,11 @@ class TestTransportServerTcpLoadBalance:
     indirect=True,
 )
 class TestTransportServerTcpLoadBalanceDynamicReload:
-    def test_secure_tcp_request_load_balanced(
+    def test_dynamic_reload(
         self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
         """
-        Sends requests to a TLS enabled load balanced TCP service.
+        Updates a secret used by the transport server and verifies that NGINX is not reloaded.
         """
         src_sec_yaml = f"{TEST_DATA}/transport-server-tcp-load-balance/tcp-tls-secret.yaml"
         src_new_sec_yaml = f"{TEST_DATA}/transport-server-tcp-load-balance/new-tls-secret.yaml"
@@ -706,5 +706,4 @@ class TestTransportServerTcpLoadBalanceDynamicReload:
         expected_reloads = 0
         assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
 
-        # self.restore_ts(kube_apis, transport_server_setup)
         delete_items_from_yaml(kube_apis, src_sec_yaml, transport_server_setup.namespace)
