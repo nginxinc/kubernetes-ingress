@@ -32,7 +32,7 @@ jobs:
       contents: read # for docker/build-push-action to read repo content
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       id-token: write # for OIDC login to AWS
-    runs-on: ubuntu-22.04
+    runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-22.04' || 'kic-plus' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -84,13 +84,29 @@ jobs:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
         if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
 
+      - name: Get Id Token
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        id: idtoken
+        with:
+          script: |
+            let id_token = await core.getIDToken()
+            core.setOutput('id_token', id_token)
+
+      - name: Login to NGINX Registry
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: docker-mgmt.nginx.com
+          username: ${{ steps.idtoken.outputs.id_token }}
+          password: ${{ github.actor }}
+        if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@31cebacef4805868f9ce9a0cb03ee36c32df2ac4 # v5.3.0
         with:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress,enable=${{ github.ref_type == 'tag' }}
+            name=docker-mgmt.nginx.com/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress,enable=${{ github.ref_type != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
             name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ github.ref_type == 'tag' && contains(inputs.target, 'aws') }}
           flavor: |
             suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}},onlatest=true
@@ -99,8 +115,9 @@ jobs:
             type=edge
             type=ref,event=pr
             type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/release-') }}
-            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=schedule
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
           labels: |
             org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
             org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
