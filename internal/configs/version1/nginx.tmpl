@@ -48,7 +48,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    
+
     {{- if .DynamicSSLReloadEnabled }}
     map $nginx_version $secret_dir_path {
         default "{{ .StaticSSLPath }}";
