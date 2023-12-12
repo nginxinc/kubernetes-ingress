@@ -35,7 +35,7 @@ The application in the `external-ns` namespace will respond to our requests when
     IC_IP=XXX.YYY.ZZZ.III
     ```
 
-4. Save the HTTPS port of the F5 NGINX Ingress Controller into a shell variable:
+4. Save the HTTPS port of NGINX Ingress Controller into a shell variable:
 
     ```shell
     IC_HTTPS_PORT=<port number>
