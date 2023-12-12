@@ -28,6 +28,7 @@ import (
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/promlog"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	util_version "k8s.io/apimachinery/pkg/util/version"
@@ -694,16 +695,17 @@ func createPlusAndLatencyCollectors(
 
 			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			cacheZoneLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			workerPIDVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
-				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames)
-			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels)
+				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, cacheZoneLabels, workerPIDVariableLabels)
+			promlogConfig := &promlog.Config{}
+			logger := promlog.New(promlogConfig)
+			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
 			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
 		} else {
 			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
-			client, err := metrics.NewNginxMetricsClient(httpClient)
-			if err != nil {
-				glog.Errorf("Error creating the Nginx client for Prometheus metrics: %v", err)
-			}
+			client := metrics.NewNginxMetricsClient(httpClient)
 			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels, prometheusSecret)
 		}
 		if *enableLatencyMetrics {

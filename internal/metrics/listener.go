@@ -15,17 +15,20 @@ import (
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/promlog"
 	v1 "k8s.io/api/core/v1"
 )
 
 // NewNginxMetricsClient creates an NginxClient to fetch stats from NGINX over an unix socket
-func NewNginxMetricsClient(httpClient *http.Client) (*prometheusClient.NginxClient, error) {
+func NewNginxMetricsClient(httpClient *http.Client) *prometheusClient.NginxClient {
 	return prometheusClient.NewNginxClient(httpClient, "http://config-status/stub_status")
 }
 
 // RunPrometheusListenerForNginx runs an http server to expose Prometheus metrics for NGINX
 func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string, prometheusSecret *v1.Secret) {
-	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", constLabels))
+	promlogConfig := &promlog.Config{}
+	logger := promlog.New(promlogConfig)
+	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", constLabels, logger))
 	runServer(strconv.Itoa(port), registry, prometheusSecret)
 }
 
