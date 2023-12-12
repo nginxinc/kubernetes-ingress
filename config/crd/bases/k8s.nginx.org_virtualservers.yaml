@@ -599,6 +599,10 @@ spec:
                 items:
                   description: Upstream defines an upstream.
                   properties:
+                    backup:
+                      type: string
+                    backupPort:
+                      type: integer
                     buffer-size:
                       type: string
                     buffering:

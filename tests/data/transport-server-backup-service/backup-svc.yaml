@@ -1,0 +1,7 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: backup-svc-ts
+spec:
+  type: ExternalName
+  externalName: external-backend-svc.external-ns.svc.cluster.local

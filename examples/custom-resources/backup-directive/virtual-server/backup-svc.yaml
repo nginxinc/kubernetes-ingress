@@ -1,0 +1,7 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: backup-svc
+spec:
+  type: ExternalName
+  externalName: coffee-backup-svc.external-ns.svc.cluster.local

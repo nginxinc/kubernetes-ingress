@@ -42,6 +42,95 @@ func TestValidateTransportServer(t *testing.T) {
 	}
 }
 
+func makeTransportServer() conf_v1.TransportServer {
+	return conf_v1.TransportServer{
+		Spec: conf_v1.TransportServerSpec{
+			Listener: conf_v1.TransportServerListener{
+				Name:     "tcp-listener",
+				Protocol: "TCP",
+			},
+			Upstreams: []conf_v1.TransportServerUpstream{
+				{
+					Name:    "upstream1",
+					Service: "test-1",
+					Port:    5501,
+				},
+			},
+			Action: &conf_v1.TransportServerAction{
+				Pass: "upstream1",
+			},
+		},
+	}
+}
+
+func TestValidateTransportServer_BackupService(t *testing.T) {
+	t.Parallel()
+
+	ts := makeTransportServer()
+	ts.Spec.Upstreams[0].Backup = createPointerFromString("backup-service")
+	ts.Spec.Upstreams[0].BackupPort = createPointerFromUInt16(5505)
+
+	tsv := createTransportServerValidator()
+
+	err := tsv.ValidateTransportServer(&ts)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestValidateTransportServer_FailsOnMissingBackupName(t *testing.T) {
+	t.Parallel()
+
+	ts := makeTransportServer()
+	// backup name not created, it's nil
+	ts.Spec.Upstreams[0].BackupPort = createPointerFromUInt16(5505)
+
+	tsv := createTransportServerValidator()
+
+	err := tsv.ValidateTransportServer(&ts)
+	if err == nil {
+		t.Error("want error on missing backup name")
+	}
+}
+
+func TestValidateTransportServer_FailsOnMissingBackupPort(t *testing.T) {
+	t.Parallel()
+
+	ts := makeTransportServer()
+	ts.Spec.Upstreams[0].Backup = createPointerFromString("backup-service-ts")
+	// backup port not created, it's nil
+
+	tsv := createTransportServerValidator()
+
+	err := tsv.ValidateTransportServer(&ts)
+	if err == nil {
+		t.Error("want error on missing backup port")
+	}
+}
+
+func TestValidateTransportServer_FailsOnNotSupportedLBMethodForBackup(t *testing.T) {
+	t.Parallel()
+
+	notSupportedLBMethods := []string{"hash", "hash_ip", "random", "random two least"}
+	for _, lbMethod := range notSupportedLBMethods {
+		lbMethod := lbMethod
+		t.Run(lbMethod, func(t *testing.T) {
+			t.Parallel()
+
+			ts := makeTransportServer()
+			ts.Spec.Upstreams[0].Backup = createPointerFromString("backup-service")
+			ts.Spec.Upstreams[0].BackupPort = createPointerFromUInt16(5505)
+			ts.Spec.Upstreams[0].LoadBalancingMethod = lbMethod
+
+			tsv := createTransportServerValidator()
+			err := tsv.ValidateTransportServer(&ts)
+			if err == nil {
+				t.Errorf("want err on not supported load balancing method: %q, got nil", lbMethod)
+			}
+		})
+	}
+}
+
 func TestValidateTransportServer_FailsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 	ts := conf_v1.TransportServer{

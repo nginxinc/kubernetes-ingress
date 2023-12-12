@@ -158,6 +158,8 @@ loadBalancingMethod: least_conn
 |``failTimeout`` | Sets the [time](https://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#fail_timeout) during which the specified number of unsuccessful attempts to communicate with the server should happen to consider the server unavailable and the period of time the server will be considered unavailable. The default is ``10s``. | ``string`` | No |
 |``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstreamhealthcheck) | No |
 |``loadBalancingMethod`` | The method used to load balance the upstream servers. By default, connections are distributed between the servers using a weighted round-robin balancing method. See the [upstream](http://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#upstream) section for available methods and their details. | ``string`` | No |
+|``backup`` | The name of the backup service of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname). This will be used when the primary servers are unavailable. Note: The parameter cannot be used along with the ``random`` , ``hash`` or ``ip_hash`` load balancing methods. | ``string`` | No |
+|``backupPort`` | The port of the backup service. The backup port is required if the backup service name is provided. The port must fall into the range ``1..65535``. | ``uint16`` | No |
 {{% /table %}}
 
 ### Upstream.Healthcheck

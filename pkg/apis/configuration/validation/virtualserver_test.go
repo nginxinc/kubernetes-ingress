@@ -69,6 +69,131 @@ func TestValidateVirtualServer(t *testing.T) {
 	}
 }
 
+func makeVirtualServer() v1.VirtualServer {
+	return v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+		Spec: v1.VirtualServerSpec{
+			Host: "example.com",
+			TLS: &v1.TLS{
+				Secret: "abc",
+			},
+			ExternalDNS: v1.ExternalDNS{
+				Enable: false,
+			},
+			Upstreams: []v1.Upstream{
+				{
+					Name:      "first",
+					Service:   "service-1",
+					LBMethod:  "random",
+					Port:      80,
+					MaxFails:  createPointerFromInt(8),
+					MaxConns:  createPointerFromInt(16),
+					Keepalive: createPointerFromInt(32),
+					Type:      "grpc",
+				},
+				{
+					Name:    "second",
+					Service: "service-2",
+					Port:    80,
+				},
+			},
+			Routes: []v1.Route{
+				{
+					Path: "/first",
+					Action: &v1.Action{
+						Pass: "first",
+					},
+				},
+				{
+					Path: "/second",
+					Action: &v1.Action{
+						Pass: "second",
+					},
+				},
+			},
+			Dos: "some-ns/some-name",
+		},
+	}
+}
+
+func createPointerFromString(s string) *string {
+	return &s
+}
+
+func TestValidateFailsOnMissingBackupPort(t *testing.T) {
+	t.Parallel()
+
+	vs := makeVirtualServer()
+	// setup only backup name, missing backup port
+	vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+
+	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
+	err := vsv.ValidateVirtualServer(&vs)
+	if err == nil {
+		t.Error("want error for missing backup port, got nil", err)
+	}
+}
+
+func createPointerFromUInt16(port uint16) *uint16 {
+	return &port
+}
+
+func TestValidateFailsOnMissingBackupName(t *testing.T) {
+	t.Parallel()
+
+	vs := makeVirtualServer()
+	// setup only backup port, missing backup name
+	vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
+
+	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
+	err := vsv.ValidateVirtualServer(&vs)
+	if err == nil {
+		t.Error("want error for missing backup name, got nil", err)
+	}
+}
+
+func TestValidateFailsOnNotSupportedLBMethodForBackup(t *testing.T) {
+	t.Parallel()
+
+	notSupportedLBMethods := []string{"hash", "hash_ip", "random", "random two least_conn"}
+	for _, lbMethod := range notSupportedLBMethods {
+		lbMethod := lbMethod
+		t.Run(lbMethod, func(t *testing.T) {
+			t.Parallel()
+
+			vs := makeVirtualServer()
+			vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+			vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
+
+			// Not supported load balancing method
+			vs.Spec.Upstreams[1].LBMethod = lbMethod
+
+			vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
+			err := vsv.ValidateVirtualServer(&vs)
+			if err == nil {
+				t.Errorf("want error for not supported load balancing method: %s", lbMethod)
+			}
+		})
+	}
+}
+
+func TestValidateBackup(t *testing.T) {
+	t.Parallel()
+
+	vs := makeVirtualServer()
+	vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+	vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
+
+	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
+	err := vsv.ValidateVirtualServer(&vs)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestValidateHost(t *testing.T) {
 	t.Parallel()
 	validHosts := []string{

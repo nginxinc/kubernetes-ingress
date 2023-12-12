@@ -425,6 +425,25 @@ def create_service_with_name(v1: CoreV1Api, namespace, name) -> str:
         return create_service(v1, namespace, dep)
 
 
+def create_secure_app_deployment_with_name(apps_v1_api: AppsV1Api, namespace, name) -> str:
+    """
+    Deploys app in /common/app/secure in the configured name and namespace
+
+    :param v1: CoreV1Api
+    :param namespace: namespace name
+    :param name: name
+    :return: str
+    """
+    print(f"Create a Service with a specific name: {name}")
+    with open(f"{TEST_DATA}/common/app/secure/deployment/secure-app.yaml") as f:
+        dep = yaml.safe_load(f)
+        dep["metadata"]["name"] = name
+        dep["spec"]["selector"]["matchLabels"]["app"] = name
+        dep["spec"]["template"]["metadata"]["labels"]["app"] = name
+        dep["spec"]["template"]["spec"]["containers"][0]["name"] = name
+        return create_deployment(apps_v1_api, namespace, dep)
+
+
 def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, int, int, int, int):
     """
     Get service allocated node_ports.
@@ -993,6 +1012,21 @@ def get_ingress_nginx_template_conf(v1: CoreV1Api, ingress_namespace, ingress_na
     :return: str
     """
     file_path = f"/etc/nginx/conf.d/{ingress_namespace}-{ingress_name}.conf"
+    return get_file_contents(v1, file_path, pod_name, pod_namespace)
+
+
+def get_vs_nginx_template_conf(v1: CoreV1Api, vs_namespace, vs_name, pod_name, pod_namespace) -> str:
+    """
+    Get contents of /etc/nginx/conf.d/vs_{namespace}_{ingress_name}.conf in the pod.
+
+    :param v1: CoreV1Api
+    :param ingress_namespace:
+    :param ingress_name:
+    :param pod_name:
+    :param pod_namespace:
+    :return: str
+    """
+    file_path = f"/etc/nginx/conf.d/vs_{vs_namespace}_{vs_name}.conf"
     return get_file_contents(v1, file_path, pod_name, pod_namespace)
 
 
