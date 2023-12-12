@@ -23,7 +23,7 @@ The application in the `external-ns` namespace will respond to our requests when
    ```
 
    We configure the `-watch-namespace` flag to only watch the `nginx-ingress` and `default` namespaces.
-   This ensures that the F5 NGINX Ingress Controller will treat our service in the `external-ns` namespace
+   This ensures that NGINX Ingress Controller will treat our service in the `external-ns` namespace
    as an external service.
 
 2. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
