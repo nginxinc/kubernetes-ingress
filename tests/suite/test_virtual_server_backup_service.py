@@ -10,16 +10,13 @@ from suite.utils.resources_utils import (
     ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
     get_first_pod_name,
+    get_vs_nginx_template_conf,
     replace_configmap,
     replace_configmap_from_yaml,
     scale_deployment,
     wait_before_test,
-    get_vs_nginx_template_conf,
 )
-
-from suite.utils.vs_vsr_resources_utils import (
-    patch_virtual_server_from_yaml,
-)
+from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
 
 
 def make_request(url, host):
@@ -29,6 +26,7 @@ def make_request(url, host):
         allow_redirects=False,
         verify=False,
     )
+
 
 class ExternalNameSetup:
     """Encapsulate ExternalName example details.
@@ -42,6 +40,7 @@ class ExternalNameSetup:
         self.ic_pod_name = ic_pod_name
         self.external_svc = external_svc
         self.external_host = external_host
+
 
 @pytest.fixture(scope="class")
 def vs_externalname_setup(
@@ -86,6 +85,7 @@ def vs_externalname_setup(
 
     return ExternalNameSetup(ic_pod_name, external_svc, external_svc_host)
 
+
 @pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.backup_service
@@ -114,14 +114,15 @@ class TestVirtualServerWithBackupService:
     This test validates that we still get a response back from the default
     service, and not the backup service, as long as the default service is still available
     """
+
     def test_get_response_from_application(
-            self,
-            kube_apis,
-            ingress_controller_prerequisites,
-            crd_ingress_controller,
-            virtual_server_setup,
-            vs_externalname_setup,
-        ) -> None:
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        virtual_server_setup,
+        vs_externalname_setup,
+    ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
@@ -157,14 +158,15 @@ class TestVirtualServerWithBackupService:
     This test validates that we get a response back from the backup service.
     This test also scales the application back to 2 replicas after confirming a response from the backup service.
     """
+
     def test_get_response_from_backup(
-            self,
-            kube_apis,
-            ingress_controller_prerequisites,
-            crd_ingress_controller,
-            virtual_server_setup,
-            vs_externalname_setup,
-        ) -> None:
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        virtual_server_setup,
+        vs_externalname_setup,
+    ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
@@ -249,14 +251,15 @@ class TestVirtualServerWithBackupService:
     """
     This test validates that getting an error response after deleting the backup service.
     """
+
     def test_delete_backup_service(
-            self,
-            kube_apis,
-            ingress_controller_prerequisites,
-            crd_ingress_controller,
-            virtual_server_setup,
-            vs_externalname_setup,
-        ) -> None:
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        virtual_server_setup,
+        vs_externalname_setup,
+    ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,

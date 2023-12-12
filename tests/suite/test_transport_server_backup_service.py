@@ -3,26 +3,26 @@ from pprint import pprint
 import pytest
 from settings import DEPLOYMENTS, TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
-from suite.utils.custom_resources_utils import create_ts_from_yaml, patch_ts_from_yaml, delete_ts, read_ts
+from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, patch_ts_from_yaml, read_ts
 from suite.utils.resources_utils import (
+    create_configmap_from_yaml,
+    create_items_from_yaml,
     create_namespace_with_name_from_yaml,
+    create_secret_from_yaml,
+    create_secure_app_deployment_with_name,
     create_service_from_yaml,
     create_service_with_name,
+    delete_items_from_yaml,
     delete_namespace,
     ensure_connection,
     ensure_response_from_backend,
-    create_secure_app_deployment_with_name,
     get_first_pod_name,
+    get_ts_nginx_template_conf,
     replace_configmap,
     replace_configmap_from_yaml,
     scale_deployment,
     wait_before_test,
-    create_items_from_yaml,
-    delete_items_from_yaml,
     wait_until_all_pods_are_ready,
-    create_configmap_from_yaml,
-    create_secret_from_yaml,
-    get_ts_nginx_template_conf,
 )
 from suite.utils.ssl_utils import create_sni_session
 from suite.utils.yaml_utils import get_first_host_from_yaml
@@ -30,6 +30,7 @@ from suite.utils.yaml_utils import get_first_host_from_yaml
 secure_app_secret = f"{TEST_DATA}/common/app/secure/secret/app-tls-secret.yaml"
 secure_app_config_map = f"{TEST_DATA}/common/app/secure/config-map/secure-config.yaml"
 ts_with_backup = f"{TEST_DATA}/transport-server-backup-service/transport-server-with-backup.yaml"
+
 
 class ExternalNameSetup:
     """Encapsulate ExternalName example details.
@@ -43,6 +44,7 @@ class ExternalNameSetup:
         self.ic_pod_name = ic_pod_name
         self.external_svc = external_svc
         self.external_host = external_host
+
 
 @pytest.fixture(scope="class")
 def ts_externalname_setup(
@@ -91,6 +93,7 @@ def ts_externalname_setup(
     request.addfinalizer(fin)
 
     return ExternalNameSetup(ic_pod_name, external_svc, external_svc_host)
+
 
 class TransportServerTlsSetup:
     """
@@ -182,6 +185,7 @@ class TestTransportServerWithBackupService:
     This test validates that we still get a response back from the default
     service, and not the backup service, as long as the default service is still available
     """
+
     def test_get_response_from_application(
         self,
         kube_apis,
@@ -229,6 +233,7 @@ class TestTransportServerWithBackupService:
     This test validates that we get a response back from the backup service.
     This test also scales the application back to 2 replicas after confirming a response from the backup service.
     """
+
     def test_get_response_from_backup(
         self,
         kube_apis,
@@ -282,6 +287,7 @@ class TestTransportServerWithBackupService:
         )
         assert "least_conn;" in result_conf
         assert f"server {ts_externalname_setup.external_host}:8443 resolve backup;" in result_conf
+
 
 #         resp_after_scale = session.get(
 #             req_url,
