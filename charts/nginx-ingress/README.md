@@ -458,6 +458,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.defaultHTTPListenerPort`  | Sets the port for the HTTP `default_server` listener. | 80 |
 |`controller.defaultHTTPSListenerPort`  | Sets the port for the HTTPS `default_server` listener. | 443 |
 |`controller.readOnlyRootFilesystem` | Configure root filesystem as read-only and add volumes for temporary data. | false |
+|`controller.enableSSLDynamicReload` | Enable lazy loading for SSL Certificates for NGINX Plus. | true |
 |`rbac.create` | Configures RBAC. | true |
 |`prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 |`prometheus.port` | Configures the port to scrape the metrics. | 9113 |

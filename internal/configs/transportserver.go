@@ -2,6 +2,7 @@ package configs
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	api_v1 "k8s.io/api/core/v1"
@@ -40,65 +41,74 @@ func newUpstreamNamerForTransportServer(transportServer *conf_v1.TransportServer
 	}
 }
 
+type transportServerConfigParams struct {
+	transportServerEx      *TransportServerEx
+	listenerPort           int
+	isPlus                 bool
+	isResolverConfigured   bool
+	isDynamicReloadEnabled bool
+	staticSSLPath          string
+}
+
 // generateTransportServerConfig generates a full configuration for a TransportServer.
-func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool, isResolverConfigured bool) (*version2.TransportServerConfig, Warnings) {
+func generateTransportServerConfig(p transportServerConfigParams) (*version2.TransportServerConfig, Warnings) {
 	warnings := newWarnings()
 
-	upstreamNamer := newUpstreamNamerForTransportServer(transportServerEx.TransportServer)
+	upstreamNamer := newUpstreamNamerForTransportServer(p.transportServerEx.TransportServer)
 
-	upstreams, w := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus, isResolverConfigured)
+	upstreams, w := generateStreamUpstreams(p.transportServerEx, upstreamNamer, p.isPlus, p.isResolverConfigured)
 	warnings.Add(w)
 
-	healthCheck, match := generateTransportServerHealthCheck(transportServerEx.TransportServer.Spec.Action.Pass,
-		upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
-		transportServerEx.TransportServer.Spec.Upstreams)
+	healthCheck, match := generateTransportServerHealthCheck(p.transportServerEx.TransportServer.Spec.Action.Pass,
+		upstreamNamer.GetNameForUpstream(p.transportServerEx.TransportServer.Spec.Action.Pass),
+		p.transportServerEx.TransportServer.Spec.Upstreams)
 
-	sslConfig, w := generateSSLConfig(transportServerEx.TransportServer, transportServerEx.TransportServer.Spec.TLS, transportServerEx.TransportServer.Namespace, transportServerEx.SecretRefs)
+	sslConfig, w := generateSSLConfig(p.transportServerEx.TransportServer, p.transportServerEx.TransportServer.Spec.TLS, p.transportServerEx.TransportServer.Namespace, p.transportServerEx.SecretRefs)
 	warnings.Add(w)
 
 	var proxyRequests, proxyResponses *int
 	var connectTimeout, nextUpstreamTimeout string
 	var nextUpstream bool
 	var nextUpstreamTries int
-	if transportServerEx.TransportServer.Spec.UpstreamParameters != nil {
-		proxyRequests = transportServerEx.TransportServer.Spec.UpstreamParameters.UDPRequests
-		proxyResponses = transportServerEx.TransportServer.Spec.UpstreamParameters.UDPResponses
+	if p.transportServerEx.TransportServer.Spec.UpstreamParameters != nil {
+		proxyRequests = p.transportServerEx.TransportServer.Spec.UpstreamParameters.UDPRequests
+		proxyResponses = p.transportServerEx.TransportServer.Spec.UpstreamParameters.UDPResponses
 
-		nextUpstream = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstream
+		nextUpstream = p.transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstream
 		if nextUpstream {
-			nextUpstreamTries = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTries
-			nextUpstreamTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout
+			nextUpstreamTries = p.transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTries
+			nextUpstreamTimeout = p.transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout
 		}
 
-		connectTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout
+		connectTimeout = p.transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout
 	}
 
 	var proxyTimeout string
-	if transportServerEx.TransportServer.Spec.SessionParameters != nil {
-		proxyTimeout = transportServerEx.TransportServer.Spec.SessionParameters.Timeout
+	if p.transportServerEx.TransportServer.Spec.SessionParameters != nil {
+		proxyTimeout = p.transportServerEx.TransportServer.Spec.SessionParameters.Timeout
 	}
 
-	serverSnippets := generateSnippets(true, transportServerEx.TransportServer.Spec.ServerSnippets, []string{})
+	serverSnippets := generateSnippets(true, p.transportServerEx.TransportServer.Spec.ServerSnippets, []string{})
 
-	streamSnippets := generateSnippets(true, transportServerEx.TransportServer.Spec.StreamSnippets, []string{})
+	streamSnippets := generateSnippets(true, p.transportServerEx.TransportServer.Spec.StreamSnippets, []string{})
 
-	statusZone := transportServerEx.TransportServer.Spec.Listener.Name
-	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName {
-		statusZone = transportServerEx.TransportServer.Spec.Host
+	statusZone := p.transportServerEx.TransportServer.Spec.Listener.Name
+	if p.transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName {
+		statusZone = p.transportServerEx.TransportServer.Spec.Host
 	}
 
 	tsConfig := &version2.TransportServerConfig{
 		Server: version2.StreamServer{
-			TLSPassthrough:           transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName,
-			UnixSocket:               generateUnixSocket(transportServerEx),
-			Port:                     listenerPort,
-			UDP:                      transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
+			TLSPassthrough:           p.transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName,
+			UnixSocket:               generateUnixSocket(p.transportServerEx),
+			Port:                     p.listenerPort,
+			UDP:                      p.transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
 			StatusZone:               statusZone,
 			ProxyRequests:            proxyRequests,
 			ProxyResponses:           proxyResponses,
-			ProxyPass:                upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
-			Name:                     transportServerEx.TransportServer.Name,
-			Namespace:                transportServerEx.TransportServer.Namespace,
+			ProxyPass:                upstreamNamer.GetNameForUpstream(p.transportServerEx.TransportServer.Spec.Action.Pass),
+			Name:                     p.transportServerEx.TransportServer.Name,
+			Namespace:                p.transportServerEx.TransportServer.Namespace,
 			ProxyConnectTimeout:      generateTimeWithDefault(connectTimeout, "60s"),
 			ProxyTimeout:             generateTimeWithDefault(proxyTimeout, "10m"),
 			ProxyNextUpstream:        nextUpstream,
@@ -106,12 +116,14 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyNextUpstreamTries:   nextUpstreamTries,
 			HealthCheck:              healthCheck,
 			ServerSnippets:           serverSnippets,
-			DisableIPV6:              transportServerEx.DisableIPV6,
+			DisableIPV6:              p.transportServerEx.DisableIPV6,
 			SSL:                      sslConfig,
 		},
-		Match:          match,
-		Upstreams:      upstreams,
-		StreamSnippets: streamSnippets,
+		Match:                   match,
+		Upstreams:               upstreams,
+		StreamSnippets:          streamSnippets,
+		DynamicSSLReloadEnabled: p.isDynamicReloadEnabled,
+		StaticSSLPath:           p.staticSSLPath,
 	}
 	return tsConfig, warnings
 }
@@ -182,6 +194,9 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 
 		upstreams = append(upstreams, ups)
 	}
+	sort.Slice(upstreams, func(i, j int) bool {
+		return upstreams[i].Name < upstreams[j].Name
+	})
 	return upstreams, warnings
 }
 
@@ -283,6 +298,9 @@ func generateStreamUpstream(upstream conf_v1.TransportServerUpstream, upstreamNa
 		})
 	}
 
+	sort.Slice(upsServers, func(i, j int) bool {
+		return upsServers[i].Address < upsServers[j].Address
+	})
 	return version2.StreamUpstream{
 		Name:                name,
 		Servers:             upsServers,

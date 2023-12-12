@@ -15,7 +15,7 @@ type TemplateExecutor struct {
 // NewTemplateExecutor creates a TemplateExecutor.
 func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string) (*TemplateExecutor, error) {
 	// template name must be the base name of the template file https://golang.org/pkg/text/template/#Template.ParseFiles
-	nginxTemplate, err := template.New(path.Base(mainTemplatePath)).ParseFiles(mainTemplatePath)
+	nginxTemplate, err := template.New(path.Base(mainTemplatePath)).Funcs(helperFunctions).ParseFiles(mainTemplatePath)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string) (*
 
 // UpdateMainTemplate updates the main NGINX template.
 func (te *TemplateExecutor) UpdateMainTemplate(templateString *string) error {
-	newTemplate, err := template.New("nginxTemplate").Parse(*templateString)
+	newTemplate, err := template.New("nginxTemplate").Funcs(helperFunctions).Parse(*templateString)
 	if err != nil {
 		return err
 	}

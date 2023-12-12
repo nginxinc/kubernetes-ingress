@@ -977,7 +977,7 @@ func newNGINXIngressTmpl(t *testing.T) *template.Template {
 
 func newNGINXPlusMainTmpl(t *testing.T) *template.Template {
 	t.Helper()
-	tmpl, err := template.New("nginx-plus.tmpl").ParseFiles("nginx-plus.tmpl")
+	tmpl, err := template.New("nginx-plus.tmpl").Funcs(helperFunctions).ParseFiles("nginx-plus.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -986,7 +986,7 @@ func newNGINXPlusMainTmpl(t *testing.T) *template.Template {
 
 func newNGINXMainTmpl(t *testing.T) *template.Template {
 	t.Helper()
-	tmpl, err := template.New("nginx.tmpl").ParseFiles("nginx.tmpl")
+	tmpl, err := template.New("nginx.tmpl").Funcs(helperFunctions).ParseFiles("nginx.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}
