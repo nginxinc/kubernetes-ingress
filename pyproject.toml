@@ -24,6 +24,13 @@ addopts = "--tb=native -ra --disable-warnings -x -l --profile -v"
 log_cli = true
 markers =[
     "appprotect",
+    "appprotect_integration",
+    "appprotect_waf_policies",
+    "appprotect_waf_policies_allow",
+    "appprotect_waf_policies_block",
+    "appprotect_waf_policies_grpc",
+    "appprotect_watch",
+    "appprotect_batch",
     "dos",
     "ingresses",
     "policies",
