@@ -309,6 +309,31 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(
 	return endpoints
 }
 
+func (vsc *virtualServerConfigurator) generateBackupEndpointsForUpstream(
+	owner runtime.Object,
+	namespace string,
+	upstream conf_v1.Upstream,
+	virtualServerEx *VirtualServerEx,
+) []string {
+	if upstream.Backup == nil || upstream.BackupPort == nil {
+		return []string{}
+	}
+	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, *upstream.Backup)
+	_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[externalNameSvcKey]
+	if isExternalNameSvc && !vsc.isResolverConfigured {
+		msgFmt := "Type ExternalName service %v in upstream %v will be ignored. To use ExternaName services, a resolver must be configured in the ConfigMap"
+		vsc.addWarningf(owner, msgFmt, *upstream.Backup, upstream.Name)
+		return []string{}
+	}
+
+	backupEndpointsKey := GenerateEndpointsKey(namespace, *upstream.Backup, upstream.Subselector, *upstream.BackupPort)
+	backupEndpoints := virtualServerEx.Endpoints[backupEndpointsKey]
+	if len(backupEndpoints) == 0 {
+		return []string{}
+	}
+	return backupEndpoints
+}
+
 // GenerateVirtualServerConfig generates a full configuration for a VirtualServer
 func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	vsEx *VirtualServerEx,
@@ -377,10 +402,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
 		upstreamNamespace := vsEx.VirtualServer.Namespace
 		endpoints := vsc.generateEndpointsForUpstream(vsEx.VirtualServer, upstreamNamespace, u, vsEx)
+		backupEndpoints := vsc.generateBackupEndpointsForUpstream(vsEx.VirtualServer, upstreamNamespace, u, vsEx)
 
 		// isExternalNameSvc is always false for OSS
 		_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
-		ups := vsc.generateUpstream(vsEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
+		ups := vsc.generateUpstream(vsEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints, backupEndpoints)
 		upstreams = append(upstreams, ups)
 
 		u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts, vsEx.VirtualServer.Spec.InternalRoute)
@@ -407,10 +433,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)
 			upstreamNamespace := vsr.Namespace
 			endpoints := vsc.generateEndpointsForUpstream(vsr, upstreamNamespace, u, vsEx)
+			backup := vsc.generateBackupEndpointsForUpstream(vsEx.VirtualServer, upstreamNamespace, u, vsEx)
 
 			// isExternalNameSvc is always false for OSS
 			_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
-			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
+			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints, backup)
 			upstreams = append(upstreams, ups)
 			u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts, vsEx.VirtualServer.Spec.InternalRoute)
 			crUpstreams[upstreamName] = u
@@ -1417,6 +1444,7 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 	upstream conf_v1.Upstream,
 	isExternalNameSvc bool,
 	endpoints []string,
+	backupEndpoints []string,
 ) version2.Upstream {
 	var upsServers []version2.UpstreamServer
 	for _, e := range endpoints {
@@ -1427,6 +1455,17 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 	}
 	sort.Slice(upsServers, func(i, j int) bool {
 		return upsServers[i].Address < upsServers[j].Address
+	})
+
+	var upsBackupServers []version2.UpstreamServer
+	for _, be := range backupEndpoints {
+		s := version2.UpstreamServer{
+			Address: be,
+		}
+		upsBackupServers = append(upsBackupServers, s)
+	}
+	sort.Slice(upsBackupServers, func(i, j int) bool {
+		return upsBackupServers[i].Address < upsBackupServers[j].Address
 	})
 
 	lbMethod := generateLBMethod(upstream.LBMethod, vsc.cfgParams.LBMethod)
@@ -1445,6 +1484,7 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 		FailTimeout:      generateTimeWithDefault(upstream.FailTimeout, vsc.cfgParams.FailTimeout),
 		MaxConns:         generateIntFromPointer(upstream.MaxConns, vsc.cfgParams.MaxConns),
 		UpstreamZoneSize: vsc.cfgParams.UpstreamZoneSize,
+		BackupServers:    upsBackupServers,
 	}
 
 	if vsc.isPlus {
@@ -2401,7 +2441,12 @@ func createUpstreamsForPlus(
 		endpointsKey := GenerateEndpointsKey(upstreamNamespace, u.Service, u.Subselector, u.Port)
 		endpoints := virtualServerEx.Endpoints[endpointsKey]
 
-		ups := vsc.generateUpstream(virtualServerEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
+		backupEndpoints := []string{}
+		if u.Backup != nil {
+			backupEndpointsKey := GenerateEndpointsKey(upstreamNamespace, *u.Backup, u.Subselector, *u.BackupPort)
+			backupEndpoints = virtualServerEx.Endpoints[backupEndpointsKey]
+		}
+		ups := vsc.generateUpstream(virtualServerEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints, backupEndpoints)
 		upstreams = append(upstreams, ups)
 	}
 
@@ -2410,12 +2455,7 @@ func createUpstreamsForPlus(
 		for _, u := range vsr.Spec.Upstreams {
 			isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(vsr.Namespace, u.Service)]
 			if isExternalNameSvc {
-				glog.V(
-					3,
-				).Infof(
-					"Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API",
-					u.Service,
-				)
+				glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
 				continue
 			}
 
@@ -2425,7 +2465,13 @@ func createUpstreamsForPlus(
 			endpointsKey := GenerateEndpointsKey(upstreamNamespace, u.Service, u.Subselector, u.Port)
 			endpoints := virtualServerEx.Endpoints[endpointsKey]
 
-			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
+			// BackupService
+			backupEndpoints := []string{}
+			if u.Backup != nil {
+				backupEndpointsKey := GenerateEndpointsKey(upstreamNamespace, *u.Backup, u.Subselector, *u.BackupPort)
+				backupEndpoints = virtualServerEx.Endpoints[backupEndpointsKey]
+			}
+			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints, backupEndpoints)
 			upstreams = append(upstreams, ups)
 		}
 	}

@@ -557,6 +557,344 @@ func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
 	}
 }
 
+func tsEx() TransportServerEx {
+	return TransportServerEx{
+		TransportServer: &conf_v1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
+					Name:     "tls-passthrough",
+					Protocol: "TLS_PASSTHROUGH",
+				},
+				Host: "example.com",
+				Upstreams: []conf_v1.TransportServerUpstream{
+					{
+						Name:    "tcp-app",
+						Service: "tcp-app-svc",
+						Port:    5001,
+					},
+				},
+				UpstreamParameters: &conf_v1.UpstreamParameters{
+					ConnectTimeout:      "30s",
+					NextUpstream:        false,
+					NextUpstreamTries:   0,
+					NextUpstreamTimeout: "",
+				},
+				Action: &conf_v1.TransportServerAction{
+					Pass: "tcp-app",
+				},
+			},
+		},
+		Endpoints:   map[string][]string{},
+		DisableIPV6: false,
+	}
+}
+
+func TestGenerateTransportServerConfigForBackupServiceNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	transportServerEx := tsEx()
+	transportServerEx.TransportServer.Spec.Upstreams[0].LoadBalancingMethod = "least_conn"
+	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = createPointerFromString("backup-svc")
+	transportServerEx.TransportServer.Spec.Upstreams[0].BackupPort = createPointerFromUInt16(5090)
+	transportServerEx.Endpoints = map[string][]string{
+		"default/tcp-app-svc:5001": {
+			"10.0.0.20:5001",
+		},
+		"default/backup-svc:5090": {
+			"clustertwo.corp.local:5090",
+		},
+	}
+
+	listenerPort := 2020
+
+	want := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     "10.0.0.20:5001",
+						MaxFails:    1,
+						FailTimeout: "10s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				BackupServers: []version2.StreamUpstreamBackupServer{
+					{
+						Address: "clustertwo.corp.local:5090",
+					},
+				},
+				LoadBalancingMethod: "least_conn",
+			},
+		},
+		Server: version2.StreamServer{
+			TLSPassthrough:           true,
+			UnixSocket:               "unix:/var/lib/nginx/passthrough-default_tcp-server.sock",
+			Port:                     2020,
+			UDP:                      false,
+			StatusZone:               "example.com",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "30s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			ProxyTimeout:             "10m",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+			SSL:                      &version2.StreamSSL{},
+		},
+		DisableIPV6:    false,
+		StreamSnippets: []string{},
+	}
+
+	p := transportServerConfigParams{
+		transportServerEx:    &transportServerEx,
+		listenerPort:         listenerPort,
+		isPlus:               true,
+		isResolverConfigured: false,
+	}
+
+	got, warnings := generateTransportServerConfig(p)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestGenerateTransportServerConfig_DoesNotGenerateBackupOnMissingBackupName(t *testing.T) {
+	t.Parallel()
+
+	transportServerEx := tsEx()
+	transportServerEx.TransportServer.Spec.Upstreams[0].LoadBalancingMethod = "least_conn"
+	transportServerEx.TransportServer.Spec.Upstreams[0].BackupPort = createPointerFromUInt16(5090)
+	transportServerEx.Endpoints = map[string][]string{
+		"default/tcp-app-svc:5001": {
+			"10.0.0.20:5001",
+		},
+	}
+
+	listenerPort := 2020
+
+	want := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     "10.0.0.20:5001",
+						MaxFails:    1,
+						FailTimeout: "10s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				BackupServers:       nil,
+				LoadBalancingMethod: "least_conn",
+			},
+		},
+		Server: version2.StreamServer{
+			TLSPassthrough:           true,
+			UnixSocket:               "unix:/var/lib/nginx/passthrough-default_tcp-server.sock",
+			Port:                     2020,
+			UDP:                      false,
+			StatusZone:               "example.com",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "30s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			ProxyTimeout:             "10m",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+			SSL:                      &version2.StreamSSL{},
+		},
+		DisableIPV6:    false,
+		StreamSnippets: []string{},
+	}
+
+	p := transportServerConfigParams{
+		transportServerEx:    &transportServerEx,
+		listenerPort:         listenerPort,
+		isPlus:               true,
+		isResolverConfigured: false,
+	}
+
+	got, warnings := generateTransportServerConfig(p)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestGenerateTransportServerConfig_DoesNotGenerateBackupOnMissingBackupPort(t *testing.T) {
+	t.Parallel()
+
+	transportServerEx := tsEx()
+	transportServerEx.TransportServer.Spec.Upstreams[0].LoadBalancingMethod = "least_conn"
+	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = createPointerFromString("clustertwo.corp.local")
+	transportServerEx.TransportServer.Spec.Upstreams[0].BackupPort = nil
+	transportServerEx.Endpoints = map[string][]string{
+		"default/tcp-app-svc:5001": {
+			"10.0.0.20:5001",
+		},
+	}
+
+	listenerPort := 2020
+
+	want := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     "10.0.0.20:5001",
+						MaxFails:    1,
+						FailTimeout: "10s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				BackupServers:       nil,
+				LoadBalancingMethod: "least_conn",
+			},
+		},
+		Server: version2.StreamServer{
+			TLSPassthrough:           true,
+			UnixSocket:               "unix:/var/lib/nginx/passthrough-default_tcp-server.sock",
+			Port:                     2020,
+			UDP:                      false,
+			StatusZone:               "example.com",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "30s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			ProxyTimeout:             "10m",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+			SSL:                      &version2.StreamSSL{},
+		},
+		DisableIPV6:    false,
+		StreamSnippets: []string{},
+	}
+
+	p := transportServerConfigParams{
+		transportServerEx:    &transportServerEx,
+		listenerPort:         listenerPort,
+		isPlus:               true,
+		isResolverConfigured: false,
+	}
+
+	got, warnings := generateTransportServerConfig(p)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestGenerateTransportServerConfig_DoesNotGenerateBackupOnMissingBackupPortAndName(t *testing.T) {
+	t.Parallel()
+
+	transportServerEx := tsEx()
+	transportServerEx.TransportServer.Spec.Upstreams[0].LoadBalancingMethod = "least_conn"
+	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = nil
+	transportServerEx.TransportServer.Spec.Upstreams[0].BackupPort = nil
+	transportServerEx.Endpoints = map[string][]string{
+		"default/tcp-app-svc:5001": {
+			"10.0.0.20:5001",
+		},
+	}
+
+	listenerPort := 2020
+
+	want := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     "10.0.0.20:5001",
+						MaxFails:    1,
+						FailTimeout: "10s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				BackupServers:       nil,
+				LoadBalancingMethod: "least_conn",
+			},
+		},
+		Server: version2.StreamServer{
+			TLSPassthrough:           true,
+			UnixSocket:               "unix:/var/lib/nginx/passthrough-default_tcp-server.sock",
+			Port:                     2020,
+			UDP:                      false,
+			StatusZone:               "example.com",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "30s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			ProxyTimeout:             "10m",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+			SSL:                      &version2.StreamSSL{},
+		},
+		DisableIPV6:    false,
+		StreamSnippets: []string{},
+	}
+
+	p := transportServerConfigParams{
+		transportServerEx:    &transportServerEx,
+		listenerPort:         listenerPort,
+		isPlus:               true,
+		isResolverConfigured: false,
+	}
+
+	got, warnings := generateTransportServerConfig(p)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
 func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 	t.Parallel()
 	udpRequests := 1

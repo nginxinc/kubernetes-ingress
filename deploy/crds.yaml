@@ -612,6 +612,10 @@ spec:
                 items:
                   description: TransportServerUpstream defines an upstream.
                   properties:
+                    backup:
+                      type: string
+                    backupPort:
+                      type: integer
                     failTimeout:
                       type: string
                     healthCheck:
@@ -760,6 +764,10 @@ spec:
                 items:
                   description: TransportServerUpstream defines an upstream.
                   properties:
+                    backup:
+                      type: string
+                    backupPort:
+                      type: integer
                     failTimeout:
                       type: string
                     healthCheck:
@@ -1321,6 +1329,10 @@ spec:
                 items:
                   description: Upstream defines an upstream.
                   properties:
+                    backup:
+                      type: string
+                    backupPort:
+                      type: integer
                     buffer-size:
                       type: string
                     buffering:
@@ -2102,6 +2114,10 @@ spec:
                 items:
                   description: Upstream defines an upstream.
                   properties:
+                    backup:
+                      type: string
+                    backupPort:
+                      type: integer
                     buffer-size:
                       type: string
                     buffering:

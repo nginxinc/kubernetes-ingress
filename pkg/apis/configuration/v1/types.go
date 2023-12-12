@@ -125,6 +125,8 @@ type Upstream struct {
 	UseClusterIP             bool              `json:"use-cluster-ip"`
 	NTLM                     bool              `json:"ntlm"`
 	Type                     string            `json:"type"`
+	Backup                   *string           `json:"backup"`
+	BackupPort               *uint16           `json:"backupPort"`
 }
 
 // UpstreamBuffers defines Buffer Configuration for an Upstream.
@@ -477,6 +479,8 @@ type TransportServerUpstream struct {
 	MaxConns            *int                        `json:"maxConns"`
 	HealthCheck         *TransportServerHealthCheck `json:"healthCheck"`
 	LoadBalancingMethod string                      `json:"loadBalancingMethod"`
+	Backup              *string                     `json:"backup"`
+	BackupPort          *uint16                     `json:"backupPort"`
 }
 
 // TransportServerHealthCheck defines the parameters for active Upstream HealthChecks.

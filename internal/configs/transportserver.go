@@ -185,7 +185,21 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 			endpoints = []string{}
 		}
 
-		ups := generateStreamUpstream(u, upstreamNamer, endpoints, isPlus)
+		var backupEndpoints []string
+		if u.Backup != nil && u.BackupPort != nil {
+			backupEnpointsKey := GenerateEndpointsKey(transportServerEx.TransportServer.Namespace, *u.Backup, nil, *u.BackupPort)
+			externalNameSvcKey = GenerateExternalNameSvcKey(transportServerEx.TransportServer.Namespace, *u.Backup)
+
+			backupEndpoints = transportServerEx.Endpoints[backupEnpointsKey]
+			_, isExternalNameSvc = transportServerEx.ExternalNameSvcs[externalNameSvcKey]
+			if isExternalNameSvc && !isResolverConfigured {
+				msgFmt := "Type ExternalName service %v in upstream %v will be ignored. To use ExternalName services, a resolver must be configured in the ConfigMap"
+				warnings.AddWarningf(transportServerEx.TransportServer, msgFmt, u.Backup, u.Name)
+				backupEndpoints = []string{}
+			}
+		}
+
+		ups := generateStreamUpstream(u, upstreamNamer, endpoints, backupEndpoints, isPlus)
 		ups.Resolve = isExternalNameSvc
 		ups.UpstreamLabels.Service = u.Service
 		ups.UpstreamLabels.ResourceType = "transportserver"
@@ -271,7 +285,7 @@ func generateHealthCheckMatch(match *conf_v1.TransportServerMatch, name string) 
 	}
 }
 
-func generateStreamUpstream(upstream conf_v1.TransportServerUpstream, upstreamNamer *upstreamNamer, endpoints []string, isPlus bool) version2.StreamUpstream {
+func generateStreamUpstream(upstream conf_v1.TransportServerUpstream, upstreamNamer *upstreamNamer, endpoints, backupEndpoints []string, isPlus bool) version2.StreamUpstream {
 	var upsServers []version2.StreamUpstreamServer
 
 	name := upstreamNamer.GetNameForUpstream(upstream.Name)
@@ -290,6 +304,14 @@ func generateStreamUpstream(upstream conf_v1.TransportServerUpstream, upstreamNa
 		upsServers = append(upsServers, s)
 	}
 
+	var upsBackups []version2.StreamUpstreamBackupServer
+	for _, e := range backupEndpoints {
+		s := version2.StreamUpstreamBackupServer{
+			Address: e,
+		}
+		upsBackups = append(upsBackups, s)
+	}
+
 	if !isPlus && len(endpoints) == 0 {
 		upsServers = append(upsServers, version2.StreamUpstreamServer{
 			Address:     nginxNonExistingUnixSocket,
@@ -301,10 +323,15 @@ func generateStreamUpstream(upstream conf_v1.TransportServerUpstream, upstreamNa
 	sort.Slice(upsServers, func(i, j int) bool {
 		return upsServers[i].Address < upsServers[j].Address
 	})
+	sort.Slice(upsBackups, func(i, j int) bool {
+		return upsBackups[i].Address < upsBackups[j].Address
+	})
+
 	return version2.StreamUpstream{
 		Name:                name,
 		Servers:             upsServers,
 		LoadBalancingMethod: generateLoadBalancingMethod(upstream.LoadBalancingMethod),
+		BackupServers:       upsBackups,
 	}
 }
 

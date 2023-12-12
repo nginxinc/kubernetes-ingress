@@ -155,8 +155,8 @@ func validateTransportServerUpstreams(upstreams []conf_v1.TransportServerUpstrea
 		}
 
 		allErrs = append(allErrs, validateTSUpstreamHealthChecks(u.HealthCheck, idxPath.Child("healthChecks"))...)
-
 		allErrs = append(allErrs, validateLoadBalancingMethod(u.LoadBalancingMethod, idxPath.Child("loadBalancingMethod"), isPlus)...)
+		allErrs = append(allErrs, validateBackup(u.Backup, u.BackupPort, u.LoadBalancingMethod, idxPath)...)
 	}
 
 	return allErrs, upstreamNames
