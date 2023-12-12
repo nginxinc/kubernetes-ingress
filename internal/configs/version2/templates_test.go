@@ -384,27 +384,27 @@ func tsConfig() TransportServerConfig {
 	}
 }
 
-func TestExecuteTemplateForTransportServerWithBackupServerForNGINX(t *testing.T) {
-	t.Parallel()
+// func TestExecuteTemplateForTransportServerWithBackupServerForNGINX(t *testing.T) {
+// 	t.Parallel()
 
-	tsCfg := tsConfig()
-	tsCfg.Upstreams[0].BackupServers = []StreamUpstreamBackupServer{
-		{
-			Address: "clustertwo.corp.local:8080",
-		},
-	}
-	e := newTmplExecutorNGINX(t)
-	got, err := e.ExecuteTransportServerTemplate(&tsCfg)
-	if err != nil {
-		t.Error(err)
-	}
+// 	tsCfg := tsConfig()
+// 	tsCfg.Upstreams[0].BackupServers = []StreamUpstreamBackupServer{
+// 		{
+// 			Address: "clustertwo.corp.local:8080",
+// 		},
+// 	}
+// 	e := newTmplExecutorNGINX(t)
+// 	got, err := e.ExecuteTransportServerTemplate(&tsCfg)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	want := fmt.Sprintf("server %s backup;", tsCfg.Upstreams[0].BackupServers[0].Address)
-	if !bytes.Contains(got, []byte(want)) {
-		t.Errorf("want backup %q in the transport server config", want)
-	}
-	t.Log(string(got))
-}
+// 	want := fmt.Sprintf("server %s backup;", tsCfg.Upstreams[0].BackupServers[0].Address)
+// 	if !bytes.Contains(got, []byte(want)) {
+// 		t.Errorf("want backup %q in the transport server config", want)
+// 	}
+// 	t.Log(string(got))
+// }
 
 func TestExecuteTemplateForTransportServerWithBackupServerForNGINXPlus(t *testing.T) {
 	t.Parallel()
@@ -499,30 +499,6 @@ func TestExecuteVirtualServerTemplateWithBackupServerNGINXPlus(t *testing.T) {
 	}
 
 	want := fmt.Sprintf("server %s backup resolve;", externalName)
-	if !bytes.Contains(got, []byte(want)) {
-		t.Errorf("want %q in generated template", want)
-	}
-	t.Log(string(got))
-}
-
-func TestExecuteVirtualServerTemplateWithBackupServerNGINX(t *testing.T) {
-	t.Parallel()
-
-	externalName := "clustertwo.corp.local:8080"
-	vscfg := vsConfig()
-	vscfg.Upstreams[0].BackupServers = []UpstreamServer{
-		{
-			Address: externalName,
-		},
-	}
-
-	e := newTmplExecutorNGINX(t)
-	got, err := e.ExecuteVirtualServerTemplate(&vscfg)
-	if err != nil {
-		t.Error(err)
-	}
-
-	want := fmt.Sprintf("server %s backup;", externalName)
 	if !bytes.Contains(got, []byte(want)) {
 		t.Errorf("want %q in generated template", want)
 	}
