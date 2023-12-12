@@ -4,11 +4,12 @@ VERSION = $(GIT_TAG)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
 # variables that can be overridden by the user
-PREFIX ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
-TAG ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
-TARGET ?= local ## The target of the build. Possible values: local, container and download
+PREFIX                        ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
+TAG                           ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
+TARGET                        ?= local ## The target of the build. Possible values: local, container and download
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
-ARCH ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
+ARCH                          ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
+GOOS                          ?= linux ## The OS of the binary. For example linux, darwin.
 
 # final docker build command
 DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
@@ -78,7 +79,7 @@ build: ## Build Ingress Controller binary
 	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
 ifeq ($(strip $(TARGET)),local)
 	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container or TARGET=download\n"; exit $$code)
-	CGO_ENABLED=0 GOOS=linux GOARCH=$(strip $(ARCH)) go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
+	CGO_ENABLED=0 GOOS=$(strip $(GOOS)) GOARCH=$(strip $(ARCH)) go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 else ifeq ($(strip $(TARGET)),download)
 	@$(MAKE) download-binary-docker
 endif
