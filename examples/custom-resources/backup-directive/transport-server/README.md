@@ -1,6 +1,6 @@
 # Support for Backup Directive in Transport Server
 
-NGINX Ingress Controller supports routing requests to a service specified as `Backup`.
+F5 NGINX Ingress Controller supports routing requests to a service called `backup`.
 The `backup` service is of type
 [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname).
 
