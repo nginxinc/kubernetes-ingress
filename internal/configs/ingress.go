@@ -522,6 +522,9 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 			})
 		}
 		if len(upsServers) > 0 {
+			sort.Slice(upsServers, func(i, j int) bool {
+				return upsServers[i].Address < upsServers[j].Address
+			})
 			ups.UpstreamServers = upsServers
 		}
 	}

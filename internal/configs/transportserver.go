@@ -2,6 +2,7 @@ package configs
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	api_v1 "k8s.io/api/core/v1"
@@ -193,6 +194,9 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 
 		upstreams = append(upstreams, ups)
 	}
+	sort.Slice(upstreams, func(i, j int) bool {
+		return upstreams[i].Name < upstreams[j].Name
+	})
 	return upstreams, warnings
 }
 
@@ -294,6 +298,9 @@ func generateStreamUpstream(upstream conf_v1.TransportServerUpstream, upstreamNa
 		})
 	}
 
+	sort.Slice(upsServers, func(i, j int) bool {
+		return upsServers[i].Address < upsServers[j].Address
+	})
 	return version2.StreamUpstream{
 		Name:                name,
 		Servers:             upsServers,
