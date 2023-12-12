@@ -216,6 +216,7 @@ def ap_ingress_setup(request, kube_apis, ingress_controller_endpoint, test_names
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.batch_start
 @pytest.mark.appprotect
+@pytest.mark.appprotect_batch
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [
@@ -379,6 +380,7 @@ def appprotect_waf_setup(request, kube_apis, test_namespace) -> None:
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.batch_start
 @pytest.mark.appprotect
+@pytest.mark.appprotect_batch
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap, virtual_server_setup",
     [
