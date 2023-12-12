@@ -927,7 +927,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	}
 
 	gc := lbc.configuration.GetGlobalConfiguration()
-	if gc != nil {
+	if gc != nil && lbc.configMap != nil {
 		key := getResourceKey(&lbc.configMap.ObjectMeta)
 		lbc.recorder.Eventf(gc, eventType, eventTitle, fmt.Sprintf("GlobalConfiguration %s was updated %s", key, eventWarningMessage))
 	}
