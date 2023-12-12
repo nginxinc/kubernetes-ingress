@@ -4,7 +4,8 @@ F5 NGINX Ingress Controller supports routing requests to a service called `backu
 `backup` is an [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service.
 
 > [!NOTE]
-> The [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service is only available with NGINX Plus.
+> The [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) service is only
+available with NGINX Plus.
 
 For this example, we will use two [tls-passthrough](/examples/custom-resources/tls-passthrough) configurations.
 One will be deployed in the `default` namespace, and the other in the `external-ns` namespace.
