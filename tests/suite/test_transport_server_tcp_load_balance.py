@@ -1,7 +1,7 @@
-from datetime import datetime
 import re
 import socket
 import ssl
+from datetime import datetime
 
 import pytest
 from settings import TEST_DATA
@@ -635,7 +635,6 @@ class TestTransportServerTcpLoadBalance:
         expected_reloads = 1
         assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
 
-
         self.restore_ts(kube_apis, transport_server_setup)
         delete_items_from_yaml(kube_apis, src_sec_yaml, transport_server_setup.namespace)
 
@@ -653,7 +652,7 @@ class TestTransportServerTcpLoadBalance:
                     "-global-configuration=nginx-ingress/nginx-configuration",
                     "-enable-leader-election=false",
                     "-enable-prometheus-metrics",
-                    "-v=3"
+                    "-v=3",
                 ],
             },
             {"example": "transport-server-tcp-load-balance"},
@@ -662,7 +661,6 @@ class TestTransportServerTcpLoadBalance:
     indirect=True,
 )
 class TestTransportServerTcpLoadBalanceDynamicReload:
-
     def test_secure_tcp_request_load_balanced(
         self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
@@ -707,7 +705,6 @@ class TestTransportServerTcpLoadBalanceDynamicReload:
         reloads = count_after - count_before_replace
         expected_reloads = 0
         assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
-
 
         # self.restore_ts(kube_apis, transport_server_setup)
         delete_items_from_yaml(kube_apis, src_sec_yaml, transport_server_setup.namespace)
