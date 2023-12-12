@@ -2,11 +2,13 @@ package version2
 
 // TransportServerConfig holds NGINX configuration for a TransportServer.
 type TransportServerConfig struct {
-	Server         StreamServer
-	Upstreams      []StreamUpstream
-	StreamSnippets []string
-	Match          *Match
-	DisableIPV6    bool
+	Server                  StreamServer
+	Upstreams               []StreamUpstream
+	StreamSnippets          []string
+	Match                   *Match
+	DisableIPV6             bool
+	DynamicSSLReloadEnabled bool
+	StaticSSLPath           string
 }
 
 // StreamUpstream defines a stream upstream.

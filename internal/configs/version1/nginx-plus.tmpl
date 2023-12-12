@@ -27,7 +27,7 @@ load_module modules/ngx_fips_check_module.so;
 {{$value}}{{end}}
 {{- end}}
 
-{{if .OIDC}}
+{{- if .OIDC}}
 load_module modules/ngx_http_js_module.so;
 {{- end}}
 
@@ -59,6 +59,12 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
+
+    {{- if .DynamicSSLReloadEnabled }}
+    map $nginx_version $secret_dir_path {
+        default "{{ .StaticSSLPath }}";
+    }
+    {{- end }}
 
     {{- if .AppProtectDosLoadModule}}
     {{- if .AppProtectDosLogFormat}}
@@ -172,8 +178,8 @@ http {
         {{- if .SSLRejectHandshake}}
         ssl_reject_handshake on;
         {{- else}}
-        ssl_certificate /etc/nginx/secrets/default;
-        ssl_certificate_key /etc/nginx/secrets/default;
+        ssl_certificate {{ makeSecretPath "/etc/nginx/secrets/default" .StaticSSLPath "$secret_dir_path" .DynamicSSLReloadEnabled }};
+        ssl_certificate_key {{ makeSecretPath "/etc/nginx/secrets/default" .StaticSSLPath "$secret_dir_path" .DynamicSSLReloadEnabled }};
         {{- end}}
 
         {{- range $setRealIPFrom := .SetRealIPFrom}}
@@ -276,8 +282,8 @@ http {
         listen 443 ssl;
         {{if not .DisableIPV6}}listen [::]:443 ssl;{{end}}
         server_name {{.InternalRouteServerName}};
-        ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
-        ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+        ssl_certificate {{ makeSecretPath "/etc/nginx/secrets/spiffe_cert.pem" .StaticSSLPath "$secret_dir_path" .DynamicSSLReloadEnabled }};
+        ssl_certificate_key {{ makeSecretPath "/etc/nginx/secrets/spiffe_key.pem" .StaticSSLPath "$secret_dir_path" .DynamicSSLReloadEnabled }};
         ssl_client_certificate /etc/nginx/secrets/spiffe_rootca.pem;
         ssl_verify_client on;
         ssl_verify_depth 25;
@@ -309,6 +315,12 @@ stream {
 
     map_hash_max_size {{.MapHashMaxSize}};
     {{if .MapHashBucketSize}}map_hash_bucket_size {{.MapHashBucketSize}};{{end}}
+
+    {{- if .DynamicSSLReloadEnabled }}
+    map $nginx_version $secret_dir_path {
+        default "{{ .StaticSSLPath }}";
+    }
+    {{- end }}
 
     {{- if .TLSPassthrough}}
     map $ssl_preread_server_name $dest_internal_passthrough  {

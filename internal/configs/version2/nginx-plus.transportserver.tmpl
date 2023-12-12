@@ -41,9 +41,9 @@ server {
         {{- end }}
 
         {{- if $ssl.Enabled }}
-    ssl_certificate {{ $ssl.Certificate }};
-    ssl_certificate_key {{ $ssl.CertificateKey }};
-        {{- end }}
+    ssl_certificate {{ makeSecretPath $ssl.Certificate $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+	ssl_certificate_key {{ makeSecretPath $ssl.CertificateKey $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+	    {{- end }}
     {{- end }}
 
     status_zone {{ $s.StatusZone }};

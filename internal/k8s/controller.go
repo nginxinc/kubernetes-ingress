@@ -927,7 +927,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	}
 
 	gc := lbc.configuration.GetGlobalConfiguration()
-	if gc != nil {
+	if gc != nil && lbc.configMap != nil {
 		key := getResourceKey(&lbc.configMap.ObjectMeta)
 		lbc.recorder.Eventf(gc, eventType, eventTitle, fmt.Sprintf("GlobalConfiguration %s was updated %s", key, eventWarningMessage))
 	}
@@ -2388,7 +2388,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 
 	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes)
+	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
 	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 }
 
@@ -2505,7 +2505,7 @@ func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
 func (lbc *LoadBalancerController) handleRegularSecretDeletion(resources []Resource) {
 	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateResources(resourceExes)
+	warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
 }
@@ -2517,8 +2517,8 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 	var addOrUpdateErr error
 
 	resourceExes := lbc.createExtendedResources(resources)
-	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes)
 
+	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes, !lbc.configurator.DynamicSSLReloadEnabled())
 	if addOrUpdateErr != nil {
 		glog.Errorf("Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)

@@ -29,7 +29,7 @@ func NewTemplateExecutor(virtualServerTemplatePath string, transportServerTempla
 		return nil, err
 	}
 
-	tsTemplate, err := template.New(path.Base(transportServerTemplatePath)).ParseFiles(transportServerTemplatePath)
+	tsTemplate, err := template.New(path.Base(transportServerTemplatePath)).Funcs(helperFunctions).ParseFiles(transportServerTemplatePath)
 	if err != nil {
 		return nil, err
 	}
