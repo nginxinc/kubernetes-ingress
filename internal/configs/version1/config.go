@@ -10,11 +10,13 @@ type UpstreamLabels struct {
 
 // IngressNginxConfig describes an NGINX configuration.
 type IngressNginxConfig struct {
-	Upstreams         []Upstream
-	Servers           []Server
-	Keepalive         string
-	Ingress           Ingress
-	SpiffeClientCerts bool
+	Upstreams               []Upstream
+	Servers                 []Server
+	Keepalive               string
+	Ingress                 Ingress
+	SpiffeClientCerts       bool
+	DynamicSSLReloadEnabled bool
+	StaticSSLPath           string
 }
 
 // Ingress holds information about an Ingress resource.
@@ -230,6 +232,8 @@ type MainConfig struct {
 	InternalRouteServerName            string
 	LatencyMetrics                     bool
 	OIDC                               bool
+	DynamicSSLReloadEnabled            bool
+	StaticSSLPath                      string
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

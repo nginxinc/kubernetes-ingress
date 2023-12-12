@@ -527,3 +527,11 @@ Sets the port for the HTTPS `default_server` listener.
 Default `443`.
 
 <a name="cmdoption-default-https-listener-port"></a>
+
+### -ssl-dynamic-reload
+
+Used to activate or deactivate lazy loading for SSL Certificates for NGINX Plus.
+
+The default value is `true` when using NGINX Plus.
+
+<a name="cmdoption-ssl-dynamic-reload"></a>

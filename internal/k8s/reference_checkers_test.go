@@ -313,13 +313,68 @@ func TestSecretIsReferencedByVirtualServerRoute(t *testing.T) {
 
 func TestSecretIsReferencedByTransportServer(t *testing.T) {
 	t.Parallel()
-	isPlus := false // doesn't matter for TransportServer
-	rc := newSecretReferenceChecker(isPlus)
+	tests := []struct {
+		ts              *conf_v1.TransportServer
+		secretNamespace string
+		secretName      string
+		expected        bool
+		msg             string
+	}{
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					TLS: &conf_v1.TransportServerTLS{
+						Secret: "test-secret",
+					},
+				},
+			},
+			secretNamespace: "default",
+			secretName:      "test-secret",
+			expected:        true,
+			msg:             "tls secret is referenced",
+		},
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					TLS: &conf_v1.TransportServerTLS{
+						Secret: "test-secret",
+					},
+				},
+			},
+			secretNamespace: "other-namespace",
+			secretName:      "test-secret",
+			expected:        false,
+			msg:             "tls secret is referenced but in another namespace",
+		},
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{},
+			},
+			secretNamespace: "other-namespace",
+			secretName:      "test-secret",
+			expected:        false,
+			msg:             "tls secret is not but in another namespace",
+		},
+	}
 
-	// always returns false
-	result := rc.IsReferencedByTransportServer("", "", nil)
-	if result != false {
-		t.Error("IsReferencedByTransportServer() returned true but expected false")
+	for _, test := range tests {
+		isPlus := false // doesn't matter for TransportServer
+		rc := newSecretReferenceChecker(isPlus)
+
+		// always returns false
+		result := rc.IsReferencedByTransportServer(test.secretNamespace, test.secretName, test.ts)
+		if result != test.expected {
+			t.Errorf("IsReferencedByTransportServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
 	}
 }
 

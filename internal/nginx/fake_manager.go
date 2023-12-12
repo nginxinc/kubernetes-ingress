@@ -26,15 +26,17 @@ func NewFakeManager(confPath string) *FakeManager {
 }
 
 // CreateMainConfig provides a fake implementation of CreateMainConfig.
-func (*FakeManager) CreateMainConfig(content []byte) {
+func (*FakeManager) CreateMainConfig(content []byte) bool {
 	glog.V(3).Info("Writing main config")
 	glog.V(3).Info(string(content))
+	return true
 }
 
 // CreateConfig provides a fake implementation of CreateConfig.
-func (*FakeManager) CreateConfig(name string, content []byte) {
+func (*FakeManager) CreateConfig(name string, content []byte) bool {
 	glog.V(3).Infof("Writing config %v", name)
 	glog.V(3).Info(string(content))
+	return true
 }
 
 // CreateAppProtectResourceFile provides a fake implementation of CreateAppProtectResourceFile
@@ -59,9 +61,10 @@ func (*FakeManager) DeleteConfig(name string) {
 }
 
 // CreateStreamConfig provides a fake implementation of CreateStreamConfig.
-func (*FakeManager) CreateStreamConfig(name string, content []byte) {
+func (*FakeManager) CreateStreamConfig(name string, content []byte) bool {
 	glog.V(3).Infof("Writing stream config %v", name)
 	glog.V(3).Info(string(content))
+	return true
 }
 
 // DeleteStreamConfig provides a fake implementation of DeleteStreamConfig.
@@ -70,8 +73,9 @@ func (*FakeManager) DeleteStreamConfig(name string) {
 }
 
 // CreateTLSPassthroughHostsConfig provides a fake implementation of CreateTLSPassthroughHostsConfig.
-func (*FakeManager) CreateTLSPassthroughHostsConfig(_ []byte) {
+func (*FakeManager) CreateTLSPassthroughHostsConfig(_ []byte) bool {
 	glog.V(3).Infof("Writing TLS Passthrough Hosts config file")
+	return false
 }
 
 // CreateSecret provides a fake implementation of CreateSecret.
@@ -99,7 +103,7 @@ func (fm *FakeManager) CreateDHParam(_ string) (string, error) {
 // Version provides a fake implementation of Version.
 func (*FakeManager) Version() string {
 	glog.V(3).Info("Printing nginx version")
-	return "fake version"
+	return "fake version plus"
 }
 
 // Start provides a fake implementation of Start.
@@ -168,4 +172,9 @@ func (*FakeManager) AppProtectDosAgentQuit() {
 // AppProtectDosAgentStart is a fake implementation of AppProtectAgentStart
 func (*FakeManager) AppProtectDosAgentStart(_ chan error, _ bool, _ int, _ int, _ int) {
 	glog.V(3).Infof("Starting FakeAppProtectDosAgent")
+}
+
+// GetSecretsDir is a fake implementation
+func (fm *FakeManager) GetSecretsDir() string {
+	return fm.secretsPath
 }

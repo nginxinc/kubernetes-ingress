@@ -116,6 +116,8 @@ func main() {
 		EnableOIDC:                     *enableOIDC,
 		SSLRejectHandshake:             sslRejectHandshake,
 		EnableCertManager:              *enableCertManager,
+		DynamicSSLReload:               *enableDynamicSSLReload,
+		StaticSSLPath:                  nginxManager.GetSecretsDir(),
 	}
 
 	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
@@ -132,17 +134,18 @@ func main() {
 
 	plusCollector, syslogListener, latencyCollector := createPlusAndLatencyCollectors(registry, constLabels, kubeClient, plusClient, staticCfgParams.NginxServiceMesh)
 	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
-		NginxManager:            nginxManager,
-		StaticCfgParams:         staticCfgParams,
-		Config:                  cfgParams,
-		TemplateExecutor:        templateExecutor,
-		TemplateExecutorV2:      templateExecutorV2,
-		LatencyCollector:        latencyCollector,
-		LabelUpdater:            plusCollector,
-		IsPlus:                  *nginxPlus,
-		IsWildcardEnabled:       isWildcardEnabled,
-		IsPrometheusEnabled:     *enablePrometheusMetrics,
-		IsLatencyMetricsEnabled: *enableLatencyMetrics,
+		NginxManager:              nginxManager,
+		StaticCfgParams:           staticCfgParams,
+		Config:                    cfgParams,
+		TemplateExecutor:          templateExecutor,
+		TemplateExecutorV2:        templateExecutorV2,
+		LatencyCollector:          latencyCollector,
+		LabelUpdater:              plusCollector,
+		IsPlus:                    *nginxPlus,
+		IsWildcardEnabled:         isWildcardEnabled,
+		IsPrometheusEnabled:       *enablePrometheusMetrics,
+		IsLatencyMetricsEnabled:   *enableLatencyMetrics,
+		IsDynamicSSLReloadEnabled: *enableDynamicSSLReload,
 	})
 
 	controllerNamespace := os.Getenv("POD_NAMESPACE")

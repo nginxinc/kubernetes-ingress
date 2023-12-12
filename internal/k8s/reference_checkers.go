@@ -90,7 +90,15 @@ func (rc *secretReferenceChecker) IsReferencedByVirtualServerRoute(_ string, _ s
 	return false
 }
 
-func (rc *secretReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1.TransportServer) bool {
+func (rc *secretReferenceChecker) IsReferencedByTransportServer(secretNamespace string, secretName string, ts *conf_v1.TransportServer) bool {
+	if ts.Namespace != secretNamespace {
+		return false
+	}
+
+	if ts.Spec.TLS != nil && ts.Spec.TLS.Secret == secretName {
+		return true
+	}
+
 	return false
 }
 
