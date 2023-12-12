@@ -141,7 +141,6 @@ class TestAppProtectWAFPolicyVS:
         wait_before_test()
 
     @pytest.mark.smoke
-    @pytest.mark.appprotect_waf_policies_block
     @pytest.mark.parametrize(
         "vs_src, waf",
         [
@@ -286,7 +285,6 @@ class TestAppProtectWAFPolicyVS:
         assert_valid_responses(response1)
         assert_valid_responses(response2)
 
-    @pytest.mark.appprotect_waf_policies_allow
     def test_ap_waf_policy_multi_logs(
         self,
         kube_apis,
