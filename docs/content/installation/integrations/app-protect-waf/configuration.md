@@ -8,7 +8,7 @@ docs: "DOCS-578"
 aliases: ["/app-protect/configuration/"]
 ---
 
-> Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.0/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.0/examples/ingress-resources/app-protect-waf).
+{{< note >}} The NGINX Ingress Controller repository has complete NGINX App Protect WAF examples with [VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/custom-resources/app-protect-waf) and [Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/ingress-resources/app-protect-waf). {{< /note >}}
 
 ## Global Configuration
 
