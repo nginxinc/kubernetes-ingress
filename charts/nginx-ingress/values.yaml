@@ -14,7 +14,7 @@ controller:
   ## Deploys the Ingress Controller for NGINX Plus.
   nginxplus: false
 
-  # Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
+  ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
   nginxReloadTimeout: 60000
 
   ## Support for App Protect WAF
@@ -235,7 +235,7 @@ controller:
   ## The number of replicas of the Ingress Controller deployment.
   replicaCount: 1
 
-  # Configures the ingress class the Ingress Controller uses.
+  ## Configures the ingress class the Ingress Controller uses.
   ingressClass:
     ## A class of the Ingress Controller.
 
@@ -463,7 +463,7 @@ controller:
   ## Configure root filesystem as read-only and add volumes for temporary data.
   readOnlyRootFilesystem: false
 
-  ## Enable dynamic reloading of certificates for NGINX Plus
+  ## Enable dynamic reloading of certificates
   enableSSLDynamicReload: true
 
 rbac:
