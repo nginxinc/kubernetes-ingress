@@ -101,7 +101,7 @@ Notice that the fields match in name and nesting: NGINX Ingress Controller will 
 
 ## NGINX App Protect WAF Logs
 
-Configuring 
+Configuring
 
 You can set the [NGINX App Protect WAF log configurations](/nginx-app-protect-waf/logging-overview/logs-overview/) by creating an `APLogConf` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 

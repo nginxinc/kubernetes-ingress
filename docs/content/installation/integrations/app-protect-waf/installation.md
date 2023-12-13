@@ -146,7 +146,7 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 
 {{%tab name="Install CRDs after cloning the repo"%}}
 
-{{< note >}} If you are installing the CRDs this way, ensure you have first cloned the repository. {{< /note >}} 
+{{< note >}} If you are installing the CRDs this way, ensure you have first cloned the repository. {{< /note >}}
 
 These YAML files create CRDs for the following resources:
 
@@ -164,7 +164,7 @@ kubectl apply -f config/crd/bases/appprotect.f5.com_apusersigs.yaml
 
 {{</tabs>}}
 
---- 
+---
 
 ## Deploy NGINX Ingress Controller {#deploy-ingress-controller}
 
