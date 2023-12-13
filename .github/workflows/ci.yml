@@ -355,7 +355,7 @@ jobs:
     name: Build Docker OSS
     needs: smoke-tests
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         image: [debian, alpine]
         platforms:
@@ -379,7 +379,7 @@ jobs:
     name: Build Docker Plus
     needs: [binaries, build-docker]
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         image: [debian-plus, alpine-plus, alpine-plus-fips]
         platforms: ["linux/arm64, linux/amd64"]
@@ -404,7 +404,7 @@ jobs:
     name: Build Docker NAP
     needs: [binaries, build-docker-plus]
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         image: [debian-plus-nap, ubi-plus-nap]
         platforms: ["linux/amd64"]
