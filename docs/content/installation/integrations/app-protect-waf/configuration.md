@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: "Learn how to use NGINX Ingress Controller to configure NGINX App Protect WAF."
+description: "This document explains how to use F5 NGINX Ingress Controller to configure NGINX App Protect WAF."
 weight: 1900
 doctypes: [""]
 toc: true
@@ -8,107 +8,108 @@ docs: "DOCS-578"
 aliases: ["/app-protect/configuration/"]
 ---
 
-> Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/ingress-resources/app-protect-waf).
+{{< note >}} The NGINX Ingress Controller repository has complete NGINX App Protect WAF examples with [VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/custom-resources/app-protect-waf) and [Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/ingress-resources/app-protect-waf). {{< /note >}}
 
 ## Global Configuration
 
-NGINX Ingress Controller has a set of global configuration parameters that align with those available in NGINX App Protect WAF. See [ConfigMap keys]({{< relref "configuration/global-configuration/configmap-resource.md#modules" >}}) for the complete list. The NGINX App Protect WAF parameters use the `app-protect*` prefix.
+NGINX Ingress Controller has global configuration parameters that match those in NGINX App Protect WAF. They are found in the [ConfigMap resource]({{< relref "configuration/global-configuration/configmap-resource.md#modules" >}}): the NGINX App Protect WAF parameters are prefixed with `app-protect*`.
 
 ## Enable NGINX App Protect WAF
 
-You can enable and configure NGINX App Protect WAF on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis.
+NGINX App Protect WAF can be enabled and configured for custom resources (VirtualServer, VirtualServerRoute) or Ingress resources.
 
-To configure NGINX App Protect WAF on a VirtualServer resource, you would create a Policy Custom Resource referencing the `APPolicy` Custom Resource or `APPolicy` Bundle, and add this to the VirtualServer definition. See the documentation on the [NGINX App Protect WAF Policy]({{< relref "configuration/policy-resource.md#waf" >}}).
+- For custom resources, you need to create a Policy Custom Resource referencing the `APPolicy` custom resource or bundle, then add it to the VirtualServer definition. Additional detail can be found in the [Policy Resource documentation]({{< relref "configuration/policy-resource.md#waf" >}}).
+- For Ingress resources, apply the [`app-protect` annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) to each desired resource.
 
-To configure NGINX App Protect WAF on an Ingress resource, you would apply the [`app-protect` annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) to each desired resource.
 
 ## NGINX App Protect WAF Policies
 
-You can define NGINX App Protect WAF policies for your VirtualServer, VirtualServerRoute, or Ingress resources by creating an `APPolicy` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
+NGINX App Protect WAF Policies can be created for VirtualServer, VirtualServerRoute, or Ingress resources by creating an `APPolicy` [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/). There are some caveats:
 
- > **Note**: The fields `policy.signature-requirements[].minRevisionDatetime` and `policy.signature-requirements[].maxRevisionDatetime` are not supported.
-
- > **Note**: [The Advanced gRPC Protection for Unary Traffic](/nginx-app-protect-waf/configuration-guide/configuration/#grpc-protection-for-unary-traffic) only supports providing an `idl-file` inline. The fields `policy.idl-files[].link`, `policy.idl-files[].$ref`, and
+- The fields `policy.signature-requirements[].minRevisionDatetime` and `policy.signature-requirements[].maxRevisionDatetime` are not supported.
+- [The Advanced gRPC Protection for Unary Traffic](/nginx-app-protect-waf/configuration-guide/configuration/#grpc-protection-for-unary-traffic) only supports providing an `idl-file` inline. The fields `policy.idl-files[].link`, `policy.idl-files[].$ref`, and
  `policy.idl-files[].file` are not supported. The IDL file should be provided in field `policy.idl-files[].contents`. The value of this field can be base64 encoded. In this case the field `policy.idl-files[].isBase64` should be set to `true`.
 
- > **Note**: [External References](/nginx-app-protect-waf/configuration-guide/configuration/#external-references) in the Ingress Controller are deprecated and will not be supported in future releases.
+{{<warning>}} External references are deprecated in NGINX Ingress Controller and will not be supported in future releases. {{</warning>}}
 
-To add any [NGINX App Protect WAF policy](/nginx-app-protect-waf/declarative-policy/policy/) to an Ingress resource:
+To add an [NGINX App Protect WAF policy](/nginx-app-protect-waf/declarative-policy/policy/) to an Ingress resource:
 
-1. Create an `APPolicy` Custom resource manifest.
-2. Add the desired policy to the `spec` field in the `APPolicy` resource.
+1. Create an `APPolicy` custom resource manifest.
+1. Add the policy to the `spec` field in the `APPolicy` resource.
 
-   > **Note**: The relationship between the Policy JSON and the resource spec is 1:1. If you're defining your resources in YAML, as we do in our examples, you'll need to represent the policy as YAML. The fields must match those in the source JSON exactly in name and level.
+A resource specification and its Policy JSON **must** match. The fields must be identical in name and nesting level. If the resources are defined with YAML, the policy must also be represented in YAML.
 
-  For example, say you want to use the [DataGuard policy](/nginx-app-protect-waf/declarative-policy/policy/#policy/data-guard) shown below:
+As an example, this is a [DataGuard policy](/nginx-app-protect-waf/declarative-policy/policy/#policy/data-guard):
 
-  ```json
-  {
-      "policy": {
-          "name": "dataguard_blocking",
-          "template": { "name": "POLICY_TEMPLATE_NGINX_BASE" },
-          "applicationLanguage": "utf-8",
-          "enforcementMode": "blocking",
-          "blocking-settings": {
-              "violations": [
-                  {
-                      "name": "VIOL_DATA_GUARD",
-                      "alarm": true,
-                      "block": true
-                  }
-              ]
-          },
-          "data-guard": {
-              "enabled": true,
-              "maskData": true,
-              "creditCardNumbers": true,
-              "usSocialSecurityNumbers": true,
-              "enforcementMode": "ignore-urls-in-list",
-              "enforcementUrls": []
-          }
-      }
-  }
+```json
+{
+    "policy": {
+        "name": "dataguard_blocking",
+        "template": { "name": "POLICY_TEMPLATE_NGINX_BASE" },
+        "applicationLanguage": "utf-8",
+        "enforcementMode": "blocking",
+        "blocking-settings": {
+            "violations": [
+                {
+                    "name": "VIOL_DATA_GUARD",
+                    "alarm": true,
+                    "block": true
+                }
+            ]
+        },
+        "data-guard": {
+            "enabled": true,
+            "maskData": true,
+            "creditCardNumbers": true,
+            "usSocialSecurityNumbers": true,
+            "enforcementMode": "ignore-urls-in-list",
+            "enforcementUrls": []
+        }
+    }
+}
   ```
 
-  You would create an `APPolicy` resource with the policy defined in the `spec`, as shown below:
+This is what its corresponding `APPolicy` resource defined in the `spec` would look like:
 
-  ```yaml
-  apiVersion: appprotect.f5.com/v1beta1
-  kind: APPolicy
-  metadata:
-    name: dataguard-blocking
-  spec:
-    policy:
-      name: dataguard_blocking
-      template:
-        name: POLICY_TEMPLATE_NGINX_BASE
-      applicationLanguage: utf-8
-      enforcementMode: blocking
-      blocking-settings:
-        violations:
-        - name: VIOL_DATA_GUARD
-          alarm: true
-          block: true
-      data-guard:
-        enabled: true
-        maskData: true
-        creditCardNumbers: true
-        usSocialSecurityNumbers: true
-        enforcementMode: ignore-urls-in-list
-        enforcementUrls: []
-  ```
+```yaml
+apiVersion: appprotect.f5.com/v1beta1
+kind: APPolicy
+metadata:
+  name: dataguard-blocking
+spec:
+  policy:
+    name: dataguard_blocking
+    template:
+      name: POLICY_TEMPLATE_NGINX_BASE
+    applicationLanguage: utf-8
+    enforcementMode: blocking
+    blocking-settings:
+      violations:
+      - name: VIOL_DATA_GUARD
+        alarm: true
+        block: true
+    data-guard:
+      enabled: true
+      maskData: true
+      creditCardNumbers: true
+      usSocialSecurityNumbers: true
+      enforcementMode: ignore-urls-in-list
+      enforcementUrls: []
+```
 
-  > Notice how the fields match exactly in name and level. NGINX Ingress Controller will transform the YAML into a valid JSON WAF policy config.
+Notice that the fields match in name and nesting: NGINX Ingress Controller will transform the YAML into a valid JSON WAF policy config.
 
 ## NGINX App Protect WAF Logs
+
+Configuring
 
 You can set the [NGINX App Protect WAF log configurations](/nginx-app-protect-waf/logging-overview/logs-overview/) by creating an `APLogConf` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
 To add the [log configurations](/nginx-app-protect-waf/logging-overview/security-log/) to a VirtualServer or an Ingress resource:
 
 1. Create an `APLogConf` Custom Resource manifest.
-2. Add the desired log configuration to the `spec` field in the `APLogConf` resource.
-3. Add the `APLogConf` reference to the [VirtualServer Policy resource]({{< relref "configuration/policy-resource.md#waf" >}}) or the [Ingress resource]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) as per the documentation.
+1. Add the log configuration to the `spec` field in the `APLogConf` resource.
+1. Add a reference to `APLogConf` in the [VirtualServer Policy resource]({{< relref "configuration/policy-resource.md#waf" >}}) or the [Ingress resource]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) as per the documentation.
 
    > **Note**: The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. NGINX Ingress Controller will transform the YAML into a valid JSON WAF log config.
 
@@ -209,12 +210,15 @@ spec:
 
 ## App Protect WAF Bundles
 
-You can define App Protect WAF bundles for VirtualServers by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
+You can define App Protect WAF bundles for VirtualServer custom resources by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
+
+Before applying a policy, a WAF policy bundle must be created, then copied to a volume mounted to `/etc/nginx/waf/bundles`.
+
+{{< note >}} NGINX Ingress Controller does not currently support `securityLogs` for policy bundles. {{< /note >}}
+
+This example show how a policy is configured by referencing a generated WAF Policy Bundle:
 
 
-For example, you can configure a policy by referencing generated WAF Policy Bundle:
-
-> **Note**: Currently we do not support `securityLogs` for policy bundles.
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: Policy
@@ -225,8 +229,6 @@ spec:
     enable: true
     apBundle: "<policy_bundle_name>.tgz"
 ```
-
-> **Note**: Before applying the policy, a WAF Policy Bundle must be created, copied to a volume, and the volume must be mounted to `/etc/nginx/waf/bundles`.
 
 ## OpenAPI Specification in NGINX Ingress Controller
 
