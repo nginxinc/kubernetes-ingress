@@ -532,6 +532,6 @@ Default `443`.
 
 Used to activate or deactivate lazy loading for SSL Certificates.
 
-The default value is `true`..
+The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
