@@ -42,6 +42,7 @@ markers =[
     "vs_ipv6",
     "vs_rewrite",
     "vs_responses",
+    "vs_grpc",
     "vsr",
 ]
 testpaths = [

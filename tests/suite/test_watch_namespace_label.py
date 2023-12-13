@@ -177,6 +177,7 @@ class TestWatchNamespaceLabelIngress:
 
 
 @pytest.mark.vs
+@pytest.mark.vs_responses
 @pytest.mark.parametrize(
     "crd_ingress_controller, expected_responses",
     [
