@@ -116,14 +116,53 @@ make push PREFIX=<my-docker-registry>/nginx-plus-ingress
 
 ---
 
+## Create custom resources {#create-custom-resources}
+
+{{< include "installation/create-custom-resources.md" >}}
+
+---
+
+## Create App Protect DoS custom resources
+
+{{<tabs name="install-dos-crds">}}
+
+{{%tab name="Install CRDs from single YAML"%}}
+
+This single YAML file creates CRDs for the following resources:
+
+- `APDosPolicy`
+- `APDosLogConf`
+- `DosProtectedResource`
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-dos.yaml
+```
+
+{{%/tab%}}
+
+{{%tab name="Install CRDs after cloning the repo"%}}
+
+These YAML files create CRDs for the following resources:
+
+- `APDosPolicy`
+- `APDosLogConf`
+- `DosProtectedResource`
+
+```shell
+kubectl apply -f config/crd/bases/appprotectdos.f5.com_apdoslogconfs.yaml
+kubectl apply -f config/crd/bases/appprotectdos.f5.com_apdospolicy.yaml
+kubectl apply -f config/crd/bases/appprotectdos.f5.com_dosprotectedresources.yaml
+```
+
+{{%/tab%}}
+
+{{</tabs>}}
+
+---
+
 ## Deploy NGINX Ingress Controller {#deploy-ingress-controller}
 
-You have two options for deploying NGINX Ingress Controller:
-
-- **Deployment**. Choose this method for the flexibility to dynamically change the number of NGINX Ingress Controller replicas.
-- **DaemonSet**. Choose this method if you want NGINX Ingress Controller to run on all nodes or a subset of nodes.
-
-Before you start, update the [command-line arguments]({{< relref "configuration/global-configuration/command-line-arguments.md" >}}) for the NGINX Ingress Controller container in the relevant manifest file to meet your specific requirements.
+{{< include "installation/deploy-controller.md" >}}
 
 ### Using a Deployment
 
