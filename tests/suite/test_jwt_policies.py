@@ -27,6 +27,7 @@ invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.policies
+@pytest.mark.policies_jwt
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
