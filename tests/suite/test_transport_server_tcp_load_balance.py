@@ -623,7 +623,7 @@ class TestTransportServerTcpLoadBalance:
             endpoint = response.decode()
             print(f"Connected securely to: {endpoint}")
 
-        # for OSS and and Plus with -ssl-dynamic-reload=false, we expect
+        # with -ssl-dynamic-reload=false, we expect
         # replacing a secret to trigger a reload
         count_before_replace = get_reload_count(transport_server_setup.metrics_url)
         print(f"replacing: {sec_name} in {transport_server_setup.namespace}")
@@ -639,7 +639,6 @@ class TestTransportServerTcpLoadBalance:
         delete_items_from_yaml(kube_apis, src_sec_yaml, transport_server_setup.namespace)
 
 
-@pytest.mark.skip_for_nginx_oss
 @pytest.mark.ts
 @pytest.mark.skip_for_loadbalancer
 @pytest.mark.parametrize(

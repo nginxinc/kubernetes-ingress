@@ -130,7 +130,7 @@ class TestVirtualServerTLS:
         wait_before_test(1)
         assert_us_subject(virtual_server_setup)
 
-        # for OSS and and Plus with -ssl-dynamic-reload=false, we expect
+        # with -ssl-dynamic-reload=false, we expect
         # replacing a secret to trigger a reload
         count_before_replace = get_reload_count(virtual_server_setup.metrics_url)
 
@@ -150,7 +150,6 @@ class TestVirtualServerTLS:
         assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
 
 
-@pytest.mark.skip_for_nginx_oss
 @pytest.mark.vs
 @pytest.mark.smoke
 @pytest.mark.parametrize(
