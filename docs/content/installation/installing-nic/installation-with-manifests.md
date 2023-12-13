@@ -15,7 +15,7 @@ docs: "DOCS-603"
 
 ### Get the NGINX Controller Image
 
-{{<note>}} Always use the most up-to-date stable release listed on the [releases page]({{< relref "releases.md" >}}).{{</note>}}
+{{<note>}}Always use the most up-to-date stable release listed on the [releases page]({{< relref "releases.md" >}}).{{</note>}}
 
 Choose one of the following methods to get the NGINX Ingress Controller image:
 
