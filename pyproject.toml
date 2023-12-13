@@ -44,6 +44,9 @@ markers =[
     "vs_responses",
     "vs_grpc",
     "vs_redirects",
+    "vs_externaldns",
+    "vs_externalname",
+    "vs_certmanager",
     "vsr",
 ]
 testpaths = [

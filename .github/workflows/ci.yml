@@ -257,11 +257,13 @@ jobs:
                                                 [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"policies\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects'\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects and not vs_externalname and not vs_externaldns and not vs_certmanager'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects or vs_externalname or vs_externaldns'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs_certmanager'\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects'\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects'\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects and not vs_externalname and not vs_externaldns and not vs_certmanager'\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects or vs_externalname or vs_externaldns'\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"vs_certmanager\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
