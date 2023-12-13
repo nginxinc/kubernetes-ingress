@@ -100,6 +100,7 @@ test_data = [
 @pytest.mark.parametrize("crd_ingress_controller", [({"type": "complete"})], indirect=True)
 class TestRewrites:
     @pytest.mark.vs
+    @pytest.mark.vs_rewrite
     @pytest.mark.parametrize("path,args,cookies,expected", test_data)
     def test_vs_rewrite(self, vs_rewrites_setup, path, args, cookies, expected):
         """
