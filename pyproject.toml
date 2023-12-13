@@ -39,6 +39,7 @@ markers =[
     "smoke",
     "ts",
     "vs",
+    "vs_ipv6",
     "vsr",
 ]
 testpaths = [

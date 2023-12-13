@@ -257,9 +257,11 @@ jobs:
                                                 [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"policies\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"vs and not vs_ipv6\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"vs_ipv6\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"vs and not vs_ipv6\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"vs_ipv6\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
