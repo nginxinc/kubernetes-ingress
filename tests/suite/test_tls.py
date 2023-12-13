@@ -138,7 +138,7 @@ class TestIngressTLS:
         wait_before_test(1)
         assert_us_subject(ingress_controller_endpoint, tls_setup.ingress_host)
 
-        # for OSS and and Plus with -ssl-dynamic-reload=false, we expect
+        # with -ssl-dynamic-reload=false, we expect
         # replacing a secret to trigger a reload
         count_before_replace = get_reload_count(tls_setup.metrics_url)
 
@@ -153,7 +153,6 @@ class TestIngressTLS:
         assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
 
 
-@pytest.mark.skip_for_nginx_oss
 @pytest.mark.ingresses
 @pytest.mark.parametrize(
     "ingress_controller, tls_setup",

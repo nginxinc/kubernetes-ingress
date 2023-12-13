@@ -530,8 +530,8 @@ Default `443`.
 
 ### -ssl-dynamic-reload
 
-Used to activate or deactivate lazy loading for SSL Certificates for NGINX Plus.
+Used to activate or deactivate lazy loading for SSL Certificates.
 
-The default value is `true` when using NGINX Plus.
+The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
