@@ -12,15 +12,17 @@ type UpstreamLabels struct {
 
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
-	HTTPSnippets      []string
-	LimitReqZones     []LimitReqZone
-	Maps              []Map
-	Server            Server
-	SpiffeCerts       bool
-	SpiffeClientCerts bool
-	SplitClients      []SplitClient
-	StatusMatches     []StatusMatch
-	Upstreams         []Upstream
+	HTTPSnippets            []string
+	LimitReqZones           []LimitReqZone
+	Maps                    []Map
+	Server                  Server
+	SpiffeCerts             bool
+	SpiffeClientCerts       bool
+	SplitClients            []SplitClient
+	StatusMatches           []StatusMatch
+	Upstreams               []Upstream
+	DynamicSSLReloadEnabled bool
+	StaticSSLPath           string
 }
 
 // Upstream defines an upstream.
@@ -39,6 +41,7 @@ type Upstream struct {
 	SessionCookie    *SessionCookie
 	UpstreamLabels   UpstreamLabels
 	NTLM             bool
+	BackupServers    []UpstreamServer
 }
 
 // UpstreamServer defines an upstream server.

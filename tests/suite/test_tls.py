@@ -7,6 +7,7 @@ from suite.utils.resources_utils import (
     delete_items_from_yaml,
     delete_secret,
     ensure_connection_to_public_endpoint,
+    get_reload_count,
     is_secret_present,
     replace_secret,
     wait_before_test,
@@ -43,12 +44,13 @@ def assert_gb_subject(endpoint, host):
 
 
 class TLSSetup:
-    def __init__(self, ingress_host, secret_name, secret_path, new_secret_path, invalid_secret_path):
+    def __init__(self, ingress_host, secret_name, secret_path, new_secret_path, invalid_secret_path, metrics_url):
         self.ingress_host = ingress_host
         self.secret_name = secret_name
         self.secret_path = secret_path
         self.new_secret_path = new_secret_path
         self.invalid_secret_path = invalid_secret_path
+        self.metrics_url = metrics_url
 
 
 @pytest.fixture(scope="class")
@@ -63,6 +65,7 @@ def tls_setup(
     print("------------------------- Deploy TLS setup -----------------------------------")
 
     test_data_path = f"{TEST_DATA}/tls"
+    metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
 
     ingress_path = f"{test_data_path}/{request.param}/ingress.yaml"
     create_ingress_from_yaml(kube_apis.networking_v1, test_namespace, ingress_path)
@@ -90,11 +93,19 @@ def tls_setup(
         f"{test_data_path}/tls-secret.yaml",
         f"{test_data_path}/new-tls-secret.yaml",
         f"{test_data_path}/invalid-tls-secret.yaml",
+        metrics_url,
     )
 
 
 @pytest.mark.ingresses
-@pytest.mark.parametrize("tls_setup", ["standard", "mergeable"], indirect=True)
+@pytest.mark.parametrize(
+    "ingress_controller, tls_setup",
+    [
+        pytest.param({"extra_args": ["-enable-prometheus-metrics", "-ssl-dynamic-reload=false"]}, "standard"),
+        pytest.param({"extra_args": ["-enable-prometheus-metrics", "-ssl-dynamic-reload=false"]}, "mergeable"),
+    ],
+    indirect=True,
+)
 class TestIngressTLS:
     def test_tls_termination(self, kube_apis, ingress_controller_endpoint, test_namespace, tls_setup):
         print("Step 1: no secret")
@@ -127,7 +138,51 @@ class TestIngressTLS:
         wait_before_test(1)
         assert_us_subject(ingress_controller_endpoint, tls_setup.ingress_host)
 
+        # for OSS and and Plus with -ssl-dynamic-reload=false, we expect
+        # replacing a secret to trigger a reload
+        count_before_replace = get_reload_count(tls_setup.metrics_url)
+
         print("Step 7: update secret and check")
         replace_secret(kube_apis.v1, tls_setup.secret_name, test_namespace, tls_setup.new_secret_path)
         wait_before_test(1)
         assert_gb_subject(ingress_controller_endpoint, tls_setup.ingress_host)
+
+        count_after = get_reload_count(tls_setup.metrics_url)
+        reloads = count_after - count_before_replace
+        expected_reloads = 1
+        assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"
+
+
+@pytest.mark.skip_for_nginx_oss
+@pytest.mark.ingresses
+@pytest.mark.parametrize(
+    "ingress_controller, tls_setup",
+    [
+        pytest.param({"extra_args": ["-enable-prometheus-metrics"]}, "standard"),
+        pytest.param({"extra_args": ["-enable-prometheus-metrics"]}, "mergeable"),
+    ],
+    indirect=True,
+)
+class TestIngressTLSDynamicReloads:
+    def test_tls_termination(self, kube_apis, ingress_controller_endpoint, test_namespace, tls_setup):
+        print("Step 1: no secret")
+        assert_unrecognized_name_error(ingress_controller_endpoint, tls_setup.ingress_host)
+
+        print("Step 2: deploy secret and check")
+        create_secret_from_yaml(kube_apis.v1, test_namespace, tls_setup.secret_path)
+        wait_before_test(1)
+        assert_us_subject(ingress_controller_endpoint, tls_setup.ingress_host)
+
+        # for Plus with -ssl-dynamic-reload=true, we expect
+        # replacing a secret not to trigger a reload
+        count_before_replace = get_reload_count(tls_setup.metrics_url)
+
+        print("Step 3: update secret and check")
+        replace_secret(kube_apis.v1, tls_setup.secret_name, test_namespace, tls_setup.new_secret_path)
+        wait_before_test(1)
+        assert_gb_subject(ingress_controller_endpoint, tls_setup.ingress_host)
+
+        count_after = get_reload_count(tls_setup.metrics_url)
+        reloads = count_after - count_before_replace
+        expected_reloads = 0
+        assert reloads == expected_reloads, f"expected {expected_reloads} reloads, got {reloads}"

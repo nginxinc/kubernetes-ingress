@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -56,12 +57,12 @@ type ServerConfig struct {
 // The Manager interface updates NGINX configuration, starts, reloads and quits NGINX,
 // updates NGINX Plus upstream servers.
 type Manager interface {
-	CreateMainConfig(content []byte)
-	CreateConfig(name string, content []byte)
+	CreateMainConfig(content []byte) bool
+	CreateConfig(name string, content []byte) bool
 	DeleteConfig(name string)
-	CreateStreamConfig(name string, content []byte)
+	CreateStreamConfig(name string, content []byte) bool
 	DeleteStreamConfig(name string)
-	CreateTLSPassthroughHostsConfig(content []byte)
+	CreateTLSPassthroughHostsConfig(content []byte) bool
 	CreateSecret(name string, content []byte, mode os.FileMode) string
 	DeleteSecret(name string)
 	CreateAppProtectResourceFile(name string, content []byte)
@@ -83,6 +84,7 @@ type Manager interface {
 	AppProtectPluginQuit()
 	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
 	AppProtectDosAgentQuit()
+	GetSecretsDir() string
 }
 
 // LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
@@ -133,29 +135,33 @@ func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector
 }
 
 // CreateMainConfig creates the main NGINX configuration file. If the file already exists, it will be overridden.
-func (lm *LocalManager) CreateMainConfig(content []byte) {
+func (lm *LocalManager) CreateMainConfig(content []byte) bool {
 	glog.V(3).Infof("Writing main config to %v", lm.mainConfFilename)
 	glog.V(3).Infof(string(content))
 
+	configChanged := configContentsChanged(lm.mainConfFilename, content)
 	err := createFileAndWrite(lm.mainConfFilename, content)
 	if err != nil {
 		glog.Fatalf("Failed to write main config: %v", err)
 	}
+	return configChanged
 }
 
 // CreateConfig creates a configuration file. If the file already exists, it will be overridden.
-func (lm *LocalManager) CreateConfig(name string, content []byte) {
-	createConfig(lm.getFilenameForConfig(name), content)
+func (lm *LocalManager) CreateConfig(name string, content []byte) bool {
+	return createConfig(lm.getFilenameForConfig(name), content)
 }
 
-func createConfig(filename string, content []byte) {
+func createConfig(filename string, content []byte) bool {
 	glog.V(3).Infof("Writing config to %v", filename)
 	glog.V(3).Info(string(content))
 
+	configChanged := configContentsChanged(filename, content)
 	err := createFileAndWrite(filename, content)
 	if err != nil {
 		glog.Fatalf("Failed to write config to %v: %v", filename, err)
 	}
+	return configChanged
 }
 
 // DeleteConfig deletes the configuration file from the conf.d folder.
@@ -177,8 +183,8 @@ func (lm *LocalManager) getFilenameForConfig(name string) string {
 
 // CreateStreamConfig creates a configuration file for stream module.
 // If the file already exists, it will be overridden.
-func (lm *LocalManager) CreateStreamConfig(name string, content []byte) {
-	createConfig(lm.getFilenameForStreamConfig(name), content)
+func (lm *LocalManager) CreateStreamConfig(name string, content []byte) bool {
+	return createConfig(lm.getFilenameForStreamConfig(name), content)
 }
 
 // DeleteStreamConfig deletes the configuration file from the stream-conf.d folder.
@@ -193,9 +199,9 @@ func (lm *LocalManager) getFilenameForStreamConfig(name string) string {
 // CreateTLSPassthroughHostsConfig creates a configuration file with mapping between TLS Passthrough hosts and
 // the corresponding unix sockets.
 // If the file already exists, it will be overridden.
-func (lm *LocalManager) CreateTLSPassthroughHostsConfig(content []byte) {
+func (lm *LocalManager) CreateTLSPassthroughHostsConfig(content []byte) bool {
 	glog.V(3).Infof("Writing TLS Passthrough Hosts config file to %v", lm.tlsPassthroughHostsFilename)
-	createConfig(lm.tlsPassthroughHostsFilename, content)
+	return createConfig(lm.tlsPassthroughHostsFilename, content)
 }
 
 // CreateSecret creates a secret file with the specified name, content and mode. If the file already exists,
@@ -221,7 +227,7 @@ func (lm *LocalManager) DeleteSecret(name string) {
 	}
 }
 
-// GetFilenameForSecret constructs the filename for the secret.
+// GetFilenameForSecret constructs the filename for the secret
 func (lm *LocalManager) GetFilenameForSecret(name string) string {
 	return path.Join(lm.secretsPath, name)
 }
@@ -551,4 +557,19 @@ func getBinaryFileName(debug bool) string {
 		return nginxBinaryPathDebug
 	}
 	return nginxBinaryPath
+}
+
+// GetSecretsDir allows the static config params to reference the secrets directory
+func (lm *LocalManager) GetSecretsDir() string {
+	return lm.secretsPath
+}
+
+func configContentsChanged(filename string, content []byte) bool {
+	filename = filepath.Clean(filename)
+	if currentContent, err := os.ReadFile(filename); err == nil {
+		if string(content) == string(currentContent) {
+			return false
+		}
+	}
+	return true
 }

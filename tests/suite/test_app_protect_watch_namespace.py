@@ -125,6 +125,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
+@pytest.mark.appprotect_watch
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [{"extra_args": [f"-enable-custom-resources", f"-enable-app-protect", f"-enable-prometheus-metrics"]}],
@@ -157,6 +158,7 @@ class TestAppProtectWatchNamespaceDisabled:
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
+@pytest.mark.appprotect_watch
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [

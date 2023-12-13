@@ -134,6 +134,8 @@ type StaticConfigParams struct {
 	EnableOIDC                     bool
 	SSLRejectHandshake             bool
 	EnableCertManager              bool
+	DynamicSSLReload               bool
+	StaticSSLPath                  string
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.

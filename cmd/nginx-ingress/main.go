@@ -28,6 +28,7 @@ import (
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/promlog"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	util_version "k8s.io/apimachinery/pkg/util/version"
@@ -43,8 +44,10 @@ import (
 var version string
 
 const (
-	nginxVersionLabel = "app.nginx.org/version"
-	versionLabel      = "app.kubernetes.io/version"
+	nginxVersionLabel      = "app.nginx.org/version"
+	versionLabel           = "app.kubernetes.io/version"
+	appProtectVersionLabel = "appprotect.f5.com/version"
+	appProtectVersionPath  = "/opt/app_protect/VERSION"
 )
 
 func main() {
@@ -71,7 +74,12 @@ func main() {
 
 	nginxVersion := getNginxVersionInfo(nginxManager)
 
-	updateSelfWithVersionInfo(kubeClient, version, nginxVersion)
+	var appProtectVersion string
+	if *appProtect {
+		appProtectVersion = getAppProtectVersionInfo()
+	}
+
+	updateSelfWithVersionInfo(kubeClient, version, nginxVersion, appProtectVersion)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
@@ -108,6 +116,8 @@ func main() {
 		EnableOIDC:                     *enableOIDC,
 		SSLRejectHandshake:             sslRejectHandshake,
 		EnableCertManager:              *enableCertManager,
+		DynamicSSLReload:               *enableDynamicSSLReload,
+		StaticSSLPath:                  nginxManager.GetSecretsDir(),
 	}
 
 	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
@@ -124,17 +134,18 @@ func main() {
 
 	plusCollector, syslogListener, latencyCollector := createPlusAndLatencyCollectors(registry, constLabels, kubeClient, plusClient, staticCfgParams.NginxServiceMesh)
 	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
-		NginxManager:            nginxManager,
-		StaticCfgParams:         staticCfgParams,
-		Config:                  cfgParams,
-		TemplateExecutor:        templateExecutor,
-		TemplateExecutorV2:      templateExecutorV2,
-		LatencyCollector:        latencyCollector,
-		LabelUpdater:            plusCollector,
-		IsPlus:                  *nginxPlus,
-		IsWildcardEnabled:       isWildcardEnabled,
-		IsPrometheusEnabled:     *enablePrometheusMetrics,
-		IsLatencyMetricsEnabled: *enableLatencyMetrics,
+		NginxManager:              nginxManager,
+		StaticCfgParams:           staticCfgParams,
+		Config:                    cfgParams,
+		TemplateExecutor:          templateExecutor,
+		TemplateExecutorV2:        templateExecutorV2,
+		LatencyCollector:          latencyCollector,
+		LabelUpdater:              plusCollector,
+		IsPlus:                    *nginxPlus,
+		IsWildcardEnabled:         isWildcardEnabled,
+		IsPrometheusEnabled:       *enablePrometheusMetrics,
+		IsLatencyMetricsEnabled:   *enableLatencyMetrics,
+		IsDynamicSSLReloadEnabled: *enableDynamicSSLReload,
 	})
 
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
@@ -400,6 +411,16 @@ func getNginxVersionInfo(nginxManager nginx.Manager) string {
 		glog.Fatal("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
 	}
 	return nginxVersion
+}
+
+func getAppProtectVersionInfo() string {
+	v, err := os.ReadFile(appProtectVersionPath)
+	if err != nil {
+		glog.Fatalf("Cannot detect the AppProtect version, %s", err.Error())
+	}
+	version := strings.TrimSpace(string(v))
+	glog.Infof("Using AppProtect Version %s", version)
+	return version
 }
 
 func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error) {
@@ -677,16 +698,17 @@ func createPlusAndLatencyCollectors(
 
 			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			cacheZoneLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			workerPIDVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
-				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames)
-			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels)
+				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, cacheZoneLabels, workerPIDVariableLabels)
+			promlogConfig := &promlog.Config{}
+			logger := promlog.New(promlogConfig)
+			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
 			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
 		} else {
 			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
-			client, err := metrics.NewNginxMetricsClient(httpClient)
-			if err != nil {
-				glog.Errorf("Error creating the Nginx client for Prometheus metrics: %v", err)
-			}
+			client := metrics.NewNginxMetricsClient(httpClient)
 			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels, prometheusSecret)
 		}
 		if *enableLatencyMetrics {
@@ -766,7 +788,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string, nginxVersion string) {
+func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string, nginxVersion string, appProtectVersion string) {
 	pod, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), os.Getenv("POD_NAME"), meta_v1.GetOptions{})
 	if err != nil {
 		glog.Errorf("Error getting pod: %v", err)
@@ -783,6 +805,9 @@ func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string,
 	replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
 	nginxVer = replacer.Replace(nginxVer)
 	labels[nginxVersionLabel] = nginxVer
+	if appProtectVersion != "" {
+		labels[appProtectVersionLabel] = appProtectVersion
+	}
 	labels[versionLabel] = strings.TrimPrefix(version, "v")
 	newPod.ObjectMeta.Labels = labels
 

@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/commonhelpers"
 )
 
 type protocol int
@@ -129,4 +131,5 @@ var helperFunctions = template.FuncMap{
 	"toUpper":           strings.ToUpper,
 	"makeHTTPListener":  makeHTTPListener,
 	"makeHTTPSListener": makeHTTPSListener,
+	"makeSecretPath":    commonhelpers.MakeSecretPath,
 }

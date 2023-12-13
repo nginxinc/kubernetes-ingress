@@ -255,6 +255,26 @@ func validatePositiveIntOrZeroFromPointer(n *int, fieldPath *field.Path) field.E
 	return nil
 }
 
+func validateBackupNameFromPointer(backup *string, fieldPath *field.Path) field.ErrorList {
+	if backup == nil {
+		return nil
+	}
+	backupName := *backup
+	return validateServiceName(backupName, fieldPath.Child("backup"))
+}
+
+func validateBackupPortFromPointer(backupPort *uint16, fieldPath *field.Path) field.ErrorList {
+	if backupPort == nil {
+		return nil
+	}
+	port := *backupPort
+	allErrs := field.ErrorList{}
+	for _, msg := range validation.IsValidPortNum(int(port)) {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("port"), port, msg))
+	}
+	return allErrs
+}
+
 func validateBuffer(buff *v1.UpstreamBuffers, fieldPath *field.Path) field.ErrorList {
 	if buff == nil {
 		return nil
@@ -593,10 +613,38 @@ func (vsv *VirtualServerValidator) validateUpstreams(upstreams []v1.Upstream, fi
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
 		}
 
+		allErrs = append(allErrs, validateBackup(u.Backup, u.BackupPort, u.LBMethod, idxPath)...)
+
 		allErrs = append(allErrs, rejectPlusResourcesInOSS(u, idxPath, vsv.isPlus)...)
 	}
-
 	return allErrs, upstreamNames
+}
+
+// validateBackup validates backup service name and port semantics and business logic.
+//
+// Backup can't be used with load balancing methods: 'hash', 'hash_ip' and 'random'.
+// Ref.: https://nginx.org/en/docs/http/ngx_http_upstream_module.html
+func validateBackup(backup *string, backupPort *uint16, lbMethod string, idxPath *field.Path) field.ErrorList {
+	if backup == nil && backupPort == nil {
+		return nil
+	}
+	allErrs := field.ErrorList{}
+	if backup != nil && backupPort == nil {
+		allErrs = append(allErrs, field.Invalid(idxPath.Child("backupPort"), backupPort, "both backup and backup port must be specified"))
+	}
+	if backup == nil && backupPort != nil {
+		allErrs = append(allErrs, field.Invalid(idxPath.Child("backup"), backup, "both backup and backup port must be specified"))
+	}
+
+	if strings.Contains(lbMethod, "hash") || strings.Contains(lbMethod, "hash_ip") || strings.Contains(lbMethod, "random") {
+		allErrs = append(allErrs, field.Forbidden(idxPath.Child("backup"),
+			"backup cannot be used along with the 'hash', 'hash_ip' and 'random' load balancing methods",
+		))
+	}
+
+	allErrs = append(allErrs, validateBackupNameFromPointer(backup, idxPath.Child("backup"))...)
+	allErrs = append(allErrs, validateBackupPortFromPointer(backupPort, idxPath.Child("backupPort"))...)
+	return allErrs
 }
 
 var validNextUpstreamParams = map[string]bool{

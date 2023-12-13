@@ -110,13 +110,16 @@ class TransportServerSetup:
         namespace (str):
     """
 
-    def __init__(self, name, namespace, ingress_pod_name, ic_namespace, public_endpoint: PublicEndpoint, resource):
+    def __init__(
+        self, name, namespace, ingress_pod_name, ic_namespace, public_endpoint: PublicEndpoint, resource, metrics_url
+    ):
         self.name = name
         self.namespace = namespace
         self.ingress_pod_name = ingress_pod_name
         self.ic_namespace = ic_namespace
         self.public_endpoint = public_endpoint
         self.resource = resource
+        self.metrics_url = metrics_url
 
 
 @pytest.fixture(scope="class")
@@ -161,6 +164,8 @@ def transport_server_setup(
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
     ic_namespace = ingress_controller_prerequisites.namespace
 
+    metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+
     return TransportServerSetup(
         ts_resource["metadata"]["name"],
         test_namespace,
@@ -168,6 +173,7 @@ def transport_server_setup(
         ic_namespace,
         ingress_controller_endpoint,
         ts_resource,
+        metrics_url,
     )
 
 

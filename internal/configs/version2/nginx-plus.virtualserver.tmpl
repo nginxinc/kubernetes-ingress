@@ -9,6 +9,10 @@ upstream {{ $u.Name }} {
     server {{ $s.Address }} max_fails={{ $u.MaxFails }} fail_timeout={{ $u.FailTimeout }}{{ if $u.SlowStart }} slow_start={{ $u.SlowStart }}{{ end }} max_conns={{ $u.MaxConns }}{{ if $u.Resolve }} resolve{{ end }};
     {{- end }}
 
+    {{- range $b := $u.BackupServers }}
+    server {{ $b.Address }} backup resolve;
+    {{- end }}
+
     {{- if $u.Keepalive }}
     keepalive {{ $u.Keepalive }};
     {{- end }}
@@ -106,18 +110,18 @@ server {
         {{- if $ssl.RejectHandshake }}
     ssl_reject_handshake on;
         {{- else if $.SpiffeCerts }}
-    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
-    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
-        {{- else }}
-    ssl_certificate {{ $ssl.Certificate }};
-    ssl_certificate_key {{ $ssl.CertificateKey }};
+    ssl_certificate {{ makeSecretPath "/etc/nginx/secrets/spiffe_cert.pem" $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+    ssl_certificate_key {{ makeSecretPath "/etc/nginx/secrets/spiffe_key.pem" $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+       {{- else }}
+    ssl_certificate {{ makeSecretPath $ssl.Certificate $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+	ssl_certificate_key {{ makeSecretPath $ssl.CertificateKey $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
         {{- end }}
     {{- else }}
       {{- if $.SpiffeCerts }}
     listen 443 ssl;
     {{if not $s.DisableIPV6}}listen [::]:443 ssl;{{end}}
-    ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
-    ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+    ssl_certificate {{ makeSecretPath "/etc/nginx/secrets/spiffe_cert.pem" $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+    ssl_certificate_key {{ makeSecretPath "/etc/nginx/secrets/spiffe_key.pem" $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
       {{- end }}
     {{- end }}
 
@@ -216,8 +220,8 @@ server {
 
     {{- with $s.EgressMTLS }}
         {{- if .Certificate }}
-    proxy_ssl_certificate {{ .Certificate }};
-    proxy_ssl_certificate_key {{ .CertificateKey }};
+    proxy_ssl_certificate {{ makeSecretPath .Certificate $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+    proxy_ssl_certificate_key {{ makeSecretPath .CertificateKey $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
         {{- end }}
         {{- if .TrustedCert }}
     proxy_ssl_trusted_certificate {{ .TrustedCert }};
@@ -403,8 +407,8 @@ server {
 
         {{- with $l.EgressMTLS }}
             {{- if .Certificate }}
-        {{ $proxyOrGRPC }}_ssl_certificate {{ .Certificate }};
-        {{ $proxyOrGRPC }}_ssl_certificate_key {{ .CertificateKey }};
+        {{ $proxyOrGRPC }}_ssl_certificate {{ makeSecretPath .Certificate $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+        {{ $proxyOrGRPC }}_ssl_certificate_key {{ makeSecretPath .CertificateKey $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
             {{- end }}
             {{ if .TrustedCert }}
         {{ $proxyOrGRPC }}_ssl_trusted_certificate {{ .TrustedCert }};
@@ -577,8 +581,8 @@ server {
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
             {{- end }}
             {{- if $.SpiffeClientCerts }}
-        {{ $proxyOrGRPC }}_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
-        {{ $proxyOrGRPC }}_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+        {{ $proxyOrGRPC }}_ssl_certificate {{ makeSecretPath "/etc/nginx/secrets/spiffe_cert.pem" $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
+        {{ $proxyOrGRPC }}_ssl_certificate_key {{ makeSecretPath "/etc/nginx/secrets/spiffe_key.pem" $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
         {{ $proxyOrGRPC }}_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
         {{ $proxyOrGRPC }}_ssl_server_name on;
         {{ $proxyOrGRPC }}_ssl_verify on;
