@@ -43,6 +43,7 @@ markers =[
     "vs_rewrite",
     "vs_responses",
     "vs_grpc",
+    "vs_redirects",
     "vsr",
 ]
 testpaths = [
