@@ -32,6 +32,7 @@ markers =[
     "appprotect_watch",
     "appprotect_batch",
     "dos",
+    "dos_learning",
     "ingresses",
     "policies",
     "rewrite",
