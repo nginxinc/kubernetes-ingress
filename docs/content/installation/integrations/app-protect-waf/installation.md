@@ -10,7 +10,7 @@ aliases: ["/app-protect/installation/"]
 
 {{< custom-styles >}}
 
-{{<call-out "tip" "Pre-built image alternatives" >}}If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
+{{<call-out "tip" "Pre-built image alternatives" >}} If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
 
 ## Before you start
 
@@ -115,9 +115,85 @@ make push PREFIX=<my-docker-registry>/nginx-plus-ingress
 
 ---
 
+## Create core custom resources {#create-custom-resources}
+
+
+{{< include "installation/create-custom-resources.md" >}}
+
+---
+
+## Create App Protect WAF custom resources
+
+{{< note >}} If you're using NGINX Ingress Controller with the App Protect WAF module and policy bundles, you can skip this section. You will need to create and configure [Persistent Volume and Persistent Volume Claim](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) in your Kubernetes cluster. {{< /note >}}
+
+<br>
+
+{{<tabs name="install-waf-crds">}}
+
+{{%tab name="Install CRDs from single YAML"%}}
+
+This single YAML file creates CRDs for the following resources:
+
+- `APPolicy`
+- `APLogConf`
+- `APUserSig`
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-waf.yaml
+```
+
+{{%/tab%}}
+
+{{%tab name="Install CRDs after cloning the repo"%}}
+
+{{< note >}} If you are installing the CRDs this way, ensure you have first cloned the repository. {{< /note >}} 
+
+These YAML files create CRDs for the following resources:
+
+- `APPolicy`
+- `APLogConf`
+- `APUserSig`
+
+```shell
+kubectl apply -f config/crd/bases/appprotect.f5.com_appolicies.yaml
+kubectl apply -f config/crd/bases/appprotect.f5.com_aplogconfs.yaml
+kubectl apply -f config/crd/bases/appprotect.f5.com_apusersigs.yaml
+```
+
+{{%/tab%}}
+
+{{</tabs>}}
+
+--- 
+
 ## Deploy NGINX Ingress Controller {#deploy-ingress-controller}
 
 {{< include "installation/deploy-controller.md" >}}
+
+{{< note >}} If you're using NGINX Ingress Controller with the AppProtect WAF module and policy bundles, you will need to modify the Deployment or DaemonSet file to include volumes and volume mounts.
+
+NGINX Ingress Controller **requires** the volume mount path to be `/etc/nginx/waf/bundles`. {{< /note >}}
+
+Add a `volumes` section to deployment template spec:
+
+```yaml
+...
+volumes:
+- name: <volume_name>
+persistentVolumeClaim:
+    claimName: <claim_name>
+...
+```
+
+Add volume mounts to the `containers` section:
+
+```yaml
+...
+volumeMounts:
+- name: <volume_mount_name>
+    mountPath: /etc/nginx/waf/bundles
+...
+```
 
 ### Using a Deployment
 

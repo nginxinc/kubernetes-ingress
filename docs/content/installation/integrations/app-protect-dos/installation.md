@@ -116,6 +116,50 @@ make push PREFIX=<my-docker-registry>/nginx-plus-ingress
 
 ---
 
+## Create custom resources {#create-custom-resources}
+
+{{< include "installation/create-custom-resources.md" >}}
+
+---
+
+## Create App Protect DoS custom resources
+
+{{<tabs name="install-dos-crds">}}
+
+{{%tab name="Install CRDs from single YAML"%}}
+
+This single YAML file creates CRDs for the following resources:
+
+- `APDosPolicy`
+- `APDosLogConf`
+- `DosProtectedResource`
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-dos.yaml
+```
+
+{{%/tab%}}
+
+{{%tab name="Install CRDs after cloning the repo"%}}
+
+These YAML files create CRDs for the following resources:
+
+- `APDosPolicy`
+- `APDosLogConf`
+- `DosProtectedResource`
+
+```shell
+kubectl apply -f config/crd/bases/appprotectdos.f5.com_apdoslogconfs.yaml
+kubectl apply -f config/crd/bases/appprotectdos.f5.com_apdospolicy.yaml
+kubectl apply -f config/crd/bases/appprotectdos.f5.com_dosprotectedresources.yaml
+```
+
+{{%/tab%}}
+
+{{</tabs>}}
+
+---
+
 ## Deploy NGINX Ingress Controller {#deploy-ingress-controller}
 
 {{< include "installation/deploy-controller.md" >}}
