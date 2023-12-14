@@ -28,9 +28,7 @@ def make_request(url, host):
     )
 
 
-def get_result_in_conf_with_retry(
-    kube_apis_v1, external_host, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace
-):
+def get_result_in_conf_with_retry(kube_apis_v1, external_host, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace):
     retry = 0
     result_conf = ""
     expected_conf_line = f"server {external_host}:80 backup resolve;"
