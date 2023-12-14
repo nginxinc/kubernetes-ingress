@@ -120,7 +120,7 @@ class TestTransportServerStatus:
                 ts_externalname_setup.ic_pod_name,
                 ingress_controller_prerequisites.namespace,
             )
-            retry = +1
+            retry = retry + 1
 
         assert resolver_count == 2  # one for http and other for stream context
         assert (

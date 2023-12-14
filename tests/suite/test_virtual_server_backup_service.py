@@ -42,7 +42,7 @@ def get_result_in_conf_with_retry(
             ic_pod_name,
             ic_pod_namespace,
         )
-        retry = +1
+        retry = retry + 1
     return result_conf
 
 

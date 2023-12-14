@@ -140,7 +140,7 @@ class TestWatchNamespaceLabelIngress:
             retry = 0
             while resp.status_code != expected_responses[ing] and retry < 3:
                 resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.resource_hosts[ing]})
-                retry = +1
+                retry = retry + 1
                 wait_before_test()
             assert (
                 resp.status_code == expected_responses[ing]
@@ -155,7 +155,7 @@ class TestWatchNamespaceLabelIngress:
         ing = "foreign-ns-ingress"
         while resp.status_code != 200 and retry < 3:
             resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.resource_hosts[ing]})
-            retry = +1
+            retry = retry + 1
             wait_before_test()
         assert (
             resp.status_code == 200
@@ -169,7 +169,7 @@ class TestWatchNamespaceLabelIngress:
         retry = 0
         while resp.status_code != expected_responses[ing] and retry < 3:
             resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.resource_hosts[ing]})
-            retry = +1
+            retry = retry + 1
             wait_before_test()
         assert (
             resp.status_code == expected_responses[ing]
@@ -196,7 +196,7 @@ class TestWatchNamespaceLabelVS:
             retry = 0
             while resp.status_code != expected_responses[vs] and retry < 3:
                 resp = requests.get(backend_setup_vs.req_url, headers={"host": backend_setup_vs.resource_hosts[vs]})
-                retry = +1
+                retry = retry + 1
                 wait_before_test()
             assert (
                 resp.status_code == expected_responses[vs]
@@ -211,7 +211,7 @@ class TestWatchNamespaceLabelVS:
         vs = "foreign-ns-vs"
         while resp.status_code != 200 and retry < 3:
             resp = requests.get(backend_setup_vs.req_url, headers={"host": backend_setup_vs.resource_hosts[vs]})
-            retry = +1
+            retry = retry + 1
             wait_before_test()
         assert (
             resp.status_code == 200
@@ -225,7 +225,7 @@ class TestWatchNamespaceLabelVS:
         retry = 0
         while resp.status_code != expected_responses[vs] and retry < 3:
             resp = requests.get(backend_setup_vs.req_url, headers={"host": backend_setup_vs.resource_hosts[vs]})
-            retry = +1
+            retry = retry + 1
             wait_before_test()
         assert (
             resp.status_code == expected_responses[vs]
