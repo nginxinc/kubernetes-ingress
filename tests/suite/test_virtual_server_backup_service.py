@@ -16,7 +16,7 @@ from suite.utils.resources_utils import (
     scale_deployment,
     wait_before_test,
 )
-from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
+from suite.utils.vs_vsr_resources_utils import delete_and_create_vs_from_yaml
 
 
 def make_request(url, host):
@@ -26,6 +26,24 @@ def make_request(url, host):
         allow_redirects=False,
         verify=False,
     )
+
+
+def get_result_in_conf_with_retry(
+    kube_apis_v1, expected_conf_line, external_host, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace
+):
+    retry = 0
+    result_conf = ""
+    while (expected_conf_line not in result_conf) and retry < 5:
+        wait_before_test()
+        result_conf = get_vs_nginx_template_conf(
+            kube_apis_v1,
+            vs_namespace,
+            vs_name,
+            ic_pod_name,
+            ic_pod_namespace,
+        )
+        retry = +1
+    return result_conf
 
 
 class ExternalNameSetup:
@@ -124,7 +142,7 @@ class TestVirtualServerWithBackupService:
         vs_externalname_setup,
     ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             vs_backup_service,
@@ -143,16 +161,19 @@ class TestVirtualServerWithBackupService:
         assert "backend1-" in res.text
         assert "external-backend" not in res.text
 
-        result_conf = get_vs_nginx_template_conf(
+        expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            expected_conf_line,
+            vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
 
         assert "least_conn;" in result_conf
-        assert f"server {vs_externalname_setup.external_host}:80 backup resolve;" in result_conf
+        assert expected_conf_line in result_conf
 
     """
     This test validates that we get a response back from the backup service.
@@ -168,7 +189,7 @@ class TestVirtualServerWithBackupService:
         vs_externalname_setup,
     ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             vs_backup_service,
@@ -187,16 +208,19 @@ class TestVirtualServerWithBackupService:
         assert "backend1-" in res.text
         assert "external-backend" not in res.text
 
-        result_conf = get_vs_nginx_template_conf(
+        expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            expected_conf_line,
+            vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
 
         assert "least_conn;" in result_conf
-        assert f"server {vs_externalname_setup.external_host}:80 backup resolve;" in result_conf
+        assert expected_conf_line in result_conf
 
         print("\nStep 3: Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
@@ -212,16 +236,18 @@ class TestVirtualServerWithBackupService:
         assert "external-backend" in res_from_backup.text
         assert "backend1-" not in res_from_backup.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            expected_conf_line,
+            vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
 
         assert "least_conn;" in result_conf
-        assert f"server {vs_externalname_setup.external_host}:80 backup resolve;" in result_conf
+        assert expected_conf_line in result_conf
 
         print("\nStep 5: Scale deployment back to 2 replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 2)
@@ -237,16 +263,18 @@ class TestVirtualServerWithBackupService:
         assert "external-backend" not in res_after_scaleup.text
         assert "backend1-" in res_after_scaleup.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            expected_conf_line,
+            vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
 
         assert "least_conn;" in result_conf
-        assert f"server {vs_externalname_setup.external_host}:80 backup resolve;" in result_conf
+        assert expected_conf_line in result_conf
 
     """
     This test validates that getting an error response after deleting the backup service.
@@ -261,7 +289,7 @@ class TestVirtualServerWithBackupService:
         vs_externalname_setup,
     ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             vs_backup_service,
@@ -280,16 +308,19 @@ class TestVirtualServerWithBackupService:
         assert "backend1-" in res.text
         assert "external-backend" not in res.text
 
-        result_conf = get_vs_nginx_template_conf(
+        expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            expected_conf_line,
+            vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
 
         assert "least_conn;" in result_conf
-        assert f"server {vs_externalname_setup.external_host}:80 backup resolve;" in result_conf
+        assert expected_conf_line in result_conf
 
         print("\nStep 3: Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
@@ -305,16 +336,18 @@ class TestVirtualServerWithBackupService:
         assert "external-backend" in res_from_backup.text
         assert "backend1-" not in res_from_backup.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            expected_conf_line,
+            vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
 
         assert "least_conn;" in result_conf
-        assert f"server {vs_externalname_setup.external_host}:80 backup resolve;" in result_conf
+        assert expected_conf_line in result_conf
 
         print("\nStep 5: Delete backup service by deleting the namespace")
         delete_namespace(kube_apis.v1, "external-ns")
