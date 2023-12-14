@@ -27,7 +27,10 @@ def make_request(url, host):
         verify=False,
     )
 
-def get_result_in_conf_with_retry(kube_apis_v1, external_host, retries, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace):
+
+def get_result_in_conf_with_retry(
+    kube_apis_v1, external_host, retries, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace
+):
     retry = 0
     result_conf = ""
     expected_conf_line = f"server {external_host}:80 backup resolve;"
@@ -42,6 +45,7 @@ def get_result_in_conf_with_retry(kube_apis_v1, external_host, retries, vs_name,
         )
         retry = +1
     return result_conf
+
 
 class ExternalNameSetup:
     """Encapsulate ExternalName example details.
@@ -128,6 +132,7 @@ class TestVirtualServerWithBackupService:
     This test validates that we still get a response back from the default
     service, and not the backup service, as long as the default service is still available
     """
+
     def test_get_response_from_application(
         self,
         kube_apis,
@@ -168,6 +173,7 @@ class TestVirtualServerWithBackupService:
 
         assert "least_conn;" in result_conf
         assert f"server {vs_externalname_setup.external_host}:80 backup resolve;" in result_conf
+
     """
     This test validates that we get a response back from the backup service.
     This test also scales the application back to 2 replicas after confirming a response from the backup service.
