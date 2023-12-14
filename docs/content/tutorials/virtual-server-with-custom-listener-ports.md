@@ -9,7 +9,7 @@ toc: true
 ## Configuring a VirtualServer with custom HTTP and HTTPS listener ports.
 
 VirtualServer can explicitly define custom HTTP and HTTPS listener ports using the `spec.listener.http` and `spec.listener.https` fields.
-Each field must reference a valid listener defined by in a [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/) resource.
+Each field must reference a valid listener defined by in a [GlobalConfiguration]({{< relref "/configuration/global-configuration/globalconfiguration-resource.md" >}}) resource.
 
 ## Deploy GlobalConfiguration
 
@@ -55,7 +55,7 @@ kubectl apply -f nginx-configuration.yaml
         ssl: true
     ```
 
-1. Follow the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm/) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
+1. Follow the [Installation with Helm]({{< relref "/installation/installing-nic/installation-with-helm.md" >}}) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
 
 1. Ensure your NodePort or LoadBalancer service is configured to expose the custom listener ports. This is set in the `customPorts` section under `controller.service.customPorts`:
 
@@ -82,7 +82,7 @@ kubectl apply -f nginx-configuration.yaml
       - -$(POD_NAMESPACE)/nginx-configuration
     ```
 
-2. Follow the [Installation with Manifests](/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
+2. Follow the [Installation with Manifests]({{< relref "/installation/installing-nic/installation-with-manifests.md" >}}) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
 
 3. Ensure your NodePort or LoadBalancer service is configured to expose the custom listener ports. Below is an example yaml configuration using NodePort, which would also apply to a LoadBalancer service:
 
@@ -112,7 +112,7 @@ kubectl apply -f nginx-configuration.yaml
 {{</tabs>}}
 
 ## Deploying VirtualServer with custom listeners
-Deploy the example resources in the [custom listeners](/examples/custom-resources/custom-listeners/) folder. This will deploy all required resources, including the VirtualServer.
+Deploy the [custom listeners](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/custom-resources/custom-listeners) resources from the repository examples. It includes all required resources, including VirtualServer.
 
 Below is a snippet of the VirtualServer resource that will be deployed:
 
