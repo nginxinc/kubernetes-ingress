@@ -16,7 +16,7 @@ from suite.utils.resources_utils import (
     scale_deployment,
     wait_before_test,
 )
-from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
+from suite.utils.vs_vsr_resources_utils import delete_and_create_vs_from_yaml
 
 
 def make_request(url, host):
@@ -27,6 +27,21 @@ def make_request(url, host):
         verify=False,
     )
 
+def get_result_in_conf_with_retry(kube_apis_v1, external_host, retries, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace):
+    retry = 0
+    result_conf = ""
+    expected_conf_line = f"server {external_host}:80 backup resolve;"
+    while (expected_conf_line not in result_conf) and retry < retries:
+        wait_before_test()
+        result_conf = get_vs_nginx_template_conf(
+            kube_apis_v1,
+            vs_namespace,
+            vs_name,
+            ic_pod_name,
+            ic_pod_namespace,
+        )
+        retry = +1
+    return result_conf
 
 class ExternalNameSetup:
     """Encapsulate ExternalName example details.
@@ -88,7 +103,6 @@ def vs_externalname_setup(
 
 @pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.backup_service
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -114,7 +128,6 @@ class TestVirtualServerWithBackupService:
     This test validates that we still get a response back from the default
     service, and not the backup service, as long as the default service is still available
     """
-
     def test_get_response_from_application(
         self,
         kube_apis,
@@ -124,7 +137,7 @@ class TestVirtualServerWithBackupService:
         vs_externalname_setup,
     ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             vs_backup_service,
@@ -143,17 +156,18 @@ class TestVirtualServerWithBackupService:
         assert "backend1-" in res.text
         assert "external-backend" not in res.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            vs_externalname_setup.external_host,
+            5,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
 
         assert "least_conn;" in result_conf
         assert f"server {vs_externalname_setup.external_host}:80 backup resolve;" in result_conf
-
     """
     This test validates that we get a response back from the backup service.
     This test also scales the application back to 2 replicas after confirming a response from the backup service.
@@ -168,7 +182,7 @@ class TestVirtualServerWithBackupService:
         vs_externalname_setup,
     ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             vs_backup_service,
@@ -187,10 +201,12 @@ class TestVirtualServerWithBackupService:
         assert "backend1-" in res.text
         assert "external-backend" not in res.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            vs_externalname_setup.external_host,
+            5,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
@@ -212,10 +228,12 @@ class TestVirtualServerWithBackupService:
         assert "external-backend" in res_from_backup.text
         assert "backend1-" not in res_from_backup.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            vs_externalname_setup.external_host,
+            5,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
@@ -237,10 +255,12 @@ class TestVirtualServerWithBackupService:
         assert "external-backend" not in res_after_scaleup.text
         assert "backend1-" in res_after_scaleup.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            vs_externalname_setup.external_host,
+            5,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
@@ -261,7 +281,7 @@ class TestVirtualServerWithBackupService:
         vs_externalname_setup,
     ) -> None:
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             vs_backup_service,
@@ -280,10 +300,12 @@ class TestVirtualServerWithBackupService:
         assert "backend1-" in res.text
         assert "external-backend" not in res.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            vs_externalname_setup.external_host,
+            5,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
@@ -305,10 +327,12 @@ class TestVirtualServerWithBackupService:
         assert "external-backend" in res_from_backup.text
         assert "backend1-" not in res_from_backup.text
 
-        result_conf = get_vs_nginx_template_conf(
+        result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
-            virtual_server_setup.namespace,
+            vs_externalname_setup.external_host,
+            5,
             virtual_server_setup.vs_name,
+            virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
