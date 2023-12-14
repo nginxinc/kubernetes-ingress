@@ -256,20 +256,27 @@ jobs:
             echo "matrix={\"images\": \
                                                 [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
-                                                {\"image\": \"alpine\", \"marker\":\"policies\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"alpine\", \"marker\":\"'policies and not policies_rl and not policies_ac and not policies_jwt and not policies_mtls'\"}, \
+                                                {\"image\": \"alpine\", \"marker\":\"'policies_rl or policies_ac or policies_jwt or policies_mtls'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects and not vs_externalname and not vs_externaldns and not vs_certmanager'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects or vs_externalname or vs_externaldns or vs_certmanager'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs_certmanager'\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects and not vs_externalname and not vs_externaldns and not vs_certmanager'\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects or vs_externalname or vs_externaldns or vs_certmanager'\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"vs_certmanager\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}, \
+                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies and not policies_rl and not policies_ac and not policies_jwt and not policies_mtls'\"}, \
+                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies_rl or policies_ac or policies_jwt or policies_mtls'\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_integration\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_policies_allow\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"'appprotect_waf_policies and not appprotect_waf_policies_allow'\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_policies_grpc\"}, \
-                                                {\"image\": \"debian-plus-nap\", \"marker\": \"'appprotect_watch or appprotect_batch'\"}, \
-                                                {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"'appprotect_watch or appprotect_batch or appprotect_integration'\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"'dos and not dos_learning'\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"dos_learning\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
           else
             echo "matrix={\"k8s\": [\"1.22.17\", \"1.23.17\", \"1.24.15\", \"1.25.11\", \"1.26.6\", \"1.27.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \

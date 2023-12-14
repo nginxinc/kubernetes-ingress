@@ -75,6 +75,7 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
 
 
 @pytest.mark.vs
+@pytest.mark.vs_grpc
 @pytest.mark.smoke
 @pytest.mark.flaky(max_runs=3)
 @pytest.mark.parametrize(
