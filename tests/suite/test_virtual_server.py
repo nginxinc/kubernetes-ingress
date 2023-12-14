@@ -21,6 +21,7 @@ from suite.utils.yaml_utils import get_first_host_from_yaml, get_name_from_yaml,
 
 
 @pytest.mark.vs
+@pytest.mark.vs_responses
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",

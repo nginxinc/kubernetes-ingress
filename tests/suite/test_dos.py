@@ -253,6 +253,7 @@ class TestDos:
         assert f'vs_name="{test_namespace}/dos-protected/name"' in log_contents
         assert "bad_actor" in log_contents
 
+    @pytest.mark.dos_learning
     def test_dos_under_attack_with_learning(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, dos_setup, test_namespace
     ):
