@@ -29,12 +29,12 @@ def make_request(url, host):
 
 
 def get_result_in_conf_with_retry(
-    kube_apis_v1, external_host, retries, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace
+    kube_apis_v1, external_host, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace
 ):
     retry = 0
     result_conf = ""
     expected_conf_line = f"server {external_host}:80 backup resolve;"
-    while (expected_conf_line not in result_conf) and retry < retries:
+    while (expected_conf_line not in result_conf) and retry < 5:
         wait_before_test()
         result_conf = get_vs_nginx_template_conf(
             kube_apis_v1,
@@ -164,7 +164,6 @@ class TestVirtualServerWithBackupService:
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
             vs_externalname_setup.external_host,
-            5,
             virtual_server_setup.vs_name,
             virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
@@ -210,7 +209,6 @@ class TestVirtualServerWithBackupService:
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
             vs_externalname_setup.external_host,
-            5,
             virtual_server_setup.vs_name,
             virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
@@ -237,7 +235,6 @@ class TestVirtualServerWithBackupService:
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
             vs_externalname_setup.external_host,
-            5,
             virtual_server_setup.vs_name,
             virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
@@ -264,7 +261,6 @@ class TestVirtualServerWithBackupService:
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
             vs_externalname_setup.external_host,
-            5,
             virtual_server_setup.vs_name,
             virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
@@ -309,7 +305,6 @@ class TestVirtualServerWithBackupService:
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
             vs_externalname_setup.external_host,
-            5,
             virtual_server_setup.vs_name,
             virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
@@ -336,7 +331,6 @@ class TestVirtualServerWithBackupService:
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
             vs_externalname_setup.external_host,
-            5,
             virtual_server_setup.vs_name,
             virtual_server_setup.namespace,
             vs_externalname_setup.ic_pod_name,
