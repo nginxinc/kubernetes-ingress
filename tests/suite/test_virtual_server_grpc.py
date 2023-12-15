@@ -80,6 +80,7 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
 
 
 @pytest.mark.vs
+@pytest.mark.vs_grpc
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
@@ -265,6 +266,7 @@ class TestVirtualServerGrpc:
 
 
 @pytest.mark.vs
+@pytest.mark.vs_gprc
 @pytest.mark.smoke
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(

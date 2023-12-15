@@ -41,7 +41,7 @@ class TestVirtualServerServiceInsightHTTP:
         while (resp.json() != {"Total": 3, "Up": 3, "Unhealthy": 0}) and retry < 5:
             resp = requests.get(req_url)
             wait_before_test()
-            retry = +1
+            retry = retry + 1
 
         assert resp.status_code == 200, f"Expected 200 code for /probe/{host} but got {resp.status_code}"
         assert resp.json() == {"Total": 3, "Up": 3, "Unhealthy": 0}
@@ -99,7 +99,7 @@ class TestVirtualServerServiceInsightHTTPS:
         while (resp.json() != {"Total": 3, "Up": 3, "Unhealthy": 0}) and retry < 5:
             resp = requests.get(req_url, verify=False)
             wait_before_test()
-            retry = +1
+            retry = retry + 1
         assert resp.status_code == 200, f"Expected 200 code for /probe/{host} but got {resp.status_code}"
         assert resp.json() == {"Total": 3, "Up": 3, "Unhealthy": 0}
 
@@ -129,6 +129,6 @@ class TestVirtualServerServiceInsightHTTPS:
         while (resp.json() != {"Total": 6, "Up": 6, "Unhealthy": 0}) and retry < 5:
             resp = requests.get(req_url, verify=False)
             wait_before_test()
-            retry = +1
+            retry = retry + 1
         assert resp.status_code == 200, f"Expected 200 code for /probe/{host} but got {resp.status_code}"
         assert resp.json() == {"Total": 6, "Up": 6, "Unhealthy": 0}
