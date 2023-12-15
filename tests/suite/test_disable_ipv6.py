@@ -21,6 +21,7 @@ from suite.utils.yaml_utils import get_name_from_yaml
 
 @pytest.mark.vs
 @pytest.mark.ts
+@pytest.mark.vs_ipv6
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup, transport_server_setup",
     [

@@ -50,6 +50,7 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
 
 
 @pytest.mark.policies
+@pytest.mark.policies_ac
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [

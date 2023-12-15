@@ -25,6 +25,7 @@ rl_vs_override_spec_route = f"{TEST_DATA}/rate-limit/route-subroute/virtual-serv
 
 
 @pytest.mark.policies
+@pytest.mark.policies_rl
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
