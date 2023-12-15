@@ -46,7 +46,14 @@ jobs:
       - name: Output Variables
         id: vars
         run: |
-          echo "k8s_latest=$(grep -m1 'FROM kindest/node' <tests/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
+          kindest_latest=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
+            | grep -o '"name": *"[^"]*' \
+            | grep -o '[^"]*$' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -rV \
+            | head -n 1 \
+            | tr -d '\n')
+          echo "k8s_latest=$kindest_latest" >> $GITHUB_OUTPUT
           echo "chart_version=$(yq '.version' <charts/nginx-ingress/Chart.yaml)" >> $GITHUB_OUTPUT
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
           kindest_versions=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
