@@ -55,6 +55,9 @@ echo "Updating versions: "
 echo "ic_version: ${current_ic_version} -> ${ic_version}"
 echo "helm_chart_version: ${current_helm_chart_version} -> ${helm_chart_version}"
 
+regex_ic="s#$current_ic_version#$ic_version#g"
+regex_helm="s#$current_helm_chart_version#$helm_chart_version#g"
+
 mv "${HELM_CHART_PATH}/values.schema.json" "${TMPDIR}/"
 jq --arg version "${ic_version}" \
     '.properties.controller.properties.image.properties.tag.default = $version | .properties.controller.properties.image.properties.tag.examples[0] = $version | .properties.controller.examples[0].image.tag = $version | .properties.controller.properties.image.examples[0].tag = $version | .examples[0].controller.image.tag = $version' \
@@ -74,8 +77,7 @@ for i in "${FILES_TO_UPDATE_IC_VERSION[@]}"; do
     fi
     file_name=$(basename "${i}")
     mv "${i}" "${TMPDIR}/${file_name}"
-    regex="s#$current_ic_version#$ic_version#g"
-    cat "${TMPDIR}/${file_name}" | sed -e "$regex" > "${i}"
+    cat "${TMPDIR}/${file_name}" | sed -e "$regex_ic" > "${i}"
     if [ $? -ne 0 ]; then
         echo "ERROR: failed processing ${i}"
         mv "${TMPDIR}/${file_name}" "${i}"
@@ -90,8 +92,7 @@ for i in "${FILE_TO_UPDATE_HELM_CHART_VERSION[@]}"; do
     fi
     file_name=$(basename "${i}")
     mv "${i}" "${TMPDIR}/${file_name}"
-    regex="s#$current_ic_version#$ic_version#g"
-    cat "${TMPDIR}/${file_name}" | sed -e "$regex" > "${i}"
+    cat "${TMPDIR}/${file_name}" | sed -e "$regex_helm" > "${i}"
     if [ $? -ne 0 ]; then
         echo "ERROR: failed processing ${i}"
         mv "${TMPDIR}/${file_name}" "${i}"
@@ -107,8 +108,7 @@ for i in ${docs_files}; do
     fi
     file_name=$(basename "${i}")
     mv "${i}" "${TMPDIR}/${file_name}"
-    regex="s#$current_ic_version#$ic_version#g"
-    cat "${TMPDIR}/${file_name}" | sed -e "$regex" > "${i}"
+    cat "${TMPDIR}/${file_name}" | sed -e "$regex_ic" | sed -e "$regex_helm" > "${i}"
     if [ $? -ne 0 ]; then
         echo "ERROR: failed processing ${i}"
         mv "${TMPDIR}/${file_name}" "${i}"
