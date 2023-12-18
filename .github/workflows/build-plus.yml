@@ -91,6 +91,7 @@ jobs:
           script: |
             let id_token = await core.getIDToken()
             core.setOutput('id_token', id_token)
+        if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
 
       - name: Login to NGINX Registry
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
