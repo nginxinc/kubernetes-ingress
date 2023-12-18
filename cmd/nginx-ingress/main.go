@@ -79,7 +79,7 @@ func main() {
 		appProtectVersion = getAppProtectVersionInfo()
 	}
 
-	updateSelfWithVersionInfo(kubeClient, version, nginxVersion, appProtectVersion)
+	updateSelfWithVersionInfo(kubeClient, version, nginxVersion.String(), appProtectVersion)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
@@ -400,17 +400,16 @@ func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Man
 	return nginxManager, useFakeNginxManager
 }
 
-func getNginxVersionInfo(nginxManager nginx.Manager) string {
-	nginxVersion := nginxManager.Version()
-	isPlus := strings.Contains(nginxVersion, "plus")
-	glog.Infof("Using %s", nginxVersion)
+func getNginxVersionInfo(nginxManager nginx.Manager) nginx.Version {
+	nginxInfo := nginxManager.Version()
+	glog.Infof("Using %s", nginxInfo.String())
 
-	if *nginxPlus && !isPlus {
+	if *nginxPlus && !nginxInfo.IsPlus {
 		glog.Fatal("NGINX Plus flag enabled (-nginx-plus) without NGINX Plus binary")
-	} else if !*nginxPlus && isPlus {
+	} else if !*nginxPlus && nginxInfo.IsPlus {
 		glog.Fatal("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
 	}
-	return nginxVersion
+	return nginxInfo
 }
 
 func getAppProtectVersionInfo() string {

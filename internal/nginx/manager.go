@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -46,6 +47,23 @@ const (
 	appProtectDosAgentStartDebugCmd = "/usr/bin/admd -d --standalone --log debug"
 )
 
+var (
+	re     = regexp.MustCompile(`(?P<name>\S+)/(?P<version>\S+)`)
+	plusre = regexp.MustCompile(`(?P<name>\S+)/(?P<version>\S+).\((?P<plus>\S+plus\S+)\)`)
+)
+
+// Version holds the parsed output from `nginx -v`
+type Version struct {
+	raw    string
+	OSS    string
+	IsPlus bool
+	Plus   string
+}
+
+func (v *Version) String() string {
+	return v.raw
+}
+
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
 type ServerConfig struct {
 	MaxFails    int
@@ -72,7 +90,7 @@ type Manager interface {
 	CreateDHParam(content string) (string, error)
 	CreateOpenTracingTracerConfig(content string) error
 	Start(done chan error)
-	Version() string
+	Version() Version
 	Reload(isEndpointsUpdate bool) error
 	Quit()
 	UpdateConfigVersionFile(openTracing bool)
@@ -334,13 +352,13 @@ func (lm *LocalManager) Quit() {
 }
 
 // Version returns NGINX version
-func (lm *LocalManager) Version() string {
+func (lm *LocalManager) Version() Version {
 	binaryFilename := getBinaryFileName(lm.debug)
 	out, err := exec.Command(binaryFilename, "-v").CombinedOutput()
 	if err != nil {
 		glog.Fatalf("Failed to get nginx version: %v", err)
 	}
-	return string(out)
+	return parseNginxVersion(string(out))
 }
 
 // UpdateConfigVersionFile writes the config version file.
@@ -430,6 +448,38 @@ func (lm *LocalManager) CreateOpenTracingTracerConfig(content string) error {
 	}
 
 	return nil
+}
+
+func parseNginxVersion(line string) Version {
+	matches := re.FindStringSubmatch(line)
+	plusmatches := plusre.FindStringSubmatch(line)
+	nv := Version{
+		raw: line,
+	}
+
+	if len(plusmatches) > 0 {
+		subNames := plusre.SubexpNames()
+		nv.IsPlus = true
+		for i, v := range plusmatches {
+			switch subNames[i] {
+			case "plus":
+				nv.Plus = v
+			case "version":
+				nv.OSS = v
+			}
+		}
+	}
+
+	if len(matches) > 0 {
+		for i, key := range re.SubexpNames() {
+			val := matches[i]
+			if key == "version" {
+				nv.OSS = val
+			}
+		}
+	}
+
+	return nv
 }
 
 // verifyConfigVersion is used to check if the worker process that the API client is connected
