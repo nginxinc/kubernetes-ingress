@@ -282,18 +282,17 @@ jobs:
                                                 {\"image\": \"alpine\", \"marker\":\"'policies and not policies_rl and not policies_ac and not policies_jwt and not policies_mtls'\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"'policies_rl or policies_ac or policies_jwt or policies_mtls'\"}, \
                                                 {\"image\": \"debian\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects and not vs_externalname and not vs_externaldns and not vs_certmanager'\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects or vs_externalname or vs_externaldns or vs_certmanager'\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"'vs_certmanager'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs_grpc or vs_redirects or vs_externalname or vs_externaldns'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs_responses or vs_ipv6 or vs_rewrite or vs_certmanager'\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects and not vs_externalname and not vs_externaldns and not vs_certmanager'\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects or vs_externalname or vs_externaldns or vs_certmanager'\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"vs_certmanager\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_grpc or vs_redirects or vs_externalname or vs_externaldns'\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_responses or vs_ipv6 or vs_rewrite or vs_certmanager'\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies and not policies_rl and not policies_ac and not policies_jwt and not policies_mtls'\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies_rl or policies_ac or policies_jwt or policies_mtls'\"}, \
-                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_integration\"}, \
+                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies and not policies_ac and not policies_jwt and not policies_mtls'\"}, \
+                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies_ac or policies_jwt or policies_mtls'\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_policies_allow\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"'appprotect_waf_policies and not appprotect_waf_policies_allow'\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_policies_grpc\"}, \
