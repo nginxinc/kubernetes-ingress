@@ -8,7 +8,7 @@ docs: "DOCS-616"
 ---
 ## 3.4.0
 
-%%RELEASE_DATE%%
+19 Dec 2023
 
 The default_server listeners for ports 80 and 443 can now be fully customized giving you the flexibility to shift the HTTP and HTTPS default listeners to other ports as your needs require.
 
