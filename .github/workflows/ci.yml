@@ -32,6 +32,7 @@ jobs:
     outputs:
       go_path: ${{ steps.vars.outputs.go_path }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
+      latest_kindest_node_versions: ${{steps.vars.outputs.latest_kindest_node_versions}}
       chart_version: ${{ steps.vars.outputs.chart_version }}
     steps:
       - name: Checkout Repository
@@ -45,9 +46,31 @@ jobs:
       - name: Output Variables
         id: vars
         run: |
-          echo "k8s_latest=$(grep -m1 'FROM kindest/node' <tests/Dockerfile | awk -F'[:v]' '{print $3}')" >> $GITHUB_OUTPUT
+          kindest_latest=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
+            | grep -o '"name": *"[^"]*' \
+            | grep -o '[^"]*$' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -rV \
+            | head -n 1 \
+            | sed 's/^.\{1\}//' \
+            | tr -d '\n')
+          echo "k8s_latest=$kindest_latest" >> $GITHUB_OUTPUT
           echo "chart_version=$(yq '.version' <charts/nginx-ingress/Chart.yaml)" >> $GITHUB_OUTPUT
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
+          kindest_versions=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
+            | grep -o '"name": *"[^"]*' \
+            | grep -o '[^"]*$' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -rV \
+            | awk -F. '!seen[$1"."$2]++' \
+            | head -n 7 \
+            | sort -V \
+            | sed 's/v//g' \
+            | sed 's/^/\\\"/' \
+            | sed 's/$/\\\",/' \
+            | tr '\n' ' ' \
+            | sed 's/, $//')
+          echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
 
       - name: Check if go.mod and go.sum are up to date
         run: go mod tidy && git diff --exit-code -- go.mod go.sum
@@ -279,7 +302,7 @@ jobs:
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"dos_learning\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}" >> $GITHUB_OUTPUT
           else
-            echo "matrix={\"k8s\": [\"1.22.17\", \"1.23.17\", \"1.24.15\", \"1.25.11\", \"1.26.6\", \"1.27.3\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+            echo "matrix={\"k8s\": [${{ needs.checks.outputs.latest_kindest_node_versions }}], \
                                              \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}" >> $GITHUB_OUTPUT
           fi
 
