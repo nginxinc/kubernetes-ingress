@@ -28,8 +28,8 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 
 1. Clone the NGINX Ingress Controller repository:
 
-    ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.3.2
+    ```console
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.4.0
     cd kubernetes-ingress
     ```
 
@@ -217,7 +217,7 @@ To enable the NGINX App Protect DoS Module:
 
 {{< include "installation/manifests/verify-pods-are-running.md" >}}
 
-For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}),the [NGINX Ingress Controller with App Protect WAF example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/custom-resources/app-protect-waf) and the [NGINX Ingress Controller with App Protect WAF example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v3.3.2/examples/ingress-resources/app-protect-waf).
+For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.0/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.0/examples/ingress-resources/app-protect-waf" >}}).
 
 ---
 
