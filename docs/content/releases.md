@@ -10,6 +10,18 @@ docs: "DOCS-616"
 
 %%RELEASE_DATE%%
 
+The default_server listeners for ports 80 and 443 can now be fully customized giving you the flexibility to shift the HTTP and HTTPS default listeners to other ports as your needs require.
+
+Traffic splits now support weights from 0 - 100 giving you the control that you expect when performing canary roll outs of your back end services.
+
+A new capability of "upstream backup" has been introduced for NGINX Plus customers. This gives you the control to set a backup service for any path. This takes advantage of NGINX health checks and will automatically forward traffic to the backup service when all pods of the primary service stop responding.
+
+Dynamic reloading of SSL certificates takes advantage of native NGINX functionality to dynamically load updated certificates when they are requested and thus not require a reload when certificates update.
+
+A number of Helm enhancements have come directly from our community and range from giving greater flexibility for HPA, namespace sharing for custom sidecars, and supporting multiple image pull secrets for greater deployment flexibility.
+
+To make sure the NGINX Ingress Controller follows Helm best practices, we've refactored our helm chart location. You can now find our helm charts under `charts\nginx-ingress`.
+
 ### <i class="fa-solid fa-rocket"></i> Features
 
 - [4574](https://github.com/nginxinc/kubernetes-ingress/pull/4574) Graduate TransportServer and GlobalConfiguration to v1.
