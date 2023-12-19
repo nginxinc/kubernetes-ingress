@@ -41,7 +41,7 @@ func TestNginxVersionParsing(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.input, func(t *testing.T) {
-			actual := parseNginxVersion(tc.input)
+			actual := NewVersion(tc.input)
 			if actual != tc.expected {
 				t.Errorf("expected %v but got %v", tc.expected, actual)
 			}

@@ -1,6 +1,9 @@
 package configs
 
-import conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+import (
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+)
 
 // ConfigParams holds NGINX configuration parameters that affect the main NGINX config
 // as well as configs for Ingress resources.
@@ -136,6 +139,7 @@ type StaticConfigParams struct {
 	EnableCertManager              bool
 	DynamicSSLReload               bool
 	StaticSSLPath                  string
+	NginxVersion                   nginx.Version
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.

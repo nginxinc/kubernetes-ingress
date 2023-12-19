@@ -146,6 +146,7 @@ func main() {
 		IsPrometheusEnabled:       *enablePrometheusMetrics,
 		IsLatencyMetricsEnabled:   *enableLatencyMetrics,
 		IsDynamicSSLReloadEnabled: *enableDynamicSSLReload,
+		NginxVersion:              nginxVersion,
 	})
 
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
