@@ -22,6 +22,8 @@ A number of Helm enhancements have come directly from our community and range fr
 
 To make sure the NGINX Ingress Controller follows Helm best practices, we've refactored our helm chart location. You can now find our helm charts under `charts\nginx-ingress`.
 
+We’ve added the functionality to define App Protect WAF bundles for VirtualServers by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
+
 ### <i class="fa-solid fa-rocket"></i> Features
 
 - [4574](https://github.com/nginxinc/kubernetes-ingress/pull/4574) Graduate TransportServer and GlobalConfiguration to v1.
