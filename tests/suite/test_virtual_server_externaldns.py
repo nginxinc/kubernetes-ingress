@@ -10,6 +10,7 @@ VS_YAML = f"{TEST_DATA}/virtual-server-external-dns/standard/virtual-server.yaml
 
 
 @pytest.mark.vs
+@pytest.mark.vs_externaldns
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ed, create_externaldns, virtual_server_setup",

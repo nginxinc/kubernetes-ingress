@@ -140,7 +140,7 @@ class TestTransportServerTSServiceInsightHTTP:
         while (resp.json() != {"Total": 1, "Up": 1, "Unhealthy": 0}) and retry < 5:
             resp = requests.get(service_insight_endpoint)
             wait_before_test()
-            retry = +1
+            retry = retry + 1
         assert resp.json() == {"Total": 1, "Up": 1, "Unhealthy": 0}
 
 
@@ -199,5 +199,5 @@ class TestTransportServerTSServiceInsightHTTPS:
         while (resp.json() != {"Total": 1, "Up": 1, "Unhealthy": 0}) and retry < 5:
             resp = requests.get(service_insight_endpoint, verify=False)
             wait_before_test()
-            retry = +1
+            retry = retry + 1
         assert resp.json() == {"Total": 1, "Up": 1, "Unhealthy": 0}

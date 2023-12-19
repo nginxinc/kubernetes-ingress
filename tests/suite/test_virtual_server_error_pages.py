@@ -43,7 +43,7 @@ class TestVSErrorPages:
                 print(f"redirect to uri: {resp.next.url}")
             except AttributeError as e:
                 print(f"Exception occurred: {e}")
-                retry = +1
+                retry = retry + 1
                 continue
             break
         assert f"http://{virtual_server_setup.vs_host}/error.html" in resp.next.url
