@@ -501,3 +501,24 @@ jobs:
               },
             })
     if: github.ref_type == 'tag'
+
+  gcp-marketplace:
+    name: Trigger PR for GCP Marketplace
+    runs-on: ubuntu-22.04
+    needs: [checks, publish-helm]
+    steps:
+      - name:
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.NGINX_PAT }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'kubernetes-ingress-gcp',
+              workflow_id: 'sync-chart.yml',
+              ref: 'main',
+              inputs: {
+                chart_version: '${{ needs.checks.outputs.chart_version }}'
+              },
+            })
+    if: github.ref_type == 'tag'
