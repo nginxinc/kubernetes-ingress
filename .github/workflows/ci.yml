@@ -132,7 +132,7 @@ jobs:
         if: github.ref_type == 'tag'
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@785af55296512c907875513e397320ae3f1306bb # v1.0.1
+        uses: lucacome/draft-release@52f02d1a69b61568e54ab5cf86ce91503bac4066 # v1.0.2
         id: release-notes
         with:
           minor-label: "enhancement"
