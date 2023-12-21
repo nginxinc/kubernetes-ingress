@@ -128,7 +128,7 @@ jobs:
         if: github.ref_type == 'tag'
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@1fc5bd396d372bee37d608f955b336615edf79c8 # v3.2.0
+        uses: sigstore/cosign-installer@9614fae9e5c5eddabb09f90a270fcb487c9f7149 # v3.3.0
         if: github.ref_type == 'tag'
 
       - name: Create/Update Draft
@@ -282,18 +282,17 @@ jobs:
                                                 {\"image\": \"alpine\", \"marker\":\"'policies and not policies_rl and not policies_ac and not policies_jwt and not policies_mtls'\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"'policies_rl or policies_ac or policies_jwt or policies_mtls'\"}, \
                                                 {\"image\": \"debian\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects and not vs_externalname and not vs_externaldns and not vs_certmanager'\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects or vs_externalname or vs_externaldns or vs_certmanager'\"}, \
-                                                {\"image\": \"debian\", \"marker\": \"'vs_certmanager'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs_grpc or vs_redirects or vs_externalname or vs_externaldns'\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"'vs_responses or vs_ipv6 or vs_rewrite or vs_certmanager'\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"'vs and not vs_ipv6 and not vs_rewrite and not vs_responses and not vs_grpc and not vs_redirects and not vs_externalname and not vs_externaldns and not vs_certmanager'\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_ipv6 or vs_rewrite or vs_responses or vs_grpc or vs_redirects or vs_externalname or vs_externaldns or vs_certmanager'\"}, \
-                                                {\"image\": \"debian-plus\", \"marker\": \"vs_certmanager\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_grpc or vs_redirects or vs_externalname or vs_externaldns'\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"'vs_responses or vs_ipv6 or vs_rewrite or vs_certmanager'\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies and not policies_rl and not policies_ac and not policies_jwt and not policies_mtls'\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies_rl or policies_ac or policies_jwt or policies_mtls'\"}, \
-                                                {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_integration\"}, \
+                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies and not policies_ac and not policies_jwt and not policies_mtls'\"}, \
+                                                {\"image\": \"ubi-plus\", \"marker\":\"'policies_ac or policies_jwt or policies_mtls'\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_policies_allow\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"'appprotect_waf_policies and not appprotect_waf_policies_allow'\"}, \
                                                 {\"image\": \"debian-plus-nap\", \"marker\": \"appprotect_waf_policies_grpc\"}, \
@@ -346,7 +345,7 @@ jobs:
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html

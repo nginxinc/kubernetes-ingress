@@ -17,7 +17,7 @@ h2 {
 </style>
 
 {{< note >}}
-NGINX Ingress Operator isn't compatible with NGINX Ingress Controller 3.2.0 at this time.  We'll update this guide and remove this note when we release a compatible version.
+NGINX Ingress Operator isn't compatible with NGINX Ingress Controller 3.4.0 at this time.  We'll update this guide and remove this note when we release a compatible version.
 {{< /note >}}
 
 ## Before you start
@@ -49,7 +49,7 @@ spec:
     image:
       pullPolicy: IfNotPresent
       repository: nginx/nginx-ingress
-      tag: 3.3.2-ubi
+      tag: 3.4.0-ubi
     ingressClass: nginx
     kind: deployment
     nginxplus: false
