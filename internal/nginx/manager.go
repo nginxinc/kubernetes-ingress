@@ -452,7 +452,7 @@ func (v *Version) String() string {
 }
 
 // PlusGreaterThanOrEqualTo compares the supplied nginx-plus version string with the Version{} struct
-func (v *Version) PlusGreaterThanOrEqualTo(target string) (bool, error) {
+func (v Version) PlusGreaterThanOrEqualTo(target string) (bool, error) {
 	r, p, err := extractPlusVersionValues(v.String())
 	if err != nil {
 		return false, err
@@ -465,7 +465,7 @@ func (v *Version) PlusGreaterThanOrEqualTo(target string) (bool, error) {
 	return (r > tr || (r == tr && p >= tp)), nil
 }
 
-// NewVersion will take the ouput from `nginx -v` and explodes it into the `nginx.Version` struct
+// NewVersion will take the output from `nginx -v` and explodes it into the `nginx.Version` struct
 func NewVersion(line string) Version {
 	matches := re.FindStringSubmatch(line)
 	plusmatches := plusre.FindStringSubmatch(line)
@@ -510,13 +510,13 @@ func extractPlusVersionValues(input string) (int, int, error) {
 
 	rValue, err := strconv.Atoi(matches[1])
 	if err != nil {
-		return 0, 0, fmt.Errorf("failed to convert rValue to integer: %v", err)
+		return 0, 0, fmt.Errorf("failed to convert rValue to integer: %w", err)
 	}
 
-	if len(matches) > 2 {
+	if len(matches) > 2 && len(matches[2]) > 0 {
 		pValue, err = strconv.Atoi(matches[2])
 		if err != nil {
-			return 0, 0, fmt.Errorf("failed to convert pValue to integer: %v", err)
+			return 0, 0, fmt.Errorf("failed to convert pValue to integer: %w", err)
 		}
 	}
 
