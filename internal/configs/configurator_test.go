@@ -25,6 +25,7 @@ func createTestStaticConfigParams() *StaticConfigParams {
 		NginxStatusAllowCIDRs:          []string{"127.0.0.1"},
 		NginxStatusPort:                8080,
 		StubStatusOverUnixSocketForOSS: false,
+		NginxVersion:                   nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 }
 
@@ -53,6 +54,7 @@ func createTestConfigurator(t *testing.T) *Configurator {
 		IsWildcardEnabled:       false,
 		IsPrometheusEnabled:     false,
 		IsLatencyMetricsEnabled: false,
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	})
 	cnf.isReloadsEnabled = true
 	return cnf

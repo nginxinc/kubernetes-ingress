@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -46,6 +47,19 @@ const (
 	appProtectDosAgentStartDebugCmd = "/usr/bin/admd -d --standalone --log debug"
 )
 
+var (
+	re     = regexp.MustCompile(`(?P<name>\S+)/(?P<version>\S+)`)
+	plusre = regexp.MustCompile(`(?P<name>\S+)/(?P<version>\S+).\((?P<plus>\S+plus\S+)\)`)
+)
+
+// Version holds the parsed output from `nginx -v`
+type Version struct {
+	raw    string
+	OSS    string
+	IsPlus bool
+	Plus   string
+}
+
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
 type ServerConfig struct {
 	MaxFails    int
@@ -72,7 +86,7 @@ type Manager interface {
 	CreateDHParam(content string) (string, error)
 	CreateOpenTracingTracerConfig(content string) error
 	Start(done chan error)
-	Version() string
+	Version() Version
 	Reload(isEndpointsUpdate bool) error
 	Quit()
 	UpdateConfigVersionFile(openTracing bool)
@@ -334,13 +348,13 @@ func (lm *LocalManager) Quit() {
 }
 
 // Version returns NGINX version
-func (lm *LocalManager) Version() string {
+func (lm *LocalManager) Version() Version {
 	binaryFilename := getBinaryFileName(lm.debug)
 	out, err := exec.Command(binaryFilename, "-v").CombinedOutput()
 	if err != nil {
 		glog.Fatalf("Failed to get nginx version: %v", err)
 	}
-	return string(out)
+	return NewVersion(string(out))
 }
 
 // UpdateConfigVersionFile writes the config version file.
@@ -430,6 +444,83 @@ func (lm *LocalManager) CreateOpenTracingTracerConfig(content string) error {
 	}
 
 	return nil
+}
+
+// Return the raw Nginx version string from `nginx -v`
+func (v *Version) String() string {
+	return v.raw
+}
+
+// PlusGreaterThanOrEqualTo compares the supplied nginx-plus version string with the Version{} struct
+func (v Version) PlusGreaterThanOrEqualTo(target string) (bool, error) {
+	r, p, err := extractPlusVersionValues(v.String())
+	if err != nil {
+		return false, err
+	}
+	tr, tp, err := extractPlusVersionValues(target)
+	if err != nil {
+		return false, err
+	}
+
+	return (r > tr || (r == tr && p >= tp)), nil
+}
+
+// NewVersion will take the output from `nginx -v` and explodes it into the `nginx.Version` struct
+func NewVersion(line string) Version {
+	matches := re.FindStringSubmatch(line)
+	plusmatches := plusre.FindStringSubmatch(line)
+	nv := Version{
+		raw: line,
+	}
+
+	if len(plusmatches) > 0 {
+		subNames := plusre.SubexpNames()
+		nv.IsPlus = true
+		for i, v := range plusmatches {
+			switch subNames[i] {
+			case "plus":
+				nv.Plus = v
+			case "version":
+				nv.OSS = v
+			}
+		}
+	}
+
+	if len(matches) > 0 {
+		for i, key := range re.SubexpNames() {
+			val := matches[i]
+			if key == "version" {
+				nv.OSS = val
+			}
+		}
+	}
+
+	return nv
+}
+
+// extractPlusVersionValues
+func extractPlusVersionValues(input string) (int, int, error) {
+	var rValue, pValue int
+	re := regexp.MustCompile(`-r(\d+)(?:-p(\d+))?`)
+	matches := re.FindStringSubmatch(input)
+
+	if len(matches) < 2 {
+		return 0, 0, fmt.Errorf("no matches found in the input string")
+	}
+
+	rValue, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to convert rValue to integer: %w", err)
+	}
+
+	if len(matches) > 2 && len(matches[2]) > 0 {
+		pValue, err = strconv.Atoi(matches[2])
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to convert pValue to integer: %w", err)
+		}
+	}
+
+	return rValue, pValue, nil
 }
 
 // verifyConfigVersion is used to check if the worker process that the API client is connected
