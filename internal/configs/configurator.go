@@ -145,6 +145,7 @@ type ConfiguratorParams struct {
 	IsWildcardEnabled         bool
 	IsLatencyMetricsEnabled   bool
 	IsDynamicSSLReloadEnabled bool
+	NginxVersion              nginx.Version
 }
 
 // NewConfigurator creates a new Configurator.
