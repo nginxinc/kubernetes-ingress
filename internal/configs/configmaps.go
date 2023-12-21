@@ -581,6 +581,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		OIDC:                               staticCfgParams.EnableOIDC,
 		DynamicSSLReloadEnabled:            staticCfgParams.DynamicSSLReload,
 		StaticSSLPath:                      staticCfgParams.StaticSSLPath,
+		NginxVersion:                       staticCfgParams.NginxVersion,
 	}
 	return nginxCfg
 }
