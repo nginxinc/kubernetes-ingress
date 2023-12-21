@@ -118,6 +118,7 @@ func main() {
 		EnableCertManager:              *enableCertManager,
 		DynamicSSLReload:               *enableDynamicSSLReload,
 		StaticSSLPath:                  nginxManager.GetSecretsDir(),
+		NginxVersion:                   nginxVersion,
 	}
 
 	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
