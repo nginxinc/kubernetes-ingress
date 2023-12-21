@@ -71,6 +71,23 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
         if: github.event_name != 'pull_request'
 
+      - name: Authenticate to Google Cloud Marketplace
+        id: auth-mktpl
+        uses: google-github-actions/auth@67e9c72af6e0492df856527b474995862b7b6591 # v2.0.0
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
+        if: github.ref_type == 'tag' && ! contains(inputs.target, 'aws')
+
+      - name: Login to GCR for Marketplace
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth-mktpl.outputs.access_token }}
+        if: github.ref_type == 'tag' && ! contains(inputs.target, 'aws')
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a # v4.0.1
         with:
@@ -107,6 +124,7 @@ jobs:
         with:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
+            name=gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }},enable=${{ github.ref_type == 'tag' && ! contains(inputs.target, 'aws') && ! contains(inputs.image, 'alpine') && ! contains(inputs.image, 'ubi') }}
             name=docker-mgmt.nginx.com/nginx-ic${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ github.ref_type != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') && ! contains(inputs.target, 'aws') }}
             name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ github.ref_type == 'tag' && contains(inputs.target, 'aws') }}
           flavor: |
