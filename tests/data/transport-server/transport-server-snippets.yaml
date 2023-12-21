@@ -4,7 +4,10 @@ metadata:
   name: transport-server
 spec:
   streamSnippets: limit_conn_zone $binary_remote_addr zone=addr:10m;
-  serverSnippets: limit_conn addr 1;
+  serverSnippets: |
+    limit_conn addr 1;
+    # a comment is allowed in snippets
+    add_header X-test-header "test-value";
   listener:
     name: dns-tcp
     protocol: TCP

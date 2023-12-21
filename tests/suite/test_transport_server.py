@@ -55,10 +55,11 @@ class TestTransportServer:
             transport_server_setup.namespace,
         )
 
-        assert (
-            "limit_conn_zone $binary_remote_addr zone=addr:10m;" in conf  # stream-snippets
-            and "limit_conn addr 1;" in conf  # server-snippets
-        )
+        conf_lines = [line.strip() for line in conf.split("\n")]
+        assert "limit_conn_zone $binary_remote_addr zone=addr:10m;" in conf_lines  # stream-snippets on separate line
+        assert "limit_conn addr 1;" in conf_lines  # server-snippets on separate line
+        assert "# a comment is allowed in snippets" in conf_lines  # comments are allowed in server snippets
+        assert 'add_header X-test-header "test-value";' in conf_lines  # new line in server-snippets on separate line
 
     def test_configurable_timeout_directives(
         self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites

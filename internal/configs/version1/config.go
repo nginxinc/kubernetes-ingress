@@ -1,5 +1,7 @@
 package version1
 
+import "github.com/nginxinc/kubernetes-ingress/internal/nginx"
+
 // UpstreamLabels describes the Prometheus labels for an NGINX upstream.
 type UpstreamLabels struct {
 	Service           string
@@ -234,6 +236,7 @@ type MainConfig struct {
 	OIDC                               bool
 	DynamicSSLReloadEnabled            bool
 	StaticSSLPath                      string
+	NginxVersion                       nginx.Version
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

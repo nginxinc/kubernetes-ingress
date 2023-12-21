@@ -18,8 +18,8 @@ upstream {{ $u.Name }} {
 {{- end }}
 
 {{- range $snippet := .StreamSnippets }}
-{{- $snippet }}
-{{ end }}
+{{ $snippet }}
+{{- end }}
 
 {{ with $m := .Match }}
 match {{ $m.Name }} {
@@ -60,7 +60,7 @@ server {
     {{- end }}
 
     {{- range $snippet := $s.ServerSnippets }}
-    {{- $snippet }}
+    {{ $snippet }}
     {{- end }}
 
     proxy_pass {{ $s.ProxyPass }};
