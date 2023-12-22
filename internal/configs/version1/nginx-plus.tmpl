@@ -346,3 +346,9 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
+
+{{- if (.NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r31") }}
+mgmt {
+    usage_report interval=0s;
+}
+{{- end}}

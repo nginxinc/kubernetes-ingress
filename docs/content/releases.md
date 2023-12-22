@@ -6,6 +6,65 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## 3.4.0
+
+19 Dec 2023
+
+The default_server listeners for ports 80 and 443 can now be fully customized giving you the flexibility to shift the HTTP and HTTPS default listeners to other ports as your needs require.
+
+Traffic splits now support weights from 0 - 100 giving you the control that you expect when performing canary roll outs of your back end services.
+
+A new capability of "upstream backup" has been introduced for NGINX Plus customers. This gives you the control to set a backup service for any path. This takes advantage of NGINX health checks and will automatically forward traffic to the backup service when all pods of the primary service stop responding.
+
+Dynamic reloading of SSL certificates takes advantage of native NGINX functionality to dynamically load updated certificates when they are requested and thus not require a reload when certificates update.
+
+A number of Helm enhancements have come directly from our community and range from giving greater flexibility for HPA, namespace sharing for custom sidecars, and supporting multiple image pull secrets for greater deployment flexibility.
+
+To make sure the NGINX Ingress Controller follows Helm best practices, we've refactored our helm chart location. You can now find our helm charts under `charts\nginx-ingress`.
+
+We’ve added the functionality to define App Protect WAF bundles for VirtualServers by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
+
+### <i class="fa-solid fa-rocket"></i> Features
+
+- [4574](https://github.com/nginxinc/kubernetes-ingress/pull/4574) Graduate TransportServer and GlobalConfiguration to v1.
+- [4464](https://github.com/nginxinc/kubernetes-ingress/pull/4464) Allow default_server listeners to be customised.
+- [4526](https://github.com/nginxinc/kubernetes-ingress/pull/4526) Update use of http2 listen directive to align with deprecation.
+- [4276](https://github.com/nginxinc/kubernetes-ingress/pull/4276) Use Lease for leader election.
+- [4655](https://github.com/nginxinc/kubernetes-ingress/pull/4655) Support weights 0 and 100 in traffic splitting.
+- [4653](https://github.com/nginxinc/kubernetes-ingress/pull/4653) Add support for backup directive for VS and TS.
+- [4788](https://github.com/nginxinc/kubernetes-ingress/pull/4788) Dynamic reload of SSL certificates
+- [4428](https://github.com/nginxinc/kubernetes-ingress/pull/4428) Add option for installing CRDs from a single remote yaml.
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+
+- [4504](https://github.com/nginxinc/kubernetes-ingress/pull/4504) Delete the DNSEndpoint resource when VS is deleted & Ratelimit requeues on errors.
+- [4575](https://github.com/nginxinc/kubernetes-ingress/pull/4575) update dockerfile for debian NGINX Plus.
+
+### <i class="fa-solid fa-box"></i> Helm Chart
+
+- [4306](https://github.com/nginxinc/kubernetes-ingress/pull/4306) Refactor Helm Chart location.
+- [4391](https://github.com/nginxinc/kubernetes-ingress/pull/4391) Add HPA Custom Behavior.  Thanks to [saedx1](https://github.com/saedx1).
+- [4559](https://github.com/nginxinc/kubernetes-ingress/pull/4559) Add process namespace sharing for ingress controller.  Thanks to [panzouh](https://github.com/panzouh).
+- [4651](https://github.com/nginxinc/kubernetes-ingress/pull/4651) Add initContainerResources Helm configuration.
+- [4656](https://github.com/nginxinc/kubernetes-ingress/pull/4656) Allows multiple imagePullSecrets in the helm chart.  Thanks to [AlessioCasco](https://github.com/AlessioCasco).
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.4.0 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.4.0),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.4.0 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.4.0 source code
+- For Helm, use version 1.1.0 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.22-1.29.
 <hr>
 
 ## 3.3.2

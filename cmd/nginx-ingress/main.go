@@ -79,7 +79,7 @@ func main() {
 		appProtectVersion = getAppProtectVersionInfo()
 	}
 
-	updateSelfWithVersionInfo(kubeClient, version, nginxVersion, appProtectVersion)
+	go updateSelfWithVersionInfo(kubeClient, version, nginxVersion.String(), appProtectVersion, 10, time.Second*5)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
@@ -118,6 +118,7 @@ func main() {
 		EnableCertManager:              *enableCertManager,
 		DynamicSSLReload:               *enableDynamicSSLReload,
 		StaticSSLPath:                  nginxManager.GetSecretsDir(),
+		NginxVersion:                   nginxVersion,
 	}
 
 	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
@@ -146,6 +147,7 @@ func main() {
 		IsPrometheusEnabled:       *enablePrometheusMetrics,
 		IsLatencyMetricsEnabled:   *enableLatencyMetrics,
 		IsDynamicSSLReloadEnabled: *enableDynamicSSLReload,
+		NginxVersion:              nginxVersion,
 	})
 
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
@@ -400,17 +402,16 @@ func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Man
 	return nginxManager, useFakeNginxManager
 }
 
-func getNginxVersionInfo(nginxManager nginx.Manager) string {
-	nginxVersion := nginxManager.Version()
-	isPlus := strings.Contains(nginxVersion, "plus")
-	glog.Infof("Using %s", nginxVersion)
+func getNginxVersionInfo(nginxManager nginx.Manager) nginx.Version {
+	nginxInfo := nginxManager.Version()
+	glog.Infof("Using %s", nginxInfo.String())
 
-	if *nginxPlus && !isPlus {
+	if *nginxPlus && !nginxInfo.IsPlus {
 		glog.Fatal("NGINX Plus flag enabled (-nginx-plus) without NGINX Plus binary")
-	} else if !*nginxPlus && isPlus {
+	} else if !*nginxPlus && nginxInfo.IsPlus {
 		glog.Fatal("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
 	}
-	return nginxVersion
+	return nginxInfo
 }
 
 func getAppProtectVersionInfo() string {
@@ -788,34 +789,47 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version string, nginxVersion string, appProtectVersion string) {
-	pod, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), os.Getenv("POD_NAME"), meta_v1.GetOptions{})
-	if err != nil {
-		glog.Errorf("Error getting pod: %v", err)
-		return
-	}
-
-	// Copy pod and update the labels.
-	newPod := pod.DeepCopy()
-	labels := newPod.ObjectMeta.Labels
-	if labels == nil {
-		labels = make(map[string]string)
-	}
+func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, nginxVersion, appProtectVersion string, maxRetries int, waitTime time.Duration) {
 	nginxVer := strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
 	replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
 	nginxVer = replacer.Replace(nginxVer)
-	labels[nginxVersionLabel] = nginxVer
-	if appProtectVersion != "" {
-		labels[appProtectVersionLabel] = appProtectVersion
-	}
-	labels[versionLabel] = strings.TrimPrefix(version, "v")
-	newPod.ObjectMeta.Labels = labels
+	podUpdated := false
 
-	_, err = kubeClient.CoreV1().Pods(newPod.ObjectMeta.Namespace).Update(context.TODO(), newPod, meta_v1.UpdateOptions{})
-	if err != nil {
-		glog.Errorf("Error updating pod with labels: %v", err)
-		return
+	for i := 0; (i < maxRetries || maxRetries == 0) && !podUpdated; i++ {
+		if i > 0 {
+			time.Sleep(waitTime)
+		}
+		pod, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), os.Getenv("POD_NAME"), meta_v1.GetOptions{})
+		if err != nil {
+			glog.Errorf("Error getting pod on attempt %d of %d: %v", i+1, maxRetries, err)
+			continue
+		}
+
+		// Copy pod and update the labels.
+		newPod := pod.DeepCopy()
+		labels := newPod.ObjectMeta.Labels
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+
+		labels[nginxVersionLabel] = nginxVer
+		labels[versionLabel] = strings.TrimPrefix(version, "v")
+		if appProtectVersion != "" {
+			labels[appProtectVersionLabel] = appProtectVersion
+		}
+		newPod.ObjectMeta.Labels = labels
+
+		_, err = kubeClient.CoreV1().Pods(newPod.ObjectMeta.Namespace).Update(context.TODO(), newPod, meta_v1.UpdateOptions{})
+		if err != nil {
+			glog.Errorf("Error updating pod with labels on attempt %d of %d: %v", i+1, maxRetries, err)
+			continue
+		}
+
+		glog.Infof("Pod label updated: %s", pod.ObjectMeta.Name)
+		podUpdated = true
 	}
 
-	glog.Infof("Pod label updated: %s", pod.ObjectMeta.Name)
+	if !podUpdated {
+		glog.Errorf("Failed to update pod labels after %d attempts", maxRetries)
+	}
 }

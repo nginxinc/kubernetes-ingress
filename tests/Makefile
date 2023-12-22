@@ -45,13 +45,8 @@ run-tests: ## Run tests
 	docker run --rm -v $(KUBE_CONFIG_FOLDER):/root/.kube $(TEST_PREFIX):$(TEST_TAG) --context=$(CONTEXT) --image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) --deployment-type=$(DEPLOYMENT_TYPE) --ic-type=$(IC_TYPE) --service=$(SERVICE) --node-ip=$(NODE_IP) --show-ic-logs=$(SHOW_IC_LOGS) $(PYTEST_ARGS)
 
 
-.PHONY: update-test-kind-config ## Update Kind config
-update-test-kind-config:
-	sed -ir "s|server:.*|server: https://$(strip $(K8S_CLUSTER_NAME))-control-plane:6443|" $(KIND_KUBE_CONFIG_FOLDER)/config
-
-
 .PHONY: run-tests-in-kind
-run-tests-in-kind: update-test-kind-config ## Run tests in Kind
+run-tests-in-kind: ## Run tests in Kind
 	docker run --network=kind --rm \
 		-v $(KIND_KUBE_CONFIG_FOLDER):/root/.kube \
 		-v $(ROOT_DIR)/tests:/workspace/tests \
@@ -72,8 +67,8 @@ create-kind-cluster: $(KIND_KUBE_CONFIG_FOLDER) ## Create a Kind K8S cluster
 		--name $(K8S_CLUSTER_NAME) \
 		--image=kindest/node:v$(K8S_CLUSTER_VERSION) \
 		--config=<(sed 's/dual/${IP_FAMILY}/' $(ROOT_DIR)/tests/ci-files/ci-kind-config.yaml) \
-		--kubeconfig $(KIND_KUBE_CONFIG_FOLDER)/config \
 		--wait $(K8S_TIMEOUT)
+	@kind get kubeconfig --name $(K8S_CLUSTER_NAME) --internal > $(KIND_KUBE_CONFIG_FOLDER)/config
 
 
 .PHONY: delete-kind-cluster

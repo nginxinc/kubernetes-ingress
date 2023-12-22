@@ -14,7 +14,7 @@ upstream {{ $u.Name }} {
 {{- end }}
 
 {{- range $snippet := .StreamSnippets }}
-{{- $snippet }}
+{{ $snippet }}
 {{- end }}
 
 {{- $s := .Server }}
@@ -42,7 +42,7 @@ server {
     {{- end }}
 
     {{- range $snippet := $s.ServerSnippets }}
-    {{- $snippet }}
+    {{ $snippet }}
     {{- end }}
 
     proxy_pass {{ $s.ProxyPass }};

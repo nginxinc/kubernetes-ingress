@@ -114,7 +114,7 @@ class TestWatchMultipleNamespaces:
             retry = 0
             while resp.status_code != expected_responses[ing] and retry < 3:
                 resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[ing]})
-                retry = +1
+                retry = retry + 1
                 wait_before_test()
             assert (
                 resp.status_code == expected_responses[ing]

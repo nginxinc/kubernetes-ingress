@@ -57,7 +57,7 @@ class TestVSRWatchSecretNamespacesValid:
             except requests.exceptions.SSLError as e:
                 exception = str(e)
                 print(f"SSL certificate exception: {exception}")
-            retry = +1
+            retry = retry + 1
 
         assert resp.status_code == 200
 

@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 )
 
 func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
@@ -14,6 +16,19 @@ func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	err := tmpl.Execute(buf, mainCfg)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(buf.String())
+}
+
+func TestExecuteMainTemplateForNGINXPlusR31(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusMainTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, mainCfgR31)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1291,6 +1306,33 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+	}
+
+	mainCfgR31 = MainConfig{
+		DefaultHTTPListenerPort:  80,
+		DefaultHTTPSListenerPort: 443,
+		ServerNamesHashMaxSize:   "512",
+		ServerTokens:             "off",
+		WorkerProcesses:          "auto",
+		WorkerCPUAffinity:        "auto",
+		WorkerShutdownTimeout:    "1m",
+		WorkerConnections:        "1024",
+		WorkerRlimitNofile:       "65536",
+		LogFormat:                []string{"$remote_addr", "$remote_user"},
+		LogFormatEscaping:        "default",
+		StreamSnippets:           []string{"# comment"},
+		StreamLogFormat:          []string{"$remote_addr", "$remote_user"},
+		StreamLogFormatEscaping:  "none",
+		ResolverAddresses:        []string{"example.com", "127.0.0.1"},
+		ResolverIPV6:             false,
+		ResolverValid:            "10s",
+		ResolverTimeout:          "15s",
+		KeepaliveTimeout:         "65s",
+		KeepaliveRequests:        100,
+		VariablesHashBucketSize:  256,
+		VariablesHashMaxSize:     1024,
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 
 	mainCfgHTTP2On = MainConfig{
@@ -1317,6 +1359,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 
 	mainCfgCustomTLSPassthroughPort = MainConfig{
@@ -1342,6 +1385,7 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      8443,
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 
 	mainCfgWithoutTLSPassthrough = MainConfig{
@@ -1367,6 +1411,7 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          false,
 		TLSPassthroughPort:      8443,
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 
 	mainCfgDefaultTLSPassthroughPort = MainConfig{
@@ -1392,6 +1437,7 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      443,
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 
 	mainCfgCustomDefaultHTTPAndHTTPSListenerPorts = MainConfig{
@@ -1417,6 +1463,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 
 	mainCfgCustomDefaultHTTPListenerPort = MainConfig{
@@ -1442,6 +1489,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 
 	mainCfgCustomDefaultHTTPSListenerPort = MainConfig{
@@ -1467,6 +1515,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	}
 
 	// Vars for Mergable Ingress Master - Minion tests
