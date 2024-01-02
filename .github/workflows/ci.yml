@@ -66,9 +66,7 @@ jobs:
             | head -n 7 \
             | sort -V \
             | sed 's/v//g' \
-            | sed 's/^/\\\"/' \
-            | sed 's/$/\\\",/' \
-            | tr '\n' ' ' \
+            | sed 's/$//' \
             | sed 's/, $//')
           echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
 
@@ -281,7 +279,7 @@ jobs:
           if [ "${{ github.event_name }}" != "schedule" ]; then
             echo "matrix=$(cat .github/data/matrix-smoke.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
           else
-            echo "matrix=$(cat .github/data/matrix-regression.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
+            echo "matrix=$(cat .github/data/matrix-regression.json | jq -c --argjson latest "$(echo ${{ needs.checks.outputs.latest_kindest_node_versions }} | jq -R -s -c 'split("\n")[:-1]')" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
           fi
 
       - name: Docker Buildx
