@@ -201,6 +201,7 @@ jobs:
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          fail-on-cache-miss: true
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
@@ -355,7 +356,7 @@ jobs:
     name: Build Docker OSS
     needs: smoke-tests
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         image: [debian, alpine]
         platforms:
@@ -379,7 +380,7 @@ jobs:
     name: Build Docker Plus
     needs: [binaries, build-docker]
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         image: [debian-plus, alpine-plus, alpine-plus-fips]
         platforms: ["linux/arm64, linux/amd64"]
@@ -404,7 +405,7 @@ jobs:
     name: Build Docker NAP
     needs: [binaries, build-docker-plus]
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         image: [debian-plus-nap, ubi-plus-nap]
         platforms: ["linux/amd64"]
