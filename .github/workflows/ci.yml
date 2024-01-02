@@ -13,6 +13,12 @@ on:
       - release-*
   schedule:
     - cron: "0 4 * * *" # run every day at 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      runRegression:
+        required: false
+        type: boolean
+        description: "Run the regression test suite if set to `true` otherwise will run smoke tests"
 
 defaults:
   run:
@@ -277,10 +283,10 @@ jobs:
 
       - id: set-matrix
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
-            echo "matrix=$(cat .github/data/matrix-smoke.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
-          else
+          if [ "${{ github.event_name }}" == "schedule" ] || [ "${{ inputs.runRegression }}" ]; then
             echo "matrix=$(cat .github/data/matrix-regression.json | jq -c --argjson latest "${{ needs.checks.outputs.latest_kindest_node_versions }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
+          else
+            echo "matrix=$(cat .github/data/matrix-smoke.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
           fi
 
       - name: Docker Buildx
