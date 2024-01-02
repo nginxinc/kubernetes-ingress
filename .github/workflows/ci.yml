@@ -98,7 +98,7 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-22.04
     needs: checks
-    if: ${{ ! needs.checks.outputs.binary_cache_hit }}
+    if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -149,7 +149,7 @@ jobs:
     name: Build Binaries
     runs-on: ubuntu-22.04
     needs: [checks, unit-tests]
-    if: ${{ ! needs.checks.outputs.binary_cache_hit }}
+    if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
     permissions:
       contents: write # for goreleaser/goreleaser-action to manage releases
       id-token: write # for goreleaser/goreleaser-action to sign artifacts
