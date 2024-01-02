@@ -323,6 +323,7 @@ jobs:
     name: Smoke Tests
     runs-on: ubuntu-22.04
     needs: setup-matrix
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
