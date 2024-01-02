@@ -47,7 +47,6 @@ jobs:
           with: |
             path: ${{ github.workspace }}/dist
             key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
-            fail-on-cache-miss: true
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
