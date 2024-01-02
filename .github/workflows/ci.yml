@@ -288,7 +288,7 @@ jobs:
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
-    needs: checks
+    needs: [binaries, checks]
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
