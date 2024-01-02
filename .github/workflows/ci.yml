@@ -197,11 +197,15 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v.1.3.0
         with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
-          fail-on-cache-miss: true
+          attempt_delay: 1000
+          attempt_limit: 3
+          action: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+          with: |
+            path: ${{ github.workspace }}/dist
+            key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+            fail-on-cache-miss: true
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
