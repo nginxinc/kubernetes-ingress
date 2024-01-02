@@ -1,0 +1,11 @@
+{
+  "k8s": [],
+  "images": [
+    {
+      "image": "debian"
+    },
+    {
+      "image": "debian-plus"
+    }
+  ]
+}
