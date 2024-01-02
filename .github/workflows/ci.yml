@@ -381,10 +381,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [debian-plus-nap, ubi-plus-nap]
+        image: [debian-plus-nap]
         platforms: ["linux/amd64"]
         target: [goreleaser, aws]
         nap_modules: [dos, waf, "waf,dos"]
+        include:
+          - image: ubi-plus-nap
+            nap_modules: [waf]
+          - image: ubi-plus-dos
+            nap_modules: [dos, "waf,dos"]
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
