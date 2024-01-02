@@ -87,7 +87,8 @@ runs:
         make -f tests/Makefile create-kind-cluster K8S_CLUSTER_NAME=${{ github.run_id }} K8S_CLUSTER_VERSION=${{ inputs.k8s-version }} K8S_TIMEOUT=${{ inputs.k8s-timeout }}
         make -f tests/Makefile image-load PREFIX=nginx/${{ steps.ingress-type.outputs.name }} TAG=${{ steps.ingress-type.outputs.tag }} K8S_CLUSTER_NAME=${{ github.run_id }}
         marker="${{ inputs.marker }}"
-        sanitized_marker="${marker// /_}"
+        nospaces="${marker// /_}"
+        sanitized_marker="${nospaces//\'/}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
         echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
         echo "cluster=$(echo nginx-${{ inputs.image }}-$name)" >> $GITHUB_OUTPUT
