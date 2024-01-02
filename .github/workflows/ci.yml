@@ -117,6 +117,7 @@ jobs:
     name: Release Notes
     runs-on: ubuntu-22.04
     needs: [checks, unit-tests]
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     outputs:
       release-url: ${{ steps.release-notes.outputs.release-url }}
     permissions:
@@ -149,7 +150,6 @@ jobs:
     name: Build Binaries
     runs-on: ubuntu-22.04
     needs: [checks, unit-tests]
-    if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
     permissions:
       contents: write # for goreleaser/goreleaser-action to manage releases
       id-token: write # for goreleaser/goreleaser-action to sign artifacts
@@ -204,6 +204,7 @@ jobs:
     name: Helm Tests
     runs-on: ubuntu-22.04
     needs: [checks, binaries]
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     strategy:
       matrix:
         include:
@@ -289,6 +290,7 @@ jobs:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
     needs: [binaries, checks]
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
