@@ -284,7 +284,7 @@ jobs:
       - id: set-matrix
         run: |
           if [ "${{ github.event_name }}" == "schedule" ] || [ "${{ inputs.runRegression }}" ]; then
-            echo "matrix=$(cat .github/data/matrix-regression.json | jq -c --argjson latest "${{ needs.checks.outputs.latest_kindest_node_versions }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
+            echo "matrix=$(cat .github/data/matrix-regression.json | jq -c --argjson latest '${{ needs.checks.outputs.latest_kindest_node_versions }}' '.k8s += $latest')" >> $GITHUB_OUTPUT
           else
             echo "matrix=$(cat .github/data/matrix-smoke.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
           fi
