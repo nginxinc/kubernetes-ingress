@@ -67,7 +67,8 @@ jobs:
             | sort -V \
             | sed 's/v//g' \
             | sed 's/$//' \
-            | sed 's/, $//')
+            | sed 's/, $//'
+            | jq -R -s -c 'split("\n")[:-1]')
           echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
 
       - name: Check if go.mod and go.sum are up to date
@@ -279,7 +280,7 @@ jobs:
           if [ "${{ github.event_name }}" != "schedule" ]; then
             echo "matrix=$(cat .github/data/matrix-smoke.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
           else
-            echo "matrix=$(cat .github/data/matrix-regression.json | jq -c --argjson latest "$(echo ${{ needs.checks.outputs.latest_kindest_node_versions }} | jq -R -s -c 'split("\n")[:-1]')" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
+            echo "matrix=$(cat .github/data/matrix-regression.json | jq -c --argjson latest "${{ needs.checks.outputs.latest_kindest_node_versions }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
           fi
 
       - name: Docker Buildx
