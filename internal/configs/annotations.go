@@ -13,6 +13,9 @@ const BasicAuthSecretAnnotation = "nginx.org/basic-auth-secret" // #nosec G101
 // PathRegexAnnotation is the annotation where the regex location (path) modifier is specified.
 const PathRegexAnnotation = "nginx.org/path-regex"
 
+// UseClusterIPAnnotation is the annotation where the use-cluster-ip boolean is specified.
+const UseClusterIPAnnotation = "nginx.org/use-cluster-ip"
+
 // AppProtectPolicyAnnotation is where the NGINX App Protect policy is specified
 const AppProtectPolicyAnnotation = "appprotect.f5.com/app-protect-policy"
 
@@ -37,6 +40,7 @@ var masterBlacklist = map[string]bool{
 	"nginx.com/health-checks":                 true,
 	"nginx.com/health-checks-mandatory":       true,
 	"nginx.com/health-checks-mandatory-queue": true,
+	UseClusterIPAnnotation:                    true,
 }
 
 var minionBlacklist = map[string]bool{
@@ -399,6 +403,14 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		_, ok := validPathRegex[pathRegex]
 		if !ok {
 			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/path-regex: got %q. Allowed values: 'case_sensitive', 'case_insensitive', 'exact'", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), pathRegex)
+		}
+	}
+
+	if useClusterIP, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, UseClusterIPAnnotation, ingEx.Ingress); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfgParams.UseClusterIP = useClusterIP
 		}
 	}
 	return cfgParams
