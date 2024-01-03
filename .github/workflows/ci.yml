@@ -32,8 +32,10 @@ jobs:
     outputs:
       go_path: ${{ steps.vars.outputs.go_path }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
-      latest_kindest_node_versions: ${{steps.vars.outputs.latest_kindest_node_versions}}
+      latest_kindest_node_versions: ${{ steps.vars.outputs.latest_kindest_node_versions }}
+      go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
+      binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -70,6 +72,16 @@ jobs:
             | sed 's/, $//' \
             | jq -R -s -c 'split("\n")[:-1]')
           echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
+          echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Fetch Cached Binary Artifacts
+        id: binary-cache
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
+          lookup-only: true
 
       - name: Check if go.mod and go.sum are up to date
         run: go mod tidy && git diff --exit-code -- go.mod go.sum
@@ -96,40 +108,22 @@ jobs:
           go-version-file: go.mod
       - name: Run Tests
         run: make cover
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
         with:
           files: ./coverage.txt
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-  binaries:
-    name: Build Binaries
+  release-notes:
+    name: Release Notes
     runs-on: ubuntu-22.04
     needs: [checks, unit-tests]
     outputs:
       release-url: ${{ steps.release-notes.outputs.release-url }}
     permissions:
-      contents: write # for lucacome/draft-release and goreleaser/goreleaser-action to manage releases
-      id-token: write # for goreleaser/goreleaser-action to sign artifacts
-      issues: write # for goreleaser/goreleaser-action to close milestone
+      contents: write # for lucacome/draft-release
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          fetch-depth: 0
-
-      - name: Setup Golang Environment
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-        with:
-          go-version-file: go.mod
-
-      - name: Download Syft
-        uses: anchore/sbom-action/download-syft@5ecf649a417b8ae17dc8383dc32d46c03f2312df # v0.15.1
-        if: github.ref_type == 'tag'
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@9614fae9e5c5eddabb09f90a270fcb487c9f7149 # v3.3.0
-        if: github.ref_type == 'tag'
-
       - name: Create/Update Draft
         uses: lucacome/draft-release@785af55296512c907875513e397320ae3f1306bb # v1.0.1
         id: release-notes
@@ -153,6 +147,33 @@ jobs:
             - Operator -- https://github.com/nginxinc/nginx-ingress-helm-operator
         if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
+  binaries:
+    name: Build Binaries
+    runs-on: ubuntu-22.04
+    needs: [checks, unit-tests]
+    permissions:
+      contents: write # for goreleaser/goreleaser-action to manage releases
+      id-token: write # for goreleaser/goreleaser-action to sign artifacts
+      issues: write # for goreleaser/goreleaser-action to close milestone
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Download Syft
+        uses: anchore/sbom-action/download-syft@5ecf649a417b8ae17dc8383dc32d46c03f2312df # v0.15.1
+        if: github.ref_type == 'tag'
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@9614fae9e5c5eddabb09f90a270fcb487c9f7149 # v3.3.0
+        if: github.ref_type == 'tag'
+
       - name: Build binaries
         uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8 # v5.0.0
         with:
@@ -173,12 +194,14 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
           AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
           AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
   helm-tests:
     name: Helm Tests
@@ -199,7 +222,7 @@ jobs:
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
@@ -268,7 +291,7 @@ jobs:
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
-    needs: [checks, binaries]
+    needs: [binaries, checks]
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -328,7 +351,7 @@ jobs:
 
   build-docker:
     name: Build Docker OSS
-    needs: smoke-tests
+    needs: [checks, smoke-tests]
     strategy:
       fail-fast: false
       matrix:
@@ -342,6 +365,7 @@ jobs:
     with:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
+      go_md5: ${{ needs.checks.outputs.go_code_md5 }}
     permissions:
       contents: read
       actions: read
@@ -352,7 +376,7 @@ jobs:
 
   build-docker-plus:
     name: Build Docker Plus
-    needs: [binaries, build-docker]
+    needs: [checks, build-docker, release-notes]
     strategy:
       fail-fast: false
       matrix:
@@ -368,7 +392,8 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
-      release-url: ${{ needs.binaries.outputs.release-url }}
+      go_md5: ${{ needs.checks.outputs.go_code_md5 }}
+      release-url: ${{ needs.release-notes.outputs.release-url }}
     permissions:
       contents: read
       security-events: write
@@ -377,7 +402,7 @@ jobs:
 
   build-docker-nap:
     name: Build Docker NAP
-    needs: [binaries, build-docker-plus]
+    needs: [checks, build-docker-plus, release-notes]
     strategy:
       fail-fast: false
       matrix:
@@ -390,8 +415,9 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
+      go_md5: ${{ needs.checks.outputs.go_code_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
-      release-url: ${{ needs.binaries.outputs.release-url }}
+      release-url: ${{ needs.release-notes.outputs.release-url }}
     permissions:
       contents: read
       security-events: write
