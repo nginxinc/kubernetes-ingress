@@ -8,18 +8,21 @@ This will allow HTTP and/or HTTPs based requests to be made on non-default ports
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
    instructions to deploy the Ingress Controller with custom resources enabled.
 2. Ensure the Ingress Controller is configured with the `-global-configuration` argument:
+
    ```console
    args:
       - -global-configuration=$(POD_NAMESPACE)/nginx-configuration
    ```
 
 3. Save the public IP address of the Ingress Controller into a shell variable:
+
    ```console
    IC_IP=XXX.YYY.ZZZ.III
    ```
 
 4. If you have a NodePort or Loadbalancer service deployed, ensure they are updated to include the custom listener ports.
 Example YAML for a LoadBalancer:
+
    ```yaml
    apiVersion: v1
    kind: Service
@@ -40,9 +43,12 @@ Example YAML for a LoadBalancer:
      selector:
        app: nginx-ingress
    ```
+
 ## Step 1 - Deploy the GlobalConfiguration resource
+
 Similar to how listeners are configured in our [basic-tcp-udp](../../examples/custom-resource/basic-tcp-udp) examples,
 here we deploy a GlobalConfiguration resource with the listeners we want to use in our VirtualServer.
+
    ```yaml
    apiVersion: k8s.nginx.org/v1alpha1
    kind: GlobalConfiguration
@@ -65,6 +71,7 @@ here we deploy a GlobalConfiguration resource with the listeners we want to use 
    ```
 
 ## Step 2 - Save the custom port numbers
+
 Save the custom HTTP and/or HTTPS ports into a shell variables for later:
 
    ```console
@@ -81,6 +88,7 @@ Create the coffee and the tea deployments and services:
    ```
 
 ## Step 4 - Deploy the VirtualServer with custom listeners
+
 The VirtualServer in this example is set to use the listeners defined in the GlobalConfiguration resource
 that was deployed in Step 1. Below is the yaml of this example VirtualServer:
 
@@ -133,6 +141,7 @@ that was deployed in Step 1. Below is the yaml of this example VirtualServer:
     ```
 
    Below you will see the events as well as the new `Listeners` field
+
     ```console
    . . .
    Spec:
