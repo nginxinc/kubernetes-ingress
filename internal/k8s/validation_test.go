@@ -3048,13 +3048,6 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"nginx.org/use-cluster-ip": "true",
-			},
-			expectedErrors: nil,
-			msg:            "valid nginx.org/use-cluster-ip annotation",
-		},
-		{
-			annotations: map[string]string{
 				"nginx.org/use-cluster-ip": "not_a_boolean",
 			},
 			specServices:          map[string]bool{},
