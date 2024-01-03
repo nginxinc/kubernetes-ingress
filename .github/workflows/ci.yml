@@ -98,7 +98,6 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-22.04
     needs: checks
-    if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -108,16 +107,17 @@ jobs:
           go-version-file: go.mod
       - name: Run Tests
         run: make cover
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
         with:
           files: ./coverage.txt
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
   release-notes:
     name: Release Notes
     runs-on: ubuntu-22.04
     needs: [checks, unit-tests]
-    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     outputs:
       release-url: ${{ steps.release-notes.outputs.release-url }}
     permissions:
@@ -193,18 +193,19 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
           AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
           AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
   helm-tests:
     name: Helm Tests
     runs-on: ubuntu-22.04
     needs: [checks, binaries]
-    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     strategy:
       matrix:
         include:
@@ -290,7 +291,6 @@ jobs:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
     needs: [binaries, checks]
-    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -323,7 +323,6 @@ jobs:
     name: Smoke Tests
     runs-on: ubuntu-22.04
     needs: setup-matrix
-    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
