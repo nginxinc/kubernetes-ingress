@@ -9,6 +9,9 @@ on:
       image:
         required: true
         type: string
+      go_md5:
+        required: true
+        type: string
       tag:
         required: false
         type: string
@@ -46,7 +49,7 @@ jobs:
           action: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
           with: |
             path: ${{ github.workspace }}/dist
-            key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+            key: nginx-ingress-${{ inputs.go_md5 }}
             fail-on-cache-miss: true
 
       - name: Setup QEMU

@@ -1,8 +1,10 @@
-
 name: Run Smoke Tests
 description: Run Smoke Tests for the project
 
 inputs:
+  go_md5:
+    required: true
+    type: string
   k8s-version:
     description: Kubernetes version to use
     required: false
@@ -43,7 +45,7 @@ runs:
         action: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with: |
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ inputs.go_md5 }}
           fail-on-cache-miss: true
 
     - name: Ingress type
@@ -61,10 +63,10 @@ runs:
       uses: docker/build-push-action@v3
       with:
         file: build/Dockerfile
-        context: '.'
+        context: "."
         cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
         target: goreleaser
-        tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
+        tags: "docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}"
         load: true
         pull: true
         build-args: |
@@ -80,7 +82,7 @@ runs:
       uses: docker/build-push-action@v3
       with:
         file: tests/Dockerfile
-        context: '.'
+        context: "."
         cache-from: type=gha,scope=test-runner
         tags: test-runner:${{ github.sha }}
         pull: true
