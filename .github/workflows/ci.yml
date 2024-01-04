@@ -341,7 +341,7 @@ jobs:
   smoke-tests:
     name: Smoke Tests
     runs-on: ubuntu-22.04
-    needs: setup-matrix
+    needs: [checks, setup-matrix]
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
