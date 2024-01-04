@@ -163,7 +163,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ github.event_name != 'pull_request' && inputs.platforms || '' }}
-          load: ${{ github.event_name == 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' && inputs.nap_modules == '' }}
           push: ${{ inputs.nap_modules != '' }}
           pull: true
           no-cache: ${{ github.event_name != 'pull_request' }}
