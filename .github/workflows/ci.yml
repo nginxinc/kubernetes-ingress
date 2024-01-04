@@ -359,6 +359,7 @@ jobs:
           nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
           nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
+          go_md5: ${{ needs.checks.outputs.go_code_md5 }}
 
       - name: Upload Test Results
         uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
