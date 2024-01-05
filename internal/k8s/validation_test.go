@@ -3046,6 +3046,44 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid nginx.com/sticky-cookie-services annotation",
 		},
+		{
+			annotations: map[string]string{
+				"nginx.org/use-cluster-ip": "not_a_boolean",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/use-cluster-ip: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid nginx.org/use-cluster-ip annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/use-cluster-ip": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/use-cluster-ip annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/use-cluster-ip": "false",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/use-cluster-ip annotation",
+		},
 	}
 
 	for _, test := range tests {

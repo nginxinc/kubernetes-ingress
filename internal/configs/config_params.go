@@ -83,6 +83,7 @@ type ConfigParams struct {
 	SlowStart                              string
 	SSLRedirect                            bool
 	UpstreamZoneSize                       string
+	UseClusterIP                           bool
 	VariablesHashBucketSize                uint64
 	VariablesHashMaxSize                   uint64
 

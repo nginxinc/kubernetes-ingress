@@ -69,6 +69,7 @@ const (
 	rewritesAnnotation                    = "nginx.org/rewrites"
 	stickyCookieServicesAnnotation        = "nginx.com/sticky-cookie-services"
 	pathRegexAnnotation                   = "nginx.org/path-regex"
+	useClusterIPAnnotation                = "nginx.org/use-cluster-ip"
 )
 
 const (
@@ -331,6 +332,9 @@ var (
 		},
 		pathRegexAnnotation: {
 			validatePathRegex,
+		},
+		useClusterIPAnnotation: {
+			validateBoolAnnotation,
 		},
 	}
 	annotationNames = sortedAnnotationNames(annotationValidations)

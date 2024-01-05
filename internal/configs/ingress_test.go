@@ -663,6 +663,253 @@ func TestGenerateNginxCfgForMergeableIngressesForBasicAuth(t *testing.T) {
 	}
 }
 
+func TestGenerateNginxCfgForMergeableIngressesWithUseClusterIP(t *testing.T) {
+	t.Parallel()
+	mergeableIngresses := createMergeableCafeIngress()
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/use-cluster-ip"] = "true"
+
+	isPlus := false
+
+	expected := createExpectedConfigForMergeableCafeIngressWithUseClusterIP()
+	configParams := NewDefaultConfigParams(isPlus)
+
+	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
+		mergeableIngs:        mergeableIngresses,
+		apResources:          nil,
+		dosResource:          nil,
+		baseCfgParams:        configParams,
+		isPlus:               isPlus,
+		isResolverConfigured: false,
+		staticParams:         &StaticConfigParams{},
+		isWildcardEnabled:    false,
+	})
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned warnings: %v", warnings)
+	}
+}
+
+func createExpectedConfigForMergeableCafeIngressWithUseClusterIP() version1.IngressNginxConfig {
+	upstreamZoneSize := "256k"
+	coffeeUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "coffee-svc.default.svc.cluster.local:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+	teaUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "10.0.0.2:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+	expected := version1.IngressNginxConfig{
+		Upstreams: []version1.Upstream{
+			coffeeUpstream,
+			teaUpstream,
+		},
+		Servers: []version1.Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []version1.Location{
+					{
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &version1.Ingress{
+							Name:      "cafe-ingress-coffee-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+								"nginx.org/use-cluster-ip":         "true",
+							},
+						},
+						ProxySSLName: "coffee-svc.default.svc",
+					},
+					{
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &version1.Ingress{
+							Name:      "cafe-ingress-tea-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
+						ProxySSLName: "tea-svc.default.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]version1.HealthCheck),
+			},
+		},
+		Ingress: version1.Ingress{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
+	}
+
+	return expected
+}
+
+func createExpectedConfigForCafeIngressWithUseClusterIP() version1.IngressNginxConfig {
+	upstreamZoneSize := "256k"
+
+	coffeeUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-cafe.example.com-coffee-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "coffee-svc.default.svc.cluster.local:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+
+	teaUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "tea-svc.default.svc.cluster.local:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+
+	expected := version1.IngressNginxConfig{
+		Upstreams: []version1.Upstream{
+			coffeeUpstream,
+			teaUpstream,
+		},
+		Servers: []version1.Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []version1.Location{
+					{
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						ProxySSLName:        "coffee-svc.default.svc",
+					},
+					{
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						ProxySSLName:        "tea-svc.default.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]version1.HealthCheck),
+			},
+		},
+		Ingress: version1.Ingress{
+			Name:      "cafe-ingress",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class": "nginx",
+				"nginx.org/use-cluster-ip":    "true",
+			},
+		},
+	}
+	return expected
+}
+
+func TestGenerateNginxCfgWithUseClusterIP(t *testing.T) {
+	t.Parallel()
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["nginx.org/use-cluster-ip"] = "true"
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expected := createExpectedConfigForCafeIngressWithUseClusterIP()
+
+	result, warnings := generateNginxCfg(NginxCfgParams{
+		staticParams:         &StaticConfigParams{},
+		ingEx:                &cafeIngressEx,
+		apResources:          nil,
+		dosResource:          nil,
+		isMinion:             false,
+		isPlus:               false,
+		baseCfgParams:        configParams,
+		isResolverConfigured: false,
+		isWildcardEnabled:    false,
+	})
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
+	}
+}
+
 func createMergeableCafeIngress() *MergeableIngresses {
 	master := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
