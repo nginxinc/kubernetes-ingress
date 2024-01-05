@@ -19,6 +19,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	"net"
 	"strconv"
 	"strings"
@@ -161,6 +162,7 @@ type LoadBalancerController struct {
 	enableBatchReload             bool
 	isIPV6Disabled                bool
 	namespaceWatcherController    cache.Controller
+	telemetryReporter             telemetry.Reporter
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -270,6 +272,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	if input.ExternalDNSEnabled {
 		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
 	}
+
+	// Placeholder exporter.
+	exporter := &telemetry.StdOutExporter{}
+	lbc.telemetryReporter = telemetry.NewTelemetryReporter(10*time.Second, exporter)
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
@@ -685,6 +691,15 @@ func (lbc *LoadBalancerController) Run() {
 	}
 	if lbc.leaderElector != nil {
 		go lbc.leaderElector.Run(lbc.ctx)
+	}
+
+	glog.V(1).Info("Checking if leader is set...")
+	if lbc.isLeaderElectionEnabled {
+		if lbc.leaderElector != nil && lbc.leaderElector.IsLeader() {
+			glog.V(1).Info("BEFORE Starting Telemetry Reporter...")
+			go lbc.telemetryReporter.Start(lbc.ctx)
+			glog.V(1).Info("AFTER Starting Telemetry Reporter...")
+		}
 	}
 
 	for _, nif := range lbc.namespacedInformers {

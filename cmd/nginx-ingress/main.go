@@ -790,9 +790,12 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 }
 
 func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, nginxVersion, appProtectVersion string, maxRetries int, waitTime time.Duration) {
-	nginxVer := strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
-	replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
-	nginxVer = replacer.Replace(nginxVer)
+	var nginxVer string
+	if nginxVersion != "" {
+		nginxVer := strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
+		replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
+		nginxVer = replacer.Replace(nginxVer)
+	}
 	podUpdated := false
 
 	for i := 0; (i < maxRetries || maxRetries == 0) && !podUpdated; i++ {
