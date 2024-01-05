@@ -512,8 +512,9 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 		}
 
 		if cfg.UseClusterIP {
+			fqdn := fmt.Sprintf("%s.%s.svc.cluster.local:%d", backend.Service.Name, ingEx.Ingress.Namespace, backend.Service.Port.Number)
 			upsServers = append(upsServers, version1.UpstreamServer{
-				Address:     fmt.Sprintf("%s:%d", backend.Service.Name, backend.Service.Port.Number),
+				Address:     fqdn,
 				MaxFails:    cfg.MaxFails,
 				MaxConns:    cfg.MaxConns,
 				FailTimeout: cfg.FailTimeout,
