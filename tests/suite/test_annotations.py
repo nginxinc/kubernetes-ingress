@@ -210,6 +210,7 @@ def annotations_grpc_setup(
 
 
 @pytest.mark.ingresses
+@pytest.mark.annotations
 @pytest.mark.parametrize("annotations_setup", ["standard", "mergeable"], indirect=True)
 class TestAnnotations:
     def test_nginx_config_defaults(self, kube_apis, annotations_setup, ingress_controller_prerequisites, cli_arguments):
@@ -484,6 +485,7 @@ class TestAnnotations:
 
 
 @pytest.mark.ingresses
+@pytest.mark.annotations
 @pytest.mark.parametrize("annotations_setup", ["mergeable"], indirect=True)
 class TestMergeableFlows:
     @pytest.mark.parametrize(
@@ -527,6 +529,7 @@ class TestMergeableFlows:
 
 
 @pytest.mark.ingresses
+@pytest.mark.annotations
 class TestGrpcFlows:
     @pytest.mark.parametrize(
         "annotations, expected_strings, unexpected_strings",

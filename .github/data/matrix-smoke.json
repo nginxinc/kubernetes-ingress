@@ -2,7 +2,11 @@
   "images": [
     {
       "image": "debian",
-      "marker": "ingresses"
+      "marker": "ingresses and not annotations and not basic_auth and not hsts and not ingresses_smoke and not watch_namespace and not wildcard_tls"
+    },
+    {
+      "image": "debian",
+      "marker": "annotations or basic_auth or hsts or ingresses_smoke or watch_namespace or wildcard_tls"
     },
     {
       "image": "alpine",
@@ -50,7 +54,11 @@
     },
     {
       "image": "alpine-plus",
-      "marker": "ingresses"
+      "marker": "ingresses and not annotations and not basic_auth and not hsts and not ingresses_smoke and not watch_namespace and not wildcard_tls"
+    },
+    {
+      "image": "alpine-plus",
+      "marker": "annotations or basic_auth or hsts or ingresses_smoke or watch_namespace or wildcard_tls"
     },
     {
       "image": "alpine-plus",

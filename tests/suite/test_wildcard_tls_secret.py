@@ -115,6 +115,7 @@ def wildcard_tls_secret_ingress_controller(
 
 @pytest.mark.ingresses
 @pytest.mark.smoke
+@pytest.mark.wildcard_tls
 class TestTLSWildcardSecrets:
     @pytest.mark.parametrize("path", paths)
     def test_response_code_200(self, wildcard_tls_secret_ingress_controller, wildcard_tls_secret_setup, path):
