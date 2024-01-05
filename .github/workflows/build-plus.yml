@@ -72,7 +72,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || inputs.nap_modules != ''
 
       - name: Authenticate to Google Cloud Marketplace
         id: auth-mktpl
