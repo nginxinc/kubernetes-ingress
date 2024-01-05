@@ -339,7 +339,7 @@ jobs:
           load: true
 
   smoke-tests:
-    name: ${{ matrix.images.image }} ${{ matrix.images.label }}
+    name: ST ${{ matrix.images.image }} ${{ matrix.images.label }}
     runs-on: ubuntu-22.04
     needs: [checks, setup-matrix]
     strategy:
