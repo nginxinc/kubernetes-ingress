@@ -12,7 +12,7 @@ on:
       target:
         required: true
         type: string
-      go_md5:
+      go-md5:
         required: true
         type: string
       nap_modules:
@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ inputs.go_md5 }}
+          key: nginx-ingress-${{ inputs.go-md5 }}
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0

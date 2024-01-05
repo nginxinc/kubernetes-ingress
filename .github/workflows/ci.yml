@@ -341,7 +341,7 @@ jobs:
   smoke-tests:
     name: Smoke Tests
     runs-on: ubuntu-22.04
-    needs: setup-matrix
+    needs: [checks, setup-matrix]
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
@@ -359,6 +359,7 @@ jobs:
           nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
           nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
+          go-md5: ${{ needs.checks.outputs.go_code_md5 }}
 
       - name: Upload Test Results
         uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
@@ -383,7 +384,7 @@ jobs:
     with:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
-      go_md5: ${{ needs.checks.outputs.go_code_md5 }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
     permissions:
       contents: read
       actions: read
@@ -410,7 +411,7 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
-      go_md5: ${{ needs.checks.outputs.go_code_md5 }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
     permissions:
       contents: read
@@ -433,7 +434,7 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
-      go_md5: ${{ needs.checks.outputs.go_code_md5 }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
     permissions:
