@@ -64,7 +64,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || inputs.nap_modules != ''
 
       - name: Login to GCR
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
