@@ -158,6 +158,7 @@ step_5_expected_results = [
 
 
 @pytest.mark.ingresses
+@pytest.mark.basic_auth
 class TestAuthBasicAuthMergeableMinions:
     def test_auth_basic_auth_response_codes(self, kube_apis, auth_basic_auth_setup, test_namespace):
         print("Step 1: execute check after secrets creation")

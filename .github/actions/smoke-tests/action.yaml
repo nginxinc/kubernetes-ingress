@@ -3,7 +3,7 @@ name: Run Smoke Tests
 description: Run Smoke Tests for the project
 
 inputs:
-  go_md5:
+  go-md5:
     required: true
     type: string
   k8s-version:
@@ -42,7 +42,7 @@ runs:
       uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/dist
-        key: nginx-ingress-${{ inputs.go_md5 }}
+        key: nginx-ingress-${{ inputs.go-md5 }}
 
     - name: Ingress type
       id: ingress-type
