@@ -431,8 +431,12 @@ jobs:
         nap_modules: [dos, waf, "waf,dos"]
         include:
           - image: ubi-plus-nap
+            platforms: ["linux/amd64"]
+            target: [goreleaser, aws]
             nap_modules: [waf]
           - image: ubi-plus-dos
+            platforms: ["linux/amd64"]
+            target: [goreleaser, aws]
             nap_modules: [dos, "waf,dos"]
     uses: ./.github/workflows/build-plus.yml
     with:
