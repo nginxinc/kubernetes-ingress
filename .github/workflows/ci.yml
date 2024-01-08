@@ -430,27 +430,27 @@ jobs:
         target: [goreleaser, aws]
         nap_modules: [dos, waf, "waf,dos"]
         include:
-          - image: ubi-plus-nap
+          - image: ubi-plus-nap-ubi-9
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: waf
-          - image: ubi-plus-dos
+          - image: ubi-plus-nap-ubi-8
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: dos
-          - image: ubi-plus-dos
+          - image: ubi-plus-nap-ubi-8
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: "waf,dos"
-          - image: ubi-plus-nap
+          - image: ubi-plus-nap-ubi-9
             target: aws
             platforms: "linux/amd64"
             nap_modules: waf
-          - image: ubi-plus-dos
+          - image: ubi-plus-nap-ubi-8
             target: aws
             platforms: "linux/amd64"
             nap_modules: dos
-          - image: ubi-plus-dos
+          - image: ubi-plus-nap-ubi-8
             target: aws
             platforms: "linux/amd64"
             nap_modules: "waf,dos"
