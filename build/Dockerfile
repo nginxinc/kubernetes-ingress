@@ -204,7 +204,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=app-protect-security-updates.key,target=/tmp/app-protect-security-updates.key \
 	--mount=type=bind,from=nginx-files,src=app-protect-9.repo,target=/etc/yum.repos.d/app-protect-9.repo \
 	source /tmp/rhel_license \
-	## the code below is duplicated from the ubi-plus image because NAP doesn't support UBI 9 and minimal versions
+	## the code below is duplicated from the ubi-plus image because NAP WAF doesn't support UBI minimal versions
 	dnf --nodocs install -y shadow-utils ca-certificates \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
@@ -243,7 +243,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=app-protect-8.repo,target=/etc/yum.repos.d/app-protect-8.repo \
 	--mount=type=bind,from=nginx-files,src=app-protect-dos-8.repo,target=/etc/yum.repos.d/app-protect-dos-8.repo \
 	source /tmp/rhel_license \
-	## the code below is duplicated from the ubi-plus image because NAP doesn't support UBI 9 and minimal versions
+	## the code below is duplicated from the ubi-plus image because NAP DOS doesn't support UBI 9 and minimal versions
 	dnf --nodocs install -y shadow-utils ca-certificates \
 	&& dnf update -y \
 	&& groupadd --system --gid 101 nginx \
