@@ -92,7 +92,7 @@
     },
     {
       "label": "AP_WAF 1/4",
-      "image": "ubi-plus-nap-ubi-9",
+      "image": "ubi-9-plus-nap",
       "marker": "appprotect_waf_policies_allow"
     },
     {
@@ -117,7 +117,7 @@
     },
     {
       "label": "AP_DOS_Learning",
-      "image": "ubi-plus-nap-ubi-8",
+      "image": "ubi-8-plus-nap",
       "marker": "dos_learning"
     }
   ],
