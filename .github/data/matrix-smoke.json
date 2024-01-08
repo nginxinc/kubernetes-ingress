@@ -92,7 +92,7 @@
     },
     {
       "label": "AP_WAF 1/4",
-      "image": "debian-plus-nap",
+      "image": "ubi-plus-nap",
       "marker": "appprotect_waf_policies_allow"
     },
     {
@@ -117,7 +117,7 @@
     },
     {
       "label": "AP_DOS_Learning",
-      "image": "debian-plus-nap",
+      "image": "ubi-plus-dos",
       "marker": "dos_learning"
     }
   ],
