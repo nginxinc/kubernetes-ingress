@@ -188,30 +188,30 @@ func TestParseRateLimitAnnotations(t *testing.T) {
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-rate": "200",
 	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
-		t.Errorf("No Errors when parsing invalid request rate")
+		t.Error("No Errors when parsing invalid request rate")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-rate": "200r/h",
 	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
-		t.Errorf("No Errors when parsing invalid request rate")
+		t.Error("No Errors when parsing invalid request rate")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-rate": "0r/s",
 	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
-		t.Errorf("No Errors when parsing invalid request rate")
+		t.Error("No Errors when parsing invalid request rate")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-zone-size": "10abc",
 	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
-		t.Errorf("No Errors when parsing invalid zone size")
+		t.Error("No Errors when parsing invalid zone size")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-log-level": "foobar",
 	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
-		t.Errorf("No Errors when parsing invalid log level")
+		t.Error("No Errors when parsing invalid log level")
 	}
 }
