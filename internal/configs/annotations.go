@@ -433,12 +433,14 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 	return cfgParams
 }
 
-// parseRateLimitAnnotations parses rate-limiting-related annotations and places them into cfgParams. Occuring errors are collected and returned, but do not abort parsing.
+// parseRateLimitAnnotations parses rate-limiting-related annotations and places them into cfgParams. Occurring errors are collected and returned, but do not abort parsing.
+//
+//gocyclo:ignore
 func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigParams, context apiObject) []error {
 	errors := make([]error, 0)
 	if requestRateLimit, exists := annotations["nginx.org/limit-req-rate"]; exists {
 		if rate, err := ParseRequestRate(requestRateLimit); err != nil {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-rate: got %s: %v", context.GetNamespace(), context.GetName(), requestRateLimit, err))
+			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-rate: got %s: %w", context.GetNamespace(), context.GetName(), requestRateLimit, err))
 		} else {
 			cfgParams.LimitReqRate = rate
 		}
@@ -448,7 +450,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	}
 	if requestRateZoneSize, exists := annotations["nginx.org/limit-req-zone-size"]; exists {
 		if size, err := ParseSize(requestRateZoneSize); err != nil {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-zone-size: got %s: %v", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
+			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-zone-size: got %s: %w", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
 		} else {
 			cfgParams.LimitReqZoneSize = size
 		}

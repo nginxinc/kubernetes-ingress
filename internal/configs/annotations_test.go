@@ -182,7 +182,7 @@ func TestParseRateLimitAnnotations(t *testing.T) {
 		"nginx.org/limit-req-dry-run":     "true",
 		"nginx.org/limit-req-log-level":   "info",
 	}, NewDefaultConfigParams(false), context); len(errors) > 0 {
-		t.Errorf("Errors when parsing valid limit-req annotations")
+		t.Error("Errors when parsing valid limit-req annotations")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
@@ -214,5 +214,4 @@ func TestParseRateLimitAnnotations(t *testing.T) {
 	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
 		t.Errorf("No Errors when parsing invalid log level")
 	}
-
 }
