@@ -175,6 +175,22 @@ The table below summarizes the available annotations.
 |``nginx.org/use-cluster-ip`` | N/A | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as NGINX Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP.   | ``False`` |  |
 {{% /table %}}
 
+### Rate limiting
+
+{{% table %}}
+|Annotation | ConfigMap Key | Description | Default | Example |
+| ---| ---| ---| ---| --- |
+|``nginx.org/limit-req-rate`` | N/A | Enables request-rate-limiting for this ingress by creating a [limit_req_zone](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) and matching [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) for each location. All servers/locations of one ingress share the same zone. Must have unit r/s or r/m. | N/A | 200r/s |
+|``nginx.org/limit-req-key`` | N/A | The key to which the rate limit is applied. Can contain text, variables, or a combination of them. Variables must be surrounded by ${}. | ${binary_remote_addr} | ${binary_remote_addr} |
+|``nginx.org/limit-req-zone-size`` | N/A | Configures the size of the created [limit_req_zone](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone). | 10m | 20m |
+|``nginx.org/limit-req-delay`` | N/A | Configures the delay-parameter of the [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) directive. | 0 | 100 |
+|``nginx.org/limit-req-no-delay`` | N/A | Configures the nodelay-parameter of the [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) directive. | false | true |
+|``nginx.org/limit-req-burst`` | N/A | Configures the burst-parameter of the [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) directive. | N/A | 100 |
+|``nginx.org/limit-req-dry-run`` | N/A | Enables the dry run mode. In this mode, the rate limit is not actually applied, but the number of excessive requests is accounted as usual in the shared memory zone. | false | true |
+|``nginx.org/limit-req-log-level`` | N/A | Sets the desired logging level for cases when the server refuses to process requests due to rate exceeding, or delays request processing. Allowed values are info, notice, warn or error. | error | info |
+|``nginx.org/limit-req-reject-code`` | N/A | Sets the status code to return in response to rejected requests. Must fall into the range 400..599. | 429 | 503 |
+{{% /table %}}
+
 ### Snippets and Custom Templates
 
 {{% table %}}
