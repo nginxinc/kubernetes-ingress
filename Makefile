@@ -1,5 +1,5 @@
 # variables that should not be overridden by the user
-GIT_TAG = $(shell git describe --tags --abbrev=0 || echo untagged)
+GIT_TAG = $(shell git tag --sort=-version:refname | head -n1 || echo untagged)
 VERSION = $(GIT_TAG)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
