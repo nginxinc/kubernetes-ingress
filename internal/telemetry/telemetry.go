@@ -2,52 +2,54 @@ package telemetry
 
 import (
 	"context"
-	"fmt"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"time"
 )
 
-type Data struct {
-}
-
-type Exporter interface {
-	Export(data Data)
-}
-
-type StdOutExporter struct {
-}
-
-func (s *StdOutExporter) Export(data Data) {
-	fmt.Printf("Exporting data %v", data)
-}
+const (
+	jitterFactor = 0.1  // If the period is 10 seconds, the jitter will be up to 1 second.
+	sliding      = true // The period with jitter will be calculated after each report() call.
+)
 
 type Reporter interface {
-	report(ctx context.Context)
 	Start(ctx context.Context)
 }
 
-type TraceTelemetryReporter struct {
-	exporter Exporter
-	period   time.Duration
+type TraceTelemetryReporterConfig struct {
+	Data     Data
+	Exporter Exporter
+	Period   time.Duration
 }
 
-func NewTelemetryReporter(reportingPeriod time.Duration, exporter Exporter) *TraceTelemetryReporter {
+type TraceTelemetryReporter struct {
+	config TraceTelemetryReporterConfig
+}
+
+func NewTelemetryReporter(config TraceTelemetryReporterConfig) *TraceTelemetryReporter {
 	return &TraceTelemetryReporter{
-		exporter: exporter,
-		period:   reportingPeriod,
+		config: config,
 	}
 }
 
 func (t *TraceTelemetryReporter) Start(ctx context.Context) {
 	glog.V(1).Info("Starting Telemetry Job...")
-	wait.UntilWithContext(ctx, t.report, t.period)
+	wait.JitterUntilWithContext(ctx, t.report, t.config.Period, jitterFactor, sliding)
 	glog.V(1).Info("Stopping Telemetry Job...")
 }
 
-// ctx is blank for now during POC.
-func (t *TraceTelemetryReporter) report(_ context.Context) {
-	t.exporter.Export(Data{})
+func (t *TraceTelemetryReporter) report(ctx context.Context) {
+	// Gather data here
+	t.setProductName()
+	t.setProductVersion()
 
-	glog.V(1).Info("Data exported...")
+	t.config.Exporter.Export(ctx, t.config.Data)
+}
+
+func (t *TraceTelemetryReporter) setProductVersion() {
+	// Placeholder function
+}
+
+func (t *TraceTelemetryReporter) setProductName() {
+	// Placeholder function
 }

@@ -41,7 +41,10 @@ import (
 )
 
 // Injected during build
-var version string
+var (
+	version               string
+	telemetryReportPeriod string
+)
 
 const (
 	nginxVersionLabel      = "app.nginx.org/version"
@@ -199,6 +202,7 @@ func main() {
 		ExternalDNSEnabled:           *enableExternalDNS,
 		IsIPV6Disabled:               *disableIPV6,
 		WatchNamespaceLabel:          *watchNamespaceLabel,
+		TelemetryReportPeriod:        telemetryReportPeriod,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

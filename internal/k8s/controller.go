@@ -163,6 +163,8 @@ type LoadBalancerController struct {
 	isIPV6Disabled                bool
 	namespaceWatcherController    cache.Controller
 	telemetryReporter             telemetry.Reporter
+	telemetryChan                 chan struct{}
+	telemetryReportPeriod         string
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -208,6 +210,7 @@ type NewLoadBalancerControllerInput struct {
 	ExternalDNSEnabled           bool
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
+	TelemetryReportPeriod        string
 }
 
 // NewLoadBalancerController creates a controller
@@ -240,6 +243,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		isPrometheusEnabled:          input.IsPrometheusEnabled,
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 		isIPV6Disabled:               input.IsIPV6Disabled,
+		telemetryReportPeriod:        input.TelemetryReportPeriod,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -275,7 +279,19 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// Placeholder exporter.
 	exporter := &telemetry.StdOutExporter{}
-	lbc.telemetryReporter = telemetry.NewTelemetryReporter(10*time.Second, exporter)
+	lbc.telemetryChan = make(chan struct{})
+	duration, err := time.ParseDuration(lbc.telemetryReportPeriod)
+
+	if err != nil {
+		glog.Fatalf("failed to parse telemetry reporting period: %v", err)
+	}
+
+	config := telemetry.TraceTelemetryReporterConfig{
+		Exporter: exporter,
+		Period:   duration,
+		Data:     telemetry.Data{},
+	}
+	lbc.telemetryReporter = telemetry.NewTelemetryReporter(config)
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
@@ -689,18 +705,21 @@ func (lbc *LoadBalancerController) Run() {
 	if lbc.externalDNSController != nil {
 		go lbc.externalDNSController.Run(lbc.ctx.Done())
 	}
+
 	if lbc.leaderElector != nil {
 		go lbc.leaderElector.Run(lbc.ctx)
 	}
 
-	glog.V(1).Info("Checking if leader is set...")
-	if lbc.isLeaderElectionEnabled {
-		if lbc.leaderElector != nil && lbc.leaderElector.IsLeader() {
-			glog.V(1).Info("BEFORE Starting Telemetry Reporter...")
-			go lbc.telemetryReporter.Start(lbc.ctx)
-			glog.V(1).Info("AFTER Starting Telemetry Reporter...")
+	go func(ctx context.Context) {
+		glog.V(1).Info("-- Checking if leader is set --")
+		select {
+		case <-lbc.telemetryChan:
+			lbc.telemetryReporter.Start(lbc.ctx)
+		case <-ctx.Done():
+			glog.V(1).Info("-- DONE Reporting Telemetry --")
+			return
 		}
-	}
+	}(lbc.ctx)
 
 	for _, nif := range lbc.namespacedInformers {
 		nif.start()
