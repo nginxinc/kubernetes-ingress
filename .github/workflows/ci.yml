@@ -359,6 +359,7 @@ jobs:
           nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
           nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
+          rhel-license: ${{ contains(matrix.images.image, 'ubi') && secrets.RHEL_LICENSE || '' }}
           go-md5: ${{ needs.checks.outputs.go_code_md5 }}
 
       - name: Upload Test Results

@@ -28,6 +28,9 @@ inputs:
   azure-ad-secret:
     description: Azure Active Directory secret for JWKs
     required: false
+  rhel-license:
+    description: RHEL license for UBI builds
+    required: false
 
 outputs:
   test-results-name:
@@ -72,7 +75,7 @@ runs:
         secrets: |
           ${{ contains(inputs.image, 'plus') && format('"nginx-repo.crt={0}"', inputs.nginx-crt) || '' }}
           ${{ contains(inputs.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
-          ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+          ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', inputs.rhel-license) || '' }}
 
     - name: Build Test-Runner Container
       uses: docker/build-push-action@v3
