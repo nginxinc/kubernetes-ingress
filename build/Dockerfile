@@ -230,7 +230,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& subscription-manager unregister \
 	&& dnf clean all
 
-############################################# Base image for UBI with NGINX Plus and App Protect DoS #############################################
+############################################# Base image for UBI with NGINX Plus and App Protect WAF & DoS #############################################
 FROM redhat/ubi8 as ubi-8-plus-nap
 ARG NAP_MODULES
 
