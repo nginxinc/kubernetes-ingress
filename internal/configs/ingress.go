@@ -269,14 +269,18 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 			if cfgParams.LimitReqRate != "" {
 				zoneName := p.ingEx.Ingress.Namespace + "/" + p.ingEx.Ingress.Name
 				loc.LimitReq = &version1.LimitReq{
-					Zone:   zoneName,
-					Burst:  cfgParams.LimitReqBurst,
-					Delay:  cfgParams.LimitReqDelay,
-					Status: cfgParams.LimitReqStatus,
+					Zone:       zoneName,
+					Burst:      cfgParams.LimitReqBurst,
+					Delay:      cfgParams.LimitReqDelay,
+					NoDelay:    cfgParams.LimitReqNoDelay,
+					DryRun:     cfgParams.LimitReqDryRun,
+					LogLevel:   cfgParams.LimitReqLogLevel,
+					RejectCode: cfgParams.LimitReqRejectCode,
 				}
 				if !limitReqZoneExists(limitReqZones, zoneName) {
 					limitReqZones = append(limitReqZones, version1.LimitReqZone{
 						Name: zoneName,
+						Key:  cfgParams.LimitReqKey,
 						Size: cfgParams.LimitReqZoneSize,
 						Rate: cfgParams.LimitReqRate,
 					})

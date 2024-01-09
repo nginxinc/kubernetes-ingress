@@ -989,9 +989,11 @@ func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimit(t *testing.T) {
 	limitReq := ingressCfgRequestRateLimit.Servers[0].Locations[0].LimitReq
 
 	wantDirectives := []string{
-		"limit_req_zone $binary_remote_addr zone=default/myingress:10m rate=200r/s;",
+		"limit_req_zone ${binary_remote_addr} zone=default/myingress:10m rate=200r/s;",
 		"limit_req zone=default/myingress burst=" + strconv.Itoa(limitReq.Burst) + " delay=" + strconv.Itoa(limitReq.Delay) + ";",
-		"limit_req_status " + strconv.Itoa(limitReq.Status) + ";",
+		"limit_req_status " + strconv.Itoa(limitReq.RejectCode) + ";",
+		"limit_req_dry_run on;",
+		"limit_req_log_level info;",
 	}
 
 	for _, want := range wantDirectives {
@@ -1018,12 +1020,15 @@ func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimitMinions(t *testin
 	limitReqCoffee := ingressCfgRequestRateLimitMinions.Servers[0].Locations[1].LimitReq
 
 	wantDirectives := []string{
-		"limit_req_zone $binary_remote_addr zone=default/tea-minion:10m rate=200r/s;",
-		"limit_req_zone $binary_remote_addr zone=default/coffee-minion:20m rate=400r/s;",
+		"limit_req_zone ${binary_remote_addr} zone=default/tea-minion:10m rate=200r/s;",
+		"limit_req_zone ${binary_remote_addr} zone=default/coffee-minion:20m rate=400r/s;",
 		"limit_req zone=" + limitReqTea.Zone + " burst=" + strconv.Itoa(limitReqTea.Burst) + " delay=" + strconv.Itoa(limitReqTea.Delay) + ";",
-		"limit_req zone=" + limitReqCoffee.Zone + " burst=" + strconv.Itoa(limitReqCoffee.Burst) + " delay=" + strconv.Itoa(limitReqCoffee.Delay) + ";",
-		"limit_req_status " + strconv.Itoa(limitReqTea.Status) + ";",
-		"limit_req_status " + strconv.Itoa(limitReqCoffee.Status) + ";",
+		"limit_req zone=" + limitReqCoffee.Zone + " burst=" + strconv.Itoa(limitReqCoffee.Burst) + " nodelay;",
+		"limit_req_status " + strconv.Itoa(limitReqTea.RejectCode) + ";",
+		"limit_req_status " + strconv.Itoa(limitReqCoffee.RejectCode) + ";",
+		"limit_req_log_level " + limitReqTea.LogLevel + ";",
+		"limit_req_log_level " + limitReqCoffee.LogLevel + ";",
+		"limit_req_dry_run on;",
 	}
 
 	for _, want := range wantDirectives {
@@ -1049,9 +1054,11 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimit(t *testing.T
 	limitReq := ingressCfgRequestRateLimit.Servers[0].Locations[0].LimitReq
 
 	wantDirectives := []string{
-		"limit_req_zone $binary_remote_addr zone=default/myingress:10m rate=200r/s;",
+		"limit_req_zone ${binary_remote_addr} zone=default/myingress:10m rate=200r/s;",
 		"limit_req zone=default/myingress burst=" + strconv.Itoa(limitReq.Burst) + " delay=" + strconv.Itoa(limitReq.Delay) + ";",
-		"limit_req_status " + strconv.Itoa(limitReq.Status) + ";",
+		"limit_req_status " + strconv.Itoa(limitReq.RejectCode) + ";",
+		"limit_req_dry_run on;",
+		"limit_req_log_level info;",
 	}
 
 	for _, want := range wantDirectives {
@@ -1078,12 +1085,15 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimitMinions(t *te
 	limitReqCoffee := ingressCfgRequestRateLimitMinions.Servers[0].Locations[1].LimitReq
 
 	wantDirectives := []string{
-		"limit_req_zone $binary_remote_addr zone=default/tea-minion:10m rate=200r/s;",
-		"limit_req_zone $binary_remote_addr zone=default/coffee-minion:20m rate=400r/s;",
+		"limit_req_zone ${binary_remote_addr} zone=default/tea-minion:10m rate=200r/s;",
+		"limit_req_zone ${binary_remote_addr} zone=default/coffee-minion:20m rate=400r/s;",
 		"limit_req zone=" + limitReqTea.Zone + " burst=" + strconv.Itoa(limitReqTea.Burst) + " delay=" + strconv.Itoa(limitReqTea.Delay) + ";",
-		"limit_req zone=" + limitReqCoffee.Zone + " burst=" + strconv.Itoa(limitReqCoffee.Burst) + " delay=" + strconv.Itoa(limitReqCoffee.Delay) + ";",
-		"limit_req_status " + strconv.Itoa(limitReqTea.Status) + ";",
-		"limit_req_status " + strconv.Itoa(limitReqCoffee.Status) + ";",
+		"limit_req zone=" + limitReqCoffee.Zone + " burst=" + strconv.Itoa(limitReqCoffee.Burst) + " nodelay;",
+		"limit_req_status " + strconv.Itoa(limitReqTea.RejectCode) + ";",
+		"limit_req_status " + strconv.Itoa(limitReqCoffee.RejectCode) + ";",
+		"limit_req_log_level " + limitReqTea.LogLevel + ";",
+		"limit_req_log_level " + limitReqCoffee.LogLevel + ";",
+		"limit_req_dry_run on;",
 	}
 
 	for _, want := range wantDirectives {
@@ -2277,10 +2287,12 @@ var (
 							Token: "$cookie_auth_token",
 						},
 						LimitReq: &LimitReq{
-							Zone:   "default/myingress",
-							Burst:  100,
-							Delay:  50,
-							Status: 429,
+							Zone:       "default/myingress",
+							Burst:      100,
+							Delay:      50,
+							RejectCode: 429,
+							DryRun:     true,
+							LogLevel:   "info",
 						},
 					},
 					{
@@ -2296,10 +2308,12 @@ var (
 							Token: "$cookie_auth_token",
 						},
 						LimitReq: &LimitReq{
-							Zone:   "default/myingress",
-							Burst:  100,
-							Delay:  50,
-							Status: 429,
+							Zone:       "default/myingress",
+							Burst:      100,
+							Delay:      50,
+							RejectCode: 429,
+							DryRun:     true,
+							LogLevel:   "info",
 						},
 					},
 				},
@@ -2315,6 +2329,7 @@ var (
 		LimitReqZones: []LimitReqZone{
 			{
 				Name: "default/myingress",
+				Key:  "${binary_remote_addr}",
 				Size: "10m",
 				Rate: "200r/s",
 			},
@@ -2360,10 +2375,12 @@ var (
 							Namespace: "default",
 						},
 						LimitReq: &LimitReq{
-							Zone:   "default/tea-minion",
-							Burst:  100,
-							Delay:  50,
-							Status: 429,
+							Zone:       "default/tea-minion",
+							Burst:      100,
+							Delay:      10,
+							LogLevel:   "info",
+							DryRun:     true,
+							RejectCode: 429,
 						},
 					},
 					{
@@ -2383,10 +2400,11 @@ var (
 							Namespace: "default",
 						},
 						LimitReq: &LimitReq{
-							Zone:   "default/coffee-minion",
-							Burst:  200,
-							Delay:  100,
-							Status: 503,
+							Zone:       "default/coffee-minion",
+							Burst:      200,
+							NoDelay:    true,
+							LogLevel:   "error",
+							RejectCode: 503,
 						},
 					},
 				},
@@ -2402,11 +2420,13 @@ var (
 		LimitReqZones: []LimitReqZone{
 			{
 				Name: "default/tea-minion",
+				Key:  "${binary_remote_addr}",
 				Size: "10m",
 				Rate: "200r/s",
 			},
 			{
 				Name: "default/coffee-minion",
+				Key:  "${binary_remote_addr}",
 				Size: "20m",
 				Rate: "400r/s",
 			},

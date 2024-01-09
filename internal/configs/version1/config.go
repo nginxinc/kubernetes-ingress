@@ -67,6 +67,7 @@ type HealthCheck struct {
 // LimitReqZone describes a zone used for request rate limiting
 type LimitReqZone struct {
 	Name string
+	Key  string
 	Size string
 	Rate string
 }
@@ -148,10 +149,13 @@ type JWTAuth struct {
 
 // LimitReq configures a request rate limit
 type LimitReq struct {
-	Zone   string
-	Burst  int
-	Delay  int
-	Status int
+	Zone       string
+	Burst      int
+	Delay      int
+	NoDelay    bool
+	RejectCode int
+	DryRun     bool
+	LogLevel   string
 }
 
 // Location describes an NGINX location.
