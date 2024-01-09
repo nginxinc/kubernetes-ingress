@@ -359,6 +359,7 @@ jobs:
           nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
           nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
+          rhel-license: ${{ contains(matrix.images.image, 'ubi') && secrets.RHEL_LICENSE || '' }}
           go-md5: ${{ needs.checks.outputs.go_code_md5 }}
 
       - name: Upload Test Results
@@ -425,10 +426,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [debian-plus-nap, ubi-plus-nap]
+        image: [debian-plus-nap]
         platforms: ["linux/amd64"]
         target: [goreleaser, aws]
         nap_modules: [dos, waf, "waf,dos"]
+        include:
+          - image: ubi-9-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: dos
+          - image: ubi-8-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: "waf,dos"
+          - image: ubi-9-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: dos
+          - image: ubi-8-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: "waf,dos"
+
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
