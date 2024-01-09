@@ -1,6 +1,9 @@
 package configs
 
 import (
+	"fmt"
+	"slices"
+
 	"github.com/golang/glog"
 )
 
@@ -423,55 +426,76 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		}
 	}
 
-	if requestRateLimit, exists := ingEx.Ingress.Annotations["nginx.org/limit-req-rate"]; exists {
-		cfgParams.LimitReqRate = requestRateLimit
+	for _, err := range parseRateLimitAnnotations(ingEx.Ingress.Annotations, &cfgParams, ingEx.Ingress) {
+		glog.Error(err)
 	}
-	if requestRateKey, exists := ingEx.Ingress.Annotations["nginx.org/limit-req-key"]; exists {
+
+	return cfgParams
+}
+
+// parseRateLimitAnnotations parses rate-limiting-related annotations and places them into cfgParams. Occuring errors are collected and returned, but do not abort parsing.
+func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigParams, context apiObject) []error {
+	errors := make([]error, 0)
+	if requestRateLimit, exists := annotations["nginx.org/limit-req-rate"]; exists {
+		if rate, err := ParseRequestRate(requestRateLimit); err != nil {
+			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-rate: got %s: %v", context.GetNamespace(), context.GetName(), requestRateLimit, err))
+		} else {
+			cfgParams.LimitReqRate = rate
+		}
+	}
+	if requestRateKey, exists := annotations["nginx.org/limit-req-key"]; exists {
 		cfgParams.LimitReqKey = requestRateKey
 	}
-	if requestRateZoneSize, exists := ingEx.Ingress.Annotations["nginx.org/limit-req-zone-size"]; exists {
-		cfgParams.LimitReqZoneSize = requestRateZoneSize
+	if requestRateZoneSize, exists := annotations["nginx.org/limit-req-zone-size"]; exists {
+		if size, err := ParseSize(requestRateZoneSize); err != nil {
+			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-zone-size: got %s: %v", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
+		} else {
+			cfgParams.LimitReqZoneSize = size
+		}
 	}
-	if requestRateDelay, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/limit-req-delay", ingEx.Ingress); exists {
+	if requestRateDelay, exists, err := GetMapKeyAsInt(annotations, "nginx.org/limit-req-delay", context); exists {
 		if err != nil {
-			glog.Error(err)
+			errors = append(errors, err)
 		} else {
 			cfgParams.LimitReqDelay = requestRateDelay
 		}
 	}
-	if requestRateNoDelay, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.org/limit-req-no-delay", ingEx.Ingress); exists {
+	if requestRateNoDelay, exists, err := GetMapKeyAsBool(annotations, "nginx.org/limit-req-no-delay", context); exists {
 		if err != nil {
-			glog.Error(err)
+			errors = append(errors, err)
 		} else {
 			cfgParams.LimitReqNoDelay = requestRateNoDelay
 		}
 	}
-	if requestRateBurst, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/limit-req-burst", ingEx.Ingress); exists {
+	if requestRateBurst, exists, err := GetMapKeyAsInt(annotations, "nginx.org/limit-req-burst", context); exists {
 		if err != nil {
-			glog.Error(err)
+			errors = append(errors, err)
 		} else {
 			cfgParams.LimitReqBurst = requestRateBurst
 		}
 	}
-	if requestRateDryRun, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.org/limit-req-dry-run", ingEx.Ingress); exists {
+	if requestRateDryRun, exists, err := GetMapKeyAsBool(annotations, "nginx.org/limit-req-dry-run", context); exists {
 		if err != nil {
-			glog.Error(err)
+			errors = append(errors, err)
 		} else {
 			cfgParams.LimitReqDryRun = requestRateDryRun
 		}
 	}
-	if requestRateLogLevel, exists := ingEx.Ingress.Annotations["nginx.org/limit-req-log-level"]; exists {
-		cfgParams.LimitReqLogLevel = requestRateLogLevel
+	if requestRateLogLevel, exists := annotations["nginx.org/limit-req-log-level"]; exists {
+		if !slices.Contains([]string{"info", "notice", "warn", "error"}, requestRateLogLevel) {
+			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-log-level: got %s", context.GetNamespace(), context.GetName(), requestRateLogLevel))
+		} else {
+			cfgParams.LimitReqLogLevel = requestRateLogLevel
+		}
 	}
-	if requestRateRejectCode, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/limit-req-reject-code", ingEx.Ingress); exists {
+	if requestRateRejectCode, exists, err := GetMapKeyAsInt(annotations, "nginx.org/limit-req-reject-code", context); exists {
 		if err != nil {
-			glog.Error(err)
+			errors = append(errors, err)
 		} else {
 			cfgParams.LimitReqRejectCode = requestRateRejectCode
 		}
 	}
-
-	return cfgParams
+	return errors
 }
 
 func getWebsocketServices(ingEx *IngressEx) map[string]bool {
