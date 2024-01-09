@@ -440,7 +440,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [debian-plus-nap]
+        image: [debian-plus-nap, ubi-plus-nap, alpine-nap-waf-plus-fips]
         platforms: ["linux/amd64"]
         target: [goreleaser, aws]
         nap_modules: [dos, waf, "waf,dos"]
