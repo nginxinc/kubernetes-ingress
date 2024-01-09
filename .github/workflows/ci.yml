@@ -369,6 +369,20 @@ jobs:
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
         if: always()
 
+  smoke-results:
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    name: Final Smoke Test Results
+    needs: [smoke-tests]
+    steps:
+      - run: |
+          result="${{ needs.smoke-tests.result }}"
+          if [[ $result == "success" || $result == "skipped" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
+
   build-docker:
     name: Build Docker OSS
     needs: [checks, smoke-tests]
