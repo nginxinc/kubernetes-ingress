@@ -1,4 +1,3 @@
-
 name: Run Smoke Tests
 description: Run Smoke Tests for the project
 
@@ -28,6 +27,9 @@ inputs:
     required: false
   azure-ad-secret:
     description: Azure Active Directory secret for JWKs
+    required: false
+  rhel-license:
+    description: RHEL license for UBI builds
     required: false
 
 outputs:
@@ -59,10 +61,10 @@ runs:
       uses: docker/build-push-action@v3
       with:
         file: build/Dockerfile
-        context: '.'
+        context: "."
         cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
         target: goreleaser
-        tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
+        tags: "docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}"
         load: true
         pull: true
         build-args: |
@@ -73,12 +75,13 @@ runs:
         secrets: |
           ${{ contains(inputs.image, 'plus') && format('"nginx-repo.crt={0}"', inputs.nginx-crt) || '' }}
           ${{ contains(inputs.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
+          ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', inputs.rhel-license) || '' }}
 
     - name: Build Test-Runner Container
       uses: docker/build-push-action@v3
       with:
         file: tests/Dockerfile
-        context: '.'
+        context: "."
         cache-from: type=gha,scope=test-runner
         tags: test-runner:${{ github.sha }}
         pull: true
