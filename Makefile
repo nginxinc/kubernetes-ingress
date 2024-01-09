@@ -3,6 +3,8 @@ GIT_TAG = $(shell git describe --tags --abbrev=0 || echo untagged)
 VERSION = $(GIT_TAG)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
+# Additional flags added here can be accessed in main.go.
+# e.g. `main.version` maps to `var version` in main.go
 GO_LINKER_FLAGS_VARS = -X main.version=${VERSION}
 GO_LINKER_FLAGS_OPTIONS = -s -w
 GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_OPTIONS) $(GO_LINKER_FLAGS_VARS)
@@ -14,7 +16,6 @@ TARGET                        ?= local ## The target of the build. Possible valu
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
 ARCH                          ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
 GOOS                          ?= linux ## The OS of the binary. For example linux, darwin
-TELEMETRY_REPORT_PERIOD 	  ?= 24h ## The frequency at which the telemetry reporting job runs
 
 # final docker build command
 DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
