@@ -2,9 +2,10 @@ package telemetry
 
 import (
 	"context"
+	"time"
+
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"time"
 )
 
 const (

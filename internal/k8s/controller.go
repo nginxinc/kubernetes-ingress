@@ -19,12 +19,13 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	"net"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
@@ -281,7 +282,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		exporter := &telemetry.StdOutExporter{}
 		lbc.telemetryChan = make(chan struct{})
 		period, err := time.ParseDuration(input.TelemetryReportPeriod)
-
 		if err != nil {
 			glog.Fatalf("Error parsing duration for telemetry: %v", err)
 		}
