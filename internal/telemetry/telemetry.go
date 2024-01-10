@@ -37,6 +37,7 @@ func (t *TraceTelemetryReporter) Start(ctx context.Context) {
 }
 
 func (t *TraceTelemetryReporter) report(ctx context.Context) {
+	glog.V(3).Infof("Collecting Telemetry Data")
 	// Gather data here
 	t.setVirtualServerCount()
 	t.setTransportServerCount()

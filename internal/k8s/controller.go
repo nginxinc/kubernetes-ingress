@@ -713,12 +713,10 @@ func (lbc *LoadBalancerController) Run() {
 
 	if lbc.telemetryReporter != nil {
 		go func(ctx context.Context) {
-			glog.V(1).Info("-- Checking if leader is set --")
 			select {
 			case <-lbc.telemetryChan:
 				lbc.telemetryReporter.Start(lbc.ctx)
 			case <-ctx.Done():
-				glog.V(1).Info("-- DONE Reporting Telemetry --")
 				return
 			}
 		}(lbc.ctx)

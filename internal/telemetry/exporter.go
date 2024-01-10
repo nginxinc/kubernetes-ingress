@@ -20,6 +20,6 @@ func NewStdOutExporter() *StdOutExporter {
 }
 
 func (s *StdOutExporter) Export(_ context.Context, data Data) error {
-	glog.V(1).Infof("Exporting data %v", data)
+	glog.V(3).Infof("Exporting data %v", data)
 	return nil
 }
