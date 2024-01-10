@@ -59,7 +59,9 @@ func createLeaderHandler(lbc *LoadBalancerController) leaderelection.LeaderCallb
 		OnStartedLeading: func(ctx context.Context) {
 			glog.V(3).Info("started leading")
 			// Closing this channel allows the leader to start the telemetry reporting process
-			close(lbc.telemetryChan)
+			if lbc.telemetryChan != nil {
+				close(lbc.telemetryChan)
+			}
 			if lbc.reportIngressStatus {
 				ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
 

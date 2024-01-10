@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	jitterFactor = 0.1  // If the period is 10 seconds, the jitter will be up to 1 second.
-	sliding      = true // The period with jitter will be calculated after each report() call.
+	jitterFactor = 0.1
+	sliding      = true
 )
 
 type Reporter interface {
@@ -17,9 +17,9 @@ type Reporter interface {
 }
 
 type TraceTelemetryReporterConfig struct {
-	Data     Data
-	Exporter Exporter
-	Period   time.Duration
+	Data            Data
+	Exporter        Exporter
+	ReportingPeriod time.Duration
 }
 
 type TraceTelemetryReporter struct {
@@ -33,23 +33,23 @@ func NewTelemetryReporter(config TraceTelemetryReporterConfig) *TraceTelemetryRe
 }
 
 func (t *TraceTelemetryReporter) Start(ctx context.Context) {
-	glog.V(1).Info("Starting Telemetry Job...")
-	wait.JitterUntilWithContext(ctx, t.report, t.config.Period, jitterFactor, sliding)
-	glog.V(1).Info("Stopping Telemetry Job...")
+	wait.JitterUntilWithContext(ctx, t.report, t.config.ReportingPeriod, jitterFactor, sliding)
 }
 
 func (t *TraceTelemetryReporter) report(ctx context.Context) {
 	// Gather data here
-	t.setProductName()
-	t.setProductVersion()
+	t.setVirtualServerCount()
+	t.setTransportServerCount()
 
-	t.config.Exporter.Export(ctx, t.config.Data)
+	if err := t.config.Exporter.Export(ctx, t.config.Data); err != nil {
+		glog.Errorf("Error exporting telemetry data: %v", err)
+	}
 }
 
-func (t *TraceTelemetryReporter) setProductVersion() {
+func (t *TraceTelemetryReporter) setVirtualServerCount() {
 	// Placeholder function
 }
 
-func (t *TraceTelemetryReporter) setProductName() {
+func (t *TraceTelemetryReporter) setTransportServerCount() {
 	// Placeholder function
 }

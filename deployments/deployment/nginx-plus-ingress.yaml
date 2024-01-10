@@ -4,7 +4,7 @@ metadata:
   name: nginx-ingress
   namespace: nginx-ingress
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: nginx-ingress
@@ -33,7 +33,7 @@ spec:
 #      - name: nginx-log
 #        emptyDir: {}
       containers:
-      - image: nginx-plus-ingress:3.4.0
+      - image: nginx-plus-ingress:telemetry
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -96,7 +96,7 @@ spec:
          #- -enable-external-dns
          #- -enable-app-protect
          #- -enable-app-protect-dos
-         #- -v=3 # Enables extensive logging. Useful for troubleshooting.
+          - -v=1 # Enables extensive logging. Useful for troubleshooting.
          #- -report-ingress-status
          #- -external-service=nginx-ingress
          #- -enable-prometheus-metrics

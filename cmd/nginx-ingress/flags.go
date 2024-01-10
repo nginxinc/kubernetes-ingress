@@ -3,20 +3,22 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/golang/glog"
+	api_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"net"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/golang/glog"
-	api_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
-	dynamicSSLReloadParam = "ssl-dynamic-reload"
+	dynamicSSLReloadParam           = "ssl-dynamic-reload"
+	enableTelemetryReportingParam   = "enable-telemetry-reporting"
+	telemetryReportingPeriodParam   = "telemetry-reporting-period"
+	defaultTelemetryReportingPeriod = "24h"
 )
 
 var (
@@ -200,6 +202,10 @@ var (
 	defaultHTTPSListenerPort = flag.Int("default-https-listener-port", 443, "Sets a custom port for the HTTPS `default_server`. [1024 - 65535]")
 
 	enableDynamicSSLReload = flag.Bool(dynamicSSLReloadParam, true, "Enable reloading of SSL Certificates without restarting the NGINX process.")
+
+	enableTelemetryReporting = flag.Bool(enableTelemetryReportingParam, true, "Enable gathering and reporting of product related telemetry.")
+
+	telemetryReportingPeriod = flag.String(telemetryReportingPeriodParam, defaultTelemetryReportingPeriod, "Period at which product telemetry is reported.")
 
 	startupCheckFn func() error
 )

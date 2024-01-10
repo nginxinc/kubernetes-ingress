@@ -9,7 +9,7 @@ type Data struct {
 }
 
 type Exporter interface {
-	Export(ctx context.Context, data Data)
+	Export(ctx context.Context, data Data) error
 }
 
 type StdOutExporter struct {

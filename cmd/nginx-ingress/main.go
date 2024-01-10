@@ -42,8 +42,7 @@ import (
 
 // Injected during build
 var (
-	version               string
-	telemetryReportPeriod string
+	version string
 )
 
 const (
@@ -202,7 +201,8 @@ func main() {
 		ExternalDNSEnabled:           *enableExternalDNS,
 		IsIPV6Disabled:               *disableIPV6,
 		WatchNamespaceLabel:          *watchNamespaceLabel,
-		TelemetryReportPeriod:        telemetryReportPeriod,
+		TelemetryReportPeriod:        *telemetryReportingPeriod,
+		EnableTelemetryReporting:     *enableTelemetryReporting,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
