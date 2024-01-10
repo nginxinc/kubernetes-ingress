@@ -279,7 +279,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	if input.EnableTelemetryReporting {
 		// Placeholder exporter.
-		exporter := &telemetry.StdOutExporter{}
+		exporter := &telemetry.LogExporter{}
 		lbc.telemetryChan = make(chan struct{})
 		period, err := time.ParseDuration(input.TelemetryReportPeriod)
 		if err != nil {

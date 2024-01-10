@@ -8,7 +8,7 @@ import (
 func TestExportData(t *testing.T) {
 	t.Parallel()
 
-	exporter := NewStdOutExporter()
+	exporter := NewLogExporter()
 
 	err := exporter.Export(context.Background(), Data{})
 	if err != nil {
