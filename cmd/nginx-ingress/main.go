@@ -796,7 +796,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, nginxVersion, appProtectVersion string, maxRetries int, waitTime time.Duration) {
 	var nginxVer string
 	if nginxVersion != "" {
-		nginxVer := strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
+		nginxVer = strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
 		replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
 		nginxVer = replacer.Replace(nginxVer)
 	}
