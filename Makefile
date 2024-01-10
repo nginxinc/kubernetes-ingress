@@ -1,7 +1,13 @@
 # variables that should not be overridden by the user
-GIT_TAG = $(shell git describe --tags --abbrev=0 || echo untagged)
+GIT_TAG = $(shell git tag --sort=-version:refname | head -n1 || echo untagged)
 VERSION = $(GIT_TAG)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
+
+# Additional flags added here can be accessed in main.go.
+# e.g. `main.version` maps to `var version` in main.go
+GO_LINKER_FLAGS_VARS = -X main.version=${VERSION}
+GO_LINKER_FLAGS_OPTIONS = -s -w
+GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_OPTIONS) $(GO_LINKER_FLAGS_VARS)
 
 # variables that can be overridden by the user
 PREFIX                        ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
@@ -9,7 +15,7 @@ TAG                           ?= $(VERSION:v%=%) ## The tag of the image. For ex
 TARGET                        ?= local ## The target of the build. Possible values: local, container and download
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
 ARCH                          ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
-GOOS                          ?= linux ## The OS of the binary. For example linux, darwin.
+GOOS                          ?= linux ## The OS of the binary. For example linux, darwin
 
 # final docker build command
 DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
@@ -79,7 +85,7 @@ build: ## Build Ingress Controller binary
 	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
 ifeq ($(strip $(TARGET)),local)
 	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container or TARGET=download\n"; exit $$code)
-	CGO_ENABLED=0 GOOS=$(strip $(GOOS)) GOARCH=$(strip $(ARCH)) go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
+	CGO_ENABLED=0 GOOS=$(strip $(GOOS)) GOARCH=$(strip $(ARCH)) go build -trimpath -ldflags "$(GO_LINKER_FLAGS)" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 else ifeq ($(strip $(TARGET)),download)
 	@$(MAKE) download-binary-docker
 endif
@@ -141,15 +147,15 @@ ubi-image-plus: build ## Create Docker image for Ingress Controller (UBI with NG
 
 .PHONY: ubi-image-nap-plus
 ubi-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and NGINX App Protect WAF)
-	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-9-plus-nap --build-arg NAP_MODULES=waf
 
 .PHONY: ubi-image-dos-plus
 ubi-image-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and NGINX App Protect DoS)
-	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=dos
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-8-plus-nap --build-arg NAP_MODULES=dos
 
 .PHONY: ubi-image-nap-dos-plus
 ubi-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus, NGINX App Protect WAF and DoS)
-	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf,dos
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-8-plus-nap --build-arg NAP_MODULES=waf,dos
 
 .PHONY: all-images ## Create all the Docker images for Ingress Controller
 all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian-image-nap-plus debian-image-dos-plus debian-image-nap-dos-plus ubi-image ubi-image-plus ubi-image-nap-plus ubi-image-dos-plus ubi-image-nap-dos-plus

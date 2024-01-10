@@ -75,6 +75,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
 
 
 @pytest.mark.ingresses
+@pytest.mark.watch_namespace
 @pytest.mark.parametrize(
     "ingress_controller, expected_responses",
     [
@@ -95,6 +96,7 @@ class TestWatchNamespace:
 
 
 @pytest.mark.ingresses
+@pytest.mark.watch_namespace
 @pytest.mark.parametrize(
     "ingress_controller, expected_responses",
     [

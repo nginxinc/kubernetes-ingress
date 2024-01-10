@@ -663,6 +663,455 @@ func TestGenerateNginxCfgForMergeableIngressesForBasicAuth(t *testing.T) {
 	}
 }
 
+func TestGenerateNginxCfgForMergeableIngressesWithUseClusterIP(t *testing.T) {
+	t.Parallel()
+	mergeableIngresses := createMergeableCafeIngress()
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/use-cluster-ip"] = "true"
+
+	isPlus := false
+
+	expected := createExpectedConfigForMergeableCafeIngressWithUseClusterIP()
+	configParams := NewDefaultConfigParams(isPlus)
+
+	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
+		mergeableIngs:        mergeableIngresses,
+		apResources:          nil,
+		dosResource:          nil,
+		baseCfgParams:        configParams,
+		isPlus:               isPlus,
+		isResolverConfigured: false,
+		staticParams:         &StaticConfigParams{},
+		isWildcardEnabled:    false,
+	})
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned warnings: %v", warnings)
+	}
+}
+
+func createExpectedConfigForMergeableCafeIngressWithUseClusterIP() version1.IngressNginxConfig {
+	upstreamZoneSize := "256k"
+	coffeeUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "coffee-svc.default.svc.cluster.local:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+	teaUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "10.0.0.2:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+	expected := version1.IngressNginxConfig{
+		Upstreams: []version1.Upstream{
+			coffeeUpstream,
+			teaUpstream,
+		},
+		Servers: []version1.Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []version1.Location{
+					{
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &version1.Ingress{
+							Name:      "cafe-ingress-coffee-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+								"nginx.org/use-cluster-ip":         "true",
+							},
+						},
+						ProxySSLName: "coffee-svc.default.svc",
+					},
+					{
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &version1.Ingress{
+							Name:      "cafe-ingress-tea-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
+						ProxySSLName: "tea-svc.default.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]version1.HealthCheck),
+			},
+		},
+		Ingress: version1.Ingress{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
+	}
+
+	return expected
+}
+
+func createExpectedConfigForCafeIngressWithUseClusterIP() version1.IngressNginxConfig {
+	upstreamZoneSize := "256k"
+
+	coffeeUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-cafe.example.com-coffee-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "coffee-svc.default.svc.cluster.local:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+
+	teaUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "tea-svc.default.svc.cluster.local:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+
+	expected := version1.IngressNginxConfig{
+		Upstreams: []version1.Upstream{
+			coffeeUpstream,
+			teaUpstream,
+		},
+		Servers: []version1.Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []version1.Location{
+					{
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						ProxySSLName:        "coffee-svc.default.svc",
+					},
+					{
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						ProxySSLName:        "tea-svc.default.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]version1.HealthCheck),
+			},
+		},
+		Ingress: version1.Ingress{
+			Name:      "cafe-ingress",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class": "nginx",
+				"nginx.org/use-cluster-ip":    "true",
+			},
+		},
+	}
+	return expected
+}
+
+func TestGenerateNginxCfgWithUseClusterIP(t *testing.T) {
+	t.Parallel()
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["nginx.org/use-cluster-ip"] = "true"
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expected := createExpectedConfigForCafeIngressWithUseClusterIP()
+
+	result, warnings := generateNginxCfg(NginxCfgParams{
+		staticParams:         &StaticConfigParams{},
+		ingEx:                &cafeIngressEx,
+		apResources:          nil,
+		dosResource:          nil,
+		isMinion:             false,
+		isPlus:               false,
+		baseCfgParams:        configParams,
+		isResolverConfigured: false,
+		isWildcardEnabled:    false,
+	})
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForLimitReq(t *testing.T) {
+	t.Parallel()
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-rate"] = "200r/s"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-key"] = "${request_uri}"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-burst"] = "100"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-no-delay"] = "true"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-delay"] = "80"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-reject-code"] = "503"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-dry-run"] = "true"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-log-level"] = "info"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-zone-size"] = "11m"
+
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expectedZones := []version1.LimitReqZone{
+		{
+			Name: "default/cafe-ingress",
+			Key:  "${request_uri}",
+			Size: "11m",
+			Rate: "200r/s",
+		},
+	}
+
+	expectedReqs := &version1.LimitReq{
+		Zone:       "default/cafe-ingress",
+		Burst:      100,
+		Delay:      80,
+		NoDelay:    true,
+		DryRun:     true,
+		LogLevel:   "info",
+		RejectCode: 503,
+	}
+
+	result, warnings := generateNginxCfg(NginxCfgParams{
+		ingEx:         &cafeIngressEx,
+		baseCfgParams: configParams,
+		staticParams:  &StaticConfigParams{},
+		isPlus:        isPlus,
+	})
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+
+	for _, server := range result.Servers {
+		for _, location := range server.Locations {
+			if !reflect.DeepEqual(location.LimitReq, expectedReqs) {
+				t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+			}
+		}
+	}
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForLimitReqDefaults(t *testing.T) {
+	t.Parallel()
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-rate"] = "200r/s"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-burst"] = "100"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-delay"] = "80"
+
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expectedZones := []version1.LimitReqZone{
+		{
+			Name: "default/cafe-ingress",
+			Key:  "${binary_remote_addr}",
+			Size: "10m",
+			Rate: "200r/s",
+		},
+	}
+
+	expectedReqs := &version1.LimitReq{
+		Zone:       "default/cafe-ingress",
+		Burst:      100,
+		Delay:      80,
+		LogLevel:   "error",
+		RejectCode: 429,
+	}
+
+	result, warnings := generateNginxCfg(NginxCfgParams{
+		ingEx:         &cafeIngressEx,
+		baseCfgParams: configParams,
+		staticParams:  &StaticConfigParams{},
+		isPlus:        isPlus,
+	})
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+
+	for _, server := range result.Servers {
+		for _, location := range server.Locations {
+			if !reflect.DeepEqual(location.LimitReq, expectedReqs) {
+				t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+			}
+		}
+	}
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForMergeableIngressesForLimitReq(t *testing.T) {
+	t.Parallel()
+	mergeableIngresses := createMergeableCafeIngress()
+
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-rate"] = "200r/s"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-key"] = "${request_uri}"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-burst"] = "100"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-delay"] = "80"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-no-delay"] = "true"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-reject-code"] = "429"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-zone-size"] = "11m"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-dry-run"] = "true"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/limit-req-log-level"] = "info"
+
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-rate"] = "400r/s"
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-burst"] = "200"
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-delay"] = "160"
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-reject-code"] = "503"
+	mergeableIngresses.Minions[1].Ingress.Annotations["nginx.org/limit-req-zone-size"] = "12m"
+
+	expectedZones := []version1.LimitReqZone{
+		{
+			Name: "default/cafe-ingress-coffee-minion",
+			Key:  "${request_uri}",
+			Size: "11m",
+			Rate: "200r/s",
+		},
+		{
+			Name: "default/cafe-ingress-tea-minion",
+			Key:  "${binary_remote_addr}",
+			Size: "12m",
+			Rate: "400r/s",
+		},
+	}
+
+	expectedReqs := map[string]*version1.LimitReq{
+		"cafe-ingress-coffee-minion": {
+			Zone:       "default/cafe-ingress-coffee-minion",
+			Burst:      100,
+			Delay:      80,
+			LogLevel:   "info",
+			RejectCode: 429,
+			NoDelay:    true,
+			DryRun:     true,
+		},
+		"cafe-ingress-tea-minion": {
+			Zone:       "default/cafe-ingress-tea-minion",
+			Burst:      200,
+			Delay:      160,
+			LogLevel:   "error",
+			RejectCode: 503,
+		},
+	}
+
+	isPlus := false
+
+	configParams := NewDefaultConfigParams(isPlus)
+
+	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
+		mergeableIngs: mergeableIngresses,
+		baseCfgParams: configParams,
+		isPlus:        isPlus,
+		staticParams:  &StaticConfigParams{},
+	})
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+
+	for _, server := range result.Servers {
+		for _, location := range server.Locations {
+			expectedLimitReq := expectedReqs[location.MinionIngress.Name]
+			if !reflect.DeepEqual(location.LimitReq, expectedLimitReq) {
+				t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", location.LimitReq, expectedLimitReq)
+			}
+		}
+	}
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
+	}
+}
+
 func createMergeableCafeIngress() *MergeableIngresses {
 	master := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{

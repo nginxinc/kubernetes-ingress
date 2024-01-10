@@ -20,10 +20,12 @@ When this happens, you should get a response from the `external-cafe` instead.
 ## Prerequisites
 
 1. Configure the NGINX Ingress Controller deployment with the following flags:
+
    ```shell
    -enable-custom-resources
    -watch-namespace=nginx-ingress,default
    ```
+
    We configure the `-watch-namespace` flag to only watch the `nginx-ingress` and `default` namespaces.
    This ensures that the NGINX Ingress Controller will treat our service in the `external-ns` namespace
    as an external service.
@@ -109,6 +111,7 @@ Run the below curl command to get a response from your application. In this exam
    ```shell
    kubectl scale deployment coffee --replicas=0
    ```
+
 2. Run the below curl command. Notice that Server name in the response is `coffee-backup-<id>` instead of `coffee-<id>`
 
    ```shell

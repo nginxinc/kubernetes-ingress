@@ -128,6 +128,7 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 	allWarnings := newWarnings()
 
 	var servers []version1.Server
+	var limitReqZones []version1.LimitReqZone
 
 	for _, rule := range p.ingEx.Ingress.Spec.Rules {
 		// skipping invalid hosts
@@ -265,6 +266,27 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 				allWarnings.Add(warnings)
 			}
 
+			if cfgParams.LimitReqRate != "" {
+				zoneName := p.ingEx.Ingress.Namespace + "/" + p.ingEx.Ingress.Name
+				loc.LimitReq = &version1.LimitReq{
+					Zone:       zoneName,
+					Burst:      cfgParams.LimitReqBurst,
+					Delay:      cfgParams.LimitReqDelay,
+					NoDelay:    cfgParams.LimitReqNoDelay,
+					DryRun:     cfgParams.LimitReqDryRun,
+					LogLevel:   cfgParams.LimitReqLogLevel,
+					RejectCode: cfgParams.LimitReqRejectCode,
+				}
+				if !limitReqZoneExists(limitReqZones, zoneName) {
+					limitReqZones = append(limitReqZones, version1.LimitReqZone{
+						Name: zoneName,
+						Key:  cfgParams.LimitReqKey,
+						Size: cfgParams.LimitReqZoneSize,
+						Rate: cfgParams.LimitReqRate,
+					})
+				}
+			}
+
 			locations = append(locations, loc)
 
 			if loc.Path == "/" {
@@ -317,6 +339,7 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 		SpiffeClientCerts:       p.staticParams.NginxServiceMesh && !cfgParams.SpiffeServerCerts,
 		DynamicSSLReloadEnabled: p.staticParams.DynamicSSLReload,
 		StaticSSLPath:           p.staticParams.StaticSSLPath,
+		LimitReqZones:           limitReqZones,
 	}, allWarnings
 }
 
@@ -511,21 +534,34 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 			endps = []string{}
 		}
 
-		for _, endp := range endps {
+		if cfg.UseClusterIP {
+			fqdn := fmt.Sprintf("%s.%s.svc.cluster.local:%d", backend.Service.Name, ingEx.Ingress.Namespace, backend.Service.Port.Number)
 			upsServers = append(upsServers, version1.UpstreamServer{
-				Address:     endp,
+				Address:     fqdn,
 				MaxFails:    cfg.MaxFails,
 				MaxConns:    cfg.MaxConns,
 				FailTimeout: cfg.FailTimeout,
 				SlowStart:   cfg.SlowStart,
 				Resolve:     isExternalNameSvc,
 			})
-		}
-		if len(upsServers) > 0 {
-			sort.Slice(upsServers, func(i, j int) bool {
-				return upsServers[i].Address < upsServers[j].Address
-			})
 			ups.UpstreamServers = upsServers
+		} else {
+			for _, endp := range endps {
+				upsServers = append(upsServers, version1.UpstreamServer{
+					Address:     endp,
+					MaxFails:    cfg.MaxFails,
+					MaxConns:    cfg.MaxConns,
+					FailTimeout: cfg.FailTimeout,
+					SlowStart:   cfg.SlowStart,
+					Resolve:     isExternalNameSvc,
+				})
+			}
+			if len(upsServers) > 0 {
+				sort.Slice(upsServers, func(i, j int) bool {
+					return upsServers[i].Address < upsServers[j].Address
+				})
+				ups.UpstreamServers = upsServers
+			}
 		}
 	}
 
@@ -596,6 +632,7 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 	var locations []version1.Location
 	var upstreams []version1.Upstream
 	healthChecks := make(map[string]version1.HealthCheck)
+	var limitReqZones []version1.LimitReqZone
 	var keepalive string
 
 	// replace master with a deepcopy because we will modify it
@@ -691,6 +728,7 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 		}
 
 		upstreams = append(upstreams, nginxCfg.Upstreams...)
+		limitReqZones = append(limitReqZones, nginxCfg.LimitReqZones...)
 	}
 
 	masterServer.HealthChecks = healthChecks
@@ -704,7 +742,17 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 		SpiffeClientCerts:       p.staticParams.NginxServiceMesh && !p.baseCfgParams.SpiffeServerCerts,
 		DynamicSSLReloadEnabled: p.staticParams.DynamicSSLReload,
 		StaticSSLPath:           p.staticParams.StaticSSLPath,
+		LimitReqZones:           limitReqZones,
 	}, warnings
+}
+
+func limitReqZoneExists(zones []version1.LimitReqZone, zoneName string) bool {
+	for _, zone := range zones {
+		if zone.Name == zoneName {
+			return true
+		}
+	}
+	return false
 }
 
 func isSSLEnabled(isSSLService bool, cfgParams ConfigParams, staticCfgParams *StaticConfigParams) bool {

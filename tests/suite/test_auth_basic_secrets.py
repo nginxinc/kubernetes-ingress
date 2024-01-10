@@ -107,6 +107,7 @@ def auth_basic_secret(
 
 
 @pytest.mark.ingresses
+@pytest.mark.basic_auth
 class TestAuthBasicSecrets:
     def test_response_code_200_and_server_name(self, auth_basic_secrets_setup, auth_basic_secret):
         req_url = f"http://{auth_basic_secrets_setup.public_endpoint.public_ip}:{auth_basic_secrets_setup.public_endpoint.port}/backend2"

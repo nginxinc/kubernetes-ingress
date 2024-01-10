@@ -121,6 +121,7 @@ def create_and_setup_namespace(kube_apis, ingress_controller_endpoint, ns_name, 
 
 
 @pytest.mark.ingresses
+@pytest.mark.watch_namespace
 @pytest.mark.parametrize(
     "ingress_controller, expected_responses",
     [

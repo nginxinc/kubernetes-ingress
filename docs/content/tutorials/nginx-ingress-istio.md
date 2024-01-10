@@ -214,7 +214,7 @@ We can see in the above output that our curl request is sent and received by NGI
 
 By default, for NGINX Ingress Controller, we populate the upstream server addresses with the endpoint IPs of the pods.
 
-When using the new `use-cluster-ip` feature, we will no populate the upstream with the `service` IP address, instead of the endpoint IP addresses.
+When using the new `use-cluster-ip` feature, we will now populate the upstream with the `service` IP address, instead of the endpoint IP addresses.
 
 In the 1.11 release, NGINX Ingress controller will only send one host header, depending on how you configure Ingress. By default NGINX Ingress Controller will send `proxy_set_header $host`. If Ingress has been configured with `action.proxy.requestHeaders` this ensures that only one set of headers will be sent to the upstream server. In summary, by setting `action.proxy.requestHeaders` in the `VirtualServer` CRD, NGINX Ingress will only send the specified headers that have been defined.
 
