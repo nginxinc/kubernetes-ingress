@@ -114,7 +114,7 @@ RUN --mount=type=bind,from=alpine-fips-3.19,target=/tmp/fips/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAF and FIPS #############################################
-FROM alpine:3.17 as alpine-nap-waf-plus-fips
+FROM alpine:3.17 as alpine-plus-nap-waf-fips
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \

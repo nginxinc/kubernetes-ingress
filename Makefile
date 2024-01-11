@@ -123,7 +123,7 @@ alpine-image-plus-fips: build ## Create Docker image for Ingress Controller (Alp
 
 .PHONY: alpine-image-nap-plus-fips
 alpine-image-nap-plus-fips: build ## Create Docker image for Ingress Controller (Alpine with NGINX Plus, NGINX App Protect WAF and FIPS)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-nap-waf-plus-fips
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus-nap-waf-fips
 
 .PHONY: debian-image-plus
 debian-image-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
