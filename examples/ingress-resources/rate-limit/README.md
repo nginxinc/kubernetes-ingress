@@ -24,7 +24,7 @@ balancing for that application using the Ingress resource with rate-limiting con
 
 ## 2. Deploy the Cafe Application
 
-    Create the coffee and the tea deployments and services:
+1. Create the coffee and the tea deployments and services:
 
     ```console
     kubectl create -f cafe.yaml
@@ -46,7 +46,7 @@ balancing for that application using the Ingress resource with rate-limiting con
 
 ## 4. Test the Application
 
-    Let's test the configuration. If you access the application at a rate that exceeds one request per second, NGINX will
+1. Let's test the configuration. If you access the application at a rate that exceeds one request per second, NGINX will
     start rejecting your requests:
 
     To get coffee:
