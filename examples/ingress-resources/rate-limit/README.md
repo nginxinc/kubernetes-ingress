@@ -24,11 +24,11 @@ balancing for that application using the Ingress resource with rate-limiting con
 
 ## 2. Deploy the Cafe Application
 
-Create the coffee and the tea deployments and services:
+    Create the coffee and the tea deployments and services:
 
-```console
-kubectl create -f cafe.yaml
-```
+    ```console
+    kubectl create -f cafe.yaml
+    ```
 
 ## 3. Configure Load Balancing
 
