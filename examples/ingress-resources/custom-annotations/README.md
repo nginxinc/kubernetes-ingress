@@ -4,7 +4,7 @@ Custom annotations enable you to quickly extend the Ingress resource to support 
 rate limiting, caching, etc.
 
 **Note**: Rate-limiting is now available with native annotation support, however this guide is still applicable for other
-Nginx functionalities.
+NGINX functionalities.
 
 Let's create a set of custom annotations to support
 [rate-limiting](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html):
