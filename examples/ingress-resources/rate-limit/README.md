@@ -64,7 +64,7 @@ balancing for that application using the Ingress resource with rate-limiting con
     ```console
     curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure
     ```
-    
+
     ```text
     <html>
     <head><title>429 Too Many Requests</title></head>
