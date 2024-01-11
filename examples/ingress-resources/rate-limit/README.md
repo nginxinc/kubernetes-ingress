@@ -1,6 +1,6 @@
 # Example
 
-In this example we deploy the NGINX or NGINX Plus Ingress Controller, a simple web application and then configure load
+In this example we deploy NGINX or NGINX Plus Ingress Controller, a simple web application and then configure load
 balancing for that application using the Ingress resource with rate-limiting configures via annotaions.
 
 ## Running the Example
