@@ -469,6 +469,10 @@ jobs:
             target: aws
             platforms: "linux/amd64"
             nap_modules: "waf,dos"
+          - image: alpine-plus-nap-waf-fips
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
 
     uses: ./.github/workflows/build-plus.yml
     with:
