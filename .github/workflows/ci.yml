@@ -135,7 +135,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@719133684c7d294116626d1344fe64f0d2ff3e9e # v0.15.2
+        uses: anchore/sbom-action/download-syft@c7f031d9249a826a082ea14c79d3b686a51d485a # v0.15.3
         if: github.ref_type == 'tag'
 
       - name: Install Cosign
@@ -185,7 +185,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@719133684c7d294116626d1344fe64f0d2ff3e9e # v0.15.2
+        uses: anchore/sbom-action/download-syft@c7f031d9249a826a082ea14c79d3b686a51d485a # v0.15.3
         if: github.ref_type == 'tag'
 
       - name: Install Cosign
@@ -368,6 +368,20 @@ jobs:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
         if: always()
+
+  smoke-results:
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    name: Final Smoke Test Results
+    needs: [smoke-tests]
+    steps:
+      - run: |
+          result="${{ needs.smoke-tests.result }}"
+          if [[ $result == "success" || $result == "skipped" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
 
   build-docker:
     name: Build Docker OSS

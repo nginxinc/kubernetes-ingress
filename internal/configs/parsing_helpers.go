@@ -239,6 +239,30 @@ func ParseSize(s string) (string, error) {
 	return "", errors.New("invalid size string")
 }
 
+var rateRegexp = regexp.MustCompile(`^(\d+)(r/s|r/m)$`)
+
+// ParseRequestRate ensures that the string value is a valid request rate in r/s or r/m and > 0
+func ParseRequestRate(s string) (string, error) {
+	s = strings.TrimSpace(s)
+
+	match := rateRegexp.FindStringSubmatch(s)
+
+	if match == nil {
+		return "", errors.New("String does not match rate-pattern: ^(\\d+)(r/s|r/m)$")
+	}
+
+	number, err := strconv.Atoi(match[1])
+	if err != nil {
+		return "", errors.New("String does not match rate-pattern")
+	}
+
+	if number <= 0 {
+		return "", errors.New("Rate must be >0")
+	}
+
+	return s, nil
+}
+
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers
 var proxyBuffersRegexp = regexp.MustCompile(`^\d+ \d+[kKmM]?$`)
 

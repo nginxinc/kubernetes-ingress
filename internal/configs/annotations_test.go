@@ -4,6 +4,9 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	networking "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestParseRewrites(t *testing.T) {
@@ -157,5 +160,58 @@ func TestMergeMasterAnnotationsIntoMinion(t *testing.T) {
 	}
 	if !reflect.DeepEqual(expectedMergedAnnotations, minionAnnotations) {
 		t.Errorf("mergeMasterAnnotationsIntoMinion returned %v, but expected %v", minionAnnotations, expectedMergedAnnotations)
+	}
+}
+
+func TestParseRateLimitAnnotations(t *testing.T) {
+	context := &networking.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "context",
+		},
+	}
+
+	if errors := parseRateLimitAnnotations(map[string]string{
+		"nginx.org/limit-req-rate":        "200r/s",
+		"nginx.org/limit-req-key":         "${request_uri}",
+		"nginx.org/limit-req-burst":       "100",
+		"nginx.org/limit-req-delay":       "80",
+		"nginx.org/limit-req-no-delay":    "true",
+		"nginx.org/limit-req-reject-code": "429",
+		"nginx.org/limit-req-zone-size":   "11m",
+		"nginx.org/limit-req-dry-run":     "true",
+		"nginx.org/limit-req-log-level":   "info",
+	}, NewDefaultConfigParams(false), context); len(errors) > 0 {
+		t.Error("Errors when parsing valid limit-req annotations")
+	}
+
+	if errors := parseRateLimitAnnotations(map[string]string{
+		"nginx.org/limit-req-rate": "200",
+	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+		t.Error("No Errors when parsing invalid request rate")
+	}
+
+	if errors := parseRateLimitAnnotations(map[string]string{
+		"nginx.org/limit-req-rate": "200r/h",
+	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+		t.Error("No Errors when parsing invalid request rate")
+	}
+
+	if errors := parseRateLimitAnnotations(map[string]string{
+		"nginx.org/limit-req-rate": "0r/s",
+	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+		t.Error("No Errors when parsing invalid request rate")
+	}
+
+	if errors := parseRateLimitAnnotations(map[string]string{
+		"nginx.org/limit-req-zone-size": "10abc",
+	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+		t.Error("No Errors when parsing invalid zone size")
+	}
+
+	if errors := parseRateLimitAnnotations(map[string]string{
+		"nginx.org/limit-req-log-level": "foobar",
+	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+		t.Error("No Errors when parsing invalid log level")
 	}
 }
