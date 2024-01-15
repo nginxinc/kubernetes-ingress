@@ -1,6 +1,5 @@
 import os
 import subprocess
-import time
 
 from kubernetes.client import CoreV1Api
 from kubernetes.stream import stream
@@ -60,7 +59,7 @@ def check_learning_status_with_admd_s(kube_apis, syslog_pod, namespace, time):
         admd_s_dic = admd_s_content_to_dic(admd_contents)
         if "name.info.learning" not in admd_s_dic:
             print("name.info.learning not found in admd_s_dic")
-            time.sleep(retry_time)
+            wait_before_test(retry_time)
             continue
         learn = admd_s_dic["name.info.learning"].replace("[", "").replace("]", "").split(",")
         learning_sas = float(learn[0])
