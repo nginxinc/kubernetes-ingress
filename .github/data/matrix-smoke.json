@@ -97,7 +97,7 @@
     },
     {
       "label": "AP_WAF 2/4",
-      "image": "debian-plus-nap",
+      "image": "alpine-plus-nap-waf-fips",
       "marker": "'appprotect_waf_policies and not appprotect_waf_policies_allow'"
     },
     {
