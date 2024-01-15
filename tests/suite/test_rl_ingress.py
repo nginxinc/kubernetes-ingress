@@ -100,17 +100,17 @@ def annotations_setup(
 
 @pytest.mark.ingresses
 @pytest.mark.annotations
-@pytest.mark.parametrize("annotations_setup", ["standard","mergeable"], indirect=True)
+@pytest.mark.parametrize("annotations_setup", ["standard", "mergeable"], indirect=True)
 class TestRateLimitIngress:
     def test_ingress_rate_limit(self, kube_apis, annotations_setup, ingress_controller_prerequisites, test_namespace):
         ensure_response_from_backend(annotations_setup.request_url, annotations_setup.ingress_host, check404=True)
         print("----------------------- Send request ----------------------")
         counter = []
-        t_end = time.perf_counter() + 2 # send requests for 2 seconds
+        t_end = time.perf_counter() + 2  # send requests for 2 seconds
         while time.perf_counter() < t_end:
             resp = requests.get(
                 annotations_setup.request_url,
                 headers={"host": annotations_setup.ingress_host},
             )
             counter.append(resp.status_code)
-        assert (counter.count(200)) <= 2 and (429 in counter) # check for only 2 200s in the list
+        assert (counter.count(200)) <= 2 and (429 in counter)  # check for only 2 200s in the list
