@@ -30,7 +30,7 @@ or build your own image using the 3.4.1 source code
 
 We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
 its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
-versions: 1.22-1.29.
+versions: 1.23-1.29.
 
 ## 3.4.0
 
