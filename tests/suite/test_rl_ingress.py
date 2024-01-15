@@ -65,7 +65,7 @@ def annotations_setup(
     ingress_controller,
     test_namespace,
 ) -> AnnotationsSetup:
-    print("------------------------- Deploy Ingress with rate-limit annotaions -----------------------------------")
+    print("------------------------- Deploy Ingress with rate-limit annotations -----------------------------------")
     src = f"{TEST_DATA}/rate-limit/ingress/{request.param}/annotations-rl-ingress.yaml"
     create_items_from_yaml(kube_apis, src, test_namespace)
     ingress_name = get_name_from_yaml(src)
@@ -103,6 +103,9 @@ def annotations_setup(
 @pytest.mark.parametrize("annotations_setup", ["standard", "mergeable"], indirect=True)
 class TestRateLimitIngress:
     def test_ingress_rate_limit(self, kube_apis, annotations_setup, ingress_controller_prerequisites, test_namespace):
+        """
+        Test if rate-limit applies with 1rps for standard and mergeable ingresses
+        """
         ensure_response_from_backend(annotations_setup.request_url, annotations_setup.ingress_host, check404=True)
         print("----------------------- Send request ----------------------")
         counter = []
