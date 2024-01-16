@@ -8,17 +8,10 @@ docs: "DOCS-616"
 ---
 ## 3.4.2
 
-%%RELEASE_DATE%%
-
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
-### <i class="fa-solid fa-rocket"></i> Features
+16 Jan 2024
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
-
-### <i class="fa-solid fa-box"></i> Helm Chart
-
-### <i class="fa-solid fa-upload"></i> Dependencies
+[4934](https://github.com/nginxinc/kubernetes-ingress/pull/4934) GCR & AWS Plus image publishing fix
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
@@ -36,7 +29,8 @@ or build your own image using the 3.4.2 source code
 
 We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
 its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
-versions: x.xx-x.xx.
+versions: 1.23-1.29.
+
 ## 3.4.1
 
 15 Jan 2024
