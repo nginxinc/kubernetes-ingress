@@ -31,11 +31,13 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       go_path: ${{ steps.vars.outputs.go_path }}
+      go_mod_cache_path: ${{ steps.vars.outputs.go_mod_cache_path }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
       latest_kindest_node_versions: ${{ steps.vars.outputs.latest_kindest_node_versions }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+      go_cache_hit: ${{ steps.go-cache.outputs.cache-hit }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -59,6 +61,7 @@ jobs:
           echo "k8s_latest=$kindest_latest" >> $GITHUB_OUTPUT
           echo "chart_version=$(yq '.version' <charts/nginx-ingress/Chart.yaml)" >> $GITHUB_OUTPUT
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
+          echo "go_mod_cache_path=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
           kindest_versions=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
             | grep -o '"name": *"[^"]*' \
             | grep -o '[^"]*$' \
@@ -74,6 +77,26 @@ jobs:
           echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
           echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
+
+      - name: Cache GoLang dependencies
+        id: go-cache
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c # v3.3.3
+        with:
+          path: ${{ steps.vars.outputs.go_mod_cache_path }}
+          key: ${{ steps.vars.outputs.go_mod_cache_path }}-${{ steps.vars.outputs.go_code_md5 }}
+          restore-keys:
+            ${{ steps.vars.outputs.go_mod_cache_path }}-
+
+      - if: steps.go-cache.outputs.cache-hit != 'true'
+        name: Install GoLang dependencies
+        run: go mod download
+
+      - name: Store Go Artifacts in Cache
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c # v3.3.3
+        with:
+          path: ${{ steps.vars.outputs.go_mod_cache_path }}
+          key: ${{ steps.vars.outputs.go_mod_cache_path }}-${{ steps.vars.outputs.go_code_md5 }}
+        if: ${{ steps.go-cache.outputs.cache-hit != 'true' }}
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
@@ -102,13 +125,25 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
       - name: Setup Golang Environment
         uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
         with:
           go-version-file: go.mod
+
+      - name: Fetch Cached Go Mod Artifacts
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c # v3.3.3
+        with:
+          path: ${{ needs.checks.outputs.go_mod_cache_path }}
+          key: ${{ needs.checks.outputs.go_mod_cache_path }}-${{ needs.checks.outputs.go_code_md5 }}
+          restore-keys:
+            ${{ needs.checks.outputs.go_mod_cache_path }}-
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
       - name: Run Tests
         run: make cover
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
         with:
@@ -183,6 +218,15 @@ jobs:
         uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
         with:
           go-version-file: go.mod
+
+      - name: Fetch Cached Go Mod Artifacts
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c # v3.3.3
+        with:
+          path: ${{ needs.checks.outputs.go_mod_cache_path }}
+          key: ${{ needs.checks.outputs.go_mod_cache_path }}-${{ needs.checks.outputs.go_code_md5 }}
+          restore-keys:
+            ${{ needs.checks.outputs.go_mod_cache_path }}-
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Download Syft
         uses: anchore/sbom-action/download-syft@c7f031d9249a826a082ea14c79d3b686a51d485a # v0.15.3
