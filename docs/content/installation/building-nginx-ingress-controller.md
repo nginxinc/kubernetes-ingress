@@ -41,10 +41,10 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
     cd kubernetes-ingress
     ```
 
-    For instance if you want to clone version v3.4.1, the commands to run would be:
+    For instance if you want to clone version v3.4.2, the commands to run would be:
 
     ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.4.1
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.4.2
     cd kubernetes-ingress
     ```
 
@@ -150,7 +150,7 @@ Key targets include:
 | _ubi-image-plus_              | Builds a UBI-based image with NGINX Plus for [OpenShift](https://www.openshift.com/) clusters.                                                                                                               |
 | _ubi-image-nap-plus_          | Builds a UBI-based image with NGINX Plus and the [NGINX App Protect WAF](/nginx-app-protect/) module for [OpenShift](https://www.openshift.com/) clusters.                                                   |
 | _ubi-image-dos-plus_          | Builds a UBI-based image with NGINX Plus and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [OpenShift](https://www.openshift.com/) clusters.                                               |
-| _ubi-image-nap-dos-plus_      | <p>Builds a UBI-based image with NGINX Plus, [NGINX App Protect WAF](/nginx-app-protect/) and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [OpenShift](https://www.openshift.com/) clusters.</p> <p> **Important**: Save your RHEL organization and activation keys in a file named _rhel_license_ at the project root.</p> <p> For instance:</p> <pre>RHEL_ORGANIZATION=1111111<br />RHEL_ACTIVATION_KEY=your-key</pre>|
+| _ubi-image-nap-dos-plus_      | <p>Builds a UBI-based image with NGINX Plus, [NGINX App Protect WAF](/nginx-app-protect/) and the [NGINX App Protect DoS](/nginx-app-protect-dos/) module for [OpenShift](https://www.openshift.com/) clusters.</p> <p> **Important**: Save your RHEL organization and activation keys in a file named _rhel_license_ at the project root.</p> <p> For instance:</p> <pre>RHEL_ORGANIZATION=1.1.211<br />RHEL_ACTIVATION_KEY=your-key</pre>|
 {{</bootstrap-table>}}
 
 ### Additional useful targets {#other-makefile-targets}

@@ -79,14 +79,14 @@ To install the chart with the release name my-release (my-release is the name th
 For NGINX:
 
 ```console
-helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.1
+helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2
 ```
 
 For NGINX Plus: (assuming you have pushed the Ingress Controller image `nginx-plus-ingress` to your private registry
 `myregistry.example.com`)
 
 ```console
-helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.1 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
 ```
 
 This will install the latest `edge` version of the Ingress Controller from GitHub Container Registry. If you prefer to
@@ -101,7 +101,7 @@ CRDs](#upgrading-the-crds).
 To upgrade the release `my-release`:
 
 ```console
-helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.1
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2
 ```
 
 ### Uninstalling the Chart
@@ -142,7 +142,7 @@ upgrading/deleting the CRDs.
 1. Pull the chart sources:
 
     ```console
-    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.1
+    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.2
     ```
 
 2. Change your working directory to nginx-ingress:
@@ -228,7 +228,7 @@ The steps you should follow depend on the Helm release name:
     Selector:               app=nginx-ingress-nginx-ingress
     ```
 
-2. Checkout the latest available tag using `git checkout v3.4.1`
+2. Checkout the latest available tag using `git checkout v3.4.2`
 
 3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
@@ -280,7 +280,7 @@ reviewing its events:
     Selector:               app=<helm_release_name>-nginx-ingress
     ```
 
-2. Checkout the latest available tag using `git checkout v3.4.1`
+2. Checkout the latest available tag using `git checkout v3.4.2`
 
 3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
@@ -347,7 +347,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.logLevel` | The log level of the Ingress Controller. | 1 |
 |`controller.image.digest` | The image digest of the Ingress Controller. | None |
 |`controller.image.repository` | The image repository of the Ingress Controller. | nginx/nginx-ingress |
-|`controller.image.tag` | The tag of the Ingress Controller image. | 3.4.1 |
+|`controller.image.tag` | The tag of the Ingress Controller image. | 3.4.2 |
 |`controller.image.pullPolicy` | The pull policy for the Ingress Controller image. | IfNotPresent |
 |`controller.lifecycle` | The lifecycle of the Ingress Controller pods. | {} |
 |`controller.customConfigMap` | The name of the custom ConfigMap used by the Ingress Controller. If set, then the default config is ignored. | "" |
