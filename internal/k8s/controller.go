@@ -851,6 +851,32 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 	svcName := endpointSlice.Labels["kubernetes.io/service-name"]
 	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, svcName)
 
+	// check if this is the endpointslice for the controller's own service
+	if lbc.statusUpdater.namespace == endpointSlice.Namespace && lbc.statusUpdater.externalServiceName == svcName {
+		previous := lbc.configurator.GetIngressControllerReplicas()
+		current := countReadyEndpoints(*endpointSlice)
+		found := false
+
+		if current != previous {
+			// number of active endpoints changed. Update configuration of all ingresses that depend on it
+			lbc.configurator.SetIngressControllerReplicas(len(endpointSlice.Endpoints))
+
+			resources := lbc.configuration.FindResourcesUsingRatelimitScaling(endpointSlice.Namespace)
+			resourceExes := lbc.createExtendedResources(resources)
+
+			for _, ingress := range resourceExes.IngressExes {
+				found = true
+				lbc.configurator.AddOrUpdateIngress(ingress)
+			}
+			for _, ingress := range resourceExes.MergeableIngresses {
+				found = true
+				lbc.configurator.AddOrUpdateMergeableIngress(ingress)
+			}
+		}
+
+		return found
+	}
+
 	resourceExes := lbc.createExtendedResources(svcResource)
 
 	if len(resourceExes.IngressExes) > 0 {
@@ -963,6 +989,17 @@ func (lbc *LoadBalancerController) mergeableIngressRequiresEndpointsUpdate(merge
 	}
 
 	return lbc.ingressRequiresEndpointsUpdate(masterIngress, serviceName)
+}
+
+// countReadyEndpoints returns the number of ready endpoints in this endpointslice
+func countReadyEndpoints(slice discovery_v1.EndpointSlice) int {
+	count := 0
+	for _, endpoint := range slice.Endpoints {
+		if endpoint.Conditions.Ready != nil && *endpoint.Conditions.Ready {
+			count = count + 1
+		}
+	}
+	return count
 }
 
 func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) configs.ExtendedResources {

@@ -136,6 +136,7 @@ type Configurator struct {
 	isLatencyMetricsEnabled   bool
 	isReloadsEnabled          bool
 	isDynamicSSLReloadEnabled bool
+	ingressControllerReplicas int
 }
 
 // ConfiguratorParams is a collection of parameters used for the
@@ -391,15 +392,16 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (bool, Warnings, e
 
 	isMinion := false
 	nginxCfg, warnings := generateNginxCfg(NginxCfgParams{
-		staticParams:         cnf.staticCfgParams,
-		ingEx:                ingEx,
-		apResources:          apResources,
-		dosResource:          dosResource,
-		isMinion:             isMinion,
-		isPlus:               cnf.isPlus,
-		baseCfgParams:        cnf.cfgParams,
-		isResolverConfigured: cnf.IsResolverConfigured(),
-		isWildcardEnabled:    cnf.isWildcardEnabled,
+		staticParams:              cnf.staticCfgParams,
+		ingEx:                     ingEx,
+		apResources:               apResources,
+		dosResource:               dosResource,
+		isMinion:                  isMinion,
+		isPlus:                    cnf.isPlus,
+		baseCfgParams:             cnf.cfgParams,
+		isResolverConfigured:      cnf.IsResolverConfigured(),
+		isWildcardEnabled:         cnf.isWildcardEnabled,
+		ingressControllerReplicas: cnf.ingressControllerReplicas,
 	})
 
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
@@ -454,14 +456,15 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	}
 
 	nginxCfg, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
-		mergeableIngs:        mergeableIngs,
-		apResources:          apResources,
-		dosResource:          dosResource,
-		baseCfgParams:        cnf.cfgParams,
-		isPlus:               cnf.isPlus,
-		isResolverConfigured: cnf.IsResolverConfigured(),
-		staticParams:         cnf.staticCfgParams,
-		isWildcardEnabled:    cnf.isWildcardEnabled,
+		mergeableIngs:             mergeableIngs,
+		apResources:               apResources,
+		dosResource:               dosResource,
+		baseCfgParams:             cnf.cfgParams,
+		isPlus:                    cnf.isPlus,
+		isResolverConfigured:      cnf.IsResolverConfigured(),
+		staticParams:              cnf.staticCfgParams,
+		isWildcardEnabled:         cnf.isWildcardEnabled,
+		ingressControllerReplicas: cnf.ingressControllerReplicas,
 	})
 
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
@@ -2008,4 +2011,12 @@ func (cnf *Configurator) DynamicSSLReloadEnabled() bool {
 // UpsertSplitClientsKeyVal upserts a key-value pair in a keyzal zone for weight changes without reloads.
 func (cnf *Configurator) UpsertSplitClientsKeyVal(zoneName, key, value string) {
 	cnf.nginxManager.UpsertSplitClientsKeyVal(zoneName, key, value)
+}
+
+func (cnf *Configurator) GetIngressControllerReplicas() int {
+	return cnf.ingressControllerReplicas
+}
+
+func (cnf *Configurator) SetIngressControllerReplicas(replicas int) {
+	cnf.ingressControllerReplicas = replicas
 }

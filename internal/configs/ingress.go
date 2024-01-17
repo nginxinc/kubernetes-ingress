@@ -78,16 +78,17 @@ type MergeableIngresses struct {
 // NginxCfgParams is a collection of parameters
 // used by generateNginxCfg() and generateNginxCfgForMergeableIngresses()
 type NginxCfgParams struct {
-	staticParams         *StaticConfigParams
-	ingEx                *IngressEx
-	mergeableIngs        *MergeableIngresses
-	apResources          *AppProtectResources
-	dosResource          *appProtectDosResource
-	baseCfgParams        *ConfigParams
-	isMinion             bool
-	isPlus               bool
-	isResolverConfigured bool
-	isWildcardEnabled    bool
+	staticParams              *StaticConfigParams
+	ingEx                     *IngressEx
+	mergeableIngs             *MergeableIngresses
+	apResources               *AppProtectResources
+	dosResource               *appProtectDosResource
+	baseCfgParams             *ConfigParams
+	isMinion                  bool
+	isPlus                    bool
+	isResolverConfigured      bool
+	isWildcardEnabled         bool
+	ingressControllerReplicas int
 }
 
 //nolint:gocyclo
@@ -278,11 +279,15 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 					RejectCode: cfgParams.LimitReqRejectCode,
 				}
 				if !limitReqZoneExists(limitReqZones, zoneName) {
+					rate := cfgParams.LimitReqRate
+					if cfgParams.LimitReqScale && p.ingressControllerReplicas > 0 {
+						rate = scaleRatelimit(rate, p.ingressControllerReplicas)
+					}
 					limitReqZones = append(limitReqZones, version1.LimitReqZone{
 						Name: zoneName,
 						Key:  cfgParams.LimitReqKey,
 						Size: cfgParams.LimitReqZoneSize,
-						Rate: cfgParams.LimitReqRate,
+						Rate: rate,
 					})
 				}
 			}
@@ -753,4 +758,31 @@ func GetBackendPortAsString(port networking.ServiceBackendPort) string {
 		return port.Name
 	}
 	return strconv.Itoa(int(port.Number))
+}
+
+// scaleRatelimit divides a given ratelimit by the given number of replicas, adjusting the unit and flooring the result as needed
+func scaleRatelimit(ratelimit string, replicas int) string {
+	if replicas < 1 {
+		return ratelimit
+	}
+
+	match := rateRegexp.FindStringSubmatch(ratelimit)
+	if match == nil {
+		return ratelimit
+	}
+
+	number, err := strconv.Atoi(match[1])
+	if err != nil {
+		return ratelimit
+	}
+
+	numberf := float64(number) / float64(replicas)
+
+	unit := match[2]
+	if unit == "r/s" && numberf < 1 {
+		numberf = numberf * 60
+		unit = "r/m"
+	}
+
+	return strconv.Itoa(int(numberf)) + unit
 }
