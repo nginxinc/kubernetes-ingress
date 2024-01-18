@@ -32,6 +32,25 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Output Variables
+        id: vars
+        run: |
+          echo "go_mod_cache_path=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+          echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+
+      - name: Cache GoLang dependencies
+        id: go-cache
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c # v3.3.3
+        with:
+          path: ${{ steps.vars.outputs.go_mod_cache_path }}
+          key: ${{ steps.vars.outputs.go_mod_cache_path }}-${{ steps.vars.outputs.go_code_md5 }}
+          restore-keys:
+            ${{ steps.vars.outputs.go_mod_cache_path }}-
+
+      - if: steps.go-cache.outputs.cache-hit != 'true'
+        name: Install GoLang dependencies
+        run: go mod download
+
       - name: Lint Code
         uses: golangci/golangci-lint-action@3a919529898de77ec3da873e3063ca4b10e7f5cc # v3.7.0
         with:

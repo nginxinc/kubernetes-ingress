@@ -37,7 +37,6 @@ jobs:
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
-      go_cache_hit: ${{ steps.go-cache.outputs.cache-hit }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
