@@ -1,8 +1,6 @@
 name: Build Test Image
 
 on:
-  schedule:
-    - cron: "0 03 * * *" # run every day at 03:00 UTC
   workflow_dispatch:
     inputs:
       force:
