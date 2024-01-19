@@ -359,6 +359,8 @@ jobs:
           nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
           nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
+          gcr-workload-identity-secret: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          gcr-service-account-secret: ${{ secrets.GCR_SERVICE_ACCOUNT }}
           rhel-license: ${{ contains(matrix.images.image, 'ubi') && secrets.RHEL_LICENSE || '' }}
           go-md5: ${{ needs.checks.outputs.go_code_md5 }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
