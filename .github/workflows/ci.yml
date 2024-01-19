@@ -361,6 +361,7 @@ jobs:
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
           rhel-license: ${{ contains(matrix.images.image, 'ubi') && secrets.RHEL_LICENSE || '' }}
           go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+          test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
 
       - name: Upload Test Results
         uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # v4.1.0
