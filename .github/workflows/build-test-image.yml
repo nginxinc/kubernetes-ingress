@@ -60,6 +60,5 @@ jobs:
           tags: |
             gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') }}
             gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:latest
-          load: true
           pull: true
           push: true

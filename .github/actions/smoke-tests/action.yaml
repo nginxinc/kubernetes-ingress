@@ -128,7 +128,6 @@ runs:
         cache-from: type=gha,scope=test-runner
         tags: ${{ inputs.test-image }}
         pull: true
-        load: true
         push: true
       if: steps.check-image.outcome == 'failure'
 
