@@ -9,9 +9,6 @@ on:
         description: "Force rebuild of test image"
         required: false
         default: "false"
-  push:
-    branches:
-      - mount-test-dir-on-smoke-tests
 
 defaults:
   run:
