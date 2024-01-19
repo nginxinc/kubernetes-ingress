@@ -34,7 +34,7 @@ def get_result_in_conf_with_retry(
     retry = 0
     result_conf = ""
     while (expected_conf_line not in result_conf) and retry < 5:
-        wait_before_test()
+        wait_before_test(5)
         result_conf = get_vs_nginx_template_conf(
             kube_apis_v1,
             vs_namespace,
@@ -79,7 +79,7 @@ def vs_externalname_setup(
         f"{TEST_DATA}/virtual-server-backup-service/nginx-config.yaml",
     )
     external_svc = create_service_from_yaml(kube_apis.v1, virtual_server_setup.namespace, external_svc_src)
-    wait_before_test(2)
+    wait_before_test(5)
     ensure_connection_to_public_endpoint(
         virtual_server_setup.public_endpoint.public_ip,
         virtual_server_setup.public_endpoint.port,
@@ -148,7 +148,7 @@ class TestVirtualServerWithBackupService:
             vs_backup_service,
             virtual_server_setup.namespace,
         )
-        wait_before_test()
+        wait_before_test(5)
 
         print("\nStep 2: Get response from VS with backup service")
         print(virtual_server_setup.backend_1_url + "\n")
@@ -195,7 +195,7 @@ class TestVirtualServerWithBackupService:
             vs_backup_service,
             virtual_server_setup.namespace,
         )
-        wait_before_test()
+        wait_before_test(10)
 
         print("\nStep 2: Get response from VS with backup service")
         print(virtual_server_setup.backend_1_url + "\n")
@@ -224,7 +224,7 @@ class TestVirtualServerWithBackupService:
 
         print("\nStep 3: Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
-        wait_before_test()
+        wait_before_test(10)
 
         print("\nStep 4: Get response from backup service")
         res_from_backup = make_request(
@@ -251,7 +251,7 @@ class TestVirtualServerWithBackupService:
 
         print("\nStep 5: Scale deployment back to 2 replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 2)
-        wait_before_test()
+        wait_before_test(10)
 
         print("\nStep 6: Get response")
         res_after_scaleup = make_request(
@@ -295,7 +295,7 @@ class TestVirtualServerWithBackupService:
             vs_backup_service,
             virtual_server_setup.namespace,
         )
-        wait_before_test()
+        wait_before_test(5)
 
         print("\nStep 2: Get response from VS with backup service")
         print(virtual_server_setup.backend_1_url + "\n")
@@ -324,7 +324,7 @@ class TestVirtualServerWithBackupService:
 
         print("\nStep 3: Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
-        wait_before_test()
+        wait_before_test(5)
 
         print("\nStep 4: Get response from backup service")
         res_from_backup = make_request(
@@ -351,7 +351,7 @@ class TestVirtualServerWithBackupService:
 
         print("\nStep 5: Delete backup service by deleting the namespace")
         delete_namespace(kube_apis.v1, "external-ns")
-        wait_before_test()
+        wait_before_test(5)
 
         print("\nStep 6: Get response")
         res_after_delete = make_request(
