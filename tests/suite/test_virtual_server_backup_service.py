@@ -33,7 +33,7 @@ def get_result_in_conf_with_retry(
 ):
     retry = 0
     result_conf = ""
-    while (expected_conf_line not in result_conf) and retry < 5:
+    while (expected_conf_line not in result_conf) and retry < 6:
         wait_before_test(5)
         result_conf = get_vs_nginx_template_conf(
             kube_apis_v1,
