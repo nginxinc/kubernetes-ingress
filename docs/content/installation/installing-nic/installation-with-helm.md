@@ -42,6 +42,14 @@ To upgrade the CRDs, pull the chart sources as described in [Pulling the Chart](
 kubectl apply -f crds/
 ```
 
+Alternatively, CRDs can be upgraded without pulling the chart by running:
+
+```console
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.2/deploy/crds.yaml
+```
+
+In the above command, `v3.4.2` represents the version of NGINX Ingress Controller release rather than the Helm chart version.
+
 {{<note>}}The following warning is expected and can be ignored: `Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply`.
 
 Make sure to check the [release notes](https://www.github.com/nginxinc/kubernetes-ingress/releases) for a new release for any special upgrade procedures.
