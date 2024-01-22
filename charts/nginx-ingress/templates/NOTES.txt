@@ -1,4 +1,4 @@
-The NGINX Ingress Controller {{ .Chart.AppVersion }} has been installed.
+NGINX Ingress Controller {{ .Chart.AppVersion }} has been installed.
 
 For release notes for this version please see: https://docs.nginx.com/nginx-ingress-controller/releases/
 
