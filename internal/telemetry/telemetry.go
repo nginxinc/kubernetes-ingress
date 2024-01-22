@@ -1,62 +1,113 @@
+// Package telemetry provides functionality for collecting and exporting NIC telemetry data.
 package telemetry
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-const (
-	jitterFactor = 0.1
-	sliding      = true
-)
-
-// Reporter is an interface that represents a telemetry style reporter
-type Reporter interface {
-	Start(ctx context.Context)
+// Export takes context and data and sends it to the Otel endpoint.
+func Export(_ context.Context, _ TraceData) error {
+	// Note: exporting functionality will be implemented in a separate module.
+	return nil
 }
 
-// TraceTelemetryReporterConfig contains configuration data for the Telemetry Reporter
-type TraceTelemetryReporterConfig struct {
-	Data            Data
-	Exporter        Exporter
-	ReportingPeriod time.Duration
+// TraceData holds collected NIC telemetry data.
+type TraceData struct {
+	// Numer of VirtualServers
+	VSCount int
+	// Number of TransportServers
+	TSCount int
+
+	// TODO
+	// Add more fields for NIC data points
 }
 
-// TraceTelemetryReporter reports telemety data that will be exported as a trace
-type TraceTelemetryReporter struct {
-	config TraceTelemetryReporterConfig
-}
+// Option is a functional option used for configuring TraceReporter.
+type Option func(*Collector) error
 
-// NewTelemetryReporter creates a new TraceTelemetryReporter
-func NewTelemetryReporter(config TraceTelemetryReporterConfig) *TraceTelemetryReporter {
-	return &TraceTelemetryReporter{
-		config: config,
+// WithTimePeriod configures reporting time on TraceReporter.
+func WithTimePeriod(period string) Option {
+	return func(c *Collector) error {
+		d, err := time.ParseDuration(period)
+		if err != nil {
+			return err
+		}
+		c.Period = d
+		return nil
 	}
+}
+
+// Collector is NIC telemetry data collector.
+type Collector struct {
+	Period time.Duration
+
+	mu   sync.Mutex
+	Data TraceData
+}
+
+// NewCollector takes 0 or more options and creates a new TraceReporter.
+// If no options are provided, NewReporter returns TraceReporter
+// configured to gather data every 24h.
+func NewCollector(opts ...Option) (*Collector, error) {
+	c := Collector{
+		Period: 24 * time.Hour,
+		Data:   TraceData{},
+	}
+	for _, o := range opts {
+		if err := o(&c); err != nil {
+			return nil, err
+		}
+	}
+	return &c, nil
 }
 
 // Start starts the telemetry reporting job
-func (t *TraceTelemetryReporter) Start(ctx context.Context) {
-	wait.JitterUntilWithContext(ctx, t.report, t.config.ReportingPeriod, jitterFactor, sliding)
+func (c *Collector) Start(ctx context.Context) {
+	wait.JitterUntilWithContext(ctx, c.Collect, c.Period, 0.1, true)
 }
 
-func (t *TraceTelemetryReporter) report(ctx context.Context) {
-	glog.V(3).Infof("Collecting Telemetry Data")
-	// Gather data here
-	t.setVirtualServerCount()
-	t.setTransportServerCount()
+// BuildReport takes context and builds report from gathered telemetry data.
+func (c *Collector) BuildReport(_ context.Context) error {
+	dt := TraceData{}
 
-	if err := t.config.Exporter.Export(ctx, t.config.Data); err != nil {
-		glog.Errorf("Error exporting telemetry data: %v", err)
+	// TODO: Implement handling and logging errors for each collected data point
+
+	c.mu.Lock()
+	c.Data = dt
+	c.mu.Unlock()
+	return nil
+}
+
+// Collect runs data builder.
+func (c *Collector) Collect(ctx context.Context) {
+	if err := c.BuildReport(ctx); err != nil {
+		glog.Errorf("error exporting telemetry data: %v", err)
 	}
 }
 
-func (t *TraceTelemetryReporter) setVirtualServerCount() {
+// GetVSCount returns number of VirtualServers in watched namespaces.
+//
+// Note: this is a placeholder function.
+func (c *Collector) GetVSCount() int {
 	// Placeholder function
+	return 0
 }
 
-func (t *TraceTelemetryReporter) setTransportServerCount() {
+// GetTSCount returns number of TransportServers in watched namespaces.
+func (c *Collector) GetTSCount() int {
 	// Placeholder function
+	return 0
+}
+
+// Run starts running NIC Telemetry Collector.
+//
+// This is a placeholder for implementing collector runner.
+func (c *Collector) Run(ctx context.Context) {
+	fn := func(ctx context.Context) {}
+	wait.JitterUntilWithContext(ctx, fn, c.Period, 0.1, true)
 }

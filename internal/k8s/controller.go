@@ -163,7 +163,7 @@ type LoadBalancerController struct {
 	enableBatchReload             bool
 	isIPV6Disabled                bool
 	namespaceWatcherController    cache.Controller
-	telemetryReporter             telemetry.Reporter
+	telemetryCollector            *telemetry.Collector
 	telemetryChan                 chan struct{}
 }
 
@@ -277,21 +277,16 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
 	}
 
+	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
-		// Placeholder exporter.
-		exporter := &telemetry.LogExporter{}
 		lbc.telemetryChan = make(chan struct{})
-		period, err := time.ParseDuration(input.TelemetryReportPeriod)
+		collector, err := telemetry.NewCollector(
+			telemetry.WithTimePeriod(input.TelemetryReportPeriod),
+		)
 		if err != nil {
-			glog.Fatalf("Error parsing duration for telemetry: %v", err)
+			glog.Fatalf("failed to initialize telemetry collector: %v", err)
 		}
-
-		config := telemetry.TraceTelemetryReporterConfig{
-			Exporter:        exporter,
-			ReportingPeriod: period,
-			Data:            telemetry.Data{},
-		}
-		lbc.telemetryReporter = telemetry.NewTelemetryReporter(config)
+		lbc.telemetryCollector = collector
 	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
@@ -711,11 +706,11 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.leaderElector.Run(lbc.ctx)
 	}
 
-	if lbc.telemetryReporter != nil {
+	if lbc.telemetryCollector != nil {
 		go func(ctx context.Context) {
 			select {
 			case <-lbc.telemetryChan:
-				lbc.telemetryReporter.Start(lbc.ctx)
+				lbc.telemetryCollector.Run(lbc.ctx)
 			case <-ctx.Done():
 				return
 			}

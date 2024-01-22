@@ -1,30 +1,47 @@
-package telemetry
+package telemetry_test
 
 import (
-	"context"
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 )
 
-type MockTelemetryReport struct {
-	data Data
-}
-
-func (m *MockTelemetryReport) Start(_ context.Context) {
-	m.data = Data{}
-}
-
-func TestCollectData(t *testing.T) {
+func TestCreateNewDefaultCollector(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	mtr := &MockTelemetryReport{
-		Data{},
+	c, err := telemetry.NewCollector()
+	if err != nil {
+		t.Fatal(err)
 	}
-	expectedData := Data{}
-	mtr.Start(ctx)
 
-	if !reflect.DeepEqual(mtr.data, expectedData) {
-		t.Fatalf("expected %v, but got %v", expectedData, mtr.data)
+	want := 24.0
+	got := c.Period.Hours()
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+
+	wantData := telemetry.TraceData{}
+	gotData := c.Data
+
+	if !cmp.Equal(wantData, gotData) {
+		t.Error(cmp.Diff(wantData, gotData))
+	}
+}
+
+func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
+	t.Parallel()
+
+	c, err := telemetry.NewCollector(telemetry.WithTimePeriod("4h"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := 4.0
+	got := c.Period.Hours()
+
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
