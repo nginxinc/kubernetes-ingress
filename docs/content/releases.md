@@ -6,6 +6,57 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## 3.4.2
+
+16 Jan 2024
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+[4934](https://github.com/nginxinc/kubernetes-ingress/pull/4934) GCR & AWS Plus image publishing fix
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.4.2 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.4.2),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.4.2 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.4.2 source code
+- For Helm, use version 1.1.2 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.23-1.29.
+
+## 3.4.1
+
+15 Jan 2024
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+[4886](https://github.com/nginxinc/kubernetes-ingress/pull/4886) Update N+ to R31
+[4886](https://github.com/nginxinc/kubernetes-ingress/pull/4886) Bump Go dependencies.
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.4.1 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.4.1),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.4.1 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.4.1 source code
+- For Helm, use version 1.1.1 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.23-1.29.
+
 ## 3.4.0
 
 19 Dec 2023
