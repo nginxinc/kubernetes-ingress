@@ -17,10 +17,7 @@ import (
 )
 
 const (
-	dynamicSSLReloadParam           = "ssl-dynamic-reload"
-	enableTelemetryReportingParam   = "enable-telemetry-reporting"
-	telemetryReportingPeriodParam   = "telemetry-reporting-period"
-	defaultTelemetryReportingPeriod = "24h"
+	dynamicSSLReloadParam = "ssl-dynamic-reload"
 )
 
 var (
@@ -205,9 +202,8 @@ var (
 
 	enableDynamicSSLReload = flag.Bool(dynamicSSLReloadParam, true, "Enable reloading of SSL Certificates without restarting the NGINX process.")
 
-	enableTelemetryReporting = flag.Bool(enableTelemetryReportingParam, true, "Enable gathering and reporting of product related telemetry.")
-
-	telemetryReportingPeriod = flag.String(telemetryReportingPeriodParam, defaultTelemetryReportingPeriod, "Period at which product telemetry is reported.")
+	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
+	telemetryReportingPeriod = flag.String("telemetry-reporting-period", "24h", "Period at which product telemetry is reported.")
 
 	startupCheckFn func() error
 )
