@@ -49,14 +49,16 @@ if [ -z "${helm_chart_version}" ]; then
 fi
 
 current_ic_version=$(yq '.appVersion' <"${HELM_CHART_PATH}/Chart.yaml")
+escaped_current_ic_version=$(printf '%s' "$current_ic_version" | sed -e 's/\./\\./g');
 current_helm_chart_version=$(yq '.version' <"${HELM_CHART_PATH}/Chart.yaml")
+escaped_current_helm_chart_version=$(printf '%s' "$current_helm_chart_version" | sed -e 's/\./\\./g');
 
 echo "Updating versions: "
 echo "ic_version: ${current_ic_version} -> ${ic_version}"
 echo "helm_chart_version: ${current_helm_chart_version} -> ${helm_chart_version}"
 
-regex_ic="s#$current_ic_version#$ic_version#g"
-regex_helm="s#$current_helm_chart_version#$helm_chart_version#g"
+regex_ic="s#$escaped_current_ic_version#$ic_version#g"
+regex_helm="s#$escaped_current_helm_chart_version#$helm_chart_version#g"
 
 mv "${HELM_CHART_PATH}/values.schema.json" "${TMPDIR}/"
 jq --arg version "${ic_version}" \
