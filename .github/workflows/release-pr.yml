@@ -12,7 +12,7 @@ on:
         required: true
         default: "0.0.0"
       k8s_versions:
-        description: "Support Kubernetes versions for this release"
+        description: "Kubernetes versions this release has been tested on"
         required: true
         default: "x.xx-x.xx"
       release_date:
