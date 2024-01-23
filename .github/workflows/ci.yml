@@ -130,19 +130,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Golang Environment
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-        with:
-          go-version-file: go.mod
-
-      - name: Download Syft
-        uses: anchore/sbom-action/download-syft@24b0d5238516480139aa8bc6f92eeb7b54a9eb0a # v0.15.5
-        if: github.ref_type == 'tag'
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@9614fae9e5c5eddabb09f90a270fcb487c9f7149 # v3.3.0
-        if: github.ref_type == 'tag'
-
       - name: Create/Update Draft
         uses: lucacome/draft-release@52f02d1a69b61568e54ab5cf86ce91503bac4066 # v1.0.2
         id: release-notes
