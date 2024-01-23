@@ -66,6 +66,7 @@ $ curl https://private-registry.nginx.com/v2/nginx-ic/nginx-plus-ingress/tags/li
   "name": "nginx-ic/nginx-plus-ingress",
   "tags": [
     "3.4.0-alpine",
+    "3.4.0-alpine-fips",
     "3.4.0-ubi",
     "3.4.0"
   ]
@@ -75,6 +76,7 @@ $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tag
 {
   "name": "nginx-ic-nap/nginx-plus-ingress",
   "tags": [
+    "3.4.0-alpine-fips",
     "3.4.0-ubi",
     "3.4.0"
   ]
