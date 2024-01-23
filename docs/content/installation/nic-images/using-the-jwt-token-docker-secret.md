@@ -161,6 +161,7 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
         "3.4.0-alpine",
+        "3.4.0-alpine-fips",
         "3.4.0-ubi",
         "3.4.0"
     ]
@@ -170,6 +171,7 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
+        "3.4.0-alpine-fips",
         "3.4.0-ubi",
         "3.4.0"
     ]
