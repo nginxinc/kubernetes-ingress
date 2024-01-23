@@ -2,7 +2,6 @@
 {{- range $u := .Upstreams }}
 upstream {{ $u.Name }} {
     zone {{ $u.Name }} 256k;
-
     {{- if $u.LoadBalancingMethod }}
     {{ $u.LoadBalancingMethod }};
     {{- end }}
