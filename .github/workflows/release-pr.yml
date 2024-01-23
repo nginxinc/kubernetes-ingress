@@ -11,6 +11,14 @@ on:
         description: "Helm version to release"
         required: true
         default: "0.0.0"
+      k8s_versions:
+        description: "Kubernetes versions this release has been tested on"
+        required: true
+        default: "x.xx-x.xx"
+      release_date:
+        description: "Date for this release"
+        required: true
+        default: "%d %b %Y"
 
 defaults:
   run:
@@ -39,7 +47,9 @@ jobs:
           token: ${{ secrets.NGINX_PAT }}
 
       - name: Replace
-        run:  .github/scripts/release-version-update.sh ${{ github.event.inputs.version }} ${{ github.event.inputs.helm_version }}
+        run: |
+          .github/scripts/release-version-update.sh ${{ github.event.inputs.version }} ${{ github.event.inputs.helm_version }}
+          .github/scripts/release-notes-update.sh ${{ github.event.inputs.version }} ${{ github.event.inputs.helm_version }} "${{ github.event.inputs.k8s_versions }}" "${{ github.event.inputs.release_date }}"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5.0.2
