@@ -66,27 +66,26 @@ func NewCollector(opts ...Option) (*Collector, error) {
 	return &c, nil
 }
 
-// Start starts the telemetry reporting job
-func (c *Collector) Start(ctx context.Context) {
-	wait.JitterUntilWithContext(ctx, c.Collect, c.Period, 0.1, true)
-}
-
 // BuildReport takes context and builds report from gathered telemetry data.
 func (c *Collector) BuildReport(_ context.Context) error {
+	glog.V(3).Info("Building telemetry report")
 	dt := TraceData{}
 
 	// TODO: Implement handling and logging errors for each collected data point
 
 	c.mu.Lock()
 	c.Data = dt
+
+	glog.V(3).Infof("%+v", c.Data)
 	c.mu.Unlock()
 	return nil
 }
 
 // Collect runs data builder.
 func (c *Collector) Collect(ctx context.Context) {
+	glog.V(3).Info("Collecting telemetry data")
 	if err := c.BuildReport(ctx); err != nil {
-		glog.Errorf("error exporting telemetry data: %v", err)
+		glog.Errorf("Error exporting telemetry data: %v", err)
 	}
 }
 
@@ -99,6 +98,8 @@ func (c *Collector) GetVSCount() int {
 }
 
 // GetTSCount returns number of TransportServers in watched namespaces.
+//
+// Note: this is a placeholder function.
 func (c *Collector) GetTSCount() int {
 	// Placeholder function
 	return 0
@@ -108,6 +109,5 @@ func (c *Collector) GetTSCount() int {
 //
 // This is a placeholder for implementing collector runner.
 func (c *Collector) Run(ctx context.Context) {
-	fn := func(ctx context.Context) {}
-	wait.JitterUntilWithContext(ctx, fn, c.Period, 0.1, true)
+	wait.JitterUntilWithContext(ctx, c.Collect, c.Period, 0.1, true)
 }

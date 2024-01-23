@@ -176,7 +176,7 @@ func TestValidateNamespaces(t *testing.T) {
 func TestValidateReportingPeriodWithInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	periods := []string{"", "-1", "1x", "abc", "-"}
+	periods := []string{"", "-1", "1x", "abc", "-", "30s", "10ms"}
 	for _, p := range periods {
 		err := validateReportingPeriod(p)
 		if err == nil {
@@ -188,7 +188,7 @@ func TestValidateReportingPeriodWithInvalidInput(t *testing.T) {
 func TestValidateReportingPeriodWithValidInput(t *testing.T) {
 	t.Parallel()
 
-	periods := []string{"1h", "24h", "30m"}
+	periods := []string{"1h", "24h", "30m", "1m"}
 	for _, p := range periods {
 		err := validateReportingPeriod(p)
 		if err != nil {

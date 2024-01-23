@@ -710,6 +710,7 @@ func (lbc *LoadBalancerController) Run() {
 		go func(ctx context.Context) {
 			select {
 			case <-lbc.telemetryChan:
+				glog.V(3).Infof("Starting telemetry collector job")
 				lbc.telemetryCollector.Run(lbc.ctx)
 			case <-ctx.Done():
 				return

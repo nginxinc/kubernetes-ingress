@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -502,9 +503,12 @@ func validateLocation(location string) error {
 
 // validateReportingPeriod checks if the reporting period parameter can be parsed.
 func validateReportingPeriod(period string) error {
-	_, err := time.ParseDuration(period)
+	duration, err := time.ParseDuration(period)
 	if err != nil {
 		return err
+	}
+	if duration.Seconds() < 60 {
+		return errors.New("invalid reporting period, expected minimum 1m")
 	}
 	return nil
 }
