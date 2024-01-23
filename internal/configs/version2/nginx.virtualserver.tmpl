@@ -2,8 +2,9 @@
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
     {{- if ne $u.UpstreamZoneSize "0" }}zone {{ $u.Name }} {{ $u.UpstreamZoneSize }};{{ end }}
-
-    {{- if $u.LBMethod }}{{ $u.LBMethod }};{{ end }}
+    {{- if $u.LBMethod }}
+    {{ $u.LBMethod }};
+    {{- end }}
 
     {{- range $s := $u.Servers }}
     server {{ $s.Address }} max_fails={{ $u.MaxFails }} fail_timeout={{ $u.FailTimeout }} max_conns={{ $u.MaxConns }};
