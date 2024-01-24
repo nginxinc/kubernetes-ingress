@@ -507,8 +507,8 @@ func validateReportingPeriod(period string) error {
 	if err != nil {
 		return err
 	}
-	if duration.Seconds() < 60 {
-		return errors.New("invalid reporting period, expected minimum 1m")
+	if duration.Minutes() < 60 {
+		return errors.New("invalid reporting period, expected minimum 1h")
 	}
 	return nil
 }
