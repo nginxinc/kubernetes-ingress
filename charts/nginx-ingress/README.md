@@ -87,14 +87,14 @@ To install the chart with the release name my-release (my-release is the name th
 For NGINX:
 
 ```console
-helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.0
+helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2
 ```
 
 For NGINX Plus: (assuming you have pushed the Ingress Controller image `nginx-plus-ingress` to your private registry
 `myregistry.example.com`)
 
 ```console
-helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.0 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
 ```
 
 This will install the latest `edge` version of the Ingress Controller from GitHub Container Registry. If you prefer to
@@ -109,7 +109,7 @@ CRDs](#upgrading-the-crds).
 To upgrade the release `my-release`:
 
 ```console
-helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.0
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2
 ```
 
 ### Uninstalling the Chart
@@ -150,7 +150,7 @@ upgrading/deleting the CRDs.
 1. Pull the chart sources:
 
     ```console
-    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.0
+    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.2
     ```
 
 2. Change your working directory to nginx-ingress:
@@ -236,7 +236,7 @@ The steps you should follow depend on the Helm release name:
     Selector:               app=nginx-ingress-nginx-ingress
     ```
 
-2. Checkout the latest available tag using `git checkout v3.4.0`
+2. Checkout the latest available tag using `git checkout v3.4.2`
 
 3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
@@ -288,7 +288,7 @@ reviewing its events:
     Selector:               app=<helm_release_name>-nginx-ingress
     ```
 
-2. Checkout the latest available tag using `git checkout v3.4.0`
+2. Checkout the latest available tag using `git checkout v3.4.2`
 
 3. Navigate to `/kubernates-ingress/charts/nginx-ingress`
 
@@ -355,7 +355,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.logLevel` | The log level of the Ingress Controller. | 1 |
 |`controller.image.digest` | The image digest of the Ingress Controller. | None |
 |`controller.image.repository` | The image repository of the Ingress Controller. | nginx/nginx-ingress |
-|`controller.image.tag` | The tag of the Ingress Controller image. | 3.4.0 |
+|`controller.image.tag` | The tag of the Ingress Controller image. | 3.4.2 |
 |`controller.image.pullPolicy` | The pull policy for the Ingress Controller image. | IfNotPresent |
 |`controller.lifecycle` | The lifecycle of the Ingress Controller pods. | {} |
 |`controller.customConfigMap` | The name of the custom ConfigMap used by the Ingress Controller. If set, then the default config is ignored. | "" |
@@ -383,7 +383,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.initContainerResources` | The resources of the init container which is used when `controller.readOnlyRootFilesystem` is set to `true` | requests: cpu=100m,memory=128Mi |
 |`controller.replicaCount` | The number of replicas of the Ingress Controller deployment. | 1 |
 |`controller.ingressClass.name` | A class of the Ingress Controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of Kubernetes. | nginx |
-|`controller.ingressClass.create` | Creates a new IngressClass object with the name `controller.ingressClass.name`. Set to `false` to use an existing ingressClass created using `kubectl` with the same name. If you use `helm upgrade`, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.4.0, do not set the value to false. | true |
+|`controller.ingressClass.create` | Creates a new IngressClass object with the name `controller.ingressClass.name`. Set to `false` to use an existing ingressClass created using `kubectl` with the same name. If you use `helm upgrade`, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.4.2, do not set the value to false. | true |
 |`controller.ingressClass.setAsDefaultIngress` | New Ingresses without an `"ingressClassName"` field specified will be assigned the class specified in `controller.ingressClass.name`. Requires `controller.ingressClass.create`.  | false |
 |`controller.watchNamespace` | Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces. Mutually exclusive with `controller.watchNamespaceLabel`. Please note that if configuring multiple namespaces using the Helm cli `--set` option, the string needs to wrapped in double quotes and the commas escaped using a backslash - e.g. `--set controller.watchNamespace="default\,nginx-ingress"`. | "" |
 |`controller.watchNamespaceLabel` | Configures the Ingress Controller to watch only those namespaces with label foo=bar. By default the Ingress Controller watches all namespaces. Mutually exclusive with `controller.watchNamespace`. | "" |
