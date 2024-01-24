@@ -5,7 +5,7 @@
  */
 var newSession = false; // Used by oidcAuth() and validateIdToken()
 
-export default {auth, codeExchange, validateIdToken, logout};
+export default {auth, codeExchange, validateIdToken, logout, redirectPostLogout};
 
 function retryOriginalRequest(r) {
     delete r.headersOut["WWW-Authenticate"]; // Remove evidence of original failed auth_jwt
@@ -265,10 +265,17 @@ function validateIdToken(r) {
 
 function logout(r) {
     r.log("OIDC logout for " + r.variables.cookie_auth_token);
-    r.variables.session_jwt   = "-";
-    r.variables.access_token  = "-";
-    r.variables.refresh_token = "-";
-    r.return(302, r.variables.oidc_logout_redirect);
+    var logoutArgs = "?post_logout_redirect_uri=" + r.variables.redirect_base + r.variables.oidc_logout_redirect + "&id_token_hint=" + r.variables.session_jwt;
+
+    r.variables.session_jwt   = '-';
+    r.variables.access_token  = '-';
+    r.variables.refresh_token = '-';
+    r.return(302, r.variables.oidc_logout_endpoint + logoutArgs);
+}
+
+// Redirect URL after logged-out from the IDP.
+function redirectPostLogout(r) {
+    r.return(302, r.variables.redir_post_logout);
 }
 
 function getAuthZArgs(r) {
