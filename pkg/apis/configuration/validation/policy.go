@@ -243,6 +243,9 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	if oidc.AuthEndpoint == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("authEndpoint"), "")}
 	}
+	if oidc.LogoutEndpoint == "" {
+		return field.ErrorList{field.Required(fieldPath.Child("logoutEndpoint"), "")}
+	}
 	if oidc.TokenEndpoint == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("tokenEndpoint"), "")}
 	}
@@ -254,6 +257,9 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	}
 	if oidc.ClientSecret == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("clientSecret"), "")}
+	}
+	if oidc.RedirectPostLogout == "" {
+		return field.ErrorList{field.Required(fieldPath.Child("redirectPostLogout"), "")}
 	}
 
 	allErrs := field.ErrorList{}
@@ -271,8 +277,10 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	}
 
 	allErrs = append(allErrs, validateURL(oidc.AuthEndpoint, fieldPath.Child("authEndpoint"))...)
+	allErrs = append(allErrs, validateURL(oidc.LogoutEndpoint, fieldPath.Child("logoutEndpoint"))...)
 	allErrs = append(allErrs, validateURL(oidc.TokenEndpoint, fieldPath.Child("tokenEndpoint"))...)
 	allErrs = append(allErrs, validateURL(oidc.JWKSURI, fieldPath.Child("jwksURI"))...)
+	allErrs = append(allErrs, validateURL(oidc.RedirectPostLogout, fieldPath.Child("redirectPostLogout"))...)
 	allErrs = append(allErrs, validateSecretName(oidc.ClientSecret, fieldPath.Child("clientSecret"))...)
 	return append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
 }

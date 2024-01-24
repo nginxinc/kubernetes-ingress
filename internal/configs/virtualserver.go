@@ -1174,16 +1174,18 @@ func (p *policiesCfg) addOIDCConfig(
 		}
 
 		oidcPolCfg.oidc = &version2.OIDC{
-			AuthEndpoint:      oidc.AuthEndpoint,
-			AuthExtraArgs:     authExtraArgs,
-			TokenEndpoint:     oidc.TokenEndpoint,
-			JwksURI:           oidc.JWKSURI,
-			ClientID:          oidc.ClientID,
-			ClientSecret:      string(clientSecret),
-			Scope:             scope,
-			RedirectURI:       redirectURI,
-			ZoneSyncLeeway:    generateIntFromPointer(oidc.ZoneSyncLeeway, 200),
-			AccessTokenEnable: oidc.AccessTokenEnable,
+			AuthEndpoint:       oidc.AuthEndpoint,
+			LogoutEndpoint:     oidc.LogoutEndpoint,
+			AuthExtraArgs:      authExtraArgs,
+			TokenEndpoint:      oidc.TokenEndpoint,
+			JwksURI:            oidc.JWKSURI,
+			ClientID:           oidc.ClientID,
+			ClientSecret:       string(clientSecret),
+			Scope:              scope,
+			RedirectURI:        redirectURI,
+			RedirectPostLogout: oidc.RedirectPostLogout,
+			ZoneSyncLeeway:     generateIntFromPointer(oidc.ZoneSyncLeeway, 200),
+			AccessTokenEnable:  oidc.AccessTokenEnable,
 		}
 		oidcPolCfg.key = polKey
 	}
