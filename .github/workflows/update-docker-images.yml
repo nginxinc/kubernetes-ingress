@@ -50,9 +50,9 @@ jobs:
       - name: Set NGINX versions
         id: versions
         run: |
-          nginx=library/$(grep -m1 "FROM nginx:" < build/Dockerfile | awk -F" " '{print $2}')
-          nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx:.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
-          nginx_ubi=$(grep -m1 "FROM nginxcontrib/nginx:" < build/Dockerfile | awk -F" " '{print $2}')
+          nginx=library/$(grep -E "FROM nginx.*debian" < build/Dockerfile | awk -F" " '{print $2}')
+          nginx_alpine=library/$(grep -E "FROM nginx.*alpine" < build/Dockerfile | awk -F" " '{print $2}')
+          nginx_ubi=$(grep -m1 "FROM nginx.*ubi" < build/Dockerfile | awk -F" " '{print $2}')
           echo "matrix=[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]" >> $GITHUB_OUTPUT
 
       - name: Set Go MD5sums
@@ -61,7 +61,7 @@ jobs:
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ steps.md5.outputs.go_code_md5 }}
@@ -129,7 +129,7 @@ jobs:
         if: ${{ needs.variables.outputs.binary-cache-hit != 'true' }}
 
       - name: Store Artifacts in Cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.variables.outputs.go-md5 }}

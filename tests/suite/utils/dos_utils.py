@@ -52,10 +52,15 @@ def check_learning_status_with_admd_s(kube_apis, syslog_pod, namespace, time):
     retry = 0
     learning_sas = 0.0
     learning_signature = 0.0
-    while (learning_sas < 75 or learning_signature != 100) and retry <= time / 15:
+    retry_time = 15
+    while (learning_sas < 75 or learning_signature != 100) and retry <= time / retry_time:
         retry += 1
-        admd_contents = get_admd_s_contents(kube_apis.v1, syslog_pod, namespace, 15)
+        admd_contents = get_admd_s_contents(kube_apis.v1, syslog_pod, namespace, retry_time)
         admd_s_dic = admd_s_content_to_dic(admd_contents)
+        if "name.info.learning" not in admd_s_dic:
+            print("name.info.learning not found in admd_s_dic")
+            wait_before_test(retry_time)
+            continue
         learn = admd_s_dic["name.info.learning"].replace("[", "").replace("]", "").split(",")
         learning_sas = float(learn[0])
         learning_signature = float(learn[3])
