@@ -1,6 +1,7 @@
 # variables that should not be overridden by the user
+VER = $(shell grep IC_VERSION .github/data/version.txt | cut -d '=' -f 2)
 GIT_TAG = $(shell git tag --sort=-version:refname | head -n1 || echo untagged)
-VERSION = $(GIT_TAG)-SNAPSHOT
+VERSION = $(VER)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
 # Additional flags added here can be accessed in main.go.

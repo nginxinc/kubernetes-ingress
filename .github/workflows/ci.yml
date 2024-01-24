@@ -36,6 +36,7 @@ jobs:
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+      ic_version: ${{ steps.vars.outputs.ic_version }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -57,7 +58,6 @@ jobs:
             | sed 's/^.\{1\}//' \
             | tr -d '\n')
           echo "k8s_latest=$kindest_latest" >> $GITHUB_OUTPUT
-          echo "chart_version=$(yq '.version' <charts/nginx-ingress/Chart.yaml)" >> $GITHUB_OUTPUT
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
           kindest_versions=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
             | grep -o '"name": *"[^"]*' \
@@ -72,7 +72,10 @@ jobs:
             | sed 's/, $//' \
             | jq -R -s -c 'split("\n")[:-1]')
           echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
-          echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+          echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" -o -name .goreleaser.yml \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+          source .github/data/version.txt
+          echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
+          echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
@@ -201,6 +204,7 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
           AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
           AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
+          GORELEASER_CURRENT_TAG: ${{ needs.checks.outputs.ic_version }}
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
@@ -513,7 +517,13 @@ jobs:
       - name: Package
         id: package
         run: |
-          output=$(helm package ${{ github.ref_type != 'tag' && '--app-version edge --version 0.0.0-edge' || '' }} kic/charts/nginx-ingress)
+          helm_versions=""
+          if [ ${{ github.ref_type }} != "tag" ]; then
+            helm_versions="--app-version edge --version 0.0.0-edge"
+          else
+            helm_versions="--app-version ${{ steps.checks.outputs.ic_version }} --version ${{ steps.checks.outputs.chart_version }}"
+          fi
+          output=$(helm package ${helm_versions} kic/charts/nginx-ingress)
           echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
 
       - name: Push to OCI registries
