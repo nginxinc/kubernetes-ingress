@@ -3,16 +3,27 @@ package telemetry
 
 import (
 	"context"
-	"sync"
+	"fmt"
+	"io"
 	"time"
 
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-// Export takes context and data and sends it to the Otel endpoint.
-func Export(_ context.Context, _ TraceData) error {
+// DiscardExporter is a temporary exporter
+// for discarding collected telemetry data.
+var DiscardExporter = Exporter{Endpoint: io.Discard}
+
+// Exporter represents a temporary telemetry data exporter.
+type Exporter struct {
+	Endpoint io.Writer
+}
+
+// Export takes context and trace data and writes to the endpoint.
+func (e *Exporter) Export(_ context.Context, td TraceData) error {
 	// Note: exporting functionality will be implemented in a separate module.
+	fmt.Fprintf(e.Endpoint, "%+v", td)
 	return nil
 }
 
@@ -42,12 +53,24 @@ func WithTimePeriod(period string) Option {
 	}
 }
 
+// WithExporter configures telemetry collector to use given exporter.
+//
+// This may change in the future when we use exporter implemented
+// in the external module.
+func WithExporter(e Exporter) Option {
+	return func(c *Collector) error {
+		c.Exporter = e
+		return nil
+	}
+}
+
 // Collector is NIC telemetry data collector.
 type Collector struct {
 	Period time.Duration
 
-	mu   sync.Mutex
-	Data TraceData
+	// Exporter is a temp exporter for exporting telemetry data.
+	// The concrete implementation will be implemented in a separate module.
+	Exporter Exporter
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -55,8 +78,8 @@ type Collector struct {
 // configured to gather data every 24h.
 func NewCollector(opts ...Option) (*Collector, error) {
 	c := Collector{
-		Period: 24 * time.Hour,
-		Data:   TraceData{},
+		Period:   24 * time.Hour,
+		Exporter: DiscardExporter, // Use DiscardExporter until the real exporter is available.
 	}
 	for _, o := range opts {
 		if err := o(&c); err != nil {
@@ -67,26 +90,32 @@ func NewCollector(opts ...Option) (*Collector, error) {
 }
 
 // BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport(_ context.Context) error {
-	glog.V(3).Info("Building telemetry report")
+func (c *Collector) BuildReport(context.Context) (TraceData, error) {
 	dt := TraceData{}
 
 	// TODO: Implement handling and logging errors for each collected data point
 
-	c.mu.Lock()
-	c.Data = dt
-
-	glog.V(3).Infof("%+v", c.Data)
-	c.mu.Unlock()
-	return nil
+	return dt, nil
 }
 
-// Collect runs data builder.
+// Collect collects and exports telemetry data.
+// It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	if err := c.BuildReport(ctx); err != nil {
+	traceData, err := c.BuildReport(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: %v", err)
+	}
+	err = c.Exporter.Export(ctx, traceData)
+	if err != nil {
 		glog.Errorf("Error exporting telemetry data: %v", err)
 	}
+	glog.V(3).Info("Exported telemetry data")
+}
+
+// Start starts running NIC Telemetry Collector.
+func (c *Collector) Start(ctx context.Context) {
+	wait.JitterUntilWithContext(ctx, c.Collect, c.Period, 0.1, true)
 }
 
 // GetVSCount returns number of VirtualServers in watched namespaces.
@@ -103,11 +132,4 @@ func (c *Collector) GetVSCount() int {
 func (c *Collector) GetTSCount() int {
 	// Placeholder function
 	return 0
-}
-
-// Run starts running NIC Telemetry Collector.
-//
-// This is a placeholder for implementing collector runner.
-func (c *Collector) Run(ctx context.Context) {
-	wait.JitterUntilWithContext(ctx, c.Collect, c.Period, 0.1, true)
 }

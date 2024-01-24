@@ -1,6 +1,8 @@
 package telemetry_test
 
 import (
+	"bytes"
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -21,13 +23,6 @@ func TestCreateNewDefaultCollector(t *testing.T) {
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
 	}
-
-	wantData := telemetry.TraceData{}
-	gotData := c.Data
-
-	if !cmp.Equal(wantData, gotData) {
-		t.Error(cmp.Diff(wantData, gotData))
-	}
 }
 
 func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
@@ -41,6 +36,25 @@ func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
 	want := 4.0
 	got := c.Period.Hours()
 
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := telemetry.Exporter{Endpoint: buf}
+
+	c, err := telemetry.NewCollector(telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	want := "{VSCount:0 TSCount:0}"
+	got := buf.String()
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
 	}
