@@ -195,7 +195,7 @@ class TestVirtualServerWithBackupService:
             vs_backup_service,
             virtual_server_setup.namespace,
         )
-        wait_before_test()
+        wait_before_test(5)
 
         print("\nStep 2: Get response from VS with backup service")
         print(virtual_server_setup.backend_1_url + "\n")
@@ -224,7 +224,7 @@ class TestVirtualServerWithBackupService:
 
         print("\nStep 3: Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
-        wait_before_test()
+        wait_before_test(5)
 
         print("\nStep 4: Get response from backup service")
         res_from_backup = make_request(
@@ -251,7 +251,7 @@ class TestVirtualServerWithBackupService:
 
         print("\nStep 5: Scale deployment back to 2 replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 2)
-        wait_before_test()
+        wait_before_test(5)
 
         print("\nStep 6: Get response")
         res_after_scaleup = make_request(
