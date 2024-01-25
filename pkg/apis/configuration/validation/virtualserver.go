@@ -1466,7 +1466,7 @@ func isValidMatchValue(value string) []string {
 
 // ValidateVirtualServerRoute validates a VirtualServerRoute.
 func (vsv *VirtualServerValidator) ValidateVirtualServerRoute(virtualServerRoute *v1.VirtualServerRoute) error {
-	allErrs := vsv.validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), "", "/", virtualServerRoute.Namespace)
+	allErrs := vsv.validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), "", "", virtualServerRoute.Namespace)
 	return allErrs.ToAggregate()
 }
 
