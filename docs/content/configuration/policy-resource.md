@@ -449,6 +449,8 @@ spec:
     authEndpoint: https://idp.example.com/openid-connect/auth
     tokenEndpoint: https://idp.example.com/openid-connect/token
     jwksURI: https://idp.example.com/openid-connect/certs
+    logoutEndpoint: https://idp.example.com/openid-connect/logout
+    redirectPostLogout: https://cafe.example.com
     accessTokenEnable: true
 ```
 
@@ -476,6 +478,8 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 |``authExtraArgs`` | A list of extra URL arguments to pass to the authorization endpoint provided by your OpenID Connect provider. Arguments must be URL encoded, multiple arguments may be included in the list, for example ``[ arg1=value1, arg2=value2 ]`` | ``string[]`` | No |
 |``tokenEndpoint`` | URL for the token endpoint provided by your OpenID Connect provider. | ``string`` | Yes |
 |``jwksURI`` | URL for the JSON Web Key Set (JWK) document provided by your OpenID Connect provider. | ``string`` | Yes |
+|``logoutEndpoint`` | URL for the logout endpoint provided by your OpenID Connect provider. | ``string`` | Yes |
+|``redirectPostLogout`` | URL to redirect after a successful logout. | ``string`` | Yes |
 |``scope`` | List of OpenID Connect scopes. The scope ``openid`` always needs to be present and others can be added concatenating them with a ``+`` sign, for example ``openid+profile+email``, ``openid+email+userDefinedScope``. The default is ``openid``. | ``string`` | No |
 |``redirectURI`` | Allows overriding the default redirect URI. The default is ``/_codexch``. | ``string`` | No |
 |``zoneSyncLeeway`` | Specifies the maximum timeout in milliseconds for synchronizing ID/access tokens and shared values between Ingress Controller pods. The default is ``200``. | ``int`` | No |
