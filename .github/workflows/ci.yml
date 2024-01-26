@@ -303,6 +303,9 @@ jobs:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
     needs: [binaries, checks]
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
