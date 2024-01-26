@@ -2685,7 +2685,28 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 				"test-1": {},
 			},
 			vsPath: "/abc",
-			msg:    "prefix vs path with both prefix and regex subroute path",
+			msg:    "prefix vs path with both exact and matching prefix subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Path: "/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/test",
+			msg:    "prefix vs path with both regex and matching prefix subroute path",
 		},
 	}
 
