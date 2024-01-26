@@ -320,16 +320,41 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
 
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Login to GCR
+        uses: docker/login-action@v3
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Check if image exists
+        id: check-image
+        run: |
+          docker manifest inspect "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
+        shell: bash
+        continue-on-error: true
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        uses: docker/build-push-action@v3
         with:
           file: tests/Dockerfile
           context: "."
           cache-from: type=gha,scope=test-runner
-          cache-to: type=gha,scope=test-runner,mode=max
-          tags: test-runner:${{ github.sha }}
+          tags: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
           pull: true
-          load: true
+          push: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        if: ${{ steps.check-image.outcome == 'failure' || github.event.pull_request.head.repo.full_name != github.repository }}
 
   smoke-tests:
     name: ${{ matrix.images.label }} ${{ matrix.images.image }} smoke tests
