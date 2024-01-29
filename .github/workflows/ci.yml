@@ -114,7 +114,7 @@ jobs:
         run: make cover
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
+        uses: codecov/codecov-action@4fe8c5f003fae66aa5ebb77cfd3e7bfbbda0b6b0 # v3.1.5
         with:
           files: ./coverage.txt
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -349,7 +349,7 @@ jobs:
         if: github.event.pull_request.head.repo.full_name == github.repository
 
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           file: tests/Dockerfile
           context: "."
