@@ -124,8 +124,6 @@ jobs:
             type=raw,value=${{ steps.tag.outputs.short }},enable=${{ inputs.tag != '' }}
           labels: |
             org.opencontainers.image.description=NGINX Ingress Controller for Kubernetes
-            org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
-            org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/main/README.md
             io.artifacthub.package.logo-url=https://docs.nginx.com/nginx-ingress-controller/images/icons/NGINX-Ingress-Controller-product-icon.svg
             io.artifacthub.package.maintainers=[{"name":"NGINX Inc","email":"kubernetes@nginx.com"}]

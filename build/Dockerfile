@@ -3,6 +3,7 @@ ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=R31
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_FRONTEND=noninteractive
+ARG BASE_IMG=nginx/nginx-ingress:${DOWNLOAD_TAG}
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
@@ -347,10 +348,12 @@ ENTRYPOINT ["/nginx-ingress"]
 # 101 is nginx
 USER 101
 
-LABEL org.opencontainers.image.version="${IC_VERSION}"
-LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
-LABEL org.nginx.kic.image.build.os="${BUILD_OS}"
-LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERSION}"
+LABEL org.opencontainers.image.version="${IC_VERSION}" \
+	org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller \
+	org.opencontainers.image.vendor="NGINX Inc <kubernetes@nginx.com>" \
+	org.nginx.kic.image.build.target="${TARGETPLATFORM}" \
+	org.nginx.kic.image.build.os="${BUILD_OS}" \
+	org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERSION}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################
@@ -392,6 +395,22 @@ RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_
 USER 101
 
 
+############################################# Create image from pre-built base images with nginx-ingress built locally #############################################
+FROM ${BASE_IMG} as prebuilt
+
+LABEL org.nginx.kic.image.build.version="local"
+
+COPY --link --chown=101:0 nginx-ingress /
+USER 0
+RUN --mount=type=bind,target=/tmp \
+	[ -n nginx-plus.tmpl ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
+	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
+	&& chown -R 101:0 /*.tmpl \
+	&& chmod -R g=u /*.tmpl \
+	setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+USER 101
+
+
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
 FROM common AS goreleaser
 ARG TARGETARCH
@@ -402,6 +421,25 @@ COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ing
 # root is required for `setcap` invocation
 USER 0
 RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
+
+
+############################################# Create image with nginx-ingress built by GoReleaser #############################################
+FROM ${BASE_IMG} AS goreleaser-prebuilt
+ARG TARGETARCH
+
+LABEL org.nginx.kic.image.build.version="goreleaser"
+
+COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN --mount=type=bind,target=/tmp \
+	[ -n nginx-plus.tmpl ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
+	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
+	&& chown -R 101:0 /*.tmpl \
+	&& chmod -R g=u /*.tmpl \
+	setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
 # 101 is nginx, defined above
 USER 101
 
@@ -417,6 +455,26 @@ COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx
 # root is required for `setcap` invocation
 USER 0
 RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
+
+
+############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
+FROM ${BASE_IMG} AS aws-prebuilt
+ARG TARGETARCH
+ARG NAP_MODULES_AWS
+
+LABEL org.nginx.kic.image.build.version="aws"
+
+COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN --mount=type=bind,target=/tmp \
+	[ -n nginx-plus.tmpl ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
+	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
+	&& chown -R 101:0 /*.tmpl \
+	&& chmod -R g=u /*.tmpl \
+	setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
 # 101 is nginx, defined above
 USER 101
 

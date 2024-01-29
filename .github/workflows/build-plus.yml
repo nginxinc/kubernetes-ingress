@@ -142,8 +142,6 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
           labels: |
             org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
-            org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
-            org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
 
       - name: NAP modules
         id: nap_modules
