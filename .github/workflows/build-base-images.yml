@@ -109,7 +109,7 @@ jobs:
             IC_VERSION=${{ needs.checks.outputs.ic_version }}
 
   build-plus:
-    name: Build OSS base images
+    name: Build Plus base images
     runs-on: ubuntu-22.04
     needs: checks
     strategy:
