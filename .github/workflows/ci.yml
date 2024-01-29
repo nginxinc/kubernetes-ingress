@@ -357,6 +357,7 @@ jobs:
           tags: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
           pull: true
           push: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          load: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
         if: ${{ steps.check-image.outcome == 'failure' || github.event.pull_request.head.repo.full_name != github.repository }}
 
   smoke-tests:
