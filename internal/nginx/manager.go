@@ -48,7 +48,7 @@ const (
 )
 
 var (
-	re     = regexp.MustCompile(`(?P<name>\S+)/(?P<version>\S+)`)
+	ossre  = regexp.MustCompile(`(?P<name>\S+)/(?P<version>\S+)`)
 	plusre = regexp.MustCompile(`(?P<name>\S+)/(?P<version>\S+).\((?P<plus>\S+plus\S+)\)`)
 )
 

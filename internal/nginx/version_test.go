@@ -3,6 +3,7 @@ package nginx_test
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 )
 
@@ -121,6 +122,77 @@ func TestNginxVersionPlusGreaterThanOrEqualTo(t *testing.T) {
 			actual, _ := tc.version.PlusGreaterThanOrEqualTo(tc.input)
 			if actual != tc.expected {
 				t.Errorf("expected %v but got %v", tc.expected, actual)
+			}
+		})
+	}
+}
+
+func TestNginxVersionPlusGreaterThanOrEqualToFailsOnInalidInput(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		version nginx.Version
+		input   string
+	}{
+		{
+			version: nginx.NewVersion("nginx version: nginx/1.25.1 (nginx-plus-r30-p1)"),
+			input:   "nginx-plus",
+		},
+		{
+			version: nginx.NewVersion("nginx version: nginx/1.25.1 (nginx-plus-r30)"),
+			input:   "nginxr30",
+		},
+		{
+			version: nginx.NewVersion("nginx version: nginx/1.25.1 (nginx-plus-r30-p1)"),
+			input:   "",
+		},
+		{
+			version: nginx.NewVersion("nginx version: nginx/1.25.1 (nginx-plus-r30)"),
+			input:   "30",
+		},
+		{
+			version: nginx.NewVersion("nginx version: nginx/1.25.1"),
+			input:   "-3",
+		},
+		{
+			version: nginx.NewVersion("nginx version: nginx/1.25.1 (nginx-plus-r30-p1)"),
+			input:   "nginx-plus-rA",
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.input, func(t *testing.T) {
+			_, err := tc.version.PlusGreaterThanOrEqualTo(tc.input)
+			if err == nil {
+				t.Errorf("want error, got nil")
+			}
+		})
+	}
+}
+
+func TestNginxNewVersionHandlesRawString(t *testing.T) {
+	t.Parallel()
+	tt := []struct {
+		name  string
+		input string
+		want  nginx.Version
+	}{
+		{
+			name:  "empty string",
+			input: "",
+			want:  nginx.Version{Raw: ""},
+		},
+		{
+			name:  "invalid nginx string",
+			input: "nginx",
+			want:  nginx.Version{Raw: "nginx"},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			got := nginx.NewVersion(tc.input)
+			if !cmp.Equal(tc.want, got) {
+				t.Error(cmp.Diff(tc.want, got))
 			}
 		})
 	}

@@ -14,9 +14,9 @@ type Version struct {
 	Plus   string
 }
 
-// NewVersion will take the output from `nginx -v` and explodes it into the `nginx.Version` struct.
+// NewVersion takes the output from `nginx -v` and explodes it into the `nginx.Version` struct.
 func NewVersion(line string) Version {
-	matches := re.FindStringSubmatch(line)
+	matches := ossre.FindStringSubmatch(line)
 	plusmatches := plusre.FindStringSubmatch(line)
 	nv := Version{
 		Raw: line,
@@ -36,7 +36,7 @@ func NewVersion(line string) Version {
 	}
 
 	if len(matches) > 0 {
-		for i, key := range re.SubexpNames() {
+		for i, key := range ossre.SubexpNames() {
 			val := matches[i]
 			if key == "version" {
 				nv.OSS = val
@@ -74,11 +74,12 @@ func (v Version) PlusGreaterThanOrEqualTo(target string) (bool, error) {
 	return (r > tr || (r == tr && p >= tp)), nil
 }
 
+var rePlus = regexp.MustCompile(`-r(\d+)(?:-p(\d+))?`)
+
 // extractPlusVersionValues
 func extractPlusVersionValues(input string) (int, int, error) {
 	var rValue, pValue int
-	re := regexp.MustCompile(`-r(\d+)(?:-p(\d+))?`)
-	matches := re.FindStringSubmatch(input)
+	matches := rePlus.FindStringSubmatch(input)
 
 	if len(matches) < 2 {
 		return 0, 0, fmt.Errorf("no matches found in the input string")
