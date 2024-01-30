@@ -114,7 +114,7 @@ RUN --mount=type=bind,from=alpine-fips-3.19,target=/tmp/fips/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAF and FIPS #############################################
-FROM alpine:3.17@sha256:6e94b5cda2d6fd57d85abf81e81dabaea97a5885f919da676cc19d3551da4061 as alpine-plus-nap-waf-fips
+FROM alpine:3.17@sha256:6e94b5cda2d6fd57d85abf81e81dabaea97a5885f919da676cc19d3551da4061 as alpine-plus-nap-fips
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
@@ -347,10 +347,12 @@ ENTRYPOINT ["/nginx-ingress"]
 # 101 is nginx
 USER 101
 
-LABEL org.opencontainers.image.version="${IC_VERSION}"
-LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
-LABEL org.nginx.kic.image.build.os="${BUILD_OS}"
-LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERSION}"
+LABEL org.opencontainers.image.version="${IC_VERSION}" \
+	org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller \
+	org.opencontainers.image.vendor="NGINX Inc <kubernetes@nginx.com>" \
+	org.nginx.kic.image.build.target="${TARGETPLATFORM}" \
+	org.nginx.kic.image.build.os="${BUILD_OS}" \
+	org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERSION}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################

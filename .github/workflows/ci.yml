@@ -497,7 +497,7 @@ jobs:
             target: aws
             platforms: "linux/amd64"
             nap_modules: "waf,dos"
-          - image: alpine-plus-nap-waf-fips
+          - image: alpine-plus-nap-fips
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: waf
