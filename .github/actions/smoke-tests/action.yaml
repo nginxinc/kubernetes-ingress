@@ -80,6 +80,7 @@ runs:
         build-args: |
           BUILD_OS=${{ inputs.image }}
           IC_VERSION=CI
+          PACKAGE_REPO=pkgs-test.nginx.com
           ${{ steps.ingress-type.outputs.modules != '' && format('NAP_MODULES={0}', steps.ingress-type.outputs.modules) || '' }}
           ${{ contains(inputs.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
         secrets: |
