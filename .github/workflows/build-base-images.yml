@@ -1,0 +1,260 @@
+name: Build Base Images
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 4 * * 1-5" # run Mon-Fri at 04:30 UTC
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref_name }}-ci
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  checks:
+    name: Checks and variables
+    runs-on: ubuntu-22.04
+    outputs:
+      docker_md5: ${{ steps.vars.outputs.docker_md5 }}
+      ic_version: ${{ steps.vars.outputs.ic_version }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Output Variables
+        id: vars
+        run: |
+          docker_md5=$(find . -type f \( -name "build/Dockerfile" -o -name .github/data/version.txt \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }' )
+          echo "docker_md5=${docker_md5:0:8}" >> $GITHUB_OUTPUT
+          source .github/data/version.txt
+          echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+  build-oss:
+    name: Build OSS base images
+    runs-on: ubuntu-22.04
+    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian, alpine]
+        platforms:
+          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+        include:
+          - image: ubi
+            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+        with:
+          platforms: arm,arm64,ppc64le,s390x
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@5a50e581162a13f4baa8916d01180d2acbc04363 # v2.1.0
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@dbef88086f6cef02e264edb7dbf63250c17cef6c # v5.5.0
+        with:
+          images: |
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss
+          flavor: |
+            suffix=-${{ matrix.image }},onlatest=false
+          tags: |
+            type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
+
+      - name: Build Base Container
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: common
+          tags: ${{ steps.meta.outputs.tags }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            IC_VERSION=${{ needs.checks.outputs.ic_version }}
+
+  build-plus:
+    name: Build Plus base images
+    runs-on: ubuntu-22.04
+    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian-plus, alpine-plus, alpine-plus-fips]
+        platforms: ["linux/arm64, linux/amd64"]
+        include:
+          - image: ubi-plus
+            platforms: "linux/arm64, linux/amd64, linux/s390x"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+        with:
+          platforms: arm,arm64,ppc64le,s390x
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@5a50e581162a13f4baa8916d01180d2acbc04363 # v2.1.0
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@dbef88086f6cef02e264edb7dbf63250c17cef6c # v5.5.0
+        with:
+          images: |
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus
+          flavor: |
+            suffix=-${{ matrix.image }},onlatest=false
+          tags: |
+            type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
+
+      - name: Build Base Container
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: common
+          tags: ${{ steps.meta.outputs.tags }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            IC_VERSION=${{ needs.checks.outputs.ic_version }}
+          secrets: |
+            "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ secrets.NGINX_KEY }}"
+
+  build-plus-nap:
+    name: Build Plus NAP base images
+    runs-on: ubuntu-22.04
+    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian-plus-nap]
+        platforms: ["linux/amd64"]
+        nap_modules: [dos, waf, "waf,dos"]
+        include:
+          - image: ubi-9-plus-nap
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap
+            platforms: "linux/amd64"
+            nap_modules: dos
+          - image: ubi-8-plus-nap
+            platforms: "linux/amd64"
+            nap_modules: "waf,dos"
+          - image: alpine-plus-nap-fips
+            platforms: "linux/amd64"
+            nap_modules: waf
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+        with:
+          platforms: arm,arm64,ppc64le,s390x
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@5a50e581162a13f4baa8916d01180d2acbc04363 # v2.1.0
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: NAP modules
+        id: nap_modules
+        run: |
+          [[ "${{ matrix.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || modules="${{ matrix.nap_modules }}"
+          echo "modules=${modules}" >> $GITHUB_OUTPUT
+        if: ${{ matrix.nap_modules != '' }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@dbef88086f6cef02e264edb7dbf63250c17cef6c # v5.5.0
+        with:
+          images: |
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus
+          flavor: |
+            suffix=-${{ matrix.image }}-${{ steps.nap_modules.outputs.modules }},onlatest=false
+          tags: |
+            type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
+
+      - name: Build Base Container
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: common
+          tags: ${{ steps.meta.outputs.tags }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            IC_VERSION=${{ needs.checks.outputs.ic_version }}
+            NAP_MODULES=${{ matrix.nap_modules }}
+          secrets: |
+            "nginx-repo.crt=${{ secrets.NGINX_AP_CRT }}"
+            "nginx-repo.key=${{ secrets.NGINX_AP_KEY }}"
+            ${{ contains(matrix.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
