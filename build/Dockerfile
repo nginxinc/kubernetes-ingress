@@ -7,7 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
 FROM opentracing/nginx-opentracing:nginx-1.25.3@sha256:2e0268d3cd31fe047c2fe566f29731865b0c99cc99b579c6584b23cd3c7830ef as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.25.3-alpine@sha256:08ccc2c8bb28f01cb17b7619f139830b3af7950826b819b267393aefa32f23ab as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.3-alpine@sha256:37c7de3a46ca05428450b1c64bfb2a4d2f9c1835860cef427928fcf11c178f0e as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 as alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.1.2-alpine3.19@sha256:67595f52053f328fd731bf493d8dc72c1fd956e5f1a2f9a579cc78c5f5f50daa as alpine-fips-3.19
 
@@ -354,7 +354,7 @@ LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERS
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.21-alpine@sha256:51a7800206bc7b276a9d62a7229cdede7b1e0f45ec28259ed44c1603c6cda1e7 AS builder
+FROM golang:1.21-alpine@sha256:a6a7f1fcf12f5efa9e04b1e75020931a616cd707f14f62ab5262bfbe109aa84a AS builder
 ARG IC_VERSION
 ARG TARGETARCH
 
