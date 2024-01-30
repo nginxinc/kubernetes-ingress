@@ -49,6 +49,37 @@ func TestNginxVersionParsing(t *testing.T) {
 	}
 }
 
+func TestNginxVersionFormat(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		input string
+		want  string
+	}{
+		{
+			input: "nginx version: nginx/1.25.1 (nginx-plus-r30-p1)",
+			want:  "1.25.1-nginx-plus-r30-p1",
+		},
+		{
+			input: "nginx version: nginx/1.25.3 (nginx-plus-r31)",
+			want:  "1.25.3-nginx-plus-r31",
+		},
+		{
+			input: "nginx version: nginx/1.25.0",
+			want:  "1.25.0",
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.input, func(t *testing.T) {
+			v := NewVersion(tc.input)
+			got := v.Format()
+			if got != tc.want {
+				t.Errorf("want %q but got %q", tc.want, got)
+			}
+		})
+	}
+}
+
 func TestNginxVersionPlusGreaterThanOrEqualTo(t *testing.T) {
 	t.Parallel()
 	type testCase struct {
