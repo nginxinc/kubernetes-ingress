@@ -17,7 +17,6 @@ TARGET                        ?= local ## The target of the build. Possible valu
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
 ARCH                          ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
 GOOS                          ?= linux ## The OS of the binary. For example linux, darwin
-BASE_IMG                      ?= nginx/nginx-ingress:edge ## The tag of the image. For example, 2.0.0
 
 # final docker build command
 DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
@@ -130,10 +129,6 @@ alpine-image-nap-plus-fips: build ## Create Docker image for Ingress Controller 
 .PHONY: debian-image-plus
 debian-image-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus
-
-.PHONY: prebuilt-image
-prebuilt-image: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BASE_IMG=${BASE_IMG}
 
 .PHONY: debian-image-nap-plus
 debian-image-nap-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and NGINX App Protect WAF)
