@@ -2,11 +2,6 @@ name: Build Base Images
 
 on:
   workflow_dispatch:
-    inputs:
-      force:
-        description: "Force rebuild of base images"
-        required: false
-        default: "false"
   schedule:
     - cron: "30 4 * * 1-5" # run Mon-Fri at 04:30 UTC
 
