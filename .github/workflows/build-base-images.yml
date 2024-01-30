@@ -8,7 +8,7 @@ on:
         required: false
         default: "false"
   schedule:
-    - cron: "30 4 * * *" # run every day at 04:30 UTC
+    - cron: "30 4 * * 1-5" # run Mon-Fri at 04:30 UTC
 
 defaults:
   run:
