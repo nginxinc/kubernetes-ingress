@@ -1,15 +1,14 @@
 name: Build Base Images
 
 on:
-  push:
-    branches:
-      - prebuild-base-images
   workflow_dispatch:
     inputs:
       force:
         description: "Force rebuild of base images"
         required: false
         default: "false"
+  schedule:
+    - cron: "30 4 * * *" # run every day at 04:30 UTC
 
 defaults:
   run:
