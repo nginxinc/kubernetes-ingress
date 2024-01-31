@@ -128,7 +128,6 @@ def vs_externalname_setup(
     indirect=True,
 )
 class TestVirtualServerWithBackupService:
-
     """
     This test validates that we still get a response back from the default
     service, and not the backup service, as long as the default service is still available
