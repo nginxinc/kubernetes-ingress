@@ -142,6 +142,8 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
           labels: |
             org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: NAP modules
         id: nap_modules
@@ -160,6 +162,7 @@ jobs:
           target: ${{ inputs.target }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ github.event_name != 'pull_request' && steps.meta.outputs.annotations || '' }}
           platforms: ${{ github.event_name != 'pull_request' && inputs.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
