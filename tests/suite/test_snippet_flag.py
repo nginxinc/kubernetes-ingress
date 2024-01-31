@@ -14,7 +14,6 @@ from suite.utils.resources_utils import (
 
 @pytest.mark.ingresses
 class TestSnippetAnnotation:
-
     """
     Checks if ingress snippets are enabled as a cli arg, that the value from a snippet annotation defined in an
     ingress resource is set in the nginx conf.

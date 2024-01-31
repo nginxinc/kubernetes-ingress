@@ -97,7 +97,7 @@
     },
     {
       "label": "AP_WAF 2/4",
-      "image": "alpine-plus-nap-waf-fips",
+      "image": "alpine-plus-nap-fips",
       "marker": "'appprotect_waf_policies and not appprotect_waf_policies_allow'"
     },
     {
