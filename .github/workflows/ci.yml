@@ -114,7 +114,7 @@ jobs:
         run: make cover
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@4fe8c5f003fae66aa5ebb77cfd3e7bfbbda0b6b0 # v3.1.5
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3.1.6
         with:
           files: ./coverage.txt
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -177,7 +177,7 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@c6aed38a4323b393d05372c58a74c39ae8386d02 # v0.15.6
+        uses: anchore/sbom-action/download-syft@767b08fd8822486ad890abb8f1d31721bebd651c # v0.15.7
         if: github.ref_type == 'tag'
 
       - name: Install Cosign
