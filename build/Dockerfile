@@ -13,7 +13,7 @@ FROM ghcr.io/nginxinc/alpine-fips:0.1.2-alpine3.19@sha256:67595f52053f328fd731bf
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.25.3-alpine@sha256:5b7ff23e6861b908f034b82d2cf77a295488e0d13271e5438ac211fcf9ed9b25 AS alpine
+FROM nginx:1.25.3-alpine@sha256:156d75f07c59b2fd59d3d1470631777943bb574135214f0a90c7bb82bde916da AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
