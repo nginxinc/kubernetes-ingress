@@ -47,7 +47,7 @@ When running NGINX Ingress Controller, you have the following options with regar
 - Defined-namespace Ingress Controller: You can configure the Ingress Controller to handle configuration resources only from particular namespaces, which is controlled through the `-watch-namespace` command-line argument. This can be useful if you want to use different NGINX Ingress Controllers for different applications, both in terms of isolation and/or operation.
 - Ingress Controller for Specific Ingress Class: This option works in conjunction with either of the options above. You can further customize which configuration resources are handled by the Ingress Controller by configuring the class of the Ingress Controller and using that class in your configuration resources. The [Configuring Ingress Class](#configuring-ingress-class) section above explains where.
 
-These options also you to run multiple NGINX Ingress Controllers, each handling a different set of configuration resources.
+These options allow you to run multiple NGINX Ingress Controllers, each handling a different set of configuration resources.
 
 {{< see-also >}}[Command-line arguments]({{< relref "configuration/global-configuration/command-line-arguments" >}}){{< /see-also >}}
 
