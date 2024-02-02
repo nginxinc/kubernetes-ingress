@@ -138,7 +138,7 @@ Expand image name.
 Build the args for the service binary.
 */}}
 {{- define "nginx-ingress.args" -}}
-{{- if .Values.controller.debug.enable }}
+{{- if and .Values.controller.debug .Values.controller.debug.enable }}
 - --listen=:2345
 - --headless=true
 - --log=true
