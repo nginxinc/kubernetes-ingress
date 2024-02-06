@@ -280,7 +280,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	if input.EnableTelemetryReporting {
 		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(
-			telemetry.WithTimePeriod(24 * time.Hour),
+			telemetry.WithTimePeriod("24h"),
 		)
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry collector: %v", err)

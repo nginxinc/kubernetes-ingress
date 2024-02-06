@@ -3,12 +3,13 @@ package k8s
 import (
 	"errors"
 	"fmt"
-	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 
 	discovery_v1 "k8s.io/api/discovery/v1"
 

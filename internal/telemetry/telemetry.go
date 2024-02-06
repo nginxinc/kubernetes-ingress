@@ -42,9 +42,13 @@ type TraceData struct {
 type Option func(*Collector) error
 
 // WithTimePeriod configures reporting time on TraceReporter.
-func WithTimePeriod(period time.Duration) Option {
+func WithTimePeriod(period string) Option {
 	return func(c *Collector) error {
-		c.Period = period
+		d, err := time.ParseDuration(period)
+		if err != nil {
+			return err
+		}
+		c.Period = d
 		return nil
 	}
 }
