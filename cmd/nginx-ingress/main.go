@@ -201,7 +201,6 @@ func main() {
 		ExternalDNSEnabled:           *enableExternalDNS,
 		IsIPV6Disabled:               *disableIPV6,
 		WatchNamespaceLabel:          *watchNamespaceLabel,
-		TelemetryReportPeriod:        *telemetryReportingPeriod,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
 	}
 

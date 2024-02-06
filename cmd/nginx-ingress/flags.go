@@ -204,8 +204,6 @@ var (
 	enableDynamicSSLReload = flag.Bool(dynamicSSLReloadParam, true, "Enable reloading of SSL Certificates without restarting the NGINX process.")
 
 	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
-	// telemetryReportingPeriod exists only until NIC v3.5 is released. It is used only for demo and testing.
-	telemetryReportingPeriod = flag.String("telemetry-reporting-period", "24h", "Period at which product telemetry is reported.")
 
 	startupCheckFn func() error
 )
@@ -388,12 +386,6 @@ func validationChecks() {
 		logLevelValidationError := validateAppProtectLogLevel(*appProtectLogLevel)
 		if logLevelValidationError != nil {
 			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
-		}
-	}
-
-	if telemetryReportingPeriod != nil {
-		if err := validateReportingPeriod(*telemetryReportingPeriod); err != nil {
-			glog.Fatalf("Invalid value for telemetry-reporting-period: %v", err)
 		}
 	}
 }

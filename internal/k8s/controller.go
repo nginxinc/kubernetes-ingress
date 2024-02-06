@@ -210,7 +210,6 @@ type NewLoadBalancerControllerInput struct {
 	ExternalDNSEnabled           bool
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
-	TelemetryReportPeriod        string
 	EnableTelemetryReporting     bool
 }
 
@@ -281,7 +280,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	if input.EnableTelemetryReporting {
 		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(
-			telemetry.WithTimePeriod(input.TelemetryReportPeriod),
+			telemetry.WithTimePeriod(24 * time.Hour),
 		)
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry collector: %v", err)

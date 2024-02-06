@@ -29,9 +29,9 @@ func (e *Exporter) Export(_ context.Context, td TraceData) error {
 
 // TraceData holds collected NIC telemetry data.
 type TraceData struct {
-	// Numer of VirtualServers
+	// Count of VirtualServers
 	VSCount int
-	// Number of TransportServers
+	// Count of TransportServers
 	TSCount int
 
 	// TODO
@@ -42,13 +42,9 @@ type TraceData struct {
 type Option func(*Collector) error
 
 // WithTimePeriod configures reporting time on TraceReporter.
-func WithTimePeriod(period string) Option {
+func WithTimePeriod(period time.Duration) Option {
 	return func(c *Collector) error {
-		d, err := time.ParseDuration(period)
-		if err != nil {
-			return err
-		}
-		c.Period = d
+		c.Period = period
 		return nil
 	}
 }
@@ -110,7 +106,7 @@ func (c *Collector) Collect(ctx context.Context) {
 	if err != nil {
 		glog.Errorf("Error exporting telemetry data: %v", err)
 	}
-	glog.V(3).Info("Exported telemetry data")
+	glog.V(3).Infof("Exported telemetry data: %x", traceData)
 }
 
 // Start starts running NIC Telemetry Collector.
