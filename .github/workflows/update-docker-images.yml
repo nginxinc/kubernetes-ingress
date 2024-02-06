@@ -50,9 +50,9 @@ jobs:
       - name: Set NGINX versions
         id: versions
         run: |
-          nginx=library/$(grep -E "FROM nginx.*debian" < build/Dockerfile | awk -F" " '{print $2}')
-          nginx_alpine=library/$(grep -E "FROM nginx.*alpine" < build/Dockerfile | awk -F" " '{print $2}')
-          nginx_ubi=$(grep -m1 "FROM nginx.*ubi" < build/Dockerfile | awk -F" " '{print $2}')
+          nginx=library/$(grep -E "FROM nginx.*debian" < build/Dockerfile | awk -F" " '{print $2}' | cut -d '@' -f 1)
+          nginx_alpine=library/$(grep -E "FROM nginx.*alpine" < build/Dockerfile | awk -F" " '{print $2}' | cut -d '@' -f 1)
+          nginx_ubi=$(grep -m1 "FROM nginx.*ubi" < build/Dockerfile | awk -F" " '{print $2}' | cut -d '@' -f 1)
           echo "matrix=[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]" >> $GITHUB_OUTPUT
 
       - name: Set Go MD5sums
