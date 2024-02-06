@@ -2426,13 +2426,13 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 	tests := []struct {
 		routes        []v1.Route
 		upstreamNames sets.Set[string]
-		pathPrefix    string
+		vsPath        string
 		msg           string
 	}{
 		{
 			routes:        []v1.Route{},
 			upstreamNames: sets.Set[string]{},
-			pathPrefix:    "/",
+			vsPath:        "/",
 			msg:           "no routes",
 		},
 		{
@@ -2447,8 +2447,74 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 			upstreamNames: map[string]sets.Empty{
 				"test": {},
 			},
-			pathPrefix: "/",
-			msg:        "valid route",
+			vsPath: "/",
+			msg:    "valid prefix route",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "/",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+				{
+					Path: "/test",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			vsPath: "/",
+			msg:    "valid route prefix with two paths",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~/test",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			vsPath: "~/test",
+			msg:    "valid regex route",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~ /regex1/?(.*)",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			vsPath: "~ /regex1/?(.*)",
+			msg:    "valid regex route",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			vsPath: "=/test",
+			msg:    "valid exact route",
 		},
 	}
 
@@ -2456,7 +2522,7 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 
 	for _, test := range tests {
 		allErrs := vsv.validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames,
-			test.pathPrefix, "default")
+			test.vsPath, "default")
 		if len(allErrs) > 0 {
 			t.Errorf("validateVirtualServerRouteSubroutes() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -2468,7 +2534,7 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 	tests := []struct {
 		routes        []v1.Route
 		upstreamNames sets.Set[string]
-		pathPrefix    string
+		vsPath        string
 		msg           string
 	}{
 		{
@@ -2490,8 +2556,8 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 				"test-1": {},
 				"test-2": {},
 			},
-			pathPrefix: "/",
-			msg:        "duplicated paths",
+			vsPath: "/",
+			msg:    "duplicated paths",
 		},
 		{
 			routes: []v1.Route{
@@ -2501,7 +2567,7 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 				},
 			},
 			upstreamNames: map[string]sets.Empty{},
-			pathPrefix:    "",
+			vsPath:        "",
 			msg:           "invalid route",
 		},
 		{
@@ -2516,8 +2582,131 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 			upstreamNames: map[string]sets.Empty{
 				"test-1": {},
 			},
-			pathPrefix: "/abc",
-			msg:        "invalid prefix",
+			vsPath: "/abc",
+			msg:    "invalid prefix",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Path: "~^/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/abc",
+			msg:    "prefix vs path with both matching prefix and mismatching regex subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/test",
+			msg:    "prefix vs path with matching regex subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/test",
+			msg:    "prefix vs path with matching exact subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "=/test",
+			msg:    "exact vs path with prefix subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "~/test",
+			msg:    "regex vs path with exact subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "=/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Path: "/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/abc",
+			msg:    "prefix vs path with both exact and matching prefix subroute path",
+		},
+		{
+			routes: []v1.Route{
+				{
+					Path: "~/abc",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+				{
+					Path: "/test",
+					Action: &v1.Action{
+						Pass: "test-1",
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+			},
+			vsPath: "/test",
+			msg:    "prefix vs path with both regex and matching prefix subroute path",
 		},
 	}
 
@@ -2525,7 +2714,7 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 
 	for _, test := range tests {
 		allErrs := vsv.validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames,
-			test.pathPrefix, "default")
+			test.vsPath, "default")
 		if len(allErrs) == 0 {
 			t.Errorf("validateVirtualServerRouteSubroutes() returned no errors for the case of %s", test.msg)
 		}
