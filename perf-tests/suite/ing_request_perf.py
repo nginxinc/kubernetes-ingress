@@ -6,7 +6,7 @@ from locust import HttpUser, task
 host = ""
 
 
-class TestAPResponse(HttpUser):
+class TestResponse(HttpUser):
     # locust class to be invoked
     def on_start(self):
         # get host from appprotect-ingress yaml before each test

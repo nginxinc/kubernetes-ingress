@@ -11,7 +11,7 @@ to find out about various configuration options.
 
 ### Prerequisites
 
-- Any k8s platform of your choices (kind, minikube, GKE, AKS etc.)
+- Any k8s platform of your choice (kind, minikube, GKE, AKS etc.)
 - Python3 and Pytest (in a virtualenv)
 
 #### Step 1 - Create a cluster on platform of your choice
