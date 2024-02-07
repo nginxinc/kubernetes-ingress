@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -8,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 	api_v1 "k8s.io/api/core/v1"
@@ -201,6 +203,9 @@ var (
 
 	enableDynamicSSLReload = flag.Bool(dynamicSSLReloadParam, true, "Enable reloading of SSL Certificates without restarting the NGINX process.")
 
+	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
+	telemetryReportingPeriod = flag.String("telemetry-reporting-period", "24h", "Sets a telemetry reporting period.")
+
 	startupCheckFn func() error
 )
 
@@ -384,6 +389,12 @@ func validationChecks() {
 			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
 		}
 	}
+
+	if telemetryReportingPeriod != nil {
+		if err := validateReportingPeriod(*telemetryReportingPeriod); err != nil {
+			glog.Fatalf("Invalid value for telemetry-reporting-period: %v", err)
+		}
+	}
 }
 
 // validateNamespaceNames validates the namespaces are in the correct format
@@ -486,6 +497,20 @@ func validateLocation(location string) error {
 	if !locationRegexp.MatchString(location) {
 		msg := validation.RegexError(locationErrMsg, locationFmt, "/path", "/path/subpath-123")
 		return fmt.Errorf("invalid location format: %v", msg)
+	}
+	return nil
+}
+
+// validateReportingPeriod checks if the reporting period parameter can be parsed.
+//
+// This function will be deprecated in NIC v3.5. It is used only for demo and testing purpose.
+func validateReportingPeriod(period string) error {
+	duration, err := time.ParseDuration(period)
+	if err != nil {
+		return err
+	}
+	if duration.Minutes() < 1 {
+		return errors.New("invalid reporting period, expected minimum 1m")
 	}
 	return nil
 }
