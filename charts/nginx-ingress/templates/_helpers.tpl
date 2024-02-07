@@ -223,4 +223,5 @@ Build the args for the service binary.
 - -ready-status-port={{ .Values.controller.readyStatus.port }}
 - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
 - -ssl-dynamic-reload={{ .Values.controller.enableSSLDynamicReload }}
+- -enable-telemetry-reporting={{ .Values.controller.enableTelemetryReporting}}
 {{- end -}}
