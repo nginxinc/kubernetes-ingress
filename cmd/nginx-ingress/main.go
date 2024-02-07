@@ -202,6 +202,7 @@ func main() {
 		IsIPV6Disabled:               *disableIPV6,
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
+		TelemetryReportingPeriod:     *telemetryReportingPeriod,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
