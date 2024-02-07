@@ -1466,7 +1466,7 @@ func isValidMatchValue(value string) []string {
 
 // ValidateVirtualServerRoute validates a VirtualServerRoute.
 func (vsv *VirtualServerValidator) ValidateVirtualServerRoute(virtualServerRoute *v1.VirtualServerRoute) error {
-	allErrs := vsv.validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), "", "/", virtualServerRoute.Namespace)
+	allErrs := vsv.validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), "", "", virtualServerRoute.Namespace)
 	return allErrs.ToAggregate()
 }
 
@@ -1527,7 +1527,7 @@ func (vsv *VirtualServerValidator) validateVirtualServerRouteSubroutes(routes []
 		isRouteFieldForbidden := true
 		routeErrs := vsv.validateRoute(r, idxPath, upstreamNames, isRouteFieldForbidden, namespace)
 
-		if vsPath != "" && !strings.HasPrefix(r.Path, vsPath) && !isRegexOrExactMatch(r.Path) {
+		if vsPath != "" && !strings.HasPrefix(r.Path, vsPath) {
 			msg := fmt.Sprintf("must start with '%s'", vsPath)
 			routeErrs = append(routeErrs, field.Invalid(idxPath, r.Path, msg))
 		}
