@@ -25,7 +25,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.25.3@sha256:4c0fdaa8b6341bfdeca5f18f7837462c80cff90527ee35ef185571e1c327beac AS debian
+FROM nginx:1.25.3@sha256:8b4c32060a41e8c07e4b33c2e2695510c729314d84b2b71a1c5d7002aaf0b5ad AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
