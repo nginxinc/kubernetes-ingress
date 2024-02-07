@@ -1367,6 +1367,14 @@
           "examples": [
             true
           ]
+        },
+        "enableTelemetryReporting": {
+          "type": "boolean",
+          "default": true,
+          "title": "Enable telemetry reporting",
+          "examples": [
+            true
+          ]
         }
       },
       "examples": [
