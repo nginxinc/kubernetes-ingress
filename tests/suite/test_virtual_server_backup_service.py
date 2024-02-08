@@ -106,7 +106,6 @@ def vs_externalname_setup(
 
 @pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.backup_service
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [

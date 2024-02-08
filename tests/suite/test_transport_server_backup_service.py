@@ -163,7 +163,6 @@ def transport_server_tls_passthrough_setup(
 
 @pytest.mark.ts
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.backup_service
 @pytest.mark.parametrize(
     "crd_ingress_controller, transport_server_tls_passthrough_setup",
     [
