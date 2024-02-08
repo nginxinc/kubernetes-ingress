@@ -7,6 +7,9 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 
 	discovery_v1 "k8s.io/api/discovery/v1"
 
@@ -3745,5 +3748,43 @@ func TestPreSyncSecrets(t *testing.T) {
 	ref = lbc.secretStore.GetSecret(unsupportedKey)
 	if ref.Error == nil {
 		t.Errorf("GetSecret(%q) returned a reference without an expected error", unsupportedKey)
+	}
+}
+
+func TestNewTelemetryCollector(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testCase          string
+		input             NewLoadBalancerControllerInput
+		expectedCollector telemetry.Collector
+	}{
+		{
+			testCase: "New Telemetry Collector with default values",
+			input: NewLoadBalancerControllerInput{
+				KubeClient:               fake.NewSimpleClientset(),
+				EnableTelemetryReporting: true,
+				TelemetryReportingPeriod: "24h",
+			},
+			expectedCollector: telemetry.Collector{
+				Period:   24 * time.Hour,
+				Exporter: telemetry.DiscardExporter,
+			},
+		},
+		{
+			testCase: "New Telemetry Collector with Telemetry Reporting set to false",
+			input: NewLoadBalancerControllerInput{
+				KubeClient:               fake.NewSimpleClientset(),
+				EnableTelemetryReporting: false,
+			},
+			expectedCollector: telemetry.Collector{},
+		},
+	}
+
+	for _, tc := range testCases {
+		lbc := NewLoadBalancerController(tc.input)
+		if reflect.DeepEqual(tc.expectedCollector, lbc.telemetryCollector) {
+			t.Fatalf("Expected %x, but got %x", tc.expectedCollector, lbc.telemetryCollector)
+		}
 	}
 }

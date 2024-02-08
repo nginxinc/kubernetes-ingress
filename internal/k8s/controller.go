@@ -25,6 +25,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
+
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
 
@@ -161,6 +163,8 @@ type LoadBalancerController struct {
 	enableBatchReload             bool
 	isIPV6Disabled                bool
 	namespaceWatcherController    cache.Controller
+	telemetryCollector            *telemetry.Collector
+	telemetryChan                 chan struct{}
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -206,6 +210,8 @@ type NewLoadBalancerControllerInput struct {
 	ExternalDNSEnabled           bool
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
+	EnableTelemetryReporting     bool
+	TelemetryReportingPeriod     string
 }
 
 // NewLoadBalancerController creates a controller
@@ -269,6 +275,18 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	if input.ExternalDNSEnabled {
 		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
+	}
+
+	// NIC Telemetry Reporting
+	if input.EnableTelemetryReporting {
+		lbc.telemetryChan = make(chan struct{})
+		collector, err := telemetry.NewCollector(
+			telemetry.WithTimePeriod(input.TelemetryReportingPeriod),
+		)
+		if err != nil {
+			glog.Fatalf("failed to initialize telemetry collector: %v", err)
+		}
+		lbc.telemetryCollector = collector
 	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
@@ -683,8 +701,20 @@ func (lbc *LoadBalancerController) Run() {
 	if lbc.externalDNSController != nil {
 		go lbc.externalDNSController.Run(lbc.ctx.Done())
 	}
+
 	if lbc.leaderElector != nil {
 		go lbc.leaderElector.Run(lbc.ctx)
+	}
+
+	if lbc.telemetryCollector != nil {
+		go func(ctx context.Context) {
+			select {
+			case <-lbc.telemetryChan:
+				lbc.telemetryCollector.Start(lbc.ctx)
+			case <-ctx.Done():
+				return
+			}
+		}(lbc.ctx)
 	}
 
 	for _, nif := range lbc.namespacedInformers {

@@ -465,6 +465,9 @@ controller:
   ## Enable dynamic reloading of certificates
   enableSSLDynamicReload: true
 
+  ## Enable telemetry reporting
+  enableTelemetryReporting: true
+
 rbac:
   ## Configures RBAC.
   create: true
