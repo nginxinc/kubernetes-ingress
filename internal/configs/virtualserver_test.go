@@ -991,13 +991,6 @@ func createPointerFromUInt16(n uint16) *uint16 {
 	return &n
 }
 
-// createPointerFromString is a helper that takes a string
-// and returns a pointer to the value. It is used for testing
-// BackupService configuration for Virtual and Transport Servers.
-func createPointerFromString(s string) *string {
-	return &s
-}
-
 // vsEx returns Virtual Server Ex config struct.
 // It's safe to modify returned config for parallel test execution.
 func vsEx() VirtualServerEx {
