@@ -10,7 +10,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.ref_name }}-ci
+  group: ${{ github.ref_name }}-base-image
   cancel-in-progress: true
 
 permissions:
