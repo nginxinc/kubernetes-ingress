@@ -128,7 +128,7 @@ func TestValidateFailsOnMissingBackupPort(t *testing.T) {
 
 	vs := makeVirtualServer()
 	// setup only backup name, missing backup port
-	vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+	vs.Spec.Upstreams[1].Backup = "backup-service"
 
 	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
 	err := vsv.ValidateVirtualServer(&vs)
@@ -165,7 +165,7 @@ func TestValidateFailsOnNotSupportedLBMethodForBackup(t *testing.T) {
 			t.Parallel()
 
 			vs := makeVirtualServer()
-			vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+			vs.Spec.Upstreams[1].Backup = "backup-service"
 			vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
 
 			// Not supported load balancing method
@@ -184,7 +184,7 @@ func TestValidateBackup(t *testing.T) {
 	t.Parallel()
 
 	vs := makeVirtualServer()
-	vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+	vs.Spec.Upstreams[1].Backup = "backup-service"
 	vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
 
 	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}

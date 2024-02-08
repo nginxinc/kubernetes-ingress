@@ -409,7 +409,7 @@ def create_service(v1: CoreV1Api, namespace, body) -> str:
     return resp.metadata.name
 
 
-def create_service_with_name(v1: CoreV1Api, namespace, name) -> str:
+def create_service_with_name(v1: CoreV1Api, namespace, name, port=80, targetPort=8080) -> str:
     """
     Create a service with a specific name based on a common yaml manifest.
 
@@ -423,6 +423,8 @@ def create_service_with_name(v1: CoreV1Api, namespace, name) -> str:
         dep = yaml.safe_load(f)
         dep["metadata"]["name"] = name
         dep["spec"]["selector"]["app"] = name.replace("-svc", "")
+        dep["spec"]["ports"][0]["port"] = port
+        dep["spec"]["ports"][0]["targetPort"] = targetPort
         return create_service(v1, namespace, dep)
 
 
