@@ -31,7 +31,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
     ```shell
     make debian-image
     ```
-4. Load debug image into cluster:
+4. Load the debug image into the Kind cluster:
     ```shell
     make -f tests/Makefile image-load
     ```
