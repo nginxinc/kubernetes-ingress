@@ -35,7 +35,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
     ```shell
     make -f tests/Makefile image-load
     ```
-5. Install NIC Helm chart
+5. Use the Helm chart to install NGINX Ingress Controller
     ```shell
     helm upgrade --install my-release charts/nginx-ingress -f - <<EOF
     controller:
