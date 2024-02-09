@@ -64,7 +64,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
 6. Add this launch configuration to the `configurations` section of your VSCode `.vscode/launch.json` file or IDE equivalent.
     ```json
     {
-        "name": "Debug NIC in local Kind cluster",
+        "name": "Debug NGINX Ingress Controller in local Kind cluster",
         "type": "go",
         "request": "attach",
         "mode": "remote",
