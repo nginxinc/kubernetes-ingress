@@ -75,7 +75,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
         "cwd": "${workspaceFolder}"
     }
     ```
-7. Run the configuration from the `Run and Debug` menu, set some breakpoints, and start debugging!
+7. Run the configuration from the `Run and Debug` menu, set breakpoints, and start debugging.
 
 
 ## Debug configuration walkthrough
