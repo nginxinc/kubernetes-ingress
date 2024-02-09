@@ -15,7 +15,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
 
 ## Quickstart
 
-1. Setup variables:
+1. Set the local variables:
     ```shell
     export TARGET=debug
     export PREFIX=local/nic-debian
