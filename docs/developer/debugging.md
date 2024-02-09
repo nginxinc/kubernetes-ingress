@@ -1,6 +1,8 @@
 # Debugging
 
-Use the [Quickstart](#quickstart) to quickly get up and running debugging NGINX Ingress Controller in a local [Kind](https://kind.sigs.k8s.io/) cluster or use the [walkthrough](#debug-configuration-walkthrough) to step through the process and modify configuration to suit your environment.
+Follow the [Quickstart](#quickstart) guide to start and debug NGINX Ingress Controller in a local [Kind](https://kind.sigs.k8s.io/) cluster or read the [walkthrough](#debug-configuration-walkthrough) to step through the full process of configuring an environment.
+
+Parts of these instructions assume you develop using [Visual Studio Code](https://code.visualstudio.com/), but can be modified and followed for any IDE (Integrated Development Environment).
 
 - [Quickstart](#quickstart)
 - [Debug configuration walkthrough](#debug-configuration-walkthrough)
