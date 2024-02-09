@@ -61,7 +61,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
             repository: local/nic-debian
     EOF
     ```
-6. Add the following launch configuration to the `configurations` section of your VSCode `.vscode/launch.json` or equivalent for your IDE of choice:
+6. Add this launch configuration to the `configurations` section of your VSCode `.vscode/launch.json` file or IDE equivalent.
     ```json
     {
         "name": "Debug NIC in local Kind cluster",
