@@ -22,7 +22,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
     export TAG=debug
     export ARCH=arm64
     ```
-    NOTE: `ARCH` should be set to `amd64` or `arm64` depending on your CPU architecture, debugging will not work as expected if this is not set correctly
+    NOTE: `ARCH` should be set to `amd64` or `arm64` to match your CPU architecture or debugging will not work as expected.
 2. Create local kind cluster:
     ```shell
     make -f tests/Makefile create-kind-cluster
