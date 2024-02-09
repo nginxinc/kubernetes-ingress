@@ -2,6 +2,15 @@
 
 Use the [Quickstart](#quickstart) to quickly get up and running debugging NGINX Ingress Controller in a local [Kind](https://kind.sigs.k8s.io/) cluster or use the [walkthrough](#debug-configuration-walkthrough) to step through the process and modify configuration to suit your environment.
 
+- [Quickstart](#quickstart)
+- [Debug configuration walkthrough](#debug-configuration-walkthrough)
+  - [1. Build a debug container image](#1-build-a-debug-container-image)
+  - [2. Deploy the debug container](#2-deploy-the-debug-container)
+  - [3. Connect your debugger](#3-connect-your-debugger)
+- [Helm configuration options](#helm-configuration-options)
+
+
+
 ## Quickstart
 
 1. Setup variables:
@@ -43,6 +52,8 @@ Use the [Quickstart](#quickstart) to quickly get up and running debugging NGINX 
           - name: godebug
             containerPort: 2345
             protocol: TCP
+        readyStatus:
+            enable: false
         image:
             tag: debug
             repository: local/nic-debian
@@ -94,11 +105,11 @@ Enable the debug configuration via Helm:
 controller:
     debug:
         enable: true
-        continue: false
-    kind: daemonset
     service:
         type: NodePort
         customPorts:
+        # only required if you want to connect
+        # directly to your cluster instead of using kubectl port-forward
           - name: godebug
             nodePort: 32345
             port: 2345
@@ -109,7 +120,9 @@ controller:
         containerPort: 2345
         protocol: TCP
     readyStatus:
-        enable: false #this needs to be false when controller.debug.continue is set to false
+    # it is recommended to deactivate readinessProbes while debugging
+    # to ensure upgrades and service connections run as expected
+        enable: false
     image:
         tag: debug
         repository: local/nic-debian-plus
@@ -131,7 +144,7 @@ args:
 <regular NIC CLI configuration>
 ```
 
-When `continue: true` (or `--continue` if not using Helm) is used Delve will immediately start NIC. Otherwise Delve will wait for a debugger to connect before starting NIC. This is useful for debugging startup behavior of NIC, however it requires that `readinessProbe` is not used for NIC.
+By default Delve will immediately start NIC. Setting `controller.debug.continue: false` will cause Delve to wait for a debugger to connect before starting NIC. This is useful for debugging startup behavior of NIC.
 
 ### 3. Connect your debugger
 
@@ -149,8 +162,20 @@ Example VSCode configuration:
     "mode": "remote",
     "remotePath": "",
     "port":32345,
-    "host":"<cluster where nodeport is exposed>",
+    "host":"<cluster where nodeport is exposed, or localhost if using kubectl port forward>",
     "showLog": true,
     "cwd": "${workspaceFolder}"
 }
 ```
+
+You may want to expose the debugging port on your cluster via `kubectl port-forward`, for example using:
+```shell
+kubectl port-forward my-release-nginx-ingress-controller-z48wf 32345:2345
+```
+
+## Helm configuration options
+
+| Parameter                   | Description                                                                                                   | Default |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- | ------- |
+| `controller.debug.enable`   | Injects Delve CLI parameters into the `args` configuration of the NIC container.                              | `false` |
+| `controller.debug.continue` | Sets the `--continue` Delve flag which continues the NIC process instead of waiting for a debugger to attach. | `true`  |

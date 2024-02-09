@@ -79,7 +79,7 @@
             },
             "continue": {
               "type": "boolean",
-              "default": false,
+              "default": true,
               "title": "Starts Delve with --continue which means that IC will not wait for a debugger attach to start",
               "examples": [
                 false,
