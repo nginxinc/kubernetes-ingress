@@ -86,11 +86,11 @@ Create an NGINX Ingress Controller container with either:
 1. `make <image name> TARGET=debug`
 This option creates the debug NGINX Ingress Controller binary locally , then loads it into the container image.
 1. `make <image name> TARGET=debug-container`
-This builds the debuggable NIC binary in the container image
+This options builds the debug NGINX Ingress Controller binary directly inside the container image.
 
-The debug image will use a NIC binary which contains debug symbols and has [Delve](https://github.com/go-delve/delve) installed. This image also uses `/dlv` as the entrypoint.
+The debug NGINX Ingress Controller binary contains debug symbols and has [Delve](https://github.com/go-delve/delve) installed. It uses `/dlv` as its entrypoint.
 
-Example for building a Debian image with NGINX Plus on Arm64 which will be tagged as `local/nic-debian-plus:debug`:
+The following example builds a Debian image with NGINX Plus on ARM64,  tagged as `local/nic-debian-plus:debug`:
 
 ```shell
 make debian-image-plus TARGET=debug PREFIX=local/nic-debian-plus TAG=debug ARCH=arm64
@@ -101,7 +101,7 @@ make debian-image-plus TARGET=debug PREFIX=local/nic-debian-plus TAG=debug ARCH=
 
 ### 2. Deploy the debug container
 
-Enable the debug configuration via Helm:
+Use Helm to enable the debug configuration:
 
 ```yaml
 controller:
@@ -122,7 +122,7 @@ controller:
         containerPort: 2345
         protocol: TCP
     readyStatus:
-    # it is recommended to deactivate readinessProbes while debugging
+    # We recommend deactivating readinessProbes while debugging
     # to ensure upgrades and service connections run as expected
         enable: false
     image:
@@ -130,7 +130,7 @@ controller:
         repository: local/nic-debian-plus
 ```
 
-Or if not using Helm manually add the Delve CLI flags to the deployment or daemonset:
+If you are not using Helm, manually add the Delve CLI arguments to the deployment or daemonset:
 ```yaml
 args:
 - --listen=:2345
@@ -143,10 +143,10 @@ args:
 - ./nginx-ingress
 - --continue
 - --
-<regular NIC CLI configuration>
+<regular NGINX Ingress Controller CLI configuration>
 ```
 
-By default Delve will immediately start NIC. Setting `controller.debug.continue: false` will cause Delve to wait for a debugger to connect before starting NIC. This is useful for debugging startup behavior of NIC.
+Delve will immediately start NGINX Ingress Controller by default. To prevent this, set `controller.debug.continue: false.`  Delve will then wait for a debugger to connect before starting NGINX Ingress Controller, which is useful for observing start-up behaviour.
 
 ### 3. Connect your debugger
 
@@ -170,7 +170,7 @@ Example VSCode configuration:
 }
 ```
 
-You may want to expose the debugging port on your cluster via `kubectl port-forward`, for example using:
+You may want to expose the debug port of your cluster via `kubectl port-forward` :
 ```shell
 kubectl port-forward my-release-nginx-ingress-controller-z48wf 32345:2345
 ```
