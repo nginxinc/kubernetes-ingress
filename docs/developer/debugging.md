@@ -82,7 +82,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
 
 ### 1. Build a debug container image
 
-Build a NIC container with either:
+Create an NGINX Ingress Controller container with either:
 1. `make <image name> TARGET=debug`
 This builds the debuggable NIC binary locally and loads it into the container image
 1. `make <image name> TARGET=debug-container`
