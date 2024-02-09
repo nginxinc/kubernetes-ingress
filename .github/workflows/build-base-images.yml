@@ -2,6 +2,7 @@ name: Build Base Images
 
 on:
   workflow_dispatch:
+  workflow_call:
   schedule:
     - cron: "30 4 * * 1-5" # run Mon-Fri at 04:30 UTC
 
@@ -11,7 +12,7 @@ defaults:
 
 concurrency:
   group: ${{ github.ref_name }}-base-image
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
