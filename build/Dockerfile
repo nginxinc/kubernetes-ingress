@@ -145,10 +145,16 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=app-protect-security-updates.key,target=/tmp/app-protect-security-updates.key \
 	--mount=type=bind,from=nginx-files,src=90pkgs-nginx,target=/etc/apt/apt.conf.d/90pkgs-nginx \
 	--mount=type=bind,from=nginx-files,src=debian-plus-11.sources,target=/etc/apt/sources.list.d/nginx-plus.sources \
-	--mount=type=bind,from=nginx-files,src=nap-waf-11.sources,target=/etc/apt/sources.list.d/app-protect.sources \
-	--mount=type=bind,from=nginx-files,src=nap-dos-11.sources,target=/etc/apt/sources.list.d/app-protect-dos.sources \
+	--mount=type=bind,from=nginx-files,src=nap-waf-11.sources,target=/tmp/app-protect.sources \
+	--mount=type=bind,from=nginx-files,src=nap-dos-11.sources,target=/tmp/app-protect-dos.sources \
 	## the code below is duplicated from the debian-plus image because NAP doesn't support debian 12
-	apt-get update \
+	if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
+	fi \
+	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
+	cp /tmp/app-protect-dos.sources /etc/apt/sources.list.d/app-protect-dos.sources; \
+	fi \
+	&& apt-get update \
 	&& apt-get upgrade -y \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates sq \
 	&& groupadd --system --gid 101 nginx \
@@ -169,6 +175,12 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig \
 	## end of duplicated code
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	rm -f /etc/apt/sources.list.d/app-protect.sources; \
+	fi \
+	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
+	rm -f /etc/apt/sources.list.d/app-protect-dos.sources; \
+	fi \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Uncomment the lines below if you want to install a custom CA certificate
@@ -205,11 +217,17 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
 	--mount=type=bind,from=nginx-files,src=nginx-plus-8.repo,target=/etc/yum.repos.d/nginx-plus.repo,rw \
 	--mount=type=bind,from=nginx-files,src=app-protect-security-updates.key,target=/tmp/app-protect-security-updates.key \
-	--mount=type=bind,from=nginx-files,src=app-protect-8.repo,target=/etc/yum.repos.d/app-protect-8.repo \
-	--mount=type=bind,from=nginx-files,src=app-protect-dos-8.repo,target=/etc/yum.repos.d/app-protect-dos-8.repo \
+	--mount=type=bind,from=nginx-files,src=app-protect-8.repo,target=/tmp/app-protect-8.repo \
+	--mount=type=bind,from=nginx-files,src=app-protect-dos-8.repo,target=/tmp/app-protect-dos-8.repo \
 	source /tmp/rhel_license \
-	## the code below is duplicated from the ubi-plus image because NAP doesn't support UBI 9 and minimal versions
-	dnf --nodocs install -y shadow-utils ca-certificates \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect-8.repo /etc/yum.repos.d/app-protect-8.repo; \
+	fi \
+	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
+	cp /tmp/app-protect-dos-8.repo /etc/yum.repos.d/app-protect-dos-8.repo; \
+	fi \
+	## the code below is duplicated from the ubi-plus image because NAP DOS doesn't support UBI 9 and minimal versions
+	&& dnf --nodocs install -y shadow-utils ca-certificates \
 	&& dnf update -y \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
@@ -233,6 +251,12 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	# fix for CVEs
 	&& dnf upgrade -y curl ncurses \
 	&& subscription-manager unregister \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	rm -f /etc/yum.repos.d/app-protect-8.repo; \
+	fi \
+	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
+	rm -f /etc/yum.repos.d/app-protect-dos-8.repo; \
+	fi \
 	&& dnf clean all
 
 # Uncomment the lines below if you want to install a custom CA certificate
