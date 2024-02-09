@@ -27,7 +27,7 @@ Parts of these instructions assume you develop using [Visual Studio Code](https:
     ```shell
     make -f tests/Makefile create-kind-cluster
     ```
-3. Build NIC debug image:
+3. Build the NGINX Ingress Controller debug image:
     ```shell
     make debian-image
     ```
