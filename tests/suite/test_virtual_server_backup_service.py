@@ -106,6 +106,7 @@ def vs_externalname_setup(
 
 @pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
+@pytest.mark.backup_service
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -126,6 +127,15 @@ def vs_externalname_setup(
     indirect=True,
 )
 class TestVirtualServerWithBackupService:
+    """
+    This function will take an existing VirtualServer and restore it back to the default VirtualServer
+    This ensure subsequent tests start with a standard VirtualServer
+    """
+    def restore_default_vs(self, kube_apis, virtual_server_setup) -> None:
+            delete_virtual_server(kube_apis.custom_objects, virtual_server_setup.vs_name, virtual_server_setup.namespace)
+            create_virtual_server_from_yaml(kube_apis.custom_objects, std_vs_src, virtual_server_setup.namespace)
+            wait_before_test()
+
     """
     This test validates that we still get a response back from the default
     service, and not the backup service, as long as the default service is still available
@@ -148,17 +158,7 @@ class TestVirtualServerWithBackupService:
         )
         wait_before_test()
 
-        print("\nStep 1: Get response from VS with backup service")
-        print(virtual_server_setup.backend_1_url + "\n")
-        res = make_request(
-            virtual_server_setup.backend_1_url,
-            virtual_server_setup.vs_host,
-        )
-
-        assert res.status_code == 200
-        assert "backend1-" in res.text
-        assert "external-backend" not in res.text
-
+        print("\nStep 1: test_get_response_from_application - Ensure configuration contains the backup service")
         expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
@@ -172,6 +172,21 @@ class TestVirtualServerWithBackupService:
 
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
+
+        wait_before_test()
+
+        print("\nStep 2: test_get_response_from_application - Get response from default pods even while the backup service exists")
+        print(virtual_server_setup.backend_1_url + "\n")
+        res = make_request(
+            virtual_server_setup.backend_1_url,
+            virtual_server_setup.vs_host,
+        )
+
+        assert res.status_code == 200
+        assert "backend1-" in res.text
+        assert "external-backend" not in res.text
+
+        self.restore_default_vs(kube_apis, virtual_server_setup)
 
     """
     This test validates that we get a response back from the backup service.
@@ -195,17 +210,7 @@ class TestVirtualServerWithBackupService:
         )
         wait_before_test()
 
-        print("\nStep 1: Get response from VS with backup service")
-        print(virtual_server_setup.backend_1_url + "\n")
-        res = make_request(
-            virtual_server_setup.backend_1_url,
-            virtual_server_setup.vs_host,
-        )
-
-        assert res.status_code == 200
-        assert "backend1-" in res.text
-        assert "external-backend" not in res.text
-
+        print("\nStep 1: test_get_response_from_backup - Ensure configuration contains the backup service")
         expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
@@ -220,11 +225,22 @@ class TestVirtualServerWithBackupService:
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
 
-        print("\nStep 2: Scale deployment to zero replicas")
+        print("\nStep 2: test_get_response_from_backup - Get response from VS with backup service")
+        print(virtual_server_setup.backend_1_url + "\n")
+        res = make_request(
+            virtual_server_setup.backend_1_url,
+            virtual_server_setup.vs_host,
+        )
+
+        assert res.status_code == 200
+        assert "backend1-" in res.text
+        assert "external-backend" not in res.text
+
+        print("\nStep 3: test_get_response_from_backup - Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
         wait_before_test()
 
-        print("\nStep 3: Get response from backup service")
+        print("\nStep 4: test_get_response_from_backup - Get response from backup service")
         res_from_backup = make_request(
             virtual_server_setup.backend_1_url,
             virtual_server_setup.vs_host,
@@ -247,20 +263,11 @@ class TestVirtualServerWithBackupService:
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
 
-        print("\nStep 4: Scale deployment back to 2 replicas")
+        print("\nStep 5: test_get_response_from_backup - Scale deployment back to 2 replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 2)
         wait_before_test()
 
-        print("\nStep 5: Get response")
-        res_after_scaleup = make_request(
-            virtual_server_setup.backend_1_url,
-            virtual_server_setup.vs_host,
-        )
-
-        assert res_after_scaleup.status_code == 200
-        assert "external-backend" not in res_after_scaleup.text
-        assert "backend1-" in res_after_scaleup.text
-
+        print("\nStep 6: test_get_response_from_backup - Confirm scale up was successful")
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
             expected_conf_line,
@@ -273,6 +280,18 @@ class TestVirtualServerWithBackupService:
 
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
+
+        print("\nStep 7: test_get_response_from_backup - Get response after scale up")
+        res_after_scaleup = make_request(
+            virtual_server_setup.backend_1_url,
+            virtual_server_setup.vs_host,
+        )
+
+        assert res_after_scaleup.status_code == 200
+        assert "external-backend" not in res_after_scaleup.text
+        assert "backend1-" in res_after_scaleup.text
+
+        self.restore_default_vs(kube_apis, virtual_server_setup)
 
     """
     This test validates that getting an error response after deleting the backup service.
@@ -295,17 +314,7 @@ class TestVirtualServerWithBackupService:
         )
         wait_before_test()
 
-        print("\nStep 1: Get response from VS with backup service")
-        print(virtual_server_setup.backend_1_url + "\n")
-        res = make_request(
-            virtual_server_setup.backend_1_url,
-            virtual_server_setup.vs_host,
-        )
-
-        assert res.status_code == 200
-        assert "backend1-" in res.text
-        assert "external-backend" not in res.text
-
+        print("\nStep 1: test_delete_backup_service - Ensure configuration contains the backup service")
         expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
@@ -320,11 +329,22 @@ class TestVirtualServerWithBackupService:
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
 
-        print("\nStep 2: Scale deployment to zero replicas")
+        print("\nStep 2: test_delete_backup_service - Get response from VS with backup service")
+        print(virtual_server_setup.backend_1_url + "\n")
+        res = make_request(
+            virtual_server_setup.backend_1_url,
+            virtual_server_setup.vs_host,
+        )
+
+        assert res.status_code == 200
+        assert "backend1-" in res.text
+        assert "external-backend" not in res.text
+
+        print("\nStep 3: test_delete_backup_service - Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
         wait_before_test()
 
-        print("\nStep 3: Get response from backup service")
+        print("\nStep 4: test_delete_backup_service - Get response from backup service")
         res_from_backup = make_request(
             virtual_server_setup.backend_1_url,
             virtual_server_setup.vs_host,
@@ -347,11 +367,11 @@ class TestVirtualServerWithBackupService:
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
 
-        print("\nStep 4: Delete backup service by deleting the namespace")
+        print("\nStep 5: test_delete_backup_service - Delete backup service by deleting the namespace")
         delete_namespace(kube_apis.v1, "external-ns")
         wait_before_test()
 
-        print("\nStep 5: Get response")
+        print("\nStep 6: test_delete_backup_service - Get response from backup service after deleting the backup service")
         res_after_delete = make_request(
             virtual_server_setup.backend_1_url,
             virtual_server_setup.vs_host,
@@ -362,3 +382,5 @@ class TestVirtualServerWithBackupService:
         # Re-add the external-ns namespace.
         # This is done to ensure the vs_externalname_setup will cleanup correctly.
         create_namespace_with_name_from_yaml(kube_apis.v1, "external-ns", f"{TEST_DATA}/common/ns.yaml")
+
+        self.restore_default_vs(kube_apis, virtual_server_setup)
