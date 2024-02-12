@@ -458,13 +458,19 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       nginx-repo: pkgs-test.nginx.com
+    secrets:
       nginx-crt: ${{ secrets.NGINX_TEST_CRT }}
       nginx-key: ${{ secrets.NGINX_TEST_KEY }}
+      rhel-license: ${{ secrets.RHEL_LICENSE }}
+      gcr-workload-identity: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+      gcr-service-account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+      gcr-mkpl-workload-identity: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
+      gcr-mkpl-service-account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
+      aws-role-mkpl: ${{ secrets.AWS_ROLE_MARKETPLACE }}
     permissions:
       contents: read
       security-events: write
       id-token: write
-    secrets: inherit
 
   build-docker-nap:
     name: Build Docker NAP
@@ -514,13 +520,19 @@ jobs:
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       nginx-repo: pkgs-test.nginx.com
+    secrets:
       nginx-crt: ${{ secrets.NGINX_TEST_CRT }}
       nginx-key: ${{ secrets.NGINX_TEST_KEY }}
+      rhel-license: ${{ secrets.RHEL_LICENSE }}
+      gcr-workload-identity: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+      gcr-service-account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+      gcr-mkpl-workload-identity: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
+      gcr-mkpl-service-account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
+      aws-role-mkpl: ${{ secrets.AWS_ROLE_MARKETPLACE }}
     permissions:
       contents: read
       security-events: write
       id-token: write
-    secrets: inherit
 
   publish-helm:
     name: Package and Publish Helm Chart

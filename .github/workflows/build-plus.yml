@@ -25,17 +25,34 @@ on:
         required: false
         type: boolean
       nginx-repo:
-        description: Nginx repo to use
+        description: Nginx repo to use for plus builds
         required: true
         type: string
+    secrets:
       nginx-crt:
-        description: Nginx cert to use
+        description: Nginx cert to use for plus builds
         required: true
-        type: string
       nginx-key:
-        description: Nginx key to use
+        description: Nginx key to use for plus builds
         required: true
-        type: string
+      rhel-license:
+        description: The RHEL license to use for UBI builds
+        required: false
+      gcr-workload-identity:
+        description: The GCR Workload Identity to use when authenticating to Google Cloud
+        required: true
+      gcr-service-account:
+        description: The GCR Service Account to use when authenticating to Google Cloud
+        required: true
+      gcr-mkpl-workload-identity:
+        description: The GCR Marketplace Workload Identity to use when authenticating to Google Cloud
+        required: true
+      gcr-mkpl-service-account:
+        description: The GCR Marketplace Service Account to use when authenticating to Google Cloud
+        required: true
+      aws-role-mkpl:
+        description: The AWS Marketplace Role to assume when authenticating to AWS MarketPlace
+        required: true
 
 defaults:
   run:
@@ -77,8 +94,8 @@ jobs:
         uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
         with:
           token_format: access_token
-          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
-          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ secrets.gcr-workload-identity }}
+          service_account: ${{ secrets.gcr-service-account }}
         if: github.event_name != 'pull_request' && ! inputs.build-cache
 
       - name: Login to GCR
@@ -94,8 +111,8 @@ jobs:
         uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
         with:
           token_format: access_token
-          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
-          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
+          workload_identity_provider: ${{ secrets.gcr-mkpl-workload-identity }}
+          service_account: ${{ secrets.gcr-mkpl-service-account }}
         if: github.ref_type == 'tag' && ! contains(inputs.target, 'aws')
 
       - name: Login to GCR for Marketplace
@@ -110,7 +127,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
+          role-to-assume: ${{ secrets.aws-role-mkpl }}
         if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
 
       - name: Login to ECR
@@ -192,9 +209,9 @@ jobs:
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
-            ${{ format('"nginx-repo.crt={0}"', inputs.nginx-crt) }}
-            ${{ format('"nginx-repo.key={0}"', inputs.nginx-key) }}
-            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+            ${{ format('"nginx-repo.crt={0}"', secrets.nginx-crt) }}
+            ${{ format('"nginx-repo.key={0}"', secrets.nginx-key) }}
+            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.rhel-license) || '' }}
 
       - name: AWS variables
         id: aws
@@ -246,11 +263,11 @@ jobs:
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
-            ${{ format('"nginx-repo.crt={0}"', inputs.nginx-crt) }}
-            ${{ format('"nginx-repo.key={0}"', inputs.nginx-key) }}
-            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ ! inputs.build-cache }}
-
+            ${{ format('"nginx-repo.crt={0}"', secrets.nginx-crt) }}
+            ${{ format('"nginx-repo.key={0}"', secrets.nginx-key) }}
+            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.rhel-license) || '' }}
+          if: ${{ ! inputs.build-cache }}
+          
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
         continue-on-error: true
