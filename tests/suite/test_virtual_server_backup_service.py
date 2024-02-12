@@ -36,7 +36,14 @@ def make_request(url, host):
 
 
 def get_result_in_conf_with_retry(
-    kube_apis_v1, kube_apis_custom_objects, expected_conf_line, external_host, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace
+    kube_apis_v1,
+    kube_apis_custom_objects,
+    expected_conf_line,
+    external_host,
+    vs_name,
+    vs_namespace,
+    ic_pod_name,
+    ic_pod_namespace,
 ):
     retry = 0
     result_conf = ""
