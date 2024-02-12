@@ -17,12 +17,13 @@ from suite.utils.resources_utils import (
     wait_before_test,
 )
 from suite.utils.vs_vsr_resources_utils import (
+    create_virtual_server_from_yaml,
     delete_and_create_vs_from_yaml,
     delete_virtual_server,
-    create_virtual_server_from_yaml,
 )
 
 std_vs_src = f"{TEST_DATA}/virtual-server-backup-service/standard/virtual-server.yaml"
+
 
 def make_request(url, host):
     return requests.get(
@@ -136,10 +137,11 @@ class TestVirtualServerWithBackupService:
     This function will take an existing VirtualServer and restore it back to the default VirtualServer
     This ensure subsequent tests start with a standard VirtualServer
     """
+
     def restore_default_vs(self, kube_apis, virtual_server_setup) -> None:
-            delete_virtual_server(kube_apis.custom_objects, virtual_server_setup.vs_name, virtual_server_setup.namespace)
-            create_virtual_server_from_yaml(kube_apis.custom_objects, std_vs_src, virtual_server_setup.namespace)
-            wait_before_test()
+        delete_virtual_server(kube_apis.custom_objects, virtual_server_setup.vs_name, virtual_server_setup.namespace)
+        create_virtual_server_from_yaml(kube_apis.custom_objects, std_vs_src, virtual_server_setup.namespace)
+        wait_before_test()
 
     """
     This test validates that we still get a response back from the default
@@ -180,7 +182,9 @@ class TestVirtualServerWithBackupService:
 
         wait_before_test()
 
-        print("\nStep 2: test_get_response_from_application - Get response from default pods even while the backup service exists")
+        print(
+            "\nStep 2: test_get_response_from_application - Get response from default pods even while the backup service exists"
+        )
         print(virtual_server_setup.backend_1_url + "\n")
         res = make_request(
             virtual_server_setup.backend_1_url,
@@ -376,7 +380,9 @@ class TestVirtualServerWithBackupService:
         delete_namespace(kube_apis.v1, "external-ns")
         wait_before_test()
 
-        print("\nStep 6: test_delete_backup_service - Get response from backup service after deleting the backup service")
+        print(
+            "\nStep 6: test_delete_backup_service - Get response from backup service after deleting the backup service"
+        )
         res_after_delete = make_request(
             virtual_server_setup.backend_1_url,
             virtual_server_setup.vs_host,
