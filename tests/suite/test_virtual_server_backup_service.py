@@ -61,13 +61,13 @@ def get_result_in_conf_with_retry(
         print(response)
         print("\n-- READ VS RESPONSE --")
 
-#         print("-- READ VS STATUS REASON --\n")
-#         print(response["status"]["reason"])
-#         print("\n-- READ VS STATUS REASON --")
-#
-#         print("-- READ VS STATUS STATE --\n")
-#         print(response["status"]["state"])
-#         print("\n-- READ VS STATUS STATE --")
+        #         print("-- READ VS STATUS REASON --\n")
+        #         print(response["status"]["reason"])
+        #         print("\n-- READ VS STATUS REASON --")
+        #
+        #         print("-- READ VS STATUS STATE --\n")
+        #         print(response["status"]["state"])
+        #         print("\n-- READ VS STATUS STATE --")
         retry = retry + 1
     return result_conf
 
