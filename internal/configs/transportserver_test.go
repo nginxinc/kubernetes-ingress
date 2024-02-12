@@ -598,7 +598,7 @@ func TestGenerateTransportServerConfigForBackupServiceNGINXPlus(t *testing.T) {
 
 	transportServerEx := tsEx()
 	transportServerEx.TransportServer.Spec.Upstreams[0].LoadBalancingMethod = "least_conn"
-	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = createPointerFromString("backup-svc")
+	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = "backup-svc"
 	transportServerEx.TransportServer.Spec.Upstreams[0].BackupPort = createPointerFromUInt16(5090)
 	transportServerEx.Endpoints = map[string][]string{
 		"default/tcp-app-svc:5001": {
@@ -752,7 +752,7 @@ func TestGenerateTransportServerConfig_DoesNotGenerateBackupOnMissingBackupPort(
 
 	transportServerEx := tsEx()
 	transportServerEx.TransportServer.Spec.Upstreams[0].LoadBalancingMethod = "least_conn"
-	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = createPointerFromString("clustertwo.corp.local")
+	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = "clustertwo.corp.local"
 	transportServerEx.TransportServer.Spec.Upstreams[0].BackupPort = nil
 	transportServerEx.Endpoints = map[string][]string{
 		"default/tcp-app-svc:5001": {
@@ -826,7 +826,7 @@ func TestGenerateTransportServerConfig_DoesNotGenerateBackupOnMissingBackupPortA
 
 	transportServerEx := tsEx()
 	transportServerEx.TransportServer.Spec.Upstreams[0].LoadBalancingMethod = "least_conn"
-	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = nil
+	transportServerEx.TransportServer.Spec.Upstreams[0].Backup = ""
 	transportServerEx.TransportServer.Spec.Upstreams[0].BackupPort = nil
 	transportServerEx.Endpoints = map[string][]string{
 		"default/tcp-app-svc:5001": {

@@ -11,33 +11,41 @@ to find out about various configuration options.
 
 ### Prerequisites
 
-- Minikube.
-- Python3 (in a virtualenv)
+- Any k8s platform of your choice (kind, minikube, GKE, AKS etc.)
+- Python3 and Pytest (in a virtualenv)
 
-#### Step 1 - Create a Minikube Cluster
-
-```bash
-minikube start
-```
+#### Step 1 - Create a cluster on platform of your choice
 
 #### Step 2 - Run the Performance Tests
 
-**Note**: if you have the Ingress Controller deployed in the cluster, please uninstall it first, making sure to remove
+**Note**: if you already have the Ingress Controller deployed in the cluster, please uninstall it first, making sure to remove
 its namespace and RBAC resources.
 
 Run the tests:
 
 - Use local Python3 installation (advised to use pyenv/virtualenv):
 
-    ```bash
+    ```shell
     cd perf_tests
     pip install -r ../tests/requirements.txt --no-deps
-    pytest -v -s -m ap_perf --count=<INT>  --users=<INT> --hatch-rate=<INT> --time=<INT>
     ```
 
-The tests will use the Ingress Controller for NGINX with the image built from `debian-image-nap-plus`. See the section
-below to learn how to configure the tests including the image and the type of NGINX -- NGINX or NGINX Plus. Refer the
-[Configuring the Tests](#configuring-the-tests) section for valid arguments.
+    For Ingress and VS performance tests:
+
+    ```shell
+    pytest -v -s -m perf --count=<INT> --users=<INT> --hatch-rate=<INT> --time=<INT>
+    ```
+
+    For AppProtect performance tests:
+
+    ```shell
+    pytest -v -s -m ap_perf --count=<INT> --users=<INT> --hatch-rate=<INT> --time=<INT>
+    ```
+
+The tests can use the Ingress Controller for NGINX with the image built from `debian-image-nap-plus`, `debian-image-plus`
+or `debian-image`.
+See the section below to learn how to configure the tests including the image and the type of NGINX -- NGINX or
+NGINX Plus. Refer to [Configuring the Tests](#configuring-the-tests) section for valid arguments.
 
 ## Configuring the Tests
 

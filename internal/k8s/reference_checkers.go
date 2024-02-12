@@ -147,7 +147,7 @@ func (rc *serviceReferenceChecker) IsReferencedByVirtualServer(svcNamespace stri
 		if rc.hasClusterIP && u.UseClusterIP {
 			continue
 		}
-		if u.Service == svcName {
+		if u.Service == svcName || u.Backup == svcName {
 			return true
 		}
 	}
@@ -178,7 +178,7 @@ func (rc *serviceReferenceChecker) IsReferencedByTransportServer(svcNamespace st
 	}
 
 	for _, u := range ts.Spec.Upstreams {
-		if u.Service == svcName {
+		if u.Service == svcName || u.Backup == svcName {
 			return true
 		}
 	}
