@@ -67,7 +67,7 @@ func TestValidateTransportServer_BackupService(t *testing.T) {
 	t.Parallel()
 
 	ts := makeTransportServer()
-	ts.Spec.Upstreams[0].Backup = createPointerFromString("backup-service")
+	ts.Spec.Upstreams[0].Backup = "backup-service"
 	ts.Spec.Upstreams[0].BackupPort = createPointerFromUInt16(5505)
 
 	tsv := createTransportServerValidator()
@@ -97,7 +97,7 @@ func TestValidateTransportServer_FailsOnMissingBackupPort(t *testing.T) {
 	t.Parallel()
 
 	ts := makeTransportServer()
-	ts.Spec.Upstreams[0].Backup = createPointerFromString("backup-service-ts")
+	ts.Spec.Upstreams[0].Backup = "backup-service-ts"
 	// backup port not created, it's nil
 
 	tsv := createTransportServerValidator()
@@ -118,7 +118,7 @@ func TestValidateTransportServer_FailsOnNotSupportedLBMethodForBackup(t *testing
 			t.Parallel()
 
 			ts := makeTransportServer()
-			ts.Spec.Upstreams[0].Backup = createPointerFromString("backup-service")
+			ts.Spec.Upstreams[0].Backup = "backup-service"
 			ts.Spec.Upstreams[0].BackupPort = createPointerFromUInt16(5505)
 			ts.Spec.Upstreams[0].LoadBalancingMethod = lbMethod
 
