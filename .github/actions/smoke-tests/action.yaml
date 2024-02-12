@@ -23,6 +23,9 @@ inputs:
   marker:
     description: Marker to use
     required: false
+  nginx-repo:
+    description: Nginx repo to use
+    default: pkgs.nginx.com
   nginx-key:
     description: Nginx key to use
     required: false
@@ -80,7 +83,7 @@ runs:
         build-args: |
           BUILD_OS=${{ inputs.image }}
           IC_VERSION=CI
-          PACKAGE_REPO=pkgs-test.nginx.com
+          PACKAGE_REPO=${{ inputs.nginx-repo }}
           ${{ steps.ingress-type.outputs.modules != '' && format('NAP_MODULES={0}', steps.ingress-type.outputs.modules) || '' }}
           ${{ contains(inputs.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
         secrets: |

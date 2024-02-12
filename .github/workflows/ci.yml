@@ -381,6 +381,7 @@ jobs:
           image: ${{ matrix.images.image != '' && matrix.images.image || 'debian' }}
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
           k8s-version: ${{ matrix.k8s }}
+          nginx-repo: pkgs-test.nginx.com
           nginx-crt: ${{ secrets.NGINX_TEST_CRT }}
           nginx-key: ${{ secrets.NGINX_TEST_KEY }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
@@ -456,6 +457,9 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
+      nginx-repo: pkgs-test.nginx.com
+      nginx-crt: ${{ secrets.NGINX_TEST_CRT }}
+      nginx-key: ${{ secrets.NGINX_TEST_KEY }}
     permissions:
       contents: read
       security-events: write
@@ -501,7 +505,6 @@ jobs:
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: waf
-
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
@@ -510,6 +513,9 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
+      nginx-repo: pkgs-test.nginx.com
+      nginx-crt: ${{ secrets.NGINX_TEST_CRT }}
+      nginx-key: ${{ secrets.NGINX_TEST_KEY }}
     permissions:
       contents: read
       security-events: write

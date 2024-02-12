@@ -24,6 +24,18 @@ on:
       build-cache:
         required: false
         type: boolean
+      nginx-repo:
+        description: Nginx repo to use
+        required: true
+        type: string
+      nginx-crt:
+        description: Nginx cert to use
+        required: true
+        type: string
+      nginx-key:
+        description: Nginx key to use
+        required: true
+        type: string
 
 defaults:
   run:
@@ -176,12 +188,12 @@ jobs:
           build-args: |
             BUILD_OS=${{ inputs.image }}
             IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
-            PACKAGE_REPO=pkgs-test.nginx.com
+            PACKAGE_REPO=${{ inputs.nginx-repo }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
-            "nginx-repo.crt=${{ secrets.NGINX_TEST_CRT }}"
-            "nginx-repo.key=${{ secrets.NGINX_TEST_KEY }}"
+            ${{ format('"nginx-repo.crt={0}"', inputs.nginx-crt) }}
+            ${{ format('"nginx-repo.key={0}"', inputs.nginx-key) }}
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
       - name: AWS variables
@@ -234,8 +246,8 @@ jobs:
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
-            "nginx-repo.crt=${{ secrets.NGINX_TEST_CRT }}"
-            "nginx-repo.key=${{ secrets.NGINX_TEST_KEY }}"
+            ${{ format('"nginx-repo.crt={0}"', inputs.nginx-crt) }}
+            ${{ format('"nginx-repo.key={0}"', inputs.nginx-key) }}
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
         if: ${{ ! inputs.build-cache }}
 
