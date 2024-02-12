@@ -20,6 +20,7 @@ from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_and_create_vs_from_yaml,
     delete_virtual_server,
+    read_vs,
 )
 
 std_vs_src = f"{TEST_DATA}/virtual-server-backup-service/standard/virtual-server.yaml"
@@ -35,7 +36,7 @@ def make_request(url, host):
 
 
 def get_result_in_conf_with_retry(
-    kube_apis_v1, expected_conf_line, external_host, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace
+    kube_apis_v1, kube_apis_custom_objects, expected_conf_line, external_host, vs_name, vs_namespace, ic_pod_name, ic_pod_namespace
 ):
     retry = 0
     result_conf = ""
@@ -48,6 +49,18 @@ def get_result_in_conf_with_retry(
             ic_pod_name,
             ic_pod_namespace,
         )
+        response = read_vs(kube_apis_custom_objects, vs_namespace, vs_name)
+        print("-- READ VS RESPONSE --\n")
+        print(response)
+        print("\n-- READ VS RESPONSE --")
+
+        print("-- READ VS STATUS REASON --\n")
+        print(response["status"]["reason"])
+        print("\n-- READ VS STATUS REASON --")
+
+        print("-- READ VS STATUS STATE --\n")
+        print(response["status"]["state"])
+        print("\n-- READ VS STATUS STATE --")
         retry = retry + 1
     return result_conf
 
@@ -112,6 +125,7 @@ def vs_externalname_setup(
 
 @pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
+@pytest.mark.backup_service
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -168,6 +182,7 @@ class TestVirtualServerWithBackupService:
         expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
+            kube_apis.custom_objects,
             expected_conf_line,
             vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
@@ -222,6 +237,7 @@ class TestVirtualServerWithBackupService:
         expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
+            kube_apis.custom_objects,
             expected_conf_line,
             vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
@@ -260,6 +276,7 @@ class TestVirtualServerWithBackupService:
 
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
+            kube_apis.custom_objects,
             expected_conf_line,
             vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
@@ -278,6 +295,7 @@ class TestVirtualServerWithBackupService:
         print("\nStep 6: test_get_response_from_backup - Confirm scale up was successful")
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
+            kube_apis.custom_objects,
             expected_conf_line,
             vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
@@ -326,6 +344,7 @@ class TestVirtualServerWithBackupService:
         expected_conf_line = f"server {vs_externalname_setup.external_host}:80 backup resolve;"
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
+            kube_apis.custom_objects,
             expected_conf_line,
             vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
@@ -364,6 +383,7 @@ class TestVirtualServerWithBackupService:
 
         result_conf = get_result_in_conf_with_retry(
             kube_apis.v1,
+            kube_apis.custom_objects,
             expected_conf_line,
             vs_externalname_setup.external_host,
             virtual_server_setup.vs_name,
