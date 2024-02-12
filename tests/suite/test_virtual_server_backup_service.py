@@ -22,6 +22,8 @@ from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
 )
 
+std_vs_src = f"{TEST_DATA}/virtual-server-backup-service/standard/virtual-server.yaml"
+
 def make_request(url, host):
     return requests.get(
         url,

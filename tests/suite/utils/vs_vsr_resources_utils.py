@@ -33,8 +33,8 @@ def create_virtual_server_from_yaml(custom_objects: CustomObjectsApi, yaml_manif
     :return: str
     """
     print("\nCreate a VirtualServer:")
-    print("\nVirtualServer manifest")
-    print("\n" + yaml_manifest)
+    print("\nVirtualServer YAML location: ")
+    print(yaml_manifest)
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
