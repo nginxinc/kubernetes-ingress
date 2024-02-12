@@ -13,7 +13,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.ref_name }}-ci
+  group: ${{ github.ref_name }}-build-test
   cancel-in-progress: true
 
 permissions:
