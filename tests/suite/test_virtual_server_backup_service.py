@@ -16,8 +16,11 @@ from suite.utils.resources_utils import (
     scale_deployment,
     wait_before_test,
 )
-from suite.utils.vs_vsr_resources_utils import delete_and_create_vs_from_yaml
-
+from suite.utils.vs_vsr_resources_utils import (
+    delete_and_create_vs_from_yaml,
+    delete_virtual_server,
+    create_virtual_server_from_yaml,
+)
 
 def make_request(url, host):
     return requests.get(
