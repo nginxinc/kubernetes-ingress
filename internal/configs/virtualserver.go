@@ -315,18 +315,18 @@ func (vsc *virtualServerConfigurator) generateBackupEndpointsForUpstream(
 	upstream conf_v1.Upstream,
 	virtualServerEx *VirtualServerEx,
 ) []string {
-	if upstream.Backup == nil || upstream.BackupPort == nil {
+	if upstream.Backup == "" || upstream.BackupPort == nil {
 		return []string{}
 	}
-	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, *upstream.Backup)
+	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, upstream.Backup)
 	_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[externalNameSvcKey]
 	if isExternalNameSvc && !vsc.isResolverConfigured {
 		msgFmt := "Type ExternalName service %v in upstream %v will be ignored. To use ExternaName services, a resolver must be configured in the ConfigMap"
-		vsc.addWarningf(owner, msgFmt, *upstream.Backup, upstream.Name)
+		vsc.addWarningf(owner, msgFmt, upstream.Backup, upstream.Name)
 		return []string{}
 	}
 
-	backupEndpointsKey := GenerateEndpointsKey(namespace, *upstream.Backup, upstream.Subselector, *upstream.BackupPort)
+	backupEndpointsKey := GenerateEndpointsKey(namespace, upstream.Backup, upstream.Subselector, *upstream.BackupPort)
 	backupEndpoints := virtualServerEx.Endpoints[backupEndpointsKey]
 	if len(backupEndpoints) == 0 {
 		return []string{}
@@ -2442,8 +2442,8 @@ func createUpstreamsForPlus(
 		endpoints := virtualServerEx.Endpoints[endpointsKey]
 
 		backupEndpoints := []string{}
-		if u.Backup != nil {
-			backupEndpointsKey := GenerateEndpointsKey(upstreamNamespace, *u.Backup, u.Subselector, *u.BackupPort)
+		if u.Backup != "" {
+			backupEndpointsKey := GenerateEndpointsKey(upstreamNamespace, u.Backup, u.Subselector, *u.BackupPort)
 			backupEndpoints = virtualServerEx.Endpoints[backupEndpointsKey]
 		}
 		ups := vsc.generateUpstream(virtualServerEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints, backupEndpoints)
@@ -2467,8 +2467,8 @@ func createUpstreamsForPlus(
 
 			// BackupService
 			backupEndpoints := []string{}
-			if u.Backup != nil {
-				backupEndpointsKey := GenerateEndpointsKey(upstreamNamespace, *u.Backup, u.Subselector, *u.BackupPort)
+			if u.Backup != "" {
+				backupEndpointsKey := GenerateEndpointsKey(upstreamNamespace, u.Backup, u.Subselector, *u.BackupPort)
 				backupEndpoints = virtualServerEx.Endpoints[backupEndpointsKey]
 			}
 			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints, backupEndpoints)

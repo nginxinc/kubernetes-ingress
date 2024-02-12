@@ -132,7 +132,7 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "skip_for_nginx_plus" in item.keywords:
                 item.add_marker(skip_for_nginx_plus)
-    if "-ap" not in config.getoption("--image"):
+    if "-nap" not in config.getoption("--image"):
         appprotect = pytest.mark.skip(reason="Skip AppProtect test in non-AP image")
         for item in items:
             if "appprotect" in item.keywords:

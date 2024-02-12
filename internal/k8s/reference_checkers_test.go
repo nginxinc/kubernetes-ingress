@@ -513,6 +513,80 @@ func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
 	}
 }
 
+func TestBackupServiceIsReferencedByVirtualServer(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		vs                *conf_v1.VirtualServer
+		serviceNamespace  string
+		backupServiceName string
+		expected          bool
+		msg               string
+	}{
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Upstreams: []conf_v1.Upstream{
+						{
+							Backup: "test-backup-service",
+						},
+					},
+				},
+			},
+			serviceNamespace:  "default",
+			backupServiceName: "test-backup-service",
+			expected:          true,
+			msg:               "Backup service is referenced by this VirtualServer",
+		},
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Upstreams: []conf_v1.Upstream{
+						{
+							Backup: "test-backup-service-does-not-exist",
+						},
+					},
+				},
+			},
+			serviceNamespace:  "default",
+			backupServiceName: "test-backup-service",
+			expected:          false,
+			msg:               "Backup service is not referenced by this VirtualServer",
+		},
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Upstreams: []conf_v1.Upstream{
+						{
+							Backup: "test-backup-service",
+						},
+					},
+				},
+			},
+			serviceNamespace:  "non-default-namespace",
+			backupServiceName: "test-backup-service",
+			expected:          false,
+			msg:               "Backup service is in different namespace",
+		},
+	}
+	for _, test := range tests {
+		rc := newServiceReferenceChecker(false)
+
+		result := rc.IsReferencedByVirtualServer(test.serviceNamespace, test.backupServiceName, test.vs)
+		if result != test.expected {
+			t.Errorf("IsReferencedByVirtualServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
 func TestServiceIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -630,7 +704,7 @@ func TestServiceIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) 
 	}
 }
 
-func TestIsServiceReferencedByTransportServer(t *testing.T) {
+func TestServiceIsReferencedByTransportServer(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		ts               *conf_v1.TransportServer
@@ -699,6 +773,81 @@ func TestIsServiceReferencedByTransportServer(t *testing.T) {
 		rc := newServiceReferenceChecker(false)
 
 		result := rc.IsReferencedByTransportServer(test.serviceNamespace, test.serviceName, test.ts)
+		if result != test.expected {
+			t.Errorf("IsReferencedByTransportServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestBackupServiceIsReferencedByTransportServer(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		ts                     *conf_v1.TransportServer
+		backupServiceNamespace string
+		backupServiceName      string
+		expected               bool
+		msg                    string
+	}{
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
+						{
+							Backup: "test-backup-service",
+						},
+					},
+				},
+			},
+			backupServiceNamespace: "default",
+			backupServiceName:      "test-backup-service",
+			expected:               true,
+			msg:                    "Backup Service is referenced by this TransportService",
+		},
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
+						{
+							Backup: "test-backup-service",
+						},
+					},
+				},
+			},
+			backupServiceNamespace: "some-namespace",
+			backupServiceName:      "test-backup-service",
+			expected:               false,
+			msg:                    "wrong namespace for service in an upstream",
+		},
+		{
+			ts: &conf_v1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.TransportServerSpec{
+					Upstreams: []conf_v1.TransportServerUpstream{
+						{
+							Service: "test-backup-service",
+						},
+					},
+				},
+			},
+			backupServiceNamespace: "default",
+			backupServiceName:      "random-backup-service",
+			expected:               false,
+			msg:                    "wrong name for service in an upstream",
+		},
+	}
+
+	for _, test := range tests {
+		rc := newServiceReferenceChecker(false)
+
+		result := rc.IsReferencedByTransportServer(test.backupServiceNamespace, test.backupServiceName, test.ts)
 		if result != test.expected {
 			t.Errorf("IsReferencedByTransportServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
