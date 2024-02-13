@@ -6,8 +6,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM opentracing/nginx-opentracing:nginx-1.25.3@sha256:2e0268d3cd31fe047c2fe566f29731865b0c99cc99b579c6584b23cd3c7830ef as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.25.3-alpine@sha256:08ccc2c8bb28f01cb17b7619f139830b3af7950826b819b267393aefa32f23ab as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.3@sha256:2217e9fa36a2130d395a40bb051965cf64c9d10087281e301e9c0b60ce2a1a57 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.3-alpine@sha256:37c7de3a46ca05428450b1c64bfb2a4d2f9c1835860cef427928fcf11c178f0e as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.1-alpine3.18@sha256:6f124002650fae697152290a14a7caa7f21884e8d78d8236c63fec2d018d721d as alpine-fips
 
 
