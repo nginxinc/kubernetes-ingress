@@ -208,7 +208,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF/DoS #############################################
-FROM redhat/ubi8@sha256:23d8dfd08024fdfa34b168c297d8c74a1dc58675b02b3418925932df123b755c as ubi-plus-nap
+FROM redhat/ubi8@sha256:627867e53ad6846afba2dfbf5cef1d54c868a9025633ef0afd546278d4654eac as ubi-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
