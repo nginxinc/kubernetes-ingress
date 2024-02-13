@@ -160,7 +160,7 @@ jobs:
           context: "."
           cache-from: type=gha,scope=${{ inputs.image }}
           cache-to: type=gha,scope=${{ inputs.image }},mode=max
-          target: goreleaser${{ github.event.pull_request.head.repo.full_name == github.repository && '-prebuilt' }}
+          target: goreleaser${{ github.event.pull_request.head.repo.full_name == github.repository && '-prebuilt' || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ github.event_name != 'pull_request' && steps.meta.outputs.annotations || '' }}
