@@ -40,8 +40,7 @@ spec:
       serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
       automountServiceAccountToken: true
       securityContext:
-        seccompProfile:
-          type: RuntimeDefault
+{{ toYaml .Values.controller.podSecurityContext | indent 8 }}
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
@@ -117,6 +116,10 @@ spec:
           periodSeconds: 1
           initialDelaySeconds: {{ .Values.controller.readyStatus.initialDelaySeconds }}
 {{- end }}
+{{- if .Values.controller.containerSecurityContext }}
+        securityContext:
+{{ toYaml .Values.controller.containerSecurityContext | indent 10 }}
+{{- else }}
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: {{ .Values.controller.readOnlyRootFilesystem }}
@@ -127,6 +130,7 @@ spec:
             - ALL
             add:
             - NET_BIND_SERVICE
+{{- end }}
 {{- if or .Values.controller.readOnlyRootFilesystem .Values.controller.volumeMounts }}
         volumeMounts:
 {{- end }}
@@ -180,6 +184,10 @@ spec:
         resources:
 {{ toYaml .Values.controller.initContainerResources | indent 10 }}
 {{- end }}
+{{- if .Values.controller.initContainerSecurityContext }}
+        securityContext:
+{{ toYaml .Values.controller.initContainerSecurityContext | indent 10 }}
+{{- else }}
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -188,6 +196,7 @@ spec:
           capabilities:
             drop:
             - ALL
+{{- end }}
         volumeMounts:
         - mountPath: /mnt/etc
           name: nginx-etc
