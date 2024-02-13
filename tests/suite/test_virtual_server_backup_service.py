@@ -175,6 +175,8 @@ class TestVirtualServerWithBackupService:
         virtual_server_setup,
         vs_externalname_setup,
     ) -> None:
+        print("\nStep 0: test_get_response_from_application - Ensure VirtualServer is fully restored to its default")
+        self.restore_default_vs(kube_apis, virtual_server_setup)
         vs_backup_service = f"{TEST_DATA}/virtual-server-backup-service/virtual-server-backup.yaml"
         delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
