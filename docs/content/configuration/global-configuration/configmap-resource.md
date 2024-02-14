@@ -95,8 +95,8 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 |``resolver-ipv6`` | Enables IPv6 resolution in the resolver. Supported in NGINX Plus only. | ``True`` | [Support for Type ExternalName Services](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.2/examples/ingress-resources/externalname-services). |
 |``resolver-valid`` | Sets the time NGINX caches the resolved DNS records. Supported in NGINX Plus only. | TTL value of a DNS record | [Support for Type ExternalName Services](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.2/examples/ingress-resources/externalname-services). |
 |``resolver-timeout`` | Sets the [resolver_timeout](https://nginx.org/en/docs/http/ngx_http_core_module.html#resolver_timeout) for name resolution. Supported in NGINX Plus only. | ``30s`` | [Support for Type ExternalName Services](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.2/examples/ingress-resources/externalname-services). |
-|``keepalive-timeout`` | Sets the value of the [keepalive_timeout](https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout) directive. | ``65s`` |  |
-|``keepalive-requests`` | Sets the value of the [keepalive_requests](https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_requests) directive. | ``100`` |  |
+|``keepalive-timeout`` | Sets the value of the [keepalive_timeout](https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout) directive. | ``75s`` |  |
+|``keepalive-requests`` | Sets the value of the [keepalive_requests](https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_requests) directive. | ``1000`` |  |
 |``variables-hash-bucket-size`` | Sets the value of the [variables_hash_bucket_size](https://nginx.org/en/docs/http/ngx_http_core_module.html#variables_hash_bucket_size) directive. | ``256`` |  |
 |``variables-hash-max-size`` | Sets the value of the [variables-hash-max-size](https://nginx.org/en/docs/http/ngx_http_core_module.html#variables_hash_max_size) directive. | ``1024`` |  |
 {{% /table %}}

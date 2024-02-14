@@ -3764,6 +3764,7 @@ func TestNewTelemetryCollector(t *testing.T) {
 			input: NewLoadBalancerControllerInput{
 				KubeClient:               fake.NewSimpleClientset(),
 				EnableTelemetryReporting: true,
+				TelemetryReportingPeriod: "24h",
 			},
 			expectedCollector: telemetry.Collector{
 				Period:   24 * time.Hour,

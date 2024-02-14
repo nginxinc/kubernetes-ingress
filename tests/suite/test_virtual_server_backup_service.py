@@ -106,8 +106,7 @@ def vs_externalname_setup(
 
 @pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.backup_service
-@pytest.mark.skip
+@pytest.mark.skip(reason="issue with VS config")
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -150,7 +149,7 @@ class TestVirtualServerWithBackupService:
         )
         wait_before_test()
 
-        print("\nStep 2: Get response from VS with backup service")
+        print("\nStep 1: Get response from VS with backup service")
         print(virtual_server_setup.backend_1_url + "\n")
         res = make_request(
             virtual_server_setup.backend_1_url,
@@ -197,7 +196,7 @@ class TestVirtualServerWithBackupService:
         )
         wait_before_test()
 
-        print("\nStep 2: Get response from VS with backup service")
+        print("\nStep 1: Get response from VS with backup service")
         print(virtual_server_setup.backend_1_url + "\n")
         res = make_request(
             virtual_server_setup.backend_1_url,
@@ -222,11 +221,11 @@ class TestVirtualServerWithBackupService:
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
 
-        print("\nStep 3: Scale deployment to zero replicas")
+        print("\nStep 2: Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
         wait_before_test()
 
-        print("\nStep 4: Get response from backup service")
+        print("\nStep 3: Get response from backup service")
         res_from_backup = make_request(
             virtual_server_setup.backend_1_url,
             virtual_server_setup.vs_host,
@@ -249,11 +248,11 @@ class TestVirtualServerWithBackupService:
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
 
-        print("\nStep 5: Scale deployment back to 2 replicas")
+        print("\nStep 4: Scale deployment back to 2 replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 2)
         wait_before_test()
 
-        print("\nStep 6: Get response")
+        print("\nStep 5: Get response")
         res_after_scaleup = make_request(
             virtual_server_setup.backend_1_url,
             virtual_server_setup.vs_host,
@@ -297,7 +296,7 @@ class TestVirtualServerWithBackupService:
         )
         wait_before_test()
 
-        print("\nStep 2: Get response from VS with backup service")
+        print("\nStep 1: Get response from VS with backup service")
         print(virtual_server_setup.backend_1_url + "\n")
         res = make_request(
             virtual_server_setup.backend_1_url,
@@ -322,11 +321,11 @@ class TestVirtualServerWithBackupService:
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
 
-        print("\nStep 3: Scale deployment to zero replicas")
+        print("\nStep 2: Scale deployment to zero replicas")
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", virtual_server_setup.namespace, 0)
         wait_before_test()
 
-        print("\nStep 4: Get response from backup service")
+        print("\nStep 3: Get response from backup service")
         res_from_backup = make_request(
             virtual_server_setup.backend_1_url,
             virtual_server_setup.vs_host,
@@ -349,11 +348,11 @@ class TestVirtualServerWithBackupService:
         assert "least_conn;" in result_conf
         assert expected_conf_line in result_conf
 
-        print("\nStep 5: Delete backup service by deleting the namespace")
+        print("\nStep 4: Delete backup service by deleting the namespace")
         delete_namespace(kube_apis.v1, "external-ns")
         wait_before_test()
 
-        print("\nStep 6: Get response")
+        print("\nStep 5: Get response")
         res_after_delete = make_request(
             virtual_server_setup.backend_1_url,
             virtual_server_setup.vs_host,
