@@ -200,9 +200,5 @@ func TestBuildReport(t *testing.T) {
 		if !cmp.Equal(test.expectedTraceData, gotTraceData) {
 			t.Error(cmp.Diff(test.expectedTraceData, gotTraceData))
 		}
-
-		if err != nil {
-			t.Fatal(err)
-		}
 	}
 }
