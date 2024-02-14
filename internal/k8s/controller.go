@@ -276,18 +276,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
 	}
 
-	// NIC Telemetry Reporting
-	if input.EnableTelemetryReporting {
-		lbc.telemetryChan = make(chan struct{})
-		collector, err := telemetry.NewCollector(
-			telemetry.WithTimePeriod("24h"),
-		)
-		if err != nil {
-			glog.Fatalf("failed to initialize telemetry collector: %v", err)
-		}
-		lbc.telemetryCollector = collector
-	}
-
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
 	lbc.namespacedInformers = make(map[string]*namespacedInformer)
@@ -297,6 +285,25 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			break
 		}
 		lbc.newNamespacedInformer(ns)
+	}
+
+	collectorConfig := telemetry.CollectorConfig{
+		K8sClientReader:       input.KubeClient,
+		CustomK8sClientReader: input.ConfClient,
+		Namespaces:            lbc.namespaceList,
+	}
+
+	// NIC Telemetry Reporting
+	if input.EnableTelemetryReporting {
+		lbc.telemetryChan = make(chan struct{})
+		collector, err := telemetry.NewCollector(
+			collectorConfig,
+			telemetry.WithTimePeriod("10s"),
+		)
+		if err != nil {
+			glog.Fatalf("failed to initialize telemetry collector: %v", err)
+		}
+		lbc.telemetryCollector = collector
 	}
 
 	if lbc.areCustomResourcesEnabled {
