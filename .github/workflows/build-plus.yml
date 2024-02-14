@@ -267,7 +267,7 @@ jobs:
             ${{ format('"nginx-repo.key={0}"', secrets.nginx-key) }}
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.rhel-license) || '' }}
           if: ${{ ! inputs.build-cache }}
-          
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
         continue-on-error: true
