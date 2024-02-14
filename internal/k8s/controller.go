@@ -278,15 +278,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
-	lbc.namespacedInformers = make(map[string]*namespacedInformer)
-	for _, ns := range lbc.namespaceList {
-		if isDynamicNs && ns == "" {
-			// no initial namespaces with watched label - skip creating informers for now
-			break
-		}
-		lbc.newNamespacedInformer(ns)
-	}
-
 	collectorConfig := telemetry.CollectorConfig{
 		K8sClientReader:       input.KubeClient,
 		CustomK8sClientReader: input.ConfClient,
@@ -304,6 +295,15 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			glog.Fatalf("failed to initialize telemetry collector: %v", err)
 		}
 		lbc.telemetryCollector = collector
+	}
+
+	lbc.namespacedInformers = make(map[string]*namespacedInformer)
+	for _, ns := range lbc.namespaceList {
+		if isDynamicNs && ns == "" {
+			// no initial namespaces with watched label - skip creating informers for now
+			break
+		}
+		lbc.newNamespacedInformer(ns)
 	}
 
 	if lbc.areCustomResourcesEnabled {

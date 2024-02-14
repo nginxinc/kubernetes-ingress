@@ -57,7 +57,6 @@ type CollectorConfig struct {
 	K8sClientReader kubernetes.Interface
 
 	// CustomK8sClientReader is a kubernetes client for our CRDs.
-	// CustomK8sClientReader v1.K8sV1Interface
 	CustomK8sClientReader k8s_nginx.Interface
 
 	// List of watched namespaces
