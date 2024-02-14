@@ -140,7 +140,7 @@ func TestBuildReport(t *testing.T) {
 		},
 		{
 			testName:          "Resource is deployed in a watched namespace with more than 1 watched namespace",
-			expectedTraceData: telemetry.TraceData{VirtualServers: 2},
+			expectedTraceData: telemetry.TraceData{VirtualServers: 3},
 			collectorConfig: telemetry.CollectorConfig{
 				K8sClientReader:       k8sfake.NewSimpleClientset(),
 				CustomK8sClientReader: customk8sfake.NewSimpleClientset(),
@@ -158,6 +158,13 @@ func TestBuildReport(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "ns-2",
 						Name:      "tea",
+					},
+					Spec: conf_v1.VirtualServerSpec{},
+				},
+				{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "ns-3",
+						Name:      "latte",
 					},
 					Spec: conf_v1.VirtualServerSpec{},
 				},
