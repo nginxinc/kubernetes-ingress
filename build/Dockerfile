@@ -3,7 +3,7 @@ ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=R31
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_FRONTEND=noninteractive
-ARG PREBUILT_BASE_IMG
+ARG PREBUILT_BASE_IMG=nginx/nginx-ingress:${DOWNLOAD_TAG}
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
