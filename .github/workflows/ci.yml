@@ -13,6 +13,12 @@ on:
       - release-*
   schedule:
     - cron: "0 4 * * *" # run every day at 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      skip-publish:
+        description: Skip the publish of the generated images
+        type: boolean
+        default: true
 
 defaults:
   run:
@@ -428,6 +434,7 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      skip-publish: ${{ inputs.skip-publish }}
     permissions:
       contents: read
       actions: read
@@ -456,6 +463,7 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
+      skip-publish: ${{ inputs.skip-publish }}
     permissions:
       contents: read
       security-events: write
@@ -510,6 +518,7 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
+      skip-publish: ${{ inputs.skip-publish }}
     permissions:
       contents: read
       security-events: write
