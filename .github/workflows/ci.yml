@@ -114,7 +114,7 @@ jobs:
         run: make cover
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@f30e4959ba63075080d4f7f90cacc18d9f3fafd7 # v4.0.0
+        uses: codecov/codecov-action@e0b68c6749509c5f83f984dd99a76a1c1a231044 # v4.0.1
         with:
           files: ./coverage.txt
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -134,7 +134,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@52f02d1a69b61568e54ab5cf86ce91503bac4066 # v1.0.2
+        uses: lucacome/draft-release@a98777f0bae0a6815cc1df77ebe48ca70e7cb970 # v1.0.3
         id: release-notes
         with:
           minor-label: "enhancement"
@@ -325,7 +325,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -333,7 +333,7 @@ jobs:
         if: github.event.pull_request.head.repo.full_name == github.repository
 
       - name: Login to GCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -349,7 +349,7 @@ jobs:
         if: github.event.pull_request.head.repo.full_name == github.repository
 
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
         with:
           file: tests/Dockerfile
           context: "."
@@ -391,7 +391,7 @@ jobs:
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
@@ -419,10 +419,10 @@ jobs:
       matrix:
         image: [debian, alpine]
         platforms:
-          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+          ["linux/arm64, linux/amd64, linux/ppc64le"]
         include:
           - image: ubi
-            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+            platforms: "linux/arm64, linux/amd64, linux/ppc64le"
     uses: ./.github/workflows/build-oss.yml
     with:
       platforms: ${{ matrix.platforms }}
