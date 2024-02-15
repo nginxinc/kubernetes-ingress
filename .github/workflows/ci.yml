@@ -16,9 +16,9 @@ on:
   workflow_dispatch:
     inputs:
       publish-image:
-        description: Skip the publish of the generated images
+        description: Publish of the generated images
         type: boolean
-        default: true
+        default: false
 
 defaults:
   run:
@@ -43,6 +43,7 @@ jobs:
       chart_version: ${{ steps.vars.outputs.chart_version }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
       ic_version: ${{ steps.vars.outputs.ic_version }}
+      publish-images: ${{ steps.vars.outputs.publish }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -82,6 +83,13 @@ jobs:
           source .github/data/version.txt
           echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
           echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
+          publish=false
+          if ${{ github.event_name == 'workflow_dispatch' && inputs.publish-image }}; then
+            publish=true
+          elif ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}; then
+            publish=true
+          fi
+          echo "publish=$publish" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
@@ -434,7 +442,7 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
-      publish-image: ${{ inputs.publish-image }}
+      publish-image: ${{ needs.checks.outputs.publish-images }}
     permissions:
       contents: read
       actions: read
@@ -463,7 +471,7 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
-      publish-image: ${{ inputs.publish-image }}
+      publish-image: ${{ needs.checks.outputs.publish-images }}
     permissions:
       contents: read
       security-events: write
@@ -509,7 +517,6 @@ jobs:
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: waf
-
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
@@ -518,7 +525,7 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
-      publish-image: ${{ inputs.publish-image }}
+      publish-image: ${{ needs.checks.outputs.publish-images }}
     permissions:
       contents: read
       security-events: write
