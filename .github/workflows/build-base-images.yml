@@ -93,8 +93,8 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
           target: common
           tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platforms }}
@@ -159,8 +159,8 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
           target: common
           tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platforms }}
@@ -246,8 +246,8 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ steps.nap_modules.outputs.modules }}
+          cache-to: type=gha,scope=${{ matrix.image }}-${{ steps.nap_modules.outputs.modules }},mode=max
           target: common
           tags: ${{ steps.meta.outputs.tags }}
           platforms: ${{ matrix.platforms }}
