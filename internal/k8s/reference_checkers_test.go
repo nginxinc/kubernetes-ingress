@@ -1641,11 +1641,11 @@ func TestDosProtectedIsReferencedByVirtualServer(t *testing.T) {
 
 func TestReplicaReferenceChecker(t *testing.T) {
 	tests := []struct {
-		Ingress  networking.Ingress
+		Ingress  *networking.Ingress
 		Expected bool
 	}{
 		{
-			Ingress: networking.Ingress{
+			Ingress: &networking.Ingress{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
 						"foo": "bar",
@@ -1655,7 +1655,7 @@ func TestReplicaReferenceChecker(t *testing.T) {
 			Expected: false,
 		},
 		{
-			Ingress: networking.Ingress{
+			Ingress: &networking.Ingress{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
 						"nginx.org/limit-req-scale": "false",
@@ -1665,7 +1665,7 @@ func TestReplicaReferenceChecker(t *testing.T) {
 			Expected: false,
 		},
 		{
-			Ingress: networking.Ingress{
+			Ingress: &networking.Ingress{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
 						"nginx.org/limit-req-scale": "true",
@@ -1678,7 +1678,7 @@ func TestReplicaReferenceChecker(t *testing.T) {
 
 	var checker ratelimitScalingAnnotationChecker
 	for i, testcase := range tests {
-		result := checker.IsReferencedByIngress("foo", "bar", &testcase.Ingress)
+		result := checker.IsReferencedByIngress("foo", "bar", testcase.Ingress)
 		if result != testcase.Expected {
 			t.Errorf("replicaReferenceChecker did not work for case %d", i)
 		}

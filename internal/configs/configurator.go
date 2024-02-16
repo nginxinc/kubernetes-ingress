@@ -1771,10 +1771,13 @@ func (cnf *Configurator) DynamicSSLReloadEnabled() bool {
 	return cnf.isDynamicSSLReloadEnabled
 }
 
+// GetIngressControllerReplicas returns the number of ingresscontroller-replicas (previously stored via SetIngressControllerReplicas)
 func (cnf *Configurator) GetIngressControllerReplicas() int {
 	return cnf.ingressControllerReplicas
 }
 
+// SetIngressControllerReplicas sets the number of ingresscontroller-replicas
+// Is used for calculating ratelimits
 func (cnf *Configurator) SetIngressControllerReplicas(replicas int) {
 	cnf.ingressControllerReplicas = replicas
 }
