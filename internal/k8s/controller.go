@@ -928,23 +928,27 @@ func (lbc *LoadBalancerController) updateNumberOfIngressControllerReplicas(contr
 		resourceExes := lbc.createExtendedResources(resources)
 		for _, ingress := range resourceExes.IngressExes {
 			found = true
-			lbc.configurator.AddOrUpdateIngress(ingress)
+			_, err := lbc.configurator.AddOrUpdateIngress(ingress)
+			if err != nil {
+				glog.Errorf("Error updating ratelimit for Ingress %s/%s: %s", ingress.Ingress.Namespace, ingress.Ingress.Name, err)
+			}
 		}
 		for _, ingress := range resourceExes.MergeableIngresses {
 			found = true
-			lbc.configurator.AddOrUpdateMergeableIngress(ingress)
+			_, err := lbc.configurator.AddOrUpdateMergeableIngress(ingress)
+			if err != nil {
+				glog.Errorf("Error updating ratelimit for Ingress %s/%s: %s", ingress.Master.Ingress.Namespace, ingress.Master.Ingress.Name, err)
+			}
 		}
 
 		// handle virtualservers
 		resources = lbc.findVirtualServersUsingRatelimitScaling()
 		resourceExes = lbc.createExtendedResources(resources)
 		for _, vserver := range resourceExes.VirtualServerExes {
-			for _, policy := range vserver.Policies {
-				if policy.Spec.RateLimit != nil && policy.Spec.RateLimit.Scale {
-					found = true
-					lbc.configurator.AddOrUpdateVirtualServer(vserver)
-					break
-				}
+			found = true
+			_, err := lbc.configurator.AddOrUpdateVirtualServer(vserver)
+			if err != nil {
+				glog.Errorf("Error updating ratelimit for VirtualServer %s/%s: %s", vserver.VirtualServer.Namespace, vserver.VirtualServer.Name, err)
 			}
 		}
 	}

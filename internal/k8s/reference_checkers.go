@@ -326,10 +326,9 @@ func (rc *dosResourceReferenceChecker) IsReferencedByTransportServer(_ string, _
 	return false
 }
 
-type ratelimitScalingAnnotationChecker struct {
-}
+type ratelimitScalingAnnotationChecker struct{}
 
-func (rc *ratelimitScalingAnnotationChecker) IsReferencedByIngress(svcNamespace string, svcName string, ing *networking.Ingress) bool {
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByIngress(_ string, _ string, ing *networking.Ingress) bool {
 	for key, value := range ing.Annotations {
 		if key == "nginx.org/limit-req-scale" && value == "true" {
 			return true
@@ -343,14 +342,14 @@ func (rc *ratelimitScalingAnnotationChecker) IsReferencedByMinion(svcNamespace s
 	return rc.IsReferencedByIngress(svcNamespace, svcName, ing)
 }
 
-func (rc *ratelimitScalingAnnotationChecker) IsReferencedByVirtualServer(svcNamespace string, svcName string, vs *conf_v1.VirtualServer) bool {
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByVirtualServer(_ string, _ string, _ *conf_v1.VirtualServer) bool {
 	return false
 }
 
-func (rc *ratelimitScalingAnnotationChecker) IsReferencedByVirtualServerRoute(svcNamespace string, svcName string, vsr *conf_v1.VirtualServerRoute) bool {
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *conf_v1.VirtualServerRoute) bool {
 	return false
 }
 
-func (rc *ratelimitScalingAnnotationChecker) IsReferencedByTransportServer(svcNamespace string, svcName string, ts *conf_v1.TransportServer) bool {
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1.TransportServer) bool {
 	return false
 }
