@@ -419,10 +419,10 @@ jobs:
       matrix:
         image: [debian, alpine]
         platforms:
-          ["linux/arm64, linux/amd64, linux/ppc64le"]
+          ["linux/arm", "linux/arm64, linux/amd64, linux/ppc64le", "linux/s390x"]
         include:
           - image: ubi
-            platforms: "linux/arm64, linux/amd64, linux/ppc64le"
+            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
     uses: ./.github/workflows/build-oss.yml
     with:
       platforms: ${{ matrix.platforms }}
