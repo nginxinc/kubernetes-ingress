@@ -115,6 +115,7 @@ func (c *Collector) GetVirtualServerCount(ctx context.Context, namespace string)
 		List(ctx, meta_v1.ListOptions{})
 	if err != nil {
 		glog.Errorf("unable to list VirtualServers in namespace %s Error: %x", namespace, err)
+		return 0
 	}
 	return len(count.Items)
 }
@@ -127,6 +128,7 @@ func (c *Collector) GetTransportServerCount(ctx context.Context, namespace strin
 		List(ctx, meta_v1.ListOptions{})
 	if err != nil {
 		glog.Errorf("unable to list TransportServers in namespace %s Error: %x", namespace, err)
+		return 0
 	}
 	return len(count.Items)
 }

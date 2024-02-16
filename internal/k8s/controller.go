@@ -285,7 +285,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			K8sClientReader:       input.KubeClient,
 			CustomK8sClientReader: input.ConfClient,
 			Namespaces:            lbc.namespaceList,
-			Period:                24 * time.Hour,
+			Period:                5 * time.Second,
 		}
 		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(
