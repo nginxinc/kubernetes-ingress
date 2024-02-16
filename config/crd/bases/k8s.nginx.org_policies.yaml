@@ -172,6 +172,8 @@ spec:
                     type: string
                   rejectCode:
                     type: integer
+                  scale:
+                    type: boolean
                   zoneSize:
                     type: string
                 type: object
