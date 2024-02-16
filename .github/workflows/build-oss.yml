@@ -151,8 +151,8 @@ jobs:
           load: ${{ github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release-') }}
           push: ${{ inputs.publish-image }}
           pull: true
-          no-cache: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
-          sbom: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
+          no-cache: ${{ inputs.publish-image }}
+          sbom: ${{ inputs.publish-image }}
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}

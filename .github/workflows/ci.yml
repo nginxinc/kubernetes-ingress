@@ -86,7 +86,7 @@ jobs:
           publish=false
           if ${{ github.event_name == 'workflow_dispatch' && inputs.publish-image }}; then
             publish=true
-          elif ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}; then
+          elif ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}; then
             publish=true
           fi
           echo "publish=$publish" >> $GITHUB_OUTPUT
@@ -453,7 +453,7 @@ jobs:
 
   build-docker-plus:
     name: Build Docker Plus
-    needs: [checks, build-docker, release-notes]
+    needs: [checks, smoke-tests, release-notes]
     strategy:
       fail-fast: false
       matrix:
@@ -480,7 +480,7 @@ jobs:
 
   build-docker-nap:
     name: Build Docker NAP
-    needs: [checks, build-docker-plus, release-notes]
+    needs: [checks, smoke-tests, release-notes]
     strategy:
       fail-fast: false
       matrix:
