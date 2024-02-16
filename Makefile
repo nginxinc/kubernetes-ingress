@@ -9,6 +9,8 @@ PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo
 GO_LINKER_FLAGS_VARS = -X main.version=${VERSION}
 GO_LINKER_FLAGS_OPTIONS = -s -w
 GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_OPTIONS) $(GO_LINKER_FLAGS_VARS)
+DEBUG_GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_VARS)
+DEBUG_GO_GC_FLAGS = all=-N -l
 
 # variables that can be overridden by the user
 PREFIX                        ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
@@ -89,6 +91,9 @@ ifeq ($(strip $(TARGET)),local)
 	CGO_ENABLED=0 GOOS=$(strip $(GOOS)) GOARCH=$(strip $(ARCH)) go build -trimpath -ldflags "$(GO_LINKER_FLAGS)" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 else ifeq ($(strip $(TARGET)),download)
 	@$(MAKE) download-binary-docker
+else ifeq ($(strip $(TARGET)),debug)
+	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container or TARGET=download\n"; exit $$code)
+	CGO_ENABLED=0 GOOS=$(strip $(GOOS)) GOARCH=$(strip $(ARCH)) go build -ldflags "$(DEBUG_GO_LINKER_FLAGS)" -gcflags "$(DEBUG_GO_GC_FLAGS)" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 endif
 
 .PHONY: download-binary-docker
