@@ -48,14 +48,14 @@ We provide the following Docker images, which include NGINX or NGINX Plus bundle
 
 ### Images with NGINX
 
-_All images include NGINX 1.25.3._
+_All images include NGINX 1.25.4._
 
 {{< bootstrap-table "table table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | DockerHub image | Architectures |
 | ---| --- | --- | --- | --- |
-|Alpine-based image | ``nginx:1.25.3-alpine``,<br>based on on ``alpine:3.18`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:3.4.3-alpine`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
-|Debian-based image | ``nginx:1.25.3``,<br>based on on ``debian:12-slim`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:3.4.3`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
-|Ubi-based image | ``nginxcontrib/nginx:1.25.3-ubi``,<br>based on on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.4.3-ubi`` | arm64<br>amd64<br>ppc64le<br>s390x |
+|Alpine-based image | ``nginx:1.25.4-alpine``,<br>based on on ``alpine:3.18`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:3.4.3-alpine`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
+|Debian-based image | ``nginx:1.25.4``,<br>based on on ``debian:12-slim`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:3.4.3`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
+|Ubi-based image | ``nginxcontrib/nginx:1.25.4-ubi``,<br>based on on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.4.3-ubi`` | arm64<br>amd64<br>ppc64le<br>s390x |
 {{% /bootstrap-table %}}
 
 ### Images with NGINX Plus
