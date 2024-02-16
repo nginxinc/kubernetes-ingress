@@ -58,11 +58,25 @@ func main() {
 
 	parseFlags()
 
-	config, kubeClient := createConfigAndKubeClient()
+	config, err := getClientConfig()
+	if err != nil {
+		glog.Fatalf("error creating client configuration: %v", err)
+	}
 
-	kubernetesVersionInfo(kubeClient)
+	kubeClient, err := getKubeClient(config)
+	if err != nil {
+		glog.Fatalf("Failed to create client: %v.", err)
+	}
 
-	validateIngressClass(kubeClient)
+	err = confirmMinimumkubernetesVersionCriteria(kubeClient)
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	err = validateIngressClass(kubeClient)
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	checkNamespaces(kubeClient)
 
@@ -133,7 +147,10 @@ func main() {
 	nginxDone := make(chan error, 1)
 	nginxManager.Start(nginxDone)
 
-	plusClient := createPlusClient(*nginxPlus, useFakeNginxManager, nginxManager)
+	plusClient, err := createPlusClient(*nginxPlus, useFakeNginxManager, nginxManager)
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	plusCollector, syslogListener, latencyCollector := createPlusAndLatencyCollectors(registry, constLabels, kubeClient, plusClient, staticCfgParams.NginxServiceMesh)
 	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
@@ -230,9 +247,7 @@ func main() {
 	}
 }
 
-func createConfigAndKubeClient() (*rest.Config, *kubernetes.Clientset) {
-	var config *rest.Config
-	var err error
+func getClientConfig() (config *rest.Config, err error) {
 	if *proxyURL != "" {
 		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 			&clientcmd.ClientConfigLoadingRules{},
@@ -241,68 +256,70 @@ func createConfigAndKubeClient() (*rest.Config, *kubernetes.Clientset) {
 					Server: *proxyURL,
 				},
 			}).ClientConfig()
-		if err != nil {
-			glog.Fatalf("error creating client configuration: %v", err)
-		}
 	} else {
-		if config, err = rest.InClusterConfig(); err != nil {
-			glog.Fatalf("error creating client configuration: %v", err)
-		}
+		config, err = rest.InClusterConfig()
 	}
 
-	kubeClient, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		glog.Fatalf("Failed to create client: %v.", err)
-	}
-
-	return config, kubeClient
+	return config, err
 }
 
-func kubernetesVersionInfo(kubeClient kubernetes.Interface) {
+func getKubeClient(config *rest.Config) (kubeClient *kubernetes.Clientset, err error) {
+	kubeClient, err = kubernetes.NewForConfig(config)
+	return kubeClient, err
+}
+
+func confirmMinimumkubernetesVersionCriteria(kubeClient kubernetes.Interface) (err error) {
 	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
 	if err != nil {
-		glog.Fatalf("error retrieving k8s version: %v", err)
+		return fmt.Errorf("error retrieving k8s version: %v", err)
 	}
 	glog.Infof("Kubernetes version: %v", k8sVersion)
 
 	minK8sVersion, err := util_version.ParseGeneric("1.22.0")
 	if err != nil {
-		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
+		return fmt.Errorf("unexpected error parsing minimum supported version: %v", err)
 	}
 
 	if !k8sVersion.AtLeast(minK8sVersion) {
-		glog.Fatalf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support.", minK8sVersion)
+		return fmt.Errorf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support", minK8sVersion)
 	}
+	return err
 }
 
-func validateIngressClass(kubeClient kubernetes.Interface) {
+func validateIngressClass(kubeClient kubernetes.Interface) (err error) {
 	ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
 	if err != nil {
-		glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
+		return fmt.Errorf("Error when getting IngressClass %v: %v", *ingressClass, err)
 	}
 
 	if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
-		glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v; expected %v", ingressClassRes.Name, ingressClassRes.Spec.Controller, k8s.IngressControllerName)
+		return fmt.Errorf("IngressClass with name %v has an invalid Spec.Controller %v; expected %v", ingressClassRes.Name, ingressClassRes.Spec.Controller, k8s.IngressControllerName)
 	}
+
+	return err
 }
 
 func checkNamespaces(kubeClient kubernetes.Interface) {
 	if *watchNamespaceLabel != "" {
-		// bootstrap the watched namespace list
-		var newWatchNamespaces []string
-		nsList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), meta_v1.ListOptions{LabelSelector: *watchNamespaceLabel})
-		if err != nil {
-			glog.Errorf("error when getting Namespaces with the label selector %v: %v", watchNamespaceLabel, err)
-		}
-		for _, ns := range nsList.Items {
-			newWatchNamespaces = append(newWatchNamespaces, ns.Name)
-		}
-		watchNamespaces = newWatchNamespaces
-		glog.Infof("Namespaces watched using label %v: %v", *watchNamespaceLabel, watchNamespaces)
+		watchNamespaces = getWatchedNamespaces(kubeClient)
 	} else {
 		checkNamespaceExists(kubeClient, watchNamespaces)
 	}
 	checkNamespaceExists(kubeClient, watchSecretNamespaces)
+}
+
+func getWatchedNamespaces(kubeClient kubernetes.Interface) (newWatchNamespaces []string) {
+	// bootstrap the watched namespace list
+	nsList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), meta_v1.ListOptions{LabelSelector: *watchNamespaceLabel})
+	if err != nil {
+		glog.Errorf("error when getting Namespaces with the label selector %v: %v", watchNamespaceLabel, err)
+	}
+	for _, ns := range nsList.Items {
+		newWatchNamespaces = append(newWatchNamespaces, ns.Name)
+	}
+	glog.Infof("Namespaces watched using label %v: %v", *watchNamespaceLabel, watchNamespaces)
+
+	return newWatchNamespaces
 }
 
 func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) {
@@ -341,19 +358,16 @@ func createCustomClients(config *rest.Config) (dynamic.Interface, k8s_nginx.Inte
 	return dynClient, confClient
 }
 
-func createPlusClient(nginxPlus bool, useFakeNginxManager bool, nginxManager nginx.Manager) *client.NginxClient {
-	var plusClient *client.NginxClient
-	var err error
-
+func createPlusClient(nginxPlus bool, useFakeNginxManager bool, nginxManager nginx.Manager) (plusClient *client.NginxClient, err error) {
 	if nginxPlus && !useFakeNginxManager {
 		httpClient := getSocketClient("/var/lib/nginx/nginx-plus-api.sock")
 		plusClient, err = client.NewNginxClient("http://nginx-plus-api/api", client.WithHTTPClient(httpClient))
 		if err != nil {
-			glog.Fatalf("Failed to create NginxClient for Plus: %v", err)
+			return plusClient, fmt.Errorf("Failed to create NginxClient for Plus: %v", err)
 		}
 		nginxManager.SetPlusClients(plusClient, httpClient)
 	}
-	return plusClient
+	return plusClient, nil
 }
 
 func createTemplateExecutors() (*version1.TemplateExecutor, *version2.TemplateExecutor) {
