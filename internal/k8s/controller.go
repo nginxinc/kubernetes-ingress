@@ -279,15 +279,14 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
-	collectorConfig := telemetry.CollectorConfig{
-		K8sClientReader:       input.KubeClient,
-		CustomK8sClientReader: input.ConfClient,
-		Namespaces:            lbc.namespaceList,
-		Period:                24 * time.Hour,
-	}
-
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
+		collectorConfig := telemetry.CollectorConfig{
+			K8sClientReader:       input.KubeClient,
+			CustomK8sClientReader: input.ConfClient,
+			Namespaces:            lbc.namespaceList,
+			Period:                24 * time.Hour,
+		}
 		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(
 			collectorConfig,
