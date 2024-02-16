@@ -3,30 +3,45 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/attribute"
 	"io"
 )
 
-// DiscardExporter is a temporary exporter
-// for discarding collected telemetry data.
-var DiscardExporter = Exporter{Endpoint: io.Discard}
+type Exporter interface {
+	//TODO Change Data to Exportable.
+	Export(ctx context.Context, data Data) error
+}
 
-// Exporter represents a temporary telemetry data exporter.
-type Exporter struct {
+// StdoutExporter represents a temporary telemetry data exporter.
+type StdoutExporter struct {
 	Endpoint io.Writer
 }
 
 // Export takes context and trace data and writes to the endpoint.
-func (e *Exporter) Export(_ context.Context, td TraceData) error {
-	// Note: exporting functionality will be implemented in a separate module.
-	fmt.Fprintf(e.Endpoint, "%+v", td)
+func (e *StdoutExporter) Export(_ context.Context, data Data) error {
+	fmt.Fprintf(e.Endpoint, "%+v", data)
 	return nil
 }
 
-// TraceData holds collected telemetry data.
-type TraceData struct {
-	VirtualServers int
+// Data holds collected telemetry data.
+type Data struct {
+	ProjectMeta       ProjectMeta
+	NICResourceCounts NICResourceCounts
+}
 
+type ProjectMeta struct {
+	Name    string
+	Version string
+}
+
+type NICResourceCounts struct {
+	VirtualServers      int
 	VirtualServerRoutes int
+	TransportServers    int
+}
 
-	TransportServers int
+// Attributes is a placeholder function.
+// This ensures that Data is of type Exportable
+func (d *Data) Attributes() []attribute.KeyValue {
+	return nil
 }

@@ -3,6 +3,7 @@ package telemetry
 
 import (
 	"context"
+	"io"
 	"time"
 
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
@@ -69,7 +70,7 @@ type CollectorConfig struct {
 func NewCollector(cfg CollectorConfig, opts ...Option) (*Collector, error) {
 	c := Collector{
 		Period:   24 * time.Hour,
-		Exporter: DiscardExporter, // Use DiscardExporter until the real exporter is available.
+		Exporter: &StdoutExporter{Endpoint: io.Discard}, // Use DiscardExporter until the real exporter is available.
 		Config:   cfg,
 	}
 	for _, o := range opts {
@@ -89,28 +90,32 @@ func (c *Collector) Start(ctx context.Context) {
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	traceData, err := c.BuildReport(ctx)
+	data, err := c.BuildReport(ctx)
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: %v", err)
 	}
-	err = c.Exporter.Export(ctx, traceData)
+	err = c.Exporter.Export(ctx, data)
 	if err != nil {
 		glog.Errorf("Error exporting telemetry data: %v", err)
 	}
-	glog.V(3).Infof("Exported telemetry data: %+v", traceData)
+	glog.V(3).Infof("Exported telemetry data: %+v", data)
 }
 
 // BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport(ctx context.Context) (TraceData, error) {
-	dt := TraceData{}
+func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
+	d := Data{}
 	var err error
 
+	// Placeholder data.
+	d.ProjectMeta.Name = "NIC"
+	d.ProjectMeta.Version = "3.4.2"
+
 	for _, namespace := range c.Config.Namespaces {
-		dt.VirtualServers += c.GetVirtualServerCount(ctx, namespace)
-		dt.TransportServers += c.GetTransportServerCount(ctx, namespace)
+		d.NICResourceCounts.VirtualServers += c.GetVirtualServerCount(ctx, namespace)
+		d.NICResourceCounts.TransportServers += c.GetTransportServerCount(ctx, namespace)
 	}
 
-	return dt, err
+	return d, err
 }
 
 // SetConfig is used to overwrite the existing config for the Collector.

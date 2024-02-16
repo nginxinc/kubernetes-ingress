@@ -55,8 +55,8 @@ func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 	t.Parallel()
 
 	buf := &bytes.Buffer{}
-	exp := telemetry.Exporter{Endpoint: buf}
-	td := telemetry.TraceData{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	td := telemetry.Data{}
 
 	cfg := telemetry.CollectorConfig{}
 
@@ -84,13 +84,17 @@ func TestBuildReport(t *testing.T) {
 	testCases := []struct {
 		testName          string
 		collectorConfig   telemetry.CollectorConfig
-		expectedTraceData telemetry.TraceData
+		expectedTraceData telemetry.Data
 		virtualServers    []*conf_v1.VirtualServer
 		transportServers  []*conf_v1.TransportServer
 	}{
 		{
-			testName:          "Resources deployed in a namespace that is watched",
-			expectedTraceData: telemetry.TraceData{VirtualServers: 2},
+			testName: "Resources deployed in a namespace that is watched",
+			expectedTraceData: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					VirtualServers: 2,
+				},
+			},
 			collectorConfig: telemetry.CollectorConfig{
 				K8sClientReader:       k8sfake.NewSimpleClientset(),
 				CustomK8sClientReader: customk8sfake.NewSimpleClientset(),
@@ -114,8 +118,12 @@ func TestBuildReport(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Resource is deployed in a namespace that is not watched",
-			expectedTraceData: telemetry.TraceData{VirtualServers: 0},
+			testName: "Resource is deployed in a namespace that is not watched",
+			expectedTraceData: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					VirtualServers: 0,
+				},
+			},
 			collectorConfig: telemetry.CollectorConfig{
 				K8sClientReader:       k8sfake.NewSimpleClientset(),
 				CustomK8sClientReader: customk8sfake.NewSimpleClientset(),
@@ -139,8 +147,12 @@ func TestBuildReport(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Resource is deployed in a watched namespace with more than 1 watched namespace",
-			expectedTraceData: telemetry.TraceData{VirtualServers: 3},
+			testName: "Resource is deployed in a watched namespace with more than 1 watched namespace",
+			expectedTraceData: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					VirtualServers: 3,
+				},
+			},
 			collectorConfig: telemetry.CollectorConfig{
 				K8sClientReader:       k8sfake.NewSimpleClientset(),
 				CustomK8sClientReader: customk8sfake.NewSimpleClientset(),
