@@ -401,6 +401,20 @@ RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --m
 	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION}" -o /nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 
 
+############################################# Download delve #############################################
+FROM golang:1.21-alpine@sha256:a6a7f1fcf12f5efa9e04b1e75020931a616cd707f14f62ab5262bfbe109aa84a AS debug-builder
+ARG IC_VERSION
+ARG TARGETARCH
+
+WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/
+RUN apk add --no-cache git
+RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+	go mod download
+RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -gcflags "all=-N -l" -o /nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
+RUN CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@latest
+
+
 ############################################# Create image with nginx-ingress built in container #############################################
 FROM common AS container
 
@@ -425,6 +439,50 @@ USER 0
 RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
 # 101 is nginx, defined above
 USER 101
+
+############################################# Create image with nginx-ingress built locally #############################################
+FROM common AS debug
+
+LABEL org.nginx.kic.image.build.version="local"
+
+ENV GOPATH="/work"
+ENV GOROOT="/go"
+ENV PATH="$PATH:${GOROOT}/bin:${GOPATH}/bin"
+
+COPY --link --from=debug-builder --chown=101:0 /go/bin/dlv /dlv
+COPY --link --chown=101:0 nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress && \
+	setcap 'cap_net_bind_service=+ep' /dlv && setcap -v 'cap_net_bind_service=+ep' /dlv && \
+	mkdir -p /nonexistent /work /go/bin /go-build && \
+	chown 101:0 /nonexistent /work /go-build
+COPY --link --from=debug-builder --chown=101:0 /usr/local/go/bin/go /go/bin/go
+# 101 is nginx, defined above
+USER 101
+ENTRYPOINT ["/dlv"]
+
+############################################# Create image with nginx-ingress built locally #############################################
+FROM common AS debug-container
+
+LABEL org.nginx.kic.image.build.version="local"
+
+ENV GOPATH="/work"
+ENV GOROOT="/go"
+ENV PATH="$PATH:${GOROOT}/bin:${GOPATH}/bin"
+
+COPY --link --from=debug-builder --chown=101:0 /go/bin/dlv /dlv
+COPY --link --from=debug-builder --chown=101:0 /nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress && \
+	setcap 'cap_net_bind_service=+ep' /dlv && setcap -v 'cap_net_bind_service=+ep' /dlv && \
+	mkdir -p /nonexistent /work /go/bin /go-build && \
+	chown 101:0 /nonexistent /work /go-build
+COPY --link --from=debug-builder --chown=101:0 /usr/local/go/bin/go /go/bin/go
+# 101 is nginx, defined above
+USER 101
+ENTRYPOINT ["/dlv"]
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################

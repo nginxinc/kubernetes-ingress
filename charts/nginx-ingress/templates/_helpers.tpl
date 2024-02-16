@@ -138,6 +138,20 @@ Expand image name.
 Build the args for the service binary.
 */}}
 {{- define "nginx-ingress.args" -}}
+{{- if and .Values.controller.debug .Values.controller.debug.enable }}
+- --listen=:2345
+- --headless=true
+- --log=true
+- --log-output=debugger,debuglineerr,gdbwire,lldbout,rpc,dap,fncall,minidump,stack
+- --accept-multiclient
+- --api-version=2
+- exec
+- ./nginx-ingress
+{{- if .Values.controller.debug.continue }}
+- --continue
+{{- end }}
+- --
+{{- end }}
 - -nginx-plus={{ .Values.controller.nginxplus }}
 - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
 - -enable-app-protect={{ .Values.controller.appprotect.enable }}

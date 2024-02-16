@@ -63,6 +63,37 @@
             true
           ]
         },
+        "debug": {
+          "type": "object",
+          "default": {},
+          "title": "Runs the container with Delve, expects a version of the IC container with dlv as the entrypoint",
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": false,
+              "title": "Runs the container with Delve, expects a version of the IC container with dlv as the entrypoint",
+              "examples": [
+                false,
+                true
+              ]
+            },
+            "continue": {
+              "type": "boolean",
+              "default": true,
+              "title": "Starts Delve with --continue which means that IC will not wait for a debugger attach to start",
+              "examples": [
+                false,
+                true
+              ]
+            }
+          },
+          "examples": [
+            {
+              "enable": true,
+              "continue": "fatal"
+            }
+          ]
+        },
         "nginxReloadTimeout": {
           "type": "integer",
           "default": 0,
