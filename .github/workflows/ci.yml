@@ -472,12 +472,12 @@ jobs:
           base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
 
-      - name: Upload Test Results
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
-        with:
-          name: ${{ steps.smoke-tests.outputs.test-results-name }}
-          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
-        if: always()
+      # - name: Upload Test Results
+      #   uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+      #   with:
+      #     name: ${{ steps.smoke-tests.outputs.test-results-name }}
+      #     path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
+      #   if: always()
 
   smoke-results:
     if: ${{ always() }}
@@ -688,23 +688,23 @@ jobs:
             })
     if: github.ref_type == 'tag'
 
-  gcp-marketplace:
-    name: Trigger PR for GCP Marketplace
-    runs-on: ubuntu-22.04
-    needs: [checks, build-docker-plus, build-docker-nap]
-    steps:
-      - name:
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        with:
-          github-token: ${{ secrets.NGINX_PAT }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: 'kubernetes-ingress-gcp',
-              workflow_id: 'sync-chart.yml',
-              ref: 'main',
-              inputs: {
-                chart_version: '${{ needs.checks.outputs.chart_version }}'
-              },
-            })
-    if: github.ref_type == 'tag'
+  # gcp-marketplace:
+  #   name: Trigger PR for GCP Marketplace
+  #   runs-on: ubuntu-22.04
+  #   needs: [checks, build-docker-plus, build-docker-nap]
+  #   steps:
+  #     - name:
+  #       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+  #       with:
+  #         github-token: ${{ secrets.NGINX_PAT }}
+  #         script: |
+  #           await github.rest.actions.createWorkflowDispatch({
+  #             owner: context.repo.owner,
+  #             repo: 'kubernetes-ingress-gcp',
+  #             workflow_id: 'sync-chart.yml',
+  #             ref: 'main',
+  #             inputs: {
+  #               chart_version: '${{ needs.checks.outputs.chart_version }}'
+  #             },
+  #           })
+  #   if: github.ref_type == 'tag'
