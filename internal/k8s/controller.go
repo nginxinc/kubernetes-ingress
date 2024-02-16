@@ -283,6 +283,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		K8sClientReader:       input.KubeClient,
 		CustomK8sClientReader: input.ConfClient,
 		Namespaces:            lbc.namespaceList,
+		Period:                24 * time.Hour,
 	}
 
 	// NIC Telemetry Reporting
@@ -290,7 +291,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(
 			collectorConfig,
-			telemetry.WithTimePeriod("24h"),
 		)
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry collector: %v", err)

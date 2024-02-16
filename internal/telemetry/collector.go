@@ -17,18 +17,6 @@ import (
 // Option is a functional option used for configuring TraceReporter.
 type Option func(*Collector) error
 
-// WithTimePeriod configures reporting time on TraceReporter.
-func WithTimePeriod(period string) Option {
-	return func(c *Collector) error {
-		d, err := time.ParseDuration(period)
-		if err != nil {
-			return err
-		}
-		c.Period = d
-		return nil
-	}
-}
-
 // WithExporter configures telemetry collector to use given exporter.
 //
 // This may change in the future when we use exporter implemented
@@ -42,8 +30,6 @@ func WithExporter(e Exporter) Option {
 
 // Collector is NIC telemetry data collector.
 type Collector struct {
-	Period time.Duration
-
 	// Exporter is a temp exporter for exporting telemetry data.
 	// The concrete implementation will be implemented in a separate module.
 	Exporter Exporter
@@ -62,6 +48,9 @@ type CollectorConfig struct {
 
 	// List of watched namespaces
 	Namespaces []string
+
+	// Period to collect telemetry
+	Period time.Duration
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -69,8 +58,7 @@ type CollectorConfig struct {
 // configured to gather data every 24h.
 func NewCollector(cfg CollectorConfig, opts ...Option) (*Collector, error) {
 	c := Collector{
-		Period:   24 * time.Hour,
-		Exporter: &StdoutExporter{Endpoint: io.Discard}, // Use DiscardExporter until the real exporter is available.
+		Exporter: &StdoutExporter{Endpoint: io.Discard},
 		Config:   cfg,
 	}
 	for _, o := range opts {
@@ -83,7 +71,7 @@ func NewCollector(cfg CollectorConfig, opts ...Option) (*Collector, error) {
 
 // Start starts running NIC Telemetry Collector.
 func (c *Collector) Start(ctx context.Context) {
-	wait.JitterUntilWithContext(ctx, c.Collect, c.Period, 0.1, true)
+	wait.JitterUntilWithContext(ctx, c.Collect, c.Config.Period, 0.1, true)
 }
 
 // Collect collects and exports telemetry data.
@@ -105,10 +93,6 @@ func (c *Collector) Collect(ctx context.Context) {
 func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 	d := Data{}
 	var err error
-
-	// Placeholder data.
-	d.ProjectMeta.Name = "NIC"
-	d.ProjectMeta.Version = "3.4.2"
 
 	for _, namespace := range c.Config.Namespaces {
 		d.NICResourceCounts.VirtualServers += c.GetVirtualServerCount(ctx, namespace)

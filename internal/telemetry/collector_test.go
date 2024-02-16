@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	customk8sfake "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
@@ -26,7 +27,7 @@ func TestCreateNewDefaultCollector(t *testing.T) {
 	}
 
 	want := 24.0
-	got := c.Period.Hours()
+	got := c.Config.Period.Hours()
 
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
@@ -36,15 +37,17 @@ func TestCreateNewDefaultCollector(t *testing.T) {
 func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
 	t.Parallel()
 
-	cfg := telemetry.CollectorConfig{}
+	cfg := telemetry.CollectorConfig{
+		Period: 24 * time.Hour,
+	}
 
-	c, err := telemetry.NewCollector(cfg, telemetry.WithTimePeriod("4h"))
+	c, err := telemetry.NewCollector(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	want := 4.0
-	got := c.Period.Hours()
+	got := c.Config.Period.Hours()
 
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
@@ -80,7 +83,6 @@ func TestBuildReport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	testCases := []struct {
 		testName          string
 		collectorConfig   telemetry.CollectorConfig
