@@ -3,6 +3,7 @@ ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=R31
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_FRONTEND=noninteractive
+ARG PREBUILT_BASE_IMG=nginx/nginx-ingress:${DOWNLOAD_TAG}
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
@@ -440,6 +441,7 @@ RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_
 # 101 is nginx, defined above
 USER 101
 
+
 ############################################# Create image with nginx-ingress built locally #############################################
 FROM common AS debug
 
@@ -461,6 +463,7 @@ COPY --link --from=debug-builder --chown=101:0 /usr/local/go/bin/go /go/bin/go
 # 101 is nginx, defined above
 USER 101
 ENTRYPOINT ["/dlv"]
+
 
 ############################################# Create image with nginx-ingress built locally #############################################
 FROM common AS debug-container
@@ -485,6 +488,19 @@ USER 101
 ENTRYPOINT ["/dlv"]
 
 
+############################################# Create image with nginx-ingress built locally & using prebuilt base image #############################################
+FROM ${PREBUILT_BASE_IMG} AS local-prebuilt
+
+LABEL org.nginx.kic.image.build.version="local"
+
+COPY --link --chown=101:0 nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
+
+
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
 FROM common AS goreleaser
 ARG TARGETARCH
@@ -499,8 +515,37 @@ RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_
 USER 101
 
 
+############################################# Create image with nginx-ingress built by GoReleaser & using prebuilt base image #############################################
+FROM ${PREBUILT_BASE_IMG} AS goreleaser-prebuilt
+ARG TARGETARCH
+
+LABEL org.nginx.kic.image.build.version="goreleaser"
+
+COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
+
+
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
 FROM common AS aws
+ARG TARGETARCH
+ARG NAP_MODULES_AWS
+
+LABEL org.nginx.kic.image.build.version="aws"
+
+COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
+# root is required for `setcap` invocation
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+# 101 is nginx, defined above
+USER 101
+
+
+############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
+FROM ${PREBUILT_BASE_IMG} AS aws-prebuilt
 ARG TARGETARCH
 ARG NAP_MODULES_AWS
 

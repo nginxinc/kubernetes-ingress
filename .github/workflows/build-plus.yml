@@ -15,6 +15,9 @@ on:
       go-md5:
         required: true
         type: string
+      base-image-md5:
+        required: false
+        type: string
       nap_modules:
         required: false
         type: string
@@ -67,7 +70,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: ${{ inputs.publish-image }}
+        if: ${{ inputs.publish-image || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Login to GCR
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -75,7 +78,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: ${{ inputs.publish-image }}
+        if: ${{ inputs.publish-image || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Authenticate to Google Cloud Marketplace
         id: auth-mktpl
@@ -162,7 +165,7 @@ jobs:
           context: "."
           cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}
           cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},mode=max
-          target: ${{ inputs.target }}
+          target: ${{ inputs.target }}${{ github.event.pull_request.head.repo.full_name == github.repository && '-prebuilt' || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ inputs.publish-image && steps.meta.outputs.annotations || '' }}
@@ -175,6 +178,7 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ contains(inputs.nap_modules, 'waf') && '-waf' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}
             IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
@@ -218,31 +222,18 @@ jobs:
             Use this image instead of building your own.
         if: ${{ github.ref_type == 'tag' && contains(inputs.target, 'aws') }}
 
-      - name: Load image for Trivy
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
-        with:
-          file: build/Dockerfile
-          context: "."
-          cache-from: type=gha,scope=${{ inputs.image }}
-          target: ${{ inputs.target }}
-          tags: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
-          load: true
-          build-args: |
-            BUILD_OS=${{ inputs.image }}
-            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
-            ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
-            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
-          secrets: |
-            "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
-            "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
-            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+      - name: Extract image name for Trivy
+        id: trivy-tag
+        run: |
+          tag=$(echo $DOCKER_METADATA_OUTPUT_JSON | jq -r '.tags[] | select(contains("f5-gcs-7899"))' )
+          echo "tag=$tag" >> $GITHUB_OUTPUT
         if: ${{ inputs.publish-image }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
         continue-on-error: true
         with:
-          image-ref: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
+          image-ref: ${{ steps.trivy-tag.outputs.tag }}
           format: "sarif"
           output: "trivy-results-${{ inputs.image }}.sarif"
           ignore-unfixed: "true"

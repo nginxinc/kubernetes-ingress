@@ -44,6 +44,7 @@ jobs:
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
       ic_version: ${{ steps.vars.outputs.ic_version }}
       publish-images: ${{ steps.vars.outputs.publish }}
+      docker_md5: ${{ steps.vars.outputs.docker_md5 }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -90,6 +91,8 @@ jobs:
             publish=true
           fi
           echo "publish=$publish" >> $GITHUB_OUTPUT
+          docker_md5=$(find . -type f \( -name "build/Dockerfile" -o -name .github/data/version.txt \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }' )
+          echo "docker_md5=${docker_md5:0:8}" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
@@ -228,10 +231,53 @@ jobs:
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
+  rebuild-base-images:
+    name: Rebuild NIC Base images
+    runs-on: ubuntu-22.04
+    needs: checks
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Check if base images exist
+        id: base_exists
+        run: |
+          docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ needs.checks.outputs.docker_md5 }}-debian
+          echo "exists=$?" >> $GITHUB_OUTPUT
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Rebuild base images
+        uses: ./.github/workflows/build-base-images.yml
+        if: github.event.pull_request.head.repo.full_name == github.repository && steps.base_exists.outputs.exists != 0
+
   helm-tests:
     name: Helm Tests
     runs-on: ubuntu-22.04
-    needs: [checks, binaries]
+    needs: [checks, binaries, rebuild-base-images]
     strategy:
       matrix:
         include:
@@ -239,6 +285,9 @@ jobs:
             type: oss
           - image: debian-plus
             type: plus
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -252,18 +301,36 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
 
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
         with:
           file: build/Dockerfile
           context: "."
           cache-from: type=gha,scope=${{ matrix.image }}
-          target: goreleaser
+          target: goreleaser${{ github.event.pull_request.head.repo.full_name == github.repository && '-prebuilt' || '' }}
           tags: ${{ matrix.type }}:${{ github.sha }}
           pull: true
           load: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ contains(matrix.image, 'plus') && 'plus' || 'oss' }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}
             IC_VERSION=CI
           secrets: |
             ${{ contains(matrix.type, 'plus') && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
@@ -316,7 +383,7 @@ jobs:
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
-    needs: [binaries, checks]
+    needs: [binaries, checks, rebuild-base-images]
     permissions:
       contents: read
       id-token: write
@@ -402,6 +469,7 @@ jobs:
           gcr-service-account-secret: ${{ secrets.GCR_SERVICE_ACCOUNT }}
           rhel-license: ${{ contains(matrix.images.image, 'ubi') && secrets.RHEL_LICENSE || '' }}
           go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+          base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
 
       - name: Upload Test Results
@@ -443,6 +511,7 @@ jobs:
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
     permissions:
       contents: read
       actions: read
@@ -470,6 +539,7 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
     permissions:
@@ -523,6 +593,7 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
