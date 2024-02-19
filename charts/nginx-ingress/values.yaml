@@ -175,7 +175,7 @@ controller:
   ## The security context for the Ingress Controller containers.
   containerSecurityContext: {} # Remove curly brackets before adding values
     # allowPrivilegeEscalation: true
-    # readOnlyRootFilesystem: true # make sure this value is same as values.controller.readOnlyRootFilesystem
+    # readOnlyRootFilesystem: true
     # runAsUser: 101 #nginx
     # runAsNonRoot: true
     # capabilities:
@@ -480,7 +480,9 @@ controller:
   defaultHTTPSListenerPort: 443
 
   ## Configure root filesystem as read-only and add volumes for temporary data.
-  readOnlyRootFilesystem: false # after 3 major releases starting 3.5.x, this argument will be moved to the `containerSecurityContext` section.
+  ## Three major releases after 3.5.x this argument will be moved to the `securityContext` section.
+  ## This value will not be used if `controller.securityContext` is set
+  readOnlyRootFilesystem: false
 
   ## Enable dynamic reloading of certificates
   enableSSLDynamicReload: true
