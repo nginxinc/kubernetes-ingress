@@ -84,6 +84,13 @@ type ExtendedResources struct {
 	TransportServerExes []*TransportServerEx
 }
 
+// WeightUpdate holds the information about the weight updates for weight changes without reloading.
+type WeightUpdate struct {
+	Zone  string
+	Key   string
+	Value string
+}
+
 type tlsPassthroughPair struct {
 	Host       string
 	UnixSocket string
@@ -555,13 +562,17 @@ func (cnf *Configurator) deleteVirtualServerMetricsLabels(key string) {
 
 // AddOrUpdateVirtualServer adds or updates NGINX configuration for the VirtualServer resource.
 func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
-	_, warnings, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
+	_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
 	if err != nil {
 		return warnings, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		return warnings, fmt.Errorf("error reloading NGINX for VirtualServer %v/%v: %w", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
+	}
+
+	for _, weightUpdate := range weightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return warnings, nil
@@ -571,7 +582,7 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 	return cnf.nginxManager.CreateOpenTracingTracerConfig(content)
 }
 
-func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (bool, Warnings, error) {
+func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (bool, Warnings, []WeightUpdate, error) {
 	apResources := cnf.updateApResourcesForVs(virtualServerEx)
 	dosResources := map[string]*appProtectDosResource{}
 	for k, v := range virtualServerEx.DosProtectedEx {
@@ -581,14 +592,14 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 			dosResources[k] = dosRes
 		}
 	}
-
+	var weightUpdates []WeightUpdate
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled)
 	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, apResources, dosResources)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
-		return false, warnings, fmt.Errorf("error generating VirtualServer config: %v: %w", name, err)
+		return false, warnings, weightUpdates, fmt.Errorf("error generating VirtualServer config: %v: %w", name, err)
 	}
 	changed := cnf.nginxManager.CreateConfig(name, content)
 
@@ -607,26 +618,32 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 			key := variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(i)
 			value := variableNamer.GetNameOfKeyOfMapForWeights(i, splitClient.Weights[0], splitClient.Weights[1])
 			zoneName := variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(i)
-			cnf.nginxManager.UpsertSplitClientsKeyVal(zoneName, key, value)
+			weightUpdates = append(weightUpdates, WeightUpdate{Zone: zoneName, Key: key, Value: value})
 		}
 	}
-	return changed, warnings, nil
+	return changed, warnings, weightUpdates, nil
 }
 
 // AddOrUpdateVirtualServers adds or updates NGINX configuration for multiple VirtualServer resources.
 func (cnf *Configurator) AddOrUpdateVirtualServers(virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	for _, vsEx := range virtualServerExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return allWarnings, err
 		}
 		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		return allWarnings, fmt.Errorf("error when reloading NGINX when updating Policy: %w", err)
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return allWarnings, nil
@@ -807,6 +824,7 @@ func (cnf *Configurator) addOrUpdateHtpasswdSecret(secret *api_v1.Secret) string
 // AddOrUpdateResources adds or updates configuration for resources.
 func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloadIfUnchanged bool) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 	configsChanged := false
 
 	updateResource := func(updateFunc func() (bool, Warnings, error), namespace, name string) error {
@@ -815,6 +833,20 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 			return fmt.Errorf("error adding or updating resource %v/%v: %w", namespace, name, err)
 		}
 		allWarnings.Add(warnings)
+		if changed {
+			configsChanged = true
+		}
+		return nil
+	}
+
+	updateVSResource := func(updateFunc func() (bool, Warnings, []WeightUpdate, error), namespace, name string) error {
+		changed, warnings, weightUpdates, err := updateFunc()
+		if err != nil {
+			return fmt.Errorf("error adding or updating resource %v/%v: %w", namespace, name, err)
+		}
+		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
+
 		if changed {
 			configsChanged = true
 		}
@@ -840,7 +872,7 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 	}
 
 	for _, vsEx := range resources.VirtualServerExes {
-		err := updateResource(func() (bool, Warnings, error) {
+		err := updateVSResource(func() (bool, Warnings, []WeightUpdate, error) {
 			return cnf.addOrUpdateVirtualServer(vsEx)
 		}, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name)
 		if err != nil {
@@ -1057,7 +1089,7 @@ func (cnf *Configurator) UpdateEndpointsForVirtualServers(virtualServerExes []*V
 
 	for _, vs := range virtualServerExes {
 		// It is safe to ignore warnings here as no new warnings should appear when updating Endpoints for VirtualServers
-		_, _, err := cnf.addOrUpdateVirtualServer(vs)
+		_, _, _, err := cnf.addOrUpdateVirtualServer(vs)
 		if err != nil {
 			return fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
 		}
@@ -1237,6 +1269,7 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources ExtendedResources) (Warnings, error) {
 	cnf.cfgParams = cfgParams
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	if cnf.cfgParams.MainServerSSLDHParamFileContent != nil {
 		fileName, err := cnf.nginxManager.CreateDHParam(*cnf.cfgParams.MainServerSSLDHParamFileContent)
@@ -1289,11 +1322,12 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		allWarnings.Add(warnings)
 	}
 	for _, vsEx := range resources.VirtualServerExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return allWarnings, err
 		}
 		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	for _, tsEx := range resources.TransportServerExes {
@@ -1315,6 +1349,10 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		return allWarnings, fmt.Errorf("error when updating config from ConfigMap: %w", err)
 	}
 
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
+	}
+
 	return allWarnings, nil
 }
 
@@ -1332,11 +1370,13 @@ func (cnf *Configurator) ReloadForBatchUpdates(batchReloadsEnabled bool) error {
 // UpdateVirtualServers updates VirtualServers.
 func (cnf *Configurator) UpdateVirtualServers(updatedVSExes []*VirtualServerEx, deletedKeys []string) []error {
 	var errList []error
+	var allWeightUpdates []WeightUpdate
 	for _, vsEx := range updatedVSExes {
-		_, _, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, _, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			errList = append(errList, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err))
 		}
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	for _, key := range deletedKeys {
@@ -1348,6 +1388,10 @@ func (cnf *Configurator) UpdateVirtualServers(updatedVSExes []*VirtualServerEx, 
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		errList = append(errList, fmt.Errorf("error when updating VirtualServer: %w", err))
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return errList
@@ -1644,6 +1688,7 @@ func (cnf *Configurator) AddOrUpdateResourcesThatUseDosProtected(ingExes []*Ingr
 
 func (cnf *Configurator) addOrUpdateIngressesAndVirtualServers(ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	for _, ingEx := range ingExes {
 		_, warnings, err := cnf.addOrUpdateIngress(ingEx)
@@ -1662,11 +1707,16 @@ func (cnf *Configurator) addOrUpdateIngressesAndVirtualServers(ingExes []*Ingres
 	}
 
 	for _, vs := range vsExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vs)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vs)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
 		}
 		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return allWarnings, nil
