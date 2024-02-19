@@ -380,7 +380,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.initContainers` | InitContainers for the Ingress Controller pods. | [] |
 |`controller.extraContainers` | Extra (eg. sidecar) containers for the Ingress Controller pods. | [] |
 |`controller.podSecurityContext`| The SecurityContext for Ingress Controller pods. | "seccompProfile": {"type": "RuntimeDefault"} |
-|`controller.containerSecurityContext`| The SecurityContext for Ingress Controller container. | {} |
+|`controller.securityContext`| The SecurityContext for Ingress Controller container. | {} |
 |`controller.initContainerSecurityContext`| The SecurityContext for Ingress Controller init container when `readOnlyRootFilesystem` is enabled by either setting `controller.securityContext.readOnlyRootFilesystem` or `controller.readOnlyRootFilesystem`to `true`. | {} |
 |`controller.resources` | The resources of the Ingress Controller pods. | requests: cpu=100m,memory=128Mi |
 |`controller.initContainerResources` | The resources of the init container which is used when `readOnlyRootFilesystem` is enabled by either setting `controller.securityContext.readOnlyRootFilesystem` or `controller.readOnlyRootFilesystem`to `true`. | requests: cpu=100m,memory=128Mi |
