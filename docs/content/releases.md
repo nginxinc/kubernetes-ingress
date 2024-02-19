@@ -6,6 +6,62 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## 3.4.3
+
+19 Feb 2024
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+[5008](https://github.com/nginxinc/kubernetes-ingress/pull/5008) Remove redundant Prometheus variable labels
+[4744](https://github.com/nginxinc/kubernetes-ingress/pull/4744) Fixed validation for VSR exact & regex subroutes.  Thanks to [jo-carter](https://github.com/jo-carter).
+[4832](https://github.com/nginxinc/kubernetes-ingress/pull/4832) Fix new lines in snippets
+[5020](https://github.com/nginxinc/kubernetes-ingress/pull/5020) Fix template file spacing for `ssl_protocols` directive
+[5041](https://github.com/nginxinc/kubernetes-ingress/pull/5041) Allow waf users to build without dos repo access
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+[5073](https://github.com/nginxinc/kubernetes-ingress/pull/5073) Bump redhat/ubi8 from `23d8dfd` to `627867e` in /build
+[5029](https://github.com/nginxinc/kubernetes-ingress/pull/5029) Bump redhat/ubi8 from `fc88b13` to `23d8dfd` in /build
+[5074](https://github.com/nginxinc/kubernetes-ingress/pull/5074) Bump opentracing/nginx-opentracing from `2e0268d` to `2217e9f` in /build
+[4927](https://github.com/nginxinc/kubernetes-ingress/pull/4927) Bump opentracing/nginx-opentracing from `426c2ff` to `2e0268d` in /build
+[5072](https://github.com/nginxinc/kubernetes-ingress/pull/5072) Bump nginx from `156d75f` to `f2802c2` in /build
+[5028](https://github.com/nginxinc/kubernetes-ingress/pull/5028) Bump nginx from `156d75f` to `156d75f` in /build
+[5019](https://github.com/nginxinc/kubernetes-ingress/pull/5019) Bump nginx from `5b7ff23` to `156d75f` in /build
+[5012](https://github.com/nginxinc/kubernetes-ingress/pull/5012) Bump nginx from `d12e6f7` to `5b7ff23` in /build
+[5003](https://github.com/nginxinc/kubernetes-ingress/pull/5003) Bump nginx from `a59278f` to `d12e6f7` in /build
+[4926](https://github.com/nginxinc/kubernetes-ingress/pull/4926) Bump nginx from `a59278f` to `a59278f` in /build
+[4925](https://github.com/nginxinc/kubernetes-ingress/pull/4925) Bump the docker-images group in /build with 1 update
+[5004](https://github.com/nginxinc/kubernetes-ingress/pull/5004) Bump golang from `51a7800` to `a6a7f1f` in /build
+[4984](https://github.com/nginxinc/kubernetes-ingress/pull/4984) Bump golang from `fd78f2f` to `51a7800` in /build
+[4928](https://github.com/nginxinc/kubernetes-ingress/pull/4928) Bump golang from `4db4aac` to `fd78f2f` in /build
+[4992](https://github.com/nginxinc/kubernetes-ingress/pull/4992) Bump nginxcontrib/nginx from `4059aff` to `4a3e891` in /build
+[4994](https://github.com/nginxinc/kubernetes-ingress/pull/4994) Bump redhat/ubi9-minimal from `a340f4b` to `582e18f` in /build
+[5033](https://github.com/nginxinc/kubernetes-ingress/pull/5033) Updates `kindest/node` from v1.29.0 to v1.29.1
+[4909](https://github.com/nginxinc/kubernetes-ingress/pull/4909) Bump the go group with 1 update
+[4924](https://github.com/nginxinc/kubernetes-ingress/pull/4924) Bump the go group with 1 update
+[4939](https://github.com/nginxinc/kubernetes-ingress/pull/4939) Bump the go group with 5 updates
+[4949](https://github.com/nginxinc/kubernetes-ingress/pull/4949) Bump the go group with 1 update
+[4971](https://github.com/nginxinc/kubernetes-ingress/pull/4971) Bump the go group with 1 update
+[5022](https://github.com/nginxinc/kubernetes-ingress/pull/5022) Bump the go group with 1 update
+[5034](https://github.com/nginxinc/kubernetes-ingress/pull/5034) Bump the go group with 1 update
+[5055](https://github.com/nginxinc/kubernetes-ingress/pull/5055) Bump the go group with 1 update
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.4.3 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.4.3),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.4.3 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.4.3 source code
+- For Helm, use version 1.1.3 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.23-1.29.
+
 ## 3.4.2
 
 16 Jan 2024
