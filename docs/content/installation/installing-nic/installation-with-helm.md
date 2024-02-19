@@ -342,8 +342,11 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.volumeMounts** | The volumeMounts of the Ingress Controller pods. | [] |
 | **controller.initContainers** | InitContainers for the Ingress Controller pods. | [] |
 | **controller.extraContainers** | Extra (eg. sidecar) containers for the Ingress Controller pods. | [] |
+| **controller.podSecurityContext**| The SecurityContext for Ingress Controller pods. | "seccompProfile": {"type": "RuntimeDefault"} |
+| **controller.securityContext** | The SecurityContext for Ingress Controller container. | {} |
+| **controller.initContainerSecurityContext** | The SecurityContext for Ingress Controller init container when `readOnlyRootFilesystem` is enabled by either setting `controller.securityContext.readOnlyRootFilesystem` or `controller.readOnlyRootFilesystem`to `true`. | {} |
 | **controller.resources** | The resources of the Ingress Controller pods. | requests: cpu=100m,memory=128Mi |
-| **controller.initContainerResources** | The resources of the init container which is used when `controller.readOnlyRootFilesystem` is set to `true` | requests: cpu=100m,memory=128Mi |
+| **controller.initContainerResources** | The resources of the init container which is used when `readOnlyRootFilesystem` is enabled by either setting `controller.securityContext.readOnlyRootFilesystem` or `controller.readOnlyRootFilesystem`to `true`. | requests: cpu=100m,memory=128Mi |
 | **controller.replicaCount** | The number of replicas of the Ingress Controller deployment. | 1 |
 | **controller.ingressClass.name** | A class of the Ingress Controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of Kubernetes. | nginx |
 | **controller.ingressClass.create** | Creates a new IngressClass object with the name `controller.ingressClass.name`. Set to `false` to use an existing ingressClass created using `kubectl` with the same name. If you use `helm upgrade`, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.4.2, do not set the value to false. | true |
@@ -428,7 +431,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.disableIPV6** | Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack. | false |
 | **controller.defaultHTTPListenerPort**  | Sets the port for the HTTP `default_server` listener. | 80 |
 | **controller.defaultHTTPSListenerPort**  | Sets the port for the HTTPS `default_server` listener. | 443 |
-| **controller.readOnlyRootFilesystem** | Configure root filesystem as read-only and add volumes for temporary data. | false |
+| **controller.readOnlyRootFilesystem** | Configure root filesystem as read-only and add volumes for temporary data. Three major releases after 3.5.x this argument will be moved permanently to the `controller.securityContext` section.  | false |
 | **controller.enableSSLDynamicReload** | Enable lazy loading for SSL Certificates. | true |
 | **rbac.create** | Configures RBAC. | true |
 | **prometheus.create** | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |

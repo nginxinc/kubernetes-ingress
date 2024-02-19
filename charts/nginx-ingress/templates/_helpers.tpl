@@ -135,6 +135,17 @@ Expand image name.
 {{- end -}}
 
 {{/*
+return if readOnlyRootFilesystem is enabled or not.
+*/}}
+{{- define "nginx-ingress.readOnlyRootFilesystem" -}}
+{{- if or .Values.controller.readOnlyRootFilesystem (and .Values.controller.securityContext .Values.controller.securityContext.readOnlyRootFilesystem) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
 Build the args for the service binary.
 */}}
 {{- define "nginx-ingress.args" -}}

@@ -508,6 +508,24 @@
           "title": "The terminationGracePeriodSeconds Schema",
           "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/terminationGracePeriodSeconds"
         },
+        "podSecurityContext": {
+          "type": "object",
+          "default": {},
+          "title": "The podSecurityContext Schema",
+          "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.PodSecurityContext"
+        },
+        "securityContext": {
+          "type": "object",
+          "default": {},
+          "title": "The securityContext Schema",
+          "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.SecurityContext"
+        },
+        "initContainerSecurityContext": {
+          "type": "object",
+          "default": {},
+          "title": "The initContainerSecurityContext Schema",
+          "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.SecurityContext"
+        },
         "resources": {
           "type": "object",
           "default": {},
@@ -1455,6 +1473,13 @@
           },
           "nodeSelector": {},
           "terminationGracePeriodSeconds": 30,
+          "podSecurityContext": {
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "securityContext": {},
+          "initContainerSecurityContext": {},
           "resources": {
             "requests": {
               "cpu": "100m",
