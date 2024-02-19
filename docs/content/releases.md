@@ -17,9 +17,6 @@ docs: "DOCS-616"
 [5020](https://github.com/nginxinc/kubernetes-ingress/pull/5020) Fix template file spacing for `ssl_protocols` directive
 [5041](https://github.com/nginxinc/kubernetes-ingress/pull/5041) Allow waf users to build without dos repo access
 
-### <i class="fa-solid fa-box"></i> Helm Chart
-[4953](https://github.com/nginxinc/kubernetes-ingress/pull/4953) Add docs links to helm NOTES.txt
-
 ### <i class="fa-solid fa-upload"></i> Dependencies
 [5073](https://github.com/nginxinc/kubernetes-ingress/pull/5073) Bump redhat/ubi8 from `23d8dfd` to `627867e` in /build
 [5029](https://github.com/nginxinc/kubernetes-ingress/pull/5029) Bump redhat/ubi8 from `fc88b13` to `23d8dfd` in /build
