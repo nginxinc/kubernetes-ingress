@@ -156,7 +156,7 @@ func TestVariableNamerSafeNsName(t *testing.T) {
 
 	expected := "default_cafe_test"
 
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 
 	if variableNamer.safeNsName != expected {
 		t.Errorf(
@@ -175,7 +175,7 @@ func TestVariableNamer(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 
 	// GetNameForSplitClientVariable()
 	index := 0
@@ -8949,7 +8949,7 @@ func TestGenerateSplits(t *testing.T) {
 		},
 	}
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	scIndex := 1
 	cfgParams := ConfigParams{}
 	crUpstreams := map[string]conf_v1.Upstream{
@@ -9088,7 +9088,7 @@ func TestGenerateSplits(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			resultSplitClient, resultLocations, resultReturnLocations := generateSplits(
+			resultSplitClient, resultLocations, resultReturnLocations, _maps, _keyValZones, _keyVals, _splitClientsKeysWithWeights := generateSplits(
 				test.splits,
 				upstreamNamer,
 				crUpstreams,
@@ -9104,6 +9104,7 @@ func TestGenerateSplits(t *testing.T) {
 				"coffee",
 				"default",
 				vsc.warnings,
+				false,
 			)
 
 			if !cmp.Equal(test.expectedSplitClient, resultSplitClient) {
@@ -9121,6 +9122,7 @@ func TestGenerateSplits(t *testing.T) {
 
 func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	t.Parallel()
+	isPlus := false
 	route := conf_v1.Route{
 		Path: "/",
 		Splits: []conf_v1.Split{
@@ -9145,7 +9147,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 		},
 	}
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 
 	expected := routingCfg{
@@ -9222,7 +9224,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	}
 
 	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams,
-		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{})
+		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{}, isPlus)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -9230,6 +9232,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 
 func TestGenerateMatchesConfig(t *testing.T) {
 	t.Parallel()
+	isPlus := false
 	route := conf_v1.Route{
 		Path: "/",
 		Matches: []conf_v1.Match{
@@ -9331,7 +9334,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		},
 	}
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2
 
@@ -9635,6 +9638,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		"",
 		"",
 		Warnings{},
+		isPlus,
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
@@ -9713,7 +9717,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		},
 	}
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2
 	errorPages := []conf_v1.ErrorPage{
@@ -10045,6 +10049,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		"coffee",
 		"default",
 		Warnings{},
+		false,
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)

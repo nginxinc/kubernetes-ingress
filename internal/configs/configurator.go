@@ -597,6 +597,19 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateVirtualServerMetricsLabels(virtualServerEx, vsCfg.Upstreams)
 	}
+
+	if cnf.isPlus && len(vsCfg.TwoWaySplitClients) > 0 {
+		for i, splitClient := range vsCfg.TwoWaySplitClients {
+			if len(splitClient.Weights) != 2 {
+				continue
+			}
+			variableNamer := *NewVSVariableNamer(virtualServerEx.VirtualServer)
+			key := variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(i)
+			value := variableNamer.GetNameOfKeyOfMapForWeights(i, splitClient.Weights[0], splitClient.Weights[1])
+			zoneName := variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(i)
+			cnf.nginxManager.UpsertSplitClientsKeyVal(zoneName, key, value)
+		}
+	}
 	return changed, warnings, nil
 }
 

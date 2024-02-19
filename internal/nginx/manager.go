@@ -99,6 +99,7 @@ type Manager interface {
 	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
 	AppProtectDosAgentQuit()
 	GetSecretsDir() string
+	UpsertSplitClientsKeyVal(zoneName string, key string, value string)
 }
 
 // LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
@@ -663,4 +664,40 @@ func configContentsChanged(filename string, content []byte) bool {
 		}
 	}
 	return true
+}
+
+// UpsertSplitClientsKeyVal upserts a key value pair in the split clients zone.
+func (lm *LocalManager) UpsertSplitClientsKeyVal(zoneName, key, value string) {
+	key = strings.Trim(key, "\"")
+	value = strings.Trim(value, "\"")
+
+	keyValPairs, err := lm.plusClient.GetKeyValPairs(zoneName)
+	if err != nil {
+		lm.tryAddKeyValPair(zoneName, key, value)
+		return
+	}
+
+	if _, ok := keyValPairs[key]; ok {
+		lm.tryModifyKeyValPair(zoneName, key, value)
+	} else {
+		lm.tryAddKeyValPair(zoneName, key, value)
+	}
+}
+
+func (lm *LocalManager) tryAddKeyValPair(zoneName, key, value string) {
+	err := lm.plusClient.AddKeyValPair(zoneName, key, value)
+	if err != nil {
+		glog.Warningf("Failed to add key value pair: %v", err)
+	} else {
+		glog.Infof("Successfully added key value pair for key: %v", key)
+	}
+}
+
+func (lm *LocalManager) tryModifyKeyValPair(zoneName, key, value string) {
+	err := lm.plusClient.ModifyKeyValPair(zoneName, key, value)
+	if err != nil {
+		glog.Warningf("Failed to modify key value pair: %v", err)
+	} else {
+		glog.Infof("Successfully modified key value pair for key: %v", key)
+	}
 }

@@ -32,6 +32,14 @@ upstream {{ $u.Name }} {
 }
 {{ end }}
 
+{{- range $kvz := .KeyValZones }}
+keyval_zone zone={{ $kvz.Name }}:{{ $kvz.Size}} state={{ $kvz.State }};
+{{- end }}
+
+{{- range $kv := .KeyVals }}
+keyval {{ $kv.Key}} {{ $kv.Variable}} zone={{ $kv.ZoneName }};
+{{- end }}
+
 {{- range $sc := .SplitClients }}
 split_clients {{ $sc.Source }} {{ $sc.Variable }} {
     {{- range $d := $sc.Distributions }}

@@ -13,12 +13,15 @@ type UpstreamLabels struct {
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
 	HTTPSnippets            []string
+	KeyValZones             []KeyValZone
+	KeyVals                 []KeyVal
 	LimitReqZones           []LimitReqZone
 	Maps                    []Map
 	Server                  Server
 	SpiffeCerts             bool
 	SpiffeClientCerts       bool
 	SplitClients            []SplitClient
+	TwoWaySplitClients      []TwoWaySplitClients
 	StatusMatches           []StatusMatch
 	Upstreams               []Upstream
 	DynamicSSLReloadEnabled bool
@@ -386,4 +389,33 @@ type JwksURI struct {
 type BasicAuth struct {
 	Secret string
 	Realm  string
+}
+
+// KeyValZone defines a keyval zone.
+type KeyValZone struct {
+	Name  string
+	Size  string
+	State string
+	Sync  bool
+}
+
+// KeyVal defines a keyval.
+type KeyVal struct {
+	Key      string
+	Variable string
+	ZoneName string
+}
+
+// TwoWaySplitClients defines split clients for two way split
+type TwoWaySplitClients struct {
+	Key      string
+	Variable string
+	ZoneName string
+	Weights  []int
+}
+
+// Variable defines an nginx variable.
+type Variable struct {
+	Name  string
+	Value string
 }

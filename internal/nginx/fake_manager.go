@@ -178,3 +178,8 @@ func (*FakeManager) AppProtectDosAgentStart(_ chan error, _ bool, _ int, _ int, 
 func (fm *FakeManager) GetSecretsDir() string {
 	return fm.secretsPath
 }
+
+// UpsertSplitClientsKeyVal is a fake implementation of UpsertSplitClientsKeyVal
+func (fm *FakeManager) UpsertSplitClientsKeyVal(_ string, _ string, _ string) {
+	glog.V(3).Infof("Creating split clients key")
+}

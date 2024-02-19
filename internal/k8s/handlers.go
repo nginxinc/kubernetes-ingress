@@ -7,6 +7,8 @@ import (
 
 	discovery_v1 "k8s.io/api/discovery/v1"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/jinzhu/copier"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"github.com/golang/glog"
@@ -18,6 +20,8 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
+
+const lastAppliedConfigAnnotation = "kubectl.kubernetes.io/last-applied-configuration"
 
 // createConfigMapHandlers builds the handler funcs for config maps
 func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
@@ -309,8 +313,32 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 		UpdateFunc: func(old, cur interface{}) {
 			curVs := cur.(*conf_v1.VirtualServer)
 			oldVs := old.(*conf_v1.VirtualServer)
-			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
-				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
+
+			var curVsCopy, oldVsCopy conf_v1.VirtualServer
+			err := copier.CopyWithOption(&curVsCopy, curVs, copier.Option{DeepCopy: true})
+			if err != nil {
+				glog.V(3).Infof("Error copying VirtualServer %v: %v", curVs.Name, err)
+				return
+			}
+
+			err = copier.CopyWithOption(&oldVsCopy, oldVs, copier.Option{DeepCopy: true})
+			if err != nil {
+				glog.V(3).Infof("Error copying VirtualServer %v: %v", oldVs.Name, err)
+				return
+			}
+
+			for i := range curVsCopy.Spec.Routes {
+				curVsCopy.Spec.Routes[i].Splits = nil
+			}
+			for i := range oldVsCopy.Spec.Routes {
+				oldVsCopy.Spec.Routes[i].Splits = nil
+			}
+
+			if lbc.isNginxPlus && !isWeightTheSame(oldVs.Spec.Routes, curVs.Spec.Routes) {
+				glog.V(3).Infof("VirtualServer %v changed only in Split weights", curVs.Name)
+			} else if virtualServerChanged(oldVsCopy, curVsCopy) {
+				diff := cmp.Diff(oldVsCopy, curVsCopy)
+				glog.V(3).Infof("VirtualServer %v changed, syncing. Difference: %s", curVs.Name, diff)
 				lbc.AddSyncQueue(curVs)
 			}
 		},
@@ -710,4 +738,53 @@ func createNamespaceHandlers(lbc *LoadBalancerController) cache.ResourceEventHan
 			}
 		},
 	}
+}
+
+func isWeightTheSame(oldRoutes, curRoutes []conf_v1.Route) bool {
+	if len(oldRoutes) != len(curRoutes) {
+		glog.V(3).Infof("Different number of routes")
+		return false
+	}
+
+	for i, oldRoute := range oldRoutes {
+		if len(oldRoute.Splits) != len(curRoutes[i].Splits) {
+			glog.V(3).Infof("Different number of splits in route %d", i)
+			return false
+		}
+
+		for j, oldSplit := range oldRoute.Splits {
+			curSplit := curRoutes[i].Splits[j]
+			if oldSplit.Weight != curSplit.Weight {
+				glog.V(3).Infof("Different weight in split %d of route %d", j, i)
+				return false
+			}
+		}
+	}
+	glog.V(3).Infof("Weights are same")
+	return true
+}
+
+func virtualServerChanged(oldVs, curVs conf_v1.VirtualServer) bool {
+	if reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
+		return false
+	}
+
+	var oldVsCopy, curVsCopy conf_v1.VirtualServer
+	err := copier.CopyWithOption(&oldVsCopy, &oldVs, copier.Option{DeepCopy: true})
+	if err != nil {
+		glog.V(3).Infof("Error copying VirtualServer %v: %v", oldVs.Name, err)
+		return false
+	}
+
+	err = copier.CopyWithOption(&curVsCopy, &curVs, copier.Option{DeepCopy: true})
+	if err != nil {
+		glog.V(3).Infof("Error copying VirtualServer %v: %v", curVs.Name, err)
+		return false
+	}
+
+	curVsCopy.ResourceVersion = oldVsCopy.ResourceVersion
+	curVsCopy.Generation = oldVsCopy.Generation
+	curVsCopy.Annotations[lastAppliedConfigAnnotation] = oldVsCopy.Annotations[lastAppliedConfigAnnotation]
+
+	return !reflect.DeepEqual(oldVsCopy, curVsCopy)
 }
