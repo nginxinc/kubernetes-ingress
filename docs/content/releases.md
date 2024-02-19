@@ -8,7 +8,7 @@ docs: "DOCS-616"
 ---
 ## 3.4.3
 
-15 Feb 2024
+19 Feb 2024
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
 [5008](https://github.com/nginxinc/kubernetes-ingress/pull/5008) Remove redundant Prometheus variable labels
