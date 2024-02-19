@@ -421,10 +421,6 @@ func getAppProtectVersionInfo() string {
 	return version
 }
 
-func getAgentVersionInfo(nginxManager nginx.Manager) string {
-	return nginxManager.AgentVersion()
-}
-
 type childProcessConfig struct {
 	nginxDone      chan error
 	aPPluginEnable bool
