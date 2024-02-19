@@ -6,8 +6,9 @@ import (
 	"io"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
@@ -44,13 +45,13 @@ type CollectorConfig struct {
 	K8sClientReader kubernetes.Interface
 
 	// CustomK8sClientReader is a kubernetes client for our CRDs.
+	// Note: May not need this client.
 	CustomK8sClientReader k8s_nginx.Interface
-
-	// List of watched namespaces
-	Namespaces []string
 
 	// Period to collect telemetry
 	Period time.Duration
+
+	Configurator *configs.Configurator
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -78,7 +79,8 @@ func (c *Collector) Start(ctx context.Context) {
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	data, err := c.BuildReport(ctx)
+	// TODO: Re-add ctx to BuildReport when collecting Node Count.
+	data, err := c.BuildReport()
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: %v", err)
 	}
@@ -90,45 +92,13 @@ func (c *Collector) Collect(ctx context.Context) {
 }
 
 // BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
+func (c *Collector) BuildReport() (Data, error) {
 	d := Data{}
 	var err error
 
-	for _, namespace := range c.Config.Namespaces {
-		d.NICResourceCounts.VirtualServers += c.GetVirtualServerCount(ctx, namespace)
-		d.NICResourceCounts.TransportServers += c.GetTransportServerCount(ctx, namespace)
+	if c.Config.Configurator != nil {
+		d.NICResourceCounts.VirtualServers, d.NICResourceCounts.VirtualServerRoutes = c.Config.Configurator.GetVirtualServerCounts()
+		d.NICResourceCounts.TransportServers = c.Config.Configurator.GetTransportServerCounts()
 	}
-
 	return d, err
-}
-
-// SetConfig is used to overwrite the existing config for the Collector.
-func (c *Collector) SetConfig(cfg CollectorConfig) {
-	c.Config = cfg
-}
-
-// GetVirtualServerCount returns the number of VirtualServers in a namespace.
-func (c *Collector) GetVirtualServerCount(ctx context.Context, namespace string) int {
-	count, err := c.Config.CustomK8sClientReader.
-		K8sV1().
-		VirtualServers(namespace).
-		List(ctx, meta_v1.ListOptions{})
-	if err != nil {
-		glog.Errorf("unable to list VirtualServers in namespace %s Error: %x", namespace, err)
-		return 0
-	}
-	return len(count.Items)
-}
-
-// GetTransportServerCount returns the number of TransportServers in a namespace.
-func (c *Collector) GetTransportServerCount(ctx context.Context, namespace string) int {
-	count, err := c.Config.CustomK8sClientReader.
-		K8sV1().
-		TransportServers(namespace).
-		List(ctx, meta_v1.ListOptions{})
-	if err != nil {
-		glog.Errorf("unable to list TransportServers in namespace %s Error: %x", namespace, err)
-		return 0
-	}
-	return len(count.Items)
 }

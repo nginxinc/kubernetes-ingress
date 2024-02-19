@@ -7,19 +7,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
-	customk8sfake "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
-	k8sfake "k8s.io/client-go/kubernetes/fake"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestCreateNewDefaultCollector(t *testing.T) {
+func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
 	t.Parallel()
 
-	cfg := telemetry.CollectorConfig{}
+	cfg := telemetry.CollectorConfig{
+		Period: 24 * time.Hour,
+	}
 
 	c, err := telemetry.NewCollector(cfg)
 	if err != nil {
@@ -34,26 +38,6 @@ func TestCreateNewDefaultCollector(t *testing.T) {
 	}
 }
 
-func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
-	t.Parallel()
-
-	cfg := telemetry.CollectorConfig{
-		Period: 24 * time.Hour,
-	}
-
-	c, err := telemetry.NewCollector(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	want := 4.0
-	got := c.Config.Period.Hours()
-
-	if !cmp.Equal(want, got) {
-		t.Error(cmp.Diff(want, got))
-	}
-}
-
 func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 	t.Parallel()
 
@@ -61,7 +45,9 @@ func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 	exp := &telemetry.StdoutExporter{Endpoint: buf}
 	td := telemetry.Data{}
 
-	cfg := telemetry.CollectorConfig{}
+	cfg := telemetry.CollectorConfig{
+		Configurator: newConfigurator(t),
+	}
 
 	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
 	if err != nil {
@@ -76,143 +62,373 @@ func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 	}
 }
 
-func TestBuildReport(t *testing.T) {
+func TestCountVirtualServers(t *testing.T) {
 	t.Parallel()
 
-	c, err := telemetry.NewCollector(telemetry.CollectorConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
 	testCases := []struct {
-		testName          string
-		collectorConfig   telemetry.CollectorConfig
-		expectedTraceData telemetry.Data
-		virtualServers    []*conf_v1.VirtualServer
-		transportServers  []*conf_v1.TransportServer
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Data
+		expectedTraceDataOnDelete telemetry.Data
+		virtualServers            []*configs.VirtualServerEx
+		deleteCount               int
 	}{
 		{
-			testName: "Resources deployed in a namespace that is watched",
-			expectedTraceData: telemetry.Data{
+			testName: "Create and delete 1 VirtualServer",
+			expectedTraceDataOnAdd: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
-					VirtualServers: 2,
+					VirtualServers: 1,
 				},
 			},
-			collectorConfig: telemetry.CollectorConfig{
-				K8sClientReader:       k8sfake.NewSimpleClientset(),
-				CustomK8sClientReader: customk8sfake.NewSimpleClientset(),
-				Namespaces:            []string{"ns-1"},
-			},
-			virtualServers: []*conf_v1.VirtualServer{
-				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "ns-1",
-						Name:      "coffee",
-					},
-					Spec: conf_v1.VirtualServerSpec{},
-				},
-				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "ns-1",
-						Name:      "tea",
-					},
-					Spec: conf_v1.VirtualServerSpec{},
-				},
-			},
-		},
-		{
-			testName: "Resource is deployed in a namespace that is not watched",
-			expectedTraceData: telemetry.Data{
+			expectedTraceDataOnDelete: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
 					VirtualServers: 0,
 				},
 			},
-			collectorConfig: telemetry.CollectorConfig{
-				K8sClientReader:       k8sfake.NewSimpleClientset(),
-				CustomK8sClientReader: customk8sfake.NewSimpleClientset(),
-				Namespaces:            []string{"ns-2"},
-			},
-			virtualServers: []*conf_v1.VirtualServer{
+			virtualServers: []*configs.VirtualServerEx{
 				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "ns-1",
-						Name:      "coffee",
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{},
 					},
-					Spec: conf_v1.VirtualServerSpec{},
-				},
-				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "ns-1",
-						Name:      "tea",
-					},
-					Spec: conf_v1.VirtualServerSpec{},
 				},
 			},
+			deleteCount: 1,
 		},
 		{
-			testName: "Resource is deployed in a watched namespace with more than 1 watched namespace",
-			expectedTraceData: telemetry.Data{
+			testName: "Create 2 VirtualServers and delete 2",
+			expectedTraceDataOnAdd: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
-					VirtualServers: 3,
+					VirtualServers: 2,
 				},
 			},
-			collectorConfig: telemetry.CollectorConfig{
-				K8sClientReader:       k8sfake.NewSimpleClientset(),
-				CustomK8sClientReader: customk8sfake.NewSimpleClientset(),
-				Namespaces:            []string{"ns-1", "ns-2", "ns-3"},
-			},
-			virtualServers: []*conf_v1.VirtualServer{
-				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "ns-1",
-						Name:      "coffee",
-					},
-					Spec: conf_v1.VirtualServerSpec{},
-				},
-				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "ns-2",
-						Name:      "tea",
-					},
-					Spec: conf_v1.VirtualServerSpec{},
-				},
-				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "ns-3",
-						Name:      "latte",
-					},
-					Spec: conf_v1.VirtualServerSpec{},
+			expectedTraceDataOnDelete: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					VirtualServers: 0,
 				},
 			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{},
+					},
+				},
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "tea",
+						},
+						Spec: conf_v1.VirtualServerSpec{},
+					},
+				},
+			},
+			deleteCount: 2,
+		},
+		{
+			testName: "Create 2 VirtualServers and delete 1",
+			expectedTraceDataOnAdd: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					VirtualServers: 2,
+				},
+			},
+			expectedTraceDataOnDelete: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					VirtualServers: 1,
+				},
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{},
+					},
+				},
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "tea",
+						},
+						Spec: conf_v1.VirtualServerSpec{},
+					},
+				},
+			},
+			deleteCount: 1,
 		},
 	}
 
 	for _, test := range testCases {
-		c.SetConfig(test.collectorConfig)
+		configurator := newConfigurator(t)
 
-		for _, vs := range test.virtualServers {
-			if _, err = test.collectorConfig.CustomK8sClientReader.K8sV1().
-				VirtualServers(vs.Namespace).
-				Create(context.Background(), vs, v1.CreateOptions{}); err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		for _, ts := range test.transportServers {
-			if _, err = test.collectorConfig.CustomK8sClientReader.K8sV1().
-				TransportServers(ts.Namespace).
-				Create(context.Background(), ts, v1.CreateOptions{}); err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		c.Config.Namespaces = test.collectorConfig.Namespaces
-		gotTraceData, err := c.BuildReport(context.Background())
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			Configurator: configurator,
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if !cmp.Equal(test.expectedTraceData, gotTraceData) {
-			t.Error(cmp.Diff(test.expectedTraceData, gotTraceData))
+		for _, vs := range test.virtualServers {
+			_, err := configurator.AddOrUpdateVirtualServer(vs)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd, gotTraceDataOnAdd) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd, gotTraceDataOnAdd))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			vs := test.virtualServers[i]
+			key := getResourceKey(vs.VirtualServer.Namespace, vs.VirtualServer.Name)
+			err := configurator.DeleteVirtualServer(key, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete, gotTraceDataOnDelete) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete, gotTraceDataOnDelete))
 		}
 	}
 }
+
+func TestCountTransportServers(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Data
+		expectedTraceDataOnDelete telemetry.Data
+		transportServers          []*configs.TransportServerEx
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 TransportServer",
+			expectedTraceDataOnAdd: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					TransportServers: 1,
+				},
+			},
+			expectedTraceDataOnDelete: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					TransportServers: 0,
+				},
+			},
+			transportServers: []*configs.TransportServerEx{
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+		{
+			testName: "Create 2 and delete 2 TransportServer",
+			expectedTraceDataOnAdd: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					TransportServers: 2,
+				},
+			},
+			expectedTraceDataOnDelete: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					TransportServers: 0,
+				},
+			},
+			transportServers: []*configs.TransportServerEx{
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "tea",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "tea",
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 2,
+		},
+		{
+			testName: "Create 2 and delete 1 TransportServer",
+			expectedTraceDataOnAdd: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					TransportServers: 2,
+				},
+			},
+			expectedTraceDataOnDelete: telemetry.Data{
+				NICResourceCounts: telemetry.NICResourceCounts{
+					TransportServers: 1,
+				},
+			},
+			transportServers: []*configs.TransportServerEx{
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "coffee",
+							},
+						},
+					},
+				},
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "tea",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "tea",
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			Configurator: configurator,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, ts := range test.transportServers {
+			_, err := configurator.AddOrUpdateTransportServer(ts)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd, gotTraceDataOnAdd) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd, gotTraceDataOnAdd))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			ts := test.transportServers[i]
+			key := getResourceKey(ts.TransportServer.Namespace, ts.TransportServer.Name)
+			err := configurator.DeleteTransportServer(key)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete, gotTraceDataOnDelete) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete, gotTraceDataOnDelete))
+		}
+	}
+}
+
+func getResourceKey(namespace, name string) string {
+	return fmt.Sprintf("%s_%s", namespace, name)
+}
+
+func newConfigurator(t *testing.T) *configs.Configurator {
+	t.Helper()
+
+	templateExecutor, err := version1.NewTemplateExecutor(mainTemplatePath, ingressTemplatePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	templateExecutorV2, err := version2.NewTemplateExecutor(virtualServerTemplatePath, transportServerTemplatePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	manager := nginx.NewFakeManager("/etc/nginx")
+	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
+		NginxManager: manager,
+		StaticCfgParams: &configs.StaticConfigParams{
+			HealthStatus:                   true,
+			HealthStatusURI:                "/nginx-health",
+			NginxStatus:                    true,
+			NginxStatusAllowCIDRs:          []string{"127.0.0.1"},
+			NginxStatusPort:                8080,
+			StubStatusOverUnixSocketForOSS: false,
+			NginxVersion:                   nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		},
+		Config:                  configs.NewDefaultConfigParams(false),
+		TemplateExecutor:        templateExecutor,
+		TemplateExecutorV2:      templateExecutorV2,
+		LatencyCollector:        nil,
+		LabelUpdater:            nil,
+		IsPlus:                  false,
+		IsWildcardEnabled:       false,
+		IsPrometheusEnabled:     false,
+		IsLatencyMetricsEnabled: false,
+	})
+	return cnf
+}
+
+const (
+	mainTemplatePath            = "../configs/version1/nginx-plus.tmpl"
+	ingressTemplatePath         = "../configs/version1/nginx-plus.ingress.tmpl"
+	virtualServerTemplatePath   = "../configs/version2/nginx-plus.virtualserver.tmpl"
+	transportServerTemplatePath = "../configs/version2/nginx-plus.transportserver.tmpl"
+)

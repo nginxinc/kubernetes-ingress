@@ -3,12 +3,14 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/attribute"
 	"io"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
+// Exporter interface for exporters.
 type Exporter interface {
-	//TODO Change Data to Exportable.
+	// TODO Change Data to Exportable.
 	Export(ctx context.Context, data Data) error
 }
 
@@ -29,11 +31,13 @@ type Data struct {
 	NICResourceCounts NICResourceCounts
 }
 
+// ProjectMeta holds metadata for the project.
 type ProjectMeta struct {
 	Name    string
 	Version string
 }
 
+// NICResourceCounts holds a count of NIC specific resource.
 type NICResourceCounts struct {
 	VirtualServers      int
 	VirtualServerRoutes int
