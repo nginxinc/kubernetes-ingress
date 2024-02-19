@@ -21,7 +21,7 @@ on:
       release-url:
         required: false
         type: string
-      build-cache:
+      publish-image:
         required: false
         type: boolean
 
@@ -55,7 +55,7 @@ jobs:
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
         with:
           platforms: arm64,s390x
-        if: github.event_name != 'pull_request'
+        if: ${{ inputs.publish-image }}
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
@@ -67,7 +67,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: github.event_name != 'pull_request' && ! inputs.build-cache
+        if: ${{ inputs.publish-image }}
 
       - name: Login to GCR
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -75,7 +75,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: github.event_name != 'pull_request' && ! inputs.build-cache
+        if: ${{ inputs.publish-image }}
 
       - name: Authenticate to Google Cloud Marketplace
         id: auth-mktpl
@@ -114,7 +114,7 @@ jobs:
           script: |
             let id_token = await core.getIDToken()
             core.setOutput('id_token', id_token)
-        if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') && ! inputs.build-cache }}
+        if: ${{ inputs.publish-image }}
 
       - name: Login to NGINX Registry
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -122,7 +122,7 @@ jobs:
           registry: docker-mgmt.nginx.com
           username: ${{ steps.idtoken.outputs.id_token }}
           password: ${{ github.actor }}
-        if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') && ! inputs.build-cache }}
+        if: ${{ inputs.publish-image }}
 
       - name: Docker meta
         id: meta
@@ -165,13 +165,13 @@ jobs:
           target: ${{ inputs.target }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ github.event_name != 'pull_request' && steps.meta.outputs.annotations || '' }}
-          platforms: ${{ github.event_name != 'pull_request' && inputs.platforms || '' }}
-          load: ${{ github.event_name == 'pull_request' }}
-          push: ${{ github.event_name != 'pull_request' && ! inputs.build-cache }}
+          annotations: ${{ inputs.publish-image && steps.meta.outputs.annotations || '' }}
+          platforms: ${{ inputs.publish-image && inputs.platforms || '' }}
+          load: ${{ ! inputs.publish-image }}
+          push: ${{ inputs.publish-image }}
           pull: true
-          no-cache: ${{ github.event_name != 'pull_request' }}
-          sbom: ${{ github.event_name != 'pull_request' }}
+          no-cache: ${{ inputs.publish-image }}
+          sbom: ${{ inputs.publish-image }}
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
@@ -236,7 +236,7 @@ jobs:
             "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ ! inputs.build-cache }}
+        if: ${{ inputs.publish-image }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
@@ -246,14 +246,14 @@ jobs:
           format: "sarif"
           output: "trivy-results-${{ inputs.image }}.sarif"
           ignore-unfixed: "true"
-        if: ${{ ! inputs.build-cache }}
+        if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@e675ced7a7522a761fc9c8eb26682c8b27c42b2b # v3.24.1
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
-        if: ${{ ! inputs.build-cache }}
+        if: ${{ inputs.publish-image }}
 
       - name: Upload Scan Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1

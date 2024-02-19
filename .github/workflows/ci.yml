@@ -13,6 +13,12 @@ on:
       - release-*
   schedule:
     - cron: "0 4 * * *" # run every day at 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      publish-image:
+        description: Publish of the generated images
+        type: boolean
+        default: false
 
 defaults:
   run:
@@ -37,6 +43,7 @@ jobs:
       chart_version: ${{ steps.vars.outputs.chart_version }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
       ic_version: ${{ steps.vars.outputs.ic_version }}
+      publish-images: ${{ steps.vars.outputs.publish }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -76,6 +83,13 @@ jobs:
           source .github/data/version.txt
           echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
           echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
+          publish=false
+          if ${{ github.event_name == 'workflow_dispatch' && inputs.publish-image }}; then
+            publish=true
+          elif ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}; then
+            publish=true
+          fi
+          echo "publish=$publish" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
@@ -413,13 +427,13 @@ jobs:
 
   build-docker:
     name: Build Docker OSS
-    needs: [checks, smoke-tests]
+    needs: [checks, smoke-results]
     strategy:
       fail-fast: false
       matrix:
         image: [debian, alpine]
         platforms:
-          ["linux/arm", "linux/arm64, linux/amd64, linux/ppc64le", "linux/s390x"]
+          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
         include:
           - image: ubi
             platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
@@ -428,6 +442,7 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
     permissions:
       contents: read
       actions: read
@@ -438,7 +453,7 @@ jobs:
 
   build-docker-plus:
     name: Build Docker Plus
-    needs: [checks, build-docker, release-notes]
+    needs: [checks, smoke-results, release-notes]
     strategy:
       fail-fast: false
       matrix:
@@ -456,6 +471,7 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
+      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
     permissions:
       contents: read
       security-events: write
@@ -464,7 +480,7 @@ jobs:
 
   build-docker-nap:
     name: Build Docker NAP
-    needs: [checks, build-docker-plus, release-notes]
+    needs: [checks, smoke-results, release-notes]
     strategy:
       fail-fast: false
       matrix:
@@ -501,7 +517,6 @@ jobs:
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: waf
-
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
@@ -510,6 +525,7 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
+      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
     permissions:
       contents: read
       security-events: write
@@ -604,7 +620,7 @@ jobs:
   gcp-marketplace:
     name: Trigger PR for GCP Marketplace
     runs-on: ubuntu-22.04
-    needs: [checks, publish-helm]
+    needs: [checks, build-docker-plus, build-docker-nap]
     steps:
       - name:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1

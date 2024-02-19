@@ -87,7 +87,7 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
-      build-cache: true
+      publish-image: false
     permissions:
       contents: read
       actions: read
@@ -116,7 +116,7 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
-      build-cache: true
+      publish-image: false
     permissions:
       contents: read
       security-events: write
@@ -170,7 +170,7 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
-      build-cache: true
+      publish-image: false
     permissions:
       contents: read
       security-events: write
