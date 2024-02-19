@@ -80,7 +80,14 @@ func main() {
 
 	checkNamespaces(kubeClient)
 
-	dynClient, confClient := createCustomClients(config)
+	dynClient, err := createDynamicClient(config)
+	if err != nil {
+		glog.Fatal(err)
+	}
+	confClient, err := createConfigClient(config)
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	constLabels := map[string]string{"class": *ingressClass}
 
@@ -88,22 +95,35 @@ func main() {
 
 	nginxManager, useFakeNginxManager := createNginxManager(managerCollector)
 
-	nginxVersion := getNginxVersionInfo(nginxManager)
+	nginxVersion, err := getNginxVersionInfo(nginxManager)
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	var appProtectVersion string
 	if *appProtect {
-		appProtectVersion = getAppProtectVersionInfo()
+		appProtectVersion, err = getAppProtectVersionInfo()
+		if err != nil {
+			glog.Fatal(err)
+		}
 	}
 
 	go updateSelfWithVersionInfo(kubeClient, version, appProtectVersion, nginxVersion, 10, time.Second*5)
 
-	templateExecutor, templateExecutorV2 := createTemplateExecutors()
+	templateExecutor := createV1TemplateExecutors()
+	templateExecutorV2 := createV2TemplateExecutors()
 
 	aPPluginDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
 
-	sslRejectHandshake := processDefaultServerSecret(kubeClient, nginxManager)
+	sslRejectHandshake, err := processDefaultServerSecret(kubeClient, nginxManager)
+	if err != nil {
+		glog.Fatal(err)
+	}
 
-	isWildcardEnabled := processWildcardSecret(kubeClient, nginxManager)
+	isWildcardEnabled, err := processWildcardSecret(kubeClient, nginxManager)
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
@@ -137,7 +157,10 @@ func main() {
 		NginxVersion:                   nginxVersion,
 	}
 
-	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
+	err = processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	if *enableTLSPassthrough {
 		var emptyFile []byte
@@ -333,29 +356,30 @@ func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) 
 	}
 }
 
-func createCustomClients(config *rest.Config) (dynamic.Interface, k8s_nginx.Interface) {
-	var dynClient dynamic.Interface
-	var err error
-	if *appProtectDos || *appProtect || *ingressLink != "" {
-		dynClient, err = dynamic.NewForConfig(config)
-		if err != nil {
-			glog.Fatalf("Failed to create dynamic client: %v.", err)
-		}
-	}
-	var confClient k8s_nginx.Interface
+func createConfigClient(config *rest.Config) (configClient k8s_nginx.Interface, err error) {
 	if *enableCustomResources {
-		confClient, err = k8s_nginx.NewForConfig(config)
+		configClient, err = k8s_nginx.NewForConfig(config)
 		if err != nil {
-			glog.Fatalf("Failed to create a conf client: %v", err)
+			return configClient, fmt.Errorf("Failed to create a conf client: %v", err)
 		}
 
 		// required for emitting Events for VirtualServer
 		err = conf_scheme.AddToScheme(scheme.Scheme)
 		if err != nil {
-			glog.Fatalf("Failed to add configuration types to the scheme: %v", err)
+			return configClient, fmt.Errorf("Failed to add configuration types to the scheme: %v", err)
 		}
 	}
-	return dynClient, confClient
+	return configClient, err
+}
+
+func createDynamicClient(config *rest.Config) (dynClient dynamic.Interface, err error) {
+	if *appProtectDos || *appProtect || *ingressLink != "" {
+		dynClient, err = dynamic.NewForConfig(config)
+		if err != nil {
+			return dynClient, fmt.Errorf("Failed to create dynamic client: %v.", err)
+		}
+	}
+	return dynClient, err
 }
 
 func createPlusClient(nginxPlus bool, useFakeNginxManager bool, nginxManager nginx.Manager) (plusClient *client.NginxClient, err error) {
@@ -370,16 +394,13 @@ func createPlusClient(nginxPlus bool, useFakeNginxManager bool, nginxManager ngi
 	return plusClient, nil
 }
 
-func createTemplateExecutors() (*version1.TemplateExecutor, *version2.TemplateExecutor) {
+func createV1TemplateExecutors() *version1.TemplateExecutor {
 	nginxConfTemplatePath := "nginx.tmpl"
 	nginxIngressTemplatePath := "nginx.ingress.tmpl"
-	nginxVirtualServerTemplatePath := "nginx.virtualserver.tmpl"
-	nginxTransportServerTemplatePath := "nginx.transportserver.tmpl"
+
 	if *nginxPlus {
 		nginxConfTemplatePath = "nginx-plus.tmpl"
 		nginxIngressTemplatePath = "nginx-plus.ingress.tmpl"
-		nginxVirtualServerTemplatePath = "nginx-plus.virtualserver.tmpl"
-		nginxTransportServerTemplatePath = "nginx-plus.transportserver.tmpl"
 	}
 
 	if *mainTemplatePath != "" {
@@ -388,6 +409,23 @@ func createTemplateExecutors() (*version1.TemplateExecutor, *version2.TemplateEx
 	if *ingressTemplatePath != "" {
 		nginxIngressTemplatePath = *ingressTemplatePath
 	}
+
+	templateExecutor, err := version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
+	if err != nil {
+		glog.Fatalf("Error creating TemplateExecutor: %v", err)
+	}
+
+	return templateExecutor
+}
+
+func createV2TemplateExecutors() *version2.TemplateExecutor {
+	nginxVirtualServerTemplatePath := "nginx.virtualserver.tmpl"
+	nginxTransportServerTemplatePath := "nginx.transportserver.tmpl"
+	if *nginxPlus {
+		nginxVirtualServerTemplatePath = "nginx-plus.virtualserver.tmpl"
+		nginxTransportServerTemplatePath = "nginx-plus.transportserver.tmpl"
+	}
+
 	if *virtualServerTemplatePath != "" {
 		nginxVirtualServerTemplatePath = *virtualServerTemplatePath
 	}
@@ -395,17 +433,12 @@ func createTemplateExecutors() (*version1.TemplateExecutor, *version2.TemplateEx
 		nginxTransportServerTemplatePath = *transportServerTemplatePath
 	}
 
-	templateExecutor, err := version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
-	if err != nil {
-		glog.Fatalf("Error creating TemplateExecutor: %v", err)
-	}
-
 	templateExecutorV2, err := version2.NewTemplateExecutor(nginxVirtualServerTemplatePath, nginxTransportServerTemplatePath)
 	if err != nil {
 		glog.Fatalf("Error creating TemplateExecutorV2: %v", err)
 	}
 
-	return templateExecutor, templateExecutorV2
+	return templateExecutorV2
 }
 
 func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Manager, bool) {
@@ -420,26 +453,26 @@ func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Man
 	return nginxManager, useFakeNginxManager
 }
 
-func getNginxVersionInfo(nginxManager nginx.Manager) nginx.Version {
-	nginxInfo := nginxManager.Version()
+func getNginxVersionInfo(nginxManager nginx.Manager) (nginxInfo nginx.Version, err error) {
+	nginxInfo = nginxManager.Version()
 	glog.Infof("Using %s", nginxInfo.String())
 
 	if *nginxPlus && !nginxInfo.IsPlus {
-		glog.Fatal("NGINX Plus flag enabled (-nginx-plus) without NGINX Plus binary")
+		return nginxInfo, fmt.Errorf("NGINX Plus flag enabled (-nginx-plus) without NGINX Plus binary")
 	} else if !*nginxPlus && nginxInfo.IsPlus {
-		glog.Fatal("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
+		return nginxInfo, fmt.Errorf("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
 	}
-	return nginxInfo
+	return nginxInfo, err
 }
 
-func getAppProtectVersionInfo() string {
+func getAppProtectVersionInfo() (version string, err error) {
 	v, err := os.ReadFile(appProtectVersionPath)
 	if err != nil {
-		glog.Fatalf("Cannot detect the AppProtect version, %s", err.Error())
+		return version, fmt.Errorf("Cannot detect the AppProtect version, %s", err.Error())
 	}
-	version := strings.TrimSpace(string(v))
+	version = strings.TrimSpace(string(v))
 	glog.Infof("Using AppProtect Version %s", version)
-	return version
+	return version, err
 }
 
 func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error) {
@@ -459,13 +492,12 @@ func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error
 	return aPPluginDone, aPPDosAgentDone
 }
 
-func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
-	var sslRejectHandshake bool
-
+func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (sslRejectHandshake bool, err error) {
+	sslRejectHandshake = false
 	if *defaultServerSecret != "" {
 		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret)
 		if err != nil {
-			glog.Fatalf("Error trying to get the default server TLS secret %v: %v", *defaultServerSecret, err)
+			return sslRejectHandshake, fmt.Errorf("Error trying to get the default server TLS secret %v: %v", *defaultServerSecret, err)
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
@@ -477,24 +509,26 @@ func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager n
 				// file doesn't exist - it is OK! we will reject TLS connections in the default server
 				sslRejectHandshake = true
 			} else {
-				glog.Fatalf("Error checking the default server TLS cert and key in %s: %v", configs.DefaultServerSecretPath, err)
+				return sslRejectHandshake, fmt.Errorf("Error checking the default server TLS cert and key in %s: %v", configs.DefaultServerSecretPath, err)
 			}
 		}
 	}
-	return sslRejectHandshake
+	return sslRejectHandshake, nil
 }
 
-func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
+func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (isWildcardTLSSecret bool, err error) {
+	isWildcardTLSSecret = false
 	if *wildcardTLSSecret != "" {
 		secret, err := getAndValidateSecret(kubeClient, *wildcardTLSSecret)
 		if err != nil {
-			glog.Fatalf("Error trying to get the wildcard TLS secret %v: %v", *wildcardTLSSecret, err)
+			return isWildcardTLSSecret, fmt.Errorf("Error trying to get the wildcard TLS secret %v: %v", *wildcardTLSSecret, err)
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
 		nginxManager.CreateSecret(configs.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
 	}
-	return *wildcardTLSSecret != ""
+	isWildcardTLSSecret = *wildcardTLSSecret != ""
+	return isWildcardTLSSecret, nil
 }
 
 func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationValidator {
@@ -521,11 +555,11 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
 }
 
-func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
+func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) (err error) {
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
 	if err != nil {
-		glog.Fatalf("Error generating NGINX main config: %v", err)
+		return fmt.Errorf("Error generating NGINX main config: %v", err)
 	}
 	nginxManager.CreateMainConfig(content)
 
@@ -536,9 +570,10 @@ func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *
 	if ngxConfig.OpenTracingLoadModule {
 		err := nginxManager.CreateOpenTracingTracerConfig(cfgParams.MainOpenTracingTracerConfig)
 		if err != nil {
-			glog.Fatalf("Error creating OpenTracing tracer config file: %v", err)
+			return fmt.Errorf("Error creating OpenTracing tracer config file: %v", err)
 		}
 	}
+	return err
 }
 
 func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone chan error) {
