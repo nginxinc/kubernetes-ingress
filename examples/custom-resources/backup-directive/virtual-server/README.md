@@ -92,7 +92,7 @@ Note that the backup service is configured with cluster domain name of the exter
 Run the below curl command to get a response from your application. In this example we hit the `/coffee` endpoint:
 
    ```shell
-   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
+   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure
    ```
 
    ```shell
@@ -115,7 +115,7 @@ Run the below curl command to get a response from your application. In this exam
 2. Run the below curl command. Notice that Server name in the response is `coffee-backup-<id>` instead of `coffee-<id>`
 
    ```shell
-   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
+   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure
    ```
 
 3. Check response from the backup service

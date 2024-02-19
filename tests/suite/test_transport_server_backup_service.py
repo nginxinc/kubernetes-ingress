@@ -52,7 +52,7 @@ def ts_externalname_setup(
 ) -> ExternalNameSetup:
     print("------------------------- Deploy External-Backend -----------------------------------")
     external_ns = create_namespace_with_name_from_yaml(kube_apis.v1, "external-ns", f"{TEST_DATA}/common/ns.yaml")
-    external_svc_name = create_service_with_name(kube_apis.v1, external_ns, "external-backend-svc")
+    external_svc_name = create_service_with_name(kube_apis.v1, external_ns, "external-backend-svc", 8443, 8443)
     create_secret_from_yaml(kube_apis.v1, external_ns, secure_app_secret)
     create_configmap_from_yaml(kube_apis.v1, external_ns, secure_app_config_map)
     create_secure_app_deployment_with_name(kube_apis.apps_v1_api, external_ns, "external-backend")
@@ -288,19 +288,12 @@ class TestTransportServerWithBackupService:
         assert "least_conn;" in result_conf
         assert f"server {ts_externalname_setup.external_host}:8443 resolve backup;" in result_conf
 
+        resp_after_scale = session.get(
+            req_url,
+            headers={"host": transport_server_tls_passthrough_setup.ts_host},
+            verify=False,
+        )
 
-#         resp_after_scale = session.get(
-#             req_url,
-#             headers={"host": transport_server_tls_passthrough_setup.ts_host},
-#             verify=False,
-#         )
-#
-#         print("---")
-#         print(resp_after_scale.status_code)
-#         print("---")
-#
-#         print("---")
-#         print(resp_after_scale.text)
-#         print("---")
-#
-#         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "secure-app", test_namespace, 1)
+        assert resp_after_scale.status_code == 200
+
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "secure-app", test_namespace, 1)

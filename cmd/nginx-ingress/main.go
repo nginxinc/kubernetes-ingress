@@ -41,7 +41,9 @@ import (
 )
 
 // Injected during build
-var version string
+var (
+	version string
+)
 
 const (
 	nginxVersionLabel      = "app.nginx.org/version"
@@ -79,7 +81,7 @@ func main() {
 		appProtectVersion = getAppProtectVersionInfo()
 	}
 
-	go updateSelfWithVersionInfo(kubeClient, version, nginxVersion.String(), appProtectVersion, 10, time.Second*5)
+	go updateSelfWithVersionInfo(kubeClient, version, appProtectVersion, nginxVersion, 10, time.Second*5)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
@@ -199,6 +201,8 @@ func main() {
 		ExternalDNSEnabled:           *enableExternalDNS,
 		IsIPV6Disabled:               *disableIPV6,
 		WatchNamespaceLabel:          *watchNamespaceLabel,
+		EnableTelemetryReporting:     *enableTelemetryReporting,
+		TelemetryReportingPeriod:     *telemetryReportingPeriod,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
@@ -699,10 +703,8 @@ func createPlusAndLatencyCollectors(
 
 			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
-			cacheZoneLabels := []string{"resource_type", "resource_name", "resource_namespace"}
-			workerPIDVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
-				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, cacheZoneLabels, workerPIDVariableLabels)
+				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, nil, nil)
 			promlogConfig := &promlog.Config{}
 			logger := promlog.New(promlogConfig)
 			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
@@ -789,10 +791,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, nginxVersion, appProtectVersion string, maxRetries int, waitTime time.Duration) {
-	nginxVer := strings.TrimSuffix(strings.Split(nginxVersion, "/")[1], "\n")
-	replacer := strings.NewReplacer(" ", "-", "(", "", ")", "")
-	nginxVer = replacer.Replace(nginxVer)
+func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, appProtectVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
 	podUpdated := false
 
 	for i := 0; (i < maxRetries || maxRetries == 0) && !podUpdated; i++ {
@@ -812,7 +811,7 @@ func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, nginxV
 			labels = make(map[string]string)
 		}
 
-		labels[nginxVersionLabel] = nginxVer
+		labels[nginxVersionLabel] = nginxVersion.Format()
 		labels[versionLabel] = strings.TrimPrefix(version, "v")
 		if appProtectVersion != "" {
 			labels[appProtectVersionLabel] = appProtectVersion

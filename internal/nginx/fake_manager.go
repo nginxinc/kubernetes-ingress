@@ -103,7 +103,7 @@ func (fm *FakeManager) CreateDHParam(_ string) (string, error) {
 // Version provides a fake implementation of Version.
 func (*FakeManager) Version() Version {
 	glog.V(3).Info("Printing nginx version")
-	return Version{}
+	return NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)")
 }
 
 // Start provides a fake implementation of Start.

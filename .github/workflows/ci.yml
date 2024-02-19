@@ -13,6 +13,12 @@ on:
       - release-*
   schedule:
     - cron: "0 4 * * *" # run every day at 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      publish-image:
+        description: Publish of the generated images
+        type: boolean
+        default: false
 
 defaults:
   run:
@@ -36,6 +42,9 @@ jobs:
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+      ic_version: ${{ steps.vars.outputs.ic_version }}
+      publish-images: ${{ steps.vars.outputs.publish }}
+      docker_md5: ${{ steps.vars.outputs.docker_md5 }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -57,7 +66,6 @@ jobs:
             | sed 's/^.\{1\}//' \
             | tr -d '\n')
           echo "k8s_latest=$kindest_latest" >> $GITHUB_OUTPUT
-          echo "chart_version=$(yq '.version' <charts/nginx-ingress/Chart.yaml)" >> $GITHUB_OUTPUT
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
           kindest_versions=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
             | grep -o '"name": *"[^"]*' \
@@ -72,7 +80,19 @@ jobs:
             | sed 's/, $//' \
             | jq -R -s -c 'split("\n")[:-1]')
           echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
-          echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+          echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" -o -name .goreleaser.yml -o -name .github/data/version.txt \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+          source .github/data/version.txt
+          echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
+          echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
+          publish=false
+          if ${{ github.event_name == 'workflow_dispatch' && inputs.publish-image }}; then
+            publish=true
+          elif ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}; then
+            publish=true
+          fi
+          echo "publish=$publish" >> $GITHUB_OUTPUT
+          docker_md5=$(find . -type f \( -name "build/Dockerfile" -o -name .github/data/version.txt \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }' )
+          echo "docker_md5=${docker_md5:0:8}" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
@@ -111,7 +131,7 @@ jobs:
         run: make cover
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
+        uses: codecov/codecov-action@e0b68c6749509c5f83f984dd99a76a1c1a231044 # v4.0.1
         with:
           files: ./coverage.txt
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -131,7 +151,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@52f02d1a69b61568e54ab5cf86ce91503bac4066 # v1.0.2
+        uses: lucacome/draft-release@a98777f0bae0a6815cc1df77ebe48ca70e7cb970 # v1.0.3
         id: release-notes
         with:
           minor-label: "enhancement"
@@ -174,11 +194,11 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@24b0d5238516480139aa8bc6f92eeb7b54a9eb0a # v0.15.5
+        uses: anchore/sbom-action/download-syft@b6a39da80722a2cb0ef5d197531764a89b5d48c3 # v0.15.8
         if: github.ref_type == 'tag'
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@9614fae9e5c5eddabb09f90a270fcb487c9f7149 # v3.3.0
+        uses: sigstore/cosign-installer@e1523de7571e31dbe865fd2e80c5c7c23ae71eb4 # v3.4.0
         if: github.ref_type == 'tag'
 
       - name: Build binaries
@@ -201,6 +221,7 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
           AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
           AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
+          GORELEASER_CURRENT_TAG: ${{ needs.checks.outputs.ic_version }}
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
@@ -210,10 +231,53 @@ jobs:
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
+  rebuild-base-images:
+    name: Rebuild NIC Base images
+    runs-on: ubuntu-22.04
+    needs: checks
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Check if base images exist
+        id: base_exists
+        run: |
+          docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ needs.checks.outputs.docker_md5 }}-debian
+          echo "exists=$?" >> $GITHUB_OUTPUT
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Rebuild base images
+        uses: ./.github/workflows/build-base-images.yml
+        if: github.event.pull_request.head.repo.full_name == github.repository && steps.base_exists.outputs.exists != 0
+
   helm-tests:
     name: Helm Tests
     runs-on: ubuntu-22.04
-    needs: [checks, binaries]
+    needs: [checks, binaries, rebuild-base-images]
     strategy:
       matrix:
         include:
@@ -221,6 +285,9 @@ jobs:
             type: oss
           - image: debian-plus
             type: plus
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -234,18 +301,36 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
 
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
         with:
           file: build/Dockerfile
           context: "."
           cache-from: type=gha,scope=${{ matrix.image }}
-          target: goreleaser
+          target: goreleaser${{ github.event.pull_request.head.repo.full_name == github.repository && '-prebuilt' || '' }}
           tags: ${{ matrix.type }}:${{ github.sha }}
           pull: true
           load: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ contains(matrix.image, 'plus') && 'plus' || 'oss' }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}
             IC_VERSION=CI
           secrets: |
             ${{ contains(matrix.type, 'plus') && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
@@ -298,7 +383,10 @@ jobs:
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
-    needs: [binaries, checks]
+    needs: [binaries, checks, rebuild-base-images]
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -316,16 +404,42 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
 
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
+      - name: Check if image exists
+        id: check-image
+        run: |
+          docker manifest inspect "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
+        shell: bash
+        continue-on-error: true
+        if: github.event.pull_request.head.repo.full_name == github.repository
+
       - name: Build Test-Runner Container
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
         with:
           file: tests/Dockerfile
           context: "."
           cache-from: type=gha,scope=test-runner
-          cache-to: type=gha,scope=test-runner,mode=max
-          tags: test-runner:${{ github.sha }}
+          tags: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
           pull: true
-          load: true
+          push: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          load: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+        if: ${{ steps.check-image.outcome == 'failure' || github.event.pull_request.head.repo.full_name != github.repository }}
 
   smoke-tests:
     name: ${{ matrix.images.label }} ${{ matrix.images.image }} smoke tests
@@ -355,10 +469,11 @@ jobs:
           gcr-service-account-secret: ${{ secrets.GCR_SERVICE_ACCOUNT }}
           rhel-license: ${{ contains(matrix.images.image, 'ubi') && secrets.RHEL_LICENSE || '' }}
           go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+          base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
@@ -380,7 +495,7 @@ jobs:
 
   build-docker:
     name: Build Docker OSS
-    needs: [checks, smoke-tests]
+    needs: [checks, smoke-results]
     strategy:
       fail-fast: false
       matrix:
@@ -395,6 +510,8 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
     permissions:
       contents: read
       actions: read
@@ -405,7 +522,7 @@ jobs:
 
   build-docker-plus:
     name: Build Docker Plus
-    needs: [checks, build-docker, release-notes]
+    needs: [checks, smoke-results, release-notes]
     strategy:
       fail-fast: false
       matrix:
@@ -422,7 +539,9 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
+      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
     permissions:
       contents: read
       security-events: write
@@ -431,7 +550,7 @@ jobs:
 
   build-docker-nap:
     name: Build Docker NAP
-    needs: [checks, build-docker-plus, release-notes]
+    needs: [checks, smoke-results, release-notes]
     strategy:
       fail-fast: false
       matrix:
@@ -464,19 +583,20 @@ jobs:
             target: aws
             platforms: "linux/amd64"
             nap_modules: "waf,dos"
-          - image: alpine-plus-nap-waf-fips
+          - image: alpine-plus-nap-fips
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: waf
-
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
+      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
     permissions:
       contents: read
       security-events: write
@@ -513,7 +633,13 @@ jobs:
       - name: Package
         id: package
         run: |
-          output=$(helm package ${{ github.ref_type != 'tag' && '--app-version edge --version 0.0.0-edge' || '' }} kic/charts/nginx-ingress)
+          helm_versions=""
+          if [ ${{ github.ref_type }} != "tag" ]; then
+            helm_versions="--app-version edge --version 0.0.0-edge"
+          else
+            helm_versions="--app-version ${{ steps.checks.outputs.ic_version }} --version ${{ steps.checks.outputs.chart_version }}"
+          fi
+          output=$(helm package ${helm_versions} kic/charts/nginx-ingress)
           echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
 
       - name: Push to OCI registries
@@ -565,7 +691,7 @@ jobs:
   gcp-marketplace:
     name: Trigger PR for GCP Marketplace
     runs-on: ubuntu-22.04
-    needs: [checks, publish-helm]
+    needs: [checks, build-docker-plus, build-docker-nap]
     steps:
       - name:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
