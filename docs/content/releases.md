@@ -11,38 +11,25 @@ docs: "DOCS-616"
 19 Feb 2024
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
-[5008](https://github.com/nginxinc/kubernetes-ingress/pull/5008) Remove redundant Prometheus variable labels
-[4744](https://github.com/nginxinc/kubernetes-ingress/pull/4744) Fixed validation for VSR exact & regex subroutes.  Thanks to [jo-carter](https://github.com/jo-carter).
-[4832](https://github.com/nginxinc/kubernetes-ingress/pull/4832) Fix new lines in snippets
-[5020](https://github.com/nginxinc/kubernetes-ingress/pull/5020) Fix template file spacing for `ssl_protocols` directive
-[5041](https://github.com/nginxinc/kubernetes-ingress/pull/5041) Allow waf users to build without dos repo access
+- [5008](https://github.com/nginxinc/kubernetes-ingress/pull/5008) Remove redundant Prometheus variable labels
+- [4744](https://github.com/nginxinc/kubernetes-ingress/pull/4744) Fixed validation for VSR exact & regex subroutes.  Thanks to [jo-carter](https://github.com/jo-carter).
+- [4832](https://github.com/nginxinc/kubernetes-ingress/pull/4832) Fix new lines in snippets
+- [5020](https://github.com/nginxinc/kubernetes-ingress/pull/5020) Fix template file spacing for `ssl_protocols` directive
+- [5041](https://github.com/nginxinc/kubernetes-ingress/pull/5041) Allow waf users to build without dos repo access
+
+### <i class="fa-solid fa-box"></i> Helm Chart
+- [4953](https://github.com/nginxinc/kubernetes-ingress/pull/4953) Add docs links to helm NOTES.txt
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
-[5073](https://github.com/nginxinc/kubernetes-ingress/pull/5073) Bump redhat/ubi8 from `23d8dfd` to `627867e` in /build
-[5029](https://github.com/nginxinc/kubernetes-ingress/pull/5029) Bump redhat/ubi8 from `fc88b13` to `23d8dfd` in /build
-[5074](https://github.com/nginxinc/kubernetes-ingress/pull/5074) Bump opentracing/nginx-opentracing from `2e0268d` to `2217e9f` in /build
-[4927](https://github.com/nginxinc/kubernetes-ingress/pull/4927) Bump opentracing/nginx-opentracing from `426c2ff` to `2e0268d` in /build
-[5072](https://github.com/nginxinc/kubernetes-ingress/pull/5072) Bump nginx from `156d75f` to `f2802c2` in /build
-[5028](https://github.com/nginxinc/kubernetes-ingress/pull/5028) Bump nginx from `156d75f` to `156d75f` in /build
-[5019](https://github.com/nginxinc/kubernetes-ingress/pull/5019) Bump nginx from `5b7ff23` to `156d75f` in /build
-[5012](https://github.com/nginxinc/kubernetes-ingress/pull/5012) Bump nginx from `d12e6f7` to `5b7ff23` in /build
-[5003](https://github.com/nginxinc/kubernetes-ingress/pull/5003) Bump nginx from `a59278f` to `d12e6f7` in /build
-[4926](https://github.com/nginxinc/kubernetes-ingress/pull/4926) Bump nginx from `a59278f` to `a59278f` in /build
-[4925](https://github.com/nginxinc/kubernetes-ingress/pull/4925) Bump the docker-images group in /build with 1 update
-[5004](https://github.com/nginxinc/kubernetes-ingress/pull/5004) Bump golang from `51a7800` to `a6a7f1f` in /build
-[4984](https://github.com/nginxinc/kubernetes-ingress/pull/4984) Bump golang from `fd78f2f` to `51a7800` in /build
-[4928](https://github.com/nginxinc/kubernetes-ingress/pull/4928) Bump golang from `4db4aac` to `fd78f2f` in /build
-[4992](https://github.com/nginxinc/kubernetes-ingress/pull/4992) Bump nginxcontrib/nginx from `4059aff` to `4a3e891` in /build
-[4994](https://github.com/nginxinc/kubernetes-ingress/pull/4994) Bump redhat/ubi9-minimal from `a340f4b` to `582e18f` in /build
-[5033](https://github.com/nginxinc/kubernetes-ingress/pull/5033) Updates `kindest/node` from v1.29.0 to v1.29.1
-[4909](https://github.com/nginxinc/kubernetes-ingress/pull/4909) Bump the go group with 1 update
-[4924](https://github.com/nginxinc/kubernetes-ingress/pull/4924) Bump the go group with 1 update
-[4939](https://github.com/nginxinc/kubernetes-ingress/pull/4939) Bump the go group with 5 updates
-[4949](https://github.com/nginxinc/kubernetes-ingress/pull/4949) Bump the go group with 1 update
-[4971](https://github.com/nginxinc/kubernetes-ingress/pull/4971) Bump the go group with 1 update
-[5022](https://github.com/nginxinc/kubernetes-ingress/pull/5022) Bump the go group with 1 update
-[5034](https://github.com/nginxinc/kubernetes-ingress/pull/5034) Bump the go group with 1 update
-[5055](https://github.com/nginxinc/kubernetes-ingress/pull/5055) Bump the go group with 1 update
+- [5073](https://github.com/nginxinc/kubernetes-ingress/pull/5073), [5029](https://github.com/nginxinc/kubernetes-ingress/pull/5029) Bump redhat/ubi8 base image
+- [4992](https://github.com/nginxinc/kubernetes-ingress/pull/4992) Bump ubi base image
+- [4994](https://github.com/nginxinc/kubernetes-ingress/pull/4994) Bump redhat/ubi9-minimal base image
+- [5074](https://github.com/nginxinc/kubernetes-ingress/pull/5074), [4927](https://github.com/nginxinc/kubernetes-ingress/pull/4927) Bump opentracing/nginx-opentracing
+- [5072](https://github.com/nginxinc/kubernetes-ingress/pull/5072), [5028](https://github.com/nginxinc/kubernetes-ingress/pull/5028), [5019](https://github.com/nginxinc/kubernetes-ingress/pull/5019), [5012](https://github.com/nginxinc/kubernetes-ingress/pull/5012), [5003](https://github.com/nginxinc/kubernetes-ingress/pull/5003), [4926](https://github.com/nginxinc/kubernetes-ingress/pull/4926), [5119](https://github.com/nginxinc/kubernetes-ingress/pull/5119) Bump nginx image
+- [4925](https://github.com/nginxinc/kubernetes-ingress/pull/4925) Bump the debian base image
+- [5004](https://github.com/nginxinc/kubernetes-ingress/pull/5004), [4984](https://github.com/nginxinc/kubernetes-ingress/pull/4984), [4928](https://github.com/nginxinc/kubernetes-ingress/pull/4928) Bump golang build image
+- [5033](https://github.com/nginxinc/kubernetes-ingress/pull/5033) Updates `kindest/node` from v1.29.0 to v1.29.1
+- [4909](https://github.com/nginxinc/kubernetes-ingress/pull/4909), [4924](https://github.com/nginxinc/kubernetes-ingress/pull/4924), [4939](https://github.com/nginxinc/kubernetes-ingress/pull/4939), [4949](https://github.com/nginxinc/kubernetes-ingress/pull/4949), [4971](https://github.com/nginxinc/kubernetes-ingress/pull/4971), [5022](https://github.com/nginxinc/kubernetes-ingress/pull/5022), [5034](https://github.com/nginxinc/kubernetes-ingress/pull/5034), [5055](https://github.com/nginxinc/kubernetes-ingress/pull/5055) Bump the go dependencies
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
@@ -92,8 +79,8 @@ versions: 1.23-1.29.
 15 Jan 2024
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
-[4886](https://github.com/nginxinc/kubernetes-ingress/pull/4886) Update N+ to R31
-[4886](https://github.com/nginxinc/kubernetes-ingress/pull/4886) Bump Go dependencies.
+- [4886](https://github.com/nginxinc/kubernetes-ingress/pull/4886) Update N+ to R31
+- [4886](https://github.com/nginxinc/kubernetes-ingress/pull/4886) Bump Go dependencies.
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
