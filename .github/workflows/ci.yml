@@ -88,7 +88,7 @@ jobs:
           publish=false
           if ${{ github.event_name == 'workflow_dispatch' && inputs.publish-image }}; then
             publish=true
-          elif ${{ github.ref_type == 'tag' }}; then
+          elif ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') }}; then
             publish=true
           elif ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}; then
             publish=true
@@ -547,8 +547,8 @@ jobs:
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
-      publish-aws-market-place: ${{ needs.checks.outputs.publish_images == 'true' && contains(matrix.target, 'aws') }}
-      publish-gcp-market-place: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
+      publish-aws-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && contains(matrix.target, 'aws') }}
+      publish-gcp-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && ! contains(matrix.target, 'aws') }}
       publish-nginx-reqistry: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
     permissions:
@@ -606,9 +606,9 @@ jobs:
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
-      publish-aws-market-place: ${{ github.ref_type == 'tag' && contains(matrix.target, 'aws') }}
-      publish-gcp-market-place: ${{ github.ref_type == 'tag' && ! contains(matrix.target, 'aws') }}
-      publish-nginx-reqistry: ${{ github.ref_type != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') && ! contains(matrix.target, 'aws') }}
+      publish-aws-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && contains(matrix.target, 'aws') }}
+      publish-gcp-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && ! contains(matrix.target, 'aws') }}
+      publish-nginx-reqistry: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
     permissions:
       contents: read
