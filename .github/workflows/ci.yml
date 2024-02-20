@@ -36,15 +36,16 @@ jobs:
     name: Checks and variables
     runs-on: ubuntu-22.04
     outputs:
-      go_path: ${{ steps.vars.outputs.go_path }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
       latest_kindest_node_versions: ${{ steps.vars.outputs.latest_kindest_node_versions }}
+      go_path: ${{ steps.vars.outputs.go_path }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
-      chart_version: ${{ steps.vars.outputs.chart_version }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+      chart_version: ${{ steps.vars.outputs.chart_version }}
       ic_version: ${{ steps.vars.outputs.ic_version }}
-      publish-images: ${{ steps.vars.outputs.publish }}
+      publish_images: ${{ steps.vars.outputs.publish }}
       docker_md5: ${{ steps.vars.outputs.docker_md5 }}
+      forked_workflow: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -66,7 +67,6 @@ jobs:
             | sed 's/^.\{1\}//' \
             | tr -d '\n')
           echo "k8s_latest=$kindest_latest" >> $GITHUB_OUTPUT
-          echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
           kindest_versions=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
             | grep -o '"name": *"[^"]*' \
             | grep -o '[^"]*$' \
@@ -80,12 +80,15 @@ jobs:
             | sed 's/, $//' \
             | jq -R -s -c 'split("\n")[:-1]')
           echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
+          echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
           echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" -o -name .goreleaser.yml -o -name .github/data/version.txt \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
           source .github/data/version.txt
           echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
           echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
           publish=false
           if ${{ github.event_name == 'workflow_dispatch' && inputs.publish-image }}; then
+            publish=true
+          elif ${{ github.ref_type == 'tag' }}; then
             publish=true
           elif ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}; then
             publish=true
@@ -244,7 +247,7 @@ jobs:
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -253,7 +256,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Login to GCR
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -261,18 +264,18 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Check if base images exist
         id: base_exists
         run: |
           docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ needs.checks.outputs.docker_md5 }}-debian
           echo "exists=$?" >> $GITHUB_OUTPUT
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Rebuild base images
         uses: ./.github/workflows/build-base-images.yml
-        if: github.event.pull_request.head.repo.full_name == github.repository && steps.base_exists.outputs.exists != 0
+        if: ${{ ! needs.checks.outputs.forked_workflow && steps.base_exists.outputs.exists != 0 }}
 
   helm-tests:
     name: Helm Tests
@@ -308,7 +311,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Login to GCR
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -316,7 +319,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
@@ -324,7 +327,7 @@ jobs:
           file: build/Dockerfile
           context: "."
           cache-from: type=gha,scope=${{ matrix.image }}
-          target: goreleaser${{ github.event.pull_request.head.repo.full_name == github.repository && '-prebuilt' || '' }}
+          target: goreleaser${{ ! needs.checks.outputs.forked_workflow && '-prebuilt' || '' }}
           tags: ${{ matrix.type }}:${{ github.sha }}
           pull: true
           load: true
@@ -411,7 +414,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Login to GCR
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -419,7 +422,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Check if image exists
         id: check-image
@@ -427,7 +430,7 @@ jobs:
           docker manifest inspect "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
         shell: bash
         continue-on-error: true
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ ! needs.checks.outputs.forked_workflow }}
 
       - name: Build Test-Runner Container
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
@@ -437,9 +440,9 @@ jobs:
           cache-from: type=gha,scope=test-runner
           tags: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
           pull: true
-          push: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-          load: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
-        if: ${{ steps.check-image.outcome == 'failure' || github.event.pull_request.head.repo.full_name != github.repository }}
+          push: ${{ ! needs.checks.outputs.forked_workflow }}
+          load: ${{ needs.checks.outputs.forked_workflow }}
+        if: ${{ steps.check-image.outcome == 'failure' || needs.checks.outputs.forked_workflow }}
 
   smoke-tests:
     name: ${{ matrix.images.label }} ${{ matrix.images.image }} smoke tests
@@ -471,6 +474,7 @@ jobs:
           go-md5: ${{ needs.checks.outputs.go_code_md5 }}
           base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
+          forked-workflow: ${{ needs.checks.outputs.forked_workflow }}
 
       - name: Upload Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
@@ -510,8 +514,9 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
-      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
+      publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
+      forked-workflow: ${{ needs.checks.outputs.forked_workflow }}
     permissions:
       contents: read
       actions: read
@@ -541,7 +546,11 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
-      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
+      publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
+      publish-aws-market-place: ${{ needs.checks.outputs.publish_images == 'true' && contains(matrix.target, 'aws') }}
+      publish-gcp-market-place: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
+      publish-nginx-reqistry: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
+      forked-workflow: ${{ needs.checks.outputs.forked_workflow }}
     permissions:
       contents: read
       security-events: write
@@ -596,7 +605,11 @@ jobs:
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
-      publish-image: ${{ needs.checks.outputs.publish-images == 'true' }}
+      publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
+      publish-aws-market-place: ${{ github.ref_type == 'tag' && contains(matrix.target, 'aws') }}
+      publish-gcp-market-place: ${{ github.ref_type == 'tag' && ! contains(matrix.target, 'aws') }}
+      publish-nginx-reqistry: ${{ github.ref_type != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') && ! contains(matrix.target, 'aws') }}
+      forked-workflow: ${{ needs.checks.outputs.forked_workflow }}
     permissions:
       contents: read
       security-events: write
