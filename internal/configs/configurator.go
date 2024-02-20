@@ -1483,7 +1483,7 @@ func (cnf *Configurator) GetVirtualServerCounts() (vsCount int, vsrCount int) {
 	for _, vs := range cnf.virtualServers {
 		vsrCount += len(vs.VirtualServerRoutes)
 	}
-	return
+	return vsCount, vsrCount
 }
 
 // GetTransportServerCounts returns the total count of
