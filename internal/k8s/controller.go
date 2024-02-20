@@ -1553,9 +1553,14 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
 	} else {
 		glog.V(2).Infof("Adding or Updating GlobalConfiguration: %v\n", key)
+		glog.Infof("current listener map: %v", lbc.configuration.listenerMap)
+		glog.Infof("current listeners: %v", lbc.configuration.listeners)
 
 		gc := obj.(*conf_v1.GlobalConfiguration)
 		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
+
+		glog.Infof("new listener map: %v", lbc.configuration.listenerMap)
+		glog.Infof("new listeners: %v", lbc.configuration.listeners)
 	}
 
 	updateErr := lbc.processChangesFromGlobalConfiguration(changes)
@@ -1566,9 +1571,9 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 		eventMessage := fmt.Sprintf("GlobalConfiguration %s was added or updated", key)
 
 		if validationErr != nil {
-			eventTitle = "Rejected"
+			eventTitle = "WithError"
 			eventType = api_v1.EventTypeWarning
-			eventMessage = fmt.Sprintf("GlobalConfiguration %s is invalid and was rejected: %v", key, validationErr)
+			eventMessage = fmt.Sprintf("GlobalConfiguration %s is updated with errors: %v", key, validationErr)
 		}
 
 		if updateErr != nil {

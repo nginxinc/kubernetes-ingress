@@ -129,8 +129,6 @@ The Ingress Controller validates the fields of a GlobalConfiguration resource. I
 1. When the Ingress Controller pod starts, if the GlobalConfiguration resource is invalid, the Ingress Controller will fail to start and exit with an error.
 1. When the Ingress Controller is running, if the GlobalConfiguration resource becomes invalid, the Ingress Controller will ignore the new version. It will report an error and continue to use the previous version. When the resource becomes valid again, the Ingress Controller will start using it.
 
-**Note**: If a GlobalConfiguration is deleted while the Ingress Controller is running, the controller will keep using the previous version of the resource.
-
 You can check if the Ingress Controller successfully applied the configuration for a GlobalConfiguration. For our  `nginx-configuration` GlobalConfiguration, we can run:
 
 ```
@@ -153,7 +151,7 @@ Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
   Normal   Updated   55s   nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration was updated
-  Warning  Rejected  6s    nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration is invalid and was rejected: spec.listeners: Duplicate value: "Duplicated port/protocol combination 53/UDP"
+  Warning  WithError  6s    nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration is invalid and was rejected: spec.listeners: Duplicate value: "Duplicated port/protocol combination 53/UDP"
 ```
 
 Note how the events section includes a Warning event with the Rejected reason.
