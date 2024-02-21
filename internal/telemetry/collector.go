@@ -79,7 +79,6 @@ func (c *Collector) Start(ctx context.Context) {
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	// TODO: Re-add ctx to BuildReport when collecting Node Count.
 	data, err := c.BuildReport(ctx)
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: %v", err)
