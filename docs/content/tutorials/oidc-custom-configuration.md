@@ -1,5 +1,5 @@
 ---
-title: Customize OIDC Configuration with NGINX Ingress Controller
+title: "Customize OIDC Configuration with NGINX Ingress Controller"
 description: |
   How to Customize the default OIDC Configuration with NGINX Ingress Controller
 weight: 1800
@@ -48,6 +48,7 @@ Annotations:  <none>
 Data
 ====
 oidc.conf:
+docs: "DOCS-1448"
 ----
     # Advanced configuration START
     set $internal_error_message "NGINX / OpenID Connect login failure\n";

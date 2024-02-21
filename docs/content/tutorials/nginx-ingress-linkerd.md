@@ -1,8 +1,9 @@
 ---
-title: NGINX Ingress Controller and Linkerd
+title: "NGINX Ingress Controller and Linkerd"
 description: |
  Using Linkerd with the F5 NGINX Ingress Controller.
 weight: 1800
+docs: "DOCS-1450"
 doctypes: ["concept"]
 toc: true
 ---

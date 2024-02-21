@@ -1,5 +1,5 @@
 ---
-docs:
+docs: "DOCS-1467"
 ---
 
 For additional context on managing containers using Kubernetes Deployments, refer to the official Kubernetes [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) documentation.

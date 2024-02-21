@@ -1,9 +1,10 @@
 ---
-title: Getting the NGINX Ingress Controller Image with JWT
+title: "Getting the NGINX Ingress Controller Image with JWT"
 description: "Use your NGINX Ingress Controller subscription JWT token to get the NGINX Plus Ingress Controller image from the F5 Docker registry."
 weight: 150
 doctypes: [""]
 toc: true
+docs: "DOCS-1454"
 ---
 
 {{<custom-styles>}}
