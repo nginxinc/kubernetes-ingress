@@ -78,7 +78,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
-    # tag: "3.4.2"
+    # tag: "3.4.3"
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
     # digest: "sha256:CHANGEME"
@@ -166,6 +166,26 @@ controller:
   # limits:
   #   cpu: 1
   #   memory: 1Gi
+
+  ## The security context for the Ingress Controller pods.
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+
+  ## The security context for the Ingress Controller containers.
+  securityContext: {} # Remove curly brackets before adding values
+    # allowPrivilegeEscalation: true
+    # readOnlyRootFilesystem: true
+    # runAsUser: 101 #nginx
+    # runAsNonRoot: true
+    # capabilities:
+    #   drop:
+    #   - ALL
+    #   add:
+    #   - NET_BIND_SERVICE
+
+  ## The security context for the Ingress Controller init container which is used when readOnlyRootFilesystem is set to true.
+  initContainerSecurityContext: {}
 
   ## The resources for the Ingress Controller init container which is used when readOnlyRootFilesystem is set to true.
   initContainerResources:
@@ -460,6 +480,8 @@ controller:
   defaultHTTPSListenerPort: 443
 
   ## Configure root filesystem as read-only and add volumes for temporary data.
+  ## Three major releases after 3.5.x this argument will be moved to the `securityContext` section.
+  ## This value will not be used if `controller.securityContext` is set
   readOnlyRootFilesystem: false
 
   ## Enable dynamic reloading of certificates

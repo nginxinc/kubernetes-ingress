@@ -4,10 +4,10 @@ go 1.21.3
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.0
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.20.0
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.20.1
 	github.com/cert-manager/cert-manager v1.14.2
 	github.com/dlclark/regexp2 v1.10.0
-	github.com/go-chi/chi/v5 v5.0.11
+	github.com/go-chi/chi/v5 v5.0.12
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/glog v1.1.2
 	github.com/google/go-cmp v0.6.0
@@ -19,6 +19,7 @@ require (
 	github.com/prometheus/common v0.47.0
 	github.com/spiffe/go-spiffe/v2 v2.1.7
 	github.com/stretchr/testify v1.8.4
+	go.opentelemetry.io/otel v1.21.0
 	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
@@ -98,7 +99,6 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.11 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // indirect
-	go.opentelemetry.io/otel v1.21.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.21.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.21.0 // indirect
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect
