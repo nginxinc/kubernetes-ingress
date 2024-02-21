@@ -57,6 +57,12 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - nodes
+  verbs:
+  - list
+- apiGroups:
+  - ""
+  resources:
   - events
   verbs:
   - create
