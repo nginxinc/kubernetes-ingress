@@ -962,6 +962,7 @@ func (cnf *Configurator) deleteTransportServer(key string) error {
 	name := getFileNameForTransportServerFromKey(key)
 	cnf.nginxManager.DeleteStreamConfig(name)
 
+	delete(cnf.transportServers, name)
 	// update TLS Passthrough Hosts config in case we have a TLS Passthrough TransportServer
 	if _, exists := cnf.tlsPassthroughPairs[key]; exists {
 		delete(cnf.tlsPassthroughPairs, key)
@@ -1468,21 +1469,27 @@ func (cnf *Configurator) GetIngressCounts() map[string]int {
 		}
 	}
 
-	for _, min := range cnf.minions {
-		counters["minion"] += len(min)
+	for _, minion := range cnf.minions {
+		counters["minion"] += len(minion)
 	}
 
 	return counters
 }
 
-// GetVirtualServerCounts returns the total count of VS/VSR resources that are handled by the Ingress Controller
+// GetVirtualServerCounts returns the total count of
+// VirtualServer and VirtualServerRoute resources that are handled by the Ingress Controller
 func (cnf *Configurator) GetVirtualServerCounts() (vsCount int, vsrCount int) {
 	vsCount = len(cnf.virtualServers)
 	for _, vs := range cnf.virtualServers {
 		vsrCount += len(vs.VirtualServerRoutes)
 	}
-
 	return vsCount, vsrCount
+}
+
+// GetTransportServerCounts returns the total count of
+// TransportServer resources that are handled by the Ingress Controller
+func (cnf *Configurator) GetTransportServerCounts() (tsCount int) {
+	return len(cnf.transportServers)
 }
 
 // AddOrUpdateSpiffeCerts writes Spiffe certs and keys to disk and reloads NGINX

@@ -3757,6 +3757,7 @@ func TestNewTelemetryCollector(t *testing.T) {
 	testCases := []struct {
 		testCase          string
 		input             NewLoadBalancerControllerInput
+		collectorConfig   telemetry.CollectorConfig
 		expectedCollector telemetry.Collector
 	}{
 		{
@@ -3767,8 +3768,10 @@ func TestNewTelemetryCollector(t *testing.T) {
 				TelemetryReportingPeriod: "24h",
 			},
 			expectedCollector: telemetry.Collector{
-				Period:   24 * time.Hour,
-				Exporter: telemetry.DiscardExporter,
+				Config: telemetry.CollectorConfig{
+					Period: 24 * time.Hour,
+				},
+				Exporter: &telemetry.StdoutExporter{},
 			},
 		},
 		{
@@ -3784,7 +3787,7 @@ func TestNewTelemetryCollector(t *testing.T) {
 	for _, tc := range testCases {
 		lbc := NewLoadBalancerController(tc.input)
 		if reflect.DeepEqual(tc.expectedCollector, lbc.telemetryCollector) {
-			t.Fatalf("Expected %x, but got %x", tc.expectedCollector, lbc.telemetryCollector)
+			t.Fatalf("Expected %v, but got %v", tc.expectedCollector, lbc.telemetryCollector)
 		}
 	}
 }

@@ -6,6 +6,49 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## 3.4.3
+
+19 Feb 2024
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [5008](https://github.com/nginxinc/kubernetes-ingress/pull/5008) Remove redundant Prometheus variable labels
+- [4744](https://github.com/nginxinc/kubernetes-ingress/pull/4744) Fixed validation for VSR exact & regex subroutes.  Thanks to [jo-carter](https://github.com/jo-carter).
+- [4832](https://github.com/nginxinc/kubernetes-ingress/pull/4832) Fix new lines in snippets
+- [5020](https://github.com/nginxinc/kubernetes-ingress/pull/5020) Fix template file spacing for `ssl_protocols` directive
+- [5041](https://github.com/nginxinc/kubernetes-ingress/pull/5041) Allow waf users to build without dos repo access
+
+### <i class="fa-solid fa-box"></i> Helm Chart
+- [4953](https://github.com/nginxinc/kubernetes-ingress/pull/4953) Add docs links to helm NOTES.txt
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+- [5073](https://github.com/nginxinc/kubernetes-ingress/pull/5073), [5029](https://github.com/nginxinc/kubernetes-ingress/pull/5029) Bump redhat/ubi8 base image
+- [4992](https://github.com/nginxinc/kubernetes-ingress/pull/4992) Bump ubi base image
+- [4994](https://github.com/nginxinc/kubernetes-ingress/pull/4994) Bump redhat/ubi9-minimal base image
+- [5074](https://github.com/nginxinc/kubernetes-ingress/pull/5074), [4927](https://github.com/nginxinc/kubernetes-ingress/pull/4927) Bump opentracing/nginx-opentracing
+- [5072](https://github.com/nginxinc/kubernetes-ingress/pull/5072), [5028](https://github.com/nginxinc/kubernetes-ingress/pull/5028), [5019](https://github.com/nginxinc/kubernetes-ingress/pull/5019), [5012](https://github.com/nginxinc/kubernetes-ingress/pull/5012), [5003](https://github.com/nginxinc/kubernetes-ingress/pull/5003), [4926](https://github.com/nginxinc/kubernetes-ingress/pull/4926), [5119](https://github.com/nginxinc/kubernetes-ingress/pull/5119) Bump nginx image
+- [4925](https://github.com/nginxinc/kubernetes-ingress/pull/4925) Bump the debian base image
+- [5004](https://github.com/nginxinc/kubernetes-ingress/pull/5004), [4984](https://github.com/nginxinc/kubernetes-ingress/pull/4984), [4928](https://github.com/nginxinc/kubernetes-ingress/pull/4928) Bump golang build image
+- [5033](https://github.com/nginxinc/kubernetes-ingress/pull/5033) Updates `kindest/node` from v1.29.0 to v1.29.1
+- [4909](https://github.com/nginxinc/kubernetes-ingress/pull/4909), [4924](https://github.com/nginxinc/kubernetes-ingress/pull/4924), [4939](https://github.com/nginxinc/kubernetes-ingress/pull/4939), [4949](https://github.com/nginxinc/kubernetes-ingress/pull/4949), [4971](https://github.com/nginxinc/kubernetes-ingress/pull/4971), [5022](https://github.com/nginxinc/kubernetes-ingress/pull/5022), [5034](https://github.com/nginxinc/kubernetes-ingress/pull/5034), [5055](https://github.com/nginxinc/kubernetes-ingress/pull/5055) Bump the go dependencies
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.4.3 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.4.3),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.4.3 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.4.3 source code
+- For Helm, use version 1.1.3 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.23-1.29.
+
 ## 3.4.2
 
 16 Jan 2024

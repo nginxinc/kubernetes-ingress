@@ -85,8 +85,6 @@ func main() {
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
 
-	aPPluginDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
-
 	sslRejectHandshake := processDefaultServerSecret(kubeClient, nginxManager)
 
 	isWildcardEnabled := processWildcardSecret(kubeClient, nginxManager)
@@ -130,8 +128,7 @@ func main() {
 		nginxManager.CreateTLSPassthroughHostsConfig(emptyFile)
 	}
 
-	nginxDone := make(chan error, 1)
-	nginxManager.Start(nginxDone)
+	cpcfg := startChildProcesses(nginxManager)
 
 	plusClient := createPlusClient(*nginxPlus, useFakeNginxManager, nginxManager)
 
@@ -155,7 +152,12 @@ func main() {
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
-	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager), cr_validation.IsExternalDNSEnabled(*enableExternalDNS))
+	virtualServerValidator := cr_validation.NewVirtualServerValidator(
+		cr_validation.IsPlus(*nginxPlus),
+		cr_validation.IsDosEnabled(*appProtectDos),
+		cr_validation.IsCertManagerEnabled(*enableCertManager),
+		cr_validation.IsExternalDNSEnabled(*enableExternalDNS),
+	)
 
 	if *enableServiceInsight {
 		createHealthProbeEndpoint(kubeClient, plusClient, cnf)
@@ -216,11 +218,7 @@ func main() {
 		}()
 	}
 
-	if *appProtect || *appProtectDos {
-		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPPluginDone, aPPDosAgentDone, *appProtect, *appProtectDos)
-	} else {
-		go handleTermination(lbc, nginxManager, syslogListener, nginxDone)
-	}
+	go handleTermination(lbc, nginxManager, syslogListener, cpcfg)
 
 	lbc.Run()
 
@@ -428,7 +426,15 @@ func getAppProtectVersionInfo() string {
 	return version
 }
 
-func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error) {
+type childProcessConfig struct {
+	nginxDone      chan error
+	aPPluginEnable bool
+	aPPluginDone   chan error
+	aPDosEnable    bool
+	aPDosDone      chan error
+}
+
+func startChildProcesses(nginxManager nginx.Manager) childProcessConfig {
 	var aPPluginDone chan error
 
 	if *appProtect {
@@ -442,7 +448,17 @@ func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error
 		aPPDosAgentDone = make(chan error, 1)
 		nginxManager.AppProtectDosAgentStart(aPPDosAgentDone, *appProtectDosDebug, *appProtectDosMaxDaemons, *appProtectDosMaxWorkers, *appProtectDosMemory)
 	}
-	return aPPluginDone, aPPDosAgentDone
+
+	nginxDone := make(chan error, 1)
+	nginxManager.Start(nginxDone)
+
+	return childProcessConfig{
+		nginxDone:      nginxDone,
+		aPPluginEnable: *appProtect,
+		aPPluginDone:   aPPluginDone,
+		aPDosEnable:    *appProtectDos,
+		aPDosDone:      aPPDosAgentDone,
+	}
 }
 
 func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
@@ -527,40 +543,6 @@ func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *
 	}
 }
 
-func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone chan error) {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGTERM)
-
-	exitStatus := 0
-	exited := false
-
-	select {
-	case err := <-nginxDone:
-		if err != nil {
-			glog.Errorf("nginx command exited with an error: %v", err)
-			exitStatus = 1
-		} else {
-			glog.Info("nginx command exited successfully")
-		}
-		exited = true
-	case <-signalChan:
-		glog.Info("Received SIGTERM, shutting down")
-	}
-
-	glog.Info("Shutting down the controller")
-	lbc.Stop()
-
-	if !exited {
-		glog.Info("Shutting down NGINX")
-		nginxManager.Quit()
-		<-nginxDone
-	}
-	listener.Stop()
-
-	glog.Infof("Exiting with a status: %v", exitStatus)
-	os.Exit(exitStatus)
-}
-
 // getSocketClient gets an http.Client with the a unix socket transport.
 func getSocketClient(sockPath string) *http.Client {
 	return &http.Client{
@@ -589,29 +571,33 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	return secret, nil
 }
 
-func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, pluginDone, agentDosDone chan error, appProtectEnabled, appProtectDosEnabled bool) {
+func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, cpcfg childProcessConfig) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
 	select {
-	case err := <-nginxDone:
-		glog.Fatalf("nginx command exited unexpectedly with status: %v", err)
-	case err := <-pluginDone:
+	case err := <-cpcfg.nginxDone:
+		if err != nil {
+			glog.Fatalf("nginx command exited unexpectedly with status: %v", err)
+		} else {
+			glog.Info("nginx command exited successfully")
+		}
+	case err := <-cpcfg.aPPluginDone:
 		glog.Fatalf("AppProtectPlugin command exited unexpectedly with status: %v", err)
-	case err := <-agentDosDone:
+	case err := <-cpcfg.aPDosDone:
 		glog.Fatalf("AppProtectDosAgent command exited unexpectedly with status: %v", err)
 	case <-signalChan:
 		glog.Infof("Received SIGTERM, shutting down")
 		lbc.Stop()
 		nginxManager.Quit()
-		<-nginxDone
-		if appProtectEnabled {
+		<-cpcfg.nginxDone
+		if cpcfg.aPPluginEnable {
 			nginxManager.AppProtectPluginQuit()
-			<-pluginDone
+			<-cpcfg.aPPluginDone
 		}
-		if appProtectDosEnabled {
+		if cpcfg.aPDosEnable {
 			nginxManager.AppProtectDosAgentQuit()
-			<-agentDosDone
+			<-cpcfg.aPDosDone
 		}
 		listener.Stop()
 	}
