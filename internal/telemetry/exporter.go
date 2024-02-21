@@ -29,6 +29,7 @@ func (e *StdoutExporter) Export(_ context.Context, data Data) error {
 type Data struct {
 	ProjectMeta       ProjectMeta
 	NICResourceCounts NICResourceCounts
+	NodeCount         int
 }
 
 // ProjectMeta holds metadata for the project.
