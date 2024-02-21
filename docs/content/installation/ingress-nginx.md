@@ -5,7 +5,7 @@ description: "This document describes how to migrate from the community-maintain
 weight: 500
 toc: true
 tags: [ "docs" ]
-docs: "DOCS-000"
+docs: "DOCS-1469"
 categories: ["installation", "platform management"]
 doctypes: ["tutorial"]
 journeys: ["getting started"]
