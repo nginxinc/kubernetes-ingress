@@ -16,6 +16,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	testClient "k8s.io/client-go/kubernetes/fake"
 )
 
 func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
@@ -46,7 +47,8 @@ func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 	td := telemetry.Data{}
 
 	cfg := telemetry.CollectorConfig{
-		Configurator: newConfigurator(t),
+		K8sClientReader: testClient.NewSimpleClientset(),
+		Configurator:    newConfigurator(t),
 	}
 
 	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
@@ -55,6 +57,76 @@ func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 	}
 	c.Collect(context.Background())
 
+	want := fmt.Sprintf("%+v", td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestCollectNodeCountInClusterWithOneNode(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: testClient.NewSimpleClientset(node1),
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	td := telemetry.Data{
+		ProjectMeta: telemetry.ProjectMeta{
+			Name:    "",
+			Version: "",
+		},
+		NICResourceCounts: telemetry.NICResourceCounts{
+			VirtualServers:      0,
+			VirtualServerRoutes: 0,
+			TransportServers:    0,
+		},
+		NodeCount: 1,
+	}
+	want := fmt.Sprintf("%+v", td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestCollectNodeCountInClusterWithThreeNodes(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: testClient.NewSimpleClientset(node1, node2, node3),
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	td := telemetry.Data{
+		ProjectMeta: telemetry.ProjectMeta{
+			Name:    "",
+			Version: "",
+		},
+		NICResourceCounts: telemetry.NICResourceCounts{
+			VirtualServers:      0,
+			VirtualServerRoutes: 0,
+			TransportServers:    0,
+		},
+		NodeCount: 3,
+	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
 	if !cmp.Equal(want, got) {
@@ -171,7 +243,8 @@ func TestCountVirtualServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			Configurator: configurator,
+			K8sClientReader: testClient.NewSimpleClientset(),
+			Configurator:    configurator,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -184,7 +257,7 @@ func TestCountVirtualServers(t *testing.T) {
 			}
 		}
 
-		gotTraceDataOnAdd, err := c.BuildReport()
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -202,7 +275,7 @@ func TestCountVirtualServers(t *testing.T) {
 			}
 		}
 
-		gotTraceDataOnDelete, err := c.BuildReport()
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -342,7 +415,8 @@ func TestCountTransportServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			Configurator: configurator,
+			K8sClientReader: testClient.NewSimpleClientset(),
+			Configurator:    configurator,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -355,7 +429,7 @@ func TestCountTransportServers(t *testing.T) {
 			}
 		}
 
-		gotTraceDataOnAdd, err := c.BuildReport()
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -373,7 +447,7 @@ func TestCountTransportServers(t *testing.T) {
 			}
 		}
 
-		gotTraceDataOnDelete, err := c.BuildReport()
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}

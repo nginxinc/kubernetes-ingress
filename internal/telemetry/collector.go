@@ -79,8 +79,7 @@ func (c *Collector) Start(ctx context.Context) {
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	// TODO: Re-add ctx to BuildReport when collecting Node Count.
-	data, err := c.BuildReport()
+	data, err := c.BuildReport(ctx)
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: %v", err)
 	}
@@ -92,7 +91,7 @@ func (c *Collector) Collect(ctx context.Context) {
 }
 
 // BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport() (Data, error) {
+func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 	d := Data{}
 	var err error
 
@@ -100,5 +99,10 @@ func (c *Collector) BuildReport() (Data, error) {
 		d.NICResourceCounts.VirtualServers, d.NICResourceCounts.VirtualServerRoutes = c.Config.Configurator.GetVirtualServerCounts()
 		d.NICResourceCounts.TransportServers = c.Config.Configurator.GetTransportServerCounts()
 	}
+	nc, err := c.NodeCount(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
+	}
+	d.NodeCount = nc
 	return d, err
 }
