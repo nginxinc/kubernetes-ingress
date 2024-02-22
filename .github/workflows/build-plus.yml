@@ -251,7 +251,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@e675ced7a7522a761fc9c8eb26682c8b27c42b2b # v3.24.1
+        uses: github/codeql-action/upload-sarif@e2e140ad1441662206e8f97754b166877dfa1c73 # v3.24.4
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
