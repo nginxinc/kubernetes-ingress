@@ -40,6 +40,32 @@ func TestNodeCountInAClusterWithOneNode(t *testing.T) {
 	}
 }
 
+func TestClusterIDRetrievesK8sClusterUID(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCollectorForCluserWithNodes(t, node1, kubeDNS)
+
+	got, err := c.ClusterID(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := "329766ff-5d78-4c9e-8736-7faad1f2e937"
+	if want != got {
+		t.Errorf("want %v, got %v", want, got)
+	}
+}
+
+func TestClusterIDErrorsOnNotExistingService(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCollectorForCluserWithNodes(t, node1)
+	_, err := c.ClusterID(context.Background())
+	if err == nil {
+		t.Error("want error, got nil")
+	}
+}
+
 // newTestCollectorForClusterWithNodes returns a telemetry collector configured
 // to simulate collecting data on a cluser with provided nodes.
 func newTestCollectorForCluserWithNodes(t *testing.T, nodes ...runtime.Object) *telemetry.Collector {
@@ -90,5 +116,31 @@ var (
 			Namespace: "default",
 		},
 		Spec: apiCoreV1.NodeSpec{},
+	}
+
+	kubeDNS = &apiCoreV1.Service{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "kube-dns",
+			Namespace: "kube-system",
+			UID:       "329766ff-5d78-4c9e-8736-7faad1f2e937",
+		},
+		Spec: apiCoreV1.ServiceSpec{},
+	}
+
+	dummyKubeDNS = &apiCoreV1.Service{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "kube-dns",
+			Namespace: "kube-system",
+			UID:       "",
+		},
+		Spec: apiCoreV1.ServiceSpec{},
 	}
 )
