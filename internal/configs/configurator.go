@@ -1829,3 +1829,7 @@ func (cnf *Configurator) DeleteSecret(key string) {
 func (cnf *Configurator) DynamicSSLReloadEnabled() bool {
 	return cnf.isDynamicSSLReloadEnabled
 }
+
+func (cnf *Configurator) UpsertSplitClientsKeyVal(zoneName, key, value string) {
+	cnf.nginxManager.UpsertSplitClientsKeyVal(zoneName, key, value)
+}

@@ -12,6 +12,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"github.com/golang/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
@@ -336,6 +337,15 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 
 			if lbc.isNginxPlus && !isWeightTheSame(oldVs.Spec.Routes, curVs.Spec.Routes) {
 				glog.V(3).Infof("VirtualServer %v changed only in Split weights", curVs.Name)
+				weights := getNewWeights(oldVs.Spec.Routes, curVs.Spec.Routes)
+
+				for _, weight := range weights {
+					variableNamer := configs.NewVSVariableNamer(curVs)
+					key := variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(weight.SplitClientsIndex)
+					value := variableNamer.GetNameOfKeyOfMapForWeights(weight.SplitClientsIndex, weight.I, weight.J)
+					zoneName := variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(weight.SplitClientsIndex)
+					lbc.configurator.UpsertSplitClientsKeyVal(zoneName, key, value)
+				}
 			} else if virtualServerChanged(oldVsCopy, curVsCopy) {
 				diff := cmp.Diff(oldVsCopy, curVsCopy)
 				glog.V(3).Infof("VirtualServer %v changed, syncing. Difference: %s", curVs.Name, diff)
@@ -740,6 +750,12 @@ func createNamespaceHandlers(lbc *LoadBalancerController) cache.ResourceEventHan
 	}
 }
 
+type weights struct {
+	I                 int
+	J                 int
+	SplitClientsIndex int
+}
+
 func isWeightTheSame(oldRoutes, curRoutes []conf_v1.Route) bool {
 	if len(oldRoutes) != len(curRoutes) {
 		glog.V(3).Infof("Different number of routes")
@@ -762,6 +778,16 @@ func isWeightTheSame(oldRoutes, curRoutes []conf_v1.Route) bool {
 	}
 	glog.V(3).Infof("Weights are same")
 	return true
+}
+
+func getNewWeights(curRoutes []conf_v1.Route) []weights {
+	var allWeights []weights
+	for i := range curRoutes {
+		if len(curRoutes[i].Splits) == 2 {
+			allWeights = append(allWeights, weights{I: curRoutes[i].Splits[0].Weight, J: curRoutes[i].Splits[1].Weight, SplitClientsIndex: i})
+		}
+	}
+	return allWeights
 }
 
 func virtualServerChanged(oldVs, curVs conf_v1.VirtualServer) bool {
