@@ -141,7 +141,7 @@ func TestCollectClusterIDInClusterWithOneNode(t *testing.T) {
 	exp := &telemetry.StdoutExporter{Endpoint: buf}
 	cfg := telemetry.CollectorConfig{
 		Configurator:    newConfigurator(t),
-		K8sClientReader: testClient.NewSimpleClientset(node1, kubeDNS),
+		K8sClientReader: testClient.NewSimpleClientset(node1, kubeNS),
 	}
 
 	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
@@ -279,7 +279,7 @@ func TestCountVirtualServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: testClient.NewSimpleClientset(dummyKubeDNS),
+			K8sClientReader: testClient.NewSimpleClientset(dummyKubeNS),
 			Configurator:    configurator,
 		})
 		if err != nil {
@@ -451,7 +451,7 @@ func TestCountTransportServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: testClient.NewSimpleClientset(dummyKubeDNS),
+			K8sClientReader: testClient.NewSimpleClientset(dummyKubeNS),
 			Configurator:    configurator,
 		})
 		if err != nil {

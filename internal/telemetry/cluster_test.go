@@ -43,7 +43,7 @@ func TestNodeCountInAClusterWithOneNode(t *testing.T) {
 func TestClusterIDRetrievesK8sClusterUID(t *testing.T) {
 	t.Parallel()
 
-	c := newTestCollectorForCluserWithNodes(t, node1, kubeDNS)
+	c := newTestCollectorForCluserWithNodes(t, node1, kubeNS)
 
 	got, err := c.ClusterID(context.Background())
 	if err != nil {
@@ -118,29 +118,27 @@ var (
 		Spec: apiCoreV1.NodeSpec{},
 	}
 
-	kubeDNS = &apiCoreV1.Service{
+	kubeNS = &apiCoreV1.Namespace{
 		TypeMeta: metaV1.TypeMeta{
-			Kind:       "Service",
+			Kind:       "Namespace",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      "kube-dns",
-			Namespace: "kube-system",
-			UID:       "329766ff-5d78-4c9e-8736-7faad1f2e937",
+			Name: "kube-system",
+			UID:  "329766ff-5d78-4c9e-8736-7faad1f2e937",
 		},
-		Spec: apiCoreV1.ServiceSpec{},
+		Spec: apiCoreV1.NamespaceSpec{},
 	}
 
-	dummyKubeDNS = &apiCoreV1.Service{
+	dummyKubeNS = &apiCoreV1.Namespace{
 		TypeMeta: metaV1.TypeMeta{
-			Kind:       "Service",
+			Kind:       "Namespace",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      "kube-dns",
-			Namespace: "kube-system",
-			UID:       "",
+			Name: "kube-system",
+			UID:  "",
 		},
-		Spec: apiCoreV1.ServiceSpec{},
+		Spec: apiCoreV1.NamespaceSpec{},
 	}
 )
