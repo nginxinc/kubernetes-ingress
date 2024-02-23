@@ -1803,6 +1803,60 @@
           "enableEgress": false
         }
       ]
+    },
+    "nginxAgent": {
+      "type": "object",
+      "default": {
+        "enable": false
+      },
+      "title": "Configuration for NGINX Agent.",
+      "required": [
+        "enable"
+      ],
+      "properties": {
+        "enable": {
+          "type": "boolean",
+          "default": false,
+          "title": "Enable NGINX Agent",
+          "examples": [
+            false
+          ]
+        },
+        "instanceGroup": {
+          "type": "string",
+          "default": "",
+          "title": "Set the --instance-group argument for NGINX Agent",
+          "examples": [
+            "my-instance-group"
+          ]
+        },
+        "instanceManager": {
+          "type": "object",
+          "default": {},
+          "title": "Configuration for the connection to NGINX Instance Manager",
+          "examples": [],
+          "required": [
+            "host"
+          ],
+          "properties": {
+            "host": {
+              "type": "string",
+              "title": "FQDN or IP for connecting to Ingress Controller",
+              "examples": [
+                "nim.example.com"
+              ]
+            },
+            "grpcPort": {
+              "type": "integer",
+              "title": "Port for connecting to Ingress Controller",
+              "default": 443,
+              "examples": [
+                443
+              ]
+            }
+          }
+        }
+      }
     }
   },
   "examples": [

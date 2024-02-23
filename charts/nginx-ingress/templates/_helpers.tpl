@@ -84,6 +84,17 @@ Expand the name of the configmap.
 {{- end -}}
 
 {{/*
+Expand the name of the configmap used for NGINX Agent.
+*/}}
+{{- define "nginx-ingress.agentConfigName" -}}
+{{- if .Values.nginxAgent.customConfigMap -}}
+{{ .Values.nginxAgent.customConfigMap }}
+{{- else -}}
+{{- printf "%s-agent-config"  (include "nginx-ingress.fullname" . | trunc 49 | trimSuffix "-") -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Expand leader election lock name.
 */}}
 {{- define "nginx-ingress.leaderElectionName" -}}
@@ -162,7 +173,7 @@ Build the args for the service binary.
 - --continue
 {{- end }}
 - --
-{{- end }}
+{{- end -}}
 - -nginx-plus={{ .Values.controller.nginxplus }}
 - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
 - -enable-app-protect={{ .Values.controller.appprotect.enable }}
@@ -249,4 +260,8 @@ Build the args for the service binary.
 - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
 - -ssl-dynamic-reload={{ .Values.controller.enableSSLDynamicReload }}
 - -enable-telemetry-reporting={{ .Values.controller.enableTelemetryReporting}}
+{{- if .Values.nginxAgent.enable }}
+- -agent=true
+- -agent-instance-group={{ default (include "nginx-ingress.controller.fullname" .) .Values.nginxAgent.instanceGroup }}
+{{- end }}
 {{- end -}}
