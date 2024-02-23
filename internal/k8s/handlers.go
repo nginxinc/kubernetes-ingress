@@ -382,8 +382,46 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 		UpdateFunc: func(old, cur interface{}) {
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
-			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
-				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
+
+			var curVsrCopy, oldVsrCopy conf_v1.VirtualServerRoute
+			err := copier.CopyWithOption(&curVsrCopy, curVsr, copier.Option{DeepCopy: true})
+			if err != nil {
+				glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", curVsr.Name, err)
+				return
+			}
+
+			err = copier.CopyWithOption(&oldVsrCopy, oldVsr, copier.Option{DeepCopy: true})
+			if err != nil {
+				glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", oldVsr.Name, err)
+				return
+			}
+
+			for i := range curVsrCopy.Spec.Subroutes {
+				curVsrCopy.Spec.Subroutes[i].Splits = nil
+			}
+			for i := range oldVsrCopy.Spec.Subroutes {
+				oldVsrCopy.Spec.Subroutes[i].Splits = nil
+			}
+
+			if lbc.isNginxPlus && !isWeightTheSame(oldVsr.Spec.Subroutes, curVsr.Spec.Subroutes) {
+				glog.V(3).Infof("VirtualServerRoute %v changed only in Split weights", curVsr.Name)
+				weights := getNewWeights(curVsr.Spec.Subroutes)
+				virtualServer, exists := lbc.getVirtualServerByVirtualServerRoute(curVsr)
+				if !exists {
+					glog.V(3).Infof("VirtualServerRoute %v does not have a VirtualServer", curVsr.Name)
+					return
+				}
+
+				for _, weight := range weights {
+					variableNamer := configs.NewVSVariableNamer(virtualServer)
+					key := variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(weight.SplitClientsIndex)
+					value := variableNamer.GetNameOfKeyOfMapForWeights(weight.SplitClientsIndex, weight.I, weight.J)
+					zoneName := variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(weight.SplitClientsIndex)
+					lbc.configurator.UpsertSplitClientsKeyVal(zoneName, key, value)
+				}
+			} else if virtualServerRouteChanged(oldVsrCopy, curVsrCopy) {
+				diff := cmp.Diff(oldVsrCopy, curVsrCopy)
+				glog.V(3).Infof("VirtualServerRoute %v changed, syncing. Difference: %s", curVsr.Name, diff)
 				lbc.AddSyncQueue(curVsr)
 			}
 		},
@@ -813,4 +851,36 @@ func virtualServerChanged(oldVs, curVs conf_v1.VirtualServer) bool {
 	curVsCopy.Annotations[lastAppliedConfigAnnotation] = oldVsCopy.Annotations[lastAppliedConfigAnnotation]
 
 	return !reflect.DeepEqual(oldVsCopy, curVsCopy)
+}
+
+func virtualServerRouteChanged(oldVsr, curVsr conf_v1.VirtualServerRoute) bool {
+	if reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
+		return false
+	}
+
+	var oldVsrCopy, curVsrCopy conf_v1.VirtualServerRoute
+	err := copier.CopyWithOption(&oldVsrCopy, &oldVsr, copier.Option{DeepCopy: true})
+	if err != nil {
+		glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", oldVsr.Name, err)
+		return false
+	}
+
+	err = copier.CopyWithOption(&curVsrCopy, &curVsr, copier.Option{DeepCopy: true})
+	if err != nil {
+		glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", curVsr.Name, err)
+		return false
+	}
+
+	curVsrCopy.ResourceVersion = oldVsrCopy.ResourceVersion
+	curVsrCopy.Generation = oldVsrCopy.Generation
+	curVsrCopy.Annotations[lastAppliedConfigAnnotation] = oldVsrCopy.Annotations[lastAppliedConfigAnnotation]
+
+	return !reflect.DeepEqual(oldVsrCopy, curVsrCopy)
+}
+
+func (lbc *LoadBalancerController) getVirtualServerByVirtualServerRoute(vsr *conf_v1.VirtualServerRoute) (*conf_v1.VirtualServer, bool) {
+	virtualServerID := vsr.Status.ReferencedBy
+
+	vs, exists := lbc.configuration.virtualServers[virtualServerID]
+	return vs, exists
 }
