@@ -14,7 +14,7 @@ import (
 func TestNodeCountInAClusterWithThreeNodes(t *testing.T) {
 	t.Parallel()
 
-	c := newTestCollectorForCluserWithNodes(t, node1, node2, node3)
+	c := newTestCollectorForClusterWithNodes(t, node1, node2, node3)
 
 	got, err := c.NodeCount(context.Background())
 	if err != nil {
@@ -29,7 +29,7 @@ func TestNodeCountInAClusterWithThreeNodes(t *testing.T) {
 func TestNodeCountInAClusterWithOneNode(t *testing.T) {
 	t.Parallel()
 
-	c := newTestCollectorForCluserWithNodes(t, node1)
+	c := newTestCollectorForClusterWithNodes(t, node1)
 	got, err := c.NodeCount(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +43,7 @@ func TestNodeCountInAClusterWithOneNode(t *testing.T) {
 func TestClusterIDRetrievesK8sClusterUID(t *testing.T) {
 	t.Parallel()
 
-	c := newTestCollectorForCluserWithNodes(t, node1, kubeNS)
+	c := newTestCollectorForClusterWithNodes(t, node1, kubeNS)
 
 	got, err := c.ClusterID(context.Background())
 	if err != nil {
@@ -59,7 +59,7 @@ func TestClusterIDRetrievesK8sClusterUID(t *testing.T) {
 func TestClusterIDErrorsOnNotExistingService(t *testing.T) {
 	t.Parallel()
 
-	c := newTestCollectorForCluserWithNodes(t, node1)
+	c := newTestCollectorForClusterWithNodes(t, node1)
 	_, err := c.ClusterID(context.Background())
 	if err == nil {
 		t.Error("want error, got nil")
@@ -68,7 +68,7 @@ func TestClusterIDErrorsOnNotExistingService(t *testing.T) {
 
 // newTestCollectorForClusterWithNodes returns a telemetry collector configured
 // to simulate collecting data on a cluser with provided nodes.
-func newTestCollectorForCluserWithNodes(t *testing.T, nodes ...runtime.Object) *telemetry.Collector {
+func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) *telemetry.Collector {
 	t.Helper()
 
 	c, err := telemetry.NewCollector(
