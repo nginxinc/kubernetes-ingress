@@ -236,7 +236,7 @@ jobs:
       - name: Extract image name for Trivy
         id: trivy-tag
         run: |
-          tag=$(echo $DOCKER_METADATA_OUTPUT_JSON | jq -r '.tags[] | select(contains("f5-gcs-7899"))' )
+          tag=$(echo $DOCKER_METADATA_OUTPUT_JSON | jq -r '[ .tags[] | select(contains("f5-gcs-7899"))] | .[0]')
           echo "tag=$tag" >> $GITHUB_OUTPUT
         if: ${{ inputs.publish-image }}
 

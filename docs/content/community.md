@@ -1,10 +1,10 @@
 ---
-title: Community and Contribution
+title: "Community and Contribution"
 
 description: "Learn about the NGINX Ingress Controller community and contribute to the project."
 weight: 2200
 toc: true
-docs: "DOCS-584"
+docs: "DOCS-1447"
 ---
 
 

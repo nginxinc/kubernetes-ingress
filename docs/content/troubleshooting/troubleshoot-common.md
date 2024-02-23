@@ -9,6 +9,7 @@ tags: [ "docs" ]
 doctypes: ["troubleshooting"]
 aliases:
  - /content/troubleshooting/troubleshoot-ingress-controller
+docs: "DOCS-1459"
 ---
 
 ## Common Problems
