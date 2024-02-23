@@ -337,7 +337,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 
 			if lbc.isNginxPlus && !isWeightTheSame(oldVs.Spec.Routes, curVs.Spec.Routes) {
 				glog.V(3).Infof("VirtualServer %v changed only in Split weights", curVs.Name)
-				weights := getNewWeights(oldVs.Spec.Routes, curVs.Spec.Routes)
+				weights := getNewWeights(curVs.Spec.Routes)
 
 				for _, weight := range weights {
 					variableNamer := configs.NewVSVariableNamer(curVs)
