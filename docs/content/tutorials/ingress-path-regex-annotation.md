@@ -1,5 +1,6 @@
 ---
-title: Ingresses Path Matching Using Path-Regex Annotation
+title: "Ingresses Path Matching Using Path-Regex Annotation"
+docs: "DOCS-1451"
 description: |
   How to customize Ingress and Mergeable Ingress types with path-regex annotations.
 weight: 1800
