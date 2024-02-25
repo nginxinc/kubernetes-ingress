@@ -1,9 +1,10 @@
 ---
-title: Troubleshooting Policy Resources
+title: "Troubleshooting Policy Resources"
 description: "This page describes how to troubleshoot NGINX Ingress Controller Policy Resources."
 weight: 200
 doctypes: [""]
 toc: true
+docs: "DOCS-1457"
 ---
 
 ## Policy Resources

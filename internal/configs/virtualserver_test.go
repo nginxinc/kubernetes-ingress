@@ -991,13 +991,6 @@ func createPointerFromUInt16(n uint16) *uint16 {
 	return &n
 }
 
-// createPointerFromString is a helper that takes a string
-// and returns a pointer to the value. It is used for testing
-// BackupService configuration for Virtual and Transport Servers.
-func createPointerFromString(s string) *string {
-	return &s
-}
-
 // vsEx returns Virtual Server Ex config struct.
 // It's safe to modify returned config for parallel test execution.
 func vsEx() VirtualServerEx {
@@ -1185,7 +1178,7 @@ func TestGenerateVirtualServerConfigWithBackupForNGINXPlus(t *testing.T) {
 
 	virtualServerEx := vsEx()
 	virtualServerEx.VirtualServer.Spec.Upstreams[2].LBMethod = "least_conn"
-	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = createPointerFromString("backup-svc")
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = "backup-svc"
 	virtualServerEx.VirtualServer.Spec.Upstreams[2].BackupPort = createPointerFromUInt16(8090)
 	virtualServerEx.Endpoints = map[string][]string{
 		"default/tea-svc:80": {
@@ -1496,7 +1489,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupNameFor
 
 	virtualServerEx := vsEx()
 	virtualServerEx.VirtualServer.Spec.Upstreams[2].LBMethod = "least_conn"
-	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = nil
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = ""
 	virtualServerEx.VirtualServer.Spec.Upstreams[2].BackupPort = createPointerFromUInt16(8090)
 	virtualServerEx.Endpoints = map[string][]string{
 		"default/tea-svc:80": {
@@ -1802,7 +1795,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortFor
 
 	virtualServerEx := vsEx()
 	virtualServerEx.VirtualServer.Spec.Upstreams[2].LBMethod = "least_conn"
-	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = createPointerFromString("backup-svc")
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = "backup-svc"
 	virtualServerEx.VirtualServer.Spec.Upstreams[2].BackupPort = nil
 	virtualServerEx.Endpoints = map[string][]string{
 		"default/tea-svc:80": {
@@ -2107,7 +2100,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortAnd
 
 	virtualServerEx := vsEx()
 	virtualServerEx.VirtualServer.Spec.Upstreams[2].LBMethod = "least_conn"
-	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = nil
+	virtualServerEx.VirtualServer.Spec.Upstreams[2].Backup = ""
 	virtualServerEx.VirtualServer.Spec.Upstreams[2].BackupPort = nil
 	virtualServerEx.Endpoints = map[string][]string{
 		"default/tea-svc:80": {

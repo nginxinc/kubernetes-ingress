@@ -1,10 +1,11 @@
 ---
-title: Customizing NGINX Ingress Controller Ports
+title: "Customizing NGINX Ingress Controller Ports"
 description: |
   How to customize F5 NGINX Ingress Controller ports.
 weight: 1800
 doctypes: ["concept"]
 toc: true
+docs: "DOCS-1449"
 ---
 ## Customizing NGINX Ingress Controller Ports
 
@@ -88,7 +89,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx/nginx-ingress:3.4.2
+      - image: nginx/nginx-ingress:3.4.3
         imagePullPolicy: IfNotPresent
         name: nginx-ingress
         ports:

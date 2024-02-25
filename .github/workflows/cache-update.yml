@@ -1,0 +1,178 @@
+name: Cache Update
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref_name }}-cache-update
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks and variables
+    runs-on: ubuntu-22.04
+    outputs:
+      go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
+      chart_version: ${{ steps.vars.outputs.chart_version }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Output Variables
+        id: vars
+        run: |
+          echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" -o -name .goreleaser.yml -o -name .github/data/version.txt \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+          source .github/data/version.txt
+          echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+  release-notes:
+    name: Release Notes
+    runs-on: ubuntu-22.04
+    needs: checks
+    outputs:
+      release-url: ${{ steps.release-notes.outputs.release-url }}
+    permissions:
+      contents: write # for lucacome/draft-release
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Create/Update Draft
+        uses: lucacome/draft-release@a98777f0bae0a6815cc1df77ebe48ca70e7cb970 # v1.0.3
+        id: release-notes
+        with:
+          minor-label: "enhancement"
+          major-label: "change"
+          publish: ${{ github.ref_type == 'tag' }}
+          collapse-after: 50
+          variables: |
+            helm-chart=${{ needs.checks.outputs.chart_version }}
+          notes-footer: |
+            ## Upgrade
+            - For NGINX, use the {{version}} images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name={{version-number}}), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+            - For NGINX Plus, use the {{version}} images from the F5 Container registry, the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE), the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking) or build your own image using the {{version}} source code.
+            - For Helm, use version {{helm-chart}} of the chart.
+
+            ## Resources
+            - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
+            - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/examples
+            - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/charts/nginx-ingress
+            - Operator -- https://github.com/nginxinc/nginx-ingress-helm-operator
+        if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
+
+  build-docker:
+    name: Build Docker OSS
+    needs: [checks]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian, alpine]
+        platforms:
+          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+        include:
+          - image: ubi
+            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      publish-image: false
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
+    secrets: inherit
+
+  build-docker-plus:
+    name: Build Docker Plus
+    needs: [checks, release-notes]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian-plus, alpine-plus, alpine-plus-fips]
+        platforms: ["linux/arm64, linux/amd64"]
+        target: [goreleaser, aws]
+        include:
+          - image: ubi-plus
+            platforms: "linux/arm64, linux/amd64, linux/s390x"
+            target: goreleaser
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      release-url: ${{ needs.release-notes.outputs.release-url }}
+      publish-image: false
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
+    secrets: inherit
+
+  build-docker-nap:
+    name: Build Docker NAP
+    needs: [checks, release-notes]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian-plus-nap]
+        platforms: ["linux/amd64"]
+        target: [goreleaser, aws]
+        nap_modules: [dos, waf, "waf,dos"]
+        include:
+          - image: ubi-9-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: dos
+          - image: ubi-8-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: "waf,dos"
+          - image: ubi-9-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: dos
+          - image: ubi-8-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: "waf,dos"
+          - image: alpine-plus-nap-fips
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      nap_modules: ${{ matrix.nap_modules }}
+      release-url: ${{ needs.release-notes.outputs.release-url }}
+      publish-image: false
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
+    secrets: inherit

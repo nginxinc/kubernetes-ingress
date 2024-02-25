@@ -15,12 +15,30 @@ on:
       go-md5:
         required: true
         type: string
+      base-image-md5:
+        required: false
+        type: string
       nap_modules:
         required: false
         type: string
       release-url:
         required: false
         type: string
+      publish-image:
+        required: false
+        type: boolean
+      publish-aws-market-place:
+        required: false
+        type: boolean
+      publish-gcp-market-place:
+        required: false
+        type: boolean
+      publish-nginx-reqistry:
+        required: false
+        type: boolean
+      forked-workflow:
+        required: false
+        type: boolean
 
 defaults:
   run:
@@ -52,19 +70,19 @@ jobs:
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
         with:
           platforms: arm64,s390x
-        if: github.event_name != 'pull_request'
+        if: ${{ inputs.publish-image }}
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@5a50e581162a13f4baa8916d01180d2acbc04363 # v2.1.0
+        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: github.event_name != 'pull_request'
+        if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
 
       - name: Login to GCR
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -72,16 +90,16 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: github.event_name != 'pull_request'
+        if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
 
       - name: Authenticate to Google Cloud Marketplace
         id: auth-mktpl
-        uses: google-github-actions/auth@5a50e581162a13f4baa8916d01180d2acbc04363 # v2.1.0
+        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
-        if: github.ref_type == 'tag' && ! contains(inputs.target, 'aws')
+        if: ${{ inputs.publish-gcp-market-place }}
 
       - name: Login to GCR for Marketplace
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -89,20 +107,19 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth-mktpl.outputs.access_token }}
-        if: github.ref_type == 'tag' && ! contains(inputs.target, 'aws')
+        if: ${{ inputs.publish-gcp-market-place }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@010d0da01d0b5a38af31e9c3470dbfdabdecca3a # v4.0.1
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
-        if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
-
+        if: ${{ inputs.publish-aws-market-place }}
       - name: Login to ECR
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
-        if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
+        if: ${{ inputs.publish-aws-market-place }}
 
       - name: Get Id Token
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -111,7 +128,7 @@ jobs:
           script: |
             let id_token = await core.getIDToken()
             core.setOutput('id_token', id_token)
-        if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
+        if: ${{ inputs.publish-nginx-reqistry }}
 
       - name: Login to NGINX Registry
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
@@ -119,17 +136,17 @@ jobs:
           registry: docker-mgmt.nginx.com
           username: ${{ steps.idtoken.outputs.id_token }}
           password: ${{ github.actor }}
-        if: ${{ github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}
+        if: ${{ inputs.publish-nginx-reqistry }}
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@dbef88086f6cef02e264edb7dbf63250c17cef6c # v5.5.0
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
-            name=gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }},enable=${{ github.ref_type == 'tag' && ! contains(inputs.target, 'aws') && ! contains(inputs.image, 'alpine') && ! contains(inputs.image, 'ubi') }}
-            name=docker-mgmt.nginx.com/nginx-ic${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ github.ref_type != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') && ! contains(inputs.target, 'aws') }}
-            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ github.ref_type == 'tag' && contains(inputs.target, 'aws') }}
+            name=gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }},enable=${{ inputs.publish-gcp-market-place && ! contains(inputs.target, 'aws') && ! contains(inputs.image, 'alpine') && ! contains(inputs.image, 'ubi') }}
+            name=docker-mgmt.nginx.com/nginx-ic${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ inputs.publish-nginx-reqistry && ! contains(inputs.target, 'aws') }}
+            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ inputs.publish-aws-market-place && contains(inputs.target, 'aws') }}
           flavor: |
             suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}},onlatest=true
             latest=${{ contains(inputs.target, 'aws') && 'false' || 'auto' }}
@@ -142,8 +159,8 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
           labels: |
             org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
-            org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
-            org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: NAP modules
         id: nap_modules
@@ -159,18 +176,20 @@ jobs:
           context: "."
           cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}
           cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},mode=max
-          target: ${{ inputs.target }}
+          target: ${{ inputs.target }}${{ ! inputs.forked-workflow && '-prebuilt' || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: ${{ github.event_name != 'pull_request' && inputs.platforms || '' }}
-          load: ${{ github.event_name == 'pull_request' }}
-          push: ${{ github.event_name != 'pull_request' }}
+          annotations: ${{ inputs.publish-image && steps.meta.outputs.annotations || '' }}
+          platforms: ${{ inputs.publish-image && inputs.platforms || '' }}
+          load: ${{ ! inputs.publish-image }}
+          push: ${{ inputs.publish-image }}
           pull: true
-          no-cache: ${{ github.event_name != 'pull_request' }}
-          sbom: ${{ github.event_name != 'pull_request' }}
+          no-cache: ${{ inputs.publish-image }}
+          sbom: ${{ inputs.publish-image }}
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ contains(inputs.nap_modules, 'waf') && '-waf' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}
             IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
@@ -195,10 +214,10 @@ jobs:
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "product_code=AWS${nap}_PRODUCT_ID" >> $GITHUB_OUTPUT
           echo "registry=${aws_registry}" >> $GITHUB_OUTPUT
-        if: github.ref_type == 'tag' && contains(inputs.target, 'aws')
+        if: ${{ inputs.publish-aws-market-place }}
 
       - name: Publish to AWS Marketplace
-        uses: nginxinc/aws-marketplace-publish@22487a7f9a905bd233dd77d8dc356767aef8fb11 # v1.0.2
+        uses: nginxinc/aws-marketplace-publish@be512a7ae9666098bc4429a1afa27a11be6a3995 # v1.0.3
         continue-on-error: true
         with:
           version: ${{ steps.aws.outputs.version }}
@@ -212,44 +231,34 @@ jobs:
             This container requires Kubernetes and can be deployed to EKS.
             Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments
             Use this image instead of building your own.
-        if: ${{ github.ref_type == 'tag' && contains(inputs.target, 'aws') }}
+        if: ${{ inputs.publish-aws-market-place }}
 
-      - name: Load image for Trivy
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
-        with:
-          file: build/Dockerfile
-          context: "."
-          cache-from: type=gha,scope=${{ inputs.image }}
-          target: ${{ inputs.target }}
-          tags: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
-          load: true
-          build-args: |
-            BUILD_OS=${{ inputs.image }}
-            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
-            ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
-            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
-          secrets: |
-            "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
-            "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
-            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+      - name: Extract image name for Trivy
+        id: trivy-tag
+        run: |
+          tag=$(echo $DOCKER_METADATA_OUTPUT_JSON | jq -r '[ .tags[] | select(contains("f5-gcs-7899"))] | .[0]')
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+        if: ${{ inputs.publish-image }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # 0.16.1
+        uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
         continue-on-error: true
         with:
-          image-ref: docker.io/${{ inputs.image }}:${{ steps.meta.outputs.version }}
+          image-ref: ${{ steps.trivy-tag.outputs.tag }}
           format: "sarif"
           output: "trivy-results-${{ inputs.image }}.sarif"
           ignore-unfixed: "true"
+        if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@0b21cf2492b6b02c465a3e5d7c473717ad7721ba # v3.23.1
+        uses: github/codeql-action/upload-sarif@e675ced7a7522a761fc9c8eb26682c8b27c42b2b # v3.24.1
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
+        if: ${{ inputs.publish-image }}
 
       - name: Upload Scan Results
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         continue-on-error: true
         with:
           name: "trivy-results-${{ inputs.image }}.sarif"

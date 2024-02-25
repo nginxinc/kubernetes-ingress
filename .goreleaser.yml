@@ -137,4 +137,4 @@ milestones:
   - close: true
 
 snapshot:
-  name_template: 'edge'
+  name_template: '{{.Version}}'

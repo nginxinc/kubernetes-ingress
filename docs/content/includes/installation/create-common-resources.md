@@ -1,5 +1,5 @@
 ---
-docs:
+docs: "DOCS-1464"
 ---
 
 In this section, you'll create resources that most NGINX Ingress Controller installations require:

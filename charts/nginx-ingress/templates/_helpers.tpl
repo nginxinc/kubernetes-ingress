@@ -135,9 +135,34 @@ Expand image name.
 {{- end -}}
 
 {{/*
+return if readOnlyRootFilesystem is enabled or not.
+*/}}
+{{- define "nginx-ingress.readOnlyRootFilesystem" -}}
+{{- if or .Values.controller.readOnlyRootFilesystem (and .Values.controller.securityContext .Values.controller.securityContext.readOnlyRootFilesystem) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
 Build the args for the service binary.
 */}}
 {{- define "nginx-ingress.args" -}}
+{{- if and .Values.controller.debug .Values.controller.debug.enable }}
+- --listen=:2345
+- --headless=true
+- --log=true
+- --log-output=debugger,debuglineerr,gdbwire,lldbout,rpc,dap,fncall,minidump,stack
+- --accept-multiclient
+- --api-version=2
+- exec
+- ./nginx-ingress
+{{- if .Values.controller.debug.continue }}
+- --continue
+{{- end }}
+- --
+{{- end }}
 - -nginx-plus={{ .Values.controller.nginxplus }}
 - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
 - -enable-app-protect={{ .Values.controller.appprotect.enable }}
@@ -223,4 +248,5 @@ Build the args for the service binary.
 - -ready-status-port={{ .Values.controller.readyStatus.port }}
 - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
 - -ssl-dynamic-reload={{ .Values.controller.enableSSLDynamicReload }}
+- -enable-telemetry-reporting={{ .Values.controller.enableTelemetryReporting}}
 {{- end -}}

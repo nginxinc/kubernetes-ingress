@@ -25,6 +25,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
+
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
 
@@ -161,6 +163,8 @@ type LoadBalancerController struct {
 	enableBatchReload             bool
 	isIPV6Disabled                bool
 	namespaceWatcherController    cache.Controller
+	telemetryCollector            *telemetry.Collector
+	telemetryChan                 chan struct{}
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -206,6 +210,8 @@ type NewLoadBalancerControllerInput struct {
 	ExternalDNSEnabled           bool
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
+	EnableTelemetryReporting     bool
+	TelemetryReportingPeriod     string
 }
 
 // NewLoadBalancerController creates a controller
@@ -239,7 +245,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 		isIPV6Disabled:               input.IsIPV6Disabled,
 	}
-
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)
 	eventBroadcaster.StartRecordingToSink(&core_v1.EventSinkImpl{
@@ -338,6 +343,24 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.dosConfiguration = appprotectdos.NewConfiguration(input.AppProtectDosEnabled)
 
 	lbc.secretStore = secrets.NewLocalSecretStore(lbc.configurator)
+
+	// NIC Telemetry Reporting
+	if input.EnableTelemetryReporting {
+		collectorConfig := telemetry.CollectorConfig{
+			K8sClientReader:       input.KubeClient,
+			CustomK8sClientReader: input.ConfClient,
+			Period:                5 * time.Second,
+			Configurator:          lbc.configurator,
+		}
+		lbc.telemetryChan = make(chan struct{})
+		collector, err := telemetry.NewCollector(
+			collectorConfig,
+		)
+		if err != nil {
+			glog.Fatalf("failed to initialize telemetry collector: %v", err)
+		}
+		lbc.telemetryCollector = collector
+	}
 
 	return lbc
 }
@@ -683,8 +706,20 @@ func (lbc *LoadBalancerController) Run() {
 	if lbc.externalDNSController != nil {
 		go lbc.externalDNSController.Run(lbc.ctx.Done())
 	}
+
 	if lbc.leaderElector != nil {
 		go lbc.leaderElector.Run(lbc.ctx)
+	}
+
+	if lbc.telemetryCollector != nil {
+		go func(ctx context.Context) {
+			select {
+			case <-lbc.telemetryChan:
+				lbc.telemetryCollector.Start(lbc.ctx)
+			case <-ctx.Done():
+				return
+			}
+		}(lbc.ctx)
 	}
 
 	for _, nif := range lbc.namespacedInformers {
@@ -3042,16 +3077,16 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	// If backup and backup port are defined it generates a backup server entry for the upstream.
 	// Backup Service is of type ExternalName.
 	generateBackupEndpoints := func(endpoints map[string][]string, u conf_v1.Upstream) {
-		if u.Backup == nil || u.BackupPort == nil {
+		if u.Backup == "" || u.BackupPort == nil {
 			return
 		}
-		backupEndpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, *u.Backup, u.Subselector, *u.BackupPort)
-		backupEndps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, *u.Backup, *u.BackupPort)
+		backupEndpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, u.Backup, u.Subselector, *u.BackupPort)
+		backupEndps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, u.Backup, *u.BackupPort)
 		if err != nil {
 			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
 		}
 		if err == nil && external {
-			externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, *u.Backup)] = true
+			externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, u.Backup)] = true
 		}
 		bendps := getIPAddressesFromEndpoints(backupEndps)
 		endpoints[backupEndpointsKey] = bendps
@@ -3576,14 +3611,14 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		}
 
 		// If backup defined on Upstream retrieve its external name and port.
-		if u.Backup != nil && u.BackupPort != nil {
-			backupEndpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, *u.Backup, nil, *u.BackupPort)
-			backupEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, *u.Backup, *u.BackupPort)
+		if u.Backup != "" && u.BackupPort != nil {
+			backupEndpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Backup, nil, *u.BackupPort)
+			backupEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Backup, *u.BackupPort)
 			if err != nil {
 				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
 			}
 			if err == nil && external {
-				externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, *u.Backup)] = true
+				externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Backup)] = true
 			}
 			bendps := getIPAddressesFromEndpoints(backupEndps)
 			endpoints[backupEndpointsKey] = bendps

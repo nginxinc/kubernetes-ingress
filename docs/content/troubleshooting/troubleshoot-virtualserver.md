@@ -1,11 +1,12 @@
 ---
-title: Troubleshooting VirtualServer Resources
+title: "Troubleshooting VirtualServer Resources"
 description: "This page describes how to troubleshoot VirtualServer and VirtualServer Resource Events."
 weight: 500
 doctypes: [""]
 toc: true
 aliases:
  - /content/troubleshooting/virtualserver-virtualserverroute
+docs: "DOCS-1461"
 ---
 ## Inspecting VirtualServer and VirtualServerRoute Resource Events
 
