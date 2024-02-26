@@ -49,4 +49,4 @@ jobs:
 
       - name: List tags from docker-mgmt registry
         run: |
-          skopeo list-tags docker://docker-mgmt.nginx.com/nginx-ic/nginx-ingress-plus
+          skopeo list-tags docker://docker-mgmt.nginx.com/nginx-ic/nginx-plus-ingress
