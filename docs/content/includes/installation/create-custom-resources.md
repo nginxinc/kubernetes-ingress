@@ -1,3 +1,7 @@
+---
+docs: "DOCS-1463"
+---
+
 To make sure your NGINX Ingress Controller pods reach the `Ready` state, you'll need to create custom resource definitions (CRDs) for various components.
 
 Alternatively, you can disable this requirement by setting the `-enable-custom-resources` command-line argument to `false`.

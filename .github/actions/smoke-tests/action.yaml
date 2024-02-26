@@ -5,6 +5,9 @@ inputs:
   go-md5:
     required: true
     type: string
+  base-image-md5:
+    required: true
+    type: string
   k8s-version:
     description: Kubernetes version to use
     required: false
@@ -41,6 +44,9 @@ inputs:
   gcr-service-account-secret:
     description: Google Service Account secret
     required: false
+  forked-workflow:
+    description: Does this workflow full access to repo resources?
+    required: false
 
 outputs:
   test-results-name:
@@ -67,18 +73,36 @@ runs:
     - name: Docker Buildx
       uses: docker/setup-buildx-action@v2
 
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        token_format: access_token
+        workload_identity_provider: ${{ inputs.gcr-workload-identity-secret }}
+        service_account: ${{ inputs.gcr-service-account-secret }}
+      if: ${{ ! inputs.forked-workflow }}
+
+    - name: Login to GCR
+      uses: docker/login-action@v3
+      with:
+        registry: gcr.io
+        username: oauth2accesstoken
+        password: ${{ steps.auth.outputs.access_token }}
+      if: ${{ ! inputs.forked-workflow }}
+
     - name: Build ${{ inputs.image }} Container
       uses: docker/build-push-action@v3
       with:
         file: build/Dockerfile
         context: "."
         cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
-        target: goreleaser
+        target: goreleaser${{ ! inputs.forked-workflow && '-prebuilt' || '' }}
         tags: "docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}"
         load: true
         pull: true
         build-args: |
           BUILD_OS=${{ inputs.image }}
+          PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ contains(inputs.image, 'plus') && 'plus' || 'oss' }}:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ contains(inputs.marker, 'appprotect') && '-waf' || '' }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}
           IC_VERSION=CI
           ${{ steps.ingress-type.outputs.modules != '' && format('NAP_MODULES={0}', steps.ingress-type.outputs.modules) || '' }}
           ${{ contains(inputs.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
@@ -105,23 +129,6 @@ runs:
         sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' ~/.kube/kind/config
       shell: bash
 
-    - name: Authenticate to Google Cloud
-      id: auth
-      uses: google-github-actions/auth@v2
-      with:
-        token_format: access_token
-        workload_identity_provider: ${{ inputs.gcr-workload-identity-secret }}
-        service_account: ${{ inputs.gcr-service-account-secret }}
-      if: github.event.pull_request.head.repo.full_name == github.repository
-
-    - name: Login to GCR
-      uses: docker/login-action@v3
-      with:
-        registry: gcr.io
-        username: oauth2accesstoken
-        password: ${{ steps.auth.outputs.access_token }}
-      if: github.event.pull_request.head.repo.full_name == github.repository
-
     - name: Build Test-Runner Container
       uses: docker/build-push-action@v3
       with:
@@ -131,7 +138,7 @@ runs:
         tags: ${{ inputs.test-image }}
         pull: true
         load: true
-      if: github.event.pull_request.head.repo.full_name != github.repository
+      if: ${{ inputs.forked-workflow }}
 
     - name: Run Smoke Tests
       run: |
