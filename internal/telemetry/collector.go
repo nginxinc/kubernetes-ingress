@@ -110,5 +110,11 @@ func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
 	}
 	d.ClusterID = cID
+
+	k8s, err := c.K8sVersion()
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
+	}
+	d.K8sVersion = k8s
 	return d, err
 }

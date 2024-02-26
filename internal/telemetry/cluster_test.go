@@ -8,7 +8,6 @@ import (
 	apiCoreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	testClient "k8s.io/client-go/kubernetes/fake"
 )
 
 func TestNodeCountInAClusterWithThreeNodes(t *testing.T) {
@@ -66,6 +65,21 @@ func TestClusterIDErrorsOnNotExistingService(t *testing.T) {
 	}
 }
 
+func TestK8sVersionRetrievesClusterVersion(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCollectorForClusterWithNodes(t, node1)
+	got, err := c.K8sVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := "v1.29.2"
+	if want != got {
+		t.Errorf("want %s, got %s", want, got)
+	}
+}
+
 // newTestCollectorForClusterWithNodes returns a telemetry collector configured
 // to simulate collecting data on a cluser with provided nodes.
 func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) *telemetry.Collector {
@@ -77,7 +91,7 @@ func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.Config.K8sClientReader = testClient.NewSimpleClientset(nodes...)
+	c.Config.K8sClientReader = newTestClientset(nodes...)
 	return c
 }
 

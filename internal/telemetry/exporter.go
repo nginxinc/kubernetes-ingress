@@ -31,6 +31,7 @@ type Data struct {
 	NICResourceCounts NICResourceCounts
 	NodeCount         int
 	ClusterID         string
+	K8sVersion        string
 }
 
 // ProjectMeta holds metadata for the project.
