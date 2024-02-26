@@ -329,10 +329,16 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			}
 
 			for i := range curVsCopy.Spec.Routes {
-				curVsCopy.Spec.Routes[i].Splits = nil
+				if lbc.isNginxPlus && len(curVsCopy.Spec.Routes[i].Splits) == 2 {
+					curVsCopy.Spec.Routes[i].Splits[0].Weight = 0
+					curVsCopy.Spec.Routes[i].Splits[1].Weight = 0
+				}
 			}
 			for i := range oldVsCopy.Spec.Routes {
-				oldVsCopy.Spec.Routes[i].Splits = nil
+				if lbc.isNginxPlus && len(oldVsCopy.Spec.Routes[i].Splits) == 2 {
+					oldVsCopy.Spec.Routes[i].Splits[0].Weight = 0
+					oldVsCopy.Spec.Routes[i].Splits[1].Weight = 0
+				}
 			}
 
 			if lbc.isNginxPlus && !isWeightTheSame(oldVs.Spec.Routes, curVs.Spec.Routes) {
@@ -397,10 +403,16 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			}
 
 			for i := range curVsrCopy.Spec.Subroutes {
-				curVsrCopy.Spec.Subroutes[i].Splits = nil
+				if lbc.isNginxPlus && len(curVsrCopy.Spec.Subroutes[i].Splits) == 2 {
+					curVsrCopy.Spec.Subroutes[i].Splits[0].Weight = 0
+					curVsrCopy.Spec.Subroutes[i].Splits[1].Weight = 0
+				}
 			}
 			for i := range oldVsrCopy.Spec.Subroutes {
-				oldVsrCopy.Spec.Subroutes[i].Splits = nil
+				if lbc.isNginxPlus && len(oldVsrCopy.Spec.Subroutes[i].Splits) == 2 {
+					oldVsrCopy.Spec.Subroutes[i].Splits[0].Weight = 0
+					oldVsrCopy.Spec.Subroutes[i].Splits[1].Weight = 0
+				}
 			}
 
 			if lbc.isNginxPlus && !isWeightTheSame(oldVsr.Spec.Subroutes, curVsr.Spec.Subroutes) {
