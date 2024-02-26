@@ -19,6 +19,10 @@ permissions:
 jobs:
   list-tags:
     name: List tags
+    permissions:
+      contents: read # for docker/build-push-action to read repo content
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      id-token: write # for OIDC login to AWS
     runs-on: [self-hosted]
     steps:
       - name: Checkout Repository
