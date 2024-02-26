@@ -725,7 +725,7 @@ func createPlusAndLatencyCollectors(
 	kubeClient *kubernetes.Clientset,
 	plusClient *client.NginxClient,
 	isMesh bool,
-) (plusCollector *nginxCollector.NginxPlusCollector, syslogListener metrics.SyslogListener, lc collectors.LatencyCollector) {
+) (plusCollector *nginxCollector.NginxPlusCollector, syslogListener metrics.SyslogListener, latencyCollector collectors.LatencyCollector) {
 
 	if *enablePrometheusMetrics {
 		upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
