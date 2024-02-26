@@ -19,7 +19,7 @@ permissions:
 jobs:
   list-tags:
     name: List tags
-    runs-on: [self-hosted, kic-plus]
+    runs-on: [self-hosted]
     strategy:
       fail-fast: false
       matrix:
