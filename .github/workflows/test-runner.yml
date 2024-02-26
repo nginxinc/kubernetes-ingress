@@ -1,0 +1,33 @@
+name: Test Self Hosted Runner
+
+on:
+  push:
+    branches:
+      - new-runner-test
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref_name }}-self-hosted-runner
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  list-tags:
+    name: List tags
+    runs-on: [self-hosted, kic-plus]
+    strategy:
+      fail-fast: false
+      matrix:
+          image: [debian, alpine]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Output Runner
+        run: |
+          echo ${{ runner.name }}/${{ runner.os }}/${{ runner.arch }}
