@@ -68,7 +68,7 @@ func main() {
 		glog.Fatalf("Failed to create client: %v.", err)
 	}
 
-	err = confirmMinimumkubernetesVersionCriteria(kubeClient)
+	err = confirmMinimumK8sVersionCriteria(kubeClient)
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -110,8 +110,15 @@ func main() {
 
 	go updateSelfWithVersionInfo(kubeClient, version, appProtectVersion, nginxVersion, 10, time.Second*5)
 
-	templateExecutor := createV1TemplateExecutors()
-	templateExecutorV2 := createV2TemplateExecutors()
+	templateExecutor, err := createV1TemplateExecutors()
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	templateExecutorV2, err := createV2TemplateExecutors()
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	aPPluginDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
 
@@ -127,10 +134,16 @@ func main() {
 
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
-	processGlobalConfiguration()
+	err = processGlobalConfiguration()
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	cfgParams := configs.NewDefaultConfigParams(*nginxPlus)
-	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
+	cfgParams, err = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	staticCfgParams := &configs.StaticConfigParams{
 		DisableIPV6:                    *disableIPV6,
@@ -197,8 +210,9 @@ func main() {
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager), cr_validation.IsExternalDNSEnabled(*enableExternalDNS))
 
-	if *enableServiceInsight {
-		createHealthProbeEndpoint(kubeClient, plusClient, cnf)
+	err = createHealthProbeEndpoint(kubeClient, plusClient, cnf)
+	if err != nil {
+		glog.Fatal(err)
 	}
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
@@ -291,7 +305,7 @@ func getKubeClient(config *rest.Config) (kubeClient *kubernetes.Clientset, err e
 	return kubeClient, err
 }
 
-func confirmMinimumkubernetesVersionCriteria(kubeClient kubernetes.Interface) (err error) {
+func confirmMinimumK8sVersionCriteria(kubeClient kubernetes.Interface) (err error) {
 	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
 	if err != nil {
 		return fmt.Errorf("error retrieving k8s version: %v", err)
@@ -394,7 +408,7 @@ func createPlusClient(nginxPlus bool, useFakeNginxManager bool, nginxManager ngi
 	return plusClient, nil
 }
 
-func createV1TemplateExecutors() *version1.TemplateExecutor {
+func createV1TemplateExecutors() (templateExecutor *version1.TemplateExecutor, err error) {
 	nginxConfTemplatePath := "nginx.tmpl"
 	nginxIngressTemplatePath := "nginx.ingress.tmpl"
 
@@ -410,15 +424,16 @@ func createV1TemplateExecutors() *version1.TemplateExecutor {
 		nginxIngressTemplatePath = *ingressTemplatePath
 	}
 
-	templateExecutor, err := version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
+	templateExecutor, err = version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
 	if err != nil {
-		glog.Fatalf("Error creating TemplateExecutor: %v", err)
+
+		return nil, fmt.Errorf("Error creating TemplateExecutor: %v", err)
 	}
 
-	return templateExecutor
+	return templateExecutor, nil
 }
 
-func createV2TemplateExecutors() *version2.TemplateExecutor {
+func createV2TemplateExecutors() (templateExecutorV2 *version2.TemplateExecutor, err error) {
 	nginxVirtualServerTemplatePath := "nginx.virtualserver.tmpl"
 	nginxTransportServerTemplatePath := "nginx.transportserver.tmpl"
 	if *nginxPlus {
@@ -433,12 +448,12 @@ func createV2TemplateExecutors() *version2.TemplateExecutor {
 		nginxTransportServerTemplatePath = *transportServerTemplatePath
 	}
 
-	templateExecutorV2, err := version2.NewTemplateExecutor(nginxVirtualServerTemplatePath, nginxTransportServerTemplatePath)
+	templateExecutorV2, err = version2.NewTemplateExecutor(nginxVirtualServerTemplatePath, nginxTransportServerTemplatePath)
 	if err != nil {
-		glog.Fatalf("Error creating TemplateExecutorV2: %v", err)
+		return nil, fmt.Errorf("Error creating TemplateExecutorV2: %v", err)
 	}
 
-	return templateExecutorV2
+	return templateExecutorV2, nil
 }
 
 func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Manager, bool) {
@@ -724,13 +739,26 @@ func createPlusAndLatencyCollectors(
 	kubeClient *kubernetes.Clientset,
 	plusClient *client.NginxClient,
 	isMesh bool,
-) (*nginxCollector.NginxPlusCollector, metrics.SyslogListener, collectors.LatencyCollector) {
+) (plusCollector *nginxCollector.NginxPlusCollector, syslogListener metrics.SyslogListener, lc collectors.LatencyCollector) {
+
+	if *enablePrometheusMetrics {
+		upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
+		upstreamServerPeerVariableLabelNames := []string{"pod_name"}
+		if isMesh {
+			upstreamServerPeerVariableLabelNames = append(upstreamServerPeerVariableLabelNames, "pod_owner")
+		}
+
+		plusCollector = createNginxPlusCollector(registry, constLabels, kubeClient, plusClient, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
+		syslogListener, lc = createLatencyCollector(registry, constLabels, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
+	}
+
+	return plusCollector, syslogListener, lc
+}
+
+func createNginxPlusCollector(registry *prometheus.Registry, constLabels map[string]string, kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, upstreamServerVariableLabels []string, upstreamServerPeerVariableLabelNames []string) *nginxCollector.NginxPlusCollector {
+	var plusCollector *nginxCollector.NginxPlusCollector
 	var prometheusSecret *api_v1.Secret
 	var err error
-	var lc collectors.LatencyCollector
-	lc = collectors.NewLatencyFakeCollector()
-	var syslogListener metrics.SyslogListener
-	syslogListener = metrics.NewSyslogFakeServer()
 
 	if *prometheusTLSSecretName != "" {
 		prometheusSecret, err = getAndValidateSecret(kubeClient, *prometheusTLSSecretName)
@@ -739,30 +767,34 @@ func createPlusAndLatencyCollectors(
 		}
 	}
 
-	var plusCollector *nginxCollector.NginxPlusCollector
-	if *enablePrometheusMetrics {
-		upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
-		upstreamServerPeerVariableLabelNames := []string{"pod_name"}
-		if isMesh {
-			upstreamServerPeerVariableLabelNames = append(upstreamServerPeerVariableLabelNames, "pod_owner")
-		}
-		if *nginxPlus {
-			streamUpstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
-			streamUpstreamServerPeerVariableLabelNames := []string{"pod_name"}
+	if *nginxPlus {
+		streamUpstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
+		streamUpstreamServerPeerVariableLabelNames := []string{"pod_name"}
 
-			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
-			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
-			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
-				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, nil, nil)
-			promlogConfig := &promlog.Config{}
-			logger := promlog.New(promlogConfig)
-			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
-			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
-		} else {
-			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
-			client := metrics.NewNginxMetricsClient(httpClient)
-			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels, prometheusSecret)
-		}
+		serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+		streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+		variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
+			streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, nil, nil)
+
+		promlogConfig := &promlog.Config{}
+		logger := promlog.New(promlogConfig)
+		plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
+		go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
+	} else {
+		httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
+		client := metrics.NewNginxMetricsClient(httpClient)
+		go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels, prometheusSecret)
+	}
+	return plusCollector
+}
+
+func createLatencyCollector(registry *prometheus.Registry, constLabels map[string]string, upstreamServerVariableLabels []string, upstreamServerPeerVariableLabelNames []string) (metrics.SyslogListener, collectors.LatencyCollector) {
+	var lc collectors.LatencyCollector
+	lc = collectors.NewLatencyFakeCollector()
+	var syslogListener metrics.SyslogListener
+	syslogListener = metrics.NewSyslogFakeServer()
+
+	if *enablePrometheusMetrics {
 		if *enableLatencyMetrics {
 			lc = collectors.NewLatencyMetricsCollector(constLabels, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
 			if err := lc.Register(registry); err != nil {
@@ -773,53 +805,54 @@ func createPlusAndLatencyCollectors(
 		}
 	}
 
-	return plusCollector, syslogListener, lc
+	return syslogListener, lc
 }
 
-func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) {
+func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) (err error) {
 	if !*enableServiceInsight {
-		return
+		return nil
 	}
 	var serviceInsightSecret *api_v1.Secret
-	var err error
 
 	if *serviceInsightTLSSecretName != "" {
 		serviceInsightSecret, err = getAndValidateSecret(kubeClient, *serviceInsightTLSSecretName)
 		if err != nil {
-			glog.Fatalf("Error trying to get the service insight TLS secret %v: %v", *serviceInsightTLSSecretName, err)
+			return fmt.Errorf("Error trying to get the service insight TLS secret %v: %v", *serviceInsightTLSSecretName, err)
 		}
 	}
 	go healthcheck.RunHealthCheck(*serviceInsightListenPort, plusClient, cnf, serviceInsightSecret)
+	return nil
 }
 
-func processGlobalConfiguration() {
+func processGlobalConfiguration() (err error) {
 	if *globalConfiguration != "" {
 		_, _, err := k8s.ParseNamespaceName(*globalConfiguration)
 		if err != nil {
-			glog.Fatalf("Error parsing the global-configuration argument: %v", err)
+			return fmt.Errorf("Error parsing the global-configuration argument: %v", err)
 		}
 
 		if !*enableCustomResources {
-			glog.Fatal("global-configuration flag requires -enable-custom-resources")
+			return fmt.Errorf("global-configuration flag requires -enable-custom-resources")
 		}
 	}
+	return nil
 }
 
-func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) *configs.ConfigParams {
+func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) (*configs.ConfigParams, error) {
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
 		if err != nil {
-			glog.Fatalf("Error parsing the nginx-configmaps argument: %v", err)
+			return nil, fmt.Errorf("Error parsing the nginx-configmaps argument: %v", err)
 		}
 		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 		if err != nil {
-			glog.Fatalf("Error when getting %v: %v", *nginxConfigMaps, err)
+			return nil, fmt.Errorf("Error when getting %v: %v", *nginxConfigMaps, err)
 		}
 		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough)
 		if cfgParams.MainServerSSLDHParamFileContent != nil {
 			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
 			if err != nil {
-				glog.Fatalf("Configmap %s/%s: Could not update dhparams: %v", ns, name, err)
+				return nil, fmt.Errorf("Configmap %s/%s: Could not update dhparams: %v", ns, name, err)
 			} else {
 				cfgParams.MainServerSSLDHParam = fileName
 			}
@@ -827,17 +860,17 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 		if cfgParams.MainTemplate != nil {
 			err = templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
 			if err != nil {
-				glog.Fatalf("Error updating NGINX main template: %v", err)
+				return nil, fmt.Errorf("Error updating NGINX main template: %v", err)
 			}
 		}
 		if cfgParams.IngressTemplate != nil {
 			err = templateExecutor.UpdateIngressTemplate(cfgParams.IngressTemplate)
 			if err != nil {
-				glog.Fatalf("Error updating ingress template: %v", err)
+				return nil, fmt.Errorf("Error updating ingress template: %v", err)
 			}
 		}
 	}
-	return cfgParams
+	return cfgParams, nil
 }
 
 func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, appProtectVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
