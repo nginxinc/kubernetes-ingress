@@ -30,6 +30,7 @@ type Data struct {
 	ProjectMeta       ProjectMeta
 	NICResourceCounts NICResourceCounts
 	NodeCount         int
+	ClusterID         string
 }
 
 // ProjectMeta holds metadata for the project.

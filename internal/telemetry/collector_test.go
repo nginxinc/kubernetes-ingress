@@ -134,6 +134,42 @@ func TestCollectNodeCountInClusterWithThreeNodes(t *testing.T) {
 	}
 }
 
+func TestCollectClusterIDInClusterWithOneNode(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: testClient.NewSimpleClientset(node1, kubeNS),
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	td := telemetry.Data{
+		ProjectMeta: telemetry.ProjectMeta{
+			Name:    "",
+			Version: "",
+		},
+		NICResourceCounts: telemetry.NICResourceCounts{
+			VirtualServers:      0,
+			VirtualServerRoutes: 0,
+			TransportServers:    0,
+		},
+		NodeCount: 1,
+		ClusterID: "329766ff-5d78-4c9e-8736-7faad1f2e937",
+	}
+	want := fmt.Sprintf("%+v", td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
 func TestCountVirtualServers(t *testing.T) {
 	t.Parallel()
 
@@ -243,7 +279,7 @@ func TestCountVirtualServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: testClient.NewSimpleClientset(),
+			K8sClientReader: testClient.NewSimpleClientset(dummyKubeNS),
 			Configurator:    configurator,
 		})
 		if err != nil {
@@ -415,7 +451,7 @@ func TestCountTransportServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: testClient.NewSimpleClientset(),
+			K8sClientReader: testClient.NewSimpleClientset(dummyKubeNS),
 			Configurator:    configurator,
 		})
 		if err != nil {

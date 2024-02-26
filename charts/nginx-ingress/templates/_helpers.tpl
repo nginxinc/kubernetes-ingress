@@ -162,7 +162,7 @@ Build the args for the service binary.
 - --continue
 {{- end }}
 - --
-{{- end }}
+{{- end -}}
 - -nginx-plus={{ .Values.controller.nginxplus }}
 - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
 - -enable-app-protect={{ .Values.controller.appprotect.enable }}
@@ -249,4 +249,48 @@ Build the args for the service binary.
 - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
 - -ssl-dynamic-reload={{ .Values.controller.enableSSLDynamicReload }}
 - -enable-telemetry-reporting={{ .Values.controller.enableTelemetryReporting}}
+{{- end -}}
+
+{{/*
+Volumes for controller.
+*/}}
+{{- define "nginx-ingress.volumes" -}}
+{{- if or (eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.volumes }}
+volumes:
+{{- end }}
+{{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
+- name: nginx-etc
+  emptyDir: {}
+- name: nginx-cache
+  emptyDir: {}
+- name: nginx-lib
+  emptyDir: {}
+- name: nginx-log
+  emptyDir: {}
+{{- end }}
+{{- if .Values.controller.volumes }}
+{{ toYaml .Values.controller.volumes }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Volume mounts for controller.
+*/}}
+{{- define "nginx-ingress.volumeMounts" -}}
+{{- if or ( eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.volumeMounts }}
+volumeMounts:
+{{- end }}
+{{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
+- mountPath: /etc/nginx
+  name: nginx-etc
+- mountPath: /var/cache/nginx
+  name: nginx-cache
+- mountPath: /var/lib/nginx
+  name: nginx-lib
+- mountPath: /var/log/nginx
+  name: nginx-log
+{{- end }}
+{{- if .Values.controller.volumeMounts}}
+{{ toYaml .Values.controller.volumeMounts }}
+{{- end }}
 {{- end -}}

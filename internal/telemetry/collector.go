@@ -104,5 +104,11 @@ func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
 	}
 	d.NodeCount = nc
+
+	cID, err := c.ClusterID(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
+	}
+	d.ClusterID = cID
 	return d, err
 }
