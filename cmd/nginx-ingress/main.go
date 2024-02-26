@@ -68,8 +68,7 @@ func main() {
 		glog.Fatalf("Failed to create client: %v.", err)
 	}
 
-	err = confirmMinimumK8sVersionCriteria(kubeClient)
-	if err != nil {
+	if err := confirmMinimumK8sVersionCriteria(kubeClient); err != nil {
 		glog.Fatal(err)
 	}
 
