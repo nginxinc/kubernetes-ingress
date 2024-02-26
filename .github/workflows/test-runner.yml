@@ -20,14 +20,29 @@ jobs:
   list-tags:
     name: List tags
     runs-on: [self-hosted]
-    strategy:
-      fail-fast: false
-      matrix:
-          image: [debian, alpine]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
+      - name: Get Id Token
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        id: idtoken
+        with:
+          script: |
+            let id_token = await core.getIDToken()
+            core.setOutput('id_token', id_token)
+
+      - name: Login to NGINX Registry
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: docker-mgmt.nginx.com
+          username: ${{ steps.idtoken.outputs.id_token }}
+          password: ${{ github.actor }}
+
       - name: Output Runner
         run: |
           echo ${{ runner.name }}/${{ runner.os }}/${{ runner.arch }}
+
+      - name: List tags from docker-mgmt registry
+        run: |
+          skopeo list-tags docker://docker-mgmt.nginx.com/nginx-ic/nginx-ingress-plus
