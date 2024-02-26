@@ -396,7 +396,6 @@ type KeyValZone struct {
 	Name  string
 	Size  string
 	State string
-	Sync  bool
 }
 
 // KeyVal defines a keyval.

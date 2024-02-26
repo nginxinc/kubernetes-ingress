@@ -2107,7 +2107,6 @@ func generateSplits(
 			Name:  kvZoneName,
 			Size:  splitClientsKeyValZoneSize,
 			State: fmt.Sprintf("%s/%s.json", keyvalZoneBasePath, kvZoneName),
-			Sync:  true,
 		}
 		kv := version2.KeyVal{
 			Key:      variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(scIndex),
