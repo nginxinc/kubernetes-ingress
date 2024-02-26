@@ -53,7 +53,7 @@ jobs:
       contents: read # for docker/build-push-action to read repo content
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       id-token: write # for OIDC login to AWS
-    runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-22.04' || 'kic-plus' }}
+    runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-22.04' || 'kic-plus' || 'self-hosted' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
