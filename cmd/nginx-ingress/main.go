@@ -120,8 +120,6 @@ func main() {
 		glog.Fatal(err)
 	}
 
-	aPPluginDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
-
 	sslRejectHandshake, err := processDefaultServerSecret(kubeClient, nginxManager)
 	if err != nil {
 		glog.Fatal(err)
