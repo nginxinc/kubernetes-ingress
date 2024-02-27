@@ -1166,6 +1166,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 		}
 
 		for _, path := range rule.HTTP.Paths {
+			path := path // address gosec G601
 			endps, exists := ingEx.Endpoints[path.Backend.Service.Name+GetBackendPortAsString(path.Backend.Service.Port)]
 			if exists {
 				if _, isExternalName := ingEx.ExternalNameSvcs[path.Backend.Service.Name]; isExternalName {
