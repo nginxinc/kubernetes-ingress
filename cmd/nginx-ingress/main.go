@@ -205,6 +205,7 @@ func main() {
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
 		TelemetryReportingPeriod:     *telemetryReportingPeriod,
+		NICVersion:                   version,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
