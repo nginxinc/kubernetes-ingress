@@ -61,5 +61,10 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      text: "Potential hardcoded credentials"
+      linters:
+        - gosec
 run:
   timeout: 5m
