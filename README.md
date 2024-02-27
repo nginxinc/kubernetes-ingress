@@ -18,6 +18,18 @@
 
 This repo provides an implementation of an Ingress Controller for NGINX and NGINX Plus from the people behind NGINX.
 
+---
+
+## Join Our Next Community Call!
+
+We value community input and would love to see you at our next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
+
+| **Date** | **Time** | **Zoom Link** | **Password** |
+|-|-|-|-|
+| **2024-03-11** | **4 PM IST (Irish Standard Time)** | [KIC - GitHub Issues Triage](https://f5networks.zoom.us/j/91421953779?pwd=197738) | **197738** |
+
+---
+
 NGINX Ingress Controller works with both NGINX and NGINX Plus and supports the standard Ingress features - content-based
 routing and TLS/SSL termination.
 
