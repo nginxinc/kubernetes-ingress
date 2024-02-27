@@ -4,6 +4,7 @@ package telemetry
 import (
 	"context"
 	"io"
+	"runtime"
 	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
@@ -92,7 +93,9 @@ func (c *Collector) Collect(ctx context.Context) {
 
 // BuildReport takes context and builds report from gathered telemetry data.
 func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
-	d := Data{}
+	d := Data{
+		Arch: runtime.GOARCH,
+	}
 	var err error
 
 	if c.Config.Configurator != nil {
@@ -110,5 +113,11 @@ func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
 	}
 	d.ClusterID = cID
+
+	k8s, err := c.K8sVersion()
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
+	}
+	d.K8sVersion = k8s
 	return d, err
 }
