@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/version"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	testClient "k8s.io/client-go/kubernetes/fake"
@@ -60,6 +61,7 @@ func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 
 	td := telemetry.Data{
 		K8sVersion: "v1.29.2",
+		Arch:       runtime.GOARCH,
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -96,6 +98,7 @@ func TestCollectNodeCountInClusterWithOneNode(t *testing.T) {
 		},
 		NodeCount:  1,
 		K8sVersion: "v1.29.2",
+		Arch:       runtime.GOARCH,
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -132,6 +135,7 @@ func TestCollectNodeCountInClusterWithThreeNodes(t *testing.T) {
 		},
 		NodeCount:  3,
 		K8sVersion: "v1.29.2",
+		Arch:       runtime.GOARCH,
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -169,6 +173,7 @@ func TestCollectClusterIDInClusterWithOneNode(t *testing.T) {
 		NodeCount:  1,
 		ClusterID:  "329766ff-5d78-4c9e-8736-7faad1f2e937",
 		K8sVersion: "v1.29.2",
+		Arch:       runtime.GOARCH,
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -206,6 +211,7 @@ func TestCollectK8sVersion(t *testing.T) {
 		NodeCount:  1,
 		ClusterID:  "329766ff-5d78-4c9e-8736-7faad1f2e937",
 		K8sVersion: "v1.29.2",
+		Arch:       runtime.GOARCH,
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -231,12 +237,14 @@ func TestCountVirtualServers(t *testing.T) {
 					VirtualServers: 1,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
 					VirtualServers: 0,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -258,12 +266,14 @@ func TestCountVirtualServers(t *testing.T) {
 					VirtualServers: 2,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
 					VirtualServers: 0,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -294,12 +304,14 @@ func TestCountVirtualServers(t *testing.T) {
 					VirtualServers: 2,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
 					VirtualServers: 1,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -389,12 +401,14 @@ func TestCountTransportServers(t *testing.T) {
 					TransportServers: 1,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
 					TransportServers: 0,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -420,12 +434,14 @@ func TestCountTransportServers(t *testing.T) {
 					TransportServers: 2,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
 					TransportServers: 0,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -464,12 +480,14 @@ func TestCountTransportServers(t *testing.T) {
 					TransportServers: 2,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				NICResourceCounts: telemetry.NICResourceCounts{
 					TransportServers: 1,
 				},
 				K8sVersion: "v1.29.2",
+				Arch:       runtime.GOARCH,
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -609,7 +627,7 @@ func newConfigurator(t *testing.T) *configs.Configurator {
 //	  Compiler     string
 //	  Platform     string
 //	}
-func newTestClientset(objects ...runtime.Object) *testClient.Clientset {
+func newTestClientset(objects ...k8sruntime.Object) *testClient.Clientset {
 	testClient := testClient.NewSimpleClientset(objects...)
 	testClient.Discovery().(*fakediscovery.FakeDiscovery).FakedServerVersion = &version.Info{
 		GitVersion: "v1.29.2",
