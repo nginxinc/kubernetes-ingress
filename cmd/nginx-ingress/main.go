@@ -52,6 +52,7 @@ const (
 	appProtectVersionPath  = "/opt/app_protect/VERSION"
 )
 
+// This is the start of the program
 func main() {
 	commitHash, commitTime, dirtyBuild := getBuildInfo()
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
@@ -277,6 +278,7 @@ func main() {
 	}
 }
 
+// This function returns a k8s client object configuration
 func getClientConfig() (config *rest.Config, err error) {
 	if *proxyURL != "" {
 		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -293,11 +295,14 @@ func getClientConfig() (config *rest.Config, err error) {
 	return config, err
 }
 
+// This returns a k8s client with the provided client config for interacting with the k8s API
 func getKubeClient(config *rest.Config) (kubeClient *kubernetes.Clientset, err error) {
 	kubeClient, err = kubernetes.NewForConfig(config)
 	return kubeClient, err
 }
 
+// This function checks that KIC is running on at least a prescribed minimum k8s version or higher for supportability
+// Anything lower throws than the prescribed version, an error is returned to the caller
 func confirmMinimumK8sVersionCriteria(kubeClient kubernetes.Interface) (err error) {
 	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
 	if err != nil {
@@ -316,6 +321,13 @@ func confirmMinimumK8sVersionCriteria(kubeClient kubernetes.Interface) (err erro
 	return err
 }
 
+// An Ingress resource can target a specific Ingress controller instance.
+// This is useful when running multiple ingress controllers in the same cluster.
+// Targeting an Ingress controller means only a specific controller should handle/implement the ingress resource.
+// This can be done using either the IngressClassName field or the ingress.class annotation
+// This function confirms that the Ingress resource is meant to be handled by NGINX Ingress Controller.
+// Otherwise an error is returned to the caller
+// This is defined in the const k8s.IngressControllerName
 func validateIngressClass(kubeClient kubernetes.Interface) (err error) {
 	ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
 	if err != nil {
@@ -329,6 +341,10 @@ func validateIngressClass(kubeClient kubernetes.Interface) (err error) {
 	return err
 }
 
+// The objective of this function is to confirm the presence of the list of namepsaces in the k8s cluster.
+// The list is provided via -watch-namespace and -watch-namespace-label cmdline options
+// The function may log an error if it failed to get the namespace(s) via the label selector
+// The secrets namespace is watched in the same vein specified via -watch-secret-namespace cmdline option
 func checkNamespaces(kubeClient kubernetes.Interface) {
 	if *watchNamespaceLabel != "" {
 		watchNamespaces = getWatchedNamespaces(kubeClient)
@@ -338,6 +354,7 @@ func checkNamespaces(kubeClient kubernetes.Interface) {
 	checkNamespaceExists(kubeClient, watchSecretNamespaces)
 }
 
+// This is a helper function for fetching the all the namespaces in the cluster
 func getWatchedNamespaces(kubeClient kubernetes.Interface) (newWatchNamespaces []string) {
 	// bootstrap the watched namespace list
 	nsList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), meta_v1.ListOptions{LabelSelector: *watchNamespaceLabel})
@@ -352,6 +369,7 @@ func getWatchedNamespaces(kubeClient kubernetes.Interface) (newWatchNamespaces [
 	return newWatchNamespaces
 }
 
+// This is a helper function for confirming the presence of input  namespaces
 func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) {
 	for _, ns := range namespaces {
 		if ns != "" {
@@ -379,6 +397,7 @@ func createConfigClient(config *rest.Config) (configClient k8s_nginx.Interface, 
 	return configClient, err
 }
 
+// Creates a new dynamic client or returns an error
 func createDynamicClient(config *rest.Config) (dynClient dynamic.Interface, err error) {
 	if *appProtectDos || *appProtect || *ingressLink != "" {
 		dynClient, err = dynamic.NewForConfig(config)
@@ -389,6 +408,7 @@ func createDynamicClient(config *rest.Config) (dynClient dynamic.Interface, err 
 	return dynClient, err
 }
 
+// Returns a NGINX plus client config to talk to the N+ API
 func createPlusClient(nginxPlus bool, useFakeNginxManager bool, nginxManager nginx.Manager) (plusClient *client.NginxClient, err error) {
 	if nginxPlus && !useFakeNginxManager {
 		httpClient := getSocketClient("/var/lib/nginx/nginx-plus-api.sock")
@@ -401,6 +421,7 @@ func createPlusClient(nginxPlus bool, useFakeNginxManager bool, nginxManager ngi
 	return plusClient, nil
 }
 
+// Returns a version 1 of the template
 func createV1TemplateExecutors() (templateExecutor *version1.TemplateExecutor, err error) {
 	nginxConfTemplatePath := "nginx.tmpl"
 	nginxIngressTemplatePath := "nginx.ingress.tmpl"
@@ -425,6 +446,7 @@ func createV1TemplateExecutors() (templateExecutor *version1.TemplateExecutor, e
 	return templateExecutor, nil
 }
 
+// Returns a version 2 of the template
 func createV2TemplateExecutors() (templateExecutorV2 *version2.TemplateExecutor, err error) {
 	nginxVirtualServerTemplatePath := "nginx.virtualserver.tmpl"
 	nginxTransportServerTemplatePath := "nginx.transportserver.tmpl"
@@ -448,6 +470,7 @@ func createV2TemplateExecutors() (templateExecutorV2 *version2.TemplateExecutor,
 	return templateExecutorV2, nil
 }
 
+// Returns a handle to a manager interface for managing the configuration of NGINX
 func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Manager, bool) {
 	useFakeNginxManager := *proxyURL != ""
 	var nginxManager nginx.Manager
@@ -460,6 +483,7 @@ func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Man
 	return nginxManager, useFakeNginxManager
 }
 
+// Returns the NGINX version depending on OSS or Plus versions
 func getNginxVersionInfo(nginxManager nginx.Manager) (nginxInfo nginx.Version, err error) {
 	nginxInfo = nginxManager.Version()
 	glog.Infof("Using %s", nginxInfo.String())
@@ -472,6 +496,7 @@ func getNginxVersionInfo(nginxManager nginx.Manager) (nginxInfo nginx.Version, e
 	return nginxInfo, err
 }
 
+// Returns the version of App-Protect running on the system
 func getAppProtectVersionInfo() (version string, err error) {
 	v, err := os.ReadFile(appProtectVersionPath)
 	if err != nil {
@@ -490,6 +515,7 @@ type childProcessConfig struct {
 	aPDosDone      chan error
 }
 
+// Procedure to start the App-Protect and DOS Protect daemons
 func startChildProcesses(nginxManager nginx.Manager) childProcessConfig {
 	var aPPluginDone chan error
 
@@ -517,6 +543,8 @@ func startChildProcesses(nginxManager nginx.Manager) childProcessConfig {
 	}
 }
 
+// Applies the server secret config as provided via the cmdline option -default-server-tls-secret or the default
+// Returns a boolean for rejecting the SSL handshake
 func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (sslRejectHandshake bool, err error) {
 	sslRejectHandshake = false
 	if *defaultServerSecret != "" {
@@ -541,6 +569,8 @@ func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager n
 	return sslRejectHandshake, nil
 }
 
+// Applies the wildcard server secret config as provided via the cmdline option -wildcard-tls-secret or the default
+// Returns a boolean for rejecting the SSL handshake
 func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (isWildcardTLSSecret bool, err error) {
 	isWildcardTLSSecret = false
 	if *wildcardTLSSecret != "" {
@@ -556,6 +586,8 @@ func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.
 	return isWildcardTLSSecret, nil
 }
 
+// This returns a list of ports and corresponding boolean on the status of the service is enabled
+// This depends on
 func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationValidator {
 	forbiddenListenerPorts := map[int]bool{
 		80:  true,
@@ -580,6 +612,7 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
 }
 
+// Generates the main NGINX config and the open tracing config
 func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) (err error) {
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
@@ -663,6 +696,8 @@ func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manag
 	os.Exit(0)
 }
 
+// Handler/callback function when KIC's NGINX software declares itself ready via the -ready-status cmdline option
+// This function is called by http.NewServeMux which probes the /nginx-ready endpoint via an HTTP request.
 func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		if !lbc.IsNginxReady() {
@@ -674,6 +709,7 @@ func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 	}
 }
 
+// This procedure creates various managers for KIC operation
 func createManagerAndControllerCollectors(constLabels map[string]string) (collectors.ManagerCollector, collectors.ControllerCollector, *prometheus.Registry) {
 	var err error
 
@@ -713,6 +749,7 @@ func createManagerAndControllerCollectors(constLabels map[string]string) (collec
 	return mc, cc, registry
 }
 
+// Creates an NGINX Plus and Latency Collector
 func createPlusAndLatencyCollectors(
 	registry *prometheus.Registry,
 	constLabels map[string]string,
@@ -734,6 +771,7 @@ func createPlusAndLatencyCollectors(
 	return plusCollector, syslogListener, latencyCollector
 }
 
+// Helper function to creates an NGINX Plus Collector
 func createNginxPlusCollector(registry *prometheus.Registry, constLabels map[string]string, kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, upstreamServerVariableLabels []string, upstreamServerPeerVariableLabelNames []string) *nginxCollector.NginxPlusCollector {
 	var plusCollector *nginxCollector.NginxPlusCollector
 	var prometheusSecret *api_v1.Secret
@@ -767,6 +805,7 @@ func createNginxPlusCollector(registry *prometheus.Registry, constLabels map[str
 	return plusCollector
 }
 
+// Helper that returns a latency metrics collect via syslog
 func createLatencyCollector(registry *prometheus.Registry, constLabels map[string]string, upstreamServerVariableLabels []string, upstreamServerPeerVariableLabelNames []string) (metrics.SyslogListener, collectors.LatencyCollector) {
 	var lc collectors.LatencyCollector
 	lc = collectors.NewLatencyFakeCollector()
@@ -787,6 +826,8 @@ func createLatencyCollector(registry *prometheus.Registry, constLabels map[strin
 	return syslogListener, lc
 }
 
+// This function starts a go routine (a lightweight thread of execution) for health checks against service insight listener ports
+// An error is returned if there is a problem with the TLS secret for the Insight service
 func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) (err error) {
 	if !*enableServiceInsight {
 		return nil
@@ -803,6 +844,8 @@ func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *cli
 	return nil
 }
 
+// Parses the cmdline option -global-configuration (requires -enable-custom-resources)
+// Returns an error either if there is a problem with -global-configuration or -enable-custom-resources is not set
 func processGlobalConfiguration() (err error) {
 	if *globalConfiguration != "" {
 		_, _, err := k8s.ParseNamespaceName(*globalConfiguration)
@@ -817,6 +860,8 @@ func processGlobalConfiguration() (err error) {
 	return nil
 }
 
+// Parses a ConfigMap resource for customizing NGINX configuration provided via the cmdline option -nginx-configmaps
+// Returns an error if unable to parse the ConfigMap
 func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) (*configs.ConfigParams, error) {
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
@@ -852,6 +897,8 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams, nil
 }
 
+// This function updates the labels of the NGINX Ingress Controller
+// An error is returned if its unable to retrieve pod info and other problems along the way
 func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, appProtectVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
 	podUpdated := false
 
