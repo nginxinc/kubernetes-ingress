@@ -20,7 +20,7 @@ This repo provides an implementation of an Ingress Controller for NGINX and NGIN
 
 ---
 
-## Join Our Next Community Call!
+## Join Our Next Community Call
 
 We value community input and would love to see you at our next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
 
