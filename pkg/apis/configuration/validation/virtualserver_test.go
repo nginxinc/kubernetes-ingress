@@ -119,10 +119,6 @@ func makeVirtualServer() v1.VirtualServer {
 	}
 }
 
-func createPointerFromString(s string) *string {
-	return &s
-}
-
 func TestValidateFailsOnMissingBackupPort(t *testing.T) {
 	t.Parallel()
 
