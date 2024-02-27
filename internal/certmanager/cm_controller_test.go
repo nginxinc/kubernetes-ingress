@@ -154,7 +154,8 @@ func Test_controller_Register(t *testing.T) {
 				vsClient:      b.VSClient,
 			}
 
-			cm.addHandlers(nsi)
+			err := cm.addHandlers(nsi)
+			assert.Nil(t, err)
 
 			queue := cm.register()
 
