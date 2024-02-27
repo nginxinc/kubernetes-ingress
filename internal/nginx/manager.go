@@ -456,13 +456,16 @@ func verifyConfigVersion(httpClient *http.Client, configVersion int, timeout tim
 	if err != nil {
 		return fmt.Errorf("error doing request: %w", err)
 	}
-	defer resp.Body.Close()
+	err = nil
+	defer func() {
+		err = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("API returned non-success status: %v", resp.StatusCode)
 	}
 
-	return nil
+	return err
 }
 
 // SetOpenTracing sets the value of OpenTracing for the Manager
