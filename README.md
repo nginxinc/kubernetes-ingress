@@ -24,8 +24,8 @@ This repo provides an implementation of an Ingress Controller for NGINX and NGIN
 
 We value community input and would love to see you at our next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
 
-**When**: Every other Monday at 4 PM Irish Time 
-**Zoom Link**: [KIC - GitHub Issues Triage](https://f5networks.zoom.us/j/91421953779?pwd=197738) 
+**When**: Every other Monday at 4 PM Irish Time
+**Zoom Link**: [KIC - GitHub Issues Triage](https://f5networks.zoom.us/j/91421953779?pwd=197738)
 **Password**: 197738
 
 | **Dates**      | **Irish Time** | **GMT**  |
