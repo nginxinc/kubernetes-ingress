@@ -6,6 +6,7 @@ repos:
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
+        exclude: '(\.md$)'
       - id: end-of-file-fixer
       - id: check-yaml
         args: [--allow-multiple-documents]
