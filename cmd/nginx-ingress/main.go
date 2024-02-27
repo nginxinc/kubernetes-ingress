@@ -72,8 +72,7 @@ func main() {
 		glog.Fatal(err)
 	}
 
-	err = validateIngressClass(kubeClient)
-	if err != nil {
+	if err := validateIngressClass(kubeClient); err != nil {
 		glog.Fatal(err)
 	}
 
@@ -131,8 +130,7 @@ func main() {
 
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
-	err = processGlobalConfiguration()
-	if err != nil {
+	if err := processGlobalConfiguration(); err != nil {
 		glog.Fatal(err)
 	}
 
@@ -167,8 +165,7 @@ func main() {
 		NginxVersion:                   nginxVersion,
 	}
 
-	err = processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
-	if err != nil {
+	if err := processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager); err != nil {
 		glog.Fatal(err)
 	}
 
@@ -211,8 +208,7 @@ func main() {
 		cr_validation.IsExternalDNSEnabled(*enableExternalDNS),
 	)
 
-	err = createHealthProbeEndpoint(kubeClient, plusClient, cnf)
-	if err != nil {
+	if err := createHealthProbeEndpoint(kubeClient, plusClient, cnf); err != nil {
 		glog.Fatal(err)
 	}
 
