@@ -212,6 +212,7 @@ type NewLoadBalancerControllerInput struct {
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
 	TelemetryReportingPeriod     string
+	NICVersion                   string
 }
 
 // NewLoadBalancerController creates a controller
@@ -351,6 +352,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			CustomK8sClientReader: input.ConfClient,
 			Period:                5 * time.Second,
 			Configurator:          lbc.configurator,
+			Version:               input.NICVersion,
 		}
 		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(

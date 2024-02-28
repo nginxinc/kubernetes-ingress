@@ -53,6 +53,9 @@ type CollectorConfig struct {
 	Period time.Duration
 
 	Configurator *configs.Configurator
+
+	// Version represents NIC version.
+	Version string
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -93,9 +96,15 @@ func (c *Collector) Collect(ctx context.Context) {
 
 // BuildReport takes context and builds report from gathered telemetry data.
 func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
-	d := Data{
-		Arch: runtime.GOARCH,
+	pm := ProjectMeta{
+		Name:    "NIC",
+		Version: c.Config.Version,
 	}
+	d := Data{
+		ProjectMeta: pm,
+		Arch:        runtime.GOARCH,
+	}
+
 	var err error
 
 	if c.Config.Configurator != nil {
