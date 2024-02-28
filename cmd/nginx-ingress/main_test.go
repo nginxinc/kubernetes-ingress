@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
@@ -26,7 +27,9 @@ func TestGetNginxVersionInfo(t *testing.T) {
 
 func TestGetAppProtectVersionInfo(t *testing.T) {
 	dataToWrite := "1.2.3\n"
-	f, err := os.CreateTemp("/var/tmp/", "dat1")
+	dirPath := path.Dir(appProtectVersionPath)
+	versionFile := path.Base(appProtectVersionPath)
+	f, err := os.CreateTemp(dirPath, versionFile)
 	if err != nil {
 		fmt.Println(err)
 		return
