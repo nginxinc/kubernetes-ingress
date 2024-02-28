@@ -269,8 +269,11 @@ jobs:
       - name: Check if base images exist
         id: base_exists
         run: |
-          docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ needs.checks.outputs.docker_md5 }}-debian
-          echo "exists=$?" >> $GITHUB_OUTPUT
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ needs.checks.outputs.docker_md5 }}-debian; then
+            echo "exists=0" >> $GITHUB_OUTPUT
+          else
+            echo "exists=1" >> $GITHUB_OUTPUT
+          fi
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Rebuild base images
