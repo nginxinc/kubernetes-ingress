@@ -14,7 +14,7 @@ data:
 {{ toYaml (default dict .Values.controller.config.entries) | indent 2 }}
 {{- end }}
 ---
-{{- if and .Values.nginxAgent.enable (not .Values.nginxAgent.customConfigMap) }}
+{{- if and .Values.nginxAgent.enable (eq (.Values.nginxAgent.customConfigMap | default "") "") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -28,50 +28,5 @@ metadata:
 {{- end }}
 data:
   nginx-agent.conf: |-
-    instance_group: nic-deployment
-    log:
-      level: {{ .Values.nginxAgent.logLevel }}
-      path: ""
-    server:
-      host: {{ .Values.nginxAgent.instanceManager.host }}
-      grpcPort: {{ .Values.nginxAgent.instanceManager.grpcPort }}
-    {{- if .Values.nginxAgent.instanceManager.tls.enable }}
-    tls:
-      # enable tls in the nginx-agent setup for grpcs
-      # default to enable to connect with tls connection but without client cert for mtls
-      enable: true
-      skip_verify:  {{ .Values.nginxAgent.instanceManager.tls.skipVerify }}
-      # path to ca certificate file used for server cert validation
-      ca: ""
-      # path to cert and key files for mTLS
-      cert: ""
-      key: ""
-    {{- end }}
-    features:
-      - registration
-      - nginx-counting
-      - metrics-sender
-      - metrics-collection
-      - dataplane-status
-    extensions:
-      - nginx-app-protect
-      - nap-monitoring
-      - advanced-metrics
-    nginx_app_protect:
-      report_interval: 15s
-      precompiled_publication: true
-    nap_monitoring:
-      collector_buffer_size: 50000
-      processor_buffer_size: 50000
-      syslog_ip: "127.0.0.1"
-      syslog_port: 1514
-    advanced_metrics:
-      socket_path: /var/run/nginx-agent/advanced-metrics.sock
-      aggregation_period: 1s
-      publishing_period: 3s
-      table_sizes_limits:
-        staging_table_max_size: 1000
-        staging_table_threshold: 1000
-        priority_table_max_size: 1000
-        priority_table_threshold: 1000
+{{ include "nginx-ingress.agentConfiguration" . | indent 4 }}
 {{- end }}

@@ -1853,6 +1853,33 @@
               "examples": [
                 443
               ]
+            },
+            "tls": {
+              "type": "object",
+              "default": {},
+              "title": "TLS configuration for connection between NGINX Agent and Instance Manager",
+              "properties": {
+                "enable": {
+                  "type": "boolean",
+                  "default": "false",
+                  "title": "enable TLS for Instance Manager connection"
+                },
+                "secret": {
+                  "type": "string",
+                  "default": "",
+                  "title": "Name of the kubernetes.io/tls secret used for TLS connection to Instance Manager"
+                },
+                "caSecret": {
+                  "type": "string",
+                  "default": "",
+                  "title": "Name of the nginx.org/ca secret used for verification"
+                },
+                "skipVerify": {
+                  "type": "boolean",
+                  "default": "false",
+                  "title": "skip certificate verification"
+                }
+              }
             }
           }
         }

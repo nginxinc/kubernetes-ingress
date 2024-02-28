@@ -556,23 +556,24 @@ nginxServiceMesh:
 nginxAgent:
   ## Enables NGINX Agent.
   enable: false
-## If nginxAgent.instanceGroup is not set the value of nginx-ingress.controller.fullname will be used
-# instanceGroup: ""
-# logLevel: "error"
-# syslog:
-#   host: "127.0.0.1"
-#   port: 1514
-# instanceManager:
-#   host:
-#   grpcPort: 443
-#   tls:
-#     enabled: false
-#     skipVerify: true
-#     ## The secret with a TLS certificate and key for the default HTTPS server.
-#     ## The value must follow the following format: `<namespace>/<name>`.
-#     ## Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters.
-#     ## Note: Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
-#     ## Format: <namespace>/<secret_name>
-#     secret: ""
-# ## The custom ConfigMap to use instead of the one provided by default
-# customConfigMap: ""
+  ## If nginxAgent.instanceGroup is not set the value of nginx-ingress.controller.fullname will be used
+  instanceGroup: ""
+  logLevel: "error"
+  syslog:
+    host: "127.0.0.1"
+    port: 1514
+  instanceManager:
+    host: ""
+    grpcPort: 443
+    tls:
+      enabled: false
+      skipVerify: false
+      ## The secret with a TLS certificate and key for the default HTTPS server.
+      ## The value must follow the following format: `<namespace>/<name>`.
+      ## Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters.
+      ## Note: Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
+      ## Format: <namespace>/<secret_name>
+      secret: ""
+      caSecret: ""
+  ## The custom ConfigMap to use instead of the one provided by default
+  customConfigMap: ""

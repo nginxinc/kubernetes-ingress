@@ -58,6 +58,9 @@ helm.sh/chart: {{ include "nginx-ingress.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if and .Values.nginxAgent.enable (eq (.Values.nginxAgent.customConfigMap | default "") "") }}
+agent-configuration-revision-hash: {{ include "nginx-ingress.agentConfiguration" . | sha1sum | trunc 8 | quote }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -87,7 +90,7 @@ Expand the name of the configmap.
 Expand the name of the configmap used for NGINX Agent.
 */}}
 {{- define "nginx-ingress.agentConfigName" -}}
-{{- if .Values.nginxAgent.customConfigMap -}}
+{{- if ne (.Values.nginxAgent.customConfigMap | default "") "" -}}
 {{ .Values.nginxAgent.customConfigMap }}
 {{- else -}}
 {{- printf "%s-agent-config"  (include "nginx-ingress.fullname" . | trunc 49 | trimSuffix "-") -}}
@@ -308,4 +311,50 @@ volumeMounts:
 {{- if .Values.controller.volumeMounts}}
 {{ toYaml .Values.controller.volumeMounts }}
 {{- end }}
+{{- end -}}
+
+{{- define "nginx-ingress.agentConfiguration" -}}
+log:
+  level: {{ .Values.nginxAgent.logLevel }}
+  path: ""
+server:
+  host: {{ .Values.nginxAgent.instanceManager.host }}
+  grpcPort: {{ .Values.nginxAgent.instanceManager.grpcPort }}
+{{- if .Values.nginxAgent.instanceManager.tls  }}
+tls:
+  enable: {{ .Values.nginxAgent.instanceManager.tls.enable | default false }}
+  skip_verify:  {{ .Values.nginxAgent.instanceManager.tls.skipVerify | default false }}
+  {{- if ne .Values.nginxAgent.instanceManager.tls.caSecret "" -}}
+  ca: ""
+  {{- end }}
+  cert: ""
+  key: ""
+{{- end }}
+features:
+  - registration
+  - nginx-counting
+  - metrics-sender
+  - metrics-collection
+  - dataplane-status
+extensions:
+  - nginx-app-protect
+  - nap-monitoring
+  - advanced-metrics
+nginx_app_protect:
+  report_interval: 15s
+  precompiled_publication: true
+nap_monitoring:
+  collector_buffer_size: 50000
+  processor_buffer_size: 50000
+  syslog_ip: "127.0.0.1"
+  syslog_port: 1514
+advanced_metrics:
+  socket_path: /var/run/nginx-agent/advanced-metrics.sock
+  aggregation_period: 1s
+  publishing_period: 3s
+  table_sizes_limits:
+    staging_table_max_size: 1000
+    staging_table_threshold: 1000
+    priority_table_max_size: 1000
+    priority_table_threshold: 1000
 {{- end -}}
