@@ -25,3 +25,13 @@ func (c *Collector) ClusterID(ctx context.Context) (string, error) {
 	}
 	return string(cluster.UID), nil
 }
+
+// K8sVersion returns a string respresenting the K8s version.
+// It returns an error if the underlying k8s API client errors.
+func (c *Collector) K8sVersion() (string, error) {
+	sv, err := c.Config.K8sClientReader.Discovery().ServerVersion()
+	if err != nil {
+		return "", err
+	}
+	return sv.String(), nil
+}
