@@ -7,6 +7,8 @@ import (
 	"path"
 	"testing"
 
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 )
 
@@ -55,5 +57,51 @@ func TestGetAppProtectVersionInfo(t *testing.T) {
 
 	if version == "" {
 		t.Errorf("Error with AppProtect Version, is empty")
+	}
+}
+
+func TestCreateGlobalConfigurationValidator(t *testing.T) {
+	globalConfiguration := conf_v1.GlobalConfiguration{
+		Spec: conf_v1.GlobalConfigurationSpec{
+			Listeners: []conf_v1.Listener{
+				{
+					Name:     "tcp-listener",
+					Port:     53,
+					Protocol: "TCP",
+				},
+				{
+					Name:     "udp-listener",
+					Port:     53,
+					Protocol: "UDP",
+				},
+			},
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	if err := gcv.ValidateGlobalConfiguration(&globalConfiguration); err != nil {
+		t.Errorf("ValidateGlobalConfiguration() returned error %v for valid input", err)
+	}
+
+	incorrectGlobalConf := conf_v1.GlobalConfiguration{
+		Spec: conf_v1.GlobalConfigurationSpec{
+			Listeners: []conf_v1.Listener{
+				{
+					Name:     "tcp-listener",
+					Port:     53,
+					Protocol: "TCPT",
+				},
+				{
+					Name:     "udp-listener",
+					Port:     53,
+					Protocol: "UDP",
+				},
+			},
+		},
+	}
+
+	if err := gcv.ValidateGlobalConfiguration(&incorrectGlobalConf); err == nil {
+		t.Errorf("ValidateGlobalConfiguration() returned error %v for invalid input", err)
 	}
 }
