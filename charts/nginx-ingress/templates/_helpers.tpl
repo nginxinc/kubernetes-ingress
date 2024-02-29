@@ -58,9 +58,6 @@ helm.sh/chart: {{ include "nginx-ingress.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if and .Values.nginxAgent.enable (eq (.Values.nginxAgent.customConfigMap | default "") "") }}
-agent-configuration-revision-hash: {{ include "nginx-ingress.agentConfiguration" . | sha1sum | trunc 8 | quote }}
-{{- end }}
 {{- end }}
 
 {{/*
@@ -72,6 +69,9 @@ Pod labels
 nsm.nginx.com/enable-ingress: "true"
 nsm.nginx.com/enable-egress: "{{ .Values.nginxServiceMesh.enableEgress }}"
 nsm.nginx.com/{{ .Values.controller.kind }}: {{ include "nginx-ingress.controller.fullname" . }}
+{{- end }}
+{{- if and .Values.nginxAgent.enable (eq (.Values.nginxAgent.customConfigMap | default "") "") }}
+agent-configuration-revision-hash: {{ include "nginx-ingress.agentConfiguration" . | sha1sum | trunc 8 | quote }}
 {{- end }}
 {{- if .Values.controller.pod.extraLabels }}
 {{ toYaml .Values.controller.pod.extraLabels }}
@@ -288,10 +288,10 @@ Build the args for the service binary.
 Volumes for controller.
 */}}
 {{- define "nginx-ingress.volumes" -}}
-{{- if or (eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.volumes }}
+{{- $volumesSet := "false" }}
 volumes:
-{{- end }}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
+{{- $volumesSet = "true" }}
 - name: nginx-etc
   emptyDir: {}
 - name: nginx-cache
@@ -302,18 +302,41 @@ volumes:
   emptyDir: {}
 {{- end }}
 {{- if .Values.controller.volumes }}
+{{- $volumesSet = "true" }}
 {{ toYaml .Values.controller.volumes }}
 {{- end }}
+{{- if .Values.nginxAgent.enable -}}
+{{- $volumesSet = "true" }}
+- name: agent-conf
+  configMap:
+    name: {{ include "nginx-ingress.agentConfigName" . }}
+- name: agent-dynamic
+  emptyDir: {}
+{{- if and .Values.nginxAgent.instanceManager.tls (ne (.Values.nginxAgent.instanceManager.tls.secret | default "") "") }}
+- name: nginx-agent-tls
+  projected:
+    sources:
+      - secret:
+          name: {{ .Values.nginxAgent.instanceManager.tls.secret }}
+{{- if .Values.nginxAgent.instanceManager.tls.caSecret }}
+      - secret:
+          name: {{ .Values.nginxAgent.instanceManager.tls.caSecret }}
+{{- end }}
+{{- end }}
+{{- end -}}
+{{- if eq $volumesSet "false" -}}
+{{ toYaml list | printf " %s" }}
+{{- end -}}
 {{- end -}}
 
 {{/*
 Volume mounts for controller.
 */}}
 {{- define "nginx-ingress.volumeMounts" -}}
-{{- if or ( eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.volumeMounts }}
+{{- $volumeMountSet := "false" }}
 volumeMounts:
-{{- end }}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
+{{- $volumeMountSet = "true" }}
 - mountPath: /etc/nginx
   name: nginx-etc
 - mountPath: /var/cache/nginx
@@ -323,9 +346,26 @@ volumeMounts:
 - mountPath: /var/log/nginx
   name: nginx-log
 {{- end }}
-{{- if .Values.controller.volumeMounts}}
+{{- if .Values.controller.volumeMounts }}
+{{- $volumeMountSet = "true" }}
 {{ toYaml .Values.controller.volumeMounts }}
 {{- end }}
+{{- if .Values.nginxAgent.enable -}}
+{{- $volumeMountSet = "true" }}
+- name: agent-conf
+  mountPath: /etc/nginx-agent/nginx-agent.conf
+  subPath: nginx-agent.conf
+- name: agent-dynamic
+  mountPath: /var/lib/nginx-agent
+{{- if and .Values.nginxAgent.instanceManager.tls .Values.nginxAgent.instanceManager.tls.secret }}
+- name: nginx-agent-tls
+  mountPath: /etc/ssl/nms
+  readOnly: true
+{{- end }}
+{{- end -}}
+{{- if eq $volumeMountSet "false" -}}
+{{ toYaml list | printf " %s" }}
+{{- end -}}
 {{- end -}}
 
 {{- define "nginx-ingress.agentConfiguration" -}}
@@ -338,12 +378,14 @@ server:
 {{- if .Values.nginxAgent.instanceManager.tls  }}
 tls:
   enable: {{ .Values.nginxAgent.instanceManager.tls.enable | default false }}
-  skip_verify:  {{ .Values.nginxAgent.instanceManager.tls.skipVerify | default false }}
-  {{- if ne .Values.nginxAgent.instanceManager.tls.caSecret "" -}}
-  ca: ""
+  skip_verify: {{ .Values.nginxAgent.instanceManager.tls.skipVerify | default false }}
+  {{- if ne .Values.nginxAgent.instanceManager.tls.caSecret "" }}
+  ca: "/etc/ssl/nms/ca.crt"
   {{- end }}
-  cert: ""
-  key: ""
+  {{- if ne .Values.nginxAgent.instanceManager.tls.secret "" }}
+  cert: "/etc/ssl/nms/tls.crt"
+  key: "/etc/ssl/nms/tls.key"
+  {{- end }}
 {{- end }}
 features:
   - registration
@@ -372,4 +414,5 @@ advanced_metrics:
     staging_table_threshold: 1000
     priority_table_max_size: 1000
     priority_table_threshold: 1000
-{{- end -}}
+
+{{ end -}}
