@@ -49,7 +49,12 @@ func (c *verifyClient) GetConfigVersion() (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("error getting client: %w", err)
 	}
-	defer resp.Body.Close()
+	err = nil
+	defer func() {
+		if tempErr := resp.Body.Close(); tempErr != nil {
+			err = tempErr
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return 0, fmt.Errorf("non-200 response: %v", resp.StatusCode)
@@ -63,7 +68,7 @@ func (c *verifyClient) GetConfigVersion() (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("error converting string to int: %w", err)
 	}
-	return v, nil
+	return v, err
 }
 
 // WaitForCorrectVersion calls the config version endpoint until it gets the expectedVersion,

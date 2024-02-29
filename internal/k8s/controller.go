@@ -1171,6 +1171,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 		glog.Warningf("unable to list Ingress resources for recently unwatched namespace %s", nsi.namespace)
 	} else {
 		for _, ing := range il.Items {
+			ing := ing // address gosec G601
 			key := getResourceKey(&ing.ObjectMeta)
 			delIngressList = append(delIngressList, key)
 			lbc.configuration.DeleteIngress(key)
@@ -2908,6 +2909,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 		}
 
 		for _, path := range rule.HTTP.Paths {
+			path := path // address gosec G601
 			podEndps := []podEndpoint{}
 			if validMinionPaths != nil && !validMinionPaths[path.Path] {
 				glog.V(3).Infof("Skipping path %s for minion Ingress %s", path.Path, ing.Name)

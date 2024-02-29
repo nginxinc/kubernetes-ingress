@@ -108,25 +108,21 @@ func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 	var err error
 
 	if c.Config.Configurator != nil {
-		d.NICResourceCounts.VirtualServers, d.NICResourceCounts.VirtualServerRoutes = c.Config.Configurator.GetVirtualServerCounts()
-		d.NICResourceCounts.TransportServers = c.Config.Configurator.GetTransportServerCounts()
+		vsCount, vsrCount := c.Config.Configurator.GetVirtualServerCounts()
+		d.VirtualServers, d.VirtualServerRoutes = int64(vsCount), int64(vsrCount)
+		d.TransportServers = int64(c.Config.Configurator.GetTransportServerCounts())
 	}
-	nc, err := c.NodeCount(ctx)
-	if err != nil {
+
+	if d.NodeCount, err = c.NodeCount(ctx); err != nil {
 		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
 	}
-	d.NodeCount = nc
 
-	cID, err := c.ClusterID(ctx)
-	if err != nil {
+	if d.ClusterID, err = c.ClusterID(ctx); err != nil {
 		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
 	}
-	d.ClusterID = cID
 
-	k8s, err := c.K8sVersion()
-	if err != nil {
+	if d.K8sVersion, err = c.K8sVersion(); err != nil {
 		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
 	}
-	d.K8sVersion = k8s
 	return d, err
 }
