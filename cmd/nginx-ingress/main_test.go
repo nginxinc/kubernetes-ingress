@@ -7,9 +7,14 @@ import (
 	"path"
 	"testing"
 
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
+	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
 // Test for getNginxVersionInfo()
@@ -103,5 +108,58 @@ func TestCreateGlobalConfigurationValidator(t *testing.T) {
 
 	if err := gcv.ValidateGlobalConfiguration(&incorrectGlobalConf); err == nil {
 		t.Errorf("ValidateGlobalConfiguration() returned error %v for invalid input", err)
+	}
+}
+
+// Test valid (nginx) and invalid (other) ingress classes
+func TestValidateIngressClass(t *testing.T) {
+	// Define an IngressClass
+	{
+		ingressClass := &networkingv1.IngressClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nginx",
+			},
+			Spec: networkingv1.IngressClassSpec{
+				Controller: k8s.IngressControllerName,
+			},
+		}
+		// Create a fake client
+		clientset := fake.NewSimpleClientset(ingressClass)
+
+		validData := []struct {
+			clientset kubernetes.Interface
+		}{
+			{
+				clientset: clientset,
+			},
+		}
+
+		if err := validateIngressClass(validData[0].clientset); err != nil {
+			t.Fatalf("error in ingress class, error: %v", err)
+		}
+	}
+
+	// Test invalid case
+	{
+		ingressClass := &networkingv1.IngressClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "not-nginx",
+			},
+			Spec: networkingv1.IngressClassSpec{
+				Controller: "www.example.com/ingress-controller",
+			},
+		}
+		clientset := fake.NewSimpleClientset(ingressClass)
+		inValidData := []struct {
+			clientset kubernetes.Interface
+		}{
+			{
+				clientset: clientset,
+			},
+		}
+
+		if err := validateIngressClass(inValidData[0].clientset); err == nil {
+			t.Fatalf("validateIngressClass() returned no error for invalid input, error: %v", err)
+		}
 	}
 }
