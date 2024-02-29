@@ -27,12 +27,12 @@ func (e *StdoutExporter) Export(_ context.Context, data Data) error {
 
 // Data holds collected telemetry data.
 type Data struct {
-	ProjectMeta       ProjectMeta
-	NICResourceCounts NICResourceCounts
-	NodeCount         int
-	ClusterID         string
-	K8sVersion        string
-	Arch              string
+	ProjectMeta
+	NICResourceCounts
+	NodeCount  int64
+	ClusterID  string
+	K8sVersion string
+	Arch       string
 }
 
 // ProjectMeta holds metadata for the project.
@@ -43,9 +43,9 @@ type ProjectMeta struct {
 
 // NICResourceCounts holds a count of NIC specific resource.
 type NICResourceCounts struct {
-	VirtualServers      int
-	VirtualServerRoutes int
-	TransportServers    int
+	VirtualServers      int64
+	VirtualServerRoutes int64
+	TransportServers    int64
 }
 
 // Attributes is a placeholder function.
