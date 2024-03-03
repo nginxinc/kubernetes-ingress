@@ -18,6 +18,26 @@
 
 This repo provides an implementation of an Ingress Controller for NGINX and NGINX Plus from the people behind NGINX.
 
+---
+
+## Join Our Next Community Call
+
+We value community input and would love to see you at our next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
+
+**When**: Every other Monday at 4 PM Irish Time.  
+**Zoom Link**: [KIC - GitHub Issues Triage](https://f5networks.zoom.us/j/91421953779?pwd=197738)  
+**Password**: `197738`  
+**Slack**: Join our channel `#nginx-ingress-controller` on the [NGINX Community Slack](https://nginxcommunity.slack.com/channels/nginx-ingress-controller) for updates and discussions.  
+
+| **Date**      | **Irish Time** | **GMT**  |
+| -------------- | -------------- | -------- |
+| **2024-03-11** | **4 PM**       | **4 PM** |
+| **2024-03-25** | **4 PM**       | **4 PM** |
+| **2024-04-08** | **4 PM**       | **3 PM** |
+| **2024-04-22** | **4 PM**       | **3 PM** |
+
+---
+
 NGINX Ingress Controller works with both NGINX and NGINX Plus and supports the standard Ingress features - content-based
 routing and TLS/SSL termination.
 

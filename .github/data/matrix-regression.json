@@ -3,11 +3,15 @@
   "images": [
     {
       "label": "regression",
-      "image": "debian"
+      "image": "debian",
+      "type": "oss",
+      "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
     },
     {
       "label": "regression",
-      "image": "debian-plus"
+      "image": "debian-plus",
+      "type": "plus",
+      "platforms": "linux/arm64, linux/amd64"
     }
   ]
 }

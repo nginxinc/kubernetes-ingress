@@ -134,7 +134,7 @@ jobs:
         run: make cover
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@e0b68c6749509c5f83f984dd99a76a1c1a231044 # v4.0.1
+        uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4.1.0
         with:
           files: ./coverage.txt
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -234,10 +234,19 @@ jobs:
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-  rebuild-base-images:
-    name: Rebuild NIC Base images
+  helm-tests:
+    name: Helm Tests
     runs-on: ubuntu-22.04
-    needs: checks
+    needs: [checks, binaries]
+    strategy:
+      matrix:
+        include:
+          - image: debian
+            type: oss
+            platforms: "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+          - image: debian-plus
+            type: plus
+            platforms: "linux/arm64, linux/amd64"
     permissions:
       contents: read
       id-token: write
@@ -245,13 +254,24 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+        with:
+          platforms: ${{ matrix.platforms }}
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -269,57 +289,32 @@ jobs:
       - name: Check if base images exist
         id: base_exists
         run: |
-          docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ needs.checks.outputs.docker_md5 }}-debian
-          echo "exists=$?" >> $GITHUB_OUTPUT
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}; then
+            echo "exists=0" >> $GITHUB_OUTPUT
+          else
+            echo "exists=1" >> $GITHUB_OUTPUT
+          fi
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
-      - name: Rebuild base images
-        uses: ./.github/workflows/build-base-images.yml
+      - name: Build Base Container
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+          target: common
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}
+          platforms: ${{ matrix.platforms }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            IC_VERSION=${{ needs.checks.outputs.ic_version }}
+          secrets: |
+            ${{ matrix.type == 'plus' && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
+            ${{ matrix.type == 'plus' && format('"nginx-repo.key={0}"', secrets.NGINX_KEY) || '' }}
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
-
-  helm-tests:
-    name: Helm Tests
-    runs-on: ubuntu-22.04
-    needs: [checks, binaries, rebuild-base-images]
-    strategy:
-      matrix:
-        include:
-          - image: debian
-            type: oss
-          - image: debian-plus
-            type: plus
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-      - name: Fetch Cached Artifacts
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
-        with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
-
-      - name: Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
-
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
-        with:
-          token_format: access_token
-          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
-          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
-
-      - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
-        with:
-          registry: gcr.io
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
@@ -333,11 +328,11 @@ jobs:
           load: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
-            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ contains(matrix.image, 'plus') && 'plus' || 'oss' }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}
             IC_VERSION=CI
           secrets: |
-            ${{ contains(matrix.type, 'plus') && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
-            ${{ contains(matrix.type, 'plus') && format('"nginx-repo.key={0}"', secrets.NGINX_KEY) || '' }}
+            ${{ matrix.type == 'plus' && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
+            ${{ matrix.type == 'plus' && format('"nginx-repo.key={0}"', secrets.NGINX_KEY) || '' }}
 
       - name: Deploy Kubernetes
         id: k8s
@@ -386,7 +381,7 @@ jobs:
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
-    needs: [binaries, checks, rebuild-base-images]
+    needs: [binaries, checks]
     permissions:
       contents: read
       id-token: write
@@ -405,11 +400,11 @@ jobs:
           fi
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@a6e2e39c0a0331da29f7fd2c2a20a427e8d3ad1f # v2.1.1
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -424,7 +419,7 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
-      - name: Check if image exists
+      - name: Check if test image exists
         id: check-image
         run: |
           docker manifest inspect "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
@@ -457,6 +452,65 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+
+      - name: Login to GCR
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+
+      - name: Check if base images exist
+        id: base_exists
+        run: |
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}; then
+            echo "exists=0" >> $GITHUB_OUTPUT
+          else
+            echo "exists=1" >> $GITHUB_OUTPUT
+          fi
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+        with:
+          platforms: ${{ matrix.platforms }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
+
+      - name: Build Base Container
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha,scope=${{ matrix.images.image }}
+          cache-to: type=gha,scope=${{ matrix.images.image }},mode=max
+          target: common
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}
+          platforms: ${{ matrix.images.platforms }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ matrix.images.image }}
+            IC_VERSION=${{ needs.checks.outputs.ic_version }}
+            NAP_MODULES=${{ matrix.images.nap_modules }}
+          secrets: |
+            ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.crt={0}"', secrets.NGINX_AP_CRT) || format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) }}
+            ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.key={0}"', secrets.NGINX_AP_KEY) || format('"nginx-repo.key={0}"', secrets.NGINX_KEY) }}
+            ${{ contains(matrix.images.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
 
       - name: Run Smoke Tests
         id: smoke-tests

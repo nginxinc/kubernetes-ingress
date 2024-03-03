@@ -41,7 +41,7 @@ const (
 )
 
 // DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server. #nosec G101
-const DefaultServerSecretPath = "/etc/nginx/secrets/default"
+const DefaultServerSecretPath = "/etc/nginx/secrets/default" //nolint:gosec // G101: Potential hardcoded credentials - false positive
 
 // DefaultSecretPath is the full default path to where secrets are stored and accessed.
 const DefaultSecretPath = "/etc/nginx/secrets" // #nosec G101
@@ -1166,6 +1166,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 		}
 
 		for _, path := range rule.HTTP.Paths {
+			path := path // address gosec G601
 			endps, exists := ingEx.Endpoints[path.Backend.Service.Name+GetBackendPortAsString(path.Backend.Service.Port)]
 			if exists {
 				if _, isExternalName := ingEx.ExternalNameSvcs[path.Backend.Service.Name]; isExternalName {

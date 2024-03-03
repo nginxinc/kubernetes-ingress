@@ -47,6 +47,13 @@ lint-python: ## Run linter for python tests
 	@isort .
 	@black .
 
+.PHONY: format
+format: ## Run goimports & gofmt
+	@go install golang.org/x/tools/cmd/goimports
+	@go install mvdan.cc/gofumpt@latest
+	@goimports -l -w .
+	@gofumpt -l -w .
+
 .PHONY: staticcheck
 staticcheck: ## Run staticcheck linter
 	@staticcheck -version >/dev/null 2>&1 || go install honnef.co/go/tools/cmd/staticcheck@2022.1.3;
