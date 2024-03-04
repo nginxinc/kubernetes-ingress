@@ -345,6 +345,10 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.VirtualServerTemplate = &virtualServerTemplate
 	}
 
+	if transportServerTemplate, exists := cfgm.Data["transportserver-template"]; exists {
+		cfgParams.TransportServerTemplate = &transportServerTemplate
+	}
+
 	if mainStreamSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "stream-snippets", cfgm, "\n"); exists {
 		cfgParams.MainStreamSnippets = mainStreamSnippets
 	}
