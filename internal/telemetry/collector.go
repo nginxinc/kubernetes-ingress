@@ -3,10 +3,11 @@ package telemetry
 
 import (
 	"context"
-	telemetry "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 	"io"
 	"runtime"
 	"time"
+
+	telemetry "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 

@@ -24,14 +24,12 @@ import (
 	testClient "k8s.io/client-go/kubernetes/fake"
 )
 
-var (
-	commonData = exporter.Data{
-		ProjectName:         "NIC",
-		ProjectVersion:      "3.5.0",
-		ClusterVersion:      "v1.29.2",
-		ProjectArchitecture: runtime.GOARCH,
-	}
-)
+var commonData = exporter.Data{
+	ProjectName:         "NIC",
+	ProjectVersion:      "3.5.0",
+	ClusterVersion:      "v1.29.2",
+	ProjectArchitecture: runtime.GOARCH,
+}
 
 func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
 	t.Parallel()

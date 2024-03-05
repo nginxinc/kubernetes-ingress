@@ -1,5 +1,5 @@
-
 package telemetry
+
 /*
 This is a generated file. DO NOT EDIT.
 */
@@ -7,9 +7,7 @@ This is a generated file. DO NOT EDIT.
 import (
 	"go.opentelemetry.io/otel/attribute"
 
-
 	ngxTelemetry "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
-
 )
 
 func (d *Data) Attributes() []attribute.KeyValue {
@@ -17,7 +15,6 @@ func (d *Data) Attributes() []attribute.KeyValue {
 
 	attrs = append(attrs, d.Data.Attributes()...)
 	attrs = append(attrs, d.NICResourceCounts.Attributes()...)
-
 
 	return attrs
 }

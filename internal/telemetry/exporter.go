@@ -3,8 +3,9 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	"github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 	"io"
+
+	"github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 )
 
 // Exporter interface for exporters.
