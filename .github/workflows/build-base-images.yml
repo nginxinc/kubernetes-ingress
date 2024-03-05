@@ -127,7 +127,7 @@ jobs:
       - name: Setup QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
         with:
-          platforms: arm,arm64,ppc64le,s390x
+          platforms: arm64,s390x
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -203,11 +203,6 @@ jobs:
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
-        with:
-          platforms: arm,arm64,ppc64le,s390x
 
       - name: Authenticate to Google Cloud
         id: auth
