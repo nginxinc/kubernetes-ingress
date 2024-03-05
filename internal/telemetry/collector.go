@@ -129,5 +129,5 @@ func (c *Collector) BuildReport(ctx context.Context) (telemetry.Exportable, erro
 
 	// TODO: Get InstallationID
 	// example of how NGF gets this ID https://github.com/nginxinc/nginx-gateway-fabric/blob/f33db51fc9e05ccf98fc8cdae100772a5cc6775e/internal/mode/static/telemetry/collector.go#L244-L248
-	return d, err
+	return &d, err
 }

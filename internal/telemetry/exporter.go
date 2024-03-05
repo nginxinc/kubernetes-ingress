@@ -24,14 +24,21 @@ func (e *StdoutExporter) Export(_ context.Context, data telemetry.Exportable) er
 }
 
 // Data holds collected telemetry data.
+//
+//go:generate go run -tags=generator github.com/nginxinc/telemetry-exporter/cmd/generator -type Data -scheme -scheme-protocol=NICProductTelemetry -scheme-df-datatype=nic-product-telemetry -scheme-namespace=ingress.nginx.com
 type Data struct {
 	telemetry.Data
 	NICResourceCounts
 }
 
 // NICResourceCounts holds a count of NIC specific resource.
+//
+//go:generate go run -tags=generator github.com/nginxinc/telemetry-exporter/cmd/generator -type NICResourceCounts
 type NICResourceCounts struct {
-	VirtualServers      int64
+	// VirtualServer is the number of VirtualServer managed by the Ingress Controller.
+	VirtualServers int64
+	// VirtualServerRoutes is the number of VirtualServerRoutes managed by the Ingress Controller.
 	VirtualServerRoutes int64
-	TransportServers    int64
+	// TransportServers is the number of TransportServers managed by the Ingress Controller.
+	TransportServers int64
 }
