@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -51,6 +52,23 @@ const (
 	appProtectVersionLabel = "appprotect.f5.com/version"
 	appProtectVersionPath  = "/opt/app_protect/VERSION"
 )
+
+// FileHandle - Interface to read a file
+type FileHandle interface {
+	ReadFile(filename string) ([]byte, error)
+}
+
+// OSFileHandle - Struct to hold the interface to the reading a file
+type OSFileHandle struct{}
+
+// ReadFile - Actual implementation of the interface abstraction
+func (o *OSFileHandle) ReadFile(filename string) ([]byte, error) {
+	_, err := os.Open(filepath.Clean(filename))
+	if err != nil {
+		return nil, err
+	}
+	return os.ReadFile(filename)
+}
 
 // This is the start of the program
 func main() {
@@ -101,7 +119,8 @@ func main() {
 
 	var appProtectVersion string
 	if *appProtect {
-		appProtectVersion, err = getAppProtectVersionInfo()
+		osFileHandle := &OSFileHandle{}
+		appProtectVersion, err = getAppProtectVersionInfo(osFileHandle)
 		if err != nil {
 			glog.Fatal(err)
 		}
@@ -497,8 +516,8 @@ func getNginxVersionInfo(nginxManager nginx.Manager) (nginxInfo nginx.Version, e
 }
 
 // Returns the version of App-Protect running on the system
-func getAppProtectVersionInfo() (version string, err error) {
-	v, err := os.ReadFile(appProtectVersionPath)
+func getAppProtectVersionInfo(fd FileHandle) (version string, err error) {
+	v, err := fd.ReadFile(appProtectVersionPath)
 	if err != nil {
 		return version, fmt.Errorf("cannot detect the AppProtect version, %s", err.Error())
 	}

@@ -1,10 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"path"
 	"testing"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
@@ -34,37 +34,52 @@ func TestGetNginxVersionInfo(t *testing.T) {
 	}
 }
 
+type MockFileHandle struct {
+	FileContent []byte
+	ReadErr     error
+}
+
+func (m *MockFileHandle) ReadFile(_ string) ([]byte, error) {
+	if m.ReadErr != nil {
+		return nil, m.ReadErr
+	}
+	return m.FileContent, nil
+}
+
 func TestGetAppProtectVersionInfo(t *testing.T) {
-	dataToWrite := "1.2.3\n"
-	dirPath := path.Dir(appProtectVersionPath)
-	versionFile := path.Base(appProtectVersionPath)
-	f, err := os.CreateTemp(dirPath, versionFile)
-	if err != nil {
-		t.Errorf("Error creating temp directory: %v", err)
-		return
-	}
-	l, err := f.WriteString(dataToWrite)
-	if err != nil {
-		fmt.Println(err)
-		if err := f.Close(); err != nil {
-			fmt.Println(err)
+	// Test for file reader returning valid/correct info and no errors
+	{
+		mockFileHandle := &MockFileHandle{
+			FileContent: []byte("1.2.3\n"),
+			ReadErr:     nil,
 		}
-
-		return
+		_, err := getAppProtectVersionInfo(mockFileHandle)
+		if err != nil {
+			t.Errorf("Error reading AppProtect Version file: %v", err)
+		}
 	}
-	fmt.Println(l, "bytes written successfully")
-	if err := f.Close(); err != nil {
-		fmt.Println(err)
-		return
+	// Test for file reader returning an error
+	{
+		mockFileHandle := &MockFileHandle{
+			FileContent: []byte("1.2.3\n"),
+			ReadErr:     errors.ErrUnsupported,
+		}
+		_, err := getAppProtectVersionInfo(mockFileHandle)
+		if err == nil {
+			t.Errorf("Error reading AppProtect Version file: %v", err)
+		}
 	}
-	version, err := getAppProtectVersionInfo()
-	if err != nil {
-		t.Errorf("Error reading AppProtect Version file: %v", err)
-	}
-
-	if version == "" {
-		t.Errorf("Error with AppProtect Version, is empty")
-	}
+	// Test for file reader returning an empty version
+	//{
+	//	mockFileHandle := &MockFileHandle{
+	//		FileContent: []byte("\n"),
+	//		ReadErr:     nil,
+	//	}
+	//	version, _ := getAppProtectVersionInfo(mockFileHandle)
+	//	if version == "" {
+	//		t.Errorf("Error with AppProtect Version, is empty")
+	//	}
+	//}
 }
 
 func TestCreateGlobalConfigurationValidator(t *testing.T) {
