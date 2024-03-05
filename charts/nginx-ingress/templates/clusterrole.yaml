@@ -50,6 +50,12 @@ rules:
   - list
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+- apiGroups:
   - networking.k8s.io
   resources:
   - ingressclasses

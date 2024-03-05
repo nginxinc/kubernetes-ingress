@@ -4,6 +4,7 @@ package telemetry
 import (
 	"context"
 	"io"
+	"runtime"
 	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
@@ -52,6 +53,9 @@ type CollectorConfig struct {
 	Period time.Duration
 
 	Configurator *configs.Configurator
+
+	// Version represents NIC version.
+	Version string
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -79,8 +83,7 @@ func (c *Collector) Start(ctx context.Context) {
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	// TODO: Re-add ctx to BuildReport when collecting Node Count.
-	data, err := c.BuildReport()
+	data, err := c.BuildReport(ctx)
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: %v", err)
 	}
@@ -92,13 +95,34 @@ func (c *Collector) Collect(ctx context.Context) {
 }
 
 // BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport() (Data, error) {
-	d := Data{}
+func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
+	pm := ProjectMeta{
+		Name:    "NIC",
+		Version: c.Config.Version,
+	}
+	d := Data{
+		ProjectMeta: pm,
+		Arch:        runtime.GOARCH,
+	}
+
 	var err error
 
 	if c.Config.Configurator != nil {
-		d.NICResourceCounts.VirtualServers, d.NICResourceCounts.VirtualServerRoutes = c.Config.Configurator.GetVirtualServerCounts()
-		d.NICResourceCounts.TransportServers = c.Config.Configurator.GetTransportServerCounts()
+		vsCount, vsrCount := c.Config.Configurator.GetVirtualServerCounts()
+		d.VirtualServers, d.VirtualServerRoutes = int64(vsCount), int64(vsrCount)
+		d.TransportServers = int64(c.Config.Configurator.GetTransportServerCounts())
+	}
+
+	if d.NodeCount, err = c.NodeCount(ctx); err != nil {
+		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
+	}
+
+	if d.ClusterID, err = c.ClusterID(ctx); err != nil {
+		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
+	}
+
+	if d.K8sVersion, err = c.K8sVersion(); err != nil {
+		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
 	}
 	return d, err
 }

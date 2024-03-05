@@ -109,7 +109,6 @@ func SyncFnFor(
 		var certs []*cmapi.Certificate
 
 		certs, err = nsi.cmLister.Certificates(vs.GetNamespace()).List(labels.Everything())
-
 		if err != nil {
 			return err
 		}

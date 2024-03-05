@@ -342,7 +342,7 @@ func (lm *LocalManager) Quit() {
 // Version returns NGINX version
 func (lm *LocalManager) Version() Version {
 	binaryFilename := getBinaryFileName(lm.debug)
-	out, err := exec.Command(binaryFilename, "-v").CombinedOutput()
+	out, err := exec.Command(binaryFilename, "-v").CombinedOutput() //nolint:gosec // G204: Subprocess launched with variable - false positive, variable resolves to a const
 	if err != nil {
 		glog.Fatalf("Failed to get nginx version: %v", err)
 	}
@@ -456,13 +456,16 @@ func verifyConfigVersion(httpClient *http.Client, configVersion int, timeout tim
 	if err != nil {
 		return fmt.Errorf("error doing request: %w", err)
 	}
-	defer resp.Body.Close()
+	err = nil
+	defer func() {
+		err = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("API returned non-success status: %v", resp.StatusCode)
 	}
 
-	return nil
+	return err
 }
 
 // SetOpenTracing sets the value of OpenTracing for the Manager
@@ -481,7 +484,7 @@ func (lm *LocalManager) AppProtectPluginStart(appDone chan error, logLevel strin
 
 	glog.V(3).Info("Starting AppProtect Plugin")
 	startupParams := strings.Fields(appPluginParams)
-	cmd := exec.Command(appProtectPluginStartCmd, startupParams...)
+	cmd := exec.Command(appProtectPluginStartCmd, startupParams...) //nolint:gosec // G204: Subprocess launched with variable - false positive, variable resolves to a const
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout

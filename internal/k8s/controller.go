@@ -212,6 +212,7 @@ type NewLoadBalancerControllerInput struct {
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
 	TelemetryReportingPeriod     string
+	NICVersion                   string
 }
 
 // NewLoadBalancerController creates a controller
@@ -351,6 +352,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			CustomK8sClientReader: input.ConfClient,
 			Period:                5 * time.Second,
 			Configurator:          lbc.configurator,
+			Version:               input.NICVersion,
 		}
 		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(
@@ -813,7 +815,6 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, endpointSliceExists, err = lbc.getNamespacedInformer(ns).endpointSliceLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return false
@@ -1170,6 +1171,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 		glog.Warningf("unable to list Ingress resources for recently unwatched namespace %s", nsi.namespace)
 	} else {
 		for _, ing := range il.Items {
+			ing := ing // address gosec G601
 			key := getResourceKey(&ing.ObjectMeta)
 			delIngressList = append(delIngressList, key)
 			lbc.configuration.DeleteIngress(key)
@@ -1364,7 +1366,6 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, polExists, err = lbc.getNamespacedInformer(ns).policyLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1423,7 +1424,6 @@ func (lbc *LoadBalancerController) syncTransportServer(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, tsExists, err = lbc.getNamespacedInformer(ns).transportServerLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1502,7 +1502,6 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, vsExists, err = lbc.getNamespacedInformer(ns).virtualServerLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1611,7 +1610,6 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 
 				ns, _, _ := cache.SplitMetaNamespaceKey(key)
 				_, vsExists, err = lbc.getNamespacedInformer(ns).virtualServerLister.GetByKey(key)
-
 				if err != nil {
 					glog.Errorf("Error when getting VirtualServer for %v: %v", key, err)
 				}
@@ -1634,7 +1632,6 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 
 				ns, _, _ := cache.SplitMetaNamespaceKey(key)
 				_, ingExists, err = lbc.getNamespacedInformer(ns).ingressLister.GetByKeySafe(key)
-
 				if err != nil {
 					glog.Errorf("Error when getting Ingress for %v: %v", key, err)
 				}
@@ -1656,7 +1653,6 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 
 				ns, _, _ := cache.SplitMetaNamespaceKey(key)
 				_, tsExists, err = lbc.getNamespacedInformer(ns).transportServerLister.GetByKey(key)
-
 				if err != nil {
 					glog.Errorf("Error when getting TransportServer for %v: %v", key, err)
 				}
@@ -2276,7 +2272,6 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, exists, err = lbc.getNamespacedInformer(ns).virtualServerRouteLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -2308,7 +2303,6 @@ func (lbc *LoadBalancerController) syncIngress(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	ing, ingExists, err = lbc.getNamespacedInformer(ns).ingressLister.GetByKeySafe(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -2362,7 +2356,6 @@ func (lbc *LoadBalancerController) syncService(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, exists, err = lbc.getNamespacedInformer(ns).svcLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -2470,7 +2463,6 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 		return
 	}
 	obj, secrExists, err = lbc.getNamespacedInformer(namespace).secretLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -2917,6 +2909,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 		}
 
 		for _, path := range rule.HTTP.Paths {
+			path := path // address gosec G601
 			podEndps := []podEndpoint{}
 			if validMinionPaths != nil && !validMinionPaths[path.Path] {
 				glog.V(3).Infof("Skipping path %s for minion Ingress %s", path.Path, ing.Name)
@@ -3323,7 +3316,6 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 		var err error
 
 		policyObj, exists, err = lbc.getNamespacedInformer(polNamespace).policyLister.GetByKey(policyKey)
-
 		if err != nil {
 			errors = append(errors, fmt.Errorf("failed to get policy %s: %w", policyKey, err))
 			continue
@@ -3706,7 +3698,6 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 	var pods []*api_v1.Pod
 	nsi := lbc.getNamespacedInformer(svc.Namespace)
 	pods, err = nsi.podLister.ListByNamespace(svc.Namespace, labels.Merge(svc.Spec.Selector, subselector).AsSelector())
-
 	if err != nil {
 		return nil, fmt.Errorf("error getting pods in namespace %v that match the selector %v: %w", svc.Namespace, labels.Merge(svc.Spec.Selector, subselector), err)
 	}
@@ -3808,7 +3799,6 @@ func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *net
 	var pods []*api_v1.Pod
 	nsi := lbc.getNamespacedInformer(svc.Namespace)
 	pods, err = nsi.podLister.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
-
 	if err != nil {
 		glog.V(3).Infof("Error fetching pods for namespace %v: %v", svc.Namespace, err)
 		return nil
@@ -3861,7 +3851,6 @@ func (lbc *LoadBalancerController) getExternalEndpointsForIngressBackend(backend
 func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networking.IngressBackend, svc *api_v1.Service) (result []podEndpoint, isExternal bool, err error) {
 	var endpointSlices []discovery_v1.EndpointSlice
 	endpointSlices, err = lbc.getNamespacedInformer(svc.Namespace).endpointSliceLister.GetServiceEndpointSlices(svc)
-
 	if err != nil {
 		if svc.Spec.Type == api_v1.ServiceTypeExternalName {
 			if !lbc.isNginxPlus {
@@ -3934,7 +3923,6 @@ func (lbc *LoadBalancerController) getPodOwnerTypeAndNameFromAddress(ns, name st
 	var err error
 
 	obj, exists, err = lbc.getNamespacedInformer(ns).podLister.GetByKey(fmt.Sprintf("%s/%s", ns, name))
-
 	if err != nil {
 		glog.Warningf("could not get pod by key %s/%s: %v", ns, name, err)
 		return "", ""
@@ -3983,7 +3971,6 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort api_v1.ServicePort, svc
 	var pods []*api_v1.Pod
 	var err error
 	pods, err = lbc.getNamespacedInformer(svc.Namespace).podLister.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
-
 	if err != nil {
 		return 0, fmt.Errorf("error getting pod information: %w", err)
 	}
@@ -4021,7 +4008,6 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *networki
 	var err error
 
 	svcObj, svcExists, err = lbc.getNamespacedInformer(namespace).svcLister.GetByKey(svcKey)
-
 	if err != nil {
 		return nil, err
 	}
@@ -4097,7 +4083,6 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, polExists, err = lbc.getNamespacedInformer(ns).appProtectPolicyLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4129,7 +4114,6 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, confExists, err = lbc.getNamespacedInformer(ns).appProtectLogConfLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4161,7 +4145,6 @@ func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, sigExists, err = lbc.getNamespacedInformer(ns).appProtectUserSigLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4193,7 +4176,6 @@ func (lbc *LoadBalancerController) syncAppProtectDosPolicy(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, polExists, err = lbc.getNamespacedInformer(ns).appProtectDosPolicyLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4223,7 +4205,6 @@ func (lbc *LoadBalancerController) syncAppProtectDosLogConf(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, confExists, err = lbc.getNamespacedInformer(ns).appProtectDosLogConfLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -4253,7 +4234,6 @@ func (lbc *LoadBalancerController) syncDosProtectedResource(task task) {
 
 	ns, _, _ := cache.SplitMetaNamespaceKey(key)
 	obj, confExists, err = lbc.getNamespacedInformer(ns).appProtectDosProtectedLister.GetByKey(key)
-
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
