@@ -2436,7 +2436,7 @@ var (
 
 var testUpstream = Upstream{
 	Name:             "test",
-	UpstreamZoneSize: "512k",
+	UpstreamZoneSize: "256k",
 	UpstreamServers: []UpstreamServer{
 		{
 			Address:     "127.0.0.1:8181",
