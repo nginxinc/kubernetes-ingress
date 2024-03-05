@@ -7,9 +7,9 @@ This is a generated file. DO NOT EDIT.
 import (
 	"go.opentelemetry.io/otel/attribute"
 
-	
+
 	ngxTelemetry "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
-	
+
 )
 
 func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
@@ -18,7 +18,7 @@ func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
 	attrs = append(attrs, attribute.Int64("VirtualServers", d.VirtualServers))
 	attrs = append(attrs, attribute.Int64("VirtualServerRoutes", d.VirtualServerRoutes))
 	attrs = append(attrs, attribute.Int64("TransportServers", d.TransportServers))
-	
+
 
 	return attrs
 }
