@@ -4979,6 +4979,38 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 					},
 				},
 			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "header-returns",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "example.com",
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/header/return",
+							Action: &conf_v1.Action{
+								Return: &conf_v1.ActionReturn{
+									Headers: []conf_v1.Header{{Name: "return-header", Value: "value 1"}},
+									Body:    "hello 10",
+								},
+							},
+						},
+						{
+							Path: "/header/return-multiple",
+							Action: &conf_v1.Action{
+								Return: &conf_v1.ActionReturn{
+									Headers: []conf_v1.Header{
+										{Name: "return-header", Value: "value 1"},
+										{Name: "return-header-2", Value: "value 2"},
+									},
+									Body: "hello 11",
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -5179,6 +5211,22 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 						Text: "hello 9",
 					},
 				},
+				{
+					Name:        "@return_10",
+					DefaultType: "text/plain",
+					Return: version2.Return{
+						Code: 0,
+						Text: "hello 10",
+					},
+				},
+				{
+					Name:        "@return_11",
+					DefaultType: "text/plain",
+					Return: version2.Return{
+						Code: 0,
+						Text: "hello 11",
+					},
+				},
 			},
 			Locations: []version2.Location{
 				{
@@ -5300,6 +5348,35 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 						},
 					},
 					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+				},
+				{
+					Path:                 "/header/return",
+					ProxyInterceptErrors: true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@return_10",
+							Codes:        "418",
+							ResponseCode: 200,
+						},
+					},
+					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+					// Headers: []version2.Header{
+					// 	{Name: "return-header", Value: "value 1"},
+					// 	{Name: "return-header-2", Value: "value 2"},
+					// },
+				},
+				{
+					Path:                 "/header/return-multiple",
+					ProxyInterceptErrors: true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@return_11",
+							Codes:        "418",
+							ResponseCode: 200,
+						},
+					},
+					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+					// ProxySetHeaders:   []version2.Header{{Name: "return-header", Value: "value 1"}},
 				},
 			},
 		},
