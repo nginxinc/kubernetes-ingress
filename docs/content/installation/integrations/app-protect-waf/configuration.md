@@ -123,7 +123,7 @@ For example, say you want to [log state changing requests](/nginx-app-protect-wa
     "content": {
         "format": "default",
         "max_request_size": "any",
-        "max_message_size": "5k"
+        "max_message_size": "64k"
     }
 }
 ```
@@ -141,7 +141,7 @@ spec:
   content:
     format: default
     max_request_size: any
-    max_message_size: 5k
+    max_message_size: 64k
 ```
 
 ## NGINX App Protect WAF User Defined Signatures
