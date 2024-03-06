@@ -209,9 +209,10 @@ type ActionRedirect struct {
 
 // ActionReturn defines a return in an Action.
 type ActionReturn struct {
-	Code int    `json:"code"`
-	Type string `json:"type"`
-	Body string `json:"body"`
+	Code    int      `json:"code"`
+	Type    string   `json:"type"`
+	Body    string   `json:"body"`
+	Headers []Header `json:"headers"`
 }
 
 // ActionProxy defines a proxy in an Action.

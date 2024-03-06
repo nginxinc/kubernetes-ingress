@@ -148,6 +148,16 @@ spec:
                               type: string
                             code:
                               type: integer
+                            headers:
+                              items:
+                                description: Header defines an HTTP Header.
+                                properties:
+                                  name:
+                                    type: string
+                                  value:
+                                    type: string
+                                type: object
+                              type: array
                             type:
                               type: string
                           type: object
@@ -276,6 +286,16 @@ spec:
                                     type: string
                                   code:
                                     type: integer
+                                  headers:
+                                    items:
+                                      description: Header defines an HTTP Header.
+                                      properties:
+                                        name:
+                                          type: string
+                                        value:
+                                          type: string
+                                      type: object
+                                    type: array
                                   type:
                                     type: string
                                 type: object
@@ -383,6 +403,16 @@ spec:
                                           type: string
                                         code:
                                           type: integer
+                                        headers:
+                                          items:
+                                            description: Header defines an HTTP Header.
+                                            properties:
+                                              name:
+                                                type: string
+                                              value:
+                                                type: string
+                                            type: object
+                                          type: array
                                         type:
                                           type: string
                                       type: object
@@ -489,6 +519,16 @@ spec:
                                     type: string
                                   code:
                                     type: integer
+                                  headers:
+                                    items:
+                                      description: Header defines an HTTP Header.
+                                      properties:
+                                        name:
+                                          type: string
+                                        value:
+                                          type: string
+                                      type: object
+                                    type: array
                                   type:
                                     type: string
                                 type: object
