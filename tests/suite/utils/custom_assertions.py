@@ -95,6 +95,20 @@ def get_event_count(event_text, events_list) -> int:
     pytest.fail(f'Failed to find the event "{event_text}" in the list. Exiting...')
 
 
+def get_event_count_without_fail(event_text, events_list) -> int:
+    """
+    Search for the event in the list and return its counter.
+
+    :param event_text: event text
+    :param events_list: list of events
+    :return: (int)
+    """
+    for i in range(len(events_list) - 1, -1, -1):
+        if event_text in events_list[i].message:
+            return events_list[i].count
+    return 0
+
+
 def wait_for_event_count_increases(kube_apis, event_text, initial_count, events_namespace) -> None:
     """
     Wait for the event counter to get bigger than the initial value.

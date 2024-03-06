@@ -3,9 +3,13 @@ from typing import List, TypedDict
 import pytest
 import requests
 from requests.exceptions import ConnectionError
+
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import create_gc_from_yaml, delete_gc, patch_gc_from_yaml
-from suite.utils.resources_utils import create_secret_from_yaml, delete_secret, get_first_pod_name, wait_before_test
+from suite.utils.custom_assertions import assert_event_count_increased, assert_event_and_get_count, get_event_count, \
+    get_event_count_without_fail
+from suite.utils.custom_resources_utils import create_gc_from_yaml, delete_gc, patch_gc_from_yaml, read_gc
+from suite.utils.resources_utils import create_secret_from_yaml, delete_secret, get_first_pod_name, wait_before_test, \
+    get_events
 from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml, read_vs
 
 
@@ -37,17 +41,18 @@ def restore_default_vs(kube_apis, virtual_server_setup) -> None:
     "crd_ingress_controller, virtual_server_setup",
     [
         (
-            {
-                "type": "complete",
-                "extra_args": [
-                    f"-global-configuration=nginx-ingress/nginx-configuration",
-                    f"-enable-leader-election=false",
-                ],
-            },
-            {
-                "example": "virtual-server-custom-listeners",
-                "app_type": "simple",
-            },
+                {
+                    "type": "complete",
+                    "extra_args": [
+                        f"-global-configuration=nginx-ingress/nginx-configuration",
+                        f"-enable-leader-election=false",
+                        f"-enable-prometheus-metrics=true",
+                    ],
+                },
+                {
+                    "example": "virtual-server-custom-listeners",
+                    "app_type": "simple",
+                },
         )
     ],
     indirect=True,
@@ -61,7 +66,8 @@ class TestVirtualServerCustomListeners:
             "http_listener_in_config": bool,
             "https_listener_in_config": bool,
             "expected_response_codes": List[int],  # responses from requests to port 80, 433, 8085, 8445
-            "expected_error_msg": str,
+            "expected_vs_error_msg": str,
+            "expected_gc_error_msg": str,
         },
     )
 
@@ -74,7 +80,9 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": True,
                 "https_listener_in_config": True,
                 "expected_response_codes": [404, 404, 200, 200],
-                "expected_error_msg": "",
+                "expected_vs_error_msg": "",
+                "expected_gc_error_msg": "",
+
             },
             {
                 "gc_yaml": "global-configuration-missing-http",
@@ -82,7 +90,8 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": True,
                 "expected_response_codes": [404, 404, 0, 200],
-                "expected_error_msg": "Listener http-8085 is not defined in GlobalConfiguration",
+                "expected_vs_error_msg": "Listener http-8085 is not defined in GlobalConfiguration",
+                "expected_gc_error_msg": "",
             },
             {
                 "gc_yaml": "global-configuration-missing-https",
@@ -90,7 +99,8 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": True,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 200, 0],
-                "expected_error_msg": "Listener https-8445 is not defined in GlobalConfiguration",
+                "expected_vs_error_msg": "Listener https-8445 is not defined in GlobalConfiguration",
+                "expected_gc_error_msg": "",
             },
             {
                 "gc_yaml": "global-configuration-missing-http-https",
@@ -98,7 +108,8 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 0, 0],
-                "expected_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
+                "expected_vs_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
+                "expected_gc_error_msg": "",
             },
             {
                 "gc_yaml": "global-configuration",
@@ -106,8 +117,9 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 0, 0],
-                "expected_error_msg": "Listener http-8085 can't be use in `listener.https` context as SSL is not "
-                "enabled for that listener",
+                "expected_vs_error_msg": "Listener http-8085 can't be use in `listener.https` context as SSL is not "
+                                      "enabled for that listener",
+                "expected_gc_error_msg": "",
             },
             {
                 "gc_yaml": "global-configuration",
@@ -115,8 +127,9 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 0, 0],
-                "expected_error_msg": "Listener https-8445 can't be use in `listener.http` context as SSL is enabled "
-                "for that listener.",
+                "expected_vs_error_msg": "Listener https-8445 can't be use in `listener.http` context as SSL is enabled "
+                                      "for that listener.",
+                "expected_gc_error_msg": "",
             },
             {
                 "gc_yaml": "global-configuration",
@@ -124,8 +137,9 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 0, 0],
-                "expected_error_msg": "Listener https-8445 can't be use in `listener.http` context as SSL is enabled "
-                "for that listener.",
+                "expected_vs_error_msg": "Listener https-8445 can't be use in `listener.http` context as SSL is enabled "
+                                      "for that listener.",
+                "expected_gc_error_msg": "",
             },
             {
                 "gc_yaml": "",
@@ -133,7 +147,35 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 0, 0],
-                "expected_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
+                "expected_vs_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
+                "expected_gc_error_msg": "",
+            },
+            {
+                "gc_yaml": "global-configuration-repeated-http-port",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": False,
+                "https_listener_in_config": True,
+                "expected_response_codes": [404, 404, 0, 200],
+                "expected_vs_error_msg": "Listener http-8085 is not defined in GlobalConfiguration",
+                "expected_gc_error_msg": "Listener http-8085 invalid: Duplicated port/protocol combination 8085/HTTP",
+            },
+            {
+                "gc_yaml": "global-configuration-forbidden-port-http",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": False,
+                "https_listener_in_config": True,
+                "expected_response_codes": [404, 404, 0, 200],
+                "expected_vs_error_msg": "Listener http-8085 is not defined in GlobalConfiguration",
+                "expected_gc_error_msg": "Listener http-8085 invalid: port 9113 is forbidden",
+            },
+            {
+                "gc_yaml": "global-configuration-forbidden-port-ts",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": True,
+                "expected_response_codes": [404, 404, 200, 200],
+                "expected_vs_error_msg": "",
+                "expected_gc_error_msg": "Listener dns-udp invalid: port 9113 is forbidden",
             },
         ],
         ids=[
@@ -145,15 +187,18 @@ class TestVirtualServerCustomListeners:
             "https_listener_in_http_block",
             "http_https_listeners_switched",
             "no_global_configuration",
+            "update_gc_http_listener_repeated_port",
+            "update_gc_http_listener_forbidden_port",
+            "update_gc_ts_listener_forbidden_port",
         ],
     )
     def test_custom_listeners(
-        self,
-        kube_apis,
-        ingress_controller_prerequisites,
-        crd_ingress_controller,
-        virtual_server_setup,
-        test_setup: TestSetup,
+            self,
+            kube_apis,
+            ingress_controller_prerequisites,
+            crd_ingress_controller,
+            virtual_server_setup,
+            test_setup: TestSetup,
     ) -> None:
         print("\nStep 1: Create GC resource")
         secret_name = create_secret_from_yaml(
@@ -162,6 +207,10 @@ class TestVirtualServerCustomListeners:
         if test_setup["gc_yaml"]:
             global_config_file = f"{TEST_DATA}/virtual-server-custom-listeners/{test_setup['gc_yaml']}.yaml"
             gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
+
+        if test_setup["expected_gc_error_msg"]:
+            initial_events_gc = get_events(kube_apis.v1, "nginx-ingress")
+            initial_count = get_event_count_without_fail(test_setup["expected_gc_error_msg"], initial_events_gc)
 
         print("\nStep 2: Create VS with custom listeners")
         vs_custom_listeners = f"{TEST_DATA}/virtual-server-custom-listeners/{test_setup['vs_yaml']}.yaml"
@@ -221,14 +270,20 @@ class TestVirtualServerCustomListeners:
                     make_request(url, virtual_server_setup.vs_host)
 
         print("\nStep 5: Test Kubernetes VirtualServer warning events")
-        if test_setup["expected_error_msg"]:
+        if test_setup["expected_vs_error_msg"]:
             response = read_vs(kube_apis.custom_objects, virtual_server_setup.namespace, virtual_server_setup.vs_name)
             print(response)
             assert (
-                response["status"]["reason"] == "AddedOrUpdatedWithWarning"
-                and response["status"]["state"] == "Warning"
-                and test_setup["expected_error_msg"] in response["status"]["message"]
+                    response["status"]["reason"] == "AddedOrUpdatedWithWarning"
+                    and response["status"]["state"] == "Warning"
+                    and test_setup["expected_vs_error_msg"] in response["status"]["message"]
             )
+
+        if test_setup["expected_gc_error_msg"]:
+            new_events_gc = get_events(kube_apis.v1, "nginx-ingress")
+            print(new_events_gc)
+            print(initial_count, len(new_events_gc))
+            assert_event_count_increased(test_setup["expected_gc_error_msg"], initial_count, new_events_gc)
 
         print("\nStep 6: Restore test environments")
         delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)
@@ -245,7 +300,9 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 0, 0],
-                "expected_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
+                "expected_vs_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
+                "expected_gc_error_msg": "",
+
             },
             {
                 "gc_yaml": "global-configuration-https-listener-without-ssl",
@@ -253,8 +310,9 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": True,
                 "https_listener_in_config": False,
                 "expected_response_codes": [404, 404, 200, 0],
-                "expected_error_msg": "Listener https-8445 can't be use in `listener.https` context as SSL is not "
-                "enabled for that listener.",
+                "expected_vs_error_msg": "Listener https-8445 can't be use in `listener.https` context as SSL is not "
+                                         "enabled for that listener.",
+                "expected_gc_error_msg": "",
             },
             {
                 "gc_yaml": "global-configuration-http-listener-with-ssl",
@@ -262,18 +320,53 @@ class TestVirtualServerCustomListeners:
                 "http_listener_in_config": False,
                 "https_listener_in_config": True,
                 "expected_response_codes": [404, 404, 0, 200],
-                "expected_error_msg": "Listener http-8085 can't be use in `listener.http` context as SSL is enabled",
+                "expected_vs_error_msg": "Listener http-8085 can't be use in `listener.http` context as SSL is enabled",
+                "expected_gc_error_msg": "",
+            },
+            {
+                "gc_yaml": "global-configuration-repeated-http-port",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": False,
+                "https_listener_in_config": True,
+                "expected_response_codes": [404, 404, 0, 200],
+                "expected_vs_error_msg": "Listener http-8085 is not defined in GlobalConfiguration",
+                "expected_gc_error_msg": "Listener http-8085 invalid: Duplicated port/protocol combination 8085/HTTP",
+            },
+            {
+                "gc_yaml": "global-configuration-forbidden-port-http",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": False,
+                "https_listener_in_config": True,
+                "expected_response_codes": [404, 404, 0, 200],
+                "expected_vs_error_msg": "Listener http-8085 is not defined in GlobalConfiguration",
+                "expected_gc_error_msg": "Listener http-8085 invalid: port 9113 is forbidden",
+            },
+            {
+                "gc_yaml": "global-configuration-forbidden-port-ts",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": True,
+                "expected_response_codes": [404, 404, 200, 200],
+                "expected_vs_error_msg": "",
+                "expected_gc_error_msg": "Listener dns-udp invalid: port 9113 is forbidden",
             },
         ],
-        ids=["delete_gc", "update_gc_https_listener_ssl_false", "update_gc_http_listener_ssl_true"],
+        ids=[
+            "delete_gc",
+            "update_gc_https_listener_ssl_false",
+            "update_gc_http_listener_ssl_true",
+            "update_gc_http_listener_repeated_port",
+            "update_gc_http_listener_forbidden_port",
+            "update_gc_ts_listener_forbidden_port",
+        ],
     )
     def test_custom_listeners_update(
-        self,
-        kube_apis,
-        ingress_controller_prerequisites,
-        crd_ingress_controller,
-        virtual_server_setup,
-        test_setup: TestSetup,
+            self,
+            kube_apis,
+            ingress_controller_prerequisites,
+            crd_ingress_controller,
+            virtual_server_setup,
+            test_setup: TestSetup,
     ) -> None:
         # Deploy a working global config and virtual server, and then tests for errors after gc update
         print("\nStep 1: Create GC resource")
@@ -283,6 +376,10 @@ class TestVirtualServerCustomListeners:
         global_config_file = f"{TEST_DATA}/virtual-server-custom-listeners/global-configuration.yaml"
         gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
         vs_custom_listeners = f"{TEST_DATA}/virtual-server-custom-listeners/virtual-server.yaml"
+        wait_before_test()
+        if test_setup["expected_gc_error_msg"]:
+            initial_events_gc = get_events(kube_apis.v1, "nginx-ingress")
+            initial_count = get_event_count_without_fail(test_setup["expected_gc_error_msg"], initial_events_gc)
 
         print("\nStep 2: Create VS with custom listener (http-8085, https-8445)")
         patch_virtual_server_from_yaml(
@@ -357,15 +454,21 @@ class TestVirtualServerCustomListeners:
                 with pytest.raises(ConnectionError, match="Connection refused"):
                     make_request(url, virtual_server_setup.vs_host)
 
-        print("\nStep 6: Test Kubernetes VirtualServer warning events")
-        if test_setup["expected_error_msg"]:
+        print("\nStep 6: Test Kubernetes VirtualServer and GlobalConfiguration warning events")
+        if test_setup["expected_vs_error_msg"]:
             response = read_vs(kube_apis.custom_objects, virtual_server_setup.namespace, virtual_server_setup.vs_name)
             print(response)
             assert (
                 response["status"]["reason"] == "AddedOrUpdatedWithWarning"
                 and response["status"]["state"] == "Warning"
-                and test_setup["expected_error_msg"] in response["status"]["message"]
+                and test_setup["expected_vs_error_msg"] in response["status"]["message"]
             )
+
+        if test_setup["expected_gc_error_msg"]:
+            new_events_gc = get_events(kube_apis.v1, "nginx-ingress")
+            print(new_events_gc)
+            print(initial_count, len(new_events_gc))
+            assert_event_count_increased(test_setup["expected_gc_error_msg"], initial_count, new_events_gc)
 
         print("\nStep 7: Restore test environments")
         delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)

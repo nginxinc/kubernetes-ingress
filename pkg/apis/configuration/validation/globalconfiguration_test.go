@@ -48,12 +48,12 @@ func TestValidateListenerPort(t *testing.T) {
 		forbiddenListenerPorts: forbiddenListenerPorts,
 	}
 
-	allErrs := gcv.validateListenerPort(5555, field.NewPath("port"))
+	allErrs := gcv.validateListenerPort("sample-listener", 5555, field.NewPath("port"))
 	if len(allErrs) > 0 {
 		t.Errorf("validateListenerPort() returned errors %v for valid input", allErrs)
 	}
 
-	allErrs = gcv.validateListenerPort(1234, field.NewPath("port"))
+	allErrs = gcv.validateListenerPort("sample-listener", 1234, field.NewPath("port"))
 	if len(allErrs) == 0 {
 		t.Errorf("validateListenerPort() returned no errors for invalid input")
 	}
@@ -76,7 +76,7 @@ func TestValidateListeners(t *testing.T) {
 
 	gcv := createGlobalConfigurationValidator()
 
-	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) > 0 {
 		t.Errorf("validateListeners() returned errors %v for valid input", allErrs)
 	}
@@ -85,8 +85,9 @@ func TestValidateListeners(t *testing.T) {
 func TestValidateListenersFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		listeners []conf_v1.Listener
-		msg       string
+		listeners         []conf_v1.Listener
+		numValidListeners int
+		msg               string
 	}{
 		{
 			listeners: []conf_v1.Listener{
@@ -101,7 +102,8 @@ func TestValidateListenersFails(t *testing.T) {
 					Protocol: "TCP",
 				},
 			},
-			msg: "duplicated name",
+			numValidListeners: 1,
+			msg:               "duplicated name",
 		},
 		{
 			listeners: []conf_v1.Listener{
@@ -116,14 +118,39 @@ func TestValidateListenersFails(t *testing.T) {
 					Protocol: "TCP",
 				},
 			},
-			msg: "duplicated port/protocol combination",
+			numValidListeners: 1,
+			msg:               "duplicated port/protocol combination",
+		},
+		{
+			listeners: []conf_v1.Listener{
+				{
+					Name:     "tcp-listener-1",
+					Port:     2201,
+					Protocol: "TCP",
+				},
+				{
+					Name:     "tcp-listener-2",
+					Port:     2201,
+					Protocol: "TCP",
+				},
+				{
+					Name:     "udp-listener-2",
+					Port:     2201,
+					Protocol: "UDP",
+				},
+			},
+			numValidListeners: 2,
+			msg:               "duplicated port/protocol combination",
 		},
 	}
 
 	gcv := createGlobalConfigurationValidator()
 
 	for _, test := range tests {
-		allErrs := gcv.validateListeners(test.listeners, field.NewPath("listeners"))
+		validListeners, allErrs := gcv.getValidListeners(test.listeners, field.NewPath("listeners"))
+		if len(validListeners) != test.numValidListeners {
+			t.Errorf("validateListeners() returned incorrect number of valid listenrs for the case of %s", test.msg)
+		}
 		if len(allErrs) == 0 {
 			t.Errorf("validateListeners() returned no errors for invalid input for the case of %s", test.msg)
 		}
@@ -264,7 +291,7 @@ func TestValidateListenerProtocol_PassesOnHttpListenerUsingDiffPortToTCPAndUDPLi
 
 	gcv := createGlobalConfigurationValidator()
 
-	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) > 0 {
 		t.Errorf("validateListeners() returned errors %v for valid input", allErrs)
 	}
@@ -292,7 +319,7 @@ func TestValidateListenerProtocol_PassesOnHttpListenerUsingDiffPortToTCPAndUDPLi
 
 	gcv := createGlobalConfigurationValidator()
 
-	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) > 0 {
 		t.Errorf("validateListeners() returned errors %v for valid input", allErrs)
 	}
@@ -315,7 +342,7 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPListener(
 
 	gcv := createGlobalConfigurationValidator()
 
-	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) == 0 {
 		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
 	}
@@ -338,7 +365,7 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsUDPListener(
 
 	gcv := createGlobalConfigurationValidator()
 
-	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) == 0 {
 		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
 	}
@@ -366,7 +393,7 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPAndUDPLis
 
 	gcv := createGlobalConfigurationValidator()
 
-	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) == 0 {
 		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
 	}
@@ -389,7 +416,7 @@ func TestValidateListenerProtocol_FailsOnTCPListenerUsingSamePortAsHTTPListener(
 
 	gcv := createGlobalConfigurationValidator()
 
-	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) == 0 {
 		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
 	}
@@ -412,7 +439,7 @@ func TestValidateListenerProtocol_FailsOnUDPListenerUsingSamePortAsHTTPListener(
 
 	gcv := createGlobalConfigurationValidator()
 
-	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) == 0 {
 		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
 	}
