@@ -37,10 +37,11 @@ func (gcv *GlobalConfigurationValidator) ValidateGlobalConfiguration(globalConfi
 }
 
 func (gcv *GlobalConfigurationValidator) validateGlobalConfigurationSpec(spec *conf_v1.GlobalConfigurationSpec, fieldPath *field.Path) field.ErrorList {
-	return gcv.validateListeners(spec, fieldPath.Child("listeners"))
+	validListeners, err := gcv.getValidListeners(spec.Listeners, fieldPath.Child("listeners"))
+	spec.Listeners = validListeners
+	return err
 }
-
-func (gcv *GlobalConfigurationValidator) validateListeners(spec *conf_v1.GlobalConfigurationSpec, fieldPath *field.Path) field.ErrorList {
+func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.Listener, fieldPath *field.Path) ([]conf_v1.Listener, field.ErrorList) {
 	allErrs := field.ErrorList{}
 
 	listenerNames := sets.Set[string]{}
@@ -49,7 +50,7 @@ func (gcv *GlobalConfigurationValidator) validateListeners(spec *conf_v1.GlobalC
 	portProtocolMap := make(map[int]string)
 	var validListeners []conf_v1.Listener
 
-	for i, l := range spec.Listeners {
+	for i, l := range listeners {
 		idxPath := fieldPath.Index(i)
 		portProtocolKey := generatePortProtocolKey(l.Port, l.Protocol)
 		listenerErrs := gcv.validateListener(l, idxPath)
@@ -94,11 +95,10 @@ func (gcv *GlobalConfigurationValidator) validateListeners(spec *conf_v1.GlobalC
 		}
 	}
 
-	spec.Listeners = validListeners
 	glog.Infof("valid listeners: %v", validListeners)
 	//glog.Infof("valid listener names: %s, ports: %v", listenerNames, portProtocolMap)
 
-	return allErrs
+	return validListeners, allErrs
 }
 
 func generatePortProtocolKey(port int, protocol string) string {
@@ -107,7 +107,7 @@ func generatePortProtocolKey(port int, protocol string) string {
 
 func (gcv *GlobalConfigurationValidator) validateListener(listener conf_v1.Listener, fieldPath *field.Path) field.ErrorList {
 	allErrs := validateGlobalConfigurationListenerName(listener.Name, fieldPath.Child("name"))
-	allErrs = append(allErrs, gcv.validateListenerPort(listener.Port, fieldPath.Child("port"))...)
+	allErrs = append(allErrs, gcv.validateListenerPort(listener.Name, listener.Port, fieldPath.Child("port"))...)
 	allErrs = append(allErrs, validateListenerProtocol(listener.Protocol, fieldPath.Child("protocol"))...)
 
 	return allErrs
@@ -120,11 +120,11 @@ func validateGlobalConfigurationListenerName(name string, fieldPath *field.Path)
 	return validateListenerName(name, fieldPath)
 }
 
-func (gcv *GlobalConfigurationValidator) validateListenerPort(port int, fieldPath *field.Path) field.ErrorList {
-	glog.Infof("check forbidden ports: %s, port: %v", gcv.forbiddenListenerPorts, port)
+func (gcv *GlobalConfigurationValidator) validateListenerPort(name string, port int, fieldPath *field.Path) field.ErrorList {
+	glog.Infof("check forbidden ports: %v, port: %v", gcv.forbiddenListenerPorts, port)
 	if gcv.forbiddenListenerPorts[port] {
-		msg := fmt.Sprintf("port %v is forbidden", port)
-		glog.Infof("forbidden port: %s, port: %v", gcv.forbiddenListenerPorts, port)
+		msg := fmt.Sprintf("Listener %v invalid: port %v is forbidden", name, port)
+		glog.Infof("forbidden port: %v, port: %v", gcv.forbiddenListenerPorts, port)
 		return field.ErrorList{field.Forbidden(fieldPath, msg)}
 	}
 
