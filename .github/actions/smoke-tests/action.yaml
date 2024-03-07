@@ -96,7 +96,7 @@ runs:
         file: build/Dockerfile
         context: "."
         cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
-        target: goreleaser${{ ! inputs.forked-workflow && '-prebuilt' || '' }}
+        target: goreleaser${{ inputs.forked-workflow && '' || '-prebuilt' }}
         tags: "docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}"
         load: true
         pull: true
