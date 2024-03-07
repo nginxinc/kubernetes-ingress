@@ -165,14 +165,16 @@ jobs:
       - name: NAP modules
         id: nap_modules
         run: |
-          [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || modules="${{ inputs.nap_modules }}"
+          [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ inputs.nap_modules }}"
+          [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="both" || modules="${{ inputs.nap_modules }}"
           echo "modules=${modules}" >> $GITHUB_OUTPUT
+          echo "name=${name}" >> $GITHUB_OUTPUT
         if: ${{ inputs.nap_modules != '' }}
 
       - name: Check if base images exist
         id: base_exists
         run: |
-          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.modules != '' && format('-{0}', steps.nap_modules.outputs.modules) || '' }}; then
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}; then
             echo "exists=0" >> $GITHUB_OUTPUT
           else
             echo "exists=1" >> $GITHUB_OUTPUT
@@ -184,10 +186,10 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.modules != '' && format('-{0}', steps.nap_modules.outputs.modules) || '' }}
-          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.modules != '' && format('-{0}', steps.nap_modules.outputs.modules) || '' }},mode=max
+          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: common
-          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.modules != '' && format('-{0}', steps.nap_modules.outputs.modules) || '' }}
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
           platforms: ${{ inputs.platforms }}
           pull: true
           push: true
@@ -206,8 +208,8 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.modules != '' && format('-{0}', steps.nap_modules.outputs.modules) || '' }}
-          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.modules != '' && format('-{0}', steps.nap_modules.outputs.modules) || '' }},mode=max
+          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: ${{ inputs.target }}${{ ! inputs.forked-workflow && '-prebuilt' || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -221,7 +223,7 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.modules != '' && format('-{0}', steps.nap_modules.outputs.modules) || '' }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
             IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
