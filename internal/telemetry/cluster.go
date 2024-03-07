@@ -38,8 +38,7 @@ func (c *Collector) K8sVersion() (string, error) {
 	return sv.String(), nil
 }
 
-// Platform returns a string representing a platform name
-// where the K8s cluster and NIC runs.
+// Platform returns a string representing platform name.
 func (c *Collector) Platform(ctx context.Context) (string, error) {
 	nodes, err := c.Config.K8sClientReader.CoreV1().Nodes().List(ctx, metaV1.ListOptions{})
 	if err != nil {
@@ -74,5 +73,5 @@ func lookupPlatform(platformID string) string {
 	if strings.HasPrefix(platform, "k3s") {
 		return "k3s"
 	}
-	return "unknown"
+	return "other"
 }
