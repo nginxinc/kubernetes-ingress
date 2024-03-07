@@ -829,6 +829,7 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 		}
 
 		for _, path := range r.HTTP.Paths {
+			path := path // address gosec G601
 			idxPath := idxRule.Child("http").Child("path").Index(i)
 
 			allErrs = append(allErrs, validatePath(path.Path, path.PathType, idxPath.Child("path"))...)

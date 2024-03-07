@@ -579,6 +579,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsInOneEndpointSlice(t *
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		t.Run(test.desc, func(t *testing.T) {
 			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 			if err != nil {
@@ -670,6 +671,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSlice(t
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		t.Run(test.desc, func(t *testing.T) {
 			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 			if err != nil {
@@ -790,6 +792,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlice
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		t.Run(test.desc, func(t *testing.T) {
 			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 			if err != nil {
@@ -879,6 +882,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSliceOn
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		t.Run(test.desc, func(t *testing.T) {
 			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 			if err != nil {
@@ -978,6 +982,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsAcrossTwoEndpointSl
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		t.Run(test.desc, func(t *testing.T) {
 			gotEndpoints, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 			if err != nil {
@@ -1053,6 +1058,7 @@ func TestGetEndpointsFromEndpointSlices_ErrorsOnInvalidTargetPort(t *testing.T) 
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		t.Run(test.desc, func(t *testing.T) {
 			_, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 			if err == nil {
@@ -1103,6 +1109,7 @@ func TestGetEndpointsFromEndpointSlices_ErrorsOnNoEndpointSlicesFound(t *testing
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		t.Run(test.desc, func(t *testing.T) {
 			_, err := lbc.getEndpointsForPortFromEndpointSlices(test.svcEndpointSlices, backendServicePort, &test.svc)
 			if err == nil {

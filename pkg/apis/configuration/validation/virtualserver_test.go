@@ -4355,7 +4355,7 @@ func TestValidateErrorPageReturn(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageReturn(&epr, field.NewPath("return"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateErrorPageReturn(%v) returned errors for valid input: %v", epr, allErrs)
@@ -4420,6 +4420,7 @@ func TestValidateErrorPageReturnFails(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		allErrs := vsv.validateErrorPageReturn(&test.epr, field.NewPath("return"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateErrorPageReturn(%v) returned no errors for invalid input for the case of %v", test.epr, test.msg)
@@ -4447,7 +4448,7 @@ func TestValidateErrorPageRedirect(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageRedirect(&epr, field.NewPath("redirect"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateErrorPageRedirect(%v) returned errors for valid input: %v", epr, allErrs)
@@ -4493,7 +4494,7 @@ func TestValidateErrorPageRedirectFails(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageRedirect(&epr, field.NewPath("redirect"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateErrorPageRedirect(%v) returned no errors for invalid input", epr)

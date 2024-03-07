@@ -207,6 +207,7 @@ func main() {
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
 		TelemetryReportingPeriod:     *telemetryReportingPeriod,
+		NICVersion:                   version,
 		WeightChangesWithoutReload:   *enableWeightChangesWithoutReload,
 	}
 

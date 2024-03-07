@@ -19,15 +19,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "nginx-ingress.selectorLabels" . | nindent 8 }}
-{{- if .Values.nginxServiceMesh.enable }}
-        nsm.nginx.com/enable-ingress: "true"
-        nsm.nginx.com/enable-egress: "{{ .Values.nginxServiceMesh.enableEgress }}"
-        nsm.nginx.com/deployment: {{ include "nginx-ingress.controller.fullname" . }}
-{{- end }}
-{{- if .Values.controller.pod.extraLabels }}
-{{ toYaml .Values.controller.pod.extraLabels | indent 8 }}
-{{- end }}
+        {{- include "nginx-ingress.podLabels" . | nindent 8 }}
 {{- if or .Values.prometheus.create .Values.controller.pod.annotations }}
       annotations:
 {{- if .Values.prometheus.create }}

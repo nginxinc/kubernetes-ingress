@@ -20,14 +20,14 @@ This repo provides an implementation of an Ingress Controller for NGINX and NGIN
 
 ---
 
-## Join Our Next Community Call!
+## Join Our Next Community Call
 
 We value community input and would love to see you at our next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
 
-**When**: Every other Monday at 4 PM Irish Time.
-**Zoom Link**: [KIC - GitHub Issues Triage](https://f5networks.zoom.us/j/91421953779?pwd=197738)
-**Password**: 197738
-**Slack**: Join our channel `#nginx-ingress-controller` on the [NGINX Community Slack](https://nginxcommunity.slack.com/channels/nginx-ingress-controller) for updates and discussions.
+**When**: Every other Monday at 4 PM Irish Time.  
+**Zoom Link**: [KIC - GitHub Issues Triage](https://f5networks.zoom.us/j/91421953779?pwd=197738)  
+**Password**: `197738`  
+**Slack**: Join our channel `#nginx-ingress-controller` on the [NGINX Community Slack](https://nginxcommunity.slack.com/channels/nginx-ingress-controller) for updates and discussions.  
 
 | **Date**      | **Irish Time** | **GMT**  |
 | -------------- | -------------- | -------- |

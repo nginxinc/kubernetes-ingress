@@ -19,7 +19,7 @@ func TestNodeCountInAClusterWithThreeNodes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := 3
+	var want int64 = 3
 	if want != got {
 		t.Errorf("want %v, got %v", want, got)
 	}
@@ -33,7 +33,7 @@ func TestNodeCountInAClusterWithOneNode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := 1
+	var want int64 = 1
 	if want != got {
 		t.Errorf("want %v, got %v", want, got)
 	}
