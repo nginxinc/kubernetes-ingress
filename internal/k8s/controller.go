@@ -165,6 +165,7 @@ type LoadBalancerController struct {
 	namespaceWatcherController    cache.Controller
 	telemetryCollector            *telemetry.Collector
 	telemetryChan                 chan struct{}
+	weightChangesWithoutReload    bool
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -212,6 +213,7 @@ type NewLoadBalancerControllerInput struct {
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
 	TelemetryReportingPeriod     string
+	WeightChangesWithoutReload   bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -244,6 +246,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		isPrometheusEnabled:          input.IsPrometheusEnabled,
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 		isIPV6Disabled:               input.IsIPV6Disabled,
+		weightChangesWithoutReload:   input.WeightChangesWithoutReload,
 	}
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)

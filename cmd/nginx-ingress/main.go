@@ -117,6 +117,7 @@ func main() {
 		SSLRejectHandshake:             sslRejectHandshake,
 		EnableCertManager:              *enableCertManager,
 		DynamicSSLReload:               *enableDynamicSSLReload,
+		WeightChangesWithoutReload:     *enableWeightChangesWithoutReload,
 		StaticSSLPath:                  nginxManager.GetSecretsDir(),
 		NginxVersion:                   nginxVersion,
 	}
@@ -134,19 +135,20 @@ func main() {
 
 	plusCollector, syslogListener, latencyCollector := createPlusAndLatencyCollectors(registry, constLabels, kubeClient, plusClient, staticCfgParams.NginxServiceMesh)
 	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
-		NginxManager:              nginxManager,
-		StaticCfgParams:           staticCfgParams,
-		Config:                    cfgParams,
-		TemplateExecutor:          templateExecutor,
-		TemplateExecutorV2:        templateExecutorV2,
-		LatencyCollector:          latencyCollector,
-		LabelUpdater:              plusCollector,
-		IsPlus:                    *nginxPlus,
-		IsWildcardEnabled:         isWildcardEnabled,
-		IsPrometheusEnabled:       *enablePrometheusMetrics,
-		IsLatencyMetricsEnabled:   *enableLatencyMetrics,
-		IsDynamicSSLReloadEnabled: *enableDynamicSSLReload,
-		NginxVersion:              nginxVersion,
+		NginxManager:                        nginxManager,
+		StaticCfgParams:                     staticCfgParams,
+		Config:                              cfgParams,
+		TemplateExecutor:                    templateExecutor,
+		TemplateExecutorV2:                  templateExecutorV2,
+		LatencyCollector:                    latencyCollector,
+		LabelUpdater:                        plusCollector,
+		IsPlus:                              *nginxPlus,
+		IsWildcardEnabled:                   isWildcardEnabled,
+		IsPrometheusEnabled:                 *enablePrometheusMetrics,
+		IsLatencyMetricsEnabled:             *enableLatencyMetrics,
+		IsDynamicSSLReloadEnabled:           *enableDynamicSSLReload,
+		IsWeightChangesWithoutReloadEnabled: *enableWeightChangesWithoutReload,
+		NginxVersion:                        nginxVersion,
 	})
 
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
@@ -205,6 +207,7 @@ func main() {
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
 		TelemetryReportingPeriod:     *telemetryReportingPeriod,
+		WeightChangesWithoutReload:   *enableWeightChangesWithoutReload,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

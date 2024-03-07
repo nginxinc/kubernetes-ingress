@@ -535,3 +535,15 @@ Used to activate or deactivate lazy loading for SSL Certificates.
 The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
+
+### -weight-changes-without-reload
+
+Enables the ability to change the weight of split clients with two splits without reloading NGINX.
+
+Requires [-nginx-plus](#cmdoption-nginx-plus).
+
+The default value is `true`.
+
+- If the argument is set, but `nginx-plus` is set to false, NGINX Ingress Controller will ignore the flag.
+
+<a name="cmdoption-weight-changes-without-reload"></a>

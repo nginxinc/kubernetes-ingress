@@ -7,9 +7,11 @@ import (
 
 	discovery_v1 "k8s.io/api/discovery/v1"
 
+	"github.com/jinzhu/copier"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"github.com/golang/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
@@ -309,6 +311,31 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 		UpdateFunc: func(old, cur interface{}) {
 			curVs := cur.(*conf_v1.VirtualServer)
 			oldVs := old.(*conf_v1.VirtualServer)
+
+			if lbc.weightChangesWithoutReload {
+				var curVsCopy, oldVsCopy conf_v1.VirtualServer
+				err := copier.CopyWithOption(&curVsCopy, curVs, copier.Option{DeepCopy: true})
+				if err != nil {
+					glog.V(3).Infof("Error copying VirtualServer %v: %v", curVs.Name, err)
+					return
+				}
+
+				err = copier.CopyWithOption(&oldVsCopy, oldVs, copier.Option{DeepCopy: true})
+				if err != nil {
+					glog.V(3).Infof("Error copying VirtualServer %v: %v", oldVs.Name, err)
+					return
+				}
+
+				zeroOutVirtualServerSplitWeights(&curVsCopy)
+				zeroOutVirtualServerSplitWeights(&oldVsCopy)
+
+				if reflect.DeepEqual(oldVsCopy.Spec, curVsCopy.Spec) {
+					lbc.processVSWeightChangesWithoutReload(oldVs, curVs)
+					return
+				}
+
+			}
+
 			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
 				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
 				lbc.AddSyncQueue(curVs)
@@ -344,6 +371,31 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 		UpdateFunc: func(old, cur interface{}) {
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
+
+			if lbc.weightChangesWithoutReload {
+				var curVsrCopy, oldVsrCopy conf_v1.VirtualServerRoute
+				err := copier.CopyWithOption(&curVsrCopy, curVsr, copier.Option{DeepCopy: true})
+				if err != nil {
+					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", curVsr.Name, err)
+					return
+				}
+
+				err = copier.CopyWithOption(&oldVsrCopy, oldVsr, copier.Option{DeepCopy: true})
+				if err != nil {
+					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", oldVsr.Name, err)
+					return
+				}
+
+				zeroOutVirtualServerRouteSplitWeights(&curVsrCopy)
+				zeroOutVirtualServerRouteSplitWeights(&oldVsrCopy)
+
+				if reflect.DeepEqual(oldVsrCopy.Spec, curVsrCopy.Spec) {
+					lbc.processVSRWeightChangesWithoutReload(oldVsr, curVsr)
+					return
+				}
+
+			}
+
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
@@ -709,5 +761,209 @@ func createNamespaceHandlers(lbc *LoadBalancerController) cache.ResourceEventHan
 				lbc.AddSyncQueue(cur)
 			}
 		},
+	}
+}
+
+func (lbc *LoadBalancerController) getVirtualServerByVirtualServerRoute(vsr *conf_v1.VirtualServerRoute) (*conf_v1.VirtualServer, bool) {
+	virtualServerID := vsr.Status.ReferencedBy
+
+	vs, exists := lbc.configuration.virtualServers[virtualServerID]
+	return vs, exists
+}
+
+func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *conf_v1.VirtualServer, vsNew *conf_v1.VirtualServer) {
+	var weightUpdates []configs.WeightUpdate
+	var splitClientsIndex int
+	variableNamer := configs.NewVSVariableNamer(vsNew)
+
+	for i, routeNew := range vsNew.Spec.Routes {
+		routeOld := vsOld.Spec.Routes[i]
+		for j, matchNew := range routeNew.Matches {
+			matchOld := routeOld.Matches[j]
+			if len(matchNew.Splits) == 2 {
+				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight && matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
+					if matchNew.Splits[0].Weight+matchNew.Splits[1].Weight != 100 {
+						glog.V(3).Infof("VirtualServer %v has invalid weights", vsNew.Name)
+						return
+					}
+					weightUpdates = append(weightUpdates, configs.WeightUpdate{
+						Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
+						Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
+						Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, matchNew.Splits[0].Weight, matchNew.Splits[1].Weight),
+					})
+				}
+				splitClientsIndex += 101
+			} else if len(matchNew.Splits) > 0 {
+				splitClientsIndex++
+			}
+		}
+		if len(routeNew.Splits) == 2 {
+			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight && routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
+				if routeNew.Splits[0].Weight+routeNew.Splits[1].Weight != 100 {
+					glog.V(3).Infof("VirtualServer %v has invalid weights", vsNew.Name)
+					return
+				}
+				weightUpdates = append(weightUpdates, configs.WeightUpdate{
+					Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
+					Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
+					Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, routeNew.Splits[0].Weight, routeNew.Splits[1].Weight),
+				})
+				splitClientsIndex += 101
+			}
+			splitClientsIndex += 101
+		} else if len(routeNew.Splits) > 0 {
+			splitClientsIndex++
+		}
+	}
+	for _, weight := range weightUpdates {
+		glog.V(3).Infof("Upserting split clients: zone %v", weight.Zone)
+		glog.V(3).Infof("Upserting split clients: key %v", weight.Key)
+		glog.V(3).Infof("Upserting split clients: value %v", weight.Value)
+		lbc.configurator.UpsertSplitClientsKeyVal(weight.Zone, weight.Key, weight.Value)
+	}
+}
+
+func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *conf_v1.VirtualServerRoute, vsrNew *conf_v1.VirtualServerRoute) {
+	var weightUpdates []configs.WeightUpdate
+	vs, exists := lbc.getVirtualServerByVirtualServerRoute(vsrNew)
+	if !exists {
+		glog.V(3).Infof("VirtualServerRoute %v does not have a VirtualServer", vsrNew.Name)
+		return
+	}
+	splitClientsIndex := lbc.getStartingSplitClientsIndex(vsrNew, vs)
+
+	variableNamer := configs.NewVSVariableNamer(vs)
+
+	for i, routeNew := range vsrNew.Spec.Subroutes {
+		routeOld := vsrOld.Spec.Subroutes[i]
+		for j, matchNew := range routeNew.Matches {
+			matchOld := routeOld.Matches[j]
+			if len(matchNew.Splits) == 2 {
+				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight && matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
+					if matchNew.Splits[0].Weight+matchNew.Splits[1].Weight != 100 {
+						glog.V(3).Infof("VirtualServerRoute %v has invalid weights", vsrNew.Name)
+						return
+					}
+					weightUpdates = append(weightUpdates, configs.WeightUpdate{
+						Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
+						Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
+						Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, matchNew.Splits[0].Weight, matchNew.Splits[1].Weight),
+					})
+				}
+				splitClientsIndex += 101
+			} else if len(matchNew.Splits) > 0 {
+				splitClientsIndex++
+			}
+		}
+		if len(routeNew.Splits) == 2 {
+			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight && routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
+				if routeNew.Splits[0].Weight+routeNew.Splits[1].Weight != 100 {
+					glog.V(3).Infof("VirtualServerRoute %v has invalid weights", vsrNew.Name)
+					return
+				}
+				weightUpdates = append(weightUpdates, configs.WeightUpdate{
+					Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
+					Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
+					Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, routeNew.Splits[0].Weight, routeNew.Splits[1].Weight),
+				})
+			}
+			splitClientsIndex += 101
+		} else if len(routeNew.Splits) > 0 {
+			splitClientsIndex++
+		}
+	}
+	for _, weight := range weightUpdates {
+		glog.V(3).Infof("Upserting split clients: zone %v", weight.Zone)
+		glog.V(3).Infof("Upserting split clients: key %v", weight.Key)
+		glog.V(3).Infof("Upserting split clients: value %v", weight.Value)
+		lbc.configurator.UpsertSplitClientsKeyVal(weight.Zone, weight.Key, weight.Value)
+	}
+}
+
+func (lbc *LoadBalancerController) getVSExForVS(vs *conf_v1.VirtualServer) *configs.VirtualServerEx {
+	resources := lbc.configuration.GetResources()
+
+	resourceExes := lbc.createExtendedResources(resources)
+	for _, vsEx := range resourceExes.VirtualServerExes {
+		if vsEx.VirtualServer.Name == vs.Name {
+			return vsEx
+		}
+	}
+	return nil
+}
+
+func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.VirtualServerRoute, vs *conf_v1.VirtualServer) int {
+	var startingSplitClientsIndex int
+
+	for _, r := range vs.Spec.Routes {
+		for _, match := range r.Matches {
+			if len(match.Splits) == 2 {
+				startingSplitClientsIndex += 101
+			} else if len(match.Splits) > 0 {
+				startingSplitClientsIndex++
+			}
+		}
+		if len(r.Splits) == 2 {
+			startingSplitClientsIndex += 101
+		} else if len(r.Splits) > 0 {
+			startingSplitClientsIndex++
+		}
+
+	}
+
+	virtualserverEx := lbc.getVSExForVS(vs)
+
+	for _, vsRoute := range virtualserverEx.VirtualServerRoutes {
+		if vsRoute.Name == vsr.Name {
+			return startingSplitClientsIndex
+		}
+		for _, r := range vsRoute.Spec.Subroutes {
+			for _, match := range r.Matches {
+				if len(match.Splits) == 2 {
+					startingSplitClientsIndex += 101
+				} else if len(match.Splits) > 0 {
+					startingSplitClientsIndex++
+				}
+			}
+			if len(r.Splits) == 2 {
+				startingSplitClientsIndex += 101
+			} else if len(r.Splits) > 0 {
+				startingSplitClientsIndex++
+			}
+		}
+	}
+
+	return startingSplitClientsIndex
+}
+
+func zeroOutVirtualServerSplitWeights(vs *conf_v1.VirtualServer) {
+	for _, route := range vs.Spec.Routes {
+		for _, match := range route.Matches {
+			if len(match.Splits) == 2 {
+				match.Splits[0].Weight = 0
+				match.Splits[1].Weight = 0
+			}
+		}
+
+		if len(route.Splits) == 2 {
+			route.Splits[0].Weight = 0
+			route.Splits[1].Weight = 0
+		}
+	}
+}
+
+func zeroOutVirtualServerRouteSplitWeights(vs *conf_v1.VirtualServerRoute) {
+	for _, route := range vs.Spec.Subroutes {
+		for _, match := range route.Matches {
+			if len(match.Splits) == 2 {
+				match.Splits[0].Weight = 0
+				match.Splits[1].Weight = 0
+			}
+		}
+
+		if len(route.Splits) == 2 {
+			route.Splits[0].Weight = 0
+			route.Splits[1].Weight = 0
+		}
 	}
 }

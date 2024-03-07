@@ -490,6 +490,9 @@ controller:
   ## Enable telemetry reporting
   enableTelemetryReporting: true
 
+  ## Enables weight changes without reloading for splits in NGINX Plus
+  enableWeightChangesWithoutReload: true
+
 rbac:
   ## Configures RBAC.
   create: true

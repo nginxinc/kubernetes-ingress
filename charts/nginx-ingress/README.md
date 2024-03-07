@@ -471,6 +471,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.readOnlyRootFilesystem` | Configure root filesystem as read-only and add volumes for temporary data. Three major releases after 3.5.x this argument will be moved permanently to the `controller.securityContext` section. | false |
 |`controller.enableSSLDynamicReload` | Enable lazy loading for SSL Certificates. | true |
 |`controller.enableTelemetryReporting` | Enable telemetry reporting. | true |
+|`controller.enableWeightChangesWithoutReload` | Enable weight changes without reloading the NGINX configuration. | true |
 |`rbac.create` | Configures RBAC. | true |
 |`prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 |`prometheus.port` | Configures the port to scrape the metrics. | 9113 |

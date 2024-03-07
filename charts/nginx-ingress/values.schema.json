@@ -1424,6 +1424,14 @@
           "examples": [
             true
           ]
+        },
+        "enableWeightChangesWithoutReloading": {
+          "type": "boolean",
+          "default": true,
+          "title": "Enables weight changes without reloading for NGINX Plus",
+          "examples": [
+            true
+          ]
         }
       },
       "examples": [

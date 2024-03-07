@@ -150,6 +150,7 @@ type StaticConfigParams struct {
 	EnableCertManager              bool
 	DynamicSSLReload               bool
 	StaticSSLPath                  string
+	WeightChangesWithoutReload     bool
 	NginxVersion                   nginx.Version
 }
 
