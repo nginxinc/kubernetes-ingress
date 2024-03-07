@@ -106,6 +106,7 @@ func TestCollectNodeCountInClusterWithOneNode(t *testing.T) {
 		NodeCount:  1,
 		K8sVersion: "v1.29.2",
 		Arch:       runtime.GOARCH,
+		Platform:   "unknown",
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -144,6 +145,7 @@ func TestCollectNodeCountInClusterWithThreeNodes(t *testing.T) {
 		NodeCount:  3,
 		K8sVersion: "v1.29.2",
 		Arch:       runtime.GOARCH,
+		Platform:   "unknown",
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -183,6 +185,7 @@ func TestCollectClusterIDInClusterWithOneNode(t *testing.T) {
 		ClusterID:  "329766ff-5d78-4c9e-8736-7faad1f2e937",
 		K8sVersion: "v1.29.2",
 		Arch:       runtime.GOARCH,
+		Platform:   "unknown",
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -222,6 +225,7 @@ func TestCollectK8sVersion(t *testing.T) {
 		ClusterID:  "329766ff-5d78-4c9e-8736-7faad1f2e937",
 		K8sVersion: "v1.29.2",
 		Arch:       runtime.GOARCH,
+		Platform:   "unknown",
 	}
 	want := fmt.Sprintf("%+v", td)
 	got := buf.String()
@@ -252,6 +256,8 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				Platform:   "unknown",
+				NodeCount:  1,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				ProjectMeta: telemetry.ProjectMeta{
@@ -263,6 +269,8 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				Platform:   "unknown",
+				NodeCount:  1,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -289,6 +297,8 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				Platform:   "unknown",
+				NodeCount:  1,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				ProjectMeta: telemetry.ProjectMeta{
@@ -300,6 +310,8 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				Platform:   "unknown",
+				NodeCount:  1,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -335,6 +347,8 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				Platform:   "unknown",
+				NodeCount:  1,
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				ProjectMeta: telemetry.ProjectMeta{
@@ -346,6 +360,8 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				Platform:   "unknown",
+				NodeCount:  1,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -375,7 +391,7 @@ func TestCountVirtualServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: newTestClientset(dummyKubeNS),
+			K8sClientReader: newTestClientset(dummyKubeNS, node1),
 			Configurator:    configurator,
 			Version:         "3.5.0",
 		})
@@ -441,6 +457,8 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				NodeCount:  1,
+				Platform:   "unknown",
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				ProjectMeta: telemetry.ProjectMeta{
@@ -452,6 +470,8 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				NodeCount:  1,
+				Platform:   "unknown",
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -482,6 +502,8 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				NodeCount:  1,
+				Platform:   "unknown",
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				ProjectMeta: telemetry.ProjectMeta{
@@ -493,6 +515,8 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				NodeCount:  1,
+				Platform:   "unknown",
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -536,6 +560,8 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				NodeCount:  1,
+				Platform:   "unknown",
 			},
 			expectedTraceDataOnDelete: telemetry.Data{
 				ProjectMeta: telemetry.ProjectMeta{
@@ -547,6 +573,8 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				K8sVersion: "v1.29.2",
 				Arch:       runtime.GOARCH,
+				NodeCount:  1,
+				Platform:   "unknown",
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -584,7 +612,7 @@ func TestCountTransportServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: newTestClientset(dummyKubeNS),
+			K8sClientReader: newTestClientset(dummyKubeNS, node1),
 			Configurator:    configurator,
 			Version:         "3.5.0",
 		})

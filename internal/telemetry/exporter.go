@@ -33,6 +33,7 @@ type Data struct {
 	ClusterID  string
 	K8sVersion string
 	Arch       string
+	Platform   string
 }
 
 // ProjectMeta holds metadata for the project.

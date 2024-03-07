@@ -124,5 +124,9 @@ func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 	if d.K8sVersion, err = c.K8sVersion(); err != nil {
 		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
 	}
+
+	if d.Platform, err = c.Platform(ctx); err != nil {
+		glog.Errorf("Error collecting telemetry data: Platform: %v", err)
+	}
 	return d, err
 }
