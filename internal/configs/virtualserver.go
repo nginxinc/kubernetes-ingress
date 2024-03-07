@@ -777,11 +777,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		return upstreams[i].Name < upstreams[j].Name
 	})
 
-	// print twowaysplitclients and properties of each
-	for _, twsc := range twoWaySplitClients {
-		glog.V(3).Infof("TwoWaySplitClients ZoneName: %v", twsc.ZoneName)
-	}
-
 	vsCfg := version2.VirtualServerConfig{
 		Upstreams:     upstreams,
 		SplitClients:  splitClients,
