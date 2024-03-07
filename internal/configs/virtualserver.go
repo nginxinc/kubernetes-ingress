@@ -177,47 +177,56 @@ func (namer *upstreamNamer) GetNameForUpstream(upstream string) string {
 	return fmt.Sprintf("%s_%s", namer.prefix, upstream)
 }
 
-type variableNamer struct {
+// VariableNamer is a namer which generates unique variable names for a VirtualServer.
+type VariableNamer struct {
 	safeNsName string
 }
 
 // NewVSVariableNamer creates a new namer for a VirtualServer.
-func NewVSVariableNamer(virtualServer *conf_v1.VirtualServer) *variableNamer {
+func NewVSVariableNamer(virtualServer *conf_v1.VirtualServer) *VariableNamer {
 	safeNsName := strings.ReplaceAll(fmt.Sprintf("%s_%s", virtualServer.Namespace, virtualServer.Name), "-", "_")
-	return &variableNamer{
+	return &VariableNamer{
 		safeNsName: safeNsName,
 	}
 }
 
-func (namer *variableNamer) GetNameOfKeyvalZoneForSplitClientIndex(index int) string {
+// GetNameOfKeyvalZoneForSplitClientIndex returns a unique name for a keyval zone for split clients.
+func (namer *VariableNamer) GetNameOfKeyvalZoneForSplitClientIndex(index int) string {
 	return fmt.Sprintf("vs_%s_keyval_zone_split_clients_%d", namer.safeNsName, index)
 }
 
-func (namer *variableNamer) GetNameOfKeyvalForSplitClientIndex(index int) string {
+// GetNameOfKeyvalForSplitClientIndex returns a unique name for a keyval for split clients.
+func (namer *VariableNamer) GetNameOfKeyvalForSplitClientIndex(index int) string {
 	return fmt.Sprintf("$vs_%s_keyval_split_clients_%d", namer.safeNsName, index)
 }
 
-func (namer *variableNamer) GetNameOfKeyvalKeyForSplitClientIndex(index int) string {
+// GetNameOfKeyvalKeyForSplitClientIndex returns a unique name for a keyval key for split clients.
+func (namer *VariableNamer) GetNameOfKeyvalKeyForSplitClientIndex(index int) string {
 	return fmt.Sprintf("\"vs_%s_keyval_key_split_clients_%d\"", namer.safeNsName, index)
 }
 
-func (namer *variableNamer) GetNameOfMapForSplitClientIndex(index int) string {
+// GetNameOfMapForSplitClientIndex returns a unique name for a map for split clients.
+func (namer *VariableNamer) GetNameOfMapForSplitClientIndex(index int) string {
 	return fmt.Sprintf("$vs_%s_map_split_clients_%d", namer.safeNsName, index)
 }
 
-func (namer *variableNamer) GetNameOfKeyOfMapForWeights(index int, i int, j int) string {
+// GetNameOfKeyOfMapForWeights returns a unique name for a key of a map for split clients.
+func (namer *VariableNamer) GetNameOfKeyOfMapForWeights(index int, i int, j int) string {
 	return fmt.Sprintf("\"vs_%s_split_clients_%d_%d_%d\"", namer.safeNsName, index, i, j)
 }
 
-func (namer *variableNamer) GetNameOfSplitClientsForWeights(index int, i int, j int) string {
+// GetNameOfSplitClientsForWeights gets the name of the split clients for a particular combination of weights and scIndex.
+func (namer *VariableNamer) GetNameOfSplitClientsForWeights(index int, i int, j int) string {
 	return fmt.Sprintf("$vs_%s_split_clients_%d_%d_%d", namer.safeNsName, index, i, j)
 }
 
-func (namer *variableNamer) GetNameForSplitClientVariable(index int) string {
+// GetNameForSplitClientVariable gets the name of a split client variable for a particular scIndex.
+func (namer *VariableNamer) GetNameForSplitClientVariable(index int) string {
 	return fmt.Sprintf("$vs_%s_splits_%d", namer.safeNsName, index)
 }
 
-func (namer *variableNamer) GetNameForVariableForMatchesRouteMap(
+// GetNameForVariableForMatchesRouteMap gets the name of a matches route map
+func (namer *VariableNamer) GetNameForVariableForMatchesRouteMap(
 	matchesIndex int,
 	matchIndex int,
 	conditionIndex int,
@@ -225,7 +234,8 @@ func (namer *variableNamer) GetNameForVariableForMatchesRouteMap(
 	return fmt.Sprintf("$vs_%s_matches_%d_match_%d_cond_%d", namer.safeNsName, matchesIndex, matchIndex, conditionIndex)
 }
 
-func (namer *variableNamer) GetNameForVariableForMatchesRouteMainMap(matchesIndex int) string {
+// GetNameForVariableForMatchesRouteMainMap gets the name of a matches route main map
+func (namer *VariableNamer) GetNameForVariableForMatchesRouteMainMap(matchesIndex int) string {
 	return fmt.Sprintf("$vs_%s_matches_%d", namer.safeNsName, matchesIndex)
 }
 
@@ -499,7 +509,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	isVSR := false
 	matchesRoutes := 0
 
-	variableNamer := NewVSVariableNamer(vsEx.VirtualServer)
+	VariableNamer := NewVSVariableNamer(vsEx.VirtualServer)
 
 	// generates config for VirtualServer routes
 	for _, r := range vsEx.VirtualServer.Spec.Routes {
@@ -568,7 +578,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				r,
 				virtualServerUpstreamNamer,
 				crUpstreams,
-				variableNamer,
+				VariableNamer,
 				matchesRoutes,
 				len(splitClients),
 				vsc.cfgParams,
@@ -594,7 +604,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			twoWaySplitClients = append(twoWaySplitClients, cfg.TwoWaySplitClients...)
 			matchesRoutes++
 		} else if len(r.Splits) > 0 {
-			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients),
+			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, VariableNamer, len(splitClients),
 				vsc.cfgParams, errorPages, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "", vsc.warnings, vsc.WeightChangesWithoutReload)
 			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 			addDosConfigToLocations(dosRouteCfg, cfg.Locations)
@@ -698,7 +708,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 					r,
 					upstreamNamer,
 					crUpstreams,
-					variableNamer,
+					VariableNamer,
 					matchesRoutes,
 					len(splitClients),
 					vsc.cfgParams,
@@ -725,7 +735,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				twoWaySplitClients = append(twoWaySplitClients, cfg.TwoWaySplitClients...)
 				matchesRoutes++
 			} else if len(r.Splits) > 0 {
-				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams,
+				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, VariableNamer, len(splitClients), vsc.cfgParams,
 					errorPages, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings, vsc.WeightChangesWithoutReload)
 				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 				addDosConfigToLocations(dosRouteCfg, cfg.Locations)
@@ -2082,7 +2092,7 @@ func generateSplits(
 	splits []conf_v1.Split,
 	upstreamNamer *upstreamNamer,
 	crUpstreams map[string]conf_v1.Upstream,
-	variableNamer *variableNamer,
+	VariableNamer *VariableNamer,
 	scIndex int,
 	cfgParams *ConfigParams,
 	errorPages errorPageDetails,
@@ -2115,21 +2125,21 @@ func generateSplits(
 	}
 
 	if WeightChangesWithoutReload && len(splits) == 2 {
-		scs, weightMap := generateSplitsForWeightChangesWithoutReload(splits, scIndex, variableNamer)
-		kvZoneName := variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(scIndex)
+		scs, weightMap := generateSplitsForWeightChangesWithoutReload(splits, scIndex, VariableNamer)
+		kvZoneName := VariableNamer.GetNameOfKeyvalZoneForSplitClientIndex(scIndex)
 		kvz := version2.KeyValZone{
 			Name:  kvZoneName,
 			Size:  splitClientsKeyValZoneSize,
 			State: fmt.Sprintf("%s/%s.json", keyvalZoneBasePath, kvZoneName),
 		}
 		kv := version2.KeyVal{
-			Key:      variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(scIndex),
-			Variable: variableNamer.GetNameOfKeyvalForSplitClientIndex(scIndex),
+			Key:      VariableNamer.GetNameOfKeyvalKeyForSplitClientIndex(scIndex),
+			Variable: VariableNamer.GetNameOfKeyvalForSplitClientIndex(scIndex),
 			ZoneName: kvZoneName,
 		}
 		scWithWeights := version2.TwoWaySplitClients{
-			Key:               variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(scIndex),
-			Variable:          variableNamer.GetNameOfKeyvalForSplitClientIndex(scIndex),
+			Key:               VariableNamer.GetNameOfKeyvalKeyForSplitClientIndex(scIndex),
+			Variable:          VariableNamer.GetNameOfKeyvalForSplitClientIndex(scIndex),
 			ZoneName:          kvZoneName,
 			Weights:           []int{splits[0].Weight, splits[1].Weight},
 			SplitClientsIndex: scIndex,
@@ -2142,7 +2152,7 @@ func generateSplits(
 	} else {
 		splitClient := version2.SplitClient{
 			Source:        "$request_id",
-			Variable:      variableNamer.GetNameForSplitClientVariable(scIndex),
+			Variable:      VariableNamer.GetNameForSplitClientVariable(scIndex),
 			Distributions: distributions,
 		}
 		splitClients = append(splitClients, splitClient)
@@ -2172,7 +2182,7 @@ func generateDefaultSplitsConfig(
 	route conf_v1.Route,
 	upstreamNamer *upstreamNamer,
 	crUpstreams map[string]conf_v1.Upstream,
-	variableNamer *variableNamer,
+	VariableNamer *VariableNamer,
 	scIndex int,
 	cfgParams *ConfigParams,
 	errorPages errorPageDetails,
@@ -2186,18 +2196,18 @@ func generateDefaultSplitsConfig(
 	vscWarnings Warnings,
 	weightChangesWithoutReload bool,
 ) routingCfg {
-	scs, locs, returnLocs, maps, keyValZones, keyVals, twoWaySplitClients := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex, cfgParams, errorPages, originalPath, locSnippets, enableSnippets, retLocIndex, isVSR, vsrName, vsrNamespace, vscWarnings, weightChangesWithoutReload)
+	scs, locs, returnLocs, maps, keyValZones, keyVals, twoWaySplitClients := generateSplits(route.Splits, upstreamNamer, crUpstreams, VariableNamer, scIndex, cfgParams, errorPages, originalPath, locSnippets, enableSnippets, retLocIndex, isVSR, vsrName, vsrNamespace, vscWarnings, weightChangesWithoutReload)
 
 	var irl version2.InternalRedirectLocation
 	if weightChangesWithoutReload && len(route.Splits) == 2 {
 		irl = version2.InternalRedirectLocation{
 			Path:        route.Path,
-			Destination: variableNamer.GetNameOfMapForSplitClientIndex(scIndex),
+			Destination: VariableNamer.GetNameOfMapForSplitClientIndex(scIndex),
 		}
 	} else {
 		irl = version2.InternalRedirectLocation{
 			Path:        route.Path,
-			Destination: variableNamer.GetNameForSplitClientVariable(scIndex),
+			Destination: VariableNamer.GetNameForSplitClientVariable(scIndex),
 		}
 	}
 
@@ -2213,7 +2223,7 @@ func generateDefaultSplitsConfig(
 	}
 }
 
-func generateSplitsForWeightChangesWithoutReload(splits []conf_v1.Split, scIndex int, variableNamer *variableNamer) ([]version2.SplitClient, version2.Map) {
+func generateSplitsForWeightChangesWithoutReload(splits []conf_v1.Split, scIndex int, VariableNamer *VariableNamer) ([]version2.SplitClient, version2.Map) {
 	var splitClients []version2.SplitClient
 	var mapParameters []version2.Parameter
 	for i := 0; i <= 100; i++ {
@@ -2237,13 +2247,13 @@ func generateSplitsForWeightChangesWithoutReload(splits []conf_v1.Split, scIndex
 		}
 		split = version2.SplitClient{
 			Source:        "$request_id",
-			Variable:      variableNamer.GetNameOfSplitClientsForWeights(scIndex, i, j),
+			Variable:      VariableNamer.GetNameOfSplitClientsForWeights(scIndex, i, j),
 			Distributions: distributions,
 		}
 		splitClients = append(splitClients, split)
 		mapParameters = append(mapParameters, version2.Parameter{
-			Value:  variableNamer.GetNameOfKeyOfMapForWeights(scIndex, i, j),
-			Result: variableNamer.GetNameOfSplitClientsForWeights(scIndex, i, j),
+			Value:  VariableNamer.GetNameOfKeyOfMapForWeights(scIndex, i, j),
+			Result: VariableNamer.GetNameOfSplitClientsForWeights(scIndex, i, j),
 		})
 
 	}
@@ -2251,17 +2261,17 @@ func generateSplitsForWeightChangesWithoutReload(splits []conf_v1.Split, scIndex
 	var mapDefault version2.Parameter
 	var result string
 	if splits[0].Weight < splits[1].Weight {
-		result = variableNamer.GetNameOfSplitClientsForWeights(scIndex, 0, 100)
+		result = VariableNamer.GetNameOfSplitClientsForWeights(scIndex, 0, 100)
 	} else {
-		result = variableNamer.GetNameOfSplitClientsForWeights(scIndex, 100, 0)
+		result = VariableNamer.GetNameOfSplitClientsForWeights(scIndex, 100, 0)
 	}
 	mapDefault = version2.Parameter{Value: "default", Result: result}
 
 	mapParameters = append(mapParameters, mapDefault)
 
 	weightsToSplits := version2.Map{
-		Source:     variableNamer.GetNameOfKeyvalForSplitClientIndex(scIndex),
-		Variable:   variableNamer.GetNameOfMapForSplitClientIndex(scIndex),
+		Source:     VariableNamer.GetNameOfKeyvalForSplitClientIndex(scIndex),
+		Variable:   VariableNamer.GetNameOfMapForSplitClientIndex(scIndex),
 		Parameters: mapParameters,
 	}
 
@@ -2269,7 +2279,7 @@ func generateSplitsForWeightChangesWithoutReload(splits []conf_v1.Split, scIndex
 }
 
 func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
-	variableNamer *variableNamer, index int, scIndex int, cfgParams *ConfigParams, errorPages errorPageDetails,
+	VariableNamer *VariableNamer, index int, scIndex int, cfgParams *ConfigParams, errorPages errorPageDetails,
 	locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string, vscWarnings Warnings, weightChangesWithoutReload bool,
 ) routingCfg {
 	// Generate maps
@@ -2279,10 +2289,10 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 	for i, m := range route.Matches {
 		for j, c := range m.Conditions {
 			source := getNameForSourceForMatchesRouteMapFromCondition(c)
-			variable := variableNamer.GetNameForVariableForMatchesRouteMap(index, i, j)
+			variable := VariableNamer.GetNameForVariableForMatchesRouteMap(index, i, j)
 			successfulResult := "1"
 			if j < len(m.Conditions)-1 {
-				successfulResult = variableNamer.GetNameForVariableForMatchesRouteMap(index, i, j+1)
+				successfulResult = VariableNamer.GetNameForVariableForMatchesRouteMap(index, i, j+1)
 			}
 
 			params := generateParametersForMatchesRouteMap(c.Value, successfulResult)
@@ -2302,16 +2312,16 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 	source := ""
 	var params []version2.Parameter
 	for i, m := range route.Matches {
-		source += variableNamer.GetNameForVariableForMatchesRouteMap(index, i, 0)
+		source += VariableNamer.GetNameForVariableForMatchesRouteMap(index, i, 0)
 
 		v := fmt.Sprintf("~^%s1", strings.Repeat("0", i))
 		r := fmt.Sprintf("/%vmatches_%d_match_%d", internalLocationPrefix, index, i)
 		if len(m.Splits) > 0 {
 			if weightChangesWithoutReload && len(m.Splits) == 2 {
-				r = variableNamer.GetNameOfMapForSplitClientIndex(scIndex + scLocalIndex)
+				r = VariableNamer.GetNameOfMapForSplitClientIndex(scIndex + scLocalIndex)
 				scLocalIndex += 101
 			} else {
-				r = variableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
+				r = VariableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
 				scLocalIndex++
 			}
 		}
@@ -2326,9 +2336,9 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 	defaultResult := fmt.Sprintf("/%vmatches_%d_default", internalLocationPrefix, index)
 	if len(route.Splits) > 0 {
 		if weightChangesWithoutReload && len(route.Splits) == 2 {
-			defaultResult = variableNamer.GetNameOfMapForSplitClientIndex(scIndex + scLocalIndex)
+			defaultResult = VariableNamer.GetNameOfMapForSplitClientIndex(scIndex + scLocalIndex)
 		} else {
-			defaultResult = variableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
+			defaultResult = VariableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
 		}
 	}
 
@@ -2338,7 +2348,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 	}
 	params = append(params, defaultParam)
 
-	variable := variableNamer.GetNameForVariableForMatchesRouteMainMap(index)
+	variable := VariableNamer.GetNameForVariableForMatchesRouteMainMap(index)
 
 	mainMap := version2.Map{
 		Source:     source,
@@ -2362,7 +2372,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 				m.Splits,
 				upstreamNamer,
 				crUpstreams,
-				variableNamer,
+				VariableNamer,
 				scIndex+scLocalIndex,
 				cfgParams,
 				errorPages,
@@ -2406,7 +2416,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 			route.Splits,
 			upstreamNamer,
 			crUpstreams,
-			variableNamer,
+			VariableNamer,
 			scIndex+scLocalIndex,
 			cfgParams,
 			errorPages,
