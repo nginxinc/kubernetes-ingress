@@ -1,6 +1,6 @@
 module github.com/nginxinc/kubernetes-ingress
 
-go 1.22.0
+go 1.22.1
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.0
@@ -15,7 +15,6 @@ require (
 	github.com/nginxinc/nginx-plus-go-client v1.2.0
 	github.com/nginxinc/nginx-prometheus-exporter v1.1.0
 	github.com/nginxinc/nginx-service-mesh v1.7.0
-	github.com/nginxinc/telemetry-exporter v0.0.0-20240306143108-e74e64e77cff
 	github.com/prometheus/client_golang v1.18.0
 	github.com/prometheus/common v0.47.0
 	github.com/spiffe/go-spiffe/v2 v2.1.7
@@ -87,6 +86,8 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/onsi/ginkgo/v2 v2.16.0 // indirect
+	github.com/onsi/gomega v1.31.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
