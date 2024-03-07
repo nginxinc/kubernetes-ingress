@@ -6,7 +6,12 @@ import (
 	"io"
 
 	"go.opentelemetry.io/otel/attribute"
+
+	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 )
+
+// DummyData is a temporary var representing telemetry data.
+var DummyData = tel.Data{}
 
 // Exporter interface for exporters.
 type Exporter interface {
