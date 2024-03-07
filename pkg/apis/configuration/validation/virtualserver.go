@@ -572,6 +572,7 @@ func (vsv *VirtualServerValidator) validateUpstreams(upstreams []v1.Upstream, fi
 	upstreamNames = sets.Set[string]{}
 
 	for i, u := range upstreams {
+		u := u // address gosec G601
 		idxPath := fieldPath.Index(i)
 
 		upstreamErrors := validateUpstreamName(u.Name, idxPath.Child("name"))
