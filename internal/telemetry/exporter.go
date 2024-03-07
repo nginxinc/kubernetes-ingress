@@ -46,6 +46,7 @@ type NICResourceCounts struct {
 	VirtualServers      int64
 	VirtualServerRoutes int64
 	TransportServers    int64
+	Replicas            int64
 }
 
 // Attributes is a placeholder function.

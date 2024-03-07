@@ -10,6 +10,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
@@ -56,6 +57,9 @@ type CollectorConfig struct {
 
 	// Version represents NIC version.
 	Version string
+
+	// PodNSName represents the NamespacedName of the NIC Pod.
+	PodNSName types.NamespacedName
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -100,17 +104,24 @@ func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 		Name:    "NIC",
 		Version: c.Config.Version,
 	}
+	nrc := NICResourceCounts{}
 	d := Data{
-		ProjectMeta: pm,
-		Arch:        runtime.GOARCH,
+		ProjectMeta:       pm,
+		NICResourceCounts: nrc,
+		Arch:              runtime.GOARCH,
 	}
 
 	var err error
 
 	if c.Config.Configurator != nil {
 		vsCount, vsrCount := c.Config.Configurator.GetVirtualServerCounts()
-		d.VirtualServers, d.VirtualServerRoutes = int64(vsCount), int64(vsrCount)
-		d.TransportServers = int64(c.Config.Configurator.GetTransportServerCounts())
+		d.NICResourceCounts.VirtualServers = int64(vsCount)
+		d.NICResourceCounts.VirtualServerRoutes = int64(vsrCount)
+		d.NICResourceCounts.TransportServers = int64(c.Config.Configurator.GetTransportServerCounts())
+	}
+
+	if d.NICResourceCounts.Replicas, err = c.ReplicaCount(ctx); err != nil {
+		glog.Errorf("Error collecting telemetry data: Replicas: %v", err)
 	}
 
 	if d.NodeCount, err = c.NodeCount(ctx); err != nil {
@@ -124,5 +135,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 	if d.K8sVersion, err = c.K8sVersion(); err != nil {
 		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
 	}
+
 	return d, err
 }
