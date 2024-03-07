@@ -17,6 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+func createPointerFromBool(b bool) *bool {
+	return &b
+}
+
 func createPointerFromInt(n int) *int {
 	return &n
 }
