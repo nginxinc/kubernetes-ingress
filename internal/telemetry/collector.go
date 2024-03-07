@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	_ "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/util/wait"

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	_ "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 )
 
