@@ -45,7 +45,7 @@ jobs:
       ic_version: ${{ steps.vars.outputs.ic_version }}
       publish_images: ${{ steps.vars.outputs.publish }}
       docker_md5: ${{ steps.vars.outputs.docker_md5 }}
-      forked_workflow: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+      forked_workflow: ${{ (github.event.pull_request.head.repo.full_name != github.repository) && ! (startsWith(github.ref, 'refs/heads/release-') || github.ref_name == 'main') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
