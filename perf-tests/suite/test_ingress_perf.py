@@ -84,7 +84,7 @@ def setup_time(request):
     return request.config.getoption("--time")
 
 
-@pytest.mark.test
+@pytest.mark.perf
 @pytest.mark.parametrize(
     "ingress_controller",
     [

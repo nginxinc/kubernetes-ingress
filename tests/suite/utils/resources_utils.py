@@ -1713,7 +1713,7 @@ def get_resource_metrics(kube_apis, plural, namespace="nginx-ingress") -> str:
     :param plural: the plural of the resource
     """
     if plural == "pods":
-        metrics = kube_apis.list_namespaced_custom_object("metrics.k8s.io", "v1beta1", namespace, "pods")
+        metrics = kube_apis.list_namespaced_custom_object("metrics.k8s.io", "v1beta1", namespace, plural)
         while metrics["items"] == []:
             wait_before_test()
             try:
@@ -1721,11 +1721,11 @@ def get_resource_metrics(kube_apis, plural, namespace="nginx-ingress") -> str:
             except ApiException as e:
                 print(f"Error: {e}")
     elif plural == "nodes":
-        metrics = kube_apis.list_cluster_custom_object("metrics.k8s.io", "v1beta1", "nodes")
+        metrics = kube_apis.list_cluster_custom_object("metrics.k8s.io", "v1beta1", plural)
         while metrics["items"] == []:
             wait_before_test()
             try:
-                metrics = kube_apis.list_cluster_custom_object("metrics.k8s.io", "v1beta1", "nodes")
+                metrics = kube_apis.list_cluster_custom_object("metrics.k8s.io", "v1beta1", plural)
             except ApiException as e:
                 print(f"Error: {e}")
     else:
