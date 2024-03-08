@@ -94,13 +94,13 @@ jobs:
             publish=true
           fi
           echo "publish=$publish" >> $GITHUB_OUTPUT
-          docker_md5=$(find . -type f \( -name "build/Dockerfile" -o -name .github/data/version.txt \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }' )
+          docker_md5=$(find . -type f \( -name "Dockerfile" -o -name version.txt \) -not -path "./tests*" -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }')
           echo "docker_md5=${docker_md5:0:8}" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
@@ -197,7 +197,7 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@b6a39da80722a2cb0ef5d197531764a89b5d48c3 # v0.15.8
+        uses: anchore/sbom-action/download-syft@9fece9e20048ca9590af301449208b2b8861333b # v0.15.9
         if: github.ref_type == 'tag'
 
       - name: Install Cosign
@@ -228,7 +228,7 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
@@ -255,7 +255,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
@@ -453,6 +453,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
+      - name: NAP modules
+        id: nap_modules
+        run: |
+          [[ "${{ matrix.images.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || modules="${{ matrix.images.nap_modules }}"
+          echo "modules=${modules}" >> $GITHUB_OUTPUT
+        if: ${{ matrix.images.nap_modules }}
+
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
@@ -473,7 +480,7 @@ jobs:
       - name: Check if base images exist
         id: base_exists
         run: |
-          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}; then
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.modules) || '' }}; then
             echo "exists=0" >> $GITHUB_OUTPUT
           else
             echo "exists=1" >> $GITHUB_OUTPUT
@@ -495,17 +502,17 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ matrix.images.image }}
-          cache-to: type=gha,scope=${{ matrix.images.image }},mode=max
+          cache-from: type=gha,scope=${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.modules) || '' }}
+          cache-to: type=gha,scope=${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.modules) || '' }},mode=max
           target: common
-          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.modules) || '' }}
           platforms: ${{ matrix.images.platforms }}
           pull: true
           push: true
           build-args: |
             BUILD_OS=${{ matrix.images.image }}
             IC_VERSION=${{ needs.checks.outputs.ic_version }}
-            NAP_MODULES=${{ matrix.images.nap_modules }}
+            ${{ contains(matrix.images.image, 'nap') && format('NAP_MODULES={0}', matrix.images.nap_modules) || '' }}
           secrets: |
             ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.crt={0}"', secrets.NGINX_AP_CRT) || format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) }}
             ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.key={0}"', secrets.NGINX_AP_KEY) || format('"nginx-repo.key={0}"', secrets.NGINX_KEY) }}

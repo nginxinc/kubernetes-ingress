@@ -51,7 +51,7 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
@@ -118,6 +118,33 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
         if: ${{ ! inputs.forked-workflow }}
 
+      - name: Check if base images exist
+        id: base_exists
+        run: |
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ inputs.base-image-md5 }}-${{ inputs.image }}; then
+            echo "exists=0" >> $GITHUB_OUTPUT
+          else
+            echo "exists=1" >> $GITHUB_OUTPUT
+          fi
+        if: ${{ ! inputs.forked-workflow }}
+
+      - name: Build Base Container
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha,scope=${{ inputs.image }}
+          cache-to: type=gha,scope=${{ inputs.image }},mode=max
+          target: common
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ inputs.base-image-md5 }}-${{ inputs.image }}
+          platforms: ${{ inputs.platforms }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ inputs.image }}
+            IC_VERSION=${{ inputs.tag }}
+        if: ${{ ! inputs.forked-workflow && steps.base_exists.outputs.exists != 0 }}
+
       - name: Get short tag
         id: tag
         run: |
@@ -179,7 +206,7 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ inputs.base-image-md5 }}-${{ inputs.image }}
+            ${{ ! inputs.forked-workflow && format('PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:{0}-{1}', inputs.base-image-md5, inputs.image) || '' }}
             IC_VERSION=${{ (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release-')) && 'CI' || steps.meta.outputs.version }}
 
       - name: Certify Images
@@ -197,7 +224,7 @@ jobs:
         if: ${{ github.ref_type == 'tag' && contains(inputs.image, 'ubi') }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # 0.18.0
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -206,7 +233,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3.24.5
+        uses: github/codeql-action/upload-sarif@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
