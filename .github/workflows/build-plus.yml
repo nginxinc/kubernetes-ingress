@@ -61,7 +61,7 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
@@ -165,17 +165,51 @@ jobs:
       - name: NAP modules
         id: nap_modules
         run: |
+          [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ inputs.nap_modules }}"
           [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="both" || modules="${{ inputs.nap_modules }}"
           echo "modules=${modules}" >> $GITHUB_OUTPUT
+          echo "name=${name}" >> $GITHUB_OUTPUT
         if: ${{ inputs.nap_modules != '' }}
+
+      - name: Check if base images exist
+        id: base_exists
+        run: |
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}; then
+            echo "exists=0" >> $GITHUB_OUTPUT
+          else
+            echo "exists=1" >> $GITHUB_OUTPUT
+          fi
+        if: ${{ ! inputs.forked-workflow }}
+
+      - name: Build Base Container
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
+          target: common
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          platforms: ${{ inputs.platforms }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ inputs.image }}
+            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
+            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
+          secrets: |
+            "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
+            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+        if: ${{ ! inputs.forked-workflow && steps.base_exists.outputs.exists != 0 }}
 
       - name: Build Plus Docker image
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}
-          cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},mode=max
+          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: ${{ inputs.target }}${{ ! inputs.forked-workflow && '-prebuilt' || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -189,7 +223,7 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ contains(inputs.nap_modules, 'waf') && '-waf' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
             IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
@@ -241,7 +275,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # 0.18.0
         continue-on-error: true
         with:
           image-ref: ${{ steps.trivy-tag.outputs.tag }}
@@ -251,7 +285,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3.24.5
+        uses: github/codeql-action/upload-sarif@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
