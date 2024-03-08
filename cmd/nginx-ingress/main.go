@@ -53,6 +53,11 @@ const (
 	appProtectVersionPath  = "/opt/app_protect/VERSION"
 )
 
+// KubernetesAPI - type to abstract the Kubernetes interface
+type KubernetesAPI struct {
+	Client kubernetes.Interface
+}
+
 // FileHandle - Interface to read a file
 type FileHandle interface {
 	ReadFile(filename string) ([]byte, error)
@@ -567,7 +572,10 @@ func startChildProcesses(nginxManager nginx.Manager) childProcessConfig {
 func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (sslRejectHandshake bool, err error) {
 	sslRejectHandshake = false
 	if *defaultServerSecret != "" {
-		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret)
+		kAPI := &KubernetesAPI{
+			Client: kubeClient,
+		}
+		secret, err := kAPI.getAndValidateSecret(*defaultServerSecret)
 		if err != nil {
 			return sslRejectHandshake, fmt.Errorf("error trying to get the default server TLS secret %v: %w", *defaultServerSecret, err)
 		}
@@ -593,7 +601,10 @@ func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager n
 func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (isWildcardTLSSecret bool, err error) {
 	isWildcardTLSSecret = false
 	if *wildcardTLSSecret != "" {
-		secret, err := getAndValidateSecret(kubeClient, *wildcardTLSSecret)
+		kAPI := &KubernetesAPI{
+			Client: kubeClient,
+		}
+		secret, err := kAPI.getAndValidateSecret(*wildcardTLSSecret)
 		if err != nil {
 			return isWildcardTLSSecret, fmt.Errorf("error trying to get the wildcard TLS secret %v: %w", *wildcardTLSSecret, err)
 		}
@@ -665,12 +676,12 @@ func getSocketClient(sockPath string) *http.Client {
 }
 
 // getAndValidateSecret gets and validates a secret.
-func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string) (secret *api_v1.Secret, err error) {
+func (kAPI KubernetesAPI) getAndValidateSecret(secretNsName string) (secret *api_v1.Secret, err error) {
 	ns, name, err := k8s.ParseNamespaceName(secretNsName)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse the %v argument: %w", secretNsName, err)
 	}
-	secret, err = kubeClient.CoreV1().Secrets(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
+	secret, err = kAPI.Client.CoreV1().Secrets(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not get %v: %w", secretNsName, err)
 	}
@@ -797,7 +808,10 @@ func createNginxPlusCollector(registry *prometheus.Registry, constLabels map[str
 	var err error
 
 	if *prometheusTLSSecretName != "" {
-		prometheusSecret, err = getAndValidateSecret(kubeClient, *prometheusTLSSecretName)
+		kAPI := &KubernetesAPI{
+			Client: kubeClient,
+		}
+		prometheusSecret, err = kAPI.getAndValidateSecret(*prometheusTLSSecretName)
 		if err != nil {
 			glog.Fatalf("Error trying to get the prometheus TLS secret %v: %v", *prometheusTLSSecretName, err)
 		}
@@ -854,7 +868,10 @@ func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *cli
 	var serviceInsightSecret *api_v1.Secret
 
 	if *serviceInsightTLSSecretName != "" {
-		serviceInsightSecret, err = getAndValidateSecret(kubeClient, *serviceInsightTLSSecretName)
+		kAPI := &KubernetesAPI{
+			Client: kubeClient,
+		}
+		serviceInsightSecret, err = kAPI.getAndValidateSecret(*serviceInsightTLSSecretName)
 		if err != nil {
 			return fmt.Errorf("error trying to get the service insight TLS secret %v: %w", *serviceInsightTLSSecretName, err)
 		}
