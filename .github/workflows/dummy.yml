@@ -1,0 +1,68 @@
+name: Dummy
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release-*
+  push:
+    branches:
+      - main
+      - release-*
+
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref_name }}-dummy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  echo:
+    name: Echo Event
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Echo
+        run: |
+          echo "pull_request.head.repo.full_name: ${{ github.event.pull_request.head.repo.full_name }}"
+          echo "github.repository: ${{ github.repository }}"
+          echo "github.ref: ${{ startsWith(github.ref, 'refs/heads/release-') }}"
+          echo "github.ref_name: ${{ github.ref_name }}"
+          echo "forked_workflow: ${{ (github.event.pull_request.head.repo.full_name != github.repository) && ! (startsWith(github.ref, 'refs/heads/release-') || github.ref_name == 'main') }}"
+  # setup-matrix:
+  #   name: Setup Matrix
+  #   runs-on: ubuntu-22.04
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   outputs:
+  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+  #     - id: set-matrix
+  #       run: |
+  #         echo "matrix=$(cat .github/data/matrix-dummy.json | jq -c --arg latest "1.29.2" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
+
+  # use-matrix:
+  #   name: Build Matrix
+  #   runs-on: ubuntu-22.04
+  #   needs: setup-matrix
+  #   strategy:
+  #       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
+  #   steps:
+  #     - name: Output Variables
+  #       id: vars
+  #       run: echo ${{ matrix.label }}
+  #       if: ${{ matrix.images.nap_modules}}
