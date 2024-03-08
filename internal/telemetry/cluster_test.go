@@ -69,7 +69,7 @@ func TestK8sVersionRetrievesClusterVersion(t *testing.T) {
 	t.Parallel()
 
 	c := newTestCollectorForClusterWithNodes(t, node1)
-	got, err := c.K8sVersion()
+	got, err := c.ClusterVersion()
 	if err != nil {
 		t.Fatal(err)
 	}

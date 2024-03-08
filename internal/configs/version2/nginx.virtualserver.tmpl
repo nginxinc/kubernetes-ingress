@@ -304,7 +304,7 @@ server {
         {{- if $l.InternalProxyPass }}
         proxy_pass {{ $l.InternalProxyPass }};
         {{- end }}
-
+        set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
         {{- if or $l.ProxyPass $l.GRPCPass }}
             {{- range $r := $l.Rewrites }}
         rewrite {{ $r }};
@@ -327,7 +327,6 @@ server {
             {{- end }}
             {{- if not $l.GRPCPass }}
         proxy_http_version 1.1;
-        set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $vs_connection_header;
         proxy_pass_request_headers {{ if $l.ProxyPassRequestHeaders }}on{{ else }}off{{ end }};

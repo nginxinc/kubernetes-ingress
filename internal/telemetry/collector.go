@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"time"
 
+	telemetry "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
@@ -95,14 +97,13 @@ func (c *Collector) Collect(ctx context.Context) {
 }
 
 // BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
-	pm := ProjectMeta{
-		Name:    "NIC",
-		Version: c.Config.Version,
-	}
+func (c *Collector) BuildReport(ctx context.Context) (telemetry.Exportable, error) {
 	d := Data{
-		ProjectMeta: pm,
-		Arch:        runtime.GOARCH,
+		Data: telemetry.Data{
+			ProjectName:         "NIC",
+			ProjectVersion:      c.Config.Version,
+			ProjectArchitecture: runtime.GOARCH,
+		},
 	}
 
 	var err error
@@ -113,16 +114,21 @@ func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
 		d.TransportServers = int64(c.Config.Configurator.GetTransportServerCounts())
 	}
 
-	if d.NodeCount, err = c.NodeCount(ctx); err != nil {
-		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
-	}
-
 	if d.ClusterID, err = c.ClusterID(ctx); err != nil {
 		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
 	}
 
-	if d.K8sVersion, err = c.K8sVersion(); err != nil {
+	if d.ClusterNodeCount, err = c.NodeCount(ctx); err != nil {
+		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
+	}
+
+	if d.ClusterVersion, err = c.ClusterVersion(); err != nil {
 		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
 	}
-	return d, err
+
+	// TODO: Get Cluster (k8s) platform. e.g. EKS, AWS, Openshift, etc...
+
+	// TODO: Get InstallationID
+	// example of how NGF gets this ID https://github.com/nginxinc/nginx-gateway-fabric/blob/f33db51fc9e05ccf98fc8cdae100772a5cc6775e/internal/mode/static/telemetry/collector.go#L244-L248
+	return &d, err
 }
