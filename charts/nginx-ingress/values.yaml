@@ -559,21 +559,20 @@ nginxAgent:
   ## If nginxAgent.instanceGroup is not set the value of nginx-ingress.controller.fullname will be used
   instanceGroup: ""
   logLevel: "error"
+  ## Syslog listener which NGINX Agent uses to accept messages from App Protect WAF
   syslog:
     host: "127.0.0.1"
     port: 1514
   instanceManager:
     host: ""
     grpcPort: 443
+    sni: ""
     tls:
-      enabled: false
+      enabled: true
       skipVerify: false
-      ## The secret with a TLS certificate and key for the default HTTPS server.
-      ## The value must follow the following format: `<namespace>/<name>`.
-      ## Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters.
-      ## Note: Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
-      ## Format: <namespace>/<secret_name>
+      ## kubernetes.io/tls secret with a TLS certificate and key for using mTLS between NGINX Agent and Instance Manager
       secret: ""
+      ## nginx.org/ca secret for verification of Instance Manager TLS
       caSecret: ""
-  ## The custom ConfigMap to use instead of the one provided by default
+  ## The name of a custom ConfigMap to use instead of the one provided by default
   customConfigMap: ""

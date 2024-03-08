@@ -290,8 +290,18 @@ Volumes for controller.
 {{- define "nginx-ingress.volumes" -}}
 {{- $volumesSet := "false" }}
 volumes:
+{{- if eq (include "nginx-ingress.volumeEntries" .) "" -}}
+{{ toYaml list | printf " %s" }}
+{{- else }}
+{{ include "nginx-ingress.volumeEntries" . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+List of volumes for controller.
+*/}}
+{{- define "nginx-ingress.volumeEntries" -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
-{{- $volumesSet = "true" }}
 - name: nginx-etc
   emptyDir: {}
 - name: nginx-cache
@@ -302,30 +312,27 @@ volumes:
   emptyDir: {}
 {{- end }}
 {{- if .Values.controller.volumes }}
-{{- $volumesSet = "true" }}
 {{ toYaml .Values.controller.volumes }}
 {{- end }}
 {{- if .Values.nginxAgent.enable -}}
-{{- $volumesSet = "true" }}
 - name: agent-conf
   configMap:
     name: {{ include "nginx-ingress.agentConfigName" . }}
 - name: agent-dynamic
   emptyDir: {}
-{{- if and .Values.nginxAgent.instanceManager.tls (ne (.Values.nginxAgent.instanceManager.tls.secret | default "") "") }}
+{{- if and .Values.nginxAgent.instanceManager.tls (or (ne (.Values.nginxAgent.instanceManager.tls.secret | default "") "") (ne (.Values.nginxAgent.instanceManager.tls.caSecret | default "") "")) }}
 - name: nginx-agent-tls
   projected:
     sources:
+{{- if ne .Values.nginxAgent.instanceManager.tls.secret "" }}
       - secret:
           name: {{ .Values.nginxAgent.instanceManager.tls.secret }}
-{{- if .Values.nginxAgent.instanceManager.tls.caSecret }}
+{{- end }}
+{{- if ne .Values.nginxAgent.instanceManager.tls.caSecret "" }}
       - secret:
           name: {{ .Values.nginxAgent.instanceManager.tls.caSecret }}
 {{- end }}
 {{- end }}
-{{- end -}}
-{{- if eq $volumesSet "false" -}}
-{{ toYaml list | printf " %s" }}
 {{- end -}}
 {{- end -}}
 
@@ -333,10 +340,17 @@ volumes:
 Volume mounts for controller.
 */}}
 {{- define "nginx-ingress.volumeMounts" -}}
-{{- $volumeMountSet := "false" }}
+{{- $volumesSet := "false" }}
 volumeMounts:
+{{- if eq (include "nginx-ingress.volumeMountEntries" .) "" -}}
+{{ toYaml list | printf " %s" }}
+{{- else }}
+{{ include "nginx-ingress.volumeMountEntries" . }}
+{{- end -}}
+{{- end -}}
+
+{{- define "nginx-ingress.volumeMountEntries" -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
-{{- $volumeMountSet = "true" }}
 - mountPath: /etc/nginx
   name: nginx-etc
 - mountPath: /var/cache/nginx
@@ -347,24 +361,19 @@ volumeMounts:
   name: nginx-log
 {{- end }}
 {{- if .Values.controller.volumeMounts }}
-{{- $volumeMountSet = "true" }}
 {{ toYaml .Values.controller.volumeMounts }}
 {{- end }}
 {{- if .Values.nginxAgent.enable -}}
-{{- $volumeMountSet = "true" }}
 - name: agent-conf
   mountPath: /etc/nginx-agent/nginx-agent.conf
   subPath: nginx-agent.conf
 - name: agent-dynamic
   mountPath: /var/lib/nginx-agent
-{{- if and .Values.nginxAgent.instanceManager.tls .Values.nginxAgent.instanceManager.tls.secret }}
+{{- if and .Values.nginxAgent.instanceManager.tls (or (ne (.Values.nginxAgent.instanceManager.tls.secret | default "") "") (ne (.Values.nginxAgent.instanceManager.tls.caSecret | default "") "")) }}
 - name: nginx-agent-tls
   mountPath: /etc/ssl/nms
   readOnly: true
 {{- end }}
-{{- end -}}
-{{- if eq $volumeMountSet "false" -}}
-{{ toYaml list | printf " %s" }}
 {{- end -}}
 {{- end -}}
 
@@ -373,8 +382,12 @@ log:
   level: {{ .Values.nginxAgent.logLevel }}
   path: ""
 server:
-  host: {{ .Values.nginxAgent.instanceManager.host }}
+  host: {{ required ".Values.nginxAgent.instanceManager.host is required when setting .Values.nginxAgent.enable to true" .Values.nginxAgent.instanceManager.host }}
   grpcPort: {{ .Values.nginxAgent.instanceManager.grpcPort }}
+{{- if ne (.Values.nginxAgent.instanceManager.sni | default "") ""  }}
+  metrics: {{ .Values.nginxAgent.instanceManager.sni }}
+  command: {{ .Values.nginxAgent.instanceManager.sni }}
+{{- end }}
 {{- if .Values.nginxAgent.instanceManager.tls  }}
 tls:
   enable: {{ .Values.nginxAgent.instanceManager.tls.enable | default false }}
@@ -391,12 +404,10 @@ features:
   - registration
   - nginx-counting
   - metrics-sender
-  - metrics-collection
   - dataplane-status
 extensions:
   - nginx-app-protect
   - nap-monitoring
-  - advanced-metrics
 nginx_app_protect:
   report_interval: 15s
   precompiled_publication: true
@@ -405,14 +416,5 @@ nap_monitoring:
   processor_buffer_size: 50000
   syslog_ip: "127.0.0.1"
   syslog_port: 1514
-advanced_metrics:
-  socket_path: /var/run/nginx-agent/advanced-metrics.sock
-  aggregation_period: 1s
-  publishing_period: 3s
-  table_sizes_limits:
-    staging_table_max_size: 1000
-    staging_table_threshold: 1000
-    priority_table_max_size: 1000
-    priority_table_threshold: 1000
 
 {{ end -}}

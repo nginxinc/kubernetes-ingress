@@ -1830,6 +1830,14 @@
             "my-instance-group"
           ]
         },
+        "logLevel": {
+          "type": "string",
+          "default": "error",
+          "title": "Log level for NGINX Agent",
+          "examples": [
+            "error"
+          ]
+        },
         "instanceManager": {
           "type": "object",
           "default": {},
@@ -1854,6 +1862,14 @@
                 443
               ]
             },
+            "sni": {
+              "type": "string",
+              "title": "Server Name Indication for Instance Manager",
+              "default": "",
+              "examples": [
+                "nim.example.com"
+              ]
+            },
             "tls": {
               "type": "object",
               "default": {},
@@ -1861,18 +1877,18 @@
               "properties": {
                 "enable": {
                   "type": "boolean",
-                  "default": "false",
+                  "default": "true",
                   "title": "enable TLS for Instance Manager connection"
                 },
                 "secret": {
                   "type": "string",
                   "default": "",
-                  "title": "Name of the kubernetes.io/tls secret used for TLS connection to Instance Manager"
+                  "title": "kubernetes.io/tls secret with a TLS certificate and key for using mTLS between NGINX Agent and Instance Manager"
                 },
                 "caSecret": {
                   "type": "string",
                   "default": "",
-                  "title": "Name of the nginx.org/ca secret used for verification"
+                  "title": "nginx.org/ca secret for verification of Instance Manager TLS"
                 },
                 "skipVerify": {
                   "type": "boolean",
@@ -1882,6 +1898,40 @@
               }
             }
           }
+        },
+        "syslog": {
+          "type": "object",
+          "default": {
+            "host": "127.0.0.1",
+            "port": 1514
+          },
+          "title": "Syslog listener which NGINX Agent uses to accept messages from App Protect WAF",
+          "properties": {
+            "host": {
+              "type": "string",
+              "title": "Address for NGINX Agent to run syslog listener",
+              "default": "127.0.0.1",
+              "examples": [
+                "127.0.0.1"
+              ]
+            },
+            "port": {
+              "type": "integer",
+              "title": "Port for NGINX Agent to run syslog listener",
+              "default": 1514,
+              "examples": [
+                1514
+              ]
+            }
+          }
+        },
+        "customConfigMap": {
+          "type": "string",
+          "title": "The name of a custom ConfigMap to use instead of the one provided by default",
+          "default": "",
+          "examples": [
+            "my-custom-configmap"
+          ]
         }
       }
     }
