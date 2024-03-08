@@ -56,51 +56,59 @@ func (c *Collector) Platform(ctx context.Context) (string, error) {
 //
 // Cloud providers identified by PlatformID (in K8s SIGs):
 // https://github.com/orgs/kubernetes-sigs/repositories?q=cluster-api-provider
-func lookupPlatform(platformID string) string {
-	if platformID == "" { // PlatformID field not used by a provider.
+//
+//gocyclo:ignore
+func lookupPlatform(providerID string) string {
+	provider := strings.TrimSpace(providerID)
+	// The case when the ProviderID field not used by the cloud provider.
+	if provider == "" {
 		return "other"
 	}
-	platform := strings.ToLower(platformID)
-	if strings.HasPrefix(platform, "aws") {
+
+	provider = strings.ToLower(providerID)
+	if strings.HasPrefix(provider, "aws") {
 		return "aws"
 	}
-	if strings.HasPrefix(platform, "azure") {
+	if strings.HasPrefix(provider, "azure") {
 		return "azure"
 	}
-	if strings.HasPrefix(platform, "gce") {
+	if strings.HasPrefix(provider, "gce") {
 		return "gke"
 	}
-	if strings.HasPrefix(platform, "kind") {
+	if strings.HasPrefix(provider, "kind") {
 		return "kind"
 	}
-	if strings.HasPrefix(platform, "vsphere") {
+	if strings.HasPrefix(provider, "vsphere") {
 		return "vsphere"
 	}
-	if strings.HasPrefix(platform, "k3s") {
+	if strings.HasPrefix(provider, "k3s") {
 		return "k3s"
 	}
-	if strings.HasPrefix(platform, "ibmcloud") {
+	if strings.HasPrefix(provider, "ibmcloud") {
 		return "ibmcloud"
 	}
-	if strings.HasPrefix(platform, "cloudstack") {
+	if strings.HasPrefix(provider, "ibmpowervs") {
+		return "ibmpowervs"
+	}
+	if strings.HasPrefix(provider, "cloudstack") {
 		return "cloudstack"
 	}
-	if strings.HasPrefix(platform, "openstack") {
+	if strings.HasPrefix(provider, "openstack") {
 		return "openstack"
 	}
-	if strings.HasPrefix(platform, "digitalocean") {
+	if strings.HasPrefix(provider, "digitalocean") {
 		return "digitalocean"
 	}
-	if strings.HasPrefix(platform, "equinixmetal") { // former "packet" provider
+	if strings.HasPrefix(provider, "equinixmetal") {
 		return "equinixmetal"
 	}
 
-	p := strings.Split(platform, ":")
+	p := strings.Split(provider, ":")
 	if len(p) == 0 {
-		return platform
+		return "other"
 	}
 	if p[0] == "" {
-		return platform
+		return "other"
 	}
 	return p[0]
 }
