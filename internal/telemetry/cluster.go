@@ -53,7 +53,13 @@ func (c *Collector) Platform(ctx context.Context) (string, error) {
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.
+//
+// Cloud providers identified by PlatformID (in K8s SIGs):
+// https://github.com/orgs/kubernetes-sigs/repositories?q=cluster-api-provider
 func lookupPlatform(platformID string) string {
+	if platformID == "" { // PlatformID field not used by a provider.
+		return "other"
+	}
 	platform := strings.ToLower(platformID)
 	if strings.HasPrefix(platform, "aws") {
 		return "aws"
@@ -73,5 +79,28 @@ func lookupPlatform(platformID string) string {
 	if strings.HasPrefix(platform, "k3s") {
 		return "k3s"
 	}
-	return "other"
+	if strings.HasPrefix(platform, "ibmcloud") {
+		return "ibmcloud"
+	}
+	if strings.HasPrefix(platform, "cloudstack") {
+		return "cloudstack"
+	}
+	if strings.HasPrefix(platform, "openstack") {
+		return "openstack"
+	}
+	if strings.HasPrefix(platform, "digitalocean") {
+		return "digitalocean"
+	}
+	if strings.HasPrefix(platform, "equinixmetal") { // former "packet" provider
+		return "equinixmetal"
+	}
+
+	p := strings.Split(platform, ":")
+	if len(p) == 0 {
+		return platform
+	}
+	if p[0] == "" {
+		return platform
+	}
+	return p[0]
 }
