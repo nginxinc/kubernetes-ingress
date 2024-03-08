@@ -69,6 +69,7 @@ runs:
         echo "tag=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}" >> $GITHUB_OUTPUT
         echo "modules=${{ contains(inputs.marker, 'appprotect') && 'waf' || '' }}${{ contains(inputs.marker, 'dos') && 'dos' || '' }}" >> $GITHUB_OUTPUT
         echo "forked-workflow=${{  inputs.forked-workflow }}"
+        echo "prebuilt=${{ inputs.forked-workflow && '' || '-prebuilt' }}"
       shell: bash
 
     - name: Docker Buildx
