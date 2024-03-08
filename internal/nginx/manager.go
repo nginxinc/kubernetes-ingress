@@ -599,7 +599,7 @@ func (lm *LocalManager) AgentQuit() {
 func (lm *LocalManager) AgentVersion() string {
 	out, err := exec.Command(agentPath, "-v").CombinedOutput()
 	if err != nil {
-		glog.Fatalf("Failed to get nginx agent version: %v", err)
+		glog.Fatalf("Failed to get nginx-agent version: %v", err)
 	}
 	return strings.TrimSpace(strings.TrimPrefix(string(out), "nginx-agent version "))
 }

@@ -283,6 +283,10 @@ func parseFlags() {
 	if *ingressLink != "" && *externalService != "" {
 		glog.Fatal("ingresslink and external-service cannot both be set")
 	}
+
+	if *agent && !*appProtect {
+		glog.Fatal("NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
+	}
 }
 
 func initialChecks() {
