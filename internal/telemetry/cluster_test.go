@@ -260,6 +260,21 @@ func TestEquinixMetallPlatformDeterminesOwnName(t *testing.T) {
 	}
 }
 
+func TestAlibabaPlatformDeterminesOwnName(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCollectorForClusterWithNodes(t, nodeAlibaba)
+	got, err := c.Platform(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := "alicloud"
+	if want != got {
+		t.Errorf("want %s, got %s", want, got)
+	}
+}
+
 func TestPlatformLookupOnMissingPlatformIDField(t *testing.T) {
 	t.Parallel()
 
@@ -579,6 +594,20 @@ var (
 		},
 		Spec: apiCoreV1.NodeSpec{
 			ProviderID: "equinixmetal://4232e3c7-d83c-d72b-758c-71d07a3d9310",
+		},
+	}
+
+	nodeAlibaba = &apiCoreV1.Node{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Node",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "node",
+			Namespace: "default",
+		},
+		Spec: apiCoreV1.NodeSpec{
+			ProviderID: "alicloud://4232e3c7-d83c-d72b-758c-71d07a3d9310",
 		},
 	}
 )

@@ -102,6 +102,9 @@ func lookupPlatform(providerID string) string {
 	if strings.HasPrefix(provider, "equinixmetal") {
 		return "equinixmetal"
 	}
+	if strings.HasPrefix(provider, "alicloud") {
+		return "alicloud"
+	}
 
 	p := strings.Split(provider, ":")
 	if len(p) == 0 {
