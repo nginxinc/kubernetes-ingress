@@ -119,7 +119,7 @@ func TestGCPPlatformDeterminesOwnName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := "gke"
+	want := "gce"
 	if want != got {
 		t.Errorf("want %s, got %s", want, got)
 	}

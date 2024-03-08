@@ -53,58 +53,13 @@ func (c *Collector) Platform(ctx context.Context) (string, error) {
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.
-//
-// Cloud providers identified by PlatformID (in K8s SIGs):
-// https://github.com/orgs/kubernetes-sigs/repositories?q=cluster-api-provider
-//
-//gocyclo:ignore
 func lookupPlatform(providerID string) string {
 	provider := strings.TrimSpace(providerID)
-	// The case when the ProviderID field not used by the cloud provider.
 	if provider == "" {
 		return "other"
 	}
 
 	provider = strings.ToLower(providerID)
-	if strings.HasPrefix(provider, "aws") {
-		return "aws"
-	}
-	if strings.HasPrefix(provider, "azure") {
-		return "azure"
-	}
-	if strings.HasPrefix(provider, "gce") {
-		return "gke"
-	}
-	if strings.HasPrefix(provider, "kind") {
-		return "kind"
-	}
-	if strings.HasPrefix(provider, "vsphere") {
-		return "vsphere"
-	}
-	if strings.HasPrefix(provider, "k3s") {
-		return "k3s"
-	}
-	if strings.HasPrefix(provider, "ibmcloud") {
-		return "ibmcloud"
-	}
-	if strings.HasPrefix(provider, "ibmpowervs") {
-		return "ibmpowervs"
-	}
-	if strings.HasPrefix(provider, "cloudstack") {
-		return "cloudstack"
-	}
-	if strings.HasPrefix(provider, "openstack") {
-		return "openstack"
-	}
-	if strings.HasPrefix(provider, "digitalocean") {
-		return "digitalocean"
-	}
-	if strings.HasPrefix(provider, "equinixmetal") {
-		return "equinixmetal"
-	}
-	if strings.HasPrefix(provider, "alicloud") {
-		return "alicloud"
-	}
 
 	p := strings.Split(provider, ":")
 	if len(p) == 0 {
