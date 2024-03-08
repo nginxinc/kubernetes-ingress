@@ -1,4 +1,4 @@
-name: Lint
+name: Lint & Formatting
 
 on:
   pull_request:
@@ -10,13 +10,31 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.ref_name }}-lint
+  group: ${{ github.ref_name }}-lint-format
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+
+  format:
+    name: Format
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Run goimports & gofumpt
+        run: |
+          make format
+          git diff --exit-code
+
   lint:
     name: Lint
     runs-on: ubuntu-22.04
@@ -44,7 +62,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - uses: reviewdog/action-actionlint@6a38513dd4d2e818798c5c73d0870adbb82de4a4 # v1.41.0
+      - uses: reviewdog/action-actionlint@b0a6aebe1d2191decc9b4f022cdfc248b702477d # v1.42.0
         with:
           actionlint_flags: -shellcheck ""
 

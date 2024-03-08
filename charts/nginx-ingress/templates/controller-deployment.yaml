@@ -19,15 +19,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "nginx-ingress.selectorLabels" . | nindent 8 }}
-{{- if .Values.nginxServiceMesh.enable }}
-        nsm.nginx.com/enable-ingress: "true"
-        nsm.nginx.com/enable-egress: "{{ .Values.nginxServiceMesh.enableEgress }}"
-        nsm.nginx.com/deployment: {{ include "nginx-ingress.controller.fullname" . }}
-{{- end }}
-{{- if .Values.controller.pod.extraLabels }}
-{{ toYaml .Values.controller.pod.extraLabels | indent 8 }}
-{{- end }}
+        {{- include "nginx-ingress.podLabels" . | nindent 8 }}
 {{- if or .Values.prometheus.create .Values.controller.pod.annotations }}
       annotations:
 {{- if .Values.prometheus.create }}
@@ -56,22 +48,7 @@ spec:
       topologySpreadConstraints:
 {{ toYaml .Values.controller.topologySpreadConstraints | indent 8 }}
 {{- end }}
-{{- if or (eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true") .Values.controller.volumes }}
-      volumes:
-{{- end }}
-{{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
-      - name: nginx-etc
-        emptyDir: {}
-      - name: nginx-cache
-        emptyDir: {}
-      - name: nginx-lib
-        emptyDir: {}
-      - name: nginx-log
-        emptyDir: {}
-{{- end }}
-{{- if .Values.controller.volumes }}
-{{ toYaml .Values.controller.volumes | indent 6 }}
-{{- end }}
+{{- include "nginx-ingress.volumes" .  | indent 6 }}
 {{- if .Values.controller.priorityClassName }}
       priorityClassName: {{ .Values.controller.priorityClassName }}
 {{- end }}
@@ -140,22 +117,7 @@ spec:
             add:
             - NET_BIND_SERVICE
 {{- end }}
-{{- if or ( eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.volumeMounts }}
-        volumeMounts:
-{{- end }}
-{{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
-        - mountPath: /etc/nginx
-          name: nginx-etc
-        - mountPath: /var/cache/nginx
-          name: nginx-cache
-        - mountPath: /var/lib/nginx
-          name: nginx-lib
-        - mountPath: /var/log/nginx
-          name: nginx-log
-{{- end }}
-{{- if .Values.controller.volumeMounts}}
-{{ toYaml .Values.controller.volumeMounts | indent 8 }}
-{{- end }}
+{{- include "nginx-ingress.volumeMounts" . | indent 8 }}
         env:
         - name: POD_NAMESPACE
           valueFrom:

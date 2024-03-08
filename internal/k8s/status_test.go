@@ -500,6 +500,7 @@ func TestHasVsStatusChanged(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		changed := hasVsStatusChanged(&test.vs, state, reason, msg)
 
 		if changed != test.expected {
@@ -577,6 +578,7 @@ func TestHasVsrStatusChanged(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		changed := hasVsrStatusChanged(&test.vsr, state, reason, msg, referencedBy)
 
 		if changed != test.expected {
@@ -728,6 +730,7 @@ func TestHasPolicyStatusChanged(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		changed := hasPolicyStatusChanged(&test.pol, state, reason, msg)
 
 		if changed != test.expected {

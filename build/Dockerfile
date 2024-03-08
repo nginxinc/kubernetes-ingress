@@ -282,7 +282,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf clean all
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF & DoS #############################################
-FROM redhat/ubi8@sha256:627867e53ad6846afba2dfbf5cef1d54c868a9025633ef0afd546278d4654eac as ubi-8-plus-nap
+FROM redhat/ubi8@sha256:bce7e9f69fb7d4533447232478fd825811c760288f87a35699f9c8f030f2c1a6 as ubi-8-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -390,7 +390,7 @@ LABEL org.opencontainers.image.version="${IC_VERSION}" \
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.22-alpine@sha256:8e96e6cff6a388c2f70f5f662b64120941fcd7d4b89d62fec87520323a316bd9 AS builder
+FROM golang:1.22-alpine@sha256:fc5e5848529786cf1136563452b33d713d5c60b2c787f6b2a077fa6eeefd9114 AS builder
 ARG IC_VERSION
 ARG TARGETARCH
 
@@ -403,7 +403,7 @@ RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --m
 
 
 ############################################# Download delve #############################################
-FROM golang:1.21-alpine@sha256:a6a7f1fcf12f5efa9e04b1e75020931a616cd707f14f62ab5262bfbe109aa84a AS debug-builder
+FROM golang:1.22-alpine@sha256:fc5e5848529786cf1136563452b33d713d5c60b2c787f6b2a077fa6eeefd9114 AS debug-builder
 ARG IC_VERSION
 ARG TARGETARCH
 
