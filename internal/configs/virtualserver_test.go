@@ -5207,6 +5207,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 						Code: 0,
 						Text: "hello 10",
 					},
+					Headers: []version2.Header{{Name: "return-header", Value: "value 1"}},
 				},
 				{
 					Name:        "@return_11",
@@ -5214,6 +5215,10 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 					Return: version2.Return{
 						Code: 0,
 						Text: "hello 11",
+					},
+					Headers: []version2.Header{
+						{Name: "return-header", Value: "value 1"},
+						{Name: "return-header-2", Value: "value 2"},
 					},
 				},
 			},
@@ -5349,10 +5354,6 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 						},
 					},
 					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
-					// Headers: []version2.Header{
-					// 	{Name: "return-header", Value: "value 1"},
-					// 	{Name: "return-header-2", Value: "value 2"},
-					// },
 				},
 				{
 					Path:                 "/header/return-multiple",
@@ -5365,7 +5366,6 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 						},
 					},
 					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
-					// ProxySetHeaders:   []version2.Header{{Name: "return-header", Value: "value 1"}},
 				},
 			},
 		},
