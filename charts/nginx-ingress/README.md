@@ -472,6 +472,8 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.enableSSLDynamicReload` | Enable lazy loading for SSL Certificates. | true |
 |`controller.telemetryReporting.enable` | Enable telemetry reporting. | true |
 |`rbac.create` | Configures RBAC. | true |
+|`rbac.clusterrole.create` | Configures ClusterRole. | true |
+|`rbac.clusterrolebinding.create` | Configures ClusterRoleBinding. | true |
 |`prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 |`prometheus.port` | Configures the port to scrape the metrics. | 9113 |
 |`prometheus.scheme` | Configures the HTTP scheme to use for connections to the Prometheus endpoint. | http |
