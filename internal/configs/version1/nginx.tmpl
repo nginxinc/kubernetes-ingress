@@ -27,6 +27,8 @@ events {
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
+    map_hash_max_size {{.MapHashMaxSize}};
+    map_hash_bucket_size {{.MapHashBucketSize}};
 
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}
@@ -48,6 +50,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
+
 
     {{- if .DynamicSSLReloadEnabled }}
     map $nginx_version $secret_dir_path {
