@@ -19,14 +19,15 @@ import (
 )
 
 const (
-	nginx502Server             = "unix:/var/lib/nginx/nginx-502-server.sock"
-	internalLocationPrefix     = "internal_location_"
-	nginx418Server             = "unix:/var/lib/nginx/nginx-418-server.sock"
-	specContext                = "spec"
-	routeContext               = "route"
-	subRouteContext            = "subroute"
-	keyvalZoneBasePath         = "/etc/nginx/state_files"
-	splitClientsKeyValZoneSize = "100k"
+	nginx502Server                                  = "unix:/var/lib/nginx/nginx-502-server.sock"
+	internalLocationPrefix                          = "internal_location_"
+	nginx418Server                                  = "unix:/var/lib/nginx/nginx-418-server.sock"
+	specContext                                     = "spec"
+	routeContext                                    = "route"
+	subRouteContext                                 = "subroute"
+	keyvalZoneBasePath                              = "/etc/nginx/state_files"
+	splitClientsKeyValZoneSize                      = "100k"
+	splitClientAmountWhenWeightChangesWithoutReload = 101
 )
 
 var grpcConflictingErrors = map[int]bool{
@@ -2314,7 +2315,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 		if len(m.Splits) > 0 {
 			if weightChangesWithoutReload && len(m.Splits) == 2 {
 				r = VariableNamer.GetNameOfMapForSplitClientIndex(scIndex + scLocalIndex)
-				scLocalIndex += 101
+				scLocalIndex += splitClientAmountWhenWeightChangesWithoutReload
 			} else {
 				r = VariableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
 				scLocalIndex++

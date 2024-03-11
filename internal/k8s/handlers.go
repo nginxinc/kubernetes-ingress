@@ -21,6 +21,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+const splitClientAmountWhenWeightChangesWithoutReload = 101
+
 // createConfigMapHandlers builds the handler funcs for config maps
 func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
@@ -792,7 +794,7 @@ func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *co
 						Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, matchNew.Splits[0].Weight, matchNew.Splits[1].Weight),
 					})
 				}
-				splitClientsIndex += 101
+				splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 			} else if len(matchNew.Splits) > 0 {
 				splitClientsIndex++
 			}
@@ -808,9 +810,9 @@ func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *co
 					Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
 					Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, routeNew.Splits[0].Weight, routeNew.Splits[1].Weight),
 				})
-				splitClientsIndex += 101
+				splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 			}
-			splitClientsIndex += 101
+			splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 		} else if len(routeNew.Splits) > 0 {
 			splitClientsIndex++
 		}
@@ -847,7 +849,7 @@ func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *
 						Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, matchNew.Splits[0].Weight, matchNew.Splits[1].Weight),
 					})
 				}
-				splitClientsIndex += 101
+				splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 			} else if len(matchNew.Splits) > 0 {
 				splitClientsIndex++
 			}
@@ -864,7 +866,7 @@ func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *
 					Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, routeNew.Splits[0].Weight, routeNew.Splits[1].Weight),
 				})
 			}
-			splitClientsIndex += 101
+			splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 		} else if len(routeNew.Splits) > 0 {
 			splitClientsIndex++
 		}
@@ -892,13 +894,13 @@ func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.Vir
 	for _, r := range vs.Spec.Routes {
 		for _, match := range r.Matches {
 			if len(match.Splits) == 2 {
-				startingSplitClientsIndex += 101
+				startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 			} else if len(match.Splits) > 0 {
 				startingSplitClientsIndex++
 			}
 		}
 		if len(r.Splits) == 2 {
-			startingSplitClientsIndex += 101
+			startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 		} else if len(r.Splits) > 0 {
 			startingSplitClientsIndex++
 		}
@@ -914,13 +916,13 @@ func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.Vir
 		for _, r := range vsRoute.Spec.Subroutes {
 			for _, match := range r.Matches {
 				if len(match.Splits) == 2 {
-					startingSplitClientsIndex += 101
+					startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 				} else if len(match.Splits) > 0 {
 					startingSplitClientsIndex++
 				}
 			}
 			if len(r.Splits) == 2 {
-				startingSplitClientsIndex += 101
+				startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
 			} else if len(r.Splits) > 0 {
 				startingSplitClientsIndex++
 			}
