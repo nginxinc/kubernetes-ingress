@@ -16,20 +16,13 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	exporter "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
+	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/version"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	testClient "k8s.io/client-go/kubernetes/fake"
 )
-
-var commonData = exporter.Data{
-	ProjectName:         "NIC",
-	ProjectVersion:      "3.5.0",
-	ClusterVersion:      "v1.29.2",
-	ProjectArchitecture: runtime.GOARCH,
-}
 
 func TestCreateNewCollectorWithCustomReportingPeriod(t *testing.T) {
 	t.Parallel()
@@ -60,7 +53,7 @@ func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 	cfg := telemetry.CollectorConfig{
 		K8sClientReader: newTestClientset(),
 		Configurator:    newConfigurator(t),
-		Version:         "3.5.0",
+		Version:         telemetryNICData.ProjectVersion,
 	}
 	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
 	if err != nil {
@@ -69,10 +62,10 @@ func TestCreateNewCollectorWithCustomExporter(t *testing.T) {
 	c.Collect(context.Background())
 
 	td := telemetry.Data{
-		Data: exporter.Data{
-			ProjectName:         "NIC",
-			ProjectVersion:      "3.5.0",
-			ClusterVersion:      "v1.29.2",
+		Data: tel.Data{
+			ProjectName:         telemetryNICData.ProjectName,
+			ProjectVersion:      telemetryNICData.ProjectVersion,
+			ClusterVersion:      telemetryNICData.ClusterVersion,
 			ProjectArchitecture: runtime.GOARCH,
 		},
 	}
@@ -91,7 +84,7 @@ func TestCollectNodeCountInClusterWithOneNode(t *testing.T) {
 	cfg := telemetry.CollectorConfig{
 		Configurator:    newConfigurator(t),
 		K8sClientReader: newTestClientset(node1),
-		Version:         "3.5.0",
+		Version:         telemetryNICData.ProjectVersion,
 	}
 
 	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
@@ -101,22 +94,19 @@ func TestCollectNodeCountInClusterWithOneNode(t *testing.T) {
 	c.Collect(context.Background())
 
 	td := telemetry.Data{
-		Data: exporter.Data{
-			ProjectName:         "NIC",
-			ProjectVersion:      "3.5.0",
-			ClusterVersion:      "v1.29.2",
+		Data: tel.Data{
+			ProjectName:         telemetryNICData.ProjectName,
+			ProjectVersion:      telemetryNICData.ProjectVersion,
+			ClusterVersion:      telemetryNICData.ClusterVersion,
 			ProjectArchitecture: runtime.GOARCH,
 			ClusterNodeCount:    1,
+			ClusterPlatform:     "other",
 		},
 		NICResourceCounts: telemetry.NICResourceCounts{
 			VirtualServers:      0,
 			VirtualServerRoutes: 0,
 			TransportServers:    0,
 		},
-		NodeCount:  1,
-		K8sVersion: "v1.29.2",
-		Arch:       runtime.GOARCH,
-		Platform:   "other",
 	}
 
 	want := fmt.Sprintf("%+v", &td)
@@ -134,7 +124,7 @@ func TestCollectNodeCountInClusterWithThreeNodes(t *testing.T) {
 	cfg := telemetry.CollectorConfig{
 		Configurator:    newConfigurator(t),
 		K8sClientReader: newTestClientset(node1, node2, node3),
-		Version:         "3.5.0",
+		Version:         telemetryNICData.ProjectVersion,
 	}
 
 	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
@@ -143,24 +133,26 @@ func TestCollectNodeCountInClusterWithThreeNodes(t *testing.T) {
 	}
 	c.Collect(context.Background())
 
-	td := telemetry.Data{
-		Data: exporter.Data{
-			ProjectName:         "NIC",
-			ProjectVersion:      "3.5.0",
-			ClusterVersion:      "v1.29.2",
-			ProjectArchitecture: runtime.GOARCH,
-			ClusterNodeCount:    3,
-		},
-		NICResourceCounts: telemetry.NICResourceCounts{
-			VirtualServers:      0,
-			VirtualServerRoutes: 0,
-			TransportServers:    0,
-		},
-		NodeCount:  3,
-		K8sVersion: "v1.29.2",
-		Arch:       runtime.GOARCH,
-		Platform:   "other",
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+		ProjectArchitecture: runtime.GOARCH,
+		ClusterNodeCount:    3,
 	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+	}
+
+	td := telemetry.Data{
+		telData,
+		nicResourceCounts,
+	}
+
 	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
 	if !cmp.Equal(want, got) {
@@ -176,7 +168,7 @@ func TestCollectClusterIDInClusterWithOneNode(t *testing.T) {
 	cfg := telemetry.CollectorConfig{
 		Configurator:    newConfigurator(t),
 		K8sClientReader: newTestClientset(node1, kubeNS),
-		Version:         "3.5.0",
+		Version:         telemetryNICData.ProjectVersion,
 	}
 
 	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
@@ -186,33 +178,29 @@ func TestCollectClusterIDInClusterWithOneNode(t *testing.T) {
 	c.Collect(context.Background())
 
 	td := telemetry.Data{
-		Data: exporter.Data{
-			ProjectName:         "NIC",
-			ProjectVersion:      "3.5.0",
-			ClusterVersion:      "v1.29.2",
+		Data: tel.Data{
+			ProjectName:         telemetryNICData.ProjectName,
+			ProjectVersion:      telemetryNICData.ProjectVersion,
+			ClusterVersion:      telemetryNICData.ClusterVersion,
+			ClusterPlatform:     "other",
 			ProjectArchitecture: runtime.GOARCH,
 			ClusterNodeCount:    1,
-			ClusterID:           "329766ff-5d78-4c9e-8736-7faad1f2e937",
+			ClusterID:           telemetryNICData.ClusterID,
 		},
 		NICResourceCounts: telemetry.NICResourceCounts{
 			VirtualServers:      0,
 			VirtualServerRoutes: 0,
 			TransportServers:    0,
 		},
-		NodeCount:  1,
-		ClusterID:  "329766ff-5d78-4c9e-8736-7faad1f2e937",
-		K8sVersion: "v1.29.2",
-		Arch:       runtime.GOARCH,
-		Platform:   "other",
 	}
-	want := fmt.Sprintf("%+v", td)
+	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
 	}
 }
 
-func TestCollectK8sVersion(t *testing.T) {
+func TestCollectClusterVersion(t *testing.T) {
 	t.Parallel()
 
 	buf := &bytes.Buffer{}
@@ -220,7 +208,7 @@ func TestCollectK8sVersion(t *testing.T) {
 	cfg := telemetry.CollectorConfig{
 		Configurator:    newConfigurator(t),
 		K8sClientReader: newTestClientset(node1, kubeNS),
-		Version:         "3.5.0",
+		Version:         telemetryNICData.ProjectVersion,
 	}
 
 	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
@@ -229,22 +217,27 @@ func TestCollectK8sVersion(t *testing.T) {
 	}
 	c.Collect(context.Background())
 
-	td := telemetry.Data{
-		ProjectMeta: telemetry.ProjectMeta{
-			Name:    "NIC",
-			Version: "3.5.0",
-		},
-		NICResourceCounts: telemetry.NICResourceCounts{
-			VirtualServers:      0,
-			VirtualServerRoutes: 0,
-			TransportServers:    0,
-		},
-		NodeCount:  1,
-		ClusterID:  "329766ff-5d78-4c9e-8736-7faad1f2e937",
-		K8sVersion: "v1.29.2",
-		Arch:       runtime.GOARCH,
-		Platform:   "other",
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
 	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+	}
+
+	td := telemetry.Data{
+		telData,
+		nicResourceCounts,
+	}
+
 	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
 	if !cmp.Equal(want, got) {
@@ -257,32 +250,18 @@ func TestCountVirtualServers(t *testing.T) {
 
 	testCases := []struct {
 		testName                  string
-		expectedTraceDataOnAdd    *telemetry.Data
-		expectedTraceDataOnDelete *telemetry.Data
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
 		virtualServers            []*configs.VirtualServerEx
 		deleteCount               int
 	}{
 		{
 			testName: "Create and delete 1 VirtualServer",
-			expectedTraceDataOnAdd: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					VirtualServers: 1,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				Platform:   "other",
-				NodeCount:  1,
+			expectedTraceDataOnAdd: telemetry.Report{
+				VirtualServers: 1,
 			},
-			expectedTraceDataOnDelete: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					VirtualServers: 0,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				Platform:   "other",
-				NodeCount:  1,
+			expectedTraceDataOnDelete: telemetry.Report{
+				VirtualServers: 0,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -299,25 +278,11 @@ func TestCountVirtualServers(t *testing.T) {
 		},
 		{
 			testName: "Create 2 VirtualServers and delete 2",
-			expectedTraceDataOnAdd: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					VirtualServers: 2,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				Platform:   "other",
-				NodeCount:  1,
+			expectedTraceDataOnAdd: telemetry.Report{
+				VirtualServers: 2,
 			},
-			expectedTraceDataOnDelete: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					VirtualServers: 0,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				Platform:   "other",
-				NodeCount:  1,
+			expectedTraceDataOnDelete: telemetry.Report{
+				VirtualServers: 0,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -343,25 +308,11 @@ func TestCountVirtualServers(t *testing.T) {
 		},
 		{
 			testName: "Create 2 VirtualServers and delete 1",
-			expectedTraceDataOnAdd: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					VirtualServers: 2,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				Platform:   "other",
-				NodeCount:  1,
+			expectedTraceDataOnAdd: telemetry.Report{
+				VirtualServers: 2,
 			},
-			expectedTraceDataOnDelete: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					VirtualServers: 1,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				Platform:   "other",
-				NodeCount:  1,
+			expectedTraceDataOnDelete: telemetry.Report{
+				VirtualServers: 1,
 			},
 			virtualServers: []*configs.VirtualServerEx{
 				{
@@ -391,9 +342,9 @@ func TestCountVirtualServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: newTestClientset(dummyKubeNS, node1),
+			K8sClientReader: newTestClientset(kubeNS, node1),
 			Configurator:    configurator,
-			Version:         "3.5.0",
+			Version:         telemetryNICData.ProjectVersion,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -411,8 +362,8 @@ func TestCountVirtualServers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !cmp.Equal(test.expectedTraceDataOnAdd, gotTraceDataOnAdd) {
-			t.Error(cmp.Diff(test.expectedTraceDataOnAdd, gotTraceDataOnAdd))
+		if !cmp.Equal(test.expectedTraceDataOnAdd.VirtualServers, gotTraceDataOnAdd.VirtualServers) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.VirtualServers, gotTraceDataOnAdd.VirtualServers))
 		}
 
 		for i := 0; i < test.deleteCount; i++ {
@@ -429,8 +380,8 @@ func TestCountVirtualServers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !cmp.Equal(test.expectedTraceDataOnDelete, gotTraceDataOnDelete) {
-			t.Error(cmp.Diff(test.expectedTraceDataOnDelete, gotTraceDataOnDelete))
+		if !cmp.Equal(test.expectedTraceDataOnDelete.VirtualServers, gotTraceDataOnDelete.VirtualServers) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.VirtualServers, gotTraceDataOnDelete.VirtualServers))
 		}
 	}
 }
@@ -440,32 +391,18 @@ func TestCountTransportServers(t *testing.T) {
 
 	testCases := []struct {
 		testName                  string
-		expectedTraceDataOnAdd    *telemetry.Data
-		expectedTraceDataOnDelete *telemetry.Data
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
 		transportServers          []*configs.TransportServerEx
 		deleteCount               int
 	}{
 		{
 			testName: "Create and delete 1 TransportServer",
-			expectedTraceDataOnAdd: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					TransportServers: 1,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				NodeCount:  1,
-				Platform:   "other",
+			expectedTraceDataOnAdd: telemetry.Report{
+				TransportServers: 1,
 			},
-			expectedTraceDataOnDelete: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					TransportServers: 0,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				NodeCount:  1,
-				Platform:   "other",
+			expectedTraceDataOnDelete: telemetry.Report{
+				TransportServers: 0,
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -486,25 +423,11 @@ func TestCountTransportServers(t *testing.T) {
 		},
 		{
 			testName: "Create 2 and delete 2 TransportServer",
-			expectedTraceDataOnAdd: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					TransportServers: 2,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				NodeCount:  1,
-				Platform:   "other",
+			expectedTraceDataOnAdd: telemetry.Report{
+				TransportServers: 2,
 			},
-			expectedTraceDataOnDelete: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					TransportServers: 0,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				NodeCount:  1,
-				Platform:   "other",
+			expectedTraceDataOnDelete: telemetry.Report{
+				TransportServers: 0,
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -538,25 +461,11 @@ func TestCountTransportServers(t *testing.T) {
 		},
 		{
 			testName: "Create 2 and delete 1 TransportServer",
-			expectedTraceDataOnAdd: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					TransportServers: 2,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				NodeCount:  1,
-				Platform:   "other",
+			expectedTraceDataOnAdd: telemetry.Report{
+				TransportServers: 2,
 			},
-			expectedTraceDataOnDelete: &telemetry.Data{
-				Data: commonData,
-				NICResourceCounts: telemetry.NICResourceCounts{
-					TransportServers: 1,
-				},
-				K8sVersion: "v1.29.2",
-				Arch:       runtime.GOARCH,
-				NodeCount:  1,
-				Platform:   "other",
+			expectedTraceDataOnDelete: telemetry.Report{
+				TransportServers: 1,
 			},
 			transportServers: []*configs.TransportServerEx{
 				{
@@ -594,9 +503,9 @@ func TestCountTransportServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: newTestClientset(dummyKubeNS, node1),
+			K8sClientReader: newTestClientset(kubeNS, node1),
 			Configurator:    configurator,
-			Version:         "3.5.0",
+			Version:         telemetryNICData.ProjectVersion,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -614,8 +523,8 @@ func TestCountTransportServers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !cmp.Equal(test.expectedTraceDataOnAdd, gotTraceDataOnAdd) {
-			t.Error(cmp.Diff(test.expectedTraceDataOnAdd, gotTraceDataOnAdd))
+		if !cmp.Equal(test.expectedTraceDataOnAdd.TransportServers, gotTraceDataOnAdd.TransportServers) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.TransportServers, gotTraceDataOnAdd.TransportServers))
 		}
 
 		for i := 0; i < test.deleteCount; i++ {
@@ -632,8 +541,8 @@ func TestCountTransportServers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !cmp.Equal(test.expectedTraceDataOnDelete, gotTraceDataOnDelete) {
-			t.Error(cmp.Diff(test.expectedTraceDataOnDelete, gotTraceDataOnDelete))
+		if !cmp.Equal(test.expectedTraceDataOnDelete.TransportServers, gotTraceDataOnDelete.TransportServers) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.TransportServers, gotTraceDataOnDelete.TransportServers))
 		}
 	}
 }
@@ -711,3 +620,14 @@ const (
 	virtualServerTemplatePath   = "../configs/version2/nginx-plus.virtualserver.tmpl"
 	transportServerTemplatePath = "../configs/version2/nginx-plus.transportserver.tmpl"
 )
+
+// telemetryNICData holds static test data for telemetry tests.
+var telemetryNICData = tel.Data{
+	ProjectName:         "NIC",
+	ProjectVersion:      "3.5.0",
+	ClusterVersion:      "v1.29.2",
+	ProjectArchitecture: runtime.GOARCH,
+	ClusterID:           "329766ff-5d78-4c9e-8736-7faad1f2e937",
+	ClusterNodeCount:    1,
+	ClusterPlatform:     "other",
+}

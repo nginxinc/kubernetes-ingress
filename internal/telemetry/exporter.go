@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/nginxinc/telemetry-exporter/pkg/telemetry"
+	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 )
 
 // Exporter interface for exporters.
 type Exporter interface {
-	Export(ctx context.Context, data telemetry.Exportable) error
+	Export(ctx context.Context, data tel.Exportable) error
 }
 
 // StdoutExporter represents a temporary telemetry data exporter.
@@ -19,7 +19,7 @@ type StdoutExporter struct {
 }
 
 // Export takes context and trace data and writes to the endpoint.
-func (e *StdoutExporter) Export(_ context.Context, data telemetry.Exportable) error {
+func (e *StdoutExporter) Export(_ context.Context, data tel.Exportable) error {
 	fmt.Fprintf(e.Endpoint, "%+v", data)
 	return nil
 }
@@ -28,19 +28,8 @@ func (e *StdoutExporter) Export(_ context.Context, data telemetry.Exportable) er
 //
 //go:generate go run -tags=generator github.com/nginxinc/telemetry-exporter/cmd/generator -type Data -scheme -scheme-protocol=NICProductTelemetry -scheme-df-datatype=nic-product-telemetry -scheme-namespace=ingress.nginx.com
 type Data struct {
-	telemetry.Data
+	tel.Data
 	NICResourceCounts
-	NodeCount  int64
-	ClusterID  string
-	K8sVersion string
-	Arch       string
-	Platform   string
-}
-
-// ProjectMeta holds metadata for the project.
-type ProjectMeta struct {
-	Name    string
-	Version string
 }
 
 // NICResourceCounts holds a count of NIC specific resource.

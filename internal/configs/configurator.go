@@ -1479,8 +1479,9 @@ func (cnf *Configurator) GetIngressCounts() map[string]int {
 
 // GetVirtualServerCounts returns the total count of
 // VirtualServer and VirtualServerRoute resources that are handled by the Ingress Controller
-func (cnf *Configurator) GetVirtualServerCounts() (vsCount int, vsrCount int) {
-	vsCount = len(cnf.virtualServers)
+func (cnf *Configurator) GetVirtualServerCounts() (int, int) {
+	vsCount := len(cnf.virtualServers)
+	vsrCount := 0
 	for _, vs := range cnf.virtualServers {
 		vsrCount += len(vs.VirtualServerRoutes)
 	}
