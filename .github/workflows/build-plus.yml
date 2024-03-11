@@ -182,7 +182,7 @@ jobs:
         if: ${{ ! inputs.forked-workflow }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e # v5.2.0
         with:
           file: build/Dockerfile
           context: "."
@@ -204,7 +204,7 @@ jobs:
         if: ${{ ! inputs.forked-workflow && steps.base_exists.outputs.exists != 0 }}
 
       - name: Build Plus Docker image
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e # v5.2.0
         with:
           file: build/Dockerfile
           context: "."
