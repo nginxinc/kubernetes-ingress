@@ -1,0 +1,46 @@
+@namespace("ingress.nginx.com") protocol NICProductTelemetry {
+	@df_datatype("nic-product-telemetry") record Data {
+		/** The field that identifies what type of data this is. */
+		string dataType;
+		/** The time the event occurred */
+		long eventTime;
+		/** The time our edge ingested the event */
+		long ingestTime;
+
+
+		/** ProjectName is the name of the project. */
+		string? ProjectName = null;
+
+		/** ProjectVersion is the version of the project. */
+		string? ProjectVersion = null;
+
+		/** ProjectArchitecture is the architecture of the project. For example, "amd64". */
+		string? ProjectArchitecture = null;
+
+		/** ClusterID is the unique id of the Kubernetes cluster where the project is installed.
+It is the UID of the `kube-system` Namespace. */
+		string? ClusterID = null;
+
+		/** ClusterVersion is the Kubernetes version of the cluster. */
+		string? ClusterVersion = null;
+
+		/** ClusterPlatform is the Kubernetes platform of the cluster. */
+		string? ClusterPlatform = null;
+
+		/** InstallationID is the unique id of the project installation in the cluster. */
+		string? InstallationID = null;
+
+		/** ClusterNodeCount is the number of nodes in the cluster. */
+		long? ClusterNodeCount = null;
+
+		/** VirtualServer is the number of VirtualServer managed by the Ingress Controller. */
+		long? VirtualServers = null;
+
+		/** VirtualServerRoutes is the number of VirtualServerRoutes managed by the Ingress Controller. */
+		long? VirtualServerRoutes = null;
+
+		/** TransportServers is the number of TransportServers managed by the Ingress Controller. */
+		long? TransportServers = null;
+
+	}
+}
