@@ -816,9 +816,6 @@ func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *co
 		}
 	}
 	for _, weight := range weightUpdates {
-		glog.V(3).Infof("Upserting split clients: zone %v", weight.Zone)
-		glog.V(3).Infof("Upserting split clients: key %v", weight.Key)
-		glog.V(3).Infof("Upserting split clients: value %v", weight.Value)
 		lbc.configurator.UpsertSplitClientsKeyVal(weight.Zone, weight.Key, weight.Value)
 	}
 }
@@ -873,9 +870,6 @@ func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *
 		}
 	}
 	for _, weight := range weightUpdates {
-		glog.V(3).Infof("Upserting split clients: zone %v", weight.Zone)
-		glog.V(3).Infof("Upserting split clients: key %v", weight.Key)
-		glog.V(3).Infof("Upserting split clients: value %v", weight.Value)
 		lbc.configurator.UpsertSplitClientsKeyVal(weight.Zone, weight.Key, weight.Value)
 	}
 }
