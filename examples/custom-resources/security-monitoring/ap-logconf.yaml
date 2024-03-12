@@ -10,7 +10,6 @@ spec:
       - from: ","
         to: "%2C"
     max_message_size: 5k
-    max_request_size: "2048"
     list_delimiter: "::"
   filter:
     request_type: illegal
