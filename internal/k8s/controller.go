@@ -19,12 +19,13 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"net"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	telemetryExporter "github.com/nginxinc/telemetry-exporter/pkg/telemetry"

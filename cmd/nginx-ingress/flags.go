@@ -3,15 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/golang/glog"
-	api_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"net"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/golang/glog"
+	api_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
@@ -387,7 +388,6 @@ func validationChecks() {
 			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
 		}
 	}
-
 }
 
 // validateNamespaceNames validates the namespaces are in the correct format
