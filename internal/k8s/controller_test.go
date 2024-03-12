@@ -3758,6 +3758,20 @@ func TestPreSyncSecrets(t *testing.T) {
 	}
 }
 
+//func TestNewTelemetryExporter(t *testing.T) {
+//	t.Parallel()
+//
+//	testCases := []struct {
+//		testCase string
+//		input NewLoadBalancerControllerInput
+//		expectedExporter telemetry.Exporter
+//	}{
+//		{
+//
+//		},
+//	}
+//}
+
 func TestNewTelemetryCollector(t *testing.T) {
 	t.Parallel()
 
@@ -3772,7 +3786,6 @@ func TestNewTelemetryCollector(t *testing.T) {
 			input: NewLoadBalancerControllerInput{
 				KubeClient:               fake.NewSimpleClientset(),
 				EnableTelemetryReporting: true,
-				TelemetryReportingPeriod: "24h",
 			},
 			expectedCollector: telemetry.Collector{
 				Config: telemetry.CollectorConfig{

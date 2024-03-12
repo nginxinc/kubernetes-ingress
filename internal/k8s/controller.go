@@ -19,6 +19,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"net"
 	"strconv"
 	"strings"
@@ -26,6 +27,7 @@ import (
 	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
+	telemetryExporter "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
@@ -211,7 +213,8 @@ type NewLoadBalancerControllerInput struct {
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
-	TelemetryReportingPeriod     string
+	TelemetryReportingEndpoint   string
+	TelemetryReportingSecure     bool
 	NICVersion                   string
 }
 
@@ -347,16 +350,34 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
+		providerOptions := []otlptracegrpc.Option{
+			otlptracegrpc.WithEndpoint(input.TelemetryReportingEndpoint),
+			// This header option will be removed when https://github.com/nginxinc/telemetry-exporter/issues/41 is resolved.
+			otlptracegrpc.WithHeaders(map[string]string{
+				"X-F5-OTEL": "GRPC",
+			}),
+		}
+
+		if !input.TelemetryReportingSecure {
+			providerOptions = append(providerOptions, otlptracegrpc.WithInsecure())
+		}
+
+		exporter, _ := telemetryExporter.NewExporter(
+			telemetryExporter.ExporterConfig{
+				SpanProvider: telemetryExporter.CreateOTLPSpanProvider(providerOptions...),
+			},
+		)
 		collectorConfig := telemetry.CollectorConfig{
 			K8sClientReader:       input.KubeClient,
 			CustomK8sClientReader: input.ConfClient,
-			Period:                5 * time.Second,
+			Period:                24 * time.Hour,
 			Configurator:          lbc.configurator,
 			Version:               input.NICVersion,
 		}
 		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(
 			collectorConfig,
+			telemetry.WithExporter(exporter),
 		)
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry collector: %v", err)

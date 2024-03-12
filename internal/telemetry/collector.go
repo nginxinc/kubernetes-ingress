@@ -93,7 +93,7 @@ func (c *Collector) Collect(ctx context.Context) {
 	if err != nil {
 		glog.Errorf("Error exporting telemetry data: %v", err)
 	}
-	glog.V(3).Infof("Exported telemetry data: %+v", data)
+	glog.V(3).Infof("Telemetry data collected: %+v", data)
 }
 
 // BuildReport takes context and builds report from gathered telemetry data.
