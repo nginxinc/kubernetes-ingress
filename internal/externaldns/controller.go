@@ -87,13 +87,13 @@ func (c *ExtDNSController) newNamespacedInformer(ns string) *namespacedInformer 
 	nsi.vsLister = nsi.sharedInformerFactory.K8s().V1().VirtualServers().Lister()
 	nsi.extdnslister = nsi.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Lister()
 
-	nsi.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(
+	nsi.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler( //nolint:errcheck,gosec
 		&QueuingEventHandler{
 			Queue: c.queue,
 		},
 	)
 
-	nsi.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().AddEventHandler(&BlockingEventHandler{
+	nsi.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().AddEventHandler(&BlockingEventHandler{ //nolint:errcheck,gosec
 		WorkFunc: externalDNSHandler(c.queue),
 	})
 
