@@ -274,9 +274,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	if input.ExternalDNSEnabled {
-		if lbc.externalDNSController, err = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs)); err != nil {
-			glog.Fatalf("failed to initialize ExternalDNS: %v", err)
-		}
+		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
 	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
@@ -1144,10 +1142,7 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 			lbc.certManagerController.AddNewNamespacedInformer(key)
 		}
 		if lbc.externalDNSController != nil {
-			if err := lbc.externalDNSController.AddNewNamespacedInformer(key); err != nil {
-				lbc.syncQueue.Requeue(task, err)
-				return
-			}
+			lbc.externalDNSController.AddNewNamespacedInformer(key)
 		}
 		if !cache.WaitForCacheSync(nsi.stopCh, nsi.cacheSyncs...) {
 			return
