@@ -1925,6 +1925,29 @@
             }
           }
         },
+        "napMonitoring": {
+          "type": "object",
+          "default": {},
+          "title": "NGINX App Protect Monitoring config",
+          "properties": {
+            "collectorBufferSize": {
+              "type": "integer",
+              "default": 50000,
+              "title": "Buffer size for collector. Will contain log lines and parsed log lines",
+              "examples": [
+                50000
+              ]
+            },
+            "processorBufferSize": {
+              "type": "integer",
+              "default": 50000,
+              "title": "Buffer size for processor. Will contain log lines and parsed log lines",
+              "examples": [
+                50000
+              ]
+            }
+          }
+        },
         "customConfigMap": {
           "type": "string",
           "title": "The name of a custom ConfigMap to use instead of the one provided by default",

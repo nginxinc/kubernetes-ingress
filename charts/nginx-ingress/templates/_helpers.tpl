@@ -412,9 +412,9 @@ nginx_app_protect:
   report_interval: 15s
   precompiled_publication: true
 nap_monitoring:
-  collector_buffer_size: 50000
-  processor_buffer_size: 50000
-  syslog_ip: "127.0.0.1"
-  syslog_port: 1514
+  collector_buffer_size: {{ .Values.nginxAgent.napMonitoring.collectorBufferSize }}
+  processor_buffer_size: {{ .Values.nginxAgent.napMonitoring.processorBufferSize }}
+  syslog_ip: {{ .Values.nginxAgent.syslog.host }}
+  syslog_port: {{ .Values.nginxAgent.syslog.port }}
 
 {{ end -}}

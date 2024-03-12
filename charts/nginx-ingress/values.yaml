@@ -563,6 +563,9 @@ nginxAgent:
   syslog:
     host: "127.0.0.1"
     port: 1514
+  napMonitoring:
+    collectorBufferSize: 50000
+    processorBufferSize: 50000
   instanceManager:
     host: ""
     grpcPort: 443
