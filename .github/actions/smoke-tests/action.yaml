@@ -80,7 +80,7 @@ runs:
         token_format: access_token
         workload_identity_provider: ${{ inputs.gcr-workload-identity-secret }}
         service_account: ${{ inputs.gcr-service-account-secret }}
-      if: ${{ ! inputs.forked-workflow }}
+      if: ${{ inputs.forked-workflow == 'false' }}
 
     - name: Login to GCR
       uses: docker/login-action@v3
@@ -88,7 +88,7 @@ runs:
         registry: gcr.io
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
-      if: ${{ ! inputs.forked-workflow }}
+      if: ${{ inputs.forked-workflow == 'false' }}
 
     - name: Build ${{ inputs.image }} Container
       uses: docker/build-push-action@v3
@@ -96,7 +96,7 @@ runs:
         file: build/Dockerfile
         context: "."
         cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
-        target: goreleaser${{ inputs.forked-workflow && '' || '-prebuilt' }}
+        target: goreleaser${{ inputs.forked-workflow == 'false' && '-prebuilt' || '' }}
         tags: "docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}"
         load: true
         pull: true
@@ -138,7 +138,7 @@ runs:
         tags: ${{ inputs.test-image }}
         pull: true
         load: true
-      if: ${{ inputs.forked-workflow }}
+      if: ${{ inputs.forked-workflow == 'true' }}
 
     - name: Run Smoke Tests
       run: |
