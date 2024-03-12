@@ -535,3 +535,17 @@ Used to activate or deactivate lazy loading for SSL Certificates.
 The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
+
+### -agent
+
+Enable NGINX Agent which can used with `-enable-app-protect` to send events to Security Monitoring.
+
+The default value is `false`.
+
+<a name="cmdoption-agent"></a>
+
+### -agent-instance-group
+
+Specify the instance group name to use for the NGINX Ingress Controller deployment when using `-agent`.
+
+<a name="cmdoption-agent-instance-group"></a>

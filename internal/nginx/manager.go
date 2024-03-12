@@ -570,7 +570,10 @@ func (lm *LocalManager) AppProtectDosAgentStart(apdaDone chan error, debug bool,
 // AgentStart starts the AppProtect plugin and sets AppProtect log level.
 func (lm *LocalManager) AgentStart(agentDone chan error, instanceGroup string) {
 	glog.V(3).Info("Starting Agent")
-	args := []string{"--instance-group", instanceGroup}
+	args := []string{}
+	if len(instanceGroup) > 0 {
+		args = append(args, "--instance-group", instanceGroup)
+	}
 	cmd := exec.Command(agentPath, args...) // #nosec G204
 
 	cmd.Stdout = os.Stdout

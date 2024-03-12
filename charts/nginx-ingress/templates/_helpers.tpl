@@ -314,7 +314,7 @@ List of volumes for controller.
 {{- if .Values.controller.volumes }}
 {{ toYaml .Values.controller.volumes }}
 {{- end }}
-{{- if .Values.nginxAgent.enable -}}
+{{- if .Values.nginxAgent.enable }}
 - name: agent-conf
   configMap:
     name: {{ include "nginx-ingress.agentConfigName" . }}
@@ -363,7 +363,7 @@ volumeMounts:
 {{- if .Values.controller.volumeMounts }}
 {{ toYaml .Values.controller.volumeMounts }}
 {{- end }}
-{{- if .Values.nginxAgent.enable -}}
+{{- if .Values.nginxAgent.enable }}
 - name: agent-conf
   mountPath: /etc/nginx-agent/nginx-agent.conf
   subPath: nginx-agent.conf
