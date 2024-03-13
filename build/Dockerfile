@@ -360,7 +360,11 @@ RUN --mount=type=bind,target=/tmp [ -n "${NAP_MODULES##*waf*}" ] && exit 0; mkdi
 	&& chown -R 101:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ \
 	&& chmod -R g=u /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ \
 	&& touch /etc/nginx/waf/nac-usersigs/index.conf \
-	&& cp -a /tmp/build/log-default.json /etc/nginx
+	&& cp -a /tmp/build/log-default.json /etc/nginx \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then mkdir -p /etc/ssl/nms /opt/nms-nap-compiler \
+	&& chown -R 101:0 /etc/ssl/nms /opt/nms-nap-compiler \
+	&& chmod -R g=u /etc/ssl/nms /opt/nms-nap-compiler \
+	&& NAP_VERSION=$(cat /opt/app_protect/VERSION) && ln -s /opt/app_protect "/opt/nms-nap-compiler/app_protect-${NAP_VERSION}"; fi
 
 # run only on nap dos build
 RUN [ -n "${NAP_MODULES##*dos*}" ] && exit 0; mkdir -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm \
@@ -373,10 +377,6 @@ RUN --mount=type=bind,target=/tmp mkdir -p /var/lib/nginx /etc/nginx/secrets /et
 	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
 	&& chown -R 101:0 /etc/nginx /var/cache/nginx /var/lib/nginx /var/log/nginx /*.tmpl \
 	&& chmod -R g=u /etc/nginx /var/cache/nginx /var/lib/nginx /var/log/nginx /*.tmpl \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then mkdir -p /etc/ssl/nms /opt/nms-nap-compiler; \
-	chown -R 101:0 /etc/ssl/nms /opt/nms-nap-compiler; \
-	chmod -R g=u /etc/ssl/nms /opt/nms-nap-compiler; \
-	NAP_VERSION=$(cat /opt/app_protect/VERSION) && ln -s /opt/app_protect "/opt/nms-nap-compiler/app_protect-${NAP_VERSION}"; fi \
 	&& rm -f /etc/nginx/conf.d/*
 
 # Uncomment the line below if you would like to add the default.pem to the image
