@@ -535,3 +535,27 @@ Used to activate or deactivate lazy loading for SSL Certificates.
 The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
+
+### -enable-telemetry-reporting
+
+Enable gathering and reporting of product related telemetry.
+
+The default value is `true`.
+
+<a name="cmdoption-enable-telemetry-reporting"></a>
+
+### -telemetry-reporting-endpoint
+
+Sets the GRPC endpoint to send data to.
+
+The default value is `oss.edge.df.f5.com:443`.
+
+<a name="cmdoption-telemetry-reporting-endpoint"></a>
+
+### -telemetry-reporting-secure
+
+If set to `false`, the [otlptracegrpc.WithInsecure()](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc#WithInsecure) option will be set for the exporter.
+
+The default value is `true`.
+
+<a name="cmdoption-telemetry-reporting-secure"></a>

@@ -202,7 +202,7 @@ var (
 	enableDynamicSSLReload = flag.Bool(dynamicSSLReloadParam, true, "Enable reloading of SSL Certificates without restarting the NGINX process.")
 
 	enableTelemetryReporting   = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
-	telemetryReportingEndpoint = flag.String("telemetry-reporting-endpoint", "dev-oss.edge.df.f5.com:443", "Set the GRPC endpoint to send data to.")
+	telemetryReportingEndpoint = flag.String("telemetry-reporting-endpoint", "oss.edge.df.f5.com:443", "Set the GRPC endpoint to send data to.")
 	telemetryReportingSecure   = flag.Bool("telemetry-reporting-secure", true, "If set to `false`, the `otlptracegrpc.WithInsecure()` option will be set for the exporter.")
 
 	startupCheckFn func() error

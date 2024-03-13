@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"io"
 
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
@@ -22,6 +23,34 @@ type StdoutExporter struct {
 func (e *StdoutExporter) Export(_ context.Context, data tel.Exportable) error {
 	fmt.Fprintf(e.Endpoint, "%+v", data)
 	return nil
+}
+
+// ExporterCfg is a configuration struct for an Exporter.
+type ExporterCfg struct {
+	Endpoint string
+	Secure   bool
+}
+
+func NewExporter(cfg ExporterCfg) (Exporter, error) {
+	providerOptions := []otlptracegrpc.Option{
+		otlptracegrpc.WithEndpoint(cfg.Endpoint),
+		// This header option will be removed when https://github.com/nginxinc/telemetry-exporter/issues/41 is resolved.
+		otlptracegrpc.WithHeaders(map[string]string{
+			"X-F5-OTEL": "GRPC",
+		}),
+	}
+
+	if !cfg.Secure {
+		providerOptions = append(providerOptions, otlptracegrpc.WithInsecure())
+	}
+
+	exporter, err := tel.NewExporter(
+		tel.ExporterConfig{
+			SpanProvider: tel.CreateOTLPSpanProvider(providerOptions...),
+		},
+	)
+
+	return exporter, err
 }
 
 // Data holds collected telemetry data.

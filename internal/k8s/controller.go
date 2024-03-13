@@ -25,11 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
-	telemetryExporter "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
-
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
 
@@ -351,23 +347,16 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
-		providerOptions := []otlptracegrpc.Option{
-			otlptracegrpc.WithEndpoint(input.TelemetryReportingEndpoint),
-			// This header option will be removed when https://github.com/nginxinc/telemetry-exporter/issues/41 is resolved.
-			otlptracegrpc.WithHeaders(map[string]string{
-				"X-F5-OTEL": "GRPC",
-			}),
+		exporterCfg := telemetry.ExporterCfg{
+			Endpoint: input.TelemetryReportingEndpoint,
+			Secure:   input.TelemetryReportingSecure,
 		}
 
-		if !input.TelemetryReportingSecure {
-			providerOptions = append(providerOptions, otlptracegrpc.WithInsecure())
-		}
+		exporter, err := telemetry.NewExporter(exporterCfg)
 
-		exporter, _ := telemetryExporter.NewExporter(
-			telemetryExporter.ExporterConfig{
-				SpanProvider: telemetryExporter.CreateOTLPSpanProvider(providerOptions...),
-			},
-		)
+		if err != nil {
+			glog.Fatalf("failed to initialize telemetry exporter: %v", err)
+		}
 		collectorConfig := telemetry.CollectorConfig{
 			K8sClientReader:       input.KubeClient,
 			CustomK8sClientReader: input.ConfClient,
