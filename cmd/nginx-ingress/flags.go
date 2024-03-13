@@ -66,6 +66,9 @@ var (
 	appProtectDosMaxWorkers = flag.Int("app-protect-dos-max-workers", 0, "Max number of nginx processes to support. Requires -nginx-plus and -enable-app-protect-dos.")
 	appProtectDosMemory     = flag.Int("app-protect-dos-memory", 0, "RAM memory size to consume in MB. Requires -nginx-plus and -enable-app-protect-dos.")
 
+	agent              = flag.Bool("agent", false, "Enable NGINX Agent")
+	agentInstanceGroup = flag.String("agent-instance-group", "nginx-ingress-controller", "Grouping used to associate NGINX Ingress Controller instances")
+
 	ingressClass = flag.String("ingress-class", "nginx",
 		`A class of the Ingress Controller.
 
@@ -279,6 +282,10 @@ func parseFlags() {
 
 	if *ingressLink != "" && *externalService != "" {
 		glog.Fatal("ingresslink and external-service cannot both be set")
+	}
+
+	if *agent && !*appProtect {
+		glog.Fatal("NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
 	}
 }
 

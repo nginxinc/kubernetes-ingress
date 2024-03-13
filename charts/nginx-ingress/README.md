@@ -489,6 +489,21 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`serviceNameOverride` | Used to prevent cloud load balancers from being replaced due to service name change during helm upgrades. | "" |
 |`nginxServiceMesh.enable` | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false |
 |`nginxServiceMesh.enableEgress` | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress Controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false |
+|`nginxAgent.enable` | Enable NGINX Agent to integrate Security Monitoring and App Protect WAF modules. Requires `controller.appprotect.enable`. | false |
+|`nginxAgent.instanceGroup` | Set a custom Instance Group name,  shown when connected to NGINX Instance Manager. `nginx-ingress.controller.fullname` will be used if not set. | "" |
+|`nginxAgent.logLevel` | Log level for NGINX Agent. | "error |
+|`nginxAgent.instanceManager.host` | FQDN or IP for connecting to NGINX Ingress Controller. Required when `nginxAgent.enable` is set to `true` | "" |
+|`nginxAgent.instanceManager.grpcPort` | Port for connecting to NGINX Ingress Controller. | 443 |
+|`nginxAgent.instanceManager.sni` | Server Name Indication for NGINX Instance Manager. See the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
+|`nginxAgent.instanceManager.tls.enable` | Enable TLS for NGINX Instance Manager connection. | true |
+|`nginxAgent.instanceManager.tls.skipVerify` | Skip certification verification for NGINX Instance Manager connection. | false |
+|`nginxAgent.instanceManager.tls.caSecret` | Name of `nginx.org/ca` secret used for verification of NGINX Instance Manager TLS. | "" |
+|`nginxAgent.instanceManager.tls.secret` | Name of `kubernetes.io/tls` secret with a TLS certificate and key for using mTLS between NGINX Agent and NGINX Instance Manager. See the NGINX Instance Manager [docs](https://docs.nginx.com/nginx-management-suite/admin-guides/configuration/secure-traffic/#mutual-client-certificate-auth-setup-mtls) and the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
+|`nginxAgent.syslog.host` | Address for NGINX Agent to run syslog listener. | 127.0.0.1 |
+|`nginxAgent.syslog.port` | Port for NGINX Agent to run syslog listener. | 1514 |
+|`nginxAgent.napMonitoring.collectorBufferSize` | Buffer size for collector. Will contain log lines and parsed log lines. | 50000 |
+|`nginxAgent.napMonitoring.processorBufferSize` | Buffer size for processor. Will contain log lines and parsed log lines. | 50000 |
+|`nginxAgent.customConfigMap` | The name of a custom ConfigMap to use instead of the one provided by default. | "" |
 
 ## Notes
 
