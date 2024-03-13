@@ -11,7 +11,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/glog v1.1.2
 	github.com/google/go-cmp v0.6.0
-	github.com/jinzhu/copier v0.4.0
 	github.com/kr/pretty v0.3.1
 	github.com/nginxinc/nginx-plus-go-client v1.2.0
 	github.com/nginxinc/nginx-prometheus-exporter v1.1.0
@@ -22,6 +21,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.7
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.24.0
+	golang.design/x/reflect v0.0.0-20220504060917-02c43be63f3b
 	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
