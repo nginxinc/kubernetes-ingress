@@ -3,8 +3,9 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"io"
+
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 )
@@ -31,6 +32,7 @@ type ExporterCfg struct {
 	Secure   bool
 }
 
+// NewExporter creates an Exporter with the provided ExporterCfg.
 func NewExporter(cfg ExporterCfg) (Exporter, error) {
 	providerOptions := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(cfg.Endpoint),

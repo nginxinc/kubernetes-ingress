@@ -353,7 +353,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		}
 
 		exporter, err := telemetry.NewExporter(exporterCfg)
-
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry exporter: %v", err)
 		}
