@@ -59,6 +59,7 @@ rules:
   - "apps"
   resources:
   - replicasets
+  - daemonsets
   verbs:
   - get
 - apiGroups:

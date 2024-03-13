@@ -352,10 +352,10 @@ func TestPlatformLookupOnMalformedPartialPlatformIDField(t *testing.T) {
 	}
 }
 
-func TestReplicaCountReturnsNumberOfNICPods(t *testing.T) {
+func TestReplicaCountReturnsNumberOfNICReplicas(t *testing.T) {
 	t.Parallel()
 
-	c := newTestCollectorForClusterWithNodes(t, node1, pod, replica)
+	c := newTestCollectorForClusterWithNodes(t, node1, pod1, replica)
 
 	got, err := c.ReplicaCount(context.Background())
 	if err != nil {
@@ -363,7 +363,21 @@ func TestReplicaCountReturnsNumberOfNICPods(t *testing.T) {
 	}
 
 	want := 1
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
 
+func TestReplicaCountReturnsNumberOfNICDaemonSets(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCollectorForClusterWithNodes(t, node1, pod2, daemon)
+	got, err := c.ReplicaCount(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := 1
 	if want != got {
 		t.Errorf("want %d, got %d", want, got)
 	}
@@ -390,7 +404,7 @@ func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) 
 
 // Pod and ReplicaSet for testing NIC replica sets.
 var (
-	pod = &apiCoreV1.Pod{
+	pod1 = &apiCoreV1.Pod{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Pod",
 			APIVersion: "v1",
@@ -454,6 +468,65 @@ var (
 			AvailableReplicas: replicaNum,
 		},
 	}
+
+	pod2 = &apiCoreV1.Pod{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "nginx-ingress",
+			Namespace: "nginx-ingress",
+			OwnerReferences: []metaV1.OwnerReference{
+				{
+					Kind: "DaemonSet",
+					Name: "nginx-ingress",
+				},
+			},
+			Labels: map[string]string{
+				"app":                    "nginx-ingress",
+				"app.kubernetes.io/name": "nginx-ingress",
+			},
+		},
+		Spec: apiCoreV1.PodSpec{
+			Containers: []apiCoreV1.Container{
+				{
+					Name:            "nginx-ingress",
+					Image:           "nginx-ingress",
+					ImagePullPolicy: "Always",
+					Env: []apiCoreV1.EnvVar{
+						{
+							Name:  "POD_NAMESPACE",
+							Value: "nginx-ingress",
+						},
+						{
+							Name:  "POD_NAME",
+							Value: "nginx-ingress",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	daemonNum int32 = 1
+	daemon          = &appsV1.DaemonSet{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "DaemonSet",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "nginx-ingress",
+			Namespace: "nginx-ingress",
+			Labels:    map[string]string{"app": "nginx-ingress"},
+		},
+		Spec: appsV1.DaemonSetSpec{},
+		Status: appsV1.DaemonSetStatus{
+			CurrentNumberScheduled: daemonNum,
+			NumberReady:            daemonNum,
+			NumberAvailable:        daemonNum,
+		},
+	}
 )
 
 // Nodes for testing NIC namespaces.
@@ -502,18 +575,6 @@ var (
 		ObjectMeta: metaV1.ObjectMeta{
 			Name: "kube-system",
 			UID:  "329766ff-5d78-4c9e-8736-7faad1f2e937",
-		},
-		Spec: apiCoreV1.NamespaceSpec{},
-	}
-
-	dummyKubeNS = &apiCoreV1.Namespace{
-		TypeMeta: metaV1.TypeMeta{
-			Kind:       "Namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metaV1.ObjectMeta{
-			Name: "kube-system",
-			UID:  "",
 		},
 		Spec: apiCoreV1.NamespaceSpec{},
 	}

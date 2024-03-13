@@ -344,7 +344,7 @@ func TestCountVirtualServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: newTestClientset(kubeNS, node1, pod, replica),
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
 		})
@@ -509,7 +509,7 @@ func TestCountTransportServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: newTestClientset(kubeNS, node1, pod, replica),
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
 		})
