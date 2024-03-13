@@ -12,6 +12,12 @@ rules:
   - list
   - watch
 - apiGroups:
+  - "apps"
+  resources:
+  - replicasets
+  verbs:
+  - get
+- apiGroups:
   - ""
   resources:
   - services

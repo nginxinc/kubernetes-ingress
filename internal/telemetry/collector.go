@@ -12,6 +12,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
@@ -58,6 +59,9 @@ type CollectorConfig struct {
 
 	// Version represents NIC version.
 	Version string
+
+	// PodNSName represents NIC Pod's NamespacedName.
+	PodNSName types.NamespacedName
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -104,6 +108,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			VirtualServers:      int64(report.VirtualServers),
 			VirtualServerRoutes: int64(report.VirtualServerRoutes),
 			TransportServers:    int64(report.TransportServers),
+			Replicas:            int64(report.NICReplicaCount),
 		},
 	}
 
@@ -125,6 +130,7 @@ type Report struct {
 	ClusterVersion      string
 	ClusterPlatform     string
 	ClusterNodeCount    int
+	NICReplicaCount     int
 	VirtualServers      int
 	VirtualServerRoutes int
 	TransportServers    int
@@ -161,6 +167,11 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: Platform: %v", err)
 	}
 
+	replicas, err := c.ReplicaCount(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Replicas: %v", err)
+	}
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -169,6 +180,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		ClusterVersion:      version,
 		ClusterPlatform:     platform,
 		ClusterNodeCount:    nodes,
+		NICReplicaCount:     replicas,
 		VirtualServers:      vsCount,
 		VirtualServerRoutes: vsrCount,
 		TransportServers:    tsCount,

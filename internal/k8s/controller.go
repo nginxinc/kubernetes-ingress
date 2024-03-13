@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -43,6 +44,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -347,17 +349,20 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
+		lbc.telemetryChan = make(chan struct{})
+
 		collectorConfig := telemetry.CollectorConfig{
 			K8sClientReader:       input.KubeClient,
 			CustomK8sClientReader: input.ConfClient,
 			Period:                5 * time.Second,
 			Configurator:          lbc.configurator,
 			Version:               input.NICVersion,
+			PodNSName: types.NamespacedName{
+				Namespace: os.Getenv("POD_NAMESPACE"),
+				Name:      os.Getenv("POD_NAME"),
+			},
 		}
-		lbc.telemetryChan = make(chan struct{})
-		collector, err := telemetry.NewCollector(
-			collectorConfig,
-		)
+		collector, err := telemetry.NewCollector(collectorConfig)
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry collector: %v", err)
 		}

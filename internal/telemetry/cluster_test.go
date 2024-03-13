@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
+	appsV1 "k8s.io/api/apps/v1"
 	apiCoreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func TestNodeCountInAClusterWithThreeNodes(t *testing.T) {
@@ -350,6 +352,23 @@ func TestPlatformLookupOnMalformedPartialPlatformIDField(t *testing.T) {
 	}
 }
 
+func TestReplicaCountReturnsNumberOfNICPods(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCollectorForClusterWithNodes(t, node1, pod, replica)
+
+	got, err := c.ReplicaCount(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := 1
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
+
 // newTestCollectorForClusterWithNodes returns a telemetry collector configured
 // to simulate collecting data on a cluser with provided nodes.
 func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) *telemetry.Collector {
@@ -362,9 +381,82 @@ func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) 
 		t.Fatal(err)
 	}
 	c.Config.K8sClientReader = newTestClientset(nodes...)
+	c.Config.PodNSName = types.NamespacedName{
+		Namespace: "nginx-ingress",
+		Name:      "nginx-ingress",
+	}
 	return c
 }
 
+// Pod and ReplicaSet for testing NIC replica sets.
+var (
+	pod = &apiCoreV1.Pod{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "nginx-ingress",
+			Namespace: "nginx-ingress",
+			OwnerReferences: []metaV1.OwnerReference{
+				{
+					Kind: "ReplicaSet",
+					Name: "nginx-ingress",
+				},
+			},
+			Labels: map[string]string{
+				"app":                    "nginx-ingress",
+				"app.kubernetes.io/name": "nginx-ingress",
+			},
+		},
+		Spec: apiCoreV1.PodSpec{
+			Containers: []apiCoreV1.Container{
+				{
+					Name:            "nginx-ingress",
+					Image:           "nginx-ingress",
+					ImagePullPolicy: "Always",
+					Env: []apiCoreV1.EnvVar{
+						{
+							Name:  "POD_NAMESPACE",
+							Value: "nginx-ingress",
+						},
+						{
+							Name:  "POD_NAME",
+							Value: "nginx-ingress",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	replicaNum int32 = 1
+	replica          = &appsV1.ReplicaSet{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "ReplicaSet",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "nginx-ingress",
+			Namespace: "nginx-ingress",
+			Labels: map[string]string{
+				"app":                    "nginx-ingress",
+				"app.kubernetes.io/name": "nginx-ingress",
+			},
+		},
+
+		Spec: appsV1.ReplicaSetSpec{
+			Replicas: &replicaNum,
+		},
+		Status: appsV1.ReplicaSetStatus{
+			Replicas:          replicaNum,
+			ReadyReplicas:     replicaNum,
+			AvailableReplicas: replicaNum,
+		},
+	}
+)
+
+// Nodes for testing NIC namespaces.
 var (
 	node1 = &apiCoreV1.Node{
 		TypeMeta: metaV1.TypeMeta{
@@ -373,7 +465,7 @@ var (
 		},
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      "test-node-1",
-			Namespace: "default",
+			Namespace: "nginx-ingress",
 		},
 		Spec: apiCoreV1.NodeSpec{},
 	}

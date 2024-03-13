@@ -42,4 +42,7 @@ type NICResourceCounts struct {
 	VirtualServerRoutes int64
 	// TransportServers is the number of TransportServers managed by the Ingress Controller.
 	TransportServers int64
+
+	// Replicas is the number of NIC replicas.
+	Replicas int64
 }
