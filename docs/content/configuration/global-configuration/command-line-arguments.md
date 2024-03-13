@@ -542,7 +542,7 @@ Enables the ability to change the weight of split clients with two splits withou
 
 Requires [-nginx-plus](#cmdoption-nginx-plus).
 
-The default value is `true`.
+The default value is `false`.
 
 - If the argument is set, but `nginx-plus` is set to false, NGINX Ingress Controller will ignore the flag.
 

@@ -210,7 +210,7 @@ var (
 	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
 	telemetryReportingPeriod = flag.String("telemetry-reporting-period", "24h", "Sets a telemetry reporting period.")
 
-	enableWeightChangesWithoutReload = flag.Bool(weightChangesWithoutReloadParam, *nginxPlus, "Enable changing weights of split clients without reloading NGINX. Requires -nginx-plus")
+	enableWeightChangesWithoutReload = flag.Bool(weightChangesWithoutReloadParam, false, "Enable changing weights of split clients without reloading NGINX. Requires -nginx-plus")
 
 	startupCheckFn func() error
 )
