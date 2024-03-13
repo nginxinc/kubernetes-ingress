@@ -85,7 +85,7 @@ jobs:
         if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -102,7 +102,7 @@ jobs:
         if: ${{ inputs.publish-gcp-market-place }}
 
       - name: Login to GCR for Marketplace
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -116,7 +116,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
         if: ${{ inputs.publish-aws-market-place }}
       - name: Login to ECR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
         if: ${{ inputs.publish-aws-market-place }}
@@ -131,7 +131,7 @@ jobs:
         if: ${{ inputs.publish-nginx-reqistry }}
 
       - name: Login to NGINX Registry
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: docker-mgmt.nginx.com
           username: ${{ steps.idtoken.outputs.id_token }}
@@ -285,7 +285,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
