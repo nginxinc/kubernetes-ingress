@@ -39,6 +39,8 @@ const (
 	appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
 	appProtectLogLevelCmd    = "/opt/app_protect/bin/set_log_level"
 
+	agentPath = "/usr/bin/nginx-agent"
+
 	// appPluginParams is the configuration of App-Protect plugin
 	appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 471859200 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
 
@@ -90,6 +92,9 @@ type Manager interface {
 	AppProtectPluginQuit()
 	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
 	AppProtectDosAgentQuit()
+	AgentStart(agentDone chan error, logLevel string)
+	AgentQuit()
+	AgentVersion() string
 	GetSecretsDir() string
 }
 
@@ -113,6 +118,7 @@ type LocalManager struct {
 	OpenTracing                  bool
 	appProtectPluginPid          int
 	appProtectDosAgentPid        int
+	agentPid                     int
 }
 
 // NewLocalManager creates a LocalManager.
@@ -559,6 +565,46 @@ func (lm *LocalManager) AppProtectDosAgentStart(apdaDone chan error, debug bool,
 	go func() {
 		apdaDone <- cmd.Wait()
 	}()
+}
+
+// AgentStart starts the AppProtect plugin and sets AppProtect log level.
+func (lm *LocalManager) AgentStart(agentDone chan error, instanceGroup string) {
+	glog.V(3).Info("Starting Agent")
+	args := []string{}
+	if len(instanceGroup) > 0 {
+		args = append(args, "--instance-group", instanceGroup)
+	}
+	cmd := exec.Command(agentPath, args...) // #nosec G204
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
+	cmd.Env = os.Environ()
+
+	if err := cmd.Start(); err != nil {
+		glog.Fatalf("Failed to start Agent: %v", err)
+	}
+	lm.agentPid = cmd.Process.Pid
+	go func() {
+		agentDone <- cmd.Wait()
+	}()
+}
+
+// AgentQuit gracefully ends AppProtect Agent.
+func (lm *LocalManager) AgentQuit() {
+	glog.V(3).Info("Quitting Agent")
+	killcmd := fmt.Sprintf("kill %d", lm.agentPid)
+	if err := shellOut(killcmd); err != nil {
+		glog.Fatalf("Failed to quit Agent: %v", err)
+	}
+}
+
+// AgentVersion returns NGINX Agent version
+func (lm *LocalManager) AgentVersion() string {
+	out, err := exec.Command(agentPath, "-v").CombinedOutput()
+	if err != nil {
+		glog.Fatalf("Failed to get nginx-agent version: %v", err)
+	}
+	return strings.TrimSpace(strings.TrimPrefix(string(out), "nginx-agent version "))
 }
 
 func getBinaryFileName(debug bool) string {

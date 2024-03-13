@@ -1803,6 +1803,168 @@
           "enableEgress": false
         }
       ]
+    },
+    "nginxAgent": {
+      "type": "object",
+      "default": {
+        "enable": false
+      },
+      "title": "Configuration for NGINX Agent.",
+      "required": [
+        "enable"
+      ],
+      "properties": {
+        "enable": {
+          "type": "boolean",
+          "default": false,
+          "title": "Enable NGINX Agent",
+          "examples": [
+            false
+          ]
+        },
+        "instanceGroup": {
+          "type": "string",
+          "default": "",
+          "title": "Set the --instance-group argument for NGINX Agent",
+          "examples": [
+            "my-instance-group"
+          ]
+        },
+        "logLevel": {
+          "type": "string",
+          "default": "info",
+          "title": "Log level for NGINX Agent",
+          "enum": [
+            "panic",
+            "fatal",
+            "error",
+            "info",
+            "debug",
+            "trace"
+          ],
+          "examples": [
+            "error"
+          ]
+        },
+        "instanceManager": {
+          "type": "object",
+          "default": {},
+          "title": "Configuration for the connection to NGINX Instance Manager",
+          "examples": [],
+          "required": [
+            "host"
+          ],
+          "properties": {
+            "host": {
+              "type": "string",
+              "title": "FQDN or IP for connecting to NGINX Instance Manager",
+              "examples": [
+                "nim.example.com"
+              ]
+            },
+            "grpcPort": {
+              "type": "integer",
+              "title": "Port for connecting to NGINX Instance Manager",
+              "default": 443,
+              "examples": [
+                443
+              ]
+            },
+            "sni": {
+              "type": "string",
+              "title": "Server Name Indication for NGINX Instance Manager",
+              "default": "",
+              "examples": [
+                "nim.example.com"
+              ]
+            },
+            "tls": {
+              "type": "object",
+              "default": {},
+              "title": "TLS configuration for connection between NGINX Agent and NGINX Instance Manager",
+              "properties": {
+                "enable": {
+                  "type": "boolean",
+                  "default": "true",
+                  "title": "enable TLS for NGINX Instance Manager connection"
+                },
+                "secret": {
+                  "type": "string",
+                  "default": "",
+                  "title": "kubernetes.io/tls secret with a TLS certificate and key for using mTLS between NGINX Agent and NGINX Instance Manager"
+                },
+                "caSecret": {
+                  "type": "string",
+                  "default": "",
+                  "title": "nginx.org/ca secret for verification of Instance Manager TLS"
+                },
+                "skipVerify": {
+                  "type": "boolean",
+                  "default": "false",
+                  "title": "skip certificate verification"
+                }
+              }
+            }
+          }
+        },
+        "syslog": {
+          "type": "object",
+          "default": {
+            "host": "127.0.0.1",
+            "port": 1514
+          },
+          "title": "Syslog listener which NGINX Agent uses to accept messages from App Protect WAF",
+          "properties": {
+            "host": {
+              "type": "string",
+              "title": "Address for NGINX Agent to run syslog listener",
+              "default": "127.0.0.1",
+              "examples": [
+                "127.0.0.1"
+              ]
+            },
+            "port": {
+              "type": "integer",
+              "title": "Port for NGINX Agent to run syslog listener",
+              "default": 1514,
+              "examples": [
+                1514
+              ]
+            }
+          }
+        },
+        "napMonitoring": {
+          "type": "object",
+          "default": {},
+          "title": "NGINX App Protect Monitoring config",
+          "properties": {
+            "collectorBufferSize": {
+              "type": "integer",
+              "default": 50000,
+              "title": "Buffer size for collector. Will contain log lines and parsed log lines",
+              "examples": [
+                50000
+              ]
+            },
+            "processorBufferSize": {
+              "type": "integer",
+              "default": 50000,
+              "title": "Buffer size for processor. Will contain log lines and parsed log lines",
+              "examples": [
+                50000
+              ]
+            }
+          }
+        },
+        "customConfigMap": {
+          "type": "string",
+          "title": "The name of a custom ConfigMap to use instead of the one provided by default",
+          "default": "",
+          "examples": [
+            "my-custom-configmap"
+          ]
+        }
+      }
     }
   },
   "examples": [
