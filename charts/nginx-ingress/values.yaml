@@ -566,6 +566,7 @@ nginxAgent:
     collectorBufferSize: 50000
     processorBufferSize: 50000
   instanceManager:
+    # FQDN or IP for connecting to NGINX Instance Manager, e.g. nim.example.com
     host: ""
     grpcPort: 443
     sni: ""

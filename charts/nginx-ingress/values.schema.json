@@ -1832,8 +1832,16 @@
         },
         "logLevel": {
           "type": "string",
-          "default": "error",
+          "default": "info",
           "title": "Log level for NGINX Agent",
+          "enum": [
+            "panic",
+            "fatal",
+            "error",
+            "info",
+            "debug",
+            "trace"
+          ],
           "examples": [
             "error"
           ]
@@ -1849,14 +1857,14 @@
           "properties": {
             "host": {
               "type": "string",
-              "title": "FQDN or IP for connecting to Ingress Controller",
+              "title": "FQDN or IP for connecting to NGINX Instance Manager",
               "examples": [
                 "nim.example.com"
               ]
             },
             "grpcPort": {
               "type": "integer",
-              "title": "Port for connecting to Ingress Controller",
+              "title": "Port for connecting to NGINX Instance Manager",
               "default": 443,
               "examples": [
                 443
@@ -1864,7 +1872,7 @@
             },
             "sni": {
               "type": "string",
-              "title": "Server Name Indication for Instance Manager",
+              "title": "Server Name Indication for NGINX Instance Manager",
               "default": "",
               "examples": [
                 "nim.example.com"
@@ -1873,17 +1881,17 @@
             "tls": {
               "type": "object",
               "default": {},
-              "title": "TLS configuration for connection between NGINX Agent and Instance Manager",
+              "title": "TLS configuration for connection between NGINX Agent and NGINX Instance Manager",
               "properties": {
                 "enable": {
                   "type": "boolean",
                   "default": "true",
-                  "title": "enable TLS for Instance Manager connection"
+                  "title": "enable TLS for NGINX Instance Manager connection"
                 },
                 "secret": {
                   "type": "string",
                   "default": "",
-                  "title": "kubernetes.io/tls secret with a TLS certificate and key for using mTLS between NGINX Agent and Instance Manager"
+                  "title": "kubernetes.io/tls secret with a TLS certificate and key for using mTLS between NGINX Agent and NGINX Instance Manager"
                 },
                 "caSecret": {
                   "type": "string",
