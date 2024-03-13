@@ -21,8 +21,6 @@ import (
 	gdesignReflect "golang.design/x/reflect"
 )
 
-const splitClientAmountWhenWeightChangesWithoutReload = 101
-
 // createConfigMapHandlers builds the handler funcs for config maps
 func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{

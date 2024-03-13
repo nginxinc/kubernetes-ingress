@@ -20,6 +20,7 @@ from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
                     "-weight-changes-without-reload=true",
+                    "-v=3",  # Temporary V3 logging
                 ],
             },
             {"example": "virtual-server-weight-changes-without-reload", "app_type": "split"},
@@ -32,6 +33,7 @@ from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
                     "-weight-changes-without-reload=false",
+                    "-v=3",  # Temporary V3 logging
                 ],
             },
             {
@@ -77,8 +79,9 @@ class TestWeightChangesWithReloadCondition:
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects, virtual_server_setup.vs_name, swap_weights_config, virtual_server_setup.namespace
         )
-        if expect_reload:
-            wait_before_test(5)
+
+        print("Wait after applying config")
+        wait_before_test(5)
 
         print("Step 4: Verify hitting the other backend.")
         ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
