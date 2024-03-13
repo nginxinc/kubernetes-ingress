@@ -451,11 +451,11 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **serviceNameOverride** | Used to prevent cloud load balancers from being replaced due to service name change during helm upgrades. | "" |
 | **nginxServiceMesh.enable** | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false |
 | **nginxServiceMesh.enableEgress** | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress Controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false |
-|**nginxAgent.enable** | Enable NGINX Agent to enable Security Monitoring integration with App Protect WAF module. Requires `controller.appprotect.enable`. | false |
-|**nginxAgent.instanceGroup** | Set a custom Instance Group name which the deployment will be shown as when connected to NGINX Instance Manager. `nginx-ingress.controller.fullname` will be used if not set. | "" |
+|**nginxAgent.enable** | Enable NGINX Agent to integrate the Security Monitoring and App Protect WAF modules. Requires `controller.appprotect.enable`. | false |
+|**nginxAgent.instanceGroup** | Set a custom Instance Group name for the deployment, shown when connected to NGINX Instance Manager. `nginx-ingress.controller.fullname` will be used if not set. | "" |
 |**nginxAgent.logLevel** | Log level for NGINX Agent. | "error |
-|**nginxAgent.instanceManager.host** | FQDN or IP for connecting to Ingress Controller. Required when `nginxAgent.enable` is set to `true` | "" |
-|**nginxAgent.instanceManager.grpcPort** | Port for connecting to Ingress Controller. | 443 |
+|**nginxAgent.instanceManager.host** | FQDN or IP for connecting to NGINX Ingress Controller. Required when `nginxAgent.enable` is set to `true` | "" |
+|**nginxAgent.instanceManager.grpcPort** | Port for connecting to NGINX Ingress Controller. | 443 |
 |**nginxAgent.instanceManager.sni** | Server Name Indication for Instance Manager. See the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
 |**nginxAgent.instanceManager.tls.enable** | Enable TLS for Instance Manager connection. | true |
 |**nginxAgent.instanceManager.tls.skipVerify** | Skip certification verification for Instance Manager connection. | false |

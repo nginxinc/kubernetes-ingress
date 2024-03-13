@@ -1,13 +1,13 @@
 # NGINX Security Monitoring
 
-In this example we deploy the NGINX Plus Ingress Controller with [NGINX App
-Protect](https://www.nginx.com/products/nginx-app-protect/) and [NGINX Agent](https://docs.nginx.com/nginx-agent/overview/) in order to integrate with [NGINX Management Suite Security Monitoring](https://docs.nginx.com/nginx-management-suite/security/). We also deploy a simple web application and then configure load balancing and WAF protection for that application using the Ingress resource. We configure logging for NGINX App Protect to send logs to the NGINX Agent syslog listener which is then sent to the Security Monitoring dashboard in NGINX Instance Manager.
+This example describes how to deploy NGINX Plus Ingress Controller with [NGINX App
+Protect](https://www.nginx.com/products/nginx-app-protect/) and [NGINX Agent](https://docs.nginx.com/nginx-agent/overview/) in order to integrate with [NGINX Management Suite Security Monitoring](https://docs.nginx.com/nginx-management-suite/security/). It involves deploying a simple web application, then configuring load balancing and WAF protection for the application using the Ingress resource. We then configure logging for NGINX App Protect to send logs to the NGINX Agent syslog listener, which is sent to the Security Monitoring dashboard in NGINX Instance Manager.
 
-## Running the Example
+## Running the example
 
-## 1. Deploy the Ingress Controller
+## 1. Deploy NGINX Ingress Controller
 
-1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy NGINX
    Ingress Controller with NGINX App Protect and NGINX Agent. Configure NGINX Agent to connect to a deployment of NGINX Instance Manager with Security Monitoring, and verify that your NGINX Ingress Controller deployment is online in NGINX Instance Manager.
 
 2. Save the public IP address of the Ingress Controller into a shell variable:
@@ -16,13 +16,13 @@ Protect](https://www.nginx.com/products/nginx-app-protect/) and [NGINX Agent](ht
     IC_IP=XXX.YYY.ZZZ.III
     ```
 
-3. Save the HTTPS port of the Ingress Controller into a shell variable:
+3. Save the HTTPS port of NGINX Ingress Controller into a shell variable:
 
     ```console
     IC_HTTPS_PORT=<port number>
     ```
 
-## 2. Deploy the Cafe Application
+## 2. Deploy the Cafe application
 
 Create the coffee and the tea deployments and services:
 
@@ -30,9 +30,9 @@ Create the coffee and the tea deployments and services:
 kubectl create -f cafe.yaml
 ```
 
-## 3. Configure Load Balancing
+## 3. Configure load balancing
 
-1. . Create a secret with an SSL certificate and a key:
+1. Create a secret with an SSL certificate and a key:
 
     ```console
     kubectl create -f cafe-secret.yaml
@@ -57,7 +57,7 @@ kubectl create -f cafe.yaml
     Note the App Protect annotations in the Ingress resource. They enable WAF protection by configuring App Protect with
     the policy and log configuration created in the previous step.
 
-## 4. Test the Application
+## 4. Test the application
 
 1. To access the application, curl the coffee and the tea services. We'll use `curl`'s --insecure option to turn off
 certificate verification of our self-signed certificate and the --resolve option to set the Host header of a request
@@ -75,7 +75,7 @@ with `cafe.example.com`
     ...
     ```
 
-    If your prefer tea:
+    If get tea:
 
     ```console
     curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
@@ -87,7 +87,7 @@ with `cafe.example.com`
     ...
     ```
 
-    Now, let's try to send a request with a suspicious URL:
+    Send a request with a suspicious URL:
 
     ```console
     curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP "https://cafe.example.com:$IC_HTTPS_PORT/tea/<script>" --insecure
@@ -98,7 +98,7 @@ with `cafe.example.com`
     ...
     ```
 
-    Lastly, let's try to send some suspicious data that matches the user defined signature.
+    Finally, send some suspicious data that matches the user defined signature.
 
     ```console
     curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP -X POST -d "apple" "https://cafe.example.com:$IC_HTTPS_PORT/tea/" --insecure
@@ -109,6 +109,6 @@ with `cafe.example.com`
     ...
     ```
 
-    As you can see, the suspicious requests were blocked by App Protect
+    The suspicious requests were demonstrably blocked by App Protect.
 
 1. Access the Security Monitoring dashboard in your deployment of NGINX Instance Manager to view details for the blocked requests.
