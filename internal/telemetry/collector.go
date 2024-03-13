@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"time"
 
-	telemetry "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
+	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
@@ -85,50 +85,92 @@ func (c *Collector) Start(ctx context.Context) {
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	data, err := c.BuildReport(ctx)
+	report, err := c.BuildReport(ctx)
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: %v", err)
 	}
-	err = c.Exporter.Export(ctx, data)
-	if err != nil {
-		glog.Errorf("Error exporting telemetry data: %v", err)
-	}
-	glog.V(3).Infof("Exported telemetry data: %+v", data)
-}
 
-// BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport(ctx context.Context) (telemetry.Exportable, error) {
-	d := Data{
-		Data: telemetry.Data{
-			ProjectName:         "NIC",
+	nicData := Data{
+		tel.Data{
+			ProjectName:         report.Name,
 			ProjectVersion:      c.Config.Version,
 			ProjectArchitecture: runtime.GOARCH,
+			ClusterID:           report.ClusterID,
+			ClusterVersion:      report.ClusterVersion,
+			ClusterPlatform:     report.ClusterPlatform,
+			ClusterNodeCount:    int64(report.ClusterNodeCount),
+		},
+		NICResourceCounts{
+			VirtualServers:      int64(report.VirtualServers),
+			VirtualServerRoutes: int64(report.VirtualServerRoutes),
+			TransportServers:    int64(report.TransportServers),
 		},
 	}
 
-	var err error
+	err = c.Exporter.Export(ctx, &nicData)
+	if err != nil {
+		glog.Errorf("Error exporting telemetry data: %v", err)
+	}
+	glog.V(3).Infof("Exported telemetry data: %+v", nicData)
+}
+
+// Report holds collected NIC telemetry data. It is the package internal
+// data structure used for decoupling types between the NIC `telemetry`
+// package and the imported `telemetry` exporter.
+type Report struct {
+	Name                string
+	Version             string
+	Architecture        string
+	ClusterID           string
+	ClusterVersion      string
+	ClusterPlatform     string
+	ClusterNodeCount    int
+	VirtualServers      int
+	VirtualServerRoutes int
+	TransportServers    int
+}
+
+// BuildReport takes context, collects telemetry data and builds the report.
+func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
+	vsCount := 0
+	vsrCount := 0
+	tsCount := 0
 
 	if c.Config.Configurator != nil {
-		vsCount, vsrCount := c.Config.Configurator.GetVirtualServerCounts()
-		d.VirtualServers, d.VirtualServerRoutes = int64(vsCount), int64(vsrCount)
-		d.TransportServers = int64(c.Config.Configurator.GetTransportServerCounts())
+		vsCount, vsrCount = c.Config.Configurator.GetVirtualServerCounts()
+		tsCount = c.Config.Configurator.GetTransportServerCounts()
 	}
 
-	if d.ClusterID, err = c.ClusterID(ctx); err != nil {
+	clusterID, err := c.ClusterID(ctx)
+	if err != nil {
 		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
 	}
 
-	if d.ClusterNodeCount, err = c.NodeCount(ctx); err != nil {
+	nodes, err := c.NodeCount(ctx)
+	if err != nil {
 		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
 	}
 
-	if d.ClusterVersion, err = c.ClusterVersion(); err != nil {
+	version, err := c.ClusterVersion()
+	if err != nil {
 		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
 	}
 
-	// TODO: Get Cluster (k8s) platform. e.g. EKS, AWS, Openshift, etc...
+	platform, err := c.Platform(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Platform: %v", err)
+	}
 
-	// TODO: Get InstallationID
-	// example of how NGF gets this ID https://github.com/nginxinc/nginx-gateway-fabric/blob/f33db51fc9e05ccf98fc8cdae100772a5cc6775e/internal/mode/static/telemetry/collector.go#L244-L248
-	return &d, err
+	return Report{
+		Name:                "NIC",
+		Version:             c.Config.Version,
+		Architecture:        runtime.GOARCH,
+		ClusterID:           clusterID,
+		ClusterVersion:      version,
+		ClusterPlatform:     platform,
+		ClusterNodeCount:    nodes,
+		VirtualServers:      vsCount,
+		VirtualServerRoutes: vsrCount,
+		TransportServers:    tsCount,
+	}, err
 }
