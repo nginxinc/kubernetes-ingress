@@ -390,7 +390,7 @@ server:
 {{- end }}
 {{- if .Values.nginxAgent.instanceManager.tls  }}
 tls:
-  enable: {{ .Values.nginxAgent.instanceManager.tls.enable | default false }}
+  enable: {{ .Values.nginxAgent.instanceManager.tls.enable | default true }}
   skip_verify: {{ .Values.nginxAgent.instanceManager.tls.skipVerify | default false }}
   {{- if ne .Values.nginxAgent.instanceManager.tls.caSecret "" }}
   ca: "/etc/ssl/nms/ca.crt"
