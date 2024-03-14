@@ -19,8 +19,10 @@ import (
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	fakediscovery "k8s.io/client-go/discovery/fake"
+
 	testClient "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -342,12 +344,16 @@ func TestCountVirtualServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: newTestClientset(kubeNS, node1),
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
 		})
 		if err != nil {
 			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
 		}
 
 		for _, vs := range test.virtualServers {
@@ -503,12 +509,16 @@ func TestCountTransportServers(t *testing.T) {
 		configurator := newConfigurator(t)
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-			K8sClientReader: newTestClientset(kubeNS, node1),
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
 		})
 		if err != nil {
 			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
 		}
 
 		for _, ts := range test.transportServers {

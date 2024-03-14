@@ -22,10 +22,10 @@ h2 {
 - A [Kubernetes Version Supported by the Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
 - Helm 3.0+.
 - If you’d like to use NGINX Plus:
-  - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames` parameter.
-  - Alternatively, pull an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
-  - Alternatively, you can build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
-  - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
+    - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames` parameter.
+    - Alternatively, pull an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
+    - Alternatively, you can build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
+    - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
 - If you’d like to use App Protect DoS, please install App Protect DoS Arbitrator [helm chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart). Make sure to install in the same namespace as the NGINX Ingress Controller. Note that if you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because it is not possible to install more than one Arbitrator in a single namespace.
 
 ## CRDs
@@ -204,7 +204,7 @@ The steps you should follow depend on the Helm release name:
     kubectl describe deployments -n <namespace>
     ```
 
-    Copy the key=value under `Selector`, such as:
+   Copy the key=value under `Selector`, such as:
 
     ```shell
     Selector: app=nginx-ingress-nginx-ingress
@@ -225,7 +225,7 @@ The steps you should follow depend on the Helm release name:
     --set controller.name=""
     --set fullnameOverride="nginx-ingress-nginx-ingress"
     ```
-    It could look as follows:
+   It could look as follows:
 
     ```shell
     helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
@@ -249,7 +249,7 @@ The steps you should follow depend on the Helm release name:
     kubectl describe deployment/daemonset -n <namespace>
     ```
 
-    Copy the key=value under ```Selector```, such as:
+   Copy the key=value under ```Selector```, such as:
 
     ```shell
     Selector: app=<helm_release_name>-nginx-ingress
@@ -272,7 +272,7 @@ The steps you should follow depend on the Helm release name:
     --set controller.name=""
     ```
 
-    It could look as follows:
+   It could look as follows:
 
     ```shell
     helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
@@ -433,6 +433,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.defaultHTTPSListenerPort**  | Sets the port for the HTTPS `default_server` listener. | 443 |
 | **controller.readOnlyRootFilesystem** | Configure root filesystem as read-only and add volumes for temporary data. Three major releases after 3.5.x this argument will be moved permanently to the `controller.securityContext` section.  | false |
 | **controller.enableSSLDynamicReload** | Enable lazy loading for SSL Certificates. | true |
+| **controller.telemetryReporting.enable** | Enable telemetry reporting. | true |
 | **rbac.create** | Configures RBAC. | true |
 | **prometheus.create** | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 | **prometheus.port** | Configures the port to scrape the metrics. | 9113 |
