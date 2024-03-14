@@ -3758,20 +3758,6 @@ func TestPreSyncSecrets(t *testing.T) {
 	}
 }
 
-//func TestNewTelemetryExporter(t *testing.T) {
-//	t.Parallel()
-//
-//	testCases := []struct {
-//		testCase string
-//		input NewLoadBalancerControllerInput
-//		expectedExporter telemetry.Exporter
-//	}{
-//		{
-//
-//		},
-//	}
-//}
-
 func TestNewTelemetryCollector(t *testing.T) {
 	t.Parallel()
 
