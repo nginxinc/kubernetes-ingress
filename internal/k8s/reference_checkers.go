@@ -325,3 +325,31 @@ func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespac
 func (rc *dosResourceReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1.TransportServer) bool {
 	return false
 }
+
+type ratelimitScalingAnnotationChecker struct{}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByIngress(_ string, _ string, ing *networking.Ingress) bool {
+	for key, value := range ing.Annotations {
+		if key == "nginx.org/limit-req-scale" && value == "true" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByMinion(svcNamespace string, svcName string, ing *networking.Ingress) bool {
+	return rc.IsReferencedByIngress(svcNamespace, svcName, ing)
+}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByVirtualServer(_ string, _ string, _ *conf_v1.VirtualServer) bool {
+	return false
+}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *conf_v1.VirtualServerRoute) bool {
+	return false
+}
+
+func (rc *ratelimitScalingAnnotationChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1.TransportServer) bool {
+	return false
+}
