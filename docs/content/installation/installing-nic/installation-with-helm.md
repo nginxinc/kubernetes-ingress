@@ -204,7 +204,7 @@ The steps you should follow depend on the Helm release name:
     kubectl describe deployments -n <namespace>
     ```
 
-    Copy the key=value under `Selector`, such as:
+   Copy the key=value under `Selector`, such as:
 
     ```shell
     Selector: app=nginx-ingress-nginx-ingress
@@ -225,7 +225,7 @@ The steps you should follow depend on the Helm release name:
     --set controller.name=""
     --set fullnameOverride="nginx-ingress-nginx-ingress"
     ```
-    It could look as follows:
+   It could look as follows:
 
     ```shell
     helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
@@ -249,7 +249,7 @@ The steps you should follow depend on the Helm release name:
     kubectl describe deployment/daemonset -n <namespace>
     ```
 
-    Copy the key=value under ```Selector```, such as:
+   Copy the key=value under ```Selector```, such as:
 
     ```shell
     Selector: app=<helm_release_name>-nginx-ingress
@@ -272,7 +272,7 @@ The steps you should follow depend on the Helm release name:
     --set controller.name=""
     ```
 
-    It could look as follows:
+   It could look as follows:
 
     ```shell
     helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
@@ -433,6 +433,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.defaultHTTPSListenerPort**  | Sets the port for the HTTPS `default_server` listener. | 443 |
 | **controller.readOnlyRootFilesystem** | Configure root filesystem as read-only and add volumes for temporary data. Three major releases after 3.5.x this argument will be moved permanently to the `controller.securityContext` section.  | false |
 | **controller.enableSSLDynamicReload** | Enable lazy loading for SSL Certificates. | true |
+| **controller.telemetryReporting.enable** | Enable telemetry reporting. | true |
 | **rbac.create** | Configures RBAC. | true |
 | **prometheus.create** | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 | **prometheus.port** | Configures the port to scrape the metrics. | 9113 |
