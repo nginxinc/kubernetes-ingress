@@ -7,6 +7,7 @@ import (
 
 	discovery_v1 "k8s.io/api/discovery/v1"
 
+	"github.com/jinzhu/copier"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"github.com/golang/glog"
@@ -17,8 +18,6 @@ import (
 
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	gdesignReflect "golang.design/x/reflect"
 )
 
 // createConfigMapHandlers builds the handler funcs for config maps
@@ -313,8 +312,18 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			oldVs := old.(*conf_v1.VirtualServer)
 
 			if lbc.weightChangesWithoutReload {
-				curVsCopy := gdesignReflect.DeepCopy(*curVs)
-				oldVsCopy := gdesignReflect.DeepCopy(*oldVs)
+				var curVsCopy, oldVsCopy conf_v1.VirtualServer
+				err := copier.CopyWithOption(&curVsCopy, curVs, copier.Option{DeepCopy: true})
+				if err != nil {
+					glog.V(3).Infof("Error copying VirtualServer %v: %v", curVs.Name, err)
+					return
+				}
+
+				err = copier.CopyWithOption(&oldVsCopy, oldVs, copier.Option{DeepCopy: true})
+				if err != nil {
+					glog.V(3).Infof("Error copying VirtualServer %v: %v", oldVs.Name, err)
+					return
+				}
 
 				zeroOutVirtualServerSplitWeights(&curVsCopy)
 				zeroOutVirtualServerSplitWeights(&oldVsCopy)
@@ -363,11 +372,21 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
 
 			if lbc.weightChangesWithoutReload {
-				curVsrCopy := gdesignReflect.DeepCopy(curVsr)
-				oldVsrCopy := gdesignReflect.DeepCopy(oldVsr)
+				var curVsrCopy, oldVsrCopy conf_v1.VirtualServerRoute
+				err := copier.CopyWithOption(&curVsrCopy, curVsr, copier.Option{DeepCopy: true})
+				if err != nil {
+					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", curVsr.Name, err)
+					return
+				}
 
-				zeroOutVirtualServerRouteSplitWeights(curVsrCopy)
-				zeroOutVirtualServerRouteSplitWeights(oldVsrCopy)
+				err = copier.CopyWithOption(&oldVsrCopy, oldVsr, copier.Option{DeepCopy: true})
+				if err != nil {
+					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", oldVsr.Name, err)
+					return
+				}
+
+				zeroOutVirtualServerRouteSplitWeights(&curVsrCopy)
+				zeroOutVirtualServerRouteSplitWeights(&oldVsrCopy)
 
 				if reflect.DeepEqual(oldVsrCopy.Spec, curVsrCopy.Spec) {
 					lbc.processVSRWeightChangesWithoutReload(oldVsr, curVsr)
