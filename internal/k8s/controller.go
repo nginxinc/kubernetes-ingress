@@ -345,7 +345,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
-		lbc.telemetryChan = make(chan struct{})
+
 		exporterCfg := telemetry.ExporterCfg{
 			Endpoint: "oss.edge.df.f5.com:443",
 		}
@@ -369,6 +369,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			glog.Fatalf("failed to initialize telemetry collector: %v", err)
 		}
 		lbc.telemetryCollector = collector
+		lbc.telemetryChan = make(chan struct{})
 	}
 
 	return lbc
