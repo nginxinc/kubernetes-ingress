@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +17,35 @@ func (c *Collector) NodeCount(ctx context.Context) (int, error) {
 		return 0, err
 	}
 	return len(nodes.Items), nil
+}
+
+// ReplicaCount returns a number of running NIC replicas.
+func (c *Collector) ReplicaCount(ctx context.Context) (int, error) {
+	pod, err := c.Config.K8sClientReader.CoreV1().Pods(c.Config.PodNSName.Namespace).Get(ctx, c.Config.PodNSName.Name, metaV1.GetOptions{})
+	if err != nil {
+		return 0, err
+	}
+	podRef := pod.GetOwnerReferences()
+	if len(podRef) != 1 {
+		return 0, fmt.Errorf("expected pod owner reference to be 1, got %d", len(podRef))
+	}
+
+	switch podRef[0].Kind {
+	case "ReplicaSet":
+		rs, err := c.Config.K8sClientReader.AppsV1().ReplicaSets(c.Config.PodNSName.Namespace).Get(ctx, podRef[0].Name, metaV1.GetOptions{})
+		if err != nil {
+			return 0, err
+		}
+		return int(*rs.Spec.Replicas), nil
+	case "DaemonSet":
+		ds, err := c.Config.K8sClientReader.AppsV1().DaemonSets(c.Config.PodNSName.Namespace).Get(ctx, podRef[0].Name, metaV1.GetOptions{})
+		if err != nil {
+			return 0, err
+		}
+		return int(ds.Status.CurrentNumberScheduled), nil
+	default:
+		return 0, fmt.Errorf("expected pod owner reference to be ReplicaSet or DeamonSet, got %s", podRef[0].Kind)
+	}
 }
 
 // ClusterID returns the UID of the kube-system namespace representing cluster id.

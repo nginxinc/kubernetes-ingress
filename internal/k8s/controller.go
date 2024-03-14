@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -42,6 +43,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -345,7 +347,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
-
 		exporterCfg := telemetry.ExporterCfg{
 			Endpoint: "oss.edge.df.f5.com:443",
 		}
@@ -360,6 +361,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			Period:                24 * time.Hour,
 			Configurator:          lbc.configurator,
 			Version:               input.NICVersion,
+			PodNSName: types.NamespacedName{
+				Namespace: os.Getenv("POD_NAMESPACE"),
+				Name:      os.Getenv("POD_NAME"),
+			},
 		}
 		collector, err := telemetry.NewCollector(
 			collectorConfig,

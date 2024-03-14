@@ -56,6 +56,13 @@ rules:
   verbs:
   - list
 - apiGroups:
+  - "apps"
+  resources:
+  - replicasets
+  - daemonsets
+  verbs:
+  - get
+- apiGroups:
   - networking.k8s.io
   resources:
   - ingressclasses
