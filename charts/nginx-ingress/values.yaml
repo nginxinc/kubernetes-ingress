@@ -487,10 +487,8 @@ controller:
   ## Enable dynamic reloading of certificates
   enableSSLDynamicReload: true
 
-  ## Configure telemetry reporting options
-  telemetryReporting:
-    ## Enable telemetry reporting
-    enable: true
+  ## Enable telemetry reporting
+  enableTelemetryReporting: true
 
   ## Enables weight changes without reloading the NGINX Configuration for two way splits in NGINX Plus.
   ## Enabling this feature may require increasing map_hash_bucket_size, map_hash_max_size,

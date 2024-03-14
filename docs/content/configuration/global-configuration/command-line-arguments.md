@@ -536,14 +536,6 @@ The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
 
-### -enable-telemetry-reporting
-
-Enable gathering and reporting of product related telemetry.
-
-The default value is `true`.
-
-<a name="cmdoption-enable-telemetry-reporting"></a>
-
 ### -weight-changes-without-reload
 
 Enables the ability to change the weight of split clients with two splits without reloading NGINX.

@@ -122,6 +122,7 @@ For example, say you want to [log state changing requests](/nginx-app-protect-wa
     },
     "content": {
         "format": "default",
+        "max_request_size": "any",
         "max_message_size": "5k"
     }
 }
@@ -139,6 +140,7 @@ spec:
     request_type: all
   content:
     format: default
+    max_request_size: any
     max_message_size: 5k
 ```
 

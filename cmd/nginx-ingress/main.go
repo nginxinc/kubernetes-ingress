@@ -212,6 +212,7 @@ func main() {
 		IsIPV6Disabled:               *disableIPV6,
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
+		TelemetryReportingPeriod:     *telemetryReportingPeriod,
 		NICVersion:                   version,
 		WeightChangesWithoutReload:   *enableWeightChangesWithoutReload,
 	}
