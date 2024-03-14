@@ -30,6 +30,7 @@ jobs:
       versions: ${{ steps.versions.outputs.matrix }}
       go-md5: ${{ steps.md5.outputs.go_code_md5 }}
       binary-cache-hit: ${{ steps.binary-cache.outputs.cache-hit }}
+      base-image-md5: ${{ steps.md5.outputs.docker_md5 }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
@@ -57,7 +58,9 @@ jobs:
 
       - name: Set Go MD5sums
         id: md5
-        run: echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+        run: |
+          ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
@@ -144,6 +147,7 @@ jobs:
       image: debian
       tag: ${{ needs.variables.outputs.kic-tag }}
       go-md5: ${{ needs.variables.outputs.go-md5 }}
+      base-image-md5: ${{ needs.variables.outputs.base-image-md5 }}
     permissions:
       contents: read
       actions: read
@@ -162,6 +166,7 @@ jobs:
       image: alpine
       tag: ${{ needs.variables.outputs.kic-tag }}
       go-md5: ${{ needs.variables.outputs.go-md5 }}
+      base-image-md5: ${{ needs.variables.outputs.base-image-md5 }}
     permissions:
       contents: read
       actions: read
@@ -180,6 +185,7 @@ jobs:
       image: ubi
       tag: ${{ needs.variables.outputs.kic-tag }}
       go-md5: ${{ needs.variables.outputs.go-md5 }}
+      base-image-md5: ${{ needs.variables.outputs.base-image-md5 }}
     permissions:
       contents: read
       actions: read
