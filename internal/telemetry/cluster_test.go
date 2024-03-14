@@ -413,18 +413,6 @@ var (
 		},
 		Spec: apiCoreV1.NamespaceSpec{},
 	}
-
-	dummyKubeNS = &apiCoreV1.Namespace{
-		TypeMeta: metaV1.TypeMeta{
-			Kind:       "Namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metaV1.ObjectMeta{
-			Name: "kube-system",
-			UID:  "",
-		},
-		Spec: apiCoreV1.NamespaceSpec{},
-	}
 )
 
 // Cloud providers' nodes for testing ProviderID lookups.
