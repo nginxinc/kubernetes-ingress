@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 )
 
@@ -22,6 +24,30 @@ type StdoutExporter struct {
 func (e *StdoutExporter) Export(_ context.Context, data tel.Exportable) error {
 	fmt.Fprintf(e.Endpoint, "%+v", data)
 	return nil
+}
+
+// ExporterCfg is a configuration struct for an Exporter.
+type ExporterCfg struct {
+	Endpoint string
+}
+
+// NewExporter creates an Exporter with the provided ExporterCfg.
+func NewExporter(cfg ExporterCfg) (Exporter, error) {
+	providerOptions := []otlptracegrpc.Option{
+		otlptracegrpc.WithEndpoint(cfg.Endpoint),
+		// This header option will be removed when https://github.com/nginxinc/telemetry-exporter/issues/41 is resolved.
+		otlptracegrpc.WithHeaders(map[string]string{
+			"X-F5-OTEL": "GRPC",
+		}),
+	}
+
+	exporter, err := tel.NewExporter(
+		tel.ExporterConfig{
+			SpanProvider: tel.CreateOTLPSpanProvider(providerOptions...),
+		},
+	)
+
+	return exporter, err
 }
 
 // Data holds collected telemetry data.
@@ -42,4 +68,7 @@ type NICResourceCounts struct {
 	VirtualServerRoutes int64
 	// TransportServers is the number of TransportServers managed by the Ingress Controller.
 	TransportServers int64
+
+	// Replicas is the number of NIC replicas.
+	Replicas int64
 }
