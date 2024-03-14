@@ -550,7 +550,7 @@ The default value is `false`.
 
 ### -enable-telemetry-reporting
 
-Enable gathering and reporting of product related telemetry.
+Enable gathering and reporting of software telemetry.
 
 The default value is `true`.
 

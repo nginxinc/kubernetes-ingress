@@ -62,11 +62,11 @@ type Data struct {
 //
 //go:generate go run -tags=generator github.com/nginxinc/telemetry-exporter/cmd/generator -type NICResourceCounts
 type NICResourceCounts struct {
-	// VirtualServer is the number of VirtualServer managed by the Ingress Controller.
+	// VirtualServers is the number of VirtualServer resources managed by the Ingress Controller.
 	VirtualServers int64
-	// VirtualServerRoutes is the number of VirtualServerRoutes managed by the Ingress Controller.
+	// VirtualServerRoutes is the number of VirtualServerRoute resources managed by the Ingress Controller.
 	VirtualServerRoutes int64
-	// TransportServers is the number of TransportServers managed by the Ingress Controller.
+	// TransportServers is the number of TransportServer resources  by the Ingress Controller.
 	TransportServers int64
 
 	// Replicas is the number of NIC replicas.
