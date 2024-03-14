@@ -210,8 +210,6 @@ type NewLoadBalancerControllerInput struct {
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
-	TelemetryReportingEndpoint   string
-	TelemetryReportingSecure     bool
 	NICVersion                   string
 }
 
@@ -347,9 +345,9 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
+		lbc.telemetryChan = make(chan struct{})
 		exporterCfg := telemetry.ExporterCfg{
-			Endpoint: input.TelemetryReportingEndpoint,
-			Secure:   input.TelemetryReportingSecure,
+			Endpoint: "oss.edge.df.f5.com:443",
 		}
 
 		exporter, err := telemetry.NewExporter(exporterCfg)
@@ -363,7 +361,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			Configurator:          lbc.configurator,
 			Version:               input.NICVersion,
 		}
-		lbc.telemetryChan = make(chan struct{})
 		collector, err := telemetry.NewCollector(
 			collectorConfig,
 			telemetry.WithExporter(exporter),

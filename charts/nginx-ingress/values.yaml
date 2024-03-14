@@ -492,12 +492,6 @@ controller:
     ## Enable telemetry reporting
     enable: true
 
-    ## If set to false, the option otlptracegrpc.WithInsecure() will be set
-    secure: true
-
-    ## GRPC endpoint to send data to
-    endpoint: "oss-dev.edge.df.f5.com:443"
-
 rbac:
   ## Configures RBAC.
   create: true

@@ -278,8 +278,6 @@ Build the args for the service binary.
 - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
 - -ssl-dynamic-reload={{ .Values.controller.enableSSLDynamicReload }}
 - -enable-telemetry-reporting={{ .Values.controller.telemetryReporting.enable}}
-- -telemetry-reporting-endpoint={{ .Values.controller.telemetryReporting.endpoint}}
-- -telemetry-reporting-secure={{ .Values.controller.telemetryReporting.secure}}
 {{- if .Values.nginxAgent.enable }}
 - -agent=true
 - -agent-instance-group={{ default (include "nginx-ingress.controller.fullname" .) .Values.nginxAgent.instanceGroup }}

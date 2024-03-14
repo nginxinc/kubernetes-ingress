@@ -434,8 +434,6 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.readOnlyRootFilesystem** | Configure root filesystem as read-only and add volumes for temporary data. Three major releases after 3.5.x this argument will be moved permanently to the `controller.securityContext` section.  | false |
 | **controller.enableSSLDynamicReload** | Enable lazy loading for SSL Certificates. | true |
 | **controller.telemetryReporting.enable** | Enable telemetry reporting. | true |
-| **controller.telemetryReporting.secure** | If set to false, the option [otlptracegrpc.WithInsecure()](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc#WithInsecure) will be set. | true |
-| **controller.telemetryReporting.endpoint** | GRPC endpoint to send data to. | "oss-dev.edge.df.f5.com:443" |
 | **rbac.create** | Configures RBAC. | true |
 | **prometheus.create** | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 | **prometheus.port** | Configures the port to scrape the metrics. | 9113 |

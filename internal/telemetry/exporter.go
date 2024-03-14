@@ -29,7 +29,6 @@ func (e *StdoutExporter) Export(_ context.Context, data tel.Exportable) error {
 // ExporterCfg is a configuration struct for an Exporter.
 type ExporterCfg struct {
 	Endpoint string
-	Secure   bool
 }
 
 // NewExporter creates an Exporter with the provided ExporterCfg.
@@ -40,10 +39,6 @@ func NewExporter(cfg ExporterCfg) (Exporter, error) {
 		otlptracegrpc.WithHeaders(map[string]string{
 			"X-F5-OTEL": "GRPC",
 		}),
-	}
-
-	if !cfg.Secure {
-		providerOptions = append(providerOptions, otlptracegrpc.WithInsecure())
 	}
 
 	exporter, err := tel.NewExporter(
