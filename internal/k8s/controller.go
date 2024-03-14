@@ -77,8 +77,9 @@ const (
 	// IngressControllerName holds Ingress Controller name
 	IngressControllerName = "nginx.org/ingress-controller"
 
-	typeKeyword     = "type"
-	helmReleaseType = "helm.sh/release.v1"
+	typeKeyword                                     = "type"
+	helmReleaseType                                 = "helm.sh/release.v1"
+	splitClientAmountWhenWeightChangesWithoutReload = 101
 )
 
 var (
