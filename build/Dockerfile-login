@@ -1,0 +1,10 @@
+# syntax=docker/dockerfile:1.6
+FROM ubuntu:22.04
+
+RUN --mount=type=secret,id=docker-u,dst=/tmp/dockerhub-user,mode=0644 \
+	--mount=type=secret,id=docker-p,dst=/tmp/dockerhub-pass,mode=0644 \
+	--mount=type=secret,id=quay-u,dst=/tmp/quay-user,mode=0644 \
+	--mount=type=secret,id=quay-p,dst=/tmp/quay-pass,mode=0644 \
+	--mount=type=secret,id=aws,dst=/tmp/aws-role,mode=0644 \
+	mkdir /creds \
+	&& cp /tmp/dockerhub* /tmp/quay* /tmp/aws-role /creds
