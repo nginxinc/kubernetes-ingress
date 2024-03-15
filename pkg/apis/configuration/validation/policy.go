@@ -279,6 +279,7 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 
 func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	bundleMode := waf.ApBundle != ""
 
 	// WAF Policy references either apPolicy or apBundle.
 	if waf.ApPolicy != "" && waf.ApBundle != "" {
@@ -295,33 +296,33 @@ func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
 		}
 	}
 
-	if waf.ApBundle != "" {
+	if bundleMode {
 		for _, msg := range validation.IsQualifiedName(waf.ApBundle) {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apBundle"), waf.ApBundle, msg))
 		}
 	}
 
 	if waf.SecurityLog != nil {
-		allErrs = append(allErrs, validateLogConf(waf.SecurityLog, fieldPath.Child("securityLog"))...)
+		allErrs = append(allErrs, validateLogConf(waf.SecurityLog, fieldPath.Child("securityLog"), bundleMode)...)
 	}
 
 	if waf.SecurityLogs != nil {
-		allErrs = append(allErrs, validateLogConfs(waf.SecurityLogs, fieldPath.Child("securityLogs"))...)
+		allErrs = append(allErrs, validateLogConfs(waf.SecurityLogs, fieldPath.Child("securityLogs"), bundleMode)...)
 	}
 	return allErrs
 }
 
-func validateLogConfs(logs []*v1.SecurityLog, fieldPath *field.Path) field.ErrorList {
+func validateLogConfs(logs []*v1.SecurityLog, fieldPath *field.Path, bundleMode bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	for i := range logs {
-		allErrs = append(allErrs, validateLogConf(logs[i], fieldPath.Index(i))...)
+		allErrs = append(allErrs, validateLogConf(logs[i], fieldPath.Index(i), bundleMode)...)
 	}
 
 	return allErrs
 }
 
-func validateLogConf(logConf *v1.SecurityLog, fieldPath *field.Path) field.ErrorList {
+func validateLogConf(logConf *v1.SecurityLog, fieldPath *field.Path, bundleMode bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if logConf.ApLogConf != "" && logConf.ApLogBundle != "" {
@@ -333,12 +334,18 @@ func validateLogConf(logConf *v1.SecurityLog, fieldPath *field.Path) field.Error
 	}
 
 	if logConf.ApLogConf != "" {
+		if bundleMode {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apLogConf"), logConf.ApLogConf, "apLogConf is not supported with apBundle"))
+		}
 		for _, msg := range validation.IsQualifiedName(logConf.ApLogConf) {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apLogConf"), logConf.ApLogConf, msg))
 		}
 	}
 
 	if logConf.ApLogBundle != "" {
+		if !bundleMode {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apLogConf"), logConf.ApLogConf, "apLogBundle is not supported with apPolicy"))
+		}
 		for _, msg := range validation.IsQualifiedName(logConf.ApLogBundle) {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apBundle"), logConf.ApLogBundle, msg))
 		}
