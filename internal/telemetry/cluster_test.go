@@ -51,7 +51,7 @@ func TestClusterIDRetrievesK8sClusterUID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := "329766ff-5d78-4c9e-8736-7faad1f2e937"
+	want := telemetryNICData.ClusterID
 	if want != got {
 		t.Errorf("want %v, got %v", want, got)
 	}
@@ -76,7 +76,7 @@ func TestK8sVersionRetrievesClusterVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := "v1.29.2"
+	want := telemetryNICData.ClusterVersion
 	if want != got {
 		t.Errorf("want %s, got %s", want, got)
 	}
@@ -383,6 +383,58 @@ func TestReplicaCountReturnsNumberOfNICDaemonSets(t *testing.T) {
 	}
 }
 
+func TestInstallationIDGeneratesHashOnReplicaSet(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCollectorForClusterWithNodes(t, kubeNS, node1, pod1, replica)
+	got, err := c.InstallationID(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := installationIDReplicaSet
+	if want != got {
+		t.Errorf("want %s, got %s", want, got)
+	}
+}
+
+func TestInstallationIDGeneratesHashOnDaemonSet(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCollectorForClusterWithNodes(t, kubeNS, node1, pod2, daemon)
+	got, err := c.InstallationID(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := installationIDDaemonSet
+	if want != got {
+		t.Errorf("want %s, got %s", want, got)
+	}
+}
+
+func TestInstallationIDFailsOnMissingReplicaSet(t *testing.T) {
+	t.Parallel()
+
+	// Pod1 is configured to have owner reference ReplicaSet.
+	c := newTestCollectorForClusterWithNodes(t, kubeNS, node1, pod1)
+	_, err := c.InstallationID(context.Background())
+	if err == nil {
+		t.Fatal("want error on missing replicaset got nil")
+	}
+}
+
+func TestInstallationIDFailsOnMissingDaemonSet(t *testing.T) {
+	t.Parallel()
+
+	// Pod2 is configured to have owner reference DaemonSet.
+	c := newTestCollectorForClusterWithNodes(t, kubeNS, node1, pod2)
+	_, err := c.InstallationID(context.Background())
+	if err != nil {
+		t.Fatal("want error on missing daemonset got nil")
+	}
+}
+
 // newTestCollectorForClusterWithNodes returns a telemetry collector configured
 // to simulate collecting data on a cluser with provided nodes.
 func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) *telemetry.Collector {
@@ -401,6 +453,13 @@ func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) 
 	}
 	return c
 }
+
+// Test InstallationIDs are generated from test data structs:
+// ClusterID, Pod and ReplicaSet/DaemonSet
+var (
+	installationIDReplicaSet = "7f47da32dfbfa7757699fee3045c4ada"
+	installationIDDaemonSet  = "53ca14b84bd01e81aacca91447123f6b"
+)
 
 // Pod and ReplicaSet for testing NIC replica sets.
 var (
@@ -456,6 +515,12 @@ var (
 			Labels: map[string]string{
 				"app":                    "nginx-ingress",
 				"app.kubernetes.io/name": "nginx-ingress",
+			},
+			OwnerReferences: []metaV1.OwnerReference{
+				{
+					Kind: "Deployment",
+					Name: "nginx-ingress",
+				},
 			},
 		},
 

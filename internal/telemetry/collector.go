@@ -102,6 +102,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			ClusterID:           report.ClusterID,
 			ClusterVersion:      report.ClusterVersion,
 			ClusterPlatform:     report.ClusterPlatform,
+			InstallationID:      report.InstallationID,
 			ClusterNodeCount:    int64(report.ClusterNodeCount),
 		},
 		NICResourceCounts{
@@ -130,6 +131,7 @@ type Report struct {
 	ClusterVersion      string
 	ClusterPlatform     string
 	ClusterNodeCount    int
+	InstallationID      string
 	NICReplicaCount     int
 	VirtualServers      int
 	VirtualServerRoutes int
@@ -172,6 +174,11 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: Replicas: %v", err)
 	}
 
+	installationID, err := c.InstallationID(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
+	}
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -180,6 +187,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		ClusterVersion:      version,
 		ClusterPlatform:     platform,
 		ClusterNodeCount:    nodes,
+		InstallationID:      installationID,
 		NICReplicaCount:     replicas,
 		VirtualServers:      vsCount,
 		VirtualServerRoutes: vsrCount,
