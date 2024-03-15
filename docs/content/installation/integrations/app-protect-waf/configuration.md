@@ -240,6 +240,10 @@ spec:
   waf:
     enable: true
     apBundle: "<policy_bundle_name>.tgz"
+    securityLogs:
+    - enable: true
+      apLogBundle: "<log_bundle_name>.tgz"
+      logDest: "syslog:server=syslog-svc.default:514"
 ```
 
 ## OpenAPI Specification in NGINX Ingress Controller
