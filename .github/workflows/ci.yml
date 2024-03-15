@@ -260,7 +260,7 @@ jobs:
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
@@ -278,7 +278,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -296,7 +296,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e # v5.2.0
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           file: build/Dockerfile
           context: "."
@@ -316,7 +316,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
 
       - name: Build Docker Image ${{ matrix.image }}
-        uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e # v5.2.0
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           file: build/Dockerfile
           context: "."
@@ -399,7 +399,7 @@ jobs:
           fi
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -411,7 +411,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -427,7 +427,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e # v5.2.0
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           file: tests/Dockerfile
           context: "."
@@ -469,7 +469,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -487,7 +487,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
 
       - name: Setup QEMU
@@ -497,7 +497,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e # v5.2.0
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           file: build/Dockerfile
           context: "."
@@ -691,14 +691,14 @@ jobs:
           path: kic
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: DockerHub Login
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}

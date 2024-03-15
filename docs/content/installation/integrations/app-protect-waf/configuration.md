@@ -22,7 +22,7 @@ NGINX App Protect WAF can be enabled and configured for custom resources (Virtua
 - For Ingress resources, apply the [`app-protect` annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) to each desired resource.
 
 
-## NGINX App Protect WAF Policies
+## NGINX App Protect WAF Policies {#waf-policies}
 
 NGINX App Protect WAF Policies can be created for VirtualServer, VirtualServerRoute, or Ingress resources by creating an `APPolicy` [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/). There are some caveats:
 
@@ -99,7 +99,7 @@ spec:
 
 Notice that the fields match in name and nesting: NGINX Ingress Controller will transform the YAML into a valid JSON WAF policy config.
 
-## NGINX App Protect WAF Logs
+## NGINX App Protect WAF Logs {#waf-logs}
 
 Configuring
 
@@ -206,15 +206,15 @@ spec:
   tag: Fruits
 ```
 
-## App Protect WAF Bundles
+## NGINX App Protect WAF Bundles {#waf-bundles}
 
 You can define App Protect WAF bundles for VirtualServer custom resources by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
 
 Before applying a policy, a WAF policy bundle must be created, then copied to a volume mounted to `/etc/nginx/waf/bundles`.
 
-{{< note >}} NGINX Ingress Controller does not currently support `securityLogs` for policy bundles. {{< /note >}}
+{{< note >}} NGINX Ingress Controller supports `securityLogs` for policy bundles when using `apLogBundle` instead of `apLogConf`. Log bundles must also be copied to a volume mounted to `/etc/nginx/waf/bundles`. {{< /note >}}
 
-This example show how a policy is configured by referencing a generated WAF Policy Bundle:
+This example shows how a policy is configured by referencing a generated WAF Policy Bundle:
 
 
 ```yaml
@@ -226,6 +226,24 @@ spec:
   waf:
     enable: true
     apBundle: "<policy_bundle_name>.tgz"
+```
+
+This example shows the same policy as above but with a log bundle used for :
+
+
+```yaml
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  name: <policy_name>
+spec:
+  waf:
+    enable: true
+    apBundle: "<policy_bundle_name>.tgz"
+    securityLogs:
+    - enable: true
+      apLogBundle: "<log_bundle_name>.tgz"
+      logDest: "syslog:server=syslog-svc.default:514"
 ```
 
 ## OpenAPI Specification in NGINX Ingress Controller

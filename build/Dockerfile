@@ -260,6 +260,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	fi \
 	## the code below is duplicated from the ubi-plus image because NAP WAF doesn't support UBI minimal versions
 	&& dnf --nodocs install -y shadow-utils ca-certificates \
+	&& dnf update -y \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& rpm --import /tmp/nginx_signing.key \
