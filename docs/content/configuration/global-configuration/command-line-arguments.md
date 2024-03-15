@@ -538,9 +538,11 @@ The default value is `true`.
 
 ### -weight-changes-without-reload
 
-Enables the ability to change the weight of split clients with two splits without reloading NGINX.
+Enables the ability to change the weight distribution of two-way split clients reloading NGINX.
 
 Requires [-nginx-plus](#cmdoption-nginx-plus).
+
+Using this feature may require increasing `map_hash_bucket_size`, `map_hash_max_size`, `variable_hash_bucket_size`, and `variable_hash_max_size` in the ConfigMap based on the number of two-way splits.
 
 The default value is `false`.
 

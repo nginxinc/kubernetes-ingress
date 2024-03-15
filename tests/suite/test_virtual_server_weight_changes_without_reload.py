@@ -20,7 +20,6 @@ from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
                     "-weight-changes-without-reload=true",
-                    "-v=3",  # Temporary V3 logging
                 ],
             },
             {"example": "virtual-server-weight-changes-without-reload", "app_type": "split"},
@@ -33,7 +32,6 @@ from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
                     "-weight-changes-without-reload=false",
-                    "-v=3",  # Temporary V3 logging
                 ],
             },
             {
