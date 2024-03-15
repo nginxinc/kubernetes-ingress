@@ -22,7 +22,7 @@ NGINX App Protect WAF can be enabled and configured for custom resources (Virtua
 - For Ingress resources, apply the [`app-protect` annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) to each desired resource.
 
 
-## NGINX App Protect WAF Policies
+## NGINX App Protect WAF Policies {#waf-policies}
 
 NGINX App Protect WAF Policies can be created for VirtualServer, VirtualServerRoute, or Ingress resources by creating an `APPolicy` [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/). There are some caveats:
 
@@ -99,7 +99,7 @@ spec:
 
 Notice that the fields match in name and nesting: NGINX Ingress Controller will transform the YAML into a valid JSON WAF policy config.
 
-## NGINX App Protect WAF Logs
+## NGINX App Protect WAF Logs {#waf-logs}
 
 Configuring
 
@@ -206,7 +206,7 @@ spec:
   tag: Fruits
 ```
 
-## NGINX App Protect WAF Bundles
+## NGINX App Protect WAF Bundles {#waf-bundles}
 
 You can define App Protect WAF bundles for VirtualServer custom resources by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
 
