@@ -70,6 +70,7 @@ type ConfigParams struct {
 	ProxyHideHeaders                       []string
 	ProxyMaxTempFileSize                   string
 	ProxyPassHeaders                       []string
+	ProxySetHeaders                        []string
 	ProxyProtocol                          bool
 	ProxyReadTimeout                       string
 	ProxySendTimeout                       string
