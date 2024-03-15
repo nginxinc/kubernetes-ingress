@@ -7,7 +7,7 @@ toc: true
 
 ## Overview
 
-The NGINX Ingress Controller collects product telemetry data to allow its developers to better understand the way our users deploy and configure our product.
+NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users.
 The goal is to use this data to triage development work and prioritize features and functionality that will provide the most value to our users.
 
 ## About Product Telemetry
