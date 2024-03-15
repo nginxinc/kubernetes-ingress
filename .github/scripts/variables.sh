@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ "$1" = "" ]; then
-    echo "ERROR: paramater needed"
+    echo "ERROR: parameter needed"
     exit 2
 fi
 
