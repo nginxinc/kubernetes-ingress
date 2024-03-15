@@ -10809,7 +10809,7 @@ func TestGenerateSplitsWeightChangesWithoutReload(t *testing.T) {
 		WeightChangesWithoutReload: true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, false, staticConfigParams, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, true, false, staticConfigParams, false, &fakeBV)
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
 			resultSplitClients, resultLocations, _, resultMaps, resultKeyValZones, resultKeyVals, resultTwoWaySplitClients := generateSplits(
