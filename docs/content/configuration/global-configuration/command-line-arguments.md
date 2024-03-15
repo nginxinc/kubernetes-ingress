@@ -538,7 +538,7 @@ The default value is `true`.
 
 ### -weight-changes-without-reload
 
-Enables the ability to change the weight distribution of two-way split clients reloading NGINX.
+Enables the ability to change the weight distribution of two-way split clients without reloading NGINX.
 
 Requires [-nginx-plus](#cmdoption-nginx-plus).
 
