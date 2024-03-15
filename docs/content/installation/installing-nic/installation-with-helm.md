@@ -22,11 +22,11 @@ h2 {
 - A [Kubernetes Version Supported by the Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
 - Helm 3.0+.
 - If you’d like to use NGINX Plus:
-    - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames` parameter.
-    - Alternatively, pull an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
-    - Alternatively, you can build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
-    - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
-- If you’d like to use App Protect DoS, please install App Protect DoS Arbitrator [helm chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart). Make sure to install in the same namespace as the NGINX Ingress Controller. Note that if you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because it is not possible to install more than one Arbitrator in a single namespace.
+  - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames` parameter.
+  - Alternatively, pull an NGINX Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
+  - Alternatively, you can NGINX build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
+  - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
+- To use App Protect DoS, install the App Protect DoS Arbitrator [Helm Chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart) in the same namespace as the NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
 
 ## CRDs
 
