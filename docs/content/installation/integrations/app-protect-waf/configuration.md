@@ -212,7 +212,7 @@ You can define App Protect WAF bundles for VirtualServer custom resources by cre
 
 Before applying a policy, a WAF policy bundle must be created, then copied to a volume mounted to `/etc/nginx/waf/bundles`.
 
-{{< note >}} NGINX Ingress Controller does not currently support `securityLogs` for policy bundles. {{< /note >}}
+{{< note >}} NGINX Ingress Controller currently supports `securityLogs` for policy bundles when using `apLogBundle` instead of `apLogConf`. {{< /note >}}
 
 This example show how a policy is configured by referencing a generated WAF Policy Bundle:
 
