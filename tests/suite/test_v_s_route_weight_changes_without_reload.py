@@ -4,11 +4,13 @@ import yaml
 from settings import TEST_DATA
 from suite.fixtures.custom_resource_fixtures import VirtualServerRoute
 from suite.utils.resources_utils import (
+    create_configmap_from_yaml,
     create_example_app,
     create_namespace_with_name_from_yaml,
     delete_namespace,
     ensure_response_from_backend,
     get_reload_count,
+    replace_configmap_from_yaml,
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
@@ -93,6 +95,9 @@ def vsr_weight_changes_without_reload_setup(
     return VSRWeightChangesWithoutReloadSetup(ns_1, vs_host, vs_name, route, backends_url, metrics_url)
 
 
+@pytest.mark.vsr
+@pytest.mark.smok
+@pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller,vsr_weight_changes_without_reload_setup, expect_reload",
     [
@@ -182,3 +187,107 @@ class TestVSRWeightChangesWithReloadCondition:
             assert (
                 count_before == count_after
             ), "The reload count should not change when weights are swapped and weight-changes-without-reload=true."
+
+
+@pytest.mark.vsr
+@pytest.mark.smok
+@pytest.mark.skip_for_nginx_oss
+@pytest.mark.parametrize(
+    "crd_ingress_controller,vsr_weight_changes_without_reload_setup",
+    [
+        (
+            {
+                "type": "complete",
+                "extra_args": [
+                    "-enable-custom-resources",
+                    "-enable-prometheus-metrics",
+                    "-weight-changes-without-reload=true",
+                    "-v=3",
+                ],
+            },
+            {"example": "virtual-server-route-weight-changes-without-reload"},
+        ),
+    ],
+    indirect=["crd_ingress_controller", "vsr_weight_changes_without_reload_setup"],
+)
+class TestVSRWeightChangesWithReloadManySplits:
+
+    def test_vsr_weight_changes_reload_many_splits(
+        self, kube_apis, crd_ingress_controller, vsr_weight_changes_without_reload_setup
+    ) -> None:
+        """
+        This test checks if 32 splits can be created when the following values are specified in the configmap
+        map-hash-bucket-size: "512"
+        map-hash-max-size: "8192"
+        variables-hash-bucket-size: "128"
+        variables-hash-max-size: "4096"
+
+        and also that weight-changes-without-reload is set to true
+        """
+        initial_weights_config = f"{TEST_DATA}/virtual-server-route-weight-changes-without-reload/virtual-server-route-many-splits-initial.yaml"
+        swap_weights_config = (
+            f"{TEST_DATA}/virtual-server-route-weight-changes-without-reload/virtual-server-route-many-splits-swap.yaml"
+        )
+
+        test_cm_src = f"{TEST_DATA}/virtual-server-route-weight-changes-without-reload/configmap/nginx-config.yaml"
+        config_map_name = "nginx-config"
+        config_map_namespace = "nginx-ingress"
+
+        print("Step 1: Create configmap.")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            config_map_name,
+            config_map_namespace,
+            test_cm_src,
+        )
+        print("Step 2: Apply initial config.")
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            vsr_weight_changes_without_reload_setup.route.name,
+            initial_weights_config,
+            vsr_weight_changes_without_reload_setup.route.namespace,
+        )
+
+        print("Step 3: Get a response from the backend.")
+        backends32_url = f"{vsr_weight_changes_without_reload_setup.backends_url}32"
+        wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_without_reload_setup.vs_host)
+        resp = requests.get(
+            backends32_url,
+            headers={"host": vsr_weight_changes_without_reload_setup.vs_host},
+        )
+        assert (
+            "backend1" in resp.text
+        )  # The route /backends/backends32 splits traffic between backend1 and backend2. All traffic goes to backend1 initially
+
+        print("Step 4: Record the initial number of reloads.")
+        count_before = get_reload_count(vsr_weight_changes_without_reload_setup.metrics_url)
+        print(f"Reload count before: {count_before}")
+
+        print("Step 5: Apply a configuration that swaps the weights (0 100) to (100 0).")
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            vsr_weight_changes_without_reload_setup.route.name,
+            swap_weights_config,
+            vsr_weight_changes_without_reload_setup.route.namespace,
+        )
+
+        wait_before_test(5)
+
+        print("Step 6: Verify hitting the other backend.")
+        ensure_response_from_backend(backends32_url, vsr_weight_changes_without_reload_setup.vs_host)
+        wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_without_reload_setup.vs_host)
+        resp = requests.get(
+            backends32_url,
+            headers={"host": vsr_weight_changes_without_reload_setup.vs_host},
+        )
+        assert (
+            "backend2" in resp.text
+        )  # After applying the new config /backends/backends/32 should always point to backend2
+
+        print("Step 7: Verify reload behavior")
+        count_after = get_reload_count(vsr_weight_changes_without_reload_setup.metrics_url)
+        print(f"Reload count after: {count_after}")
+
+        assert (
+            count_before == count_after
+        ), "The reload count should not change when weights are swapped and weight-changes-without-reload=true."
