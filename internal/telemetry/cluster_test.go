@@ -428,9 +428,9 @@ func TestInstallationIDFailsOnMissingDaemonSet(t *testing.T) {
 	t.Parallel()
 
 	// Pod2 is configured to have owner reference DaemonSet.
-	c := newTestCollectorForClusterWithNodes(t, kubeNS, node1, pod2)
+	c := newTestCollectorForClusterWithNodes(t, kubeNS, node1, pod1)
 	_, err := c.InstallationID(context.Background())
-	if err != nil {
+	if err == nil {
 		t.Fatal("want error on missing daemonset got nil")
 	}
 }
