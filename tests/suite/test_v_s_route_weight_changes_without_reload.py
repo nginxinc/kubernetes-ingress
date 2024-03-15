@@ -159,8 +159,8 @@ class TestVSRWeightChangesWithReloadCondition:
             swap_weights_config,
             vsr_weight_changes_without_reload_setup.route.namespace,
         )
-        if expect_reload:
-            wait_before_test(5)
+
+        wait_before_test(5)
 
         print("Step 4: Verify hitting the other backend.")
         ensure_response_from_backend(
