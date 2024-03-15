@@ -4337,7 +4337,9 @@ func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *
 	var weightUpdates []configs.WeightUpdate
 	vs, exists := lbc.getVirtualServerByVirtualServerRoute(vsrNew)
 	if !exists {
-		glog.V(3).Infof("VirtualServerRoute %v does not have a VirtualServer", vsrNew.Name)
+		// If the VirtualServerRoute does not have a VirtualServer (can happen if an invalid state is applied),
+		// we should add it to the sync queue to be processed normally.
+		lbc.AddSyncQueue(vsrNew)
 		return
 	}
 	splitClientsIndex := lbc.getStartingSplitClientsIndex(vsrNew, vs)
@@ -4443,6 +4445,8 @@ func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.Vir
 }
 
 func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualServer) bool {
+	lbc.configuration.lock.Lock()
+	defer lbc.configuration.lock.Unlock()
 	key := getResourceKey(&vsNew.ObjectMeta)
 	validationErr := lbc.configuration.virtualServerValidator.ValidateVirtualServer(vsNew)
 
@@ -4467,6 +4471,8 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 }
 
 func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.VirtualServerRoute) bool {
+	lbc.configuration.lock.Lock()
+	defer lbc.configuration.lock.Unlock()
 	key := getResourceKey(&vsrNew.ObjectMeta)
 	validationErr := lbc.configuration.virtualServerValidator.ValidateVirtualServerRoute(vsrNew)
 

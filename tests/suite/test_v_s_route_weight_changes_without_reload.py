@@ -94,6 +94,7 @@ def vsr_weight_changes_without_reload_setup(
 
 
 @pytest.mark.vsr
+@pytest.mark.weight_changes_without_reload
 @pytest.mark.smok
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(

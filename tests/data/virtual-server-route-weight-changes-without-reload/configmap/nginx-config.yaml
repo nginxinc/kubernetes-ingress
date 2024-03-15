@@ -6,5 +6,5 @@ metadata:
 data:
   map-hash-bucket-size: "512"
   map-hash-max-size: "8192"
-  variables-hash-bucket-size: "128"
-  variables-hash-max-size: "4096"
+  variables-hash-bucket-size: "256"
+  variables-hash-max-size: "16384"

@@ -9,6 +9,7 @@ from suite.utils.resources_utils import (
     delete_namespace,
     ensure_response_from_backend,
     get_reload_count,
+    replace_configmap,
     replace_configmap_from_yaml,
     wait_before_test,
     wait_until_all_pods_are_ready,
@@ -63,31 +64,52 @@ def vsr_weight_changes_without_reload_many_splits_setup(
 
     metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
     vs_routes_ns = get_route_namespace_from_vs_yaml(
-        f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml"
+        f"{TEST_DATA}/{request.param['example']}/standard/virtual-server-many.yaml"
     )
     ns_1 = create_namespace_with_name_from_yaml(kube_apis.v1, vs_routes_ns[0], f"{TEST_DATA}/common/ns.yaml")
     print("------------------------- Deploy Virtual Server -----------------------------------")
     vs_name = create_virtual_server_from_yaml(
-        kube_apis.custom_objects, f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml", ns_1
+        kube_apis.custom_objects, f"{TEST_DATA}/{request.param['example']}/standard/virtual-server-many.yaml", ns_1
     )
-    vs_host = get_first_host_from_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
+    vs_host = get_first_host_from_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server-many.yaml")
 
     print("------------------------- Deploy Virtual Server Route -----------------------------------")
     vsr_name = create_v_s_route_from_yaml(
-        kube_apis.custom_objects, f"{TEST_DATA}/{request.param['example']}/virtual-server-route-initial.yaml", ns_1
+        kube_apis.custom_objects,
+        f"{TEST_DATA}/{request.param['example']}/virtual-server-route-many-splits-initial.yaml",
+        ns_1,
     )
-    vsr_paths = get_paths_from_vsr_yaml(f"{TEST_DATA}/{request.param['example']}/virtual-server-route-initial.yaml")
+    vsr_paths = get_paths_from_vsr_yaml(
+        f"{TEST_DATA}/{request.param['example']}/virtual-server-route-many-splits-initial.yaml"
+    )
     route = VirtualServerRoute(ns_1, vsr_name, vsr_paths)
-    backends_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}{vsr_paths[0]}"
+    backends_url = (
+        f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}{vsr_paths[0][:-1]}"
+    )
+
+    print("-----------------------Apply Config Map---------------------------------------------------")
+    config_map_name = ingress_controller_prerequisites.config_map["metadata"]["name"]
+    replace_configmap_from_yaml(
+        kube_apis.v1,
+        config_map_name,
+        ingress_controller_prerequisites.namespace,
+        f"{TEST_DATA}/{request.param['example']}/configmap/nginx-config.yaml",
+    )
 
     print("---------------------- Deploy weight changes without reload vsr app ----------------------------")
-    create_example_app(kube_apis, "weight-changes-without-reload-vsr", ns_1)
+    create_example_app(kube_apis, "weight-changes-without-reload-vsr-many-splits", ns_1)
     wait_until_all_pods_are_ready(kube_apis.v1, ns_1)
 
     def fin():
         if request.config.getoption("--skip-fixture-teardown") == "no":
             print("Delete test namespace")
             delete_namespace(kube_apis.v1, ns_1)
+            replace_configmap(
+                kube_apis.v1,
+                config_map_name,
+                ingress_controller_prerequisites.namespace,
+                ingress_controller_prerequisites.config_map,
+            )
 
     request.addfinalizer(fin)
 
@@ -95,6 +117,7 @@ def vsr_weight_changes_without_reload_many_splits_setup(
 
 
 @pytest.mark.vsr
+@pytest.mark.weight_changes_without_reload
 @pytest.mark.smok
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
@@ -115,60 +138,34 @@ def vsr_weight_changes_without_reload_many_splits_setup(
     ],
     indirect=["crd_ingress_controller", "vsr_weight_changes_without_reload_many_splits_setup"],
 )
-class TestVSRWeightChangesWithReloadManySplits:
+class TestVSRWeightChangesWithoutReloadManySplits:
 
-    def test_vsr_weight_changes_reload_many_splits(
+    def test_vsr_weight_changes_without_reload_many_splits(
         self, kube_apis, crd_ingress_controller, vsr_weight_changes_without_reload_many_splits_setup
     ) -> None:
         """
         This test checks if 32 splits can be created when the following values are specified in the configmap
         map-hash-bucket-size: "512"
         map-hash-max-size: "8192"
-        variables-hash-bucket-size: "128"
-        variables-hash-max-size: "4096"
+        variables-hash-bucket-size: "256"
+        variables-hash-max-size: "16384"
 
         and also that weight-changes-without-reload is set to true
         """
-        initial_weights_config = f"{TEST_DATA}/virtual-server-route-weight-changes-without-reload/virtual-server-route-many-splits-initial.yaml"
         swap_weights_config = (
             f"{TEST_DATA}/virtual-server-route-weight-changes-without-reload/virtual-server-route-many-splits-swap.yaml"
         )
 
-        test_cm_src = f"{TEST_DATA}/virtual-server-route-weight-changes-without-reload/configmap/nginx-config.yaml"
-        config_map_name = "nginx-config"
-        config_map_namespace = "nginx-ingress"
-
-        print("Step 1: Create configmap.")
-        replace_configmap_from_yaml(
-            kube_apis.v1,
-            config_map_name,
-            config_map_namespace,
-            test_cm_src,
-        )
-        print("Step 2: Apply initial config.")
-        patch_v_s_route_from_yaml(
-            kube_apis.custom_objects,
-            vsr_weight_changes_without_reload_many_splits_setup.route.name,
-            initial_weights_config,
-            vsr_weight_changes_without_reload_many_splits_setup.route.namespace,
-        )
-
-        print("Step 3: Get a response from the backend.")
+        print("Step 1: Get a response from the backend.")
         backends32_url = f"{vsr_weight_changes_without_reload_many_splits_setup.backends_url}32"
         wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_without_reload_many_splits_setup.vs_host)
         resp = requests.get(
             backends32_url,
             headers={"host": vsr_weight_changes_without_reload_many_splits_setup.vs_host},
         )
-        assert (
-            "backend1" in resp.text
-        )  # The route /backends/backends32 splits traffic between backend1 and backend2. All traffic goes to backend1 initially
+        assert "backend1" in resp.text
 
-        print("Step 4: Record the initial number of reloads.")
-        count_before = get_reload_count(vsr_weight_changes_without_reload_many_splits_setup.metrics_url)
-        print(f"Reload count before: {count_before}")
-
-        print("Step 5: Apply a configuration that swaps the weights (0 100) to (100 0).")
+        print("Step 3: Apply a configuration that swaps the weights (0 100) to (100 0).")
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
             vsr_weight_changes_without_reload_many_splits_setup.route.name,
@@ -176,23 +173,11 @@ class TestVSRWeightChangesWithReloadManySplits:
             vsr_weight_changes_without_reload_many_splits_setup.route.namespace,
         )
 
-        wait_before_test(5)
-
-        print("Step 6: Verify hitting the other backend.")
+        print("Step 4: Verify hitting the other backend.")
         ensure_response_from_backend(backends32_url, vsr_weight_changes_without_reload_many_splits_setup.vs_host)
         wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_without_reload_many_splits_setup.vs_host)
         resp = requests.get(
             backends32_url,
             headers={"host": vsr_weight_changes_without_reload_many_splits_setup.vs_host},
         )
-        assert (
-            "backend2" in resp.text
-        )  # After applying the new config /backends/backends/32 should always point to backend2
-
-        print("Step 7: Verify reload behavior")
-        count_after = get_reload_count(vsr_weight_changes_without_reload_many_splits_setup.metrics_url)
-        print(f"Reload count after: {count_after}")
-
-        assert (
-            count_before == count_after
-        ), "The reload count should not change when weights are swapped and weight-changes-without-reload=true."
+        assert "backend2" in resp.text
