@@ -19,7 +19,7 @@ If you would prefer to avoid sending any telemetry data, you can [opt-out](#opt-
 
 ## Data Collected
 
-These are the data points collected and reported by the NGINX Ingress Controller:
+These are the data points collected and reported by NGINX Ingress Controller:
 - **Project Name** The name of the software, which will be labelled `NIC`.
 - **Project Version** The NGINX Ingress Controller version.
 - **Project Version** The NGINX Ingress Controller version.
