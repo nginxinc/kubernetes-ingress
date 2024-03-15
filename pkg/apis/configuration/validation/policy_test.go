@@ -1754,3 +1754,101 @@ func TestValidateBasic_FailsOnMissingSecret(t *testing.T) {
 		t.Error("want error on invalid input")
 	}
 }
+
+func TestValidateWAF_FailsOnPresentBothApLogBundleAndApLogConf(t *testing.T) {
+	t.Parallel()
+
+	waf := &v1.WAF{
+		Enable:   true,
+		ApBundle: "bundle.tgz",
+		SecurityLogs: []*v1.SecurityLog{
+			{
+				ApLogConf:   "confName",
+				ApLogBundle: "confName.tgz",
+			},
+		},
+	}
+
+	allErrs := validateWAF(waf, field.NewPath("waf"))
+	if len(allErrs) == 0 {
+		t.Errorf("want error, got %v", allErrs)
+	}
+}
+
+func TestValidateWAF_FailsOnInvalidApLogBundle(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		waf   *v1.WAF
+		valid bool
+	}{
+		{
+			waf: &v1.WAF{
+				Enable:   true,
+				ApBundle: "bundle.tgz",
+				SecurityLogs: []*v1.SecurityLog{
+					{
+						ApLogBundle: ".",
+						LogDest:     "stderr",
+					},
+				},
+			},
+		},
+		{
+			waf: &v1.WAF{
+				Enable:   true,
+				ApBundle: "bundle.tgz",
+				SecurityLogs: []*v1.SecurityLog{
+					{
+						ApLogBundle: "../bundle.tgz",
+						LogDest:     "stderr",
+					},
+				},
+			},
+		},
+		{
+			waf: &v1.WAF{
+				Enable:   true,
+				ApBundle: "bundle.tgz",
+				SecurityLogs: []*v1.SecurityLog{
+					{
+						ApLogBundle: "/bundle.tgz",
+						LogDest:     "stderr",
+					},
+				},
+			},
+		},
+		{
+			waf: &v1.WAF{
+				Enable:   true,
+				ApBundle: "bundle.tgz",
+				SecurityLog: &v1.SecurityLog{
+					ApLogBundle: "bundle.tgz",
+					LogDest:     "stderr",
+				},
+			},
+			valid: true,
+		},
+		{
+			waf: &v1.WAF{
+				Enable:   true,
+				ApBundle: "bundle.tgz",
+				SecurityLogs: []*v1.SecurityLog{
+					{
+						ApLogBundle: "bundle.tgz",
+						LogDest:     "stderr",
+					},
+				},
+			},
+			valid: true,
+		},
+	}
+
+	for _, tc := range tests {
+		allErrs := validateWAF(tc.waf, field.NewPath("waf"))
+		if len(allErrs) == 0 && !tc.valid {
+			t.Errorf("want error, got %v", allErrs)
+		} else if len(allErrs) > 0 && tc.valid {
+			t.Errorf("got error %v", allErrs)
+		}
+	}
+}
