@@ -457,8 +457,8 @@ func newTestCollectorForClusterWithNodes(t *testing.T, nodes ...runtime.Object) 
 // Test InstallationIDs are generated from test data structs:
 // ClusterID, Pod and ReplicaSet/DaemonSet
 var (
-	installationIDReplicaSet = "7f47da32dfbfa7757699fee3045c4ada"
-	installationIDDaemonSet  = "53ca14b84bd01e81aacca91447123f6b"
+	installationIDReplicaSet = "239766ff-5a78-4a1e-8736-7faad1f2e122"
+	installationIDDaemonSet  = "319766ff-5c78-4a9a-8736-7faad1f2e234"
 )
 
 // Pod and ReplicaSet for testing NIC replica sets.
@@ -475,6 +475,7 @@ var (
 				{
 					Kind: "ReplicaSet",
 					Name: "nginx-ingress",
+					UID:  types.UID(installationIDReplicaSet),
 				},
 			},
 			Labels: map[string]string{
@@ -520,6 +521,7 @@ var (
 				{
 					Kind: "Deployment",
 					Name: "nginx-ingress",
+					UID:  types.UID(installationIDReplicaSet),
 				},
 			},
 		},
@@ -546,6 +548,7 @@ var (
 				{
 					Kind: "DaemonSet",
 					Name: "nginx-ingress",
+					UID:  types.UID(installationIDDaemonSet),
 				},
 			},
 			Labels: map[string]string{
@@ -583,6 +586,7 @@ var (
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      "nginx-ingress",
 			Namespace: "nginx-ingress",
+			UID:       types.UID(installationIDDaemonSet),
 			Labels:    map[string]string{"app": "nginx-ingress"},
 		},
 		Spec: appsV1.DaemonSetSpec{},

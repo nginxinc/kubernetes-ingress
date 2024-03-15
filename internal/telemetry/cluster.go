@@ -2,8 +2,6 @@ package telemetry
 
 import (
 	"context"
-	"crypto/md5" //nolint:gosec
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -83,19 +81,12 @@ func (c *Collector) Platform(ctx context.Context) (string, error) {
 }
 
 // InstallationID returns generated NIC InstallationID.
-//
-//nolint:gosec
 func (c *Collector) InstallationID(ctx context.Context) (_ string, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("error generating InstallationID: %w", err)
 		}
 	}()
-
-	cID, err := c.ClusterID(ctx)
-	if err != nil {
-		return "", err
-	}
 
 	pod, err := c.Config.K8sClientReader.CoreV1().Pods(c.Config.PodNSName.Namespace).Get(ctx, c.Config.PodNSName.Name, metaV1.GetOptions{})
 	if err != nil {
@@ -105,8 +96,6 @@ func (c *Collector) InstallationID(ctx context.Context) (_ string, err error) {
 	if len(podOwner) != 1 {
 		return "", fmt.Errorf("expected pod owner reference to be 1, got %d", len(podOwner))
 	}
-
-	var installationID string
 
 	switch podOwner[0].Kind {
 	case "ReplicaSet":
@@ -118,15 +107,12 @@ func (c *Collector) InstallationID(ctx context.Context) (_ string, err error) {
 		if len(rsOwner) != 1 {
 			return "", fmt.Errorf("expected replicaset owner reference to be 1, got %d", len(rsOwner))
 		}
-		installationID = fmt.Sprintf("%s/%s/%s/deployment", cID, c.Config.PodNSName.Namespace, rsOwner[0].Name)
+		return string(rsOwner[0].UID), nil
 	case "DaemonSet":
-		installationID = fmt.Sprintf("%s/%s/%s/daemonset", cID, c.Config.PodNSName.Namespace, podOwner[0].Name)
+		return string(podOwner[0].UID), nil
 	default:
 		return "", fmt.Errorf("expected pod owner reference to be ReplicaSet or DeamonSet, got %s", podOwner[0].Kind)
 	}
-
-	hash := md5.Sum([]byte(installationID))
-	return hex.EncodeToString(hash[:]), nil
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID
