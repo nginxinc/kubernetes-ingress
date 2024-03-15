@@ -1417,13 +1417,21 @@
             true
           ]
         },
-        "enableTelemetryReporting": {
-          "type": "boolean",
-          "default": true,
-          "title": "Enable telemetry reporting",
-          "examples": [
-            true
-          ]
+        "telemetryReporting": {
+          "type": "object",
+          "default": {},
+          "title": "Configure telemetry reporting options",
+          "required": [],
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": true,
+              "title": "Enable telemetry reporting",
+              "examples": [
+                true
+              ]
+            }
+          }
         }
       },
       "examples": [

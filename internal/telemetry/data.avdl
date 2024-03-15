@@ -33,13 +33,13 @@ It is the UID of the `kube-system` Namespace. */
 		/** ClusterNodeCount is the number of nodes in the cluster. */
 		long? ClusterNodeCount = null;
 
-		/** VirtualServer is the number of VirtualServer managed by the Ingress Controller. */
+		/** VirtualServers is the number of VirtualServer resources managed by the Ingress Controller. */
 		long? VirtualServers = null;
 
-		/** VirtualServerRoutes is the number of VirtualServerRoutes managed by the Ingress Controller. */
+		/** VirtualServerRoutes is the number of VirtualServerRoute resources managed by the Ingress Controller. */
 		long? VirtualServerRoutes = null;
 
-		/** TransportServers is the number of TransportServers managed by the Ingress Controller. */
+		/** TransportServers is the number of TransportServer resources  by the Ingress Controller. */
 		long? TransportServers = null;
 
 	}

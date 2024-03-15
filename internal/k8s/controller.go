@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
-
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
 
@@ -213,7 +212,6 @@ type NewLoadBalancerControllerInput struct {
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
-	TelemetryReportingPeriod     string
 	NICVersion                   string
 }
 
@@ -349,12 +347,18 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
-		lbc.telemetryChan = make(chan struct{})
+		exporterCfg := telemetry.ExporterCfg{
+			Endpoint: "oss.edge.df.f5.com:443",
+		}
 
+		exporter, err := telemetry.NewExporter(exporterCfg)
+		if err != nil {
+			glog.Fatalf("failed to initialize telemetry exporter: %v", err)
+		}
 		collectorConfig := telemetry.CollectorConfig{
 			K8sClientReader:       input.KubeClient,
 			CustomK8sClientReader: input.ConfClient,
-			Period:                5 * time.Second,
+			Period:                24 * time.Hour,
 			Configurator:          lbc.configurator,
 			Version:               input.NICVersion,
 			PodNSName: types.NamespacedName{
@@ -362,11 +366,15 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 				Name:      os.Getenv("POD_NAME"),
 			},
 		}
-		collector, err := telemetry.NewCollector(collectorConfig)
+		collector, err := telemetry.NewCollector(
+			collectorConfig,
+			telemetry.WithExporter(exporter),
+		)
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry collector: %v", err)
 		}
 		lbc.telemetryCollector = collector
+		lbc.telemetryChan = make(chan struct{})
 	}
 
 	return lbc

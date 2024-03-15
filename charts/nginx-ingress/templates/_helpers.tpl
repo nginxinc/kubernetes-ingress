@@ -277,7 +277,7 @@ Build the args for the service binary.
 - -ready-status-port={{ .Values.controller.readyStatus.port }}
 - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
 - -ssl-dynamic-reload={{ .Values.controller.enableSSLDynamicReload }}
-- -enable-telemetry-reporting={{ .Values.controller.enableTelemetryReporting}}
+- -enable-telemetry-reporting={{ .Values.controller.telemetryReporting.enable}}
 {{- if .Values.nginxAgent.enable }}
 - -agent=true
 - -agent-instance-group={{ default (include "nginx-ingress.controller.fullname" .) .Values.nginxAgent.instanceGroup }}

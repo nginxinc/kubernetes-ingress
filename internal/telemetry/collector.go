@@ -117,7 +117,7 @@ func (c *Collector) Collect(ctx context.Context) {
 	if err != nil {
 		glog.Errorf("Error exporting telemetry data: %v", err)
 	}
-	glog.V(3).Infof("Exported telemetry data: %+v", nicData)
+	glog.V(3).Infof("Telemetry data collected: %+v", nicData)
 }
 
 // Report holds collected NIC telemetry data. It is the package internal

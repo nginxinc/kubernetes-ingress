@@ -536,6 +536,14 @@ The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
 
+### -enable-telemetry-reporting
+
+Enable gathering and reporting of software telemetry.
+
+The default value is `true`.
+
+<a name="cmdoption-enable-telemetry-reporting"></a>
+
 ### -agent
 
 Enable NGINX Agent which can used with `-enable-app-protect` to send events to Security Monitoring.
