@@ -39,14 +39,18 @@ func createFileAndWrite(name string, b []byte) error {
 		return fmt.Errorf("failed to open %v: %w", name, err)
 	}
 
-	defer w.Close()
+	defer func() {
+		if tempErr := w.Close(); tempErr != nil {
+			err = tempErr
+		}
+	}()
 
 	_, err = w.Write(b)
 	if err != nil {
 		return fmt.Errorf("failed to write to %v: %w", name, err)
 	}
 
-	return nil
+	return err
 }
 
 func createFileAndWriteAtomically(filename string, tempPath string, mode os.FileMode, content []byte) {

@@ -1,9 +1,10 @@
 ---
-title: Building NGINX Ingress Controller
+title: "Building NGINX Ingress Controller"
 description: "Learn how to build an NGINX Ingress Controller image from source codes and upload it to a private Docker registry. You'll also find information on the Makefile targets and variables."
 weight: 200
 doctypes: ["installation"]
 toc: true
+docs: "DOCS-1453"
 ---
 
 {{<custom-styles>}}

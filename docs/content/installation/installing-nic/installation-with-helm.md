@@ -23,10 +23,10 @@ h2 {
 - Helm 3.0+.
 - If you’d like to use NGINX Plus:
   - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames` parameter.
-  - Alternatively, pull an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
-  - Alternatively, you can build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
+  - Alternatively, pull an NGINX Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
+  - Alternatively, you can NGINX build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
   - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
-- If you’d like to use App Protect DoS, please install App Protect DoS Arbitrator [helm chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart). Make sure to install in the same namespace as the NGINX Ingress Controller. Note that if you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because it is not possible to install more than one Arbitrator in a single namespace.
+- To use App Protect DoS, install the App Protect DoS Arbitrator [Helm Chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart) in the same namespace as the NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
 
 ## CRDs
 
@@ -204,7 +204,7 @@ The steps you should follow depend on the Helm release name:
     kubectl describe deployments -n <namespace>
     ```
 
-    Copy the key=value under `Selector`, such as:
+   Copy the key=value under `Selector`, such as:
 
     ```shell
     Selector: app=nginx-ingress-nginx-ingress
@@ -225,7 +225,7 @@ The steps you should follow depend on the Helm release name:
     --set controller.name=""
     --set fullnameOverride="nginx-ingress-nginx-ingress"
     ```
-    It could look as follows:
+   It could look as follows:
 
     ```shell
     helm upgrade nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="nginx-ingress-nginx-ingress" --set controller.name="" --set fullnameOverride="nginx-ingress-nginx-ingress" -f values.yaml
@@ -249,7 +249,7 @@ The steps you should follow depend on the Helm release name:
     kubectl describe deployment/daemonset -n <namespace>
     ```
 
-    Copy the key=value under ```Selector```, such as:
+   Copy the key=value under ```Selector```, such as:
 
     ```shell
     Selector: app=<helm_release_name>-nginx-ingress
@@ -272,7 +272,7 @@ The steps you should follow depend on the Helm release name:
     --set controller.name=""
     ```
 
-    It could look as follows:
+   It could look as follows:
 
     ```shell
     helm upgrade test-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.19.0 --set controller.kind=deployment/daemonset --set controller.nginxplus=false/true --set controller.image.pullPolicy=Always --set serviceNameOverride="test-release-nginx-ingress" --set controller.name="" -f values.yaml
@@ -433,6 +433,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.defaultHTTPSListenerPort**  | Sets the port for the HTTPS `default_server` listener. | 443 |
 | **controller.readOnlyRootFilesystem** | Configure root filesystem as read-only and add volumes for temporary data. Three major releases after 3.5.x this argument will be moved permanently to the `controller.securityContext` section.  | false |
 | **controller.enableSSLDynamicReload** | Enable lazy loading for SSL Certificates. | true |
+| **controller.telemetryReporting.enable** | Enable telemetry reporting. | true |
 | **rbac.create** | Configures RBAC. | true |
 | **prometheus.create** | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 | **prometheus.port** | Configures the port to scrape the metrics. | 9113 |
@@ -451,6 +452,21 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **serviceNameOverride** | Used to prevent cloud load balancers from being replaced due to service name change during helm upgrades. | "" |
 | **nginxServiceMesh.enable** | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false |
 | **nginxServiceMesh.enableEgress** | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress Controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false |
+|**nginxAgent.enable** | Enable NGINX Agent to integrate the Security Monitoring and App Protect WAF modules. Requires `controller.appprotect.enable`. | false |
+|**nginxAgent.instanceGroup** | Set a custom Instance Group name for the deployment, shown when connected to NGINX Instance Manager. `nginx-ingress.controller.fullname` will be used if not set. | "" |
+|**nginxAgent.logLevel** | Log level for NGINX Agent. | "error |
+|**nginxAgent.instanceManager.host** | FQDN or IP for connecting to NGINX Ingress Controller. Required when `nginxAgent.enable` is set to `true` | "" |
+|**nginxAgent.instanceManager.grpcPort** | Port for connecting to NGINX Ingress Controller. | 443 |
+|**nginxAgent.instanceManager.sni** | Server Name Indication for Instance Manager. See the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
+|**nginxAgent.instanceManager.tls.enable** | Enable TLS for Instance Manager connection. | true |
+|**nginxAgent.instanceManager.tls.skipVerify** | Skip certification verification for Instance Manager connection. | false |
+|**nginxAgent.instanceManager.tls.caSecret** | Name of `nginx.org/ca` secret used for verification of Instance Manager TLS. | "" |
+|**nginxAgent.instanceManager.tls.secret** | Name of `kubernetes.io/tls` secret with a TLS certificate and key for using mTLS between NGINX Agent and Instance Manager. See the NGINX Instance Manager [docs](https://docs.nginx.com/nginx-management-suite/admin-guides/configuration/secure-traffic/#mutual-client-certificate-auth-setup-mtls) and the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
+|**nginxAgent.syslog.host** | Address for NGINX Agent to run syslog listener. | 127.0.0.1 |
+|**nginxAgent.syslog.port** | Port for NGINX Agent to run syslog listener. | 1514 |
+|**nginxAgent.napMonitoring.collectorBufferSize** | Buffer size for collector. Will contain log lines and parsed log lines. | 50000 |
+|**nginxAgent.napMonitoring.processorBufferSize** | Buffer size for processor. Will contain log lines and parsed log lines. | 50000 |
+|**nginxAgent.customConfigMap** | The name of a custom ConfigMap to use instead of the one provided by default. | "" |
 {{</bootstrap-table>}}
 {{< /table >}}
 

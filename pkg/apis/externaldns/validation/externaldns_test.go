@@ -95,6 +95,7 @@ func TestValidateDNSEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range tt {
+		tc := tc // address gosec G601
 		t.Run(tc.name, func(t *testing.T) {
 			if err := validation.ValidateDNSEndpoint(&tc.endpoint); err != nil {
 				t.Errorf("want no error on %v, got %v", tc.endpoint, err)
@@ -282,6 +283,7 @@ func TestValidateDNSEndpoint_ReturnsErrorOn(t *testing.T) {
 	}
 
 	for _, tc := range tt {
+		tc := tc // address gosec G601
 		t.Run(tc.name, func(t *testing.T) {
 			err := validation.ValidateDNSEndpoint(&tc.endpoint)
 			if !errors.Is(err, tc.want) {

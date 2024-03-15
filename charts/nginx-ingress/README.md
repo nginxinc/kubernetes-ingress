@@ -387,7 +387,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.replicaCount` | The number of replicas of the Ingress Controller deployment. | 1 |
 |`controller.ingressClass.name` | A class of the Ingress Controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of Kubernetes. | nginx |
 |`controller.ingressClass.create` | Creates a new IngressClass object with the name `controller.ingressClass.name`. Set to `false` to use an existing ingressClass created using `kubectl` with the same name. If you use `helm upgrade`, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.4.3, do not set the value to false. | true |
-|`controller.ingressClass.setAsDefaultIngress` | New Ingresses without an `"ingressClassName"` field specified will be assigned the class specified in `controller.ingressClass.name`. Requires `controller.ingressClass.create`.  | false |
+|`controller.ingressClass.setAsDefaultIngress` | New Ingresses without an `"ingressClassName"` field specified will be assigned the class specified in `controller.ingressClass.name`. Requires `controller.ingressClass.create`. | false |
 |`controller.watchNamespace` | Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces. Mutually exclusive with `controller.watchNamespaceLabel`. Please note that if configuring multiple namespaces using the Helm cli `--set` option, the string needs to wrapped in double quotes and the commas escaped using a backslash - e.g. `--set controller.watchNamespace="default\,nginx-ingress"`. | "" |
 |`controller.watchNamespaceLabel` | Configures the Ingress Controller to watch only those namespaces with label foo=bar. By default the Ingress Controller watches all namespaces. Mutually exclusive with `controller.watchNamespace`. | "" |
 |`controller.watchSecretNamespace` | Comma separated list of namespaces the Ingress Controller should watch for resources of type Secret. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See `controller.watchNamespace` and `controller.watchNamespaceLabel`. Please note that if configuring multiple namespaces using the Helm cli `--set` option, the string needs to wrapped in double quotes and the commas escaped using a backslash - e.g. `--set controller.watchSecretNamespace="default\,nginx-ingress"`. | "" |
@@ -466,11 +466,11 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.podDisruptionBudget.maxUnavailable` | The number of Ingress Controller pods that can be unavailable. This is a mutually exclusive setting with "minAvailable". | 0 |
 |`controller.strategy` | Specifies the strategy used to replace old Pods with new ones. Docs for [Deployment update strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) and [Daemonset update strategy](https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/#daemonset-update-strategy) | {} |
 |`controller.disableIPV6` | Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack. | false |
-|`controller.defaultHTTPListenerPort`  | Sets the port for the HTTP `default_server` listener. | 80 |
+|`controller.defaultHTTPListenerPort` | Sets the port for the HTTP `default_server` listener. | 80 |
 |`controller.defaultHTTPSListenerPort` | Sets the port for the HTTPS `default_server` listener. | 443 |
 |`controller.readOnlyRootFilesystem` | Configure root filesystem as read-only and add volumes for temporary data. Three major releases after 3.5.x this argument will be moved permanently to the `controller.securityContext` section. | false |
 |`controller.enableSSLDynamicReload` | Enable lazy loading for SSL Certificates. | true |
-|`controller.enableTelemetryReporting` | Enable telemetry reporting. | true |
+|`controller.telemetryReporting.enable` | Enable telemetry reporting. | true |
 |`rbac.create` | Configures RBAC. | true |
 |`prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 |`prometheus.port` | Configures the port to scrape the metrics. | 9113 |
@@ -489,6 +489,21 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`serviceNameOverride` | Used to prevent cloud load balancers from being replaced due to service name change during helm upgrades. | "" |
 |`nginxServiceMesh.enable` | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false |
 |`nginxServiceMesh.enableEgress` | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress Controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false |
+|`nginxAgent.enable` | Enable NGINX Agent to integrate Security Monitoring and App Protect WAF modules. Requires `controller.appprotect.enable`. | false |
+|`nginxAgent.instanceGroup` | Set a custom Instance Group name,  shown when connected to NGINX Instance Manager. `nginx-ingress.controller.fullname` will be used if not set. | "" |
+|`nginxAgent.logLevel` | Log level for NGINX Agent. | "error |
+|`nginxAgent.instanceManager.host` | FQDN or IP for connecting to NGINX Ingress Controller. Required when `nginxAgent.enable` is set to `true` | "" |
+|`nginxAgent.instanceManager.grpcPort` | Port for connecting to NGINX Ingress Controller. | 443 |
+|`nginxAgent.instanceManager.sni` | Server Name Indication for NGINX Instance Manager. See the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
+|`nginxAgent.instanceManager.tls.enable` | Enable TLS for NGINX Instance Manager connection. | true |
+|`nginxAgent.instanceManager.tls.skipVerify` | Skip certification verification for NGINX Instance Manager connection. | false |
+|`nginxAgent.instanceManager.tls.caSecret` | Name of `nginx.org/ca` secret used for verification of NGINX Instance Manager TLS. | "" |
+|`nginxAgent.instanceManager.tls.secret` | Name of `kubernetes.io/tls` secret with a TLS certificate and key for using mTLS between NGINX Agent and NGINX Instance Manager. See the NGINX Instance Manager [docs](https://docs.nginx.com/nginx-management-suite/admin-guides/configuration/secure-traffic/#mutual-client-certificate-auth-setup-mtls) and the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
+|`nginxAgent.syslog.host` | Address for NGINX Agent to run syslog listener. | 127.0.0.1 |
+|`nginxAgent.syslog.port` | Port for NGINX Agent to run syslog listener. | 1514 |
+|`nginxAgent.napMonitoring.collectorBufferSize` | Buffer size for collector. Will contain log lines and parsed log lines. | 50000 |
+|`nginxAgent.napMonitoring.processorBufferSize` | Buffer size for processor. Will contain log lines and parsed log lines. | 50000 |
+|`nginxAgent.customConfigMap` | The name of a custom ConfigMap to use instead of the one provided by default. | "" |
 
 ## Notes
 

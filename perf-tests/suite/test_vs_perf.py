@@ -6,14 +6,23 @@ from datetime import datetime
 import pytest
 import requests
 from common import collect_prom_reload_metrics, run_perf
-from suite.utils.resources_utils import wait_before_test
+from suite.utils.resources_utils import get_resource_metrics, wait_before_test
 
 reload = []
 
 
 @pytest.fixture(scope="class")
-def collect(request, kube_apis, ingress_controller_endpoint, test_namespace) -> None:
+def collect(request, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, test_namespace) -> None:
     def fin():
+        print("Collect resource usage metrics")
+        pod_metrics = get_resource_metrics(kube_apis.custom_objects, "pods", ingress_controller_prerequisites.namespace)
+        with open("vs_pod_metrics.json", "w+") as f:
+            json.dump(pod_metrics, f, ensure_ascii=False, indent=4)
+        node_metrics = get_resource_metrics(
+            kube_apis.custom_objects, "nodes", ingress_controller_prerequisites.namespace
+        )
+        with open("vs_node_metrics.json", "w+") as f:
+            json.dump(node_metrics, f, ensure_ascii=False, indent=4)
         with open("reload_vs.json", "w+") as f:
             json.dump(reload, f, ensure_ascii=False, indent=4)
 
