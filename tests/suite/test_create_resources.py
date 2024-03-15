@@ -1,11 +1,15 @@
-import pytest, yaml, tempfile, os
+import os
+import tempfile
+
+import pytest
+import yaml
 from settings import DEPLOYMENTS, TEST_DATA
 from suite.utils.resources_utils import (
-    create_items_from_yaml,
-    delete_items_from_yaml,
-    create_namespace,
-    delete_namespace,
     create_ingress,
+    create_items_from_yaml,
+    create_namespace,
+    delete_items_from_yaml,
+    delete_namespace,
     patch_deployment,
 )
 from suite.utils.vs_vsr_resources_utils import create_virtual_server
@@ -22,13 +26,14 @@ ingress = f"{TEST_DATA}/test-resources/ingress.yaml"
 ingress_master = f"{TEST_DATA}/test-resources/master.yaml"
 ingress_minion = f"{TEST_DATA}/test-resources/ingress-minion.yaml"
 
+
 class TestStuff:
     @pytest.mark.create
     def test_stuff_create(self, request, kube_apis):
         # count = int(request.config.getoption("--num"))
 
         with open(ns) as f:
-            namespace=f"test"
+            namespace = f"test"
             doc = yaml.safe_load(f)
             doc["metadata"]["name"] = "test"
             with tempfile.NamedTemporaryFile(mode="w+", suffix=".yml", delete=False) as temp:
@@ -47,8 +52,8 @@ class TestStuff:
             create_items_from_yaml(kube_apis, temp.name, "test")
             os.remove(temp.name)
 
-        for i in range(1, 65+1):
-            namespace=f"test"
+        for i in range(1, 65 + 1):
+            namespace = f"test"
             with open(ns) as f:
                 doc = yaml.safe_load(f)
                 doc["metadata"]["name"] = f"ns-{i}"
@@ -117,11 +122,10 @@ class TestStuff:
                 doc["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"] = f"backend-svc-{i}"
                 create_ingress(kube_apis.networking_v1, namespace, doc)
 
-
     @pytest.mark.delete
     def test_stuff_delete(self, request, kube_apis):
         # count = int(request.config.getoption("--num"))
         delete_namespace(kube_apis.v1, "test")
         # delete namespaces
-        for i in range(1, 100+1):
+        for i in range(1, 100 + 1):
             delete_namespace(kube_apis.v1, f"ns-{i}")
