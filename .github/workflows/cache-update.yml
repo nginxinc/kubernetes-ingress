@@ -48,7 +48,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create/Update Draft
-        uses: lucacome/draft-release@a98777f0bae0a6815cc1df77ebe48ca70e7cb970 # v1.0.3
+        uses: lucacome/draft-release@e076259ceb036bc5f2c2a76559784c12cf8d2e74 # v1.0.4
         id: release-notes
         with:
           minor-label: "enhancement"
