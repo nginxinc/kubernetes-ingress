@@ -186,8 +186,8 @@ github.com/nginxinc/nginx-prometheus-exporter v1.1.0 h1:Uj+eWKGvUionZc8gWFDnrb3j
 github.com/nginxinc/nginx-prometheus-exporter v1.1.0/go.mod h1:A1Fy5uLQonVGmwLC5xNxBX+vPFgYzBOvPjNRs8msT0k=
 github.com/nginxinc/nginx-service-mesh v1.7.0 h1:oxKr+Jdbxkos10VTy5xF2UHCcmfIhqWNlsOK/zPnZDM=
 github.com/nginxinc/nginx-service-mesh v1.7.0/go.mod h1:8tREM3kSEUGyk8JT8hdCf/9ol2kEo7hLR8b+m5Yd8Fs=
-github.com/nginxinc/telemetry-exporter v0.0.0-20240306143108-e74e64e77cff h1:cSvO6697zceDtW+wlehAA2xOQAipHNR+yTaMnD8F9w4=
-github.com/nginxinc/telemetry-exporter v0.0.0-20240306143108-e74e64e77cff/go.mod h1:rZ+Ohzwv9LJMzxRDPS/dEwXOUPlNrzjoGkICaG9fv0k=
+github.com/nginxinc/telemetry-exporter v0.0.0-20240307135433-a5ecce59bddf h1:PM0o/J1QyRpNCn8C9SI17b5ePuAnLdI1D5B/TV2hneY=
+github.com/nginxinc/telemetry-exporter v0.0.0-20240307135433-a5ecce59bddf/go.mod h1:rZ+Ohzwv9LJMzxRDPS/dEwXOUPlNrzjoGkICaG9fv0k=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=

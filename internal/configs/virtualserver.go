@@ -3,6 +3,8 @@ package configs
 import (
 	"fmt"
 	"net/url"
+	"os"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -25,6 +27,7 @@ const (
 	specContext            = "spec"
 	routeContext           = "route"
 	subRouteContext        = "subroute"
+	defaultLogOutput       = "syslog:server=localhost:514"
 )
 
 var grpcConflictingErrors = map[int]bool{
@@ -240,6 +243,7 @@ type virtualServerConfigurator struct {
 	isIPV6Disabled          bool
 	DynamicSSLReloadEnabled bool
 	StaticSSLPath           string
+	bundleValidator         bundleValidator
 }
 
 type oidcPolicyCfg struct {
@@ -268,7 +272,11 @@ func newVirtualServerConfigurator(
 	isResolverConfigured bool,
 	staticParams *StaticConfigParams,
 	isWildcardEnabled bool,
+	bundleValidator bundleValidator,
 ) *virtualServerConfigurator {
+	if bundleValidator == nil {
+		bundleValidator = newInternalBundleValidator(appProtectBundleFolder)
+	}
 	return &virtualServerConfigurator{
 		cfgParams:               cfgParams,
 		isPlus:                  isPlus,
@@ -283,6 +291,7 @@ func newVirtualServerConfigurator(
 		isIPV6Disabled:          staticParams.DisableIPV6,
 		DynamicSSLReloadEnabled: staticParams.DynamicSSLReload,
 		StaticSSLPath:           staticParams.StaticSSLPath,
+		bundleValidator:         bundleValidator,
 	}
 }
 
@@ -789,10 +798,34 @@ type policiesCfg struct {
 	OIDC            bool
 	WAF             *version2.WAF
 	ErrorReturn     *version2.Return
+	BundleValidator bundleValidator
 }
 
-func newPoliciesConfig() *policiesCfg {
-	return &policiesCfg{}
+type bundleValidator interface {
+	// validate returns the full path to the bundle and an error if the file is not accessible
+	validate(string) (string, error)
+}
+
+type internalBundleValidator struct {
+	bundlePath string
+}
+
+func (i internalBundleValidator) validate(bundle string) (string, error) {
+	bundle = path.Join(i.bundlePath, bundle)
+	_, err := os.Stat(bundle)
+	return bundle, err
+}
+
+func newInternalBundleValidator(b string) internalBundleValidator {
+	return internalBundleValidator{
+		bundlePath: b,
+	}
+}
+
+func newPoliciesConfig(bv bundleValidator) *policiesCfg {
+	return &policiesCfg{
+		BundleValidator: bv,
+	}
 }
 
 type policyOwnerDetails struct {
@@ -1229,42 +1262,46 @@ func (p *policiesCfg) addWAFConfig(
 
 	if waf.ApBundle != "" {
 		p.WAF.ApBundle = appProtectBundleFolder + waf.ApBundle
+		bundlePath, err := p.BundleValidator.validate(waf.ApBundle)
+		if err != nil {
+			res.addWarningf("WAF policy %s references an invalid or non-existing App Protect bundle %s", polKey, bundlePath)
+			res.isError = true
+		}
+		p.WAF.ApBundle = bundlePath
 	}
 
 	if waf.SecurityLog != nil && waf.SecurityLogs == nil {
-		glog.V(2).Info("the field securityLog is deprecated nad will be removed in future releases. Use field securityLogs instead")
-		p.WAF.ApSecurityLogEnable = true
-
-		logConfKey := waf.SecurityLog.ApLogConf
-		hasNamespace := strings.Contains(logConfKey, "/")
-		if !hasNamespace {
-			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
-		}
-
-		if logConfPath, ok := apResources.LogConfs[logConfKey]; ok {
-			logDest := generateString(waf.SecurityLog.LogDest, "syslog:server=localhost:514")
-			p.WAF.ApLogConf = []string{fmt.Sprintf("%s %s", logConfPath, logDest)}
-		} else {
-			res.addWarningf("WAF policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
-			res.isError = true
-		}
+		glog.V(2).Info("the field securityLog is deprecated and will be removed in future releases. Use field securityLogs instead")
+		waf.SecurityLogs = append(waf.SecurityLogs, waf.SecurityLog)
 	}
 
 	if waf.SecurityLogs != nil {
 		p.WAF.ApSecurityLogEnable = true
 		p.WAF.ApLogConf = []string{}
 		for _, loco := range waf.SecurityLogs {
-			logConfKey := loco.ApLogConf
-			hasNamepace := strings.Contains(logConfKey, "/")
-			if !hasNamepace {
-				logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
+			logDest := generateString(loco.LogDest, defaultLogOutput)
+
+			if loco.ApLogConf != "" {
+				logConfKey := loco.ApLogConf
+				if !strings.Contains(logConfKey, "/") {
+					logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
+				}
+				if logConfPath, ok := apResources.LogConfs[logConfKey]; ok {
+					p.WAF.ApLogConf = append(p.WAF.ApLogConf, fmt.Sprintf("%s %s", logConfPath, logDest))
+				} else {
+					res.addWarningf("WAF policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
+					res.isError = true
+				}
 			}
-			if logConfPath, ok := apResources.LogConfs[logConfKey]; ok {
-				logDest := generateString(loco.LogDest, "syslog:server=localhost:514")
-				p.WAF.ApLogConf = append(p.WAF.ApLogConf, fmt.Sprintf("%s %s", logConfPath, logDest))
-			} else {
-				res.addWarningf("WAF policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
-				res.isError = true
+
+			if loco.ApLogBundle != "" {
+				logBundle, err := p.BundleValidator.validate(loco.ApLogBundle)
+				if err != nil {
+					res.addWarningf("WAF policy %s references an invalid or non-existing log config bundle %s", polKey, logBundle)
+					res.isError = true
+				} else {
+					p.WAF.ApLogConf = append(p.WAF.ApLogConf, fmt.Sprintf("%s %s", logBundle, logDest))
+				}
 			}
 		}
 	}
@@ -1278,7 +1315,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 	context string,
 	policyOpts policyOptions,
 ) policiesCfg {
-	config := newPoliciesConfig()
+	config := newPoliciesConfig(vsc.bundleValidator)
 
 	for _, p := range policyRefs {
 		polNamespace := p.Namespace
@@ -2426,7 +2463,7 @@ func createUpstreamsForPlus(
 
 	isPlus := true
 	upstreamNamer := NewUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
-	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false, staticParams, false)
+	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false, staticParams, false, nil)
 
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(virtualServerEx.VirtualServer.Namespace, u.Service)]
