@@ -80,6 +80,41 @@ func (c *Collector) Platform(ctx context.Context) (string, error) {
 	return lookupPlatform(nodes.Items[0].Spec.ProviderID), nil
 }
 
+// InstallationID returns generated NIC InstallationID.
+func (c *Collector) InstallationID(ctx context.Context) (_ string, err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("error generating InstallationID: %w", err)
+		}
+	}()
+
+	pod, err := c.Config.K8sClientReader.CoreV1().Pods(c.Config.PodNSName.Namespace).Get(ctx, c.Config.PodNSName.Name, metaV1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	podOwner := pod.GetOwnerReferences()
+	if len(podOwner) != 1 {
+		return "", fmt.Errorf("expected pod owner reference to be 1, got %d", len(podOwner))
+	}
+
+	switch podOwner[0].Kind {
+	case "ReplicaSet":
+		rs, err := c.Config.K8sClientReader.AppsV1().ReplicaSets(c.Config.PodNSName.Namespace).Get(ctx, podOwner[0].Name, metaV1.GetOptions{})
+		if err != nil {
+			return "", err
+		}
+		rsOwner := rs.GetOwnerReferences() // rsOwner holds information about replica's owner - Deployment object
+		if len(rsOwner) != 1 {
+			return "", fmt.Errorf("expected replicaset owner reference to be 1, got %d", len(rsOwner))
+		}
+		return string(rsOwner[0].UID), nil
+	case "DaemonSet":
+		return string(podOwner[0].UID), nil
+	default:
+		return "", fmt.Errorf("expected pod owner reference to be ReplicaSet or DeamonSet, got %s", podOwner[0].Kind)
+	}
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.

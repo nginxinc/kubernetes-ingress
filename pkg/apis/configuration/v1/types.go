@@ -670,7 +670,8 @@ type WAF struct {
 
 // SecurityLog defines the security log of a WAF policy.
 type SecurityLog struct {
-	Enable    bool   `json:"enable"`
-	ApLogConf string `json:"apLogConf"`
-	LogDest   string `json:"logDest"`
+	Enable      bool   `json:"enable"`
+	ApLogConf   string `json:"apLogConf"`
+	ApLogBundle string `json:"apLogBundle"`
+	LogDest     string `json:"logDest"`
 }

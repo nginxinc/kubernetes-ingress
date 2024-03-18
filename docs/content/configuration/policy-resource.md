@@ -547,9 +547,11 @@ waf:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables NGINX App Protect WAF. | ``bool`` | Yes |
-|``apPolicy`` | The [App Protect WAF policy](/nginx-ingress-controller/app-protect/configuration/#app-protect-policies) of the WAF. Accepts an optional namespace. | ``string`` | No |
+|``apPolicy`` | The [App Protect WAF policy]({{< relref "installation/integrations/app-protect-waf/configuration.md#waf-policies" >}}) of the WAF. Accepts an optional namespace. Mutually exclusive with ``apBundle``. | ``string`` | No |
+|``apBundle`` | The [App Protect WAF policy bundle]({{< relref "installation/integrations/app-protect-waf/configuration.md#waf-bundles" >}}). Mutually exclusive with ``apPolicy``. | ``string`` | No |
 |``securityLog.enable`` | Enables security log. | ``bool`` | No |
-|``securityLog.apLogConf`` | The [App Protect WAF log conf](/nginx-ingress-controller/app-protect/configuration/#app-protect-logs) resource. Accepts an optional namespace. | ``string`` | No |
+|``securityLog.apLogConf`` | The [App Protect WAF log conf]({{< relref "installation/integrations/app-protect-waf/configuration.md#waf-logs" >}}) resource. Accepts an optional namespace. Only works with ``apPolicy``. | ``string`` | No |
+|``securityLog.apLogBundle`` | The [App Protect WAF log bundle]({{< relref "installation/integrations/app-protect-waf/configuration.md#waf-bundles" >}}) resource. Only works with ``apBundle``. | ``string`` | No |
 |``securityLog.logDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost; fqdn>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
 {{% /table %}}
 

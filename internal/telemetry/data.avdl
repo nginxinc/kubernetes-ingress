@@ -42,5 +42,8 @@ It is the UID of the `kube-system` Namespace. */
 		/** TransportServers is the number of TransportServer resources  by the Ingress Controller. */
 		long? TransportServers = null;
 
+		/** Replicas is the number of NIC replicas. */
+		long? Replicas = null;
+
 	}
 }
