@@ -228,7 +228,7 @@ spec:
     apBundle: "<policy_bundle_name>.tgz"
 ```
 
-This example shows the same policy as above but with a log bundle used for :
+This example shows the same policy as above but with a log bundle used for security log configuration:
 
 
 ```yaml
