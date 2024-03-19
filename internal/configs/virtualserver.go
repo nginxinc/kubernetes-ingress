@@ -29,7 +29,7 @@ const (
 	subRouteContext                                 = "subroute"
 	keyvalZoneBasePath                              = "/etc/nginx/state_files"
 	splitClientsKeyValZoneSize                      = "100k"
-	splitClientAmountWhenWeightChangesWithoutReload = 101
+	splitClientAmountWhenWeightChangesDynamicReload = 101
 	defaultLogOutput                                = "syslog:server=localhost:514"
 )
 
@@ -281,7 +281,7 @@ type virtualServerConfigurator struct {
 	isIPV6Disabled             bool
 	DynamicSSLReloadEnabled    bool
 	StaticSSLPath              string
-	WeightChangesWithoutReload bool
+	DynamicWeightChangesReload bool
 	bundleValidator            bundleValidator
 }
 
@@ -330,7 +330,7 @@ func newVirtualServerConfigurator(
 		isIPV6Disabled:             staticParams.DisableIPV6,
 		DynamicSSLReloadEnabled:    staticParams.DynamicSSLReload,
 		StaticSSLPath:              staticParams.StaticSSLPath,
-		WeightChangesWithoutReload: staticParams.WeightChangesWithoutReload,
+		DynamicWeightChangesReload: staticParams.DynamicWeightChangesReload,
 		bundleValidator:            bundleValidator,
 	}
 }
@@ -599,7 +599,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				isVSR,
 				"", "",
 				vsc.warnings,
-				vsc.WeightChangesWithoutReload,
+				vsc.DynamicWeightChangesReload,
 			)
 			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 			addDosConfigToLocations(dosRouteCfg, cfg.Locations)
@@ -615,7 +615,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			matchesRoutes++
 		} else if len(r.Splits) > 0 {
 			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, VariableNamer, len(splitClients),
-				vsc.cfgParams, errorPages, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "", vsc.warnings, vsc.WeightChangesWithoutReload)
+				vsc.cfgParams, errorPages, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "", vsc.warnings, vsc.DynamicWeightChangesReload)
 			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 			addDosConfigToLocations(dosRouteCfg, cfg.Locations)
 			splitClients = append(splitClients, cfg.SplitClients...)
@@ -730,7 +730,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 					vsr.Name,
 					vsr.Namespace,
 					vsc.warnings,
-					vsc.WeightChangesWithoutReload,
+					vsc.DynamicWeightChangesReload,
 				)
 				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 				addDosConfigToLocations(dosRouteCfg, cfg.Locations)
@@ -746,7 +746,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				matchesRoutes++
 			} else if len(r.Splits) > 0 {
 				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, VariableNamer, len(splitClients), vsc.cfgParams,
-					errorPages, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings, vsc.WeightChangesWithoutReload)
+					errorPages, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings, vsc.DynamicWeightChangesReload)
 				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 				addDosConfigToLocations(dosRouteCfg, cfg.Locations)
 
@@ -2137,7 +2137,7 @@ func generateSplits(
 	vsrName string,
 	vsrNamespace string,
 	vscWarnings Warnings,
-	WeightChangesWithoutReload bool,
+	WeightChangesDynamicReload bool,
 ) ([]version2.SplitClient, []version2.Location, []version2.ReturnLocation, []version2.Map, []version2.KeyValZone, []version2.KeyVal, []version2.TwoWaySplitClients) {
 	var distributions []version2.Distribution
 	var splitClients []version2.SplitClient
@@ -2157,8 +2157,8 @@ func generateSplits(
 		distributions = append(distributions, d)
 	}
 
-	if WeightChangesWithoutReload && len(splits) == 2 {
-		scs, weightMap := generateSplitsForWeightChangesWithoutReload(splits, scIndex, VariableNamer)
+	if WeightChangesDynamicReload && len(splits) == 2 {
+		scs, weightMap := generateSplitsForWeightChangesDynamicReload(splits, scIndex, VariableNamer)
 		kvZoneName := VariableNamer.GetNameOfKeyvalZoneForSplitClientIndex(scIndex)
 		kvz := version2.KeyValZone{
 			Name:  kvZoneName,
@@ -2227,12 +2227,12 @@ func generateDefaultSplitsConfig(
 	vsrName string,
 	vsrNamespace string,
 	vscWarnings Warnings,
-	weightChangesWithoutReload bool,
+	weightChangesDynamicReload bool,
 ) routingCfg {
-	scs, locs, returnLocs, maps, keyValZones, keyVals, twoWaySplitClients := generateSplits(route.Splits, upstreamNamer, crUpstreams, VariableNamer, scIndex, cfgParams, errorPages, originalPath, locSnippets, enableSnippets, retLocIndex, isVSR, vsrName, vsrNamespace, vscWarnings, weightChangesWithoutReload)
+	scs, locs, returnLocs, maps, keyValZones, keyVals, twoWaySplitClients := generateSplits(route.Splits, upstreamNamer, crUpstreams, VariableNamer, scIndex, cfgParams, errorPages, originalPath, locSnippets, enableSnippets, retLocIndex, isVSR, vsrName, vsrNamespace, vscWarnings, weightChangesDynamicReload)
 
 	var irl version2.InternalRedirectLocation
-	if weightChangesWithoutReload && len(route.Splits) == 2 {
+	if weightChangesDynamicReload && len(route.Splits) == 2 {
 		irl = version2.InternalRedirectLocation{
 			Path:        route.Path,
 			Destination: VariableNamer.GetNameOfMapForSplitClientIndex(scIndex),
@@ -2256,7 +2256,7 @@ func generateDefaultSplitsConfig(
 	}
 }
 
-func generateSplitsForWeightChangesWithoutReload(splits []conf_v1.Split, scIndex int, VariableNamer *VariableNamer) ([]version2.SplitClient, version2.Map) {
+func generateSplitsForWeightChangesDynamicReload(splits []conf_v1.Split, scIndex int, VariableNamer *VariableNamer) ([]version2.SplitClient, version2.Map) {
 	var splitClients []version2.SplitClient
 	var mapParameters []version2.Parameter
 	for i := 0; i <= 100; i++ {
@@ -2313,7 +2313,7 @@ func generateSplitsForWeightChangesWithoutReload(splits []conf_v1.Split, scIndex
 
 func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
 	VariableNamer *VariableNamer, index int, scIndex int, cfgParams *ConfigParams, errorPages errorPageDetails,
-	locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string, vscWarnings Warnings, weightChangesWithoutReload bool,
+	locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string, vscWarnings Warnings, weightChangesDynamicReload bool,
 ) routingCfg {
 	// Generate maps
 	var maps []version2.Map
@@ -2350,9 +2350,9 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 		v := fmt.Sprintf("~^%s1", strings.Repeat("0", i))
 		r := fmt.Sprintf("/%vmatches_%d_match_%d", internalLocationPrefix, index, i)
 		if len(m.Splits) > 0 {
-			if weightChangesWithoutReload && len(m.Splits) == 2 {
+			if weightChangesDynamicReload && len(m.Splits) == 2 {
 				r = VariableNamer.GetNameOfMapForSplitClientIndex(scIndex + scLocalIndex)
-				scLocalIndex += splitClientAmountWhenWeightChangesWithoutReload
+				scLocalIndex += splitClientAmountWhenWeightChangesDynamicReload
 			} else {
 				r = VariableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
 				scLocalIndex++
@@ -2368,7 +2368,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 
 	defaultResult := fmt.Sprintf("/%vmatches_%d_default", internalLocationPrefix, index)
 	if len(route.Splits) > 0 {
-		if weightChangesWithoutReload && len(route.Splits) == 2 {
+		if weightChangesDynamicReload && len(route.Splits) == 2 {
 			defaultResult = VariableNamer.GetNameOfMapForSplitClientIndex(scIndex + scLocalIndex)
 		} else {
 			defaultResult = VariableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
@@ -2417,7 +2417,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 				vsrName,
 				vsrNamespace,
 				vscWarnings,
-				weightChangesWithoutReload,
+				weightChangesDynamicReload,
 			)
 			scLocalIndex += len(scs)
 			splitClients = append(splitClients, scs...)
@@ -2461,7 +2461,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 			vsrName,
 			vsrNamespace,
 			vscWarnings,
-			weightChangesWithoutReload,
+			weightChangesDynamicReload,
 		)
 		splitClients = append(splitClients, scs...)
 		locations = append(locations, locs...)

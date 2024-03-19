@@ -9157,7 +9157,7 @@ func TestGenerateSplits(t *testing.T) {
 				"coffee",
 				"default",
 				vsc.warnings,
-				vsc.WeightChangesWithoutReload,
+				vsc.DynamicWeightChangesReload,
 			)
 
 			if !cmp.Equal(test.expectedSplitClients, resultSplitClients) {
@@ -9173,7 +9173,7 @@ func TestGenerateSplits(t *testing.T) {
 	}
 }
 
-func TestGenerateSplitsWeightChangesWithoutReload(t *testing.T) {
+func TestGenerateSplitsWeightChangesDynamicReload(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		splits               []conf_v1.Split
@@ -10806,7 +10806,7 @@ func TestGenerateSplitsWeightChangesWithoutReload(t *testing.T) {
 	returnLocationIndex := 1
 
 	staticConfigParams := &StaticConfigParams{
-		WeightChangesWithoutReload: true,
+		DynamicWeightChangesReload: true,
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, true, false, staticConfigParams, false, &fakeBV)
@@ -10828,7 +10828,7 @@ func TestGenerateSplitsWeightChangesWithoutReload(t *testing.T) {
 				"coffee",
 				"default",
 				vsc.warnings,
-				vsc.WeightChangesWithoutReload,
+				vsc.DynamicWeightChangesReload,
 			)
 
 			if !cmp.Equal(test.expectedSplitClients, resultSplitClients) {
@@ -10944,7 +10944,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	cfgParams := ConfigParams{}
 	locSnippet := ""
 	enableSnippets := false
-	weightChangesWithoutReload := false
+	weightChangesDynamicReload := false
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -10961,7 +10961,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	}
 
 	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams,
-		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{}, weightChangesWithoutReload)
+		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{}, weightChangesDynamicReload)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -11345,7 +11345,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 	enableSnippets := false
-	weightChangesWithoutReload := false
+	weightChangesDynamicReload := false
 	locSnippets := ""
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
@@ -11375,7 +11375,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		"",
 		"",
 		Warnings{},
-		weightChangesWithoutReload,
+		weightChangesDynamicReload,
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)

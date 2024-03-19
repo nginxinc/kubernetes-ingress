@@ -23,7 +23,7 @@ from tests.suite.utils.vs_vsr_resources_utils import (
 )
 
 
-class VSRWeightChangesWithoutReloadSetup:
+class VSRWeightChangesDynamicReloadSetup:
     """
     Encapsulate weight changes without reload details.
 
@@ -45,9 +45,9 @@ class VSRWeightChangesWithoutReloadSetup:
 
 
 @pytest.fixture(scope="class")
-def vsr_weight_changes_without_reload_setup(
+def vsr_weight_changes_dynamic_reload_setup(
     request, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint
-) -> VSRWeightChangesWithoutReloadSetup:
+) -> VSRWeightChangesDynamicReloadSetup:
     """
     Prepare an example app for weight changes without reload VSR.
 
@@ -80,7 +80,7 @@ def vsr_weight_changes_without_reload_setup(
     backends_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}{vsr_paths[0]}"
 
     print("---------------------- Deploy weight changes without reload vsr app ----------------------------")
-    create_example_app(kube_apis, "weight-changes-without-reload-vsr", ns_1)
+    create_example_app(kube_apis, "weight-changes-dynamic-reload-vsr", ns_1)
     wait_until_all_pods_are_ready(kube_apis.v1, ns_1)
 
     def fin():
@@ -90,15 +90,14 @@ def vsr_weight_changes_without_reload_setup(
 
     request.addfinalizer(fin)
 
-    return VSRWeightChangesWithoutReloadSetup(ns_1, vs_host, vs_name, route, backends_url, metrics_url)
+    return VSRWeightChangesDynamicReloadSetup(ns_1, vs_host, vs_name, route, backends_url, metrics_url)
 
 
 @pytest.mark.vsr
-@pytest.mark.weight_changes_without_reload
 @pytest.mark.smok
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
-    "crd_ingress_controller,vsr_weight_changes_without_reload_setup, expect_reload",
+    "crd_ingress_controller,vsr_weight_changes_dynamic_reload_setup, expect_reload",
     [
         (
             {
@@ -106,10 +105,10 @@ def vsr_weight_changes_without_reload_setup(
                 "extra_args": [
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
-                    "-weight-changes-without-reload=true",
+                    "-weight-changes-dynamic-reload=true",
                 ],
             },
-            {"example": "virtual-server-route-weight-changes-without-reload"},
+            {"example": "virtual-server-route-weight-changes-dynamic-reload"},
             False,
         ),
         (
@@ -118,70 +117,70 @@ def vsr_weight_changes_without_reload_setup(
                 "extra_args": [
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
-                    "-weight-changes-without-reload=false",
+                    "-weight-changes-dynamic-reload=false",
                 ],
             },
-            {"example": "virtual-server-route-weight-changes-without-reload"},
+            {"example": "virtual-server-route-weight-changes-dynamic-reload"},
             True,
         ),
     ],
-    indirect=["crd_ingress_controller", "vsr_weight_changes_without_reload_setup"],
+    indirect=["crd_ingress_controller", "vsr_weight_changes_dynamic_reload_setup"],
     ids=["WithoutReload", "WithReload"],
 )
 class TestVSRWeightChangesWithReloadCondition:
 
     def test_vsr_weight_changes_reload_behavior(
-        self, kube_apis, crd_ingress_controller, vsr_weight_changes_without_reload_setup, expect_reload
+        self, kube_apis, crd_ingress_controller, vsr_weight_changes_dynamic_reload_setup, expect_reload
     ):
         swap_weights_config = (
-            f"{TEST_DATA}/virtual-server-route-weight-changes-without-reload/virtual-server-route-swap.yaml"
+            f"{TEST_DATA}/virtual-server-route-weight-changes-dynamic-reload/virtual-server-route-swap.yaml"
         )
 
         print("Step 1: Get a response from the backend.")
         wait_and_assert_status_code(
-            200, vsr_weight_changes_without_reload_setup.backends_url, vsr_weight_changes_without_reload_setup.vs_host
+            200, vsr_weight_changes_dynamic_reload_setup.backends_url, vsr_weight_changes_dynamic_reload_setup.vs_host
         )
         resp = requests.get(
-            vsr_weight_changes_without_reload_setup.backends_url,
-            headers={"host": vsr_weight_changes_without_reload_setup.vs_host},
+            vsr_weight_changes_dynamic_reload_setup.backends_url,
+            headers={"host": vsr_weight_changes_dynamic_reload_setup.vs_host},
         )
         assert "backend1" in resp.text
 
         print("Step 2: Record the initial number of reloads.")
-        count_before = get_reload_count(vsr_weight_changes_without_reload_setup.metrics_url)
+        count_before = get_reload_count(vsr_weight_changes_dynamic_reload_setup.metrics_url)
         print(f"Reload count before: {count_before}")
 
         print("Step 3: Apply a configuration that swaps the weights (0 100) to (100 0).")
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
-            vsr_weight_changes_without_reload_setup.route.name,
+            vsr_weight_changes_dynamic_reload_setup.route.name,
             swap_weights_config,
-            vsr_weight_changes_without_reload_setup.route.namespace,
+            vsr_weight_changes_dynamic_reload_setup.route.namespace,
         )
 
         wait_before_test(5)
 
         print("Step 4: Verify hitting the other backend.")
         ensure_response_from_backend(
-            vsr_weight_changes_without_reload_setup.backends_url, vsr_weight_changes_without_reload_setup.vs_host
+            vsr_weight_changes_dynamic_reload_setup.backends_url, vsr_weight_changes_dynamic_reload_setup.vs_host
         )
         wait_and_assert_status_code(
-            200, vsr_weight_changes_without_reload_setup.backends_url, vsr_weight_changes_without_reload_setup.vs_host
+            200, vsr_weight_changes_dynamic_reload_setup.backends_url, vsr_weight_changes_dynamic_reload_setup.vs_host
         )
         resp = requests.get(
-            vsr_weight_changes_without_reload_setup.backends_url,
-            headers={"host": vsr_weight_changes_without_reload_setup.vs_host},
+            vsr_weight_changes_dynamic_reload_setup.backends_url,
+            headers={"host": vsr_weight_changes_dynamic_reload_setup.vs_host},
         )
         assert "backend2" in resp.text
 
-        print("Step 5: Verify reload behavior based on the weight-changes-without-reload flag.")
-        count_after = get_reload_count(vsr_weight_changes_without_reload_setup.metrics_url)
+        print("Step 5: Verify reload behavior based on the weight-changes-dynamic-reload flag.")
+        count_after = get_reload_count(vsr_weight_changes_dynamic_reload_setup.metrics_url)
         print(f"Reload count after: {count_after}")
         if expect_reload:
             assert (
                 count_before < count_after
-            ), "The reload count should increase when weights are swapped and weight-changes-without-reload=false."
+            ), "The reload count should increase when weights are swapped and weight-changes-dynamic-reload=false."
         else:
             assert (
                 count_before == count_after
-            ), "The reload count should not change when weights are swapped and weight-changes-without-reload=true."
+            ), "The reload count should not change when weights are swapped and weight-changes-dynamic-reload=true."

@@ -19,10 +19,10 @@ from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
                 "extra_args": [
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
-                    "-weight-changes-without-reload=true",
+                    "-weight-changes-dynamic-reload=true",
                 ],
             },
-            {"example": "virtual-server-weight-changes-without-reload", "app_type": "split"},
+            {"example": "virtual-server-weight-changes-dynamic-reload", "app_type": "split"},
             False,
         ),
         (
@@ -31,11 +31,11 @@ from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
                 "extra_args": [
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
-                    "-weight-changes-without-reload=false",
+                    "-weight-changes-dynamic-reload=false",
                 ],
             },
             {
-                "example": "virtual-server-weight-changes-without-reload",
+                "example": "virtual-server-weight-changes-dynamic-reload",
                 "app_type": "split",
             },
             True,
@@ -52,7 +52,7 @@ class TestWeightChangesWithReloadCondition:
         self, kube_apis, crd_ingress_controller, virtual_server_setup, expect_reload
     ):
         initial_weights_config = (
-            f"{TEST_DATA}/virtual-server-weight-changes-without-reload/standard/virtual-server.yaml"
+            f"{TEST_DATA}/virtual-server-weight-changes-dynamic-reload/standard/virtual-server.yaml"
         )
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
@@ -61,7 +61,7 @@ class TestWeightChangesWithReloadCondition:
             virtual_server_setup.namespace,
         )
         swap_weights_config = (
-            f"{TEST_DATA}/virtual-server-weight-changes-without-reload/virtual-server-weight-swap.yaml"
+            f"{TEST_DATA}/virtual-server-weight-changes-dynamic-reload/virtual-server-weight-swap.yaml"
         )
 
         print("Step 1: Get a response from the backend.")
@@ -87,15 +87,15 @@ class TestWeightChangesWithReloadCondition:
         resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
         assert "backend1-v2" in resp.text
 
-        print("Step 5: Verify reload behavior based on the weight-changes-without-reload flag.")
+        print("Step 5: Verify reload behavior based on the weight-changes-dynamic-reload flag.")
         count_after = get_reload_count(virtual_server_setup.metrics_url)
         print(f"Reload count after: {count_after}")
 
         if expect_reload:
             assert (
                 count_before < count_after
-            ), "The reload count should increase when weights are swapped and weight-changes-without-reload=false."
+            ), "The reload count should increase when weights are swapped and weight-changes-dynamic-reload=false."
         else:
             assert (
                 count_before == count_after
-            ), "The reload count should not change when weights are swapped and weight-changes-without-reload=true."
+            ), "The reload count should not change when weights are swapped and weight-changes-dynamic-reload=true."

@@ -25,7 +25,7 @@ from tests.suite.utils.vs_vsr_resources_utils import (
 )
 
 
-class VSRWeightChangesWithoutReloadManySplitsSetup:
+class VSRWeightChangesDynamicReloadManySplitsSetup:
     """
     Encapsulate weight changes without reload details.
 
@@ -47,9 +47,9 @@ class VSRWeightChangesWithoutReloadManySplitsSetup:
 
 
 @pytest.fixture(scope="class")
-def vsr_weight_changes_without_reload_many_splits_setup(
+def vsr_weight_changes_dynamic_reload_many_splits_setup(
     request, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint
-) -> VSRWeightChangesWithoutReloadManySplitsSetup:
+) -> VSRWeightChangesDynamicReloadManySplitsSetup:
     """
     Prepare an example app for weight changes without reload VSR.
 
@@ -96,8 +96,8 @@ def vsr_weight_changes_without_reload_many_splits_setup(
         f"{TEST_DATA}/{request.param['example']}/configmap/nginx-config.yaml",
     )
 
-    print("---------------------- Deploy weight changes without reload vsr app ----------------------------")
-    create_example_app(kube_apis, "weight-changes-without-reload-vsr-many-splits", ns_1)
+    print("---------------------- Deploy weight changes dynamic reload vsr app ----------------------------")
+    create_example_app(kube_apis, "weight-changes-dynamic-reload-vsr-many-splits", ns_1)
     wait_until_all_pods_are_ready(kube_apis.v1, ns_1)
 
     def fin():
@@ -113,15 +113,14 @@ def vsr_weight_changes_without_reload_many_splits_setup(
 
     request.addfinalizer(fin)
 
-    return VSRWeightChangesWithoutReloadManySplitsSetup(ns_1, vs_host, vs_name, route, backends_url, metrics_url)
+    return VSRWeightChangesDynamicReloadManySplitsSetup(ns_1, vs_host, vs_name, route, backends_url, metrics_url)
 
 
 @pytest.mark.vsr
-@pytest.mark.weight_changes_without_reload
 @pytest.mark.smok
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
-    "crd_ingress_controller,vsr_weight_changes_without_reload_many_splits_setup",
+    "crd_ingress_controller,vsr_weight_changes_dynamic_reload_many_splits_setup",
     [
         (
             {
@@ -129,19 +128,19 @@ def vsr_weight_changes_without_reload_many_splits_setup(
                 "extra_args": [
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
-                    "-weight-changes-without-reload=true",
+                    "-weight-changes-dynamic-reload=true",
                     "-v=3",
                 ],
             },
-            {"example": "virtual-server-route-weight-changes-without-reload"},
+            {"example": "virtual-server-route-weight-changes-dynamic-reload"},
         ),
     ],
-    indirect=["crd_ingress_controller", "vsr_weight_changes_without_reload_many_splits_setup"],
+    indirect=["crd_ingress_controller", "vsr_weight_changes_dynamic_reload_many_splits_setup"],
 )
-class TestVSRWeightChangesWithoutReloadManySplits:
+class TestVSRWeightChangesDynamicReloadManySplits:
 
-    def test_vsr_weight_changes_without_reload_many_splits(
-        self, kube_apis, crd_ingress_controller, vsr_weight_changes_without_reload_many_splits_setup
+    def test_vsr_weight_changes_dynamic_reload_many_splits(
+        self, kube_apis, crd_ingress_controller, vsr_weight_changes_dynamic_reload_many_splits_setup
     ) -> None:
         """
         This test checks if 32 splits can be created when the following values are specified in the configmap
@@ -150,34 +149,34 @@ class TestVSRWeightChangesWithoutReloadManySplits:
         variables-hash-bucket-size: "256"
         variables-hash-max-size: "16384"
 
-        and also that weight-changes-without-reload is set to true
+        and also that weight-changes-dynamic-reload is set to true
         """
         swap_weights_config = (
-            f"{TEST_DATA}/virtual-server-route-weight-changes-without-reload/virtual-server-route-many-splits-swap.yaml"
+            f"{TEST_DATA}/virtual-server-route-weight-changes-dynamic-reload/virtual-server-route-many-splits-swap.yaml"
         )
 
         print("Step 1: Get a response from the backend.")
-        backends32_url = f"{vsr_weight_changes_without_reload_many_splits_setup.backends_url}32"
-        wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_without_reload_many_splits_setup.vs_host)
+        backends32_url = f"{vsr_weight_changes_dynamic_reload_many_splits_setup.backends_url}32"
+        wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host)
         resp = requests.get(
             backends32_url,
-            headers={"host": vsr_weight_changes_without_reload_many_splits_setup.vs_host},
+            headers={"host": vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host},
         )
         assert "backend1" in resp.text
 
         print("Step 2: Apply a configuration that swaps the weights (0 100) to (100 0).")
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
-            vsr_weight_changes_without_reload_many_splits_setup.route.name,
+            vsr_weight_changes_dynamic_reload_many_splits_setup.route.name,
             swap_weights_config,
-            vsr_weight_changes_without_reload_many_splits_setup.route.namespace,
+            vsr_weight_changes_dynamic_reload_many_splits_setup.route.namespace,
         )
 
         print("Step 3: Verify hitting the other backend.")
-        ensure_response_from_backend(backends32_url, vsr_weight_changes_without_reload_many_splits_setup.vs_host)
-        wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_without_reload_many_splits_setup.vs_host)
+        ensure_response_from_backend(backends32_url, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host)
+        wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host)
         resp = requests.get(
             backends32_url,
-            headers={"host": vsr_weight_changes_without_reload_many_splits_setup.vs_host},
+            headers={"host": vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host},
         )
         assert "backend2" in resp.text

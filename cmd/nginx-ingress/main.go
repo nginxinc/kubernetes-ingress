@@ -123,7 +123,7 @@ func main() {
 		SSLRejectHandshake:             sslRejectHandshake,
 		EnableCertManager:              *enableCertManager,
 		DynamicSSLReload:               *enableDynamicSSLReload,
-		WeightChangesWithoutReload:     *enableWeightChangesWithoutReload,
+		DynamicWeightChangesReload:     *enableDynamicWeightChangesReload,
 		StaticSSLPath:                  nginxManager.GetSecretsDir(),
 		NginxVersion:                   nginxVersion,
 	}
@@ -153,7 +153,7 @@ func main() {
 		IsPrometheusEnabled:                 *enablePrometheusMetrics,
 		IsLatencyMetricsEnabled:             *enableLatencyMetrics,
 		IsDynamicSSLReloadEnabled:           *enableDynamicSSLReload,
-		IsWeightChangesWithoutReloadEnabled: *enableWeightChangesWithoutReload,
+		IsDynamicWeightChangesReloadEnabled: *enableDynamicWeightChangesReload,
 		NginxVersion:                        nginxVersion,
 	})
 
@@ -213,7 +213,7 @@ func main() {
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
 		NICVersion:                   version,
-		WeightChangesWithoutReload:   *enableWeightChangesWithoutReload,
+		DynamicWeightChangesReload:   *enableDynamicWeightChangesReload,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	dynamicSSLReloadParam           = "ssl-dynamic-reload"
-	weightChangesWithoutReloadParam = "weight-changes-without-reload"
+	dynamicSSLReloadParam     = "ssl-dynamic-reload"
+	dynamicWeightChangesParam = "weight-changes-dynamic-reload"
 )
 
 var (
@@ -207,7 +207,7 @@ var (
 
 	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
 
-	enableWeightChangesWithoutReload = flag.Bool(weightChangesWithoutReloadParam, false, "Enable changing weights of split clients without reloading NGINX. Requires -nginx-plus")
+	enableDynamicWeightChangesReload = flag.Bool(dynamicWeightChangesParam, false, "Enable changing weights of split clients without reloading NGINX. Requires -nginx-plus")
 
 	startupCheckFn func() error
 )
@@ -284,8 +284,8 @@ func parseFlags() {
 		glog.Fatal("ingresslink and external-service cannot both be set")
 	}
 
-	if *enableWeightChangesWithoutReload && !*nginxPlus {
-		*enableWeightChangesWithoutReload = false
+	if *enableDynamicWeightChangesReload && !*nginxPlus {
+		*enableDynamicWeightChangesReload = false
 	}
 
 	if *agent && !*appProtect {

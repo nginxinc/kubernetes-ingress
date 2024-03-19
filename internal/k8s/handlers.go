@@ -311,7 +311,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			curVs := cur.(*conf_v1.VirtualServer)
 			oldVs := old.(*conf_v1.VirtualServer)
 
-			if lbc.weightChangesWithoutReload {
+			if lbc.weightChangesDynamicReload {
 				var curVsCopy, oldVsCopy conf_v1.VirtualServer
 				err := copier.CopyWithOption(&curVsCopy, curVs, copier.Option{DeepCopy: true})
 				if err != nil {
@@ -329,7 +329,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 				zeroOutVirtualServerSplitWeights(&oldVsCopy)
 
 				if reflect.DeepEqual(oldVsCopy.Spec, curVsCopy.Spec) {
-					lbc.processVSWeightChangesWithoutReload(oldVs, curVs)
+					lbc.processVSWeightChangesDynamicReload(oldVs, curVs)
 					return
 				}
 
@@ -371,7 +371,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
 
-			if lbc.weightChangesWithoutReload {
+			if lbc.weightChangesDynamicReload {
 				var curVsrCopy, oldVsrCopy conf_v1.VirtualServerRoute
 				err := copier.CopyWithOption(&curVsrCopy, curVsr, copier.Option{DeepCopy: true})
 				if err != nil {
@@ -389,7 +389,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 				zeroOutVirtualServerRouteSplitWeights(&oldVsrCopy)
 
 				if reflect.DeepEqual(oldVsrCopy.Spec, curVsrCopy.Spec) {
-					lbc.processVSRWeightChangesWithoutReload(oldVsr, curVsr)
+					lbc.processVSRWeightChangesDynamicReload(oldVsr, curVsr)
 					return
 				}
 

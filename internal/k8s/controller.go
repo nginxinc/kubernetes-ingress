@@ -80,7 +80,7 @@ const (
 
 	typeKeyword                                     = "type"
 	helmReleaseType                                 = "helm.sh/release.v1"
-	splitClientAmountWhenWeightChangesWithoutReload = 101
+	splitClientAmountWhenWeightChangesDynamicReload = 101
 )
 
 var (
@@ -167,7 +167,7 @@ type LoadBalancerController struct {
 	namespaceWatcherController    cache.Controller
 	telemetryCollector            *telemetry.Collector
 	telemetryChan                 chan struct{}
-	weightChangesWithoutReload    bool
+	weightChangesDynamicReload    bool
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -215,7 +215,7 @@ type NewLoadBalancerControllerInput struct {
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
 	NICVersion                   string
-	WeightChangesWithoutReload   bool
+	DynamicWeightChangesReload   bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -248,7 +248,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		isPrometheusEnabled:          input.IsPrometheusEnabled,
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 		isIPV6Disabled:               input.IsIPV6Disabled,
-		weightChangesWithoutReload:   input.WeightChangesWithoutReload,
+		weightChangesDynamicReload:   input.DynamicWeightChangesReload,
 	}
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)
@@ -4284,7 +4284,7 @@ func (lbc *LoadBalancerController) addInternalRouteServer() {
 	}
 }
 
-func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *conf_v1.VirtualServer, vsNew *conf_v1.VirtualServer) {
+func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *conf_v1.VirtualServer, vsNew *conf_v1.VirtualServer) {
 	if lbc.haltIfVSConfigInvalid(vsNew) {
 		return
 	}
@@ -4305,7 +4305,7 @@ func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *co
 						Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, matchNew.Splits[0].Weight, matchNew.Splits[1].Weight),
 					})
 				}
-				splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+				splitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 			} else if len(matchNew.Splits) > 0 {
 				splitClientsIndex++
 			}
@@ -4317,9 +4317,9 @@ func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *co
 					Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
 					Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, routeNew.Splits[0].Weight, routeNew.Splits[1].Weight),
 				})
-				splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+				splitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 			}
-			splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+			splitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 		} else if len(routeNew.Splits) > 0 {
 			splitClientsIndex++
 		}
@@ -4329,7 +4329,7 @@ func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *co
 	}
 }
 
-func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *conf_v1.VirtualServerRoute, vsrNew *conf_v1.VirtualServerRoute) {
+func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *conf_v1.VirtualServerRoute, vsrNew *conf_v1.VirtualServerRoute) {
 	halt, vsEx := lbc.haltIfVSRConfigInvalid(vsrNew)
 	if halt {
 		return
@@ -4353,7 +4353,7 @@ func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *
 						Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, matchNew.Splits[0].Weight, matchNew.Splits[1].Weight),
 					})
 				}
-				splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+				splitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 			} else if len(matchNew.Splits) > 0 {
 				splitClientsIndex++
 			}
@@ -4366,7 +4366,7 @@ func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *
 					Value: variableNamer.GetNameOfKeyOfMapForWeights(splitClientsIndex, routeNew.Splits[0].Weight, routeNew.Splits[1].Weight),
 				})
 			}
-			splitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+			splitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 		} else if len(routeNew.Splits) > 0 {
 			splitClientsIndex++
 		}
@@ -4382,13 +4382,13 @@ func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.Vir
 	for _, r := range vsEx.VirtualServer.Spec.Routes {
 		for _, match := range r.Matches {
 			if len(match.Splits) == 2 {
-				startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+				startingSplitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 			} else if len(match.Splits) > 0 {
 				startingSplitClientsIndex++
 			}
 		}
 		if len(r.Splits) == 2 {
-			startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+			startingSplitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 		} else if len(r.Splits) > 0 {
 			startingSplitClientsIndex++
 		}
@@ -4402,13 +4402,13 @@ func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.Vir
 		for _, r := range vsRoute.Spec.Subroutes {
 			for _, match := range r.Matches {
 				if len(match.Splits) == 2 {
-					startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+					startingSplitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 				} else if len(match.Splits) > 0 {
 					startingSplitClientsIndex++
 				}
 			}
 			if len(r.Splits) == 2 {
-				startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
+				startingSplitClientsIndex += splitClientAmountWhenWeightChangesDynamicReload
 			} else if len(r.Splits) > 0 {
 				startingSplitClientsIndex++
 			}

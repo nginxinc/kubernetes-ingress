@@ -152,7 +152,7 @@ type ConfiguratorParams struct {
 	IsWildcardEnabled                   bool
 	IsLatencyMetricsEnabled             bool
 	IsDynamicSSLReloadEnabled           bool
-	IsWeightChangesWithoutReloadEnabled bool
+	IsDynamicWeightChangesReloadEnabled bool
 	NginxVersion                        nginx.Version
 }
 
@@ -615,7 +615,7 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 		cnf.updateVirtualServerMetricsLabels(virtualServerEx, vsCfg.Upstreams)
 	}
 
-	if cnf.staticCfgParams.WeightChangesWithoutReload && len(vsCfg.TwoWaySplitClients) > 0 {
+	if cnf.staticCfgParams.DynamicWeightChangesReload && len(vsCfg.TwoWaySplitClients) > 0 {
 		for _, splitClient := range vsCfg.TwoWaySplitClients {
 			if len(splitClient.Weights) != 2 {
 				continue
