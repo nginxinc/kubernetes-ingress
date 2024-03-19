@@ -315,13 +315,13 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 				var curVsCopy, oldVsCopy conf_v1.VirtualServer
 				err := copier.CopyWithOption(&curVsCopy, curVs, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServer %v: %v", curVs.Name, err)
+					glog.V(3).Infof("Error copying VirtualServer %v: %v for Dynamic Weight Changes", curVs.Name, err)
 					return
 				}
 
 				err = copier.CopyWithOption(&oldVsCopy, oldVs, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServer %v: %v", oldVs.Name, err)
+					glog.V(3).Infof("Error copying VirtualServer %v: %v for Dynamic Weight Changes", oldVs.Name, err)
 					return
 				}
 
@@ -375,13 +375,13 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 				var curVsrCopy, oldVsrCopy conf_v1.VirtualServerRoute
 				err := copier.CopyWithOption(&curVsrCopy, curVsr, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", curVsr.Name, err)
+					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", curVsr.Name, err)
 					return
 				}
 
 				err = copier.CopyWithOption(&oldVsrCopy, oldVsr, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v", oldVsr.Name, err)
+					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", oldVsr.Name, err)
 					return
 				}
 
