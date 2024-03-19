@@ -285,6 +285,10 @@ server {
 		proxy_read_timeout {{$location.ProxyReadTimeout}};
 		proxy_send_timeout {{$location.ProxySendTimeout}};
 		client_max_body_size {{$location.ClientMaxBodySize}};
+        {{- $proxySetHeaders := index $.Ingress.Annotations "nginx.org/proxy-set-headers" }}
+        {{- if $proxySetHeaders }}
+        proxy_set_header {{ $proxySetHeaders }};
+        {{- end }}
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
