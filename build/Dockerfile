@@ -8,7 +8,7 @@ ARG NGINX_AGENT=false
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM opentracing/nginx-opentracing:nginx-1.25.4@sha256:2c40c39be2946c080ddb0a43cfdcb856c320ec6fcc9a9126d6f8eafa452787a6 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.4@sha256:435e34daea58cbd4d552c9ba5c6e78b084276fc747f092f4e31d7ed39274b2d7 as opentracing-lib
 FROM opentracing/nginx-opentracing:nginx-1.25.4-alpine@sha256:682076ac800d0703bf72520116e6a477bb0587551b91882d82d9735e187fcc9f as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 as alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.1.2-alpine3.19@sha256:67595f52053f328fd731bf493d8dc72c1fd956e5f1a2f9a579cc78c5f5f50daa as alpine-fips-3.19
@@ -27,7 +27,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.25.4@sha256:ef1b8ca5417494c4eba0c5b3203c5f3f01ce9f288e2eb246b8fa9cddc7571b4c AS debian
+FROM nginx:1.25.4@sha256:6db391d1c0cfb30588ba0bf72ea999404f2764febf0f1f196acd5867ac7efa7e AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
