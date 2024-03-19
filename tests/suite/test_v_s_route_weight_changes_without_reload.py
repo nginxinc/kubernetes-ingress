@@ -177,7 +177,6 @@ class TestVSRWeightChangesWithReloadCondition:
         print("Step 5: Verify reload behavior based on the weight-changes-without-reload flag.")
         count_after = get_reload_count(vsr_weight_changes_without_reload_setup.metrics_url)
         print(f"Reload count after: {count_after}")
-
         if expect_reload:
             assert (
                 count_before < count_after

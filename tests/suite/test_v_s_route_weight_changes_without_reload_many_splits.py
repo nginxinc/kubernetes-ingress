@@ -165,7 +165,7 @@ class TestVSRWeightChangesWithoutReloadManySplits:
         )
         assert "backend1" in resp.text
 
-        print("Step 3: Apply a configuration that swaps the weights (0 100) to (100 0).")
+        print("Step 2: Apply a configuration that swaps the weights (0 100) to (100 0).")
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
             vsr_weight_changes_without_reload_many_splits_setup.route.name,
@@ -173,7 +173,7 @@ class TestVSRWeightChangesWithoutReloadManySplits:
             vsr_weight_changes_without_reload_many_splits_setup.route.namespace,
         )
 
-        print("Step 4: Verify hitting the other backend.")
+        print("Step 3: Verify hitting the other backend.")
         ensure_response_from_backend(backends32_url, vsr_weight_changes_without_reload_many_splits_setup.vs_host)
         wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_without_reload_many_splits_setup.vs_host)
         resp = requests.get(

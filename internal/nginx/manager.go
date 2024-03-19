@@ -656,7 +656,7 @@ func (lm *LocalManager) tryAddKeyValPair(zoneName, key, value string) {
 	if err != nil {
 		glog.Warningf("Failed to add key value pair: %v", err)
 	} else {
-		glog.Infof("Successfully added key value pair for key: %v", key)
+		glog.Infof("Added key value pair for key: %v", key)
 	}
 }
 
@@ -665,7 +665,7 @@ func (lm *LocalManager) tryModifyKeyValPair(zoneName, key, value string) {
 	if err != nil {
 		glog.Warningf("Failed to modify key value pair: %v", err)
 	} else {
-		glog.Infof("Successfully modified key value pair for key: %v", key)
+		glog.Infof("Modified key value pair for key: %v", key)
 	}
 }
 

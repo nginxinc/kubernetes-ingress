@@ -4330,21 +4330,16 @@ func (lbc *LoadBalancerController) processVSWeightChangesWithoutReload(vsOld *co
 }
 
 func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *conf_v1.VirtualServerRoute, vsrNew *conf_v1.VirtualServerRoute) {
-	if lbc.haltIfVSRConfigInvalid(vsrNew) {
+	halt, vsEx := lbc.haltIfVSRConfigInvalid(vsrNew)
+	if halt {
 		return
 	}
 
 	var weightUpdates []configs.WeightUpdate
-	vs, exists := lbc.getVirtualServerByVirtualServerRoute(vsrNew)
-	if !exists {
-		// If the VirtualServerRoute does not have a VirtualServer (can happen if an invalid state is applied),
-		// we should add it to the sync queue to be processed normally.
-		lbc.AddSyncQueue(vsrNew)
-		return
-	}
-	splitClientsIndex := lbc.getStartingSplitClientsIndex(vsrNew, vs)
 
-	variableNamer := configs.NewVSVariableNamer(vs)
+	splitClientsIndex := lbc.getStartingSplitClientsIndex(vsrNew, vsEx)
+
+	variableNamer := configs.NewVSVariableNamer(vsEx.VirtualServer)
 
 	for i, routeNew := range vsrNew.Spec.Subroutes {
 		routeOld := vsrOld.Spec.Subroutes[i]
@@ -4381,29 +4376,10 @@ func (lbc *LoadBalancerController) processVSRWeightChangesWithoutReload(vsrOld *
 	}
 }
 
-func (lbc *LoadBalancerController) getVSExForVS(vs *conf_v1.VirtualServer) *configs.VirtualServerEx {
-	resources := lbc.configuration.GetResources()
-
-	resourceExes := lbc.createExtendedResources(resources)
-	for _, vsEx := range resourceExes.VirtualServerExes {
-		if vsEx.VirtualServer.Name == vs.Name {
-			return vsEx
-		}
-	}
-	return nil
-}
-
-func (lbc *LoadBalancerController) getVirtualServerByVirtualServerRoute(vsr *conf_v1.VirtualServerRoute) (*conf_v1.VirtualServer, bool) {
-	virtualServerID := vsr.Status.ReferencedBy
-
-	vs, exists := lbc.configuration.virtualServers[virtualServerID]
-	return vs, exists
-}
-
-func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.VirtualServerRoute, vs *conf_v1.VirtualServer) int {
+func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.VirtualServerRoute, vsEx *configs.VirtualServerEx) int {
 	var startingSplitClientsIndex int
 
-	for _, r := range vs.Spec.Routes {
+	for _, r := range vsEx.VirtualServer.Spec.Routes {
 		for _, match := range r.Matches {
 			if len(match.Splits) == 2 {
 				startingSplitClientsIndex += splitClientAmountWhenWeightChangesWithoutReload
@@ -4419,9 +4395,7 @@ func (lbc *LoadBalancerController) getStartingSplitClientsIndex(vsr *conf_v1.Vir
 
 	}
 
-	virtualserverEx := lbc.getVSExForVS(vs)
-
-	for _, vsRoute := range virtualserverEx.VirtualServerRoutes {
+	for _, vsRoute := range vsEx.VirtualServerRoutes {
 		if vsRoute.Name == vsr.Name {
 			return startingSplitClientsIndex
 		}
@@ -4448,50 +4422,77 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 	lbc.configuration.lock.Lock()
 	defer lbc.configuration.lock.Unlock()
 	key := getResourceKey(&vsNew.ObjectMeta)
-	validationErr := lbc.configuration.virtualServerValidator.ValidateVirtualServer(vsNew)
 
-	if validationErr != nil {
+	validationError := lbc.configuration.virtualServerValidator.ValidateVirtualServer(vsNew)
+	if validationError != nil {
 		delete(lbc.configuration.virtualServers, key)
+	} else {
+		lbc.configuration.virtualServers[key] = vsNew
+	}
 
-		problems := []ConfigurationProblem{
-			{
-				Object:  vsNew,
-				IsError: true,
-				Reason:  "Rejected",
-				Message: fmt.Sprintf("VirtualServer %s was rejected with error: %s", key, validationErr.Error()),
-			},
-		}
+	changes, problems := lbc.configuration.rebuildHosts()
 
+	if len(problems) > 0 {
 		lbc.processProblems(problems)
 		return true
+	}
+
+	if len(changes) == 0 {
+		return true
+	}
+
+	for _, c := range changes {
+		if c.Op == AddOrUpdate {
+			switch impl := c.Resource.(type) {
+			case *VirtualServerConfiguration:
+				lbc.updateVirtualServerStatusAndEvents(impl, configs.Warnings{}, nil)
+			}
+		}
 	}
 
 	lbc.configuration.virtualServers[key] = vsNew
 	return false
 }
 
-func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.VirtualServerRoute) bool {
+func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.VirtualServerRoute) (bool, *configs.VirtualServerEx) {
 	lbc.configuration.lock.Lock()
 	defer lbc.configuration.lock.Unlock()
 	key := getResourceKey(&vsrNew.ObjectMeta)
-	validationErr := lbc.configuration.virtualServerValidator.ValidateVirtualServerRoute(vsrNew)
+	var vsEx *configs.VirtualServerEx
 
-	if validationErr != nil {
+	validationError := lbc.configuration.virtualServerValidator.ValidateVirtualServerRoute(vsrNew)
+	if validationError != nil {
 		delete(lbc.configuration.virtualServerRoutes, key)
+	} else {
+		lbc.configuration.virtualServerRoutes[key] = vsrNew
+	}
 
-		problems := []ConfigurationProblem{
-			{
-				Object:  vsrNew,
-				IsError: true,
-				Reason:  "Rejected",
-				Message: fmt.Sprintf("VirtualServerRoute %s was rejected with error: %s", key, validationErr.Error()),
-			},
-		}
+	changes, problems := lbc.configuration.rebuildHosts()
 
+	if len(problems) > 0 {
 		lbc.processProblems(problems)
-		return true
+		return true, nil
+	}
+
+	if len(changes) == 0 {
+		return true, nil
+	}
+
+	for _, c := range changes {
+		if c.Op == AddOrUpdate {
+			switch impl := c.Resource.(type) {
+			case *VirtualServerConfiguration:
+				vsEx = lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes)
+				lbc.updateVirtualServerStatusAndEvents(impl, configs.Warnings{}, nil)
+			}
+		}
+	}
+
+	if vsEx == nil {
+		glog.V(3).Infof("VirtualServerRoute %s does not have a corresponding VirtualServer", vsrNew.Name)
+		return true, nil
 	}
 
 	lbc.configuration.virtualServerRoutes[key] = vsrNew
-	return false
+	return false, vsEx
 }
