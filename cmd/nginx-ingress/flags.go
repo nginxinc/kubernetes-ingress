@@ -285,6 +285,7 @@ func parseFlags() {
 	}
 
 	if *enableDynamicWeightChangesReload && !*nginxPlus {
+		glog.Warning("weight-changes-dynamic-reload flag support is for NGINX Plus, Dynamic Weight Changes will not be enabled")
 		*enableDynamicWeightChangesReload = false
 	}
 
