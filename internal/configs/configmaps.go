@@ -66,6 +66,10 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.ProxyPassHeaders = proxyPassHeaders
 	}
 
+	if proxySetHeaders, exists := GetMapKeyAsStringSlice(cfgm.Data, "proxy-set-headers", cfgm, ","); exists {
+		cfgParams.ProxySetHeaders = proxySetHeaders
+	}
+
 	if clientMaxBodySize, exists := cfgm.Data["client-max-body-size"]; exists {
 		cfgParams.ClientMaxBodySize = clientMaxBodySize
 	}

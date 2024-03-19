@@ -164,6 +164,7 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 			RealIPRecursive:       cfgParams.RealIPRecursive,
 			ProxyHideHeaders:      cfgParams.ProxyHideHeaders,
 			ProxyPassHeaders:      cfgParams.ProxyPassHeaders,
+			ProxySetHeaders:       cfgParams.ProxySetHeaders,
 			ServerSnippets:        cfgParams.ServerSnippets,
 			Ports:                 cfgParams.Ports,
 			SSLPorts:              cfgParams.SSLPorts,

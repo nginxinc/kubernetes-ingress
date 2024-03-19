@@ -95,6 +95,7 @@ type Server struct {
 	HSTSBehindProxy       bool
 	ProxyHideHeaders      []string
 	ProxyPassHeaders      []string
+	ProxySetHeaders       []string
 
 	HealthChecks map[string]HealthCheck
 

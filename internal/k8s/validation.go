@@ -32,6 +32,7 @@ const (
 	proxySendTimeoutAnnotation            = "nginx.org/proxy-send-timeout"
 	proxyHideHeadersAnnotation            = "nginx.org/proxy-hide-headers"
 	proxyPassHeadersAnnotation            = "nginx.org/proxy-pass-headers" // #nosec G101
+	proxySetHeadersAnnotation             = "nginx.org/proxy-set-headers"  // #nosec G101
 	clientMaxBodySizeAnnotation           = "nginx.org/client-max-body-size"
 	redirectToHTTPSAnnotation             = "nginx.org/redirect-to-https"
 	sslRedirectAnnotation                 = "ingress.kubernetes.io/ssl-redirect"
@@ -166,6 +167,9 @@ var (
 			validateHTTPHeadersAnnotation,
 		},
 		proxyPassHeadersAnnotation: {
+			validateHTTPHeadersAnnotation,
+		},
+		proxySetHeadersAnnotation: {
 			validateHTTPHeadersAnnotation,
 		},
 		clientMaxBodySizeAnnotation: {
