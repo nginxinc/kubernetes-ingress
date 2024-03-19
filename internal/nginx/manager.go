@@ -96,6 +96,8 @@ type Manager interface {
 	AgentQuit()
 	AgentVersion() string
 	GetSecretsDir() string
+	UpsertSplitClientsKeyVal(zoneName string, key string, value string)
+	DeleteKeyValStateFiles(virtualServerName string)
 }
 
 // LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
@@ -104,6 +106,7 @@ type LocalManager struct {
 	confdPath                    string
 	streamConfdPath              string
 	secretsPath                  string
+	stateFilesPath               string
 	mainConfFilename             string
 	configVersionFilename        string
 	debug                        bool
@@ -132,6 +135,7 @@ func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector
 		confdPath:                   path.Join(confPath, "conf.d"),
 		streamConfdPath:             path.Join(confPath, "stream-conf.d"),
 		secretsPath:                 path.Join(confPath, "secrets"),
+		stateFilesPath:              path.Join(confPath, "state_files"),
 		dhparamFilename:             path.Join(confPath, "secrets", "dhparam.pem"),
 		mainConfFilename:            path.Join(confPath, "nginx.conf"),
 		configVersionFilename:       path.Join(confPath, "config-version.conf"),
@@ -627,4 +631,55 @@ func configContentsChanged(filename string, content []byte) bool {
 		}
 	}
 	return true
+}
+
+// UpsertSplitClientsKeyVal upserts a key value pair in the split clients zone.
+func (lm *LocalManager) UpsertSplitClientsKeyVal(zoneName, key, value string) {
+	key = strings.Trim(key, "\"")
+	value = strings.Trim(value, "\"")
+
+	keyValPairs, err := lm.plusClient.GetKeyValPairs(zoneName)
+	if err != nil {
+		lm.tryAddKeyValPair(zoneName, key, value)
+		return
+	}
+
+	if _, ok := keyValPairs[key]; ok {
+		lm.tryModifyKeyValPair(zoneName, key, value)
+	} else {
+		lm.tryAddKeyValPair(zoneName, key, value)
+	}
+}
+
+func (lm *LocalManager) tryAddKeyValPair(zoneName, key, value string) {
+	err := lm.plusClient.AddKeyValPair(zoneName, key, value)
+	if err != nil {
+		glog.Warningf("Failed to add key value pair: %v", err)
+	} else {
+		glog.Infof("Added key value pair for key: %v", key)
+	}
+}
+
+func (lm *LocalManager) tryModifyKeyValPair(zoneName, key, value string) {
+	err := lm.plusClient.ModifyKeyValPair(zoneName, key, value)
+	if err != nil {
+		glog.Warningf("Failed to modify key value pair: %v", err)
+	} else {
+		glog.Infof("Modified key value pair for key: %v", key)
+	}
+}
+
+// DeleteKeyValStateFiles deletes the state files in the /etc/nginx/state_files folder for the given virtual server.
+func (lm *LocalManager) DeleteKeyValStateFiles(virtualServerName string) {
+	files, err := os.ReadDir(lm.stateFilesPath)
+	if err != nil {
+		glog.Warningf("Failed to read the state files directory %s: %v", lm.stateFilesPath, err)
+	}
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), virtualServerName+"_keyval_zone_split_clients") {
+			if err := os.Remove(path.Join(lm.stateFilesPath, file.Name())); err != nil {
+				glog.Warningf("Failed to delete the state file %s: %v", file.Name(), err)
+			}
+		}
+	}
 }

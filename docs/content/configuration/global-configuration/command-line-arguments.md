@@ -536,6 +536,20 @@ The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
 
+### -weight-changes-dynamic-reload
+
+Enables the ability to change the weight distribution of two-way split clients without reloading NGINX.
+
+Requires [-nginx-plus](#cmdoption-nginx-plus).
+
+Using this feature may require increasing `map_hash_bucket_size`, `map_hash_max_size`, `variable_hash_bucket_size`, and `variable_hash_max_size` in the ConfigMap based on the number of two-way splits.
+
+The default value is `false`.
+
+- If the argument is set, but `nginx-plus` is set to false, NGINX Ingress Controller will ignore the flag.
+
+<a name="cmdoption-weight-changes-dynamic-reload"></a>
+
 ### -enable-telemetry-reporting
 
 Enable gathering and reporting of software telemetry.

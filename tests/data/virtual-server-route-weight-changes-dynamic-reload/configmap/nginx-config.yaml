@@ -1,0 +1,10 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  map-hash-bucket-size: "512"
+  map-hash-max-size: "8192"
+  variables-hash-bucket-size: "256"
+  variables-hash-max-size: "16384"
