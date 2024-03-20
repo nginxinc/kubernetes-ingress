@@ -44,7 +44,7 @@ jobs:
       - name: Branch
         id: branch
         run: |
-          version=${{ github.event.inputs.version }}
+          version=${{ github.event.inputs.new_version }}
           version=${version%.*}
           echo "branch=release-$version" >> $GITHUB_OUTPUT
 
