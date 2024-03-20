@@ -10,15 +10,29 @@ docs: "DOCS-616"
 
 26 Mar 2024
 
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
 ### <i class="fa-solid fa-rocket"></i> Features
+[4896](https://github.com/nginxinc/kubernetes-ingress/pull/4896), [5095](https://github.com/nginxinc/kubernetes-ingress/pull/5095), [5147](https://github.com/nginxinc/kubernetes-ingress/pull/5147), [5155](https://github.com/nginxinc/kubernetes-ingress/pull/5155), [5170](https://github.com/nginxinc/kubernetes-ingress/pull/5170), [5176](https://github.com/nginxinc/kubernetes-ingress/pull/5176), [5217](https://github.com/nginxinc/kubernetes-ingress/pull/5217), [5245](https://github.com/nginxinc/kubernetes-ingress/pull/5245), [5237](https://github.com/nginxinc/kubernetes-ingress/pull/5237), [5256](https://github.com/nginxinc/kubernetes-ingress/pull/5256), [5167](https://github.com/nginxinc/kubernetes-ingress/pull/5167) & [5261](https://github.com/nginxinc/kubernetes-ingress/pull/5261) Export Telemetry data to XCDF
+[5179](https://github.com/nginxinc/kubernetes-ingress/pull/5179) & [5051](https://github.com/nginxinc/kubernetes-ingress/pull/5051) Add NIM Security Dashboard integration for App Protect WAF security violations
+[5212](https://github.com/nginxinc/kubernetes-ingress/pull/5212) Weight changes Dynamic Reload
+[4862](https://github.com/nginxinc/kubernetes-ingress/pull/4862) Add use-cluster-ip annotation for ingress resources
+[4660](https://github.com/nginxinc/kubernetes-ingress/pull/4660) Add annotations for controlling request rate limiting
+[5083](https://github.com/nginxinc/kubernetes-ingress/pull/5083) Update default values for keepalive-requests and keepalive-timeout
+[5084](https://github.com/nginxinc/kubernetes-ingress/pull/5084) Allow securityContext and podSecurityContext to be configurable via helm parameters
+[5199](https://github.com/nginxinc/kubernetes-ingress/pull/5199) Update zone size for transportserver resource
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
+[5211](https://github.com/nginxinc/kubernetes-ingress/pull/5211) Move set above rewrite to fix uninitialized variable
+[5175](https://github.com/nginxinc/kubernetes-ingress/pull/5175) Initialize `stopCh` channel for ExternalDNS
+[5053](https://github.com/nginxinc/kubernetes-ingress/pull/5053) Ensure `backup` server is removed from upstreams when the Backup Service is deleted
+[5211](https://github.com/nginxinc/kubernetes-ingress/pull/5211) Move set above rewrite to fix uninitialized variable
 
 ### <i class="fa-solid fa-box"></i> Helm Chart
+[5159](https://github.com/nginxinc/kubernetes-ingress/pull/5159) Refactor volumes and volumeMounts to common helpers
+[5179](https://github.com/nginxinc/kubernetes-ingress/pull/5179) Move common pod label definitions to helpers
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+[4803](https://github.com/nginxinc/kubernetes-ingress/pull/4803), [4846](https://github.com/nginxinc/kubernetes-ingress/pull/4846), [4873](https://github.com/nginxinc/kubernetes-ingress/pull/4873), [4905](https://github.com/nginxinc/kubernetes-ingress/pull/4905), [5098](https://github.com/nginxinc/kubernetes-ingress/pull/5098), [5108](https://github.com/nginxinc/kubernetes-ingress/pull/5108), [5125](https://github.com/nginxinc/kubernetes-ingress/pull/5125), [5132](https://github.com/nginxinc/kubernetes-ingress/pull/5132), [5207](https://github.com/nginxinc/kubernetes-ingress/pull/5207), [5234](https://github.com/nginxinc/kubernetes-ingress/pull/5234), [5267](https://github.com/nginxinc/kubernetes-ingress/pull/5267), [5272](https://github.com/nginxinc/kubernetes-ingress/pull/5272) & [5218](https://github.com/nginxinc/kubernetes-ingress/pull/5218) Go Dependency updates
+[5208](https://github.com/nginxinc/kubernetes-ingress/pull/5208) Bump Go version to 1.22.1
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
