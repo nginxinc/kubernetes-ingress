@@ -1417,12 +1417,28 @@
             true
           ]
         },
-        "enableTelemetryReporting": {
+        "telemetryReporting": {
+          "type": "object",
+          "default": {},
+          "title": "Configure telemetry reporting options",
+          "required": [],
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": true,
+              "title": "Enable telemetry reporting",
+              "examples": [
+                true
+              ]
+            }
+          }
+        },
+        "enableWeightChangesDynamicReload": {
           "type": "boolean",
-          "default": true,
-          "title": "Enable telemetry reporting",
+          "default": false,
+          "title": "Enables weight changes without reloading for NGINX Plus",
           "examples": [
-            true
+            false
           ]
         }
       },

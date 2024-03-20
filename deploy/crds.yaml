@@ -389,6 +389,8 @@ spec:
                   securityLog:
                     description: SecurityLog defines the security log of a WAF policy.
                     properties:
+                      apLogBundle:
+                        type: string
                       apLogConf:
                         type: string
                       enable:
@@ -400,6 +402,8 @@ spec:
                     items:
                       description: SecurityLog defines the security log of a WAF policy.
                       properties:
+                        apLogBundle:
+                          type: string
                         apLogConf:
                           type: string
                         enable:
