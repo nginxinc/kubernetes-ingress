@@ -11,6 +11,7 @@ on:
     branches:
       - main
       - release-*
+  merge_group:
   schedule:
     - cron: "0 4 * * *" # run every day at 04:00 UTC
   workflow_dispatch:

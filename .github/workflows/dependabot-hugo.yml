@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "docs/go.mod"
+  merge_group:
 
 permissions:
   contents: read
