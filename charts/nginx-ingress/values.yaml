@@ -492,6 +492,11 @@ controller:
     ## Enable telemetry reporting
     enable: true
 
+  ## Allows weight adjustments without reloading the NGINX Configuration for two-way splits in NGINX Plus.
+  ## May require increasing map_hash_bucket_size, map_hash_max_size,
+  ## variable_hash_bucket_size, and variable_hash_max_size in the ConfigMap based on the number of two-way splits.
+  enableWeightChangesDynamicReload: false
+
 rbac:
   ## Configures RBAC.
   create: true

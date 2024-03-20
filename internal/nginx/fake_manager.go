@@ -193,3 +193,13 @@ func (*FakeManager) AgentVersion() string {
 func (fm *FakeManager) GetSecretsDir() string {
 	return fm.secretsPath
 }
+
+// UpsertSplitClientsKeyVal is a fake implementation of UpsertSplitClientsKeyVal
+func (fm *FakeManager) UpsertSplitClientsKeyVal(_ string, _ string, _ string) {
+	glog.V(3).Infof("Creating split clients key")
+}
+
+// DeleteKeyValStateFiles is a fake implementation of DeleteKeyValStateFiles
+func (fm *FakeManager) DeleteKeyValStateFiles(_ string) {
+	glog.V(3).Infof("Deleting keyval state files")
+}
