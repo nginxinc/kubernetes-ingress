@@ -3,14 +3,22 @@ name: Release PR
 on:
   workflow_dispatch:
     inputs:
-      version:
+      current_version:
+        description: "Current version to replace"
+        required: true
+        default: "3.3.2"
+      new_version:
         description: "Version to release"
         required: true
-        default: "0.0.0"
-      helm_version:
+        default: "3.4.3"
+      current_helm_version:
+        description: "Current helm version to replace"
+        required: true
+        default: "1.0.2"
+      new_helm_version:
         description: "Helm version to release"
         required: true
-        default: "0.0.0"
+        default: "1.1.3"
       k8s_versions:
         description: "Kubernetes versions this release has been tested on"
         required: true
@@ -48,16 +56,16 @@ jobs:
 
       - name: Replace
         run: |
-          .github/scripts/release-version-update.sh ${{ github.event.inputs.version }} ${{ github.event.inputs.helm_version }}
-          .github/scripts/release-notes-update.sh ${{ github.event.inputs.version }} ${{ github.event.inputs.helm_version }} "${{ github.event.inputs.k8s_versions }}" "${{ github.event.inputs.release_date }}"
+          .github/scripts/release-version-update.sh ${{ github.event.inputs.current_version }} ${{ github.event.inputs.current_helm_version }} ${{ github.event.inputs.new_version }} ${{ github.event.inputs.new_helm_version }}
+          .github/scripts/release-notes-update.sh ${{ github.event.inputs.new_version }} ${{ github.event.inputs.new_helm_version }} "${{ github.event.inputs.k8s_versions }}" "${{ github.event.inputs.release_date }}"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@70a41aba780001da0a30141984ae2a0c95d8704e # v6.0.2
         with:
           token: ${{ secrets.NGINX_PAT }}
-          commit-message: Release ${{ github.event.inputs.version }}
-          title: Release ${{ github.event.inputs.version }}
-          branch: docs/release-${{ github.event.inputs.version }}
+          commit-message: Release ${{ github.event.inputs.new_version }}
+          title: Release ${{ github.event.inputs.new_version }}
+          branch: docs/release-${{ github.event.inputs.new_version }}
           author: nginx-bot <integrations@nginx.com>
           body: |
-            This automated PR updates the docs for ${{ github.event.inputs.version }} release.
+            This automated PR updates the docs for ${{ github.event.inputs.new_version }} release.
