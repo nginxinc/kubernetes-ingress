@@ -84,7 +84,7 @@ spec:
     name: nginx-plus-ingress
 ```
 
-The `imagePullSecrets` and `containers.image` lines represent the Kubernetes secret, as well as the registry and version of the NGINX Ingress Controller we are going to deploy.
+The `imagePullSecrets` and `containers.image` lines represent the Kubernetes secret, as well as the registry and version of NGINX Ingress Controller we are going to deploy.
 
 ---
 

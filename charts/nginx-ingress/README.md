@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This chart deploys the NGINX Ingress Controller in your Kubernetes cluster.
+This chart deploys NGINX Ingress Controller in your Kubernetes cluster.
 
 ## Prerequisites
 

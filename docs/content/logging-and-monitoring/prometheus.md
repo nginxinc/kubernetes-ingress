@@ -43,7 +43,7 @@ If you're using *Helm* to install the Ingress Controller, to enable Prometheus m
 ### Using ServiceMonitor
 
 When deploying with *Helm*, you can deploy a `Service` and `ServiceMonitor` resource using the `prometheus.service.*` and `prometheus.serviceMonitor.*` parameters.
-When these resources are deployed, Prometheus metrics exposed by the NGINX Ingress Controller can be captured and enumerated using a `Prometheus` resource alongside a Prometheus Operator deployment.
+When these resources are deployed, Prometheus metrics exposed by NGINX Ingress Controller can be captured and enumerated using a `Prometheus` resource alongside a Prometheus Operator deployment.
 
 To view metrics captured this way, the following is required:
 * The latest ServiceMonitor CRD from the [prometheus-operator](https://github.com/prometheus-operator/prometheus-operator) repository:
