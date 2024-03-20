@@ -198,9 +198,13 @@ server {
 		proxy_send_timeout {{$location.ProxySendTimeout}};
 		client_max_body_size {{$location.ClientMaxBodySize}};
 
+        {{- range $location := $server.Locations }}
         {{- $proxySetHeaders := index $.Ingress.Annotations "nginx.org/proxy-set-headers" }}
         {{- if $proxySetHeaders }}
-        proxy_set_header {{ $proxySetHeaders }};
+        {{- range $header := split $proxySetHeaders "," }}
+        proxy_set_header {{ trim $header }};
+        {{- end }}
+        {{- end }}
         {{- end }}
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;

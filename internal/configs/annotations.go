@@ -2,7 +2,9 @@ package configs
 
 import (
 	"fmt"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"slices"
+	"strings"
 
 	"github.com/golang/glog"
 )
@@ -214,7 +216,15 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 	}
 
 	if proxySetHeaders, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-set-headers", ingEx.Ingress, ","); exists {
-		cfgParams.ProxySetHeaders = proxySetHeaders
+		var headers []version2.Header
+		for _, header := range proxySetHeaders {
+			parts := strings.Split(header, ",")
+			name := strings.TrimSpace(parts[0])
+			name2 := strings.TrimSpace(parts[1])
+			headers = append(headers, version2.Header{Name: name, Value: ""})
+			headers = append(headers, version2.Header{Name: name2, Value: ""})
+		}
+		cfgParams.ProxySetHeaders = headers
 	}
 
 	if clientMaxBodySize, exists := ingEx.Ingress.Annotations["nginx.org/client-max-body-size"]; exists {
