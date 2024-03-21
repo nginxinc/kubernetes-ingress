@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"strings"
 
 	"github.com/golang/glog"
@@ -67,7 +68,17 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 	}
 
 	if proxySetHeaders, exists := GetMapKeyAsStringSlice(cfgm.Data, "proxy-set-headers", cfgm, ","); exists {
-		cfgParams.ProxySetHeaders = proxySetHeaders
+		var headers []version2.Header
+		for _, headerAndValue := range proxySetHeaders {
+			parts := strings.SplitN(headerAndValue, " ", 2)
+			name := strings.TrimSpace(parts[0])
+			var value string
+			if len(parts) > 1 {
+				value = strings.TrimSpace(parts[1])
+			}
+			headers = append(headers, version2.Header{Name: name, Value: value})
+		}
+		cfgParams.ProxySetHeaders = headers
 	}
 
 	if clientMaxBodySize, exists := cfgm.Data["client-max-body-size"]; exists {

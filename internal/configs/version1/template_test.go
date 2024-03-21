@@ -2524,7 +2524,7 @@ var (
 			Name:      "cafe-ingress",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC test,ABC"},
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,ABC"},
 		},
 	}
 )
