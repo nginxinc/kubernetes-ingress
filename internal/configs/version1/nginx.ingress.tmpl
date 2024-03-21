@@ -203,8 +203,13 @@ server {
         {{- $proxySetHeaders := or (index $.Ingress.Annotations "nginx.org/proxy-set-headers") "" }}
         {{- if $proxySetHeaders }}
         {{- range $header := split $proxySetHeaders "," }}
-        {{- if ne $header "" }}
-        proxy_set_header {{ $header }} $http_{{ toLower $header }};{{- end }}
+        {{- $headerParts := split $header " " }}
+        {{- $headerName := index $headerParts 0 }}
+        {{- if ne $headerName "" }}
+        {{- if gt (len $headerParts) 1 }}
+        proxy_set_header {{ trim $headerName }} "{{ trim (index $headerParts 1) }}";{{- else }}
+        proxy_set_header {{ trim $headerName }} $http_{{ toLower (trim (index $headerParts 0)) }};{{- end }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- end }}

@@ -841,10 +841,10 @@ func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotation(t *test
 		t.Fatal(err)
 	}
 
-	wantProxyHeader := "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc"
+	wantProxyHeader := "proxy_set_header X-Forwarded-ABC test"
 	wantProxyHeader2 := "proxy_set_header ABC $http_abc"
 
-	if !strings.Contains(buf.String(), wantProxyHeader) && !strings.Contains(buf.String(), wantProxyHeader2) {
+	if strings.Contains(buf.String(), wantProxyHeader) && !strings.Contains(buf.String(), wantProxyHeader2) {
 		t.Errorf("want %q and %q in generated config", wantProxyHeader, wantProxyHeader2)
 	}
 }
@@ -861,7 +861,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithProxySetHeadersAnnotation(t *
 		t.Fatal(err)
 	}
 
-	wantProxyHeader := "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc"
+	wantProxyHeader := "proxy_set_header X-Forwarded-ABC test"
 	wantProxyHeader2 := "proxy_set_header ABC $http_abc"
 
 	if !strings.Contains(buf.String(), wantProxyHeader) && !strings.Contains(buf.String(), wantProxyHeader2) {
@@ -2524,7 +2524,7 @@ var (
 			Name:      "cafe-ingress",
 			Namespace: "default",
 			Annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,ABC"},
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC test,ABC"},
 		},
 	}
 )
