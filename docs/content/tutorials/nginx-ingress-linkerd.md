@@ -137,7 +137,7 @@ NAME                       READY   STATUS    RESTARTS   AGE
 httpbin-66df5bfbc9-ffhdp   2/2     Running   0          67s
 ```
 
-Next, we are going to create `virtualserver` resource for the NGINX Ingress controller.
+Next, we are going to create `virtualserver` resource for NGINX Ingress controller.
 
 ```yaml
 apiVersion: k8s.nginx.org/v1

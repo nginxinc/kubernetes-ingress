@@ -1033,7 +1033,7 @@
         },
         {
           "datasource": "Prometheus",
-          "description": "Current State of the NGINX Ingress Controller.",
+          "description": "Current State of NGINX Ingress Controller.",
           "fieldConfig": {
             "defaults": {
               "custom": {},
