@@ -205,10 +205,11 @@ server {
         {{- range $header := split $proxySetHeaders "," }}
         {{- $headerParts := split $header " " }}
         {{- $headerName := index $headerParts 0 }}
+        {{- $headerValue := (trim (index $headerParts 0)) }}
         {{- if ne $headerName "" }}
         {{- if gt (len $headerParts) 1 }}
         proxy_set_header {{ trim $headerName }} "{{ trim (index $headerParts 1) }}";{{- else }}
-        proxy_set_header {{ trim $headerName }} $http_{{ toLower (trim (index $headerParts 0)) }};{{- end }}
+        proxy_set_header {{ trim $headerName }} $http_{{ toLower (replace $headerValue "-" "_") }};{{- end }}
         {{- end }}
         {{- end }}
         {{- end }}
