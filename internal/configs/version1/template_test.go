@@ -851,6 +851,28 @@ func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotation(t *test
 	}
 }
 
+func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithTwoHeaders(t *testing.T) {
+	tmpl := newNGINXIngressTmpl(t)
+	buf := &bytes.Buffer{}
+	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
+
+	ingressCfg.Ingress.Annotations = map[string]string{
+		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC!",
+	}
+
+	err := tmpl.Execute(buf, ingressCfg)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantProxyHeader := "proxy_set_header BVC! $http_bvc!;"
+
+	if !strings.Contains(buf.String(), wantProxyHeader) {
+		t.Errorf("want %q in generated config", wantProxyHeader)
+	}
+}
+
 func TestExecuteTemplate_ForIngressForNGINXPlusWithProxySetHeadersAnnotation(t *testing.T) {
 	t.Parallel()
 
