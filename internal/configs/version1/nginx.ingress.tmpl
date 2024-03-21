@@ -202,7 +202,7 @@ server {
         {{- $proxySetHeaders := index $.Ingress.Annotations "nginx.org/proxy-set-headers" }}
         {{- if $proxySetHeaders }}
         {{- range $header := split $proxySetHeaders "," }}
-        proxy_set_header {{ trim $header }};
+        proxy_set_header {{ $header }};
         {{- end }}
         {{- end }}
         {{- end }}

@@ -220,9 +220,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		for _, header := range proxySetHeaders {
 			parts := strings.Split(header, ",")
 			name := strings.TrimSpace(parts[0])
-			name2 := strings.TrimSpace(parts[1])
 			headers = append(headers, version2.Header{Name: name, Value: ""})
-			headers = append(headers, version2.Header{Name: name2, Value: ""})
 		}
 		cfgParams.ProxySetHeaders = headers
 	}
