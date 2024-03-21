@@ -830,22 +830,24 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotation(t *testing.T) {
-	t.Parallel()
-
 	tmpl := newNGINXIngressTmpl(t)
 	buf := &bytes.Buffer{}
+	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
 
-	err := tmpl.Execute(buf, ingressCfgWithProxySetHeadersAnnotation)
+	ingressCfg.Ingress.Annotations = map[string]string{
+		"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+	}
+
+	err := tmpl.Execute(buf, ingressCfg)
 	t.Log(buf.String())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	wantProxyHeader := "proxy_set_header X-Forwarded-ABC test"
-	wantProxyHeader2 := "proxy_set_header ABC $http_abc"
+	wantProxyHeader := "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;"
 
-	if strings.Contains(buf.String(), wantProxyHeader) && !strings.Contains(buf.String(), wantProxyHeader2) {
-		t.Errorf("want %q and %q in generated config", wantProxyHeader, wantProxyHeader2)
+	if !strings.Contains(buf.String(), wantProxyHeader) {
+		t.Errorf("want %q in generated config", wantProxyHeader)
 	}
 }
 
@@ -2525,6 +2527,60 @@ var (
 			Namespace: "default",
 			Annotations: map[string]string{
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,ABC"},
+		},
+	}
+	// Testing proxysetheader annotation
+	ingressCfgWithProxySetHeadersAnnotationGeneric = IngressNginxConfig{
+		Servers: []Server{
+			{
+				Name:         "test.example.com",
+				ServerTokens: "off",
+				StatusZone:   "test.example.com",
+				JWTAuth: &JWTAuth{
+					Key:                  "/etc/nginx/secrets/key.jwk",
+					Realm:                "closed site",
+					Token:                "$cookie_auth_token",
+					RedirectLocationName: "@login_url-default-cafe-ingress",
+				},
+				SSL:               true,
+				SSLCertificate:    "secret.pem",
+				SSLCertificateKey: "secret.pem",
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				Locations: []Location{
+					{
+						Path:                "/tea/[A-Z0-9]{3}",
+						Upstream:            testUpstream,
+						ProxyConnectTimeout: "10s",
+						ProxyReadTimeout:    "10s",
+						ProxySendTimeout:    "10s",
+						ClientMaxBodySize:   "2m",
+						JWTAuth: &JWTAuth{
+							Key:   "/etc/nginx/secrets/location-key.jwk",
+							Realm: "closed site",
+							Token: "$cookie_auth_token",
+						},
+						MinionIngress: &Ingress{
+							Name:      "tea-minion",
+							Namespace: "default",
+						},
+					},
+				},
+				HealthChecks: map[string]HealthCheck{"test": healthCheck},
+				JWTRedirectLocations: []JWTRedirectLocation{
+					{
+						Name:     "@login_url-default-cafe-ingress",
+						LoginURL: "https://test.example.com/login",
+					},
+				},
+			},
+		},
+		Upstreams: []Upstream{testUpstream},
+		Keepalive: "16",
+		Ingress: Ingress{
+			Name:        "cafe-ingress",
+			Namespace:   "default",
+			Annotations: map[string]string{},
 		},
 	}
 )
