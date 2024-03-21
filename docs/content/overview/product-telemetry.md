@@ -23,7 +23,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **Project Name** The name of the software, which will be labelled `NIC`.
 - **Project Version** NGINX Ingress Controller version.
 - **Project Architecture** The architecture of the kubernetes environment. (e.g. amd64, arm64, etc...)
-- **Cluster ID** A unique identifier of the kubernetes cluster that the NGINX Ingress Controller is deployed to.
+- **Cluster ID** A unique identifier of the kubernetes cluster that NGINX Ingress Controller is deployed to.
 - **Cluster Version** The version of the Kubernetes cluster.
 - **Cluster Platform** The platform that the kubernetes cluster is operating on. (e.g. eks, aks,  etc...)
 - **Cluster Node Count** The number of nodes in the cluster that NGINX Ingress Controller is deployed to.

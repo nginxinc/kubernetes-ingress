@@ -26,7 +26,7 @@ h2 {
   - Alternatively, pull an NGINX Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
   - Alternatively, you can NGINX build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
   - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
-- To use App Protect DoS, install the App Protect DoS Arbitrator [Helm Chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart) in the same namespace as the NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
+- To use App Protect DoS, install the App Protect DoS Arbitrator [Helm Chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart) in the same namespace as NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
 
 ## CRDs
 
@@ -74,13 +74,13 @@ To install the chart with the release name my-release (my-release is the name th
 - For NGINX:
 
     ```shell
-    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2
+    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.3
     ```
 
 - For NGINX Plus: (assuming you have pushed the Ingress Controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
 
     ```shell
-    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.3 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
     ```
 
 This will install the latest `edge` version of the Ingress Controller from GitHub Container Registry. If you prefer to use Docker Hub, you can replace `ghcr.io/nginxinc/charts/nginx-ingress` with `registry-1.docker.io/nginxcharts/nginx-ingress`.
@@ -92,7 +92,7 @@ Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a re
 To upgrade the release `my-release`:
 
 ```shell
-helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.2
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.1.3
 ```
 
 ### Uninstalling the Chart
@@ -129,7 +129,7 @@ This step is required if you're installing the chart using its sources. Addition
 1. Pull the chart sources:
 
     ```shell
-    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.2
+    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.3
     ```
 
 2. Change your working directory to nginx-ingress:

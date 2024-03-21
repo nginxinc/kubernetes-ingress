@@ -10,7 +10,7 @@ aliases:
 
 <br>
 
-The NGINX Ingress Controller works with [NGINX](https://nginx.org/) as well as [NGINX Plus](https://www.nginx.com/products/nginx/), a commercial closed source version of NGINX which has additional features and support from NGINX Inc. The NGINX Ingress Controller can leverage functionality from NGINX Plus to extend its base capabilities.
+NGINX Ingress Controller works with [NGINX](https://nginx.org/) as well as [NGINX Plus](https://www.nginx.com/products/nginx/), a commercial closed source version of NGINX which has additional features and support from NGINX Inc. NGINX Ingress Controller can leverage functionality from NGINX Plus to extend its base capabilities.
 
 ## Additional features
 
@@ -28,6 +28,6 @@ For a comprehensive guide of NGINX Plus features available with custom resources
 
 ## Dynamic reconfiguration
 
-The NGINX Ingress Controller updates the configuration of the load balancer to reflect changes every time the number of pods exposed through an Ingress resource changes. When using NGINX, the configuration file must be changed then reloaded.
+NGINX Ingress Controller updates the configuration of the load balancer to reflect changes every time the number of pods exposed through an Ingress resource changes. When using NGINX, the configuration file must be changed then reloaded.
 
 For NGINX Plus, its dynamic reconfiguration is utilized, updating NGINX Plus without reloading. This avoids the increase of memory usage caused by reloads (Particularly with large volumes of client requests) and when load balancing applications with long-lived connections (Such as those using WebSockets or handling file uploads, downloads or streaming).

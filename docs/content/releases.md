@@ -114,7 +114,7 @@ Dynamic reloading of SSL certificates takes advantage of native NGINX functional
 
 A number of Helm enhancements have come directly from our community and range from giving greater flexibility for HPA, namespace sharing for custom sidecars, and supporting multiple image pull secrets for greater deployment flexibility.
 
-To make sure the NGINX Ingress Controller follows Helm best practices, we've refactored our helm chart location. You can now find our helm charts under `charts\nginx-ingress`.
+To make sure NGINX Ingress Controller follows Helm best practices, we've refactored our helm chart location. You can now find our helm charts under `charts\nginx-ingress`.
 
 We’ve added the functionality to define App Protect WAF bundles for VirtualServers by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.
 
@@ -214,7 +214,7 @@ This releases updates NGINX Plus to R30 P1 and dependencies to mitigate HTTP/2 R
 
 ### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
-With release 3.3 the NGINX Ingress Controller continues to advance capabilities for an ever-demanding set of use cases
+With release 3.3, NGINX Ingress Controller continues to advance capabilities for an ever-demanding set of use cases
 that go beyond simple layer 7 routing for services running exclusively in Kubernetes.
 
 When involved in diagnostic operations and viewing the NGINX Plus console or when viewing the enhanced NGINX Plus
@@ -238,7 +238,7 @@ To accommodate these enhancements, several new values have been added to our Hel
 existing values. Due to the potential impacts of these changes we have issued a major release to the Helm chart,
 advancing to v1.0.0
 
-To better align with the demands of supporting additional protocols such as MQTT and QUIC, the NGINX Ingress Controller
+To better align with the demands of supporting additional protocols such as MQTT and QUIC, NGINX Ingress Controller
 is changing how listeners are defined for HTTP traffic. You have always had controls over the ports defined for
 TCP/UDP traffic through the GlobalConfiguration and TransportServer objects. That same flexibility has been introduced
 for HTTP/S traffic and the VirtualServer. This area will continue to expand to give customers full control over NGINX
@@ -348,7 +348,7 @@ We will provide technical support for NGINX Ingress Controller on any Kubernetes
 
 ### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
-This release reverts the changes made in 3.1.0 to use sysctls to bind to lower level ports without the NET_BIND_SERVICE capability. It also adds support for serviceNameOverride in the Helm chart, that can be used to override the service name for the NGINX Ingress Controller. This is useful especially during an upgrade from versions prior to 3.1.0, to avoid downtime due to the service name change. To use this feature, set the `serviceNameOverride` value in the Helm chart to the name of the existing service.
+This release reverts the changes made in 3.1.0 to use sysctls to bind to lower level ports without the NET_BIND_SERVICE capability. It also adds support for serviceNameOverride in the Helm chart, that can be used to override the service name for NGINX Ingress Controller. This is useful especially during an upgrade from versions prior to 3.1.0, to avoid downtime due to the service name change. To use this feature, set the `serviceNameOverride` value in the Helm chart to the name of the existing service.
 
 For example, if the existing service name is `my-release-nginx-ingress`, you can use `--set serviceNameOverride=my-release-nginx-ingress` when running the upgrade command.
 Here is an example upgrade command that keeps the existing service name `my-release-nginx-ingress` for a deployment named `my-release`:
@@ -395,13 +395,13 @@ helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.
 ### <i class="fa-solid fa-magnifying-glass"></i> Overview
 
 - Beginning with release 3.1.0 the NET_BIND_SERVICE capability is no longer used, and instead relies on net.ipv4.ip_unprivileged_port_start sysctl to allow port binding. Kubernetes 1.22 or later is required for this sysctl to be [classified as safe](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/#safe-and-unsafe-sysctls). **Ensure that you are using the latest updated `deployment` and `daemonset` example yaml files available in the repo.**
-- *The minimum supported version of Kubernetes is now 1.22*. The NGINX Ingress Controller now uses `sysctls` to [bind to lower level ports without additional privileges](https://github.com/nginxinc/kubernetes-ingress/pull/3573/). This removes the need to use `NET_BIND_SERVICE` to bind to these ports. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
+- *The minimum supported version of Kubernetes is now 1.22*. NGINX Ingress Controller now uses `sysctls` to [bind to lower level ports without additional privileges](https://github.com/nginxinc/kubernetes-ingress/pull/3573/). This removes the need to use `NET_BIND_SERVICE` to bind to these ports. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
 - Added support for loading pre-compiled [AppProtect Policy Bundles](https://github.com/nginxinc/kubernetes-ingress/pull/3560) when using the `-enable-app-protect` cli argument. This feature removes the need for the Ingress Controller to compile NGINX App Protect Policy when NGINX App Protect Policy is updated.
 - IngressMTLS policy now supports configuring a Certificate Revocation Lists(CRL). When using this feature requests made using a revoked certificate will be rejected. See [Using a Certificate Revocation List](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#using-a-certificate-revocation-list) for details on configuring this option.
-- The NGINX Ingress Controller now supports [running with a Read-only Root Filesystem](https://github.com/nginxinc/kubernetes-ingress/pull/3548). This improves the security posture of NGINX Ingress Controller by protecting the file system from unknown writes. See [Configure root filesystem as read-only](https://docs.nginx.com/nginx-ingress-controller/configuration/security/#configure-root-filesystem-as-read-only) for details on configuring this option with both HELM and Manifest. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
+- NGINX Ingress Controller now supports [running with a Read-only Root Filesystem](https://github.com/nginxinc/kubernetes-ingress/pull/3548). This improves the security posture of NGINX Ingress Controller by protecting the file system from unknown writes. See [Configure root filesystem as read-only](https://docs.nginx.com/nginx-ingress-controller/configuration/security/#configure-root-filesystem-as-read-only) for details on configuring this option with both HELM and Manifest. Thanks to [Valters Jansons](https://github.com/sigv) for making this feature possible!
 - HELM deployments can now set [custom environment variables with controller.env](https://github.com/nginxinc/kubernetes-ingress/pull/3326). Thanks to [Aaron Shiels](https://github.com/AaronShiels) for making this possible!
 - HELM deployments can now configure a [pod disruption budget](https://github.com/nginxinc/kubernetes-ingress/pull/3248) allowing deployments to configure either a minimum number or a maximum unavailable number of pods. Thanks to [Bryan Hendryx](https://github.com/coolbry95) for making this possible!
-- The NGINX Ingress Controller uses the latest OIDC reference implementation which now supports [forwarding access tokens to upstreams / backends](https://github.com/nginxinc/kubernetes-ingress/pull/3474). Thanks to [Shawn Kim](https://github.com/shawnhankim) for making this possible!
+- NGINX Ingress Controller uses the latest OIDC reference implementation which now supports [forwarding access tokens to upstreams / backends](https://github.com/nginxinc/kubernetes-ingress/pull/3474). Thanks to [Shawn Kim](https://github.com/shawnhankim) for making this possible!
 - The default TLS secret is now optional. This improves the security posture of NGINX Ingress Controller through enabling [ssl_reject_handshake](http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_reject_handshake). This has the impact of immediately terminating the SSL handshake and not revealing TLS or cypher settings to calls that do not match a configured hostname.
 
 ### <i class="fa-solid fa-rocket"></i> Features
@@ -742,7 +742,7 @@ We will provide technical support for NGINX Ingress Controller on any Kubernetes
 
 ### <i class="fa-solid fa-life-ring"></i> Supported Platforms
 
-We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.24.
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.24.
 
 <hr>
 
@@ -830,7 +830,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 ### <i class="fa-solid fa-life-ring"></i> Supported Platforms
 
-We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.23.
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.23.
 
 <hr>
 
@@ -949,7 +949,7 @@ More about the [NGINX Plus mandatory and persistent health check features](https
 
 ### <i class="fa-solid fa-life-ring"></i> Supported Platforms
 
-We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.23.
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.23.
 
 <hr>
 
@@ -1139,7 +1139,7 @@ Note that 2.1.0 will remove support for the v1alpha1 version of the Policy.
 
 ### <i class="fa-solid fa-life-ring"></i> Supported Platforms
 
-We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.22.
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.22.
 
 <hr>
 
@@ -1221,7 +1221,7 @@ You will find the complete changelog for release 1.12.0, including bug fixes, im
 
 ### <i class="fa-solid fa-life-ring"></i> Supported Platforms
 
-We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests.  This release was fully tested on the following Kubernetes versions: 1.16-1.21.
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests.  This release was fully tested on the following Kubernetes versions: 1.16-1.21.
 
 <hr>
 
@@ -1333,7 +1333,7 @@ You will find the complete changelog for release 1.11.0, including bug fixes, im
 
 ### <i class="fa-solid fa-life-ring"></i> Supported Platforms
 
-We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests.  This release was fully tested on the following Kubernetes versions: 1.16-1.20.
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests.  This release was fully tested on the following Kubernetes versions: 1.16-1.20.
 
 <hr>
 
@@ -1673,7 +1673,7 @@ If you're using custom resources like VirtualServer and TransportServer (`contro
 
 Release 1.7.0 includes:
 
-- Support for TCP, UDP, and TLS Passthrough load balancing with the new configuration resources: TransportServer and GlobalConfiguration. The resources allow users to deliver complex, non-HTTP-based applications from Kubernetes using the NGINX Ingress Controller.
+- Support for TCP, UDP, and TLS Passthrough load balancing with the new configuration resources: TransportServer and GlobalConfiguration. The resources allow users to deliver complex, non-HTTP-based applications from Kubernetes using NGINX Ingress Controller.
 - Support for error pages in VirtualServer and VirtualServerRoute resources. A user can now specify custom error responses for errors returned by backend applications or generated by NGINX, such as a 502 response.
 - Improved validation of VirtualServer and VirtualServerRoute resources. kubectl and the Kubernetes API server can now detect violations of the structure of VirtualServer/VirtualServerRoute resources and return an error.
 - Support for an operator which manages the lifecycle of the Ingress Controller on Kubernetes or OpenShift. See the [NGINX Ingress Operator GitHub repo](https://github.com/nginxinc/nginx-ingress-operator).

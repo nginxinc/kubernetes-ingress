@@ -76,14 +76,14 @@ kubectl apply -f nginx-configuration.yaml
 
 {{%tab name="Using Manifests"%}}
 
-1. Add the below argument to the manifest file of the NGINX Ingress Controller:
+1. Add the below argument to the manifest file of NGINX Ingress Controller:
 
     ```yaml
     args:
       - -$(POD_NAMESPACE)/nginx-configuration
     ```
 
-2. Follow the [Installation with Manifests]({{< relref "/installation/installing-nic/installation-with-manifests.md" >}}) instructions to deploy the NGINX Ingress Controller with custom resources enabled.
+2. Follow the [Installation with Manifests]({{< relref "/installation/installing-nic/installation-with-manifests.md" >}}) instructions to deploy NGINX Ingress Controller with custom resources enabled.
 
 3. Ensure your NodePort or LoadBalancer service is configured to expose the custom listener ports. Below is an example yaml configuration using NodePort, which would also apply to a LoadBalancer service:
 
