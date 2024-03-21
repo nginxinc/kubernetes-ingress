@@ -198,22 +198,8 @@ server {
 		proxy_read_timeout {{$location.ProxyReadTimeout}};
 		proxy_send_timeout {{$location.ProxySendTimeout}};
 		client_max_body_size {{$location.ClientMaxBodySize}};
-
-        {{- range $location := $server.Locations }}
-        {{- $proxySetHeaders := or (index $.Ingress.Annotations "nginx.org/proxy-set-headers") "" }}
-        {{- if $proxySetHeaders }}
-        {{- range $header := split $proxySetHeaders "," }}
-        {{- $headerParts := split $header " " }}
-        {{- $headerName := index $headerParts 0 }}
-        {{- $headerValue := (trim (index $headerParts 0)) }}
-        {{- if ne $headerName "" }}
-        {{- if gt (len $headerParts) 1 }}
-        proxy_set_header {{ trim $headerName }} "{{ trim (index $headerParts 1) }}";{{- else }}
-        proxy_set_header {{ trim $headerName }} $http_{{ toLower (replace $headerValue "-" "_") }};{{- end }}
-        {{- end }}
-        {{- end }}
-        {{- end }}
-        {{- end }}
+        {{- $proxySetHeaders := generateProxySetHeaders $.Ingress.Annotations -}}
+        {{$proxySetHeaders}}
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

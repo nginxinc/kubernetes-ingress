@@ -68,16 +68,46 @@ func makePathWithRegex(path, regexType string) string {
 	}
 }
 
+// generateProxySetHeaders takes an ingress annotations map
+// and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
+// It returns a string containing the generated Nginx configuration.
+func generateProxySetHeaders(ingressAnnotations map[string]string) string {
+	var result strings.Builder
+
+	proxySetHeaders := ingressAnnotations["nginx.org/proxy-set-headers"]
+	if proxySetHeaders != "" {
+		headers := strings.Split(proxySetHeaders, ",")
+		for _, header := range headers {
+			headerParts := strings.Split(header, " ")
+			headerName := strings.TrimSpace(headerParts[0])
+			if headerName != "" {
+				if len(headerParts) > 1 {
+					headerValue := strings.TrimSpace(strings.Join(headerParts[1:], " "))
+					result.WriteString("		proxy_set_header " + headerName + " \"" + headerValue + "\";")
+				} else {
+					headerValue := strings.TrimSpace(headerParts[0])
+					headerValue = strings.ReplaceAll(headerValue, "-", "_")
+					headerValue = strings.ToLower(headerValue)
+					result.WriteString("\n		proxy_set_header " + headerName + " $http_" + headerValue + ";")
+				}
+			}
+		}
+	}
+
+	return result.String()
+}
+
 var helperFunctions = template.FuncMap{
-	"split":            split,
-	"trim":             trim,
-	"replace":          replace,
-	"concat":           concat,
-	"contains":         strings.Contains,
-	"hasPrefix":        strings.HasPrefix,
-	"hasSuffix":        strings.HasSuffix,
-	"toLower":          strings.ToLower,
-	"toUpper":          strings.ToUpper,
-	"makeLocationPath": makeLocationPath,
-	"makeSecretPath":   commonhelpers.MakeSecretPath,
+	"split":                   split,
+	"trim":                    trim,
+	"replace":                 replace,
+	"concat":                  concat,
+	"contains":                strings.Contains,
+	"hasPrefix":               strings.HasPrefix,
+	"hasSuffix":               strings.HasSuffix,
+	"toLower":                 strings.ToLower,
+	"toUpper":                 strings.ToUpper,
+	"makeLocationPath":        makeLocationPath,
+	"makeSecretPath":          commonhelpers.MakeSecretPath,
+	"generateProxySetHeaders": generateProxySetHeaders,
 }
