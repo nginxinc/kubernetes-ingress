@@ -217,10 +217,14 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 
 	if proxySetHeaders, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-set-headers", ingEx.Ingress, ","); exists {
 		var headers []version2.Header
-		for _, header := range proxySetHeaders {
-			parts := strings.Split(header, ",")
+		for _, headerAndValue := range proxySetHeaders {
+			parts := strings.SplitN(headerAndValue, " ", 2)
 			name := strings.TrimSpace(parts[0])
-			headers = append(headers, version2.Header{Name: name, Value: ""})
+			var value string
+			if len(parts) > 1 {
+				value = strings.TrimSpace(parts[1])
+			}
+			headers = append(headers, version2.Header{Name: name, Value: value})
 		}
 		cfgParams.ProxySetHeaders = headers
 	}

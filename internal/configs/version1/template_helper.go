@@ -16,6 +16,10 @@ func trim(s string) string {
 	return strings.TrimSpace(s)
 }
 
+func replace(s string, old, new string) string { return strings.ReplaceAll(s, old, new) }
+
+func concat(s1, s2 string) string { return s1 + s2 }
+
 // makeLocationPath takes location and Ingress annotations and returns
 // modified location path with added regex modifier or the original path
 // if no path-regex annotation is present in ingressAnnotations
@@ -67,6 +71,8 @@ func makePathWithRegex(path, regexType string) string {
 var helperFunctions = template.FuncMap{
 	"split":            split,
 	"trim":             trim,
+	"replace":          replace,
+	"concat":           concat,
 	"contains":         strings.Contains,
 	"hasPrefix":        strings.HasPrefix,
 	"hasSuffix":        strings.HasSuffix,
