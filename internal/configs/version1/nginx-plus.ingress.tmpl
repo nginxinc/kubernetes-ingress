@@ -260,7 +260,8 @@ server {
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header Connection $connection_upgrade;
 		{{- else}}
-		{{- if $.Keepalive}}proxy_set_header Connection "";{{end}}
+		{{- if $.Keepalive}}
+		proxy_set_header Connection "";{{end}}
 		{{- end}}
 
 		{{- if $location.LocationSnippets}}
@@ -290,8 +291,7 @@ server {
         {{- if $proxySetHeaders }}
         {{- range $header := split $proxySetHeaders "," }}
         {{- if ne $header "" }}
-        proxy_set_header {{ $header }} $http_{{ toLower $header }};
-        {{- end }}
+        proxy_set_header {{ $header }} $http_{{ toLower $header }};{{- end }}
         {{- end }}
         {{- end }}
         {{- end }}

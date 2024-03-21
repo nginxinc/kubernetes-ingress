@@ -204,8 +204,7 @@ server {
         {{- if $proxySetHeaders }}
         {{- range $header := split $proxySetHeaders "," }}
         {{- if ne $header "" }}
-        proxy_set_header {{ $header }} $http_{{ toLower $header }};
-        {{- end }}
+        proxy_set_header {{ $header }} $http_{{ toLower $header }};{{- end }}
         {{- end }}
         {{- end }}
         {{- end }}
