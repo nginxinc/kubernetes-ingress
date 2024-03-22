@@ -78,7 +78,7 @@ If you use custom container images, NGINX Agent must be installed along with NGI
    ```
    See the [NGINX Agent Configuration Overview](https://docs.nginx.com/nginx-agent/configuration/configuration-overview/) for more configuration options.
 
-   *NOTE:* The `features` list must not contain `nginx-config-async` or `nginx-ssl-config` as this may cause conflicts with NGINX Ingress Controller.
+   *NOTE:* The `features` list must not contain `nginx-config-async` or `nginx-ssl-config` as these features can cause conflicts with NGINX Ingress Controller.
 
 3. Follow the [Installation with Manifests]({{< relref "/installation/installing-nic/installation-with-manifests.md" >}}) instructions to deploy NGINX Ingress Controller with custom resources enabled.
 
