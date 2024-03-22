@@ -1,7 +1,9 @@
 package version1
 
 import (
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -68,33 +70,48 @@ func makePathWithRegex(path, regexType string) string {
 	}
 }
 
+var setHeader = regexp.MustCompile("[a-zA-Z]+$")
+
+// ValidateProxySetHeader validates the header name syntax using a regex.
+func ValidateProxySetHeader(header string) error {
+	header = strings.TrimSpace(header)
+
+	if !setHeader.MatchString(header) {
+		return errors.New("invalid header syntax")
+	}
+	return nil
+}
+
 // generateProxySetHeaders takes an ingress annotations map
 // and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
 // It returns a string containing the generated Nginx configuration.
-func generateProxySetHeaders(ingressAnnotations map[string]string) string {
+func generateProxySetHeaders(ingressAnnotations map[string]string) (string, error) {
 	var result strings.Builder
 
 	proxySetHeaders := ingressAnnotations["nginx.org/proxy-set-headers"]
+
 	if proxySetHeaders != "" {
 		headers := strings.Split(proxySetHeaders, ",")
 		for _, header := range headers {
 			headerParts := strings.Split(header, " ")
 			headerName := strings.TrimSpace(headerParts[0])
 			if headerName != "" {
+				if err := ValidateProxySetHeader(headerName); err != nil {
+					return "", err
+				}
 				if len(headerParts) > 1 {
 					headerValue := strings.TrimSpace(strings.Join(headerParts[1:], " "))
-					result.WriteString("		proxy_set_header " + headerName + " \"" + headerValue + "\";")
+					result.WriteString("		proxy_set_header " + headerName + " \"" + headerValue + "\";\n")
 				} else {
 					headerValue := strings.TrimSpace(headerParts[0])
 					headerValue = strings.ReplaceAll(headerValue, "-", "_")
 					headerValue = strings.ToLower(headerValue)
-					result.WriteString("\n		proxy_set_header " + headerName + " $http_" + headerValue + ";")
+					result.WriteString("\n		proxy_set_header " + headerName + " $http_" + headerValue + ";\n")
 				}
 			}
 		}
 	}
-
-	return result.String()
+	return result.String(), nil
 }
 
 var helperFunctions = template.FuncMap{
