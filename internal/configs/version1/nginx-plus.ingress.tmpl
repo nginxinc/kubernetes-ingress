@@ -263,7 +263,6 @@ server {
 		{{- if $.Keepalive}}
 		proxy_set_header Connection "";{{end}}
 		{{- end}}
-
 		{{- if $location.LocationSnippets}}
 		{{range $value := $location.LocationSnippets}}
 		{{$value}}{{end}}
