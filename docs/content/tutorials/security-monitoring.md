@@ -15,6 +15,8 @@ This document explains how to configure NGINX Agent to send NGINX App Protect WA
 
 This guide assumes that you have an installation of NGINX Instance Manager with [NGINX Security Monitoring](https://docs.nginx.com/nginx-management-suite/installation/vm-bare-metal/install-security-monitoring/) which is reachable from the Kubernetes cluster on which F5 NGINX Ingress Controller is deployed.
 
+If you use custom container images, NGINX Agent must be installed along with NGINX App Protect WAF. See the [Dockerfile](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/build/Dockerfile) for examples of how to install NGINX Agent or the [NGINX Agent installation documentation](https://docs.nginx.com/nginx-agent/installation-upgrade/) for more information.
+
 ## Deploying NGINX Ingress Controller with GlobalConfiguration resource
 
 {{<tabs name="deploy-config-resource">}}
