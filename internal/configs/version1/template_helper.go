@@ -70,9 +70,11 @@ func makePathWithRegex(path, regexType string) string {
 	}
 }
 
+// ValidateProxySetHeader takes a header string
+// returns an error if the header contains special characters or numbers.
+// If the header is valid, it returns nil.
 var setHeader = regexp.MustCompile("[a-zA-Z]+$")
 
-// ValidateProxySetHeader validates the header name syntax using a regex.
 func ValidateProxySetHeader(header string) error {
 	header = strings.TrimSpace(header)
 
