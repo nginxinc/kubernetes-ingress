@@ -857,7 +857,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithTwoH
 	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
 
 	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC!",
+		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC",
 	}
 
 	err := tmpl.Execute(buf, ingressCfg)
@@ -866,7 +866,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithTwoH
 		t.Fatal(err)
 	}
 
-	wantProxyHeader := "proxy_set_header BVC! $http_bvc!;"
+	wantProxyHeader := "proxy_set_header BVC $http_bvc;"
 
 	if !strings.Contains(buf.String(), wantProxyHeader) {
 		t.Errorf("want %q in generated config", wantProxyHeader)

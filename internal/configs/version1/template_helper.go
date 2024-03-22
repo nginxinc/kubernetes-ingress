@@ -103,12 +103,12 @@ func generateProxySetHeaders(ingressAnnotations map[string]string) (string, erro
 				}
 				if len(headerParts) > 1 {
 					headerValue := strings.TrimSpace(strings.Join(headerParts[1:], " "))
-					result.WriteString("		proxy_set_header " + headerName + " \"" + headerValue + "\";\n")
+					result.WriteString("		proxy_set_header " + headerName + " \"" + headerValue + "\";")
 				} else {
 					headerValue := strings.TrimSpace(headerParts[0])
 					headerValue = strings.ReplaceAll(headerValue, "-", "_")
 					headerValue = strings.ToLower(headerValue)
-					result.WriteString("\n		proxy_set_header " + headerName + " $http_" + headerValue + ";\n")
+					result.WriteString("\n		proxy_set_header " + headerName + " $http_" + headerValue + ";")
 				}
 			}
 		}
