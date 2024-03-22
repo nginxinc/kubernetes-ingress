@@ -1,0 +1,43 @@
+name: Upload NIC Release to Azure
+
+on:
+  push:
+    branches:
+      - image-build-refactor
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  azure-upload:
+    name: Upload packages to Azure
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Fetch Cached Package Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          key: nginx-ingress-d2052fb01bb850127dd02aaaa6c790a9
+          path: dist
+          fail-on-cache-miss: true
+
+      - name: Azure Login
+        uses: azure/login@8c334a195cbb38e46038007b304988d888bf676a # v2.0.0
+        with:
+          creds: ${{ secrets.AZURE_STORAGE_KEY }}
+
+      - name: Azure Upload Release Packages
+        uses: azure/CLI@965c8d7571d2231a54e321ddd07f7b10317f34d9 # v2.0.0
+        with:
+          inlineScript: |
+            for i in ./dist*; do
+              echo "Uploading ${i} to kubernetes-ingress/v0.0.0/${i##*/}"
+              az storage blob upload --auth-mode=login -f "$i" -c ${{ secrets.AZURE_BUCKET_NAME }} \
+              --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} --overwrite -n kubernetes-ingress/v0.0.0/${i##*/}
+            done
