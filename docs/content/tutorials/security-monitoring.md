@@ -29,7 +29,7 @@ This guide assumes that you have an installation of NGINX Instance Manager with 
             host: "<FQDN or IP address of NGINX Instance Manager>"
     ```
 
-2. Follow the [Installation with Helm]({{< relref "/installation/installing-nic/installation-with-helm.md" >}}) instructions to deploy the NGINX Ingress Controller with custom resources enabled, and optionally set other `nginxAgent.*` values if required.
+2. Follow the [Installation with Helm]({{< relref "/installation/installing-nic/installation-with-helm.md" >}}) instructions to deploy NGINX Ingress Controller with custom resources enabled, and optionally set other `nginxAgent.*` values if required.
 
 {{%/tab%}}
 
