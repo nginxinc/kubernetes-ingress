@@ -170,7 +170,7 @@ var (
 			validateHTTPHeadersAnnotation,
 		},
 		proxySetHeadersAnnotation: {
-			validateHTTPHeadersAnnotation,
+			validateProxySetHeaderAnnotation,
 		},
 		clientMaxBodySizeAnnotation: {
 			validateRequiredAnnotation,
@@ -409,6 +409,33 @@ func validateHTTPHeadersAnnotation(context *annotationValidationContext) field.E
 		header = strings.TrimSpace(header)
 		for _, msg := range validation.IsHTTPHeaderName(header) {
 			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, msg))
+		}
+	}
+	return allErrs
+}
+
+func validateProxySetHeaderAnnotation(context *annotationValidationContext) field.ErrorList {
+	var allErrs field.ErrorList
+	headers := strings.Split(context.value, commaDelimiter)
+
+	for _, header := range headers {
+		header = strings.TrimSpace(header)
+
+		parts := strings.SplitN(header, " ", 2)
+
+		name := strings.TrimSpace(parts[0])
+		for _, msg := range validation.IsHTTPHeaderName(name) {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, name, msg))
+		}
+
+		value := strings.TrimSpace(parts[1])
+
+		if value == "" {
+			value = ""
+		}
+		if name == "" && value == "" {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "Header must be in 'Name Value' format. Input: "+header))
+			continue
 		}
 	}
 	return allErrs
