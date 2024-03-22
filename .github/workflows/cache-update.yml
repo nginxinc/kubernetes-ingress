@@ -90,8 +90,9 @@ jobs:
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      publish-image: false
       forked-workflow: true
+      tag: "edge"
+      branch: ${{ github.ref }}
     permissions:
       contents: read
       actions: read
@@ -120,8 +121,8 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      release-url: ${{ needs.release-notes.outputs.release-url }}
-      publish-image: false
+      tag: "edge"
+      branch: ${{ github.ref }}
       forked-workflow: true
     permissions:
       contents: read
@@ -176,8 +177,8 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
-      release-url: ${{ needs.release-notes.outputs.release-url }}
-      publish-image: false
+      tag: "edge"
+      branch: ${{ github.ref }}
       forked-workflow: true
     permissions:
       contents: read

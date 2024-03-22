@@ -12,6 +12,14 @@ on:
         type: boolean
         default: false
 
+# TODO
+## add labels (here?)
+## certify ubi images (here?)
+## notify when images published (here?)
+## plus images
+## Trigger
+### Image release flow
+
 defaults:
   run:
     shell: bash
