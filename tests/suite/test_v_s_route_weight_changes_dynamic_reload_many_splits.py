@@ -179,4 +179,5 @@ class TestVSRWeightChangesDynamicReloadManySplits:
             backends32_url,
             headers={"host": vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host},
         )
+        wait_before_test(1)
         assert "backend2" in resp.text
