@@ -1,19 +1,15 @@
 ---
 title: "Connect NGINX App Protect WAF to NGINX Security Monitoring"
-description: |
-  How to monitor NGINX App Protect WAF via NGINX Security Monitoring.
 weight: 1800
 doctypes: ["concept"]
 toc: true
 ---
-## Connect NGINX App Protect WAF to NGINX Security Monitoring
 
-
-This document explains how to configure NGINX Agent to send NGINX App Protect WAF metrics to NGINX Security Monitoring.
+This document explains how to use NGINX Ingress Controller to configure NGINX Agent for sending F5 NGINX App Protect WAF metrics to NGINX Security Monitoring.
 
 ## Prerequisites
 
-This guide assumes that you have an installation of NGINX Instance Manager with [NGINX Security Monitoring](https://docs.nginx.com/nginx-management-suite/installation/vm-bare-metal/install-security-monitoring/) which is reachable from the Kubernetes cluster on which F5 NGINX Ingress Controller is deployed.
+This guide assumes that you have an installation of NGINX Instance Manager with [NGINX Security Monitoring](https://docs.nginx.com/nginx-management-suite/installation/vm-bare-metal/install-security-monitoring/) which is reachable from the Kubernetes cluster on which NGINX Ingress Controller is deployed.
 
 If you use custom container images, NGINX Agent must be installed along with NGINX App Protect WAF. See the [Dockerfile](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/build/Dockerfile) for examples of how to install NGINX Agent or the [NGINX Agent installation documentation](https://docs.nginx.com/nginx-agent/installation-upgrade/) for more information.
 
@@ -78,7 +74,7 @@ If you use custom container images, NGINX Agent must be installed along with NGI
    ```
    See the [NGINX Agent Configuration Overview](https://docs.nginx.com/nginx-agent/configuration/configuration-overview/) for more configuration options.
 
-   *NOTE:* The `features` list must not contain `nginx-config-async` or `nginx-ssl-config` as these features can cause conflicts with NGINX Ingress Controller.
+   {{< note >}} The `features` list must not contain `nginx-config-async` or `nginx-ssl-config` as these features can cause conflicts with NGINX Ingress Controller.{{< /note >}}
 
 3. Follow the [Installation with Manifests]({{< relref "/installation/installing-nic/installation-with-manifests.md" >}}) instructions to deploy NGINX Ingress Controller with custom resources enabled.
 
@@ -95,4 +91,4 @@ NGINX Agent runs a syslog listener which NGINX App Protect WAF can be configured
 - [Custom Resources example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/security-monitoring)
 - [Ingress Resources example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/security-monitoring)
 
-*NOTE:* Modifying the APLogConf in the examples may result in the Security Monitoring integration not working, as NGINX Agent expects a specific log format.
+{{< note >}} Modifying the APLogConf in the examples may result in the Security Monitoring integration not working, as NGINX Agent expects a specific log format.{{< /note >}}
