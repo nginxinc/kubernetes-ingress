@@ -95,15 +95,15 @@ func generateProxySetHeaders(ingressAnnotations map[string]string) (string, erro
 	if proxySetHeaders != "" {
 		headers := strings.Split(proxySetHeaders, ",")
 		for _, header := range headers {
-			headerParts := strings.Split(header, " ")
+			headerParts := strings.SplitN(header, " ", 2)
 			headerName := strings.TrimSpace(headerParts[0])
 			if headerName != "" {
 				if err := ValidateProxySetHeader(headerName); err != nil {
 					return "", err
 				}
 				if len(headerParts) > 1 {
-					headerValue := strings.TrimSpace(strings.Join(headerParts[1:], " "))
-					result.WriteString("		proxy_set_header " + headerName + " \"" + headerValue + "\";")
+					headerValue := strings.TrimSpace(headerParts[1])
+					result.WriteString("\n		proxy_set_header " + headerName + " \"" + headerValue + "\";")
 				} else {
 					headerValue := strings.TrimSpace(headerParts[0])
 					headerValue = strings.ReplaceAll(headerValue, "-", "_")
