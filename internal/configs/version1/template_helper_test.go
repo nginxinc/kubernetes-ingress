@@ -2,6 +2,7 @@ package version1
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 	"text/template"
 )
@@ -231,7 +232,6 @@ func TestMakeLocationPath_ForIngress(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
-
 func TestSplitInputString(t *testing.T) {
 	t.Parallel()
 
@@ -474,4 +474,92 @@ func newToUpperTemplate(t *testing.T) *template.Template {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
 	return tmpl
+}
+
+func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name             string
+		annotations      map[string]string
+		wantProxyHeaders []string
+		wantError        error
+	}{
+		{
+			name: "One Header",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+			},
+			wantProxyHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
+			wantError: nil,
+		},
+		{
+			name: "Two Headers",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC",
+			},
+			wantProxyHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				"proxy_set_header BVC $http_bvc;",
+			},
+			wantError: nil,
+		},
+		{
+			name: "Two Headers with One Value",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC test",
+			},
+			wantProxyHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				`proxy_set_header BVC "test";`,
+			},
+			wantError: nil,
+		},
+		{
+			name: "Three Headers",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC,X-Forwarded-Test",
+			},
+			wantProxyHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				"proxy_set_header BVC $http_bvc;",
+				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
+			},
+			wantError: nil,
+		},
+		{
+			name: "Three Headers with Two Value",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC abc,BVC bat,X-Forwarded-Test",
+			},
+			wantProxyHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC "abc";`,
+				`proxy_set_header BVC "bat";`,
+				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
+			},
+			wantError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			generatedConfig, err := generateProxySetHeaders(tc.annotations)
+
+			if err != tc.wantError {
+				t.Fatalf("expected error %v, got %v", tc.wantError, err)
+			}
+
+			if len(tc.wantProxyHeaders) != strings.Count(generatedConfig, "\n") {
+				t.Fatalf("expected %d config lines, got %d", len(tc.wantProxyHeaders), strings.Count(generatedConfig, "\n"))
+			}
+
+			for _, line := range tc.wantProxyHeaders {
+				if !strings.Contains(generatedConfig, line) {
+					t.Errorf("expected line %q not found in generated config", line)
+				}
+			}
+		})
+	}
 }
