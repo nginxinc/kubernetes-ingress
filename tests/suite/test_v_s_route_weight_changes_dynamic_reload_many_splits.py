@@ -175,6 +175,7 @@ class TestVSRWeightChangesDynamicReloadManySplits:
         print("Step 3: Verify hitting the other backend.")
         ensure_response_from_backend(backends32_url, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host)
         wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host)
+        wait_before_test(1)
         resp = requests.get(
             backends32_url,
             headers={"host": vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host},
