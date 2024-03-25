@@ -103,7 +103,11 @@ func generateProxySetHeaders(ingressAnnotations map[string]string) (string, erro
 				}
 				if len(headerParts) > 1 {
 					headerValue := strings.TrimSpace(headerParts[1])
-					result.WriteString("\n		proxy_set_header " + headerName + " \"" + headerValue + "\";")
+					if strings.Contains(headerValue, " ") {
+						return "", errors.New("multiple values found in header: " + header)
+					} else {
+						result.WriteString("\n		proxy_set_header " + headerName + " \"" + headerValue + "\";")
+					}
 				} else {
 					headerValue := strings.TrimSpace(headerParts[0])
 					headerValue = strings.ReplaceAll(headerValue, "-", "_")
