@@ -3,6 +3,7 @@ package configs
 import (
 	"errors"
 	"fmt"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"regexp"
 	"strconv"
 	"strings"
@@ -274,6 +275,18 @@ func ParseProxyBuffersSpec(s string) (string, error) {
 		return s, nil
 	}
 	return "", errors.New("invalid proxy buffers string")
+}
+
+func parseProxySetHeaders(proxySetHeaders []string) ([]version2.Header, error) {
+	var headers []version2.Header
+	for _, header := range proxySetHeaders {
+		parts := strings.Split(header, " ")
+		if len(parts) > 2 {
+			return nil, fmt.Errorf("invalid proxy-set-header format: %s", header)
+		}
+		headers = append(headers, version2.Header{Name: parts[0], Value: parts[1]})
+	}
+	return headers, nil
 }
 
 // ParsePortList ensures that the string is a comma-separated list of port numbers

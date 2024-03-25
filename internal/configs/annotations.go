@@ -2,11 +2,8 @@ package configs
 
 import (
 	"fmt"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	"slices"
-	"strings"
-
 	"github.com/golang/glog"
+	"slices"
 )
 
 // JWTKeyAnnotation is the annotation where the Secret with a JWK is specified.
@@ -216,18 +213,11 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 	}
 
 	if proxySetHeaders, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-set-headers", ingEx.Ingress, ","); exists {
-		var headers []version2.Header
-		for _, header := range proxySetHeaders {
-			parts := strings.Split(header, " ")
-			if len(parts) < 2 {
-				continue
-			}
-			name := strings.TrimSpace(parts[0])
-			value := strings.TrimSpace(parts[1])
-
-			headers = append(headers, version2.Header{Name: name, Value: value})
+		parsedHeaders, err := parseProxySetHeaders(proxySetHeaders)
+		if err != nil {
+			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/proxy-set-headers: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), proxySetHeaders, err)
 		}
-		cfgParams.ProxySetHeaders = headers
+		cfgParams.ProxySetHeaders = parsedHeaders
 	}
 
 	if clientMaxBodySize, exists := ingEx.Ingress.Annotations["nginx.org/client-max-body-size"]; exists {
