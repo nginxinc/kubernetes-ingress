@@ -224,17 +224,8 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 			}
 			name := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
-			var found bool
-			for i, h := range headers {
-				if h.Name == name {
-					headers[i].Value = value
-					found = true
-					break
-				}
-			}
-			if !found {
-				headers = append(headers, version2.Header{Name: name, Value: value})
-			}
+
+			headers = append(headers, version2.Header{Name: name, Value: value})
 		}
 		cfgParams.ProxySetHeaders = headers
 	}
