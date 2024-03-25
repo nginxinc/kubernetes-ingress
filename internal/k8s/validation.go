@@ -422,6 +422,9 @@ func validateProxySetHeaderAnnotation(context *annotationValidationContext) fiel
 		header = strings.TrimSpace(header)
 
 		parts := strings.SplitN(header, " ", 2)
+		if len(parts) != 2 {
+			parts = append(parts, "")
+		}
 
 		name := strings.TrimSpace(parts[0])
 		for _, msg := range validation.IsHTTPHeaderName(name) {
@@ -430,9 +433,6 @@ func validateProxySetHeaderAnnotation(context *annotationValidationContext) fiel
 
 		value := strings.TrimSpace(parts[1])
 
-		if value == "" {
-			value = ""
-		}
 		if name == "" && value == "" {
 			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "Header must be in 'Name Value' format. Input: "+header))
 			continue
