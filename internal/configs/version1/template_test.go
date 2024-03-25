@@ -829,223 +829,131 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
 	}
 }
 
-func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotation(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationVariations(t *testing.T) {
+	t.Parallel()
+
 	tmpl := newNGINXIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+	testCases := []struct {
+		name            string
+		annotations     map[string]string
+		wantProxyHeader string
+	}{
+		{
+			name: "One Header",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+			},
+			wantProxyHeader: "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+		},
+		{
+			name: "Two Headers",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC",
+			},
+			wantProxyHeader: "proxy_set_header BVC $http_bvc;",
+		},
+		{
+			name: "Two Headers with One Value",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC test",
+			},
+			wantProxyHeader: `proxy_set_header BVC "test";`,
+		},
+		{
+			name: "Three Headers",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC,X-Forwarded-Test",
+			},
+			wantProxyHeader: `proxy_set_header X-Forwarded-Test $http_x_forwarded_test;`,
+		},
+		{
+			name: "Three Headers with Two Values",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC abc,BVC bat,X-Forwarded-Test",
+			},
+			wantProxyHeader: `proxy_set_header X-Forwarded-ABC "abc";`,
+		},
 	}
 
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
+			ingressCfg.Ingress.Annotations = tc.annotations
 
-	wantProxyHeader := "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;"
+			err := tmpl.Execute(buf, ingressCfg)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
-	}
-}
-
-func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithTwoHeaders(t *testing.T) {
-	tmpl := newNGINXIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC",
-	}
-
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	wantProxyHeader := "proxy_set_header BVC $http_bvc;"
-
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
-	}
-}
-
-func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithTwoHeadersAndOneValue(t *testing.T) {
-	tmpl := newNGINXIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC test",
-	}
-
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	wantProxyHeader := `proxy_set_header BVC "test";`
-
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
+			if !strings.Contains(buf.String(), tc.wantProxyHeader) {
+				t.Errorf("want %q in generated config", tc.wantProxyHeader)
+			}
+		})
 	}
 }
 
-func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithMultipleHeaders(t *testing.T) {
-	tmpl := newNGINXIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
+func TestExecuteTemplate_ForIngressForNGINXPlusWithProxySetHeadersAnnotationVariations(t *testing.T) {
+	t.Parallel()
 
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC,X-Forwarded-Test",
-	}
-
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	wantProxyHeader := `proxy_set_header X-Forwarded-Test $http_x_forwarded_test;`
-
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
-	}
-}
-
-func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithMultipleHeadersAndTwoValues(t *testing.T) {
-	tmpl := newNGINXIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC abc,BVC bat,X-Forwarded-Test",
-	}
-
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	wantProxyHeader := `proxy_set_header X-Forwarded-ABC "abc";`
-
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
-	}
-}
-
-func TestExecuteTemplate_ForIngressForNGINXPlusWithProxySetHeadersAnnotation(t *testing.T) {
 	tmpl := newNGINXPlusIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+	testCases := []struct {
+		name            string
+		annotations     map[string]string
+		wantProxyHeader string
+	}{
+		{
+			name: "One Header",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+			},
+			wantProxyHeader: "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+		},
+		{
+			name: "Two Headers",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC",
+			},
+			wantProxyHeader: "proxy_set_header BVC $http_bvc;",
+		},
+		{
+			name: "Two Headers with One Value",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC test",
+			},
+			wantProxyHeader: `proxy_set_header BVC "test";`,
+		},
+		{
+			name: "Three Headers",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC,X-Forwarded-Test",
+			},
+			wantProxyHeader: `proxy_set_header X-Forwarded-Test $http_x_forwarded_test;`,
+		},
+		{
+			name: "Three Headers with Two Values",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC abc,BVC bat,X-Forwarded-Test",
+			},
+			wantProxyHeader: `proxy_set_header X-Forwarded-ABC "abc";`,
+		},
 	}
 
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
+			ingressCfg.Ingress.Annotations = tc.annotations
 
-	wantProxyHeader := "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;"
+			err := tmpl.Execute(buf, ingressCfg)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
-	}
-}
-
-func TestExecuteTemplate_ForIngressForNGINXPlusWithProxySetHeadersAnnotationWithTwoHeaders(t *testing.T) {
-	tmpl := newNGINXPlusIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC",
-	}
-
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	wantProxyHeader := "proxy_set_header BVC $http_bvc;"
-
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
-	}
-}
-
-func TestExecuteTemplate_ForIngressForNGINXPlusWithProxySetHeadersAnnotationWithTwoHeadersAndOneValue(t *testing.T) {
-	tmpl := newNGINXPlusIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC test",
-	}
-
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	wantProxyHeader := `proxy_set_header BVC "test";`
-
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
-	}
-}
-
-func TestExecuteTemplate_ForIngressForNGINXPlusWithProxySetHeadersAnnotationWithMultipleHeaders(t *testing.T) {
-	tmpl := newNGINXPlusIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC,X-Forwarded-Test",
-	}
-
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	wantProxyHeader := `proxy_set_header X-Forwarded-Test $http_x_forwarded_test;`
-
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
-	}
-}
-
-func TestExecuteTemplate_ForIngressForNGINXPlusWithProxySetHeadersAnnotationWithMultipleHeadersAndTwoValues(t *testing.T) {
-	tmpl := newNGINXPlusIngressTmpl(t)
-	buf := &bytes.Buffer{}
-	ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-
-	ingressCfg.Ingress.Annotations = map[string]string{
-		"nginx.org/proxy-set-headers": "X-Forwarded-ABC abc,BVC bat,X-Forwarded-Test",
-	}
-
-	err := tmpl.Execute(buf, ingressCfg)
-	t.Log(buf.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	wantProxyHeader := `proxy_set_header X-Forwarded-ABC "abc";`
-
-	if !strings.Contains(buf.String(), wantProxyHeader) {
-		t.Errorf("want %q in generated config", wantProxyHeader)
+			if !strings.Contains(buf.String(), tc.wantProxyHeader) {
+				t.Errorf("want %q in generated config", tc.wantProxyHeader)
+			}
+		})
 	}
 }
 
