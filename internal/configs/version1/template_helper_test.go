@@ -483,7 +483,6 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 		name             string
 		annotations      map[string]string
 		wantProxyHeaders []string
-		wantError        error
 	}{
 		{
 			name: "One Header",
@@ -493,7 +492,6 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 			wantProxyHeaders: []string{
 				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
 			},
-			wantError: nil,
 		},
 		{
 			name: "Two Headers",
@@ -504,7 +502,6 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
 				"proxy_set_header BVC $http_bvc;",
 			},
-			wantError: nil,
 		},
 		{
 			name: "Two Headers with One Value",
@@ -515,7 +512,6 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
 				`proxy_set_header BVC "test";`,
 			},
-			wantError: nil,
 		},
 		{
 			name: "Three Headers",
@@ -527,7 +523,6 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 				"proxy_set_header BVC $http_bvc;",
 				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
 			},
-			wantError: nil,
 		},
 		{
 			name: "Three Headers with Two Value",
@@ -539,18 +534,15 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 				`proxy_set_header BVC "bat";`,
 				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
 			},
-			wantError: nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			generatedConfig, err := generateProxySetHeaders(tc.annotations)
-
-			if err != tc.wantError {
-				t.Fatalf("expected error %v, got %v", tc.wantError, err)
+			if err != nil {
+				t.Fatal(err)
 			}
-
 			if len(tc.wantProxyHeaders) != strings.Count(generatedConfig, "\n") {
 				t.Fatalf("expected %d config lines, got %d", len(tc.wantProxyHeaders), strings.Count(generatedConfig, "\n"))
 			}
