@@ -456,8 +456,10 @@ jobs:
       - name: NAP modules
         id: nap_modules
         run: |
-          [[ "${{ matrix.images.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || modules="${{ matrix.images.nap_modules }}"
+          [[ "${{ matrix.images.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ matrix.images.nap_modules }}"
+          [[ "${{ matrix.images.nap_modules }}" == "waf,dos" ]] && modules="both" || modules="${{ matrix.images.nap_modules }}"
           echo "modules=${modules}" >> $GITHUB_OUTPUT
+          echo "name=${name}" >> $GITHUB_OUTPUT
         if: ${{ matrix.images.nap_modules }}
 
       - name: Authenticate to Google Cloud
@@ -480,7 +482,7 @@ jobs:
       - name: Check if base images exist
         id: base_exists
         run: |
-          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.modules) || '' }}; then
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.name) || '' }}; then
             echo "exists=0" >> $GITHUB_OUTPUT
           else
             echo "exists=1" >> $GITHUB_OUTPUT
@@ -502,17 +504,17 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.modules) || '' }}
-          cache-to: type=gha,scope=${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.modules) || '' }},mode=max
+          cache-from: type=gha,scope=${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          cache-to: type=gha,scope=${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: common
-          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.modules) || '' }}
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}${{ matrix.images.nap_modules && format('-{0}', steps.nap_modules.outputs.name) || '' }}
           platforms: ${{ matrix.images.platforms }}
           pull: true
           push: true
           build-args: |
             BUILD_OS=${{ matrix.images.image }}
             IC_VERSION=${{ needs.checks.outputs.ic_version }}
-            ${{ contains(matrix.images.image, 'nap') && format('NAP_MODULES={0}', matrix.images.nap_modules) || '' }}
+            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
             ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.crt={0}"', secrets.NGINX_AP_CRT) || format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) }}
             ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.key={0}"', secrets.NGINX_AP_KEY) || format('"nginx-repo.key={0}"', secrets.NGINX_KEY) }}
@@ -550,15 +552,17 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ matrix.images.image }}${{ contains(matrix.images.marker, 'dos') && '-dos' || '' }}${{ contains(matrix.images.marker, 'appprotect') && '-nap' || '' }}
-          target: goreleaser
+          cache-from: type=gha,scope=${{ matrix.images.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          cache-to: type=gha,scope=${{ matrix.images.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
+          target: goreleaser${{ needs.checks.outputs.forked_workflow == 'false' && '-prebuilt' || '' }}
           tags: "docker.io/nginx/nginx${{ contains(matrix.images.image, 'plus') && '-plus' || '' }}-ingress:${{ matrix.images.image }}${{ contains(matrix.images.marker, 'dos') && '-dos' || '' }}${{ contains(matrix.images.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}"
           load: true
           pull: true
           build-args: |
             BUILD_OS=${{ matrix.images.image }}
             IC_VERSION=CI
-            ${{ contains(matrix.images.image, 'nap') && format('NAP_MODULES={0}', matrix.images.nap_modules) || '' }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.images.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.images.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+            ${{ contains(matrix.images.image, 'nap') && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
             ${{ contains(matrix.images.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
           secrets: |
             ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.crt={0}"', secrets.NGINX_AP_CRT) || format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) }}
