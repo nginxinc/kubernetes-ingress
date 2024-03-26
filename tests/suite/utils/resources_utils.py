@@ -1493,6 +1493,24 @@ def replace_service(v1: CoreV1Api, name, namespace, body) -> str:
     return resp.metadata.name
 
 
+def get_events_for_object(v1: CoreV1Api, namespace, object_name) -> []:
+    """
+    Get the list of events in a namespace.
+
+    :param v1: CoreV1Api
+    :param namespace:
+    :return: []
+    """
+    print(f"Get the events for {object_name} in the namespace: {namespace}")
+    res = v1.list_namespaced_event(namespace)
+    return [event for event in res.items if event["involved_object"]["name"] == object_name]
+
+
+def get_events_for_object(v1: CoreV1Api, namespace, object_name) -> []:
+    events = get_events(v1, namespace)
+    return [event for event in events if event.involved_object.name == object_name]
+
+
 def get_events(v1: CoreV1Api, namespace) -> []:
     """
     Get the list of events in a namespace.
@@ -1504,6 +1522,19 @@ def get_events(v1: CoreV1Api, namespace) -> []:
     print(f"Get the events in the namespace: {namespace}")
     res = v1.list_namespaced_event(namespace)
     return res.items
+
+
+def get_event_count(v1: CoreV1Api, namespace) -> int:
+    """
+    Get the number of events in a namespace.
+
+    :param v1: CoreV1Api
+    :param namespace:
+    :return: []
+    """
+    print(f"Get the event numbers in the namespace: {namespace}")
+    res = v1.list_namespaced_event(namespace)
+    return len(res.items)
 
 
 def ensure_response_from_backend(req_url, host, additional_headers=None, check404=False, sni=False) -> None:
