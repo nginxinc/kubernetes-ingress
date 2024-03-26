@@ -277,13 +277,11 @@ func ParseProxyBuffersSpec(s string) (string, error) {
 	return "", errors.New("invalid proxy buffers string")
 }
 
+// parseProxySetHeaders ensures that the string space-seperated list of headers
 func parseProxySetHeaders(proxySetHeaders []string) ([]version2.Header, error) {
 	var headers []version2.Header
 	for _, header := range proxySetHeaders {
 		parts := strings.Split(header, " ")
-		if len(parts) > 2 {
-			return nil, fmt.Errorf("invalid proxy-set-header format: %s", header)
-		}
 		headers = append(headers, version2.Header{Name: parts[0], Value: parts[1]})
 	}
 	return headers, nil
