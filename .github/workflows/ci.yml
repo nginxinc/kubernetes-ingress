@@ -608,7 +608,6 @@ jobs:
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
       publish-aws-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && contains(matrix.target, 'aws') }}
-      publish-gcp-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && ! contains(matrix.target, 'aws') }}
       publish-nginx-reqistry: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
     permissions:
@@ -667,7 +666,6 @@ jobs:
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
       publish-aws-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && contains(matrix.target, 'aws') }}
-      publish-gcp-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && ! contains(matrix.target, 'aws') }}
       publish-nginx-reqistry: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
     permissions:
