@@ -10,12 +10,12 @@ docs: "DOCS-616"
 
 26 Mar 2024
 
-Customers who extend the capabilities of NGINX Ingress Controller with NGINX App Protect WAF and bring firewall protection to the edge of their Kubernetes clusters can now enjoy violation visibility through NGINX Instance Manager Security Monitor.  They can also use NIM Security Monitor to build Policy bundles and reduce reload time impacts on NIC.  More information at https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/#waf-bundles and https://docs.nginx.com/nginx-management-suite/security/.
+NGINX Ingress Controller and NGINX App Protect WAF users can can now view violations through NGINX Instance Manager Security Monitor.  Security Monitor can be used to build Policy bundles, reducing reload time impacts on NGINX Ingress Controller.  Read more information in [NGINX App Protect WAF Bundles](https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/#waf-bundles) and [Security Monitoring](https://docs.nginx.com/nginx-management-suite/security/).
 
-NIC has long supported blue/green and canary style rollouts through the split https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#split capability.  When using NGINX Plus and a simple two version split, you can now control progressive rollouts of a new backend version without reloading NGINX.  More information at https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-weight-changes-dynamic-reload.
+When using NGINX Plus for two version [split rollouts](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#split), you can now control progressive rollouts of a new backend version without reloading NGINX using the [**-weight-changes-dynamic-reload**](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-weight-changes-dynamic-reload) command line argument.
 
-For folks that exclusively rely on the Ingress resource, it now includes support for use-cluster-ip https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#backend-services-upstreams as well as rate limiting https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#rate-limiting.  
-use-cluster-ip supports service meshes and specific use cases when the backend service should be the target instead of individual backend service pods and bypasses upstream load balancing. 
+The [**use-cluster-ip**](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#backend-services-upstreams) annotation is now available for the Ingress resource.
+**use-cluster-ip** supports service meshes and specific use cases where the backend service should be the target instead of individual backend service pods, bypassing upstream load balancing. 
 
 ### <i class="fa-solid fa-rocket"></i> Features
 - [5179](https://github.com/nginxinc/kubernetes-ingress/pull/5179) & [5051](https://github.com/nginxinc/kubernetes-ingress/pull/5051) Add NIM Security Dashboard integration for App Protect WAF security violations
