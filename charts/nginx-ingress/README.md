@@ -471,7 +471,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |`controller.readOnlyRootFilesystem` | Configure root filesystem as read-only and add volumes for temporary data. Three major releases after 3.5.x this argument will be moved permanently to the `controller.securityContext` section. | false |
 |`controller.enableSSLDynamicReload` | Enable lazy loading for SSL Certificates. | true |
 |`controller.telemetryReporting.enable` | Enable telemetry reporting. | true |
-|`controller.enableDynamicWeightChangesReload` | Enable weight changes without reloading the NGINX configuration. May require increasing map_hash_bucket_size, map_hash_max_size, variable_hash_bucket_size, and variable_hash_max_size in the [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) if there are many two-way splits. Requires `controller.nginxplus` | false |
+|`controller.enableWeightChangesDynamicReload` | Enable weight changes without reloading the NGINX configuration. May require increasing `map_hash_bucket_size`, `map_hash_max_size`, `variable_hash_bucket_size`, and `variable_hash_max_size` in the [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) if there are many two-way splits. Requires `controller.nginxplus` | false |
 |`rbac.create` | Configures RBAC. | true |
 |`prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | true |
 |`prometheus.port` | Configures the port to scrape the metrics. | 9113 |
