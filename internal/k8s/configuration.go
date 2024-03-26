@@ -603,13 +603,9 @@ func (c *Configuration) AddOrUpdateGlobalConfiguration(gc *conf_v1.GlobalConfigu
 	validationErr := c.globalConfigurationValidator.ValidateGlobalConfiguration(gc)
 
 	c.globalConfiguration = gc
-	//glog.Infof("old listener map: %v", c.listenerMap)
 	c.setGlobalConfigListenerMap()
-	//glog.Infof("new listener map: %v", c.listenerMap)
 
-	//glog.Infof("old listeners: %v", c.listeners)
 	listenerChanges, listenerProblems := c.rebuildListeners()
-	//glog.Infof("new listeners: %v", c.listeners)
 
 	changes = append(changes, listenerChanges...)
 	problems = append(problems, listenerProblems...)

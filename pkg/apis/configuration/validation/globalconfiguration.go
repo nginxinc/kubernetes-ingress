@@ -2,9 +2,10 @@ package validation
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"sort"
 	"strings"
+
+	"github.com/golang/glog"
 
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -41,6 +42,7 @@ func (gcv *GlobalConfigurationValidator) validateGlobalConfigurationSpec(spec *c
 	spec.Listeners = validListeners
 	return err
 }
+
 func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.Listener, fieldPath *field.Path) ([]conf_v1.Listener, field.ErrorList) {
 	allErrs := field.ErrorList{}
 
@@ -96,7 +98,6 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 	}
 
 	glog.Infof("valid listeners: %v", validListeners)
-	//glog.Infof("valid listener names: %s, ports: %v", listenerNames, portProtocolMap)
 
 	return validListeners, allErrs
 }
@@ -123,7 +124,7 @@ func validateGlobalConfigurationListenerName(name string, fieldPath *field.Path)
 func (gcv *GlobalConfigurationValidator) validateListenerPort(name string, port int, fieldPath *field.Path) field.ErrorList {
 	glog.Infof("check forbidden ports: %v, port: %v", gcv.forbiddenListenerPorts, port)
 	if gcv.forbiddenListenerPorts[port] {
-		msg := fmt.Sprintf("Listener %v invalid: port %v is forbidden", name, port)
+		msg := fmt.Sprintf("Listener %v: port %v is forbidden", name, port)
 		glog.Infof("forbidden port: %v, port: %v", gcv.forbiddenListenerPorts, port)
 		return field.ErrorList{field.Forbidden(fieldPath, msg)}
 	}
