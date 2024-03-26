@@ -44,7 +44,7 @@ runs:
         sanitized_marker="${nospaces//\'/}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
         echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
-        echo "cluster=$(echo nginx-${{ inputs.image }}-$name)" >> $GITHUB_OUTPUT
+        echo "cluster=$(echo nginx-${{ inputs.image-name }}-$name)" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Setup Kubeconfig
