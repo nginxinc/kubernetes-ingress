@@ -76,9 +76,13 @@ func makePathWithRegex(path, regexType string) string {
 var setHeader = regexp.MustCompile("[a-zA-Z]+$")
 
 func ValidateProxySetHeader(header string) error {
-	header = strings.TrimSpace(header)
+	trimmedHeader := strings.TrimSpace(header)
 
-	if !setHeader.MatchString(header) {
+	if header != trimmedHeader {
+		return errors.New("space detected before or after header")
+	}
+
+	if !setHeader.MatchString(trimmedHeader) {
 		return errors.New("invalid header syntax")
 	}
 	return nil
@@ -97,9 +101,19 @@ func generateProxySetHeaders(ingressAnnotations map[string]string) (string, erro
 		for _, header := range headers {
 			headerParts := strings.SplitN(header, " ", 2)
 			headerName := strings.TrimSpace(headerParts[0])
+			if headerName == "" {
+				if err := ValidateProxySetHeader(headerName); err != nil {
+					return "", err
+				}
+			}
 			if headerName != "" {
 				if err := ValidateProxySetHeader(headerName); err != nil {
 					return "", err
+				}
+				if headerParts[1] == "" {
+					if err := ValidateProxySetHeader(headerParts[1]); err != nil {
+						return "", err
+					}
 				}
 				if len(headerParts) > 1 {
 					headerValue := strings.TrimSpace(headerParts[1])
