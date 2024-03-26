@@ -433,13 +433,13 @@ func validateProxySetHeaderAnnotation(context *annotationValidationContext) fiel
 
 		value := strings.TrimSpace(parts[1])
 
-		if value == "" {
-			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "empty header value: "+header))
+		if name == "" {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "empty header name: "+header))
 			continue
 		}
 
-		if name == "" {
-			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "empty header name: "+header))
+		if name == "" && value == "" {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "invalid header syntax: "+header))
 			continue
 		}
 	}

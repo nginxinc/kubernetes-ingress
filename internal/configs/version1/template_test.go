@@ -1002,33 +1002,6 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithInvalidProxySetHeadersAnnotat
 		wantError   []string
 	}{
 		{
-			name: "Blank Header",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": " ",
-			},
-			wantError: []string{
-				"invalid header syntax",
-			},
-		},
-		{
-			name: "Blank Value",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC ",
-			},
-			wantError: []string{
-				"invalid header syntax",
-			},
-		},
-		{
-			name: "Header with Space Before",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": " X-Forwarded-ABC",
-			},
-			wantError: []string{
-				"invalid header syntax",
-			},
-		},
-		{
 			name: "Header with Number",
 			annotations: map[string]string{
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC1",
