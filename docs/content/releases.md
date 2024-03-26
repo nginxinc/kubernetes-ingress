@@ -10,6 +10,13 @@ docs: "DOCS-616"
 
 26 Mar 2024
 
+Customers who extend the capabilities of NGINX Ingress Controller with NGINX App Protect WAF and bring firewall protection to the edge of their Kubernetes clusters can now enjoy violation visibility through NGINX Instance Manager Security Monitor.  They can also use NIM Security Monitor to build Policy bundles and reduce reload time impacts on NIC.  More information at https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/#waf-bundles and https://docs.nginx.com/nginx-management-suite/security/.
+
+NIC has long supported blue/green and canary style rollouts through the split https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#split capability.  When using NGINX Plus and a simple two version split, you can now control progressive rollouts of a new backend version without reloading NGINX.  More information at https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-weight-changes-dynamic-reload.
+
+For folks that exclusively rely on the Ingress resource, it now includes support for use-cluster-ip https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#backend-services-upstreams as well as rate limiting https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#rate-limiting.  
+use-cluster-ip supports service meshes and specific use cases when the backend service should be the target instead of individual backend service pods and bypasses upstream load balancing. 
+
 ### <i class="fa-solid fa-rocket"></i> Features
 - [5179](https://github.com/nginxinc/kubernetes-ingress/pull/5179) & [5051](https://github.com/nginxinc/kubernetes-ingress/pull/5051) Add NIM Security Dashboard integration for App Protect WAF security violations
 - [5212](https://github.com/nginxinc/kubernetes-ingress/pull/5212) Weight changes Dynamic Reload
@@ -24,7 +31,6 @@ docs: "DOCS-616"
 - [5211](https://github.com/nginxinc/kubernetes-ingress/pull/5211) Move set above rewrite to fix uninitialized variable
 - [5175](https://github.com/nginxinc/kubernetes-ingress/pull/5175) Initialize `stopCh` channel for ExternalDNS
 - [5053](https://github.com/nginxinc/kubernetes-ingress/pull/5053) Ensure `backup` server is removed from upstreams when the Backup Service is deleted
-- [5211](https://github.com/nginxinc/kubernetes-ingress/pull/5211) Move set above rewrite to fix uninitialized variable
 
 ### <i class="fa-solid fa-box"></i> Helm Chart
 - [5159](https://github.com/nginxinc/kubernetes-ingress/pull/5159) Refactor volumes and volumeMounts to common helpers
