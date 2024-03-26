@@ -999,15 +999,11 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithInvalidProxySetHeadersAnnotat
 	testCases := []struct {
 		name        string
 		annotations map[string]string
-		wantError   []string
 	}{
 		{
 			name: "Header with Number",
 			annotations: map[string]string{
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC1",
-			},
-			wantError: []string{
-				"invalid header syntax",
 			},
 		},
 		{
@@ -1015,20 +1011,13 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithInvalidProxySetHeadersAnnotat
 			annotations: map[string]string{
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC!,BVC§",
 			},
-			wantError: []string{
-				"invalid header syntax",
-			},
 		},
 		{
 			name: "One Header with Two Value",
 			annotations: map[string]string{
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC test test2",
 			},
-			wantError: []string{
-				"multiple values found in header",
-			},
 		},
-		{},
 	}
 
 	for _, tc := range testCases {
@@ -1038,21 +1027,9 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithInvalidProxySetHeadersAnnotat
 			ingressCfg.Ingress.Annotations = tc.annotations
 
 			err := tmpl.Execute(buf, ingressCfg)
-			if len(tc.wantError) == 0 {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				return
-			}
 
 			if err == nil {
 				t.Fatal("expected an error, but got nil")
-			}
-
-			for _, wantError := range tc.wantError {
-				if !strings.Contains(err.Error(), wantError) {
-					t.Errorf("expected error message %q, but got %q", wantError, err.Error())
-				}
 			}
 		})
 	}

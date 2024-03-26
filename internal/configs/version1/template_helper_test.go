@@ -555,3 +555,76 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateGenerateProxySetHeadersForInvalidHeaders(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name        string
+		annotations map[string]string
+		want        string
+	}{
+		{
+			name:        "Empty Annotation Map",
+			annotations: map[string]string{},
+			want:        "",
+		},
+		{
+			name: "Empty Anotation",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "",
+			},
+			want: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := generateProxySetHeaders(tc.annotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.want != got {
+				t.Errorf("want %q got %q", tc.want, got)
+			}
+
+		})
+	}
+}
+
+func TestValidateGenerateProxySetHeadersForInvalidHeadersForErrors(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name        string
+		annotations map[string]string
+	}{
+		{
+			name: "Header with Number",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC1",
+			},
+		},
+		{
+			name: "Headers With Special Characters",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC!,BVC§",
+			},
+		},
+		{
+			name: "One Header with Two Value",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC test test2",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := generateProxySetHeaders(tc.annotations)
+			if err == nil {
+				t.Error("expected an error, but got nil")
+			}
+		})
+	}
+}

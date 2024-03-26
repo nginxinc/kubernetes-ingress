@@ -88,33 +88,34 @@ func ValidateProxySetHeader(header string) error {
 // and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
 // It returns a string containing the generated Nginx configuration.
 func generateProxySetHeaders(ingressAnnotations map[string]string) (string, error) {
+	proxySetHeaders, ok := ingressAnnotations["nginx.org/proxy-set-headers"]
+	if !ok {
+		return "", nil
+	}
+	if proxySetHeaders == "" {
+		return "", nil
+	}
+
 	var result strings.Builder
-
-	proxySetHeaders := ingressAnnotations["nginx.org/proxy-set-headers"]
-
-	if proxySetHeaders != "" {
-		headers := strings.Split(proxySetHeaders, ",")
-		for _, header := range headers {
-			headerParts := strings.SplitN(header, " ", 2)
-			headerName := strings.TrimSpace(headerParts[0])
-			if headerName != "" {
-				if err := ValidateProxySetHeader(headerName); err != nil {
-					return "", err
-				}
-				if len(headerParts) > 1 {
-					headerValue := strings.TrimSpace(headerParts[1])
-					if strings.Contains(headerValue, " ") {
-						return "", errors.New("multiple values found in header: " + header)
-					} else {
-						result.WriteString("\n		proxy_set_header " + headerName + " \"" + headerValue + "\";")
-					}
-				} else {
-					headerValue := strings.TrimSpace(headerParts[0])
-					headerValue = strings.ReplaceAll(headerValue, "-", "_")
-					headerValue = strings.ToLower(headerValue)
-					result.WriteString("\n		proxy_set_header " + headerName + " $http_" + headerValue + ";")
-				}
+	headers := strings.Split(proxySetHeaders, ",")
+	for _, header := range headers {
+		header := strings.TrimSpace(header)
+		headerParts := strings.SplitN(header, " ", 2)
+		headerName := strings.TrimSpace(headerParts[0])
+		if err := ValidateProxySetHeader(headerName); err != nil {
+			return "", err
+		}
+		if len(headerParts) > 1 {
+			headerValue := strings.TrimSpace(headerParts[1])
+			if strings.Contains(headerValue, " ") {
+				return "", errors.New("multiple values found in header: " + header)
 			}
+			result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
+		} else {
+			headerValue := strings.TrimSpace(headerParts[0])
+			headerValue = strings.ReplaceAll(headerValue, "-", "_")
+			headerValue = strings.ToLower(headerValue)
+			result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
 		}
 	}
 	return result.String(), nil
