@@ -1,11 +1,7 @@
 import pytest
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import (
-    patch_ts_from_yaml,
-    read_ts,
-    patch_gc_from_yaml,
-)
-from suite.utils.resources_utils import wait_before_test, get_events_for_object
+from suite.utils.custom_resources_utils import patch_gc_from_yaml, patch_ts_from_yaml, read_ts
+from suite.utils.resources_utils import get_events_for_object, wait_before_test
 
 
 @pytest.mark.ts

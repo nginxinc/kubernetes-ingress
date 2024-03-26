@@ -3,16 +3,15 @@ from typing import List, TypedDict
 import pytest
 import requests
 from requests.exceptions import ConnectionError
-
 from settings import TEST_DATA
 from suite.utils.custom_resources_utils import create_gc_from_yaml, delete_gc, patch_gc_from_yaml, read_gc
 from suite.utils.resources_utils import (
     create_secret_from_yaml,
     delete_secret,
-    get_first_pod_name,
-    wait_before_test,
     get_events,
     get_events_for_object,
+    get_first_pod_name,
+    wait_before_test,
 )
 from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml, read_vs
 
