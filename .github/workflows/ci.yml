@@ -561,9 +561,9 @@ jobs:
             ${{ contains(matrix.images.image, 'nap') && format('NAP_MODULES={0}', matrix.images.nap_modules) || '' }}
             ${{ contains(matrix.images.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
           secrets: |
-            ${{ contains(matrix.images.image, 'plus') && format('"nginx-repo.crt={0}"', inputs.nginx-crt) || '' }}
-            ${{ contains(matrix.images.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
-            ${{ contains(matrix.images.image, 'ubi') && format('"rhel_license={0}"', inputs.rhel-license) || '' }}
+            ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.crt={0}"', secrets.NGINX_AP_CRT) || format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) }}
+            ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.key={0}"', secrets.NGINX_AP_KEY) || format('"nginx-repo.key={0}"', secrets.NGINX_KEY) }}
+            ${{ contains(matrix.images.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
 
       - name: Run Smoke Tests
         id: smoke-tests
