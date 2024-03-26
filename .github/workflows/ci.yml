@@ -524,7 +524,6 @@ jobs:
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'true' }}
 
       - name: Check if test image exists
         id: check-image
@@ -565,7 +564,6 @@ jobs:
             ${{ contains(matrix.images.image, 'plus') && format('"nginx-repo.crt={0}"', inputs.nginx-crt) || '' }}
             ${{ contains(matrix.images.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
             ${{ contains(matrix.images.image, 'ubi') && format('"rhel_license={0}"', inputs.rhel-license) || '' }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'true' }}
 
       - name: Run Smoke Tests
         id: smoke-tests
