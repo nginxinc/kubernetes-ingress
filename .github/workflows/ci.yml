@@ -569,6 +569,7 @@ jobs:
         id: smoke-tests
         uses: ./.github/actions/smoke-tests
         with:
+          image-type: ${{ matrix.images.image }}
           image-name: docker.io/nginx/nginx${{ contains(matrix.images.image, 'plus') && '-plus' || '' }}-ingress
           tag: ${{ matrix.images.image }}${{ contains(matrix.images.marker, 'dos') && '-dos' || '' }}${{ contains(matrix.images.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}

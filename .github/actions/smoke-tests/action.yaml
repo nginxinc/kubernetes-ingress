@@ -9,8 +9,11 @@ inputs:
     description: Timeout to use
     default: 75s
     required: false
+  image-type:
+    description: Image type to test
+    required: true
   image-name:
-    description: Docker image name test
+    description: Docker image name to test
     required: true
   tag:
     description: Docker image tag to test
@@ -44,7 +47,7 @@ runs:
         sanitized_marker="${nospaces//\'/}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
         echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
-        echo "cluster=$(echo nginx-${{ inputs.image-name }}-$name)" >> $GITHUB_OUTPUT
+        echo "cluster=$(echo nginx-${{ inputs.image-type }}-$name)" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Setup Kubeconfig
