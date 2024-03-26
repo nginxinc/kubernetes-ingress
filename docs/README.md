@@ -1,34 +1,59 @@
-# NGINX Ingress Controller Docs
+# NGINX Ingress Controller Documentation
 
-This directory contains all of the user documentation for NGINX Ingress Controller, as well as the requirements for linting, building, and publishing the documentation.
+This directory contains all of the user documentation for NGINX Ingress Controller, as well as the requirements for building and publishing the documentation.
 
-Docs are written in Markdown. We build the docs using [Hugo](https://gohugo.io) and host them on [Netlify](https://www.netlify.com/).
+Documentation is written in Markdown, built using [Hugo](https://gohugo.io) with [nginx-hugo-theme](https://github.com/nginxinc/nginx-hugo-theme), then deployed with [Netlify](https://www.netlify.com/).
 
 ## Setup
 
-To install Hugo locally, refer to the [Hugo installation instructions](https://gohugo.io/getting-started/installing/).
+Hugo is the only requirement for building documentation, but the repository's integration tooling uses markdownlint-cli.
 
-> **NOTE**: We are currently running [Hugo v0.115.3](https://github.com/gohugoio/hugo/releases/tag/v0.115.3) in production.
+> **Note**: We currently use [Hugo v0.115.3](https://github.com/gohugoio/hugo/releases/tag/v0.115.3) in production.
 
-## Local Docs Development
+Although not a strict requirement, markdown-link-check is also used in documentation development.
 
-To build the docs locally, run the desired `make` command from the docs directory:
+If you have [Docker](https://www.docker.com/get-started/) installed, there are fallbacks for all in the [Makefile](Makefile), meaning you do need to install them.
+
+- [Installing Hugo](https://gohugo.io/getting-started/installing/)
+- [Installing markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli?tab=readme-ov-file#installation)
+- [Installing markdown-link-check](https://github.com/tcort/markdown-link-check?tab=readme-ov-file#installation).
+
+The configuration files are as follows:
+
+- *Hugo*: `config/_default/config.toml`
+- *markdownlint-cli*: `.markdownlint.json`
+- *markdown-link-check* `md-linkcheck-config.json`
+
+## Repository guidelines
+
+To work on documentation, create a feature branch in a forked repository then target `main` with your pull requests, which is the default repository branch.
+
+The documentation is published from the latest public release branch. If your changes require immediate publication, create a pull request to cherry-pick changes from `main` to the public release branch.
+
+## Developing documentation locally
+
+To build the documentation locally, run the `make` command inside this `/site/` directory:
 
 ```text
-make clean          -   removes the local `public` directory, which is the default output path used by Hugo
-make docs           -   runs a local hugo server so you can view docs in your browser while you work
-make hugo-mod       -   cleans the Hugo module cache and fetches the latest version of the theme module
-make hugo-mod-tidy  -   removes unused entries in go.mod and go.sum and verifies the dependencies
-make docs-drafts    -   runs the local hugo server and includes all docs marked with `draft: true`
+make docs            - Builds the documentation set with the output as the '/public' directory
+make clean           - Removes the local '/public/' directory
+make watch           - Starts a local Hugo server for live previews
+make watch-drafts    - Starts a local Hugo server for live previews, including documentation marked with 'draft: true'
+make link-check      - Check for any broken links in the documentation
+make lint-markdown   - Runs markdownlint to identify possible markdown formatting issues
 ```
 
-## Add new docs
+The `watch` options automatically reload the Hugo server, allowing you to view updates as you work.
 
-### Generate a new doc file using Hugo
+> **Note**: The documentation uses build environments to control the baseURL used for things like internal references and static resources. The configuration for each environment can be found in the `config` directory. When running Hugo you can specify the environment and baseURL, but it's unnecessary.
 
-To create a new doc file that contains all of the pre-configured Hugo front-matter and the docs task template, **run the following command in the docs directory**:
+## Adding new documentation
 
-`hugo new <SECTIONNAME>/<FILENAME>.<FORMAT>`
+### Using Hugo to generate a new documentation file
+
+To create a new documentation file with the pre-configured Hugo front-matter for the task template, run the following command inside this `/site` directory:
+
+`hugo new <SECTIONNAME>/<FILENAME>.md`
 
 For example:
 
@@ -36,62 +61,73 @@ For example:
 hugo new getting-started/install.md
 ```
 
-The default template -- task -- should be used for most docs. To create docs using the other content templates, you can use the `--kind` flag:
+The default template (task) should be used for most pages. For other content templates, you can use the `--kind` flag:
 
 ```shell
 hugo new tutorials/deploy.md --kind tutorial
 ```
 
-The available content types (`kind`) are:
+The available content templates (`kind`) are:
 
-- concept: Helps a customer learn about a specific feature or feature set.
-- tutorial: Walks a customer through an example use case scenario; results in a functional PoC environment.
-- reference: Describes an API, command line tool, config options, etc.; should be generated automatically from source code.
-- troubleshooting: Helps a customer solve a specific problem.
-- openapi: Contains front-matter and shortcode for rendering an openapi.yaml spec
+- concept: Help a user learn about a specific feature or feature set.
+- tutorial: Walk a user through an example use case scenario.
+- reference: Describes an API, command line tool, configuration options, etc.
+- troubleshooting: Guide a user towards solving a specific problem.
+- openapi: A template with the requirements to render an openapi.yaml specification.
 
-## How to format docs
+## Documentation formatting
+
+### Basic markdown formatting
+
+There are multiple ways to format text: for consistency and clarity, these are our conventions:
+
+- Bold: Two asterisks on each side - `**Bolded text**`.
+- Italic: One underscore on each side - `_Italicized text_`.
+- Unordered lists: One dash - `- Unordered list item`.
+- Ordered lists: The 1 character followed by a stop - `1. Ordered list item`.
+
+> **Note**: The ordered notation automatically enumerates lists when built by Hugo.
+
+Close every section with a horizontal line by using three dashes: `---`.
 
 ### How to format internal links
 
-Format links as [Hugo refs](https://gohugo.io/content-management/cross-references/).
+Internal links should use Hugo [ref and relref shortcodes](https://gohugo.io/content-management/cross-references/).
 
-- File extensions are optional.
-- You can use relative paths or just the filename. (**Paths without a leading / are first resolved relative to the current page, then to the remainder of the site.**)
-- Anchors are supported.
+- Although file extensions are optional for Hugo, we include them as best practice for page anchors.
+- Relative paths are preferred, but just the filename is permissible.
+- Paths without a leading forward slash (`/`) are first resolved relative to the current page, then the remainder of the website.
 
-For example:
-
-```md
-To install <product>, refer to the [installation instructions]({{< ref "install" >}}).
-```
-
-### How to include images
-
-You can use the `img` [shortcode](#how-to-use-hugo-shortcodes) to add images into your documentation.
-
-1. Add the image to the static/img directory, or to the same directory as the doc you want to use it in.
-
-   - **DO NOT include a forward slash at the beginning of the file path.** This will break the image when it's rendered.
-     See the docs for the [Hugo relURL Function](https://gohugo.io/functions/relurl/#input-begins-with-a-slash) to learn more.
-
-1. Add the img shortcode:
-
-    {{< img src="<img-file.png>" >}}
-
-> Note: The shortcode accepts all of the same parameters as the [Hugo figure shortcode](https://gohugo.io/content-management/shortcodes/#figure).
-
-### How to use Hugo shortcodes
-
-You can use [Hugo shortcodes](/docs/themes/f5-hugo/layouts/shortcodes/) to do things like format callouts, add images, and reuse content across different docs.
-
-For example, to use the note callout:
+Here are two examples:
 
 ```md
-{{< note >}}Provide the text of the note here. {{< /note >}}
+To install <software>, refer to the [installation instructions]({{< ref "install.md" >}}).
+To install <integation>, refer to the [integration instructions]({{< relref "/integration/thing.md#section" >}}).
 ```
 
-The callout shortcodes also support multi-line blocks:
+### How to add images
+
+Use the `img` [shortcode](#using-hugo-shortcodes) to add images into your documentation.
+
+1. Add the image to the `/static/img` directory.
+1. Add the `img` shortcode:
+    `{{< img src="<img-file.png>" >}}`
+   - **Do not include a forward slash at the beginning of the file path.**
+   - This will break the image when it's rendered: read about the  [Hugo relURL Function](https://gohugo.io/functions/relurl/#input-begins-with-a-slash) to learn more.
+
+> **Note**: The `img` shortcode accepts all of the same parameters as the Hugo [figure shortcode](https://gohugo.io/content-management/shortcodes/#figure).
+
+### Using Hugo shortcodes
+
+[Hugo shortcodes](/docs/themes/f5-hugo/layouts/shortcodes/) are used to format callouts, add images, and reuse content across different pages.
+
+For example, to use the `note` callout:
+
+```md
+{{< note >}}Provide the text of the note here.{{< /note >}}
+```
+
+The callout shortcodes support multi-line blocks:
 
 ```md
 {{< caution >}}
@@ -110,12 +146,14 @@ Supported callouts:
 - `tip`
 - `warning`
 
-A few more fun shortcodes:
+Here are some other shortcodes:
 
-- `fa`: inserts a Font Awesome icon
-- `img`: include an image and define things like alt text and dimensions
-- `include`: include the content of a file in another file; the included file must be present in the content/includes directory
-- `link`: makes it possible to link to a file and prepend the path with the Hugo baseUrl
-- `openapi`: loads an OpenAPI spec and renders as HTML using ReDoc
-- `raw-html`: makes it possible to include a block of raw HTML
-- `readfile`: includes the content of another file in the current file; does not require the included file to be in a specific location.
+- `fa`: Inserts a Font Awesome icon
+- `collapse`: Make a section collapsible
+- `tab`: Create mutually exclusive tabbed window panes, useful for parallel instructions
+- `table`: Add scrollbars to wide tables for browsers with smaller viewports
+- `link`: Link to a file, prepending its path with the Hugo baseUrl
+- `openapi`: Loads an OpenAPI specifcation and render it as HTML using ReDoc
+- `include`: Include the content of a file in another file; the included file must be present in the '/content/includes/' directory
+- `raw-html`: Include a block of raw HTML
+- `readfile`: Include the content of another file in the current file, which can be in an arbitrary location.
