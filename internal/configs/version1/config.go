@@ -98,7 +98,6 @@ type Server struct {
 	HSTSBehindProxy       bool
 	ProxyHideHeaders      []string
 	ProxyPassHeaders      []string
-	ProxySetHeaders       []version2.Header
 
 	HealthChecks map[string]HealthCheck
 
@@ -170,6 +169,7 @@ type Location struct {
 	ProxyConnectTimeout  string
 	ProxyReadTimeout     string
 	ProxySendTimeout     string
+	ProxySetHeaders      []version2.Header
 	ClientMaxBodySize    string
 	Websocket            bool
 	Rewrite              string
