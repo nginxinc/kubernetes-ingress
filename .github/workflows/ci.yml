@@ -535,7 +535,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
@@ -561,7 +561,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'true' || steps.check-image.outcome == 'failure' }}
 
       - name: Build ${{ matrix.images.image }} Container
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           file: build/Dockerfile
           context: "."
