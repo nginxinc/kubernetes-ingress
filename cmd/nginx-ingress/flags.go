@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -9,7 +8,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/golang/glog"
 	api_v1 "k8s.io/api/core/v1"
@@ -18,7 +16,8 @@ import (
 )
 
 const (
-	dynamicSSLReloadParam = "ssl-dynamic-reload"
+	dynamicSSLReloadParam     = "ssl-dynamic-reload"
+	dynamicWeightChangesParam = "weight-changes-dynamic-reload"
 )
 
 var (
@@ -65,6 +64,9 @@ var (
 	appProtectDosMaxDaemons = flag.Int("app-protect-dos-max-daemons", 0, "Max number of ADMD instances. Requires -nginx-plus and -enable-app-protect-dos.")
 	appProtectDosMaxWorkers = flag.Int("app-protect-dos-max-workers", 0, "Max number of nginx processes to support. Requires -nginx-plus and -enable-app-protect-dos.")
 	appProtectDosMemory     = flag.Int("app-protect-dos-memory", 0, "RAM memory size to consume in MB. Requires -nginx-plus and -enable-app-protect-dos.")
+
+	agent              = flag.Bool("agent", false, "Enable NGINX Agent")
+	agentInstanceGroup = flag.String("agent-instance-group", "nginx-ingress-controller", "Grouping used to associate NGINX Ingress Controller instances")
 
 	ingressClass = flag.String("ingress-class", "nginx",
 		`A class of the Ingress Controller.
@@ -204,7 +206,8 @@ var (
 	enableDynamicSSLReload = flag.Bool(dynamicSSLReloadParam, true, "Enable reloading of SSL Certificates without restarting the NGINX process.")
 
 	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
-	telemetryReportingPeriod = flag.String("telemetry-reporting-period", "24h", "Sets a telemetry reporting period.")
+
+	enableDynamicWeightChangesReload = flag.Bool(dynamicWeightChangesParam, false, "Enable changing weights of split clients without reloading NGINX. Requires -nginx-plus")
 
 	startupCheckFn func() error
 )
@@ -279,6 +282,15 @@ func parseFlags() {
 
 	if *ingressLink != "" && *externalService != "" {
 		glog.Fatal("ingresslink and external-service cannot both be set")
+	}
+
+	if *enableDynamicWeightChangesReload && !*nginxPlus {
+		glog.Warning("weight-changes-dynamic-reload flag support is for NGINX Plus, Dynamic Weight Changes will not be enabled")
+		*enableDynamicWeightChangesReload = false
+	}
+
+	if *agent && !*appProtect {
+		glog.Fatal("NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
 	}
 }
 
@@ -389,12 +401,6 @@ func validationChecks() {
 			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
 		}
 	}
-
-	if telemetryReportingPeriod != nil {
-		if err := validateReportingPeriod(*telemetryReportingPeriod); err != nil {
-			glog.Fatalf("Invalid value for telemetry-reporting-period: %v", err)
-		}
-	}
 }
 
 // validateNamespaceNames validates the namespaces are in the correct format
@@ -497,20 +503,6 @@ func validateLocation(location string) error {
 	if !locationRegexp.MatchString(location) {
 		msg := validation.RegexError(locationErrMsg, locationFmt, "/path", "/path/subpath-123")
 		return fmt.Errorf("invalid location format: %v", msg)
-	}
-	return nil
-}
-
-// validateReportingPeriod checks if the reporting period parameter can be parsed.
-//
-// This function will be deprecated in NIC v3.5. It is used only for demo and testing purpose.
-func validateReportingPeriod(period string) error {
-	duration, err := time.ParseDuration(period)
-	if err != nil {
-		return err
-	}
-	if duration.Minutes() < 1 {
-		return errors.New("invalid reporting period, expected minimum 1m")
 	}
 	return nil
 }

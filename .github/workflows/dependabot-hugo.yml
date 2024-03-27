@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "docs/go.mod"
+  merge_group:
 
 permissions:
   contents: read
@@ -22,10 +23,10 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: dependabot-metadata
-        uses: dependabot/fetch-metadata@c9c4182bf1b97f5224aee3906fd373f6b61b4526 # v1.6.0
+        uses: dependabot/fetch-metadata@0fb21704c18a42ce5aa8d720ea4b912f5e6babef # v2.0.0
 
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'go_modules' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
         with:
           ref: ${{ github.head_ref }}

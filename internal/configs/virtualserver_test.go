@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -156,7 +157,7 @@ func TestVariableNamerSafeNsName(t *testing.T) {
 
 	expected := "default_cafe_test"
 
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 
 	if variableNamer.safeNsName != expected {
 		t.Errorf(
@@ -175,7 +176,7 @@ func TestVariableNamer(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 
 	// GetNameForSplitClientVariable()
 	index := 0
@@ -213,7 +214,7 @@ func TestVariableNamer(t *testing.T) {
 func TestGenerateVSConfig_GeneratesConfigWithGunzipOn(t *testing.T) {
 	t.Parallel()
 
-	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false, &fakeBV)
 
 	want := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -471,7 +472,7 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOn(t *testing.T) {
 func TestGenerateVSConfig_GeneratesConfigWithGunzipOff(t *testing.T) {
 	t.Parallel()
 
-	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false, &fakeBV)
 
 	want := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -729,7 +730,7 @@ func TestGenerateVSConfig_GeneratesConfigWithGunzipOff(t *testing.T) {
 func TestGenerateVSConfig_GeneratesConfigWithNoGunzip(t *testing.T) {
 	t.Parallel()
 
-	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, true, false, &StaticConfigParams{TLSPassthrough: true}, false, &fakeBV)
 
 	want := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -1469,6 +1470,7 @@ func TestGenerateVirtualServerConfigWithBackupForNGINXPlus(t *testing.T) {
 		isResolverConfigured,
 		&StaticConfigParams{TLSPassthrough: true},
 		isWildcardEnabled,
+		&fakeBV,
 	)
 
 	sort.Slice(want.Upstreams, func(i, j int) bool {
@@ -1775,6 +1777,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupNameFor
 		isResolverConfigured,
 		&StaticConfigParams{TLSPassthrough: true},
 		isWildcardEnabled,
+		&fakeBV,
 	)
 
 	sort.Slice(want.Upstreams, func(i, j int) bool {
@@ -2084,6 +2087,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortFor
 		isResolverConfigured,
 		&StaticConfigParams{TLSPassthrough: true},
 		isWildcardEnabled,
+		&fakeBV,
 	)
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
@@ -2383,6 +2387,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortAnd
 		isResolverConfigured,
 		&StaticConfigParams{TLSPassthrough: true},
 		isWildcardEnabled,
+		&fakeBV,
 	)
 
 	sort.Slice(want.Upstreams, func(i, j int) bool {
@@ -2860,6 +2865,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		isResolverConfigured,
 		&StaticConfigParams{TLSPassthrough: true},
 		isWildcardEnabled,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
@@ -2904,6 +2910,7 @@ func TestGenerateVirtualServerConfigWithCustomHttpAndHttpsListeners(t *testing.T
 		false,
 		&StaticConfigParams{DisableIPV6: true},
 		false,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(
@@ -2952,6 +2959,7 @@ func TestGenerateVirtualServerConfigWithCustomHttpListener(t *testing.T) {
 		false,
 		&StaticConfigParams{DisableIPV6: true},
 		false,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(
@@ -3000,6 +3008,7 @@ func TestGenerateVirtualServerConfigWithCustomHttpsListener(t *testing.T) {
 		false,
 		&StaticConfigParams{DisableIPV6: true},
 		false,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(
@@ -3048,6 +3057,7 @@ func TestGenerateVirtualServerConfigWithNilListener(t *testing.T) {
 		false,
 		&StaticConfigParams{DisableIPV6: true},
 		false,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(
@@ -3187,6 +3197,7 @@ func TestGenerateVirtualServerConfigIPV6Disabled(t *testing.T) {
 		isResolverConfigured,
 		&StaticConfigParams{DisableIPV6: true},
 		isWildcardEnabled,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
@@ -3553,7 +3564,7 @@ func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := true
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -3663,7 +3674,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	isResolverConfigured := false
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true}
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -3776,7 +3787,7 @@ func TestGenerateVirtualServerConfigWithInternalRoutes(t *testing.T) {
 	isResolverConfigured := false
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true, EnableInternalRoutes: true}
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -3889,7 +3900,7 @@ func TestGenerateVirtualServerConfigWithInternalRoutesWarning(t *testing.T) {
 	isResolverConfigured := false
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true, EnableInternalRoutes: false}
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff == "" {
@@ -4176,7 +4187,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -4495,7 +4506,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -4822,7 +4833,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 
 	isPlus := false
 	isResolverConfigured := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{MainAppProtectDosLoadModule: true}, false)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{MainAppProtectDosLoadModule: true}, false, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, dosResources)
 	if diff := cmp.Diff(expected, result.Server.Locations); diff != "" {
@@ -5297,7 +5308,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	isWildcardEnabled := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled, &fakeBV)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !reflect.DeepEqual(result, expected) {
@@ -5551,6 +5562,7 @@ func TestGenerateVirtualServerConfigJWKSPolicy(t *testing.T) {
 		false,
 		&StaticConfigParams{TLSPassthrough: true},
 		false,
+		&fakeBV,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
@@ -6194,10 +6206,11 @@ func TestGeneratePolicies(t *testing.T) {
 		},
 	}
 
-	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
+	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
 
 	for _, test := range tests {
 		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOpts)
+		result.BundleValidator = nil
 		if diff := cmp.Diff(test.expected, result); diff != "" {
 			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
@@ -6217,42 +6230,84 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 		vsName:         "test",
 	}
 
-	test := struct {
+	tests := []struct {
+		name       string
 		policyRefs []conf_v1.PolicyReference
 		policies   map[string]*conf_v1.Policy
 		policyOpts policyOptions
 		context    string
 		want       policiesCfg
 	}{
-		policyRefs: []conf_v1.PolicyReference{
-			{
-				Name:      "waf-bundle",
-				Namespace: "default",
+		{
+			name: "valid bundle",
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "waf-bundle",
+					Namespace: "default",
+				},
 			},
-		},
-		policies: map[string]*conf_v1.Policy{
-			"default/waf-bundle": {
-				Spec: conf_v1.PolicySpec{
-					WAF: &conf_v1.WAF{
-						Enable:   true,
-						ApBundle: "testWAFPolicyBundle.tgz",
+			policies: map[string]*conf_v1.Policy{
+				"default/waf-bundle": {
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApBundle: "testWAFPolicyBundle.tgz",
+						},
 					},
 				},
 			},
+			context: "route",
+			want: policiesCfg{
+				WAF: &version2.WAF{
+					Enable:   "on",
+					ApBundle: "/etc/nginx/waf/bundles/testWAFPolicyBundle.tgz",
+				},
+			},
 		},
-		context: "route",
-	}
-
-	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
-	want := policiesCfg{
-		WAF: &version2.WAF{
-			Enable:   "on",
-			ApBundle: "/etc/nginx/waf/bundles/testWAFPolicyBundle.tgz",
+		{
+			name: "valid bundle with logConf",
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "waf-bundle",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/waf-bundle": {
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApBundle: "testWAFPolicyBundle.tgz",
+							SecurityLogs: []*conf_v1.SecurityLog{
+								{
+									Enable:      true,
+									ApLogBundle: "secops_dashboard.tgz",
+								},
+							},
+						},
+					},
+				},
+			},
+			context: "route",
+			want: policiesCfg{
+				WAF: &version2.WAF{
+					Enable:              "on",
+					ApBundle:            "/etc/nginx/waf/bundles/testWAFPolicyBundle.tgz",
+					ApSecurityLogEnable: true,
+					ApLogConf:           []string{"/etc/nginx/waf/bundles/secops_dashboard.tgz syslog:server=localhost:514"},
+				},
+			},
 		},
 	}
-	got := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOptions{})
-	if !cmp.Equal(want, got) {
-		t.Error(cmp.Diff(want, got))
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+			got := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOptions{apResources: &appProtectResourcesForVS{}})
+			got.BundleValidator = nil
+			if !cmp.Equal(tc.want, got) {
+				t.Error(cmp.Diff(tc.want, got))
+			}
+		})
 	}
 }
 
@@ -7602,13 +7657,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
 
 		if test.oidcPolCfg != nil {
 			vsc.oidcPolCfg = test.oidcPolCfg
 		}
 
 		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, test.policyOpts)
+		result.BundleValidator = nil
 		if diff := cmp.Diff(test.expected, result); diff != "" {
 			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
@@ -7746,7 +7802,7 @@ func TestGenerateUpstream(t *testing.T) {
 		},
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false, &fakeBV)
 	result := vsc.generateUpstream(nil, name, upstream, false, endpoints, backupEndpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -7825,7 +7881,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{}, false)
+		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateUpstream(nil, name, test.upstream, false, endpoints, nil)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
@@ -7857,7 +7913,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 		Resolve: true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{}, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{}, false, &fakeBV)
 	result := vsc.generateUpstream(nil, name, upstream, true, endpoints, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -7903,7 +7959,7 @@ func TestGenerateUpstreamWithNTLM(t *testing.T) {
 		NTLM:             true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, false, &StaticConfigParams{}, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, true, false, &StaticConfigParams{}, false, &fakeBV)
 	result := vsc.generateUpstream(nil, name, upstream, false, endpoints, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -8523,7 +8579,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 	namespace := "default"
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, test.wildcard)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, test.wildcard, &fakeBV)
 
 		// it is ok to use nil as the owner
 		result := vsc.generateSSLConfig(nil, test.inputTLS, namespace, test.inputSecretRefs, test.inputCfgParams)
@@ -8858,9 +8914,9 @@ func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
 func TestGenerateSplits(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		splits              []conf_v1.Split
-		expectedSplitClient version2.SplitClient
-		msg                 string
+		splits               []conf_v1.Split
+		expectedSplitClients []version2.SplitClient
+		msg                  string
 	}{
 		{
 			splits: []conf_v1.Split{
@@ -8888,21 +8944,23 @@ func TestGenerateSplits(t *testing.T) {
 					},
 				},
 			},
-			expectedSplitClient: version2.SplitClient{
-				Source:   "$request_id",
-				Variable: "$vs_default_cafe_splits_1",
-				Distributions: []version2.Distribution{
-					{
-						Weight: "90%",
-						Value:  "/internal_location_splits_1_split_0",
-					},
-					{
-						Weight: "9%",
-						Value:  "/internal_location_splits_1_split_1",
-					},
-					{
-						Weight: "1%",
-						Value:  "/internal_location_splits_1_split_2",
+			expectedSplitClients: []version2.SplitClient{
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_splits_1",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "90%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "9%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+						{
+							Weight: "1%",
+							Value:  "/internal_location_splits_1_split_2",
+						},
 					},
 				},
 			},
@@ -8934,17 +8992,19 @@ func TestGenerateSplits(t *testing.T) {
 					},
 				},
 			},
-			expectedSplitClient: version2.SplitClient{
-				Source:   "$request_id",
-				Variable: "$vs_default_cafe_splits_1",
-				Distributions: []version2.Distribution{
-					{
-						Weight: "90%",
-						Value:  "/internal_location_splits_1_split_0",
-					},
-					{
-						Weight: "10%",
-						Value:  "/internal_location_splits_1_split_2",
+			expectedSplitClients: []version2.SplitClient{
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_splits_1",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "90%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "10%",
+							Value:  "/internal_location_splits_1_split_2",
+						},
 					},
 				},
 			},
@@ -8960,7 +9020,7 @@ func TestGenerateSplits(t *testing.T) {
 		},
 	}
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	scIndex := 1
 	cfgParams := ConfigParams{}
 	crUpstreams := map[string]conf_v1.Upstream{
@@ -9096,10 +9156,10 @@ func TestGenerateSplits(t *testing.T) {
 		owner: nil,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false, &fakeBV)
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			resultSplitClient, resultLocations, resultReturnLocations := generateSplits(
+			resultSplitClients, resultLocations, resultReturnLocations, _, _, _, _ := generateSplits(
 				test.splits,
 				upstreamNamer,
 				crUpstreams,
@@ -9115,16 +9175,1701 @@ func TestGenerateSplits(t *testing.T) {
 				"coffee",
 				"default",
 				vsc.warnings,
+				vsc.DynamicWeightChangesReload,
 			)
 
-			if !cmp.Equal(test.expectedSplitClient, resultSplitClient) {
-				t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", cmp.Diff(test.expectedSplitClient, resultSplitClient))
+			if !cmp.Equal(test.expectedSplitClients, resultSplitClients) {
+				t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", cmp.Diff(test.expectedSplitClients, resultSplitClients))
 			}
 			if !cmp.Equal(expectedLocations, resultLocations) {
 				t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", cmp.Diff(expectedLocations, resultLocations))
 			}
 			if !cmp.Equal(expectedReturnLocations, resultReturnLocations) {
 				t.Errorf("generateSplits() resultReturnLocations mismatch (-want +got):\n%s", cmp.Diff(expectedReturnLocations, resultReturnLocations))
+			}
+		})
+	}
+}
+
+func TestGenerateSplitsWeightChangesDynamicReload(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		splits               []conf_v1.Split
+		expectedSplitClients []version2.SplitClient
+		msg                  string
+	}{
+		{
+			splits: []conf_v1.Split{
+				{
+					Weight: 90,
+					Action: &conf_v1.Action{
+						Proxy: &conf_v1.ActionProxy{
+							Upstream:    "coffee-v1",
+							RewritePath: "/rewrite",
+						},
+					},
+				},
+				{
+					Weight: 10,
+					Action: &conf_v1.Action{
+						Pass: "coffee-v2",
+					},
+				},
+			},
+			expectedSplitClients: []version2.SplitClient{
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_0_100",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "100%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_1_99",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "1%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "99%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_2_98",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "2%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "98%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_3_97",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "3%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "97%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_4_96",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "4%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "96%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_5_95",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "5%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "95%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_6_94",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "6%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "94%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_7_93",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "7%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "93%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_8_92",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "8%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "92%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_9_91",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "9%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "91%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_10_90",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "10%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "90%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_11_89",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "11%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "89%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_12_88",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "12%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "88%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_13_87",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "13%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "87%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_14_86",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "14%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "86%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_15_85",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "15%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "85%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_16_84",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "16%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "84%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_17_83",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "17%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "83%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_18_82",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "18%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "82%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_19_81",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "19%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "81%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_20_80",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "20%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "80%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_21_79",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "21%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "79%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_22_78",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "22%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "78%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_23_77",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "23%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "77%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_24_76",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "24%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "76%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_25_75",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "25%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "75%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_26_74",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "26%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "74%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_27_73",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "27%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "73%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_28_72",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "28%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "72%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_29_71",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "29%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "71%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_30_70",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "30%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "70%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_31_69",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "31%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "69%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_32_68",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "32%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "68%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_33_67",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "33%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "67%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_34_66",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "34%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "66%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_35_65",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "35%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "65%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_36_64",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "36%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "64%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_37_63",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "37%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "63%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_38_62",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "38%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "62%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_39_61",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "39%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "61%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_40_60",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "40%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "60%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_41_59",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "41%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "59%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_42_58",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "42%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "58%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_43_57",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "43%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "57%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_44_56",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "44%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "56%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_45_55",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "45%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "55%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_46_54",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "46%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "54%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_47_53",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "47%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "53%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_48_52",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "48%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "52%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_49_51",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "49%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "51%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_50_50",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "50%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "50%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_51_49",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "51%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "49%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_52_48",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "52%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "48%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_53_47",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "53%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "47%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_54_46",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "54%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "46%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_55_45",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "55%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "45%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_56_44",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "56%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "44%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_57_43",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "57%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "43%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_58_42",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "58%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "42%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_59_41",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "59%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "41%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_60_40",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "60%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "40%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_61_39",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "61%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "39%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_62_38",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "62%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "38%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_63_37",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "63%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "37%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_64_36",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "64%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "36%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_65_35",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "65%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "35%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_66_34",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "66%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "34%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_67_33",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "67%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "33%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_68_32",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "68%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "32%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_69_31",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "69%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "31%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_70_30",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "70%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "30%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_71_29",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "71%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "29%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_72_28",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "72%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "28%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_73_27",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "73%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "27%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_74_26",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "74%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "26%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_75_25",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "75%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "25%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_76_24",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "76%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "24%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_77_23",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "77%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "23%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_78_22",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "78%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "22%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_79_21",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "79%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "21%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_80_20",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "80%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "20%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_81_19",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "81%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "19%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_82_18",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "82%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "18%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_83_17",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "83%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "17%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_84_16",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "84%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "16%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_85_15",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "85%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "15%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_86_14",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "86%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "14%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_87_13",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "87%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "13%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_88_12",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "88%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "12%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_89_11",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "89%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "11%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_90_10",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "90%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "10%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_91_9",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "91%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "9%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_92_8",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "92%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "8%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_93_7",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "93%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "7%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_94_6",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "94%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "6%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_95_5",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "95%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "5%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_96_4",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "96%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "4%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_97_3",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "97%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "3%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_98_2",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "98%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "2%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_99_1",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "99%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+						{
+							Weight: "1%",
+							Value:  "/internal_location_splits_1_split_1",
+						},
+					},
+				},
+				{
+					Source:   "$request_id",
+					Variable: "$vs_default_cafe_split_clients_1_100_0",
+					Distributions: []version2.Distribution{
+						{
+							Weight: "100%",
+							Value:  "/internal_location_splits_1_split_0",
+						},
+					},
+				},
+			},
+			msg: "Normal Split",
+		},
+	}
+	originalPath := "/path"
+
+	virtualServer := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+	}
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
+	scIndex := 1
+	cfgParams := ConfigParams{}
+	crUpstreams := map[string]conf_v1.Upstream{
+		"vs_default_cafe_coffee-v1": {
+			Service: "coffee-v1",
+		},
+		"vs_default_cafe_coffee-v2": {
+			Service: "coffee-v2",
+		},
+	}
+	enableSnippets := false
+	expectedLocations := []version2.Location{
+		{
+			Path:      "/internal_location_splits_1_split_0",
+			ProxyPass: "http://vs_default_cafe_coffee-v1",
+			Rewrites: []string{
+				"^ $request_uri_no_args",
+				fmt.Sprintf(`"^%v(.*)$" "/rewrite$1" break`, originalPath),
+			},
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			Internal:                 true,
+			ProxySSLName:             "coffee-v1.default.svc",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ServiceName:              "coffee-v1",
+			IsVSR:                    true,
+			VSRName:                  "coffee",
+			VSRNamespace:             "default",
+		},
+		{
+			Path:                     "/internal_location_splits_1_split_1",
+			ProxyPass:                "http://vs_default_cafe_coffee-v2$request_uri",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			Internal:                 true,
+			ProxySSLName:             "coffee-v2.default.svc",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ServiceName:              "coffee-v2",
+			IsVSR:                    true,
+			VSRName:                  "coffee",
+			VSRNamespace:             "default",
+		},
+	}
+
+	expectedMaps := []version2.Map{
+		{
+			Source:   "$vs_default_cafe_keyval_split_clients_1",
+			Variable: "$vs_default_cafe_map_split_clients_1",
+			Parameters: []version2.Parameter{
+				{Value: `"vs_default_cafe_split_clients_1_0_100"`, Result: "$vs_default_cafe_split_clients_1_0_100"},
+				{Value: `"vs_default_cafe_split_clients_1_1_99"`, Result: "$vs_default_cafe_split_clients_1_1_99"},
+				{Value: `"vs_default_cafe_split_clients_1_2_98"`, Result: "$vs_default_cafe_split_clients_1_2_98"},
+				{Value: `"vs_default_cafe_split_clients_1_3_97"`, Result: "$vs_default_cafe_split_clients_1_3_97"},
+				{Value: `"vs_default_cafe_split_clients_1_4_96"`, Result: "$vs_default_cafe_split_clients_1_4_96"},
+				{Value: `"vs_default_cafe_split_clients_1_5_95"`, Result: "$vs_default_cafe_split_clients_1_5_95"},
+				{Value: `"vs_default_cafe_split_clients_1_6_94"`, Result: "$vs_default_cafe_split_clients_1_6_94"},
+				{Value: `"vs_default_cafe_split_clients_1_7_93"`, Result: "$vs_default_cafe_split_clients_1_7_93"},
+				{Value: `"vs_default_cafe_split_clients_1_8_92"`, Result: "$vs_default_cafe_split_clients_1_8_92"},
+				{Value: `"vs_default_cafe_split_clients_1_9_91"`, Result: "$vs_default_cafe_split_clients_1_9_91"},
+				{Value: `"vs_default_cafe_split_clients_1_10_90"`, Result: "$vs_default_cafe_split_clients_1_10_90"},
+				{Value: `"vs_default_cafe_split_clients_1_11_89"`, Result: "$vs_default_cafe_split_clients_1_11_89"},
+				{Value: `"vs_default_cafe_split_clients_1_12_88"`, Result: "$vs_default_cafe_split_clients_1_12_88"},
+				{Value: `"vs_default_cafe_split_clients_1_13_87"`, Result: "$vs_default_cafe_split_clients_1_13_87"},
+				{Value: `"vs_default_cafe_split_clients_1_14_86"`, Result: "$vs_default_cafe_split_clients_1_14_86"},
+				{Value: `"vs_default_cafe_split_clients_1_15_85"`, Result: "$vs_default_cafe_split_clients_1_15_85"},
+				{Value: `"vs_default_cafe_split_clients_1_16_84"`, Result: "$vs_default_cafe_split_clients_1_16_84"},
+				{Value: `"vs_default_cafe_split_clients_1_17_83"`, Result: "$vs_default_cafe_split_clients_1_17_83"},
+				{Value: `"vs_default_cafe_split_clients_1_18_82"`, Result: "$vs_default_cafe_split_clients_1_18_82"},
+				{Value: `"vs_default_cafe_split_clients_1_19_81"`, Result: "$vs_default_cafe_split_clients_1_19_81"},
+				{Value: `"vs_default_cafe_split_clients_1_20_80"`, Result: "$vs_default_cafe_split_clients_1_20_80"},
+				{Value: `"vs_default_cafe_split_clients_1_21_79"`, Result: "$vs_default_cafe_split_clients_1_21_79"},
+				{Value: `"vs_default_cafe_split_clients_1_22_78"`, Result: "$vs_default_cafe_split_clients_1_22_78"},
+				{Value: `"vs_default_cafe_split_clients_1_23_77"`, Result: "$vs_default_cafe_split_clients_1_23_77"},
+				{Value: `"vs_default_cafe_split_clients_1_24_76"`, Result: "$vs_default_cafe_split_clients_1_24_76"},
+				{Value: `"vs_default_cafe_split_clients_1_25_75"`, Result: "$vs_default_cafe_split_clients_1_25_75"},
+				{Value: `"vs_default_cafe_split_clients_1_26_74"`, Result: "$vs_default_cafe_split_clients_1_26_74"},
+				{Value: `"vs_default_cafe_split_clients_1_27_73"`, Result: "$vs_default_cafe_split_clients_1_27_73"},
+				{Value: `"vs_default_cafe_split_clients_1_28_72"`, Result: "$vs_default_cafe_split_clients_1_28_72"},
+				{Value: `"vs_default_cafe_split_clients_1_29_71"`, Result: "$vs_default_cafe_split_clients_1_29_71"},
+				{Value: `"vs_default_cafe_split_clients_1_30_70"`, Result: "$vs_default_cafe_split_clients_1_30_70"},
+				{Value: `"vs_default_cafe_split_clients_1_31_69"`, Result: "$vs_default_cafe_split_clients_1_31_69"},
+				{Value: `"vs_default_cafe_split_clients_1_32_68"`, Result: "$vs_default_cafe_split_clients_1_32_68"},
+				{Value: `"vs_default_cafe_split_clients_1_33_67"`, Result: "$vs_default_cafe_split_clients_1_33_67"},
+				{Value: `"vs_default_cafe_split_clients_1_34_66"`, Result: "$vs_default_cafe_split_clients_1_34_66"},
+				{Value: `"vs_default_cafe_split_clients_1_35_65"`, Result: "$vs_default_cafe_split_clients_1_35_65"},
+				{Value: `"vs_default_cafe_split_clients_1_36_64"`, Result: "$vs_default_cafe_split_clients_1_36_64"},
+				{Value: `"vs_default_cafe_split_clients_1_37_63"`, Result: "$vs_default_cafe_split_clients_1_37_63"},
+				{Value: `"vs_default_cafe_split_clients_1_38_62"`, Result: "$vs_default_cafe_split_clients_1_38_62"},
+				{Value: `"vs_default_cafe_split_clients_1_39_61"`, Result: "$vs_default_cafe_split_clients_1_39_61"},
+				{Value: `"vs_default_cafe_split_clients_1_40_60"`, Result: "$vs_default_cafe_split_clients_1_40_60"},
+				{Value: `"vs_default_cafe_split_clients_1_41_59"`, Result: "$vs_default_cafe_split_clients_1_41_59"},
+				{Value: `"vs_default_cafe_split_clients_1_42_58"`, Result: "$vs_default_cafe_split_clients_1_42_58"},
+				{Value: `"vs_default_cafe_split_clients_1_43_57"`, Result: "$vs_default_cafe_split_clients_1_43_57"},
+				{Value: `"vs_default_cafe_split_clients_1_44_56"`, Result: "$vs_default_cafe_split_clients_1_44_56"},
+				{Value: `"vs_default_cafe_split_clients_1_45_55"`, Result: "$vs_default_cafe_split_clients_1_45_55"},
+				{Value: `"vs_default_cafe_split_clients_1_46_54"`, Result: "$vs_default_cafe_split_clients_1_46_54"},
+				{Value: `"vs_default_cafe_split_clients_1_47_53"`, Result: "$vs_default_cafe_split_clients_1_47_53"},
+				{Value: `"vs_default_cafe_split_clients_1_48_52"`, Result: "$vs_default_cafe_split_clients_1_48_52"},
+				{Value: `"vs_default_cafe_split_clients_1_49_51"`, Result: "$vs_default_cafe_split_clients_1_49_51"},
+				{Value: `"vs_default_cafe_split_clients_1_50_50"`, Result: "$vs_default_cafe_split_clients_1_50_50"},
+				{Value: `"vs_default_cafe_split_clients_1_51_49"`, Result: "$vs_default_cafe_split_clients_1_51_49"},
+				{Value: `"vs_default_cafe_split_clients_1_52_48"`, Result: "$vs_default_cafe_split_clients_1_52_48"},
+				{Value: `"vs_default_cafe_split_clients_1_53_47"`, Result: "$vs_default_cafe_split_clients_1_53_47"},
+				{Value: `"vs_default_cafe_split_clients_1_54_46"`, Result: "$vs_default_cafe_split_clients_1_54_46"},
+				{Value: `"vs_default_cafe_split_clients_1_55_45"`, Result: "$vs_default_cafe_split_clients_1_55_45"},
+				{Value: `"vs_default_cafe_split_clients_1_56_44"`, Result: "$vs_default_cafe_split_clients_1_56_44"},
+				{Value: `"vs_default_cafe_split_clients_1_57_43"`, Result: "$vs_default_cafe_split_clients_1_57_43"},
+				{Value: `"vs_default_cafe_split_clients_1_58_42"`, Result: "$vs_default_cafe_split_clients_1_58_42"},
+				{Value: `"vs_default_cafe_split_clients_1_59_41"`, Result: "$vs_default_cafe_split_clients_1_59_41"},
+				{Value: `"vs_default_cafe_split_clients_1_60_40"`, Result: "$vs_default_cafe_split_clients_1_60_40"},
+				{Value: `"vs_default_cafe_split_clients_1_61_39"`, Result: "$vs_default_cafe_split_clients_1_61_39"},
+				{Value: `"vs_default_cafe_split_clients_1_62_38"`, Result: "$vs_default_cafe_split_clients_1_62_38"},
+				{Value: `"vs_default_cafe_split_clients_1_63_37"`, Result: "$vs_default_cafe_split_clients_1_63_37"},
+				{Value: `"vs_default_cafe_split_clients_1_64_36"`, Result: "$vs_default_cafe_split_clients_1_64_36"},
+				{Value: `"vs_default_cafe_split_clients_1_65_35"`, Result: "$vs_default_cafe_split_clients_1_65_35"},
+				{Value: `"vs_default_cafe_split_clients_1_66_34"`, Result: "$vs_default_cafe_split_clients_1_66_34"},
+				{Value: `"vs_default_cafe_split_clients_1_67_33"`, Result: "$vs_default_cafe_split_clients_1_67_33"},
+				{Value: `"vs_default_cafe_split_clients_1_68_32"`, Result: "$vs_default_cafe_split_clients_1_68_32"},
+				{Value: `"vs_default_cafe_split_clients_1_69_31"`, Result: "$vs_default_cafe_split_clients_1_69_31"},
+				{Value: `"vs_default_cafe_split_clients_1_70_30"`, Result: "$vs_default_cafe_split_clients_1_70_30"},
+				{Value: `"vs_default_cafe_split_clients_1_71_29"`, Result: "$vs_default_cafe_split_clients_1_71_29"},
+				{Value: `"vs_default_cafe_split_clients_1_72_28"`, Result: "$vs_default_cafe_split_clients_1_72_28"},
+				{Value: `"vs_default_cafe_split_clients_1_73_27"`, Result: "$vs_default_cafe_split_clients_1_73_27"},
+				{Value: `"vs_default_cafe_split_clients_1_74_26"`, Result: "$vs_default_cafe_split_clients_1_74_26"},
+				{Value: `"vs_default_cafe_split_clients_1_75_25"`, Result: "$vs_default_cafe_split_clients_1_75_25"},
+				{Value: `"vs_default_cafe_split_clients_1_76_24"`, Result: "$vs_default_cafe_split_clients_1_76_24"},
+				{Value: `"vs_default_cafe_split_clients_1_77_23"`, Result: "$vs_default_cafe_split_clients_1_77_23"},
+				{Value: `"vs_default_cafe_split_clients_1_78_22"`, Result: "$vs_default_cafe_split_clients_1_78_22"},
+				{Value: `"vs_default_cafe_split_clients_1_79_21"`, Result: "$vs_default_cafe_split_clients_1_79_21"},
+				{Value: `"vs_default_cafe_split_clients_1_80_20"`, Result: "$vs_default_cafe_split_clients_1_80_20"},
+				{Value: `"vs_default_cafe_split_clients_1_81_19"`, Result: "$vs_default_cafe_split_clients_1_81_19"},
+				{Value: `"vs_default_cafe_split_clients_1_82_18"`, Result: "$vs_default_cafe_split_clients_1_82_18"},
+				{Value: `"vs_default_cafe_split_clients_1_83_17"`, Result: "$vs_default_cafe_split_clients_1_83_17"},
+				{Value: `"vs_default_cafe_split_clients_1_84_16"`, Result: "$vs_default_cafe_split_clients_1_84_16"},
+				{Value: `"vs_default_cafe_split_clients_1_85_15"`, Result: "$vs_default_cafe_split_clients_1_85_15"},
+				{Value: `"vs_default_cafe_split_clients_1_86_14"`, Result: "$vs_default_cafe_split_clients_1_86_14"},
+				{Value: `"vs_default_cafe_split_clients_1_87_13"`, Result: "$vs_default_cafe_split_clients_1_87_13"},
+				{Value: `"vs_default_cafe_split_clients_1_88_12"`, Result: "$vs_default_cafe_split_clients_1_88_12"},
+				{Value: `"vs_default_cafe_split_clients_1_89_11"`, Result: "$vs_default_cafe_split_clients_1_89_11"},
+				{Value: `"vs_default_cafe_split_clients_1_90_10"`, Result: "$vs_default_cafe_split_clients_1_90_10"},
+				{Value: `"vs_default_cafe_split_clients_1_91_9"`, Result: "$vs_default_cafe_split_clients_1_91_9"},
+				{Value: `"vs_default_cafe_split_clients_1_92_8"`, Result: "$vs_default_cafe_split_clients_1_92_8"},
+				{Value: `"vs_default_cafe_split_clients_1_93_7"`, Result: "$vs_default_cafe_split_clients_1_93_7"},
+				{Value: `"vs_default_cafe_split_clients_1_94_6"`, Result: "$vs_default_cafe_split_clients_1_94_6"},
+				{Value: `"vs_default_cafe_split_clients_1_95_5"`, Result: "$vs_default_cafe_split_clients_1_95_5"},
+				{Value: `"vs_default_cafe_split_clients_1_96_4"`, Result: "$vs_default_cafe_split_clients_1_96_4"},
+				{Value: `"vs_default_cafe_split_clients_1_97_3"`, Result: "$vs_default_cafe_split_clients_1_97_3"},
+				{Value: `"vs_default_cafe_split_clients_1_98_2"`, Result: "$vs_default_cafe_split_clients_1_98_2"},
+				{Value: `"vs_default_cafe_split_clients_1_99_1"`, Result: "$vs_default_cafe_split_clients_1_99_1"},
+				{Value: `"vs_default_cafe_split_clients_1_100_0"`, Result: "$vs_default_cafe_split_clients_1_100_0"},
+				{Value: "default", Result: "$vs_default_cafe_split_clients_1_100_0"},
+			},
+		},
+	}
+
+	expectedKeyValZones := []version2.KeyValZone{
+		{
+			Name:  "vs_default_cafe_keyval_zone_split_clients_1",
+			Size:  "100k",
+			State: "/etc/nginx/state_files/vs_default_cafe_keyval_zone_split_clients_1.json",
+		},
+	}
+
+	expectedKeyVals := []version2.KeyVal{
+		{
+			Key:      `"vs_default_cafe_keyval_key_split_clients_1"`,
+			Variable: "$vs_default_cafe_keyval_split_clients_1",
+			ZoneName: "vs_default_cafe_keyval_zone_split_clients_1",
+		},
+	}
+
+	expectedTwoWaySplitClients := []version2.TwoWaySplitClients{
+		{
+			Key:               `"vs_default_cafe_keyval_key_split_clients_1"`,
+			Variable:          "$vs_default_cafe_keyval_split_clients_1",
+			ZoneName:          "vs_default_cafe_keyval_zone_split_clients_1",
+			SplitClientsIndex: 1,
+			Weights:           []int{90, 10},
+		},
+	}
+	returnLocationIndex := 1
+
+	staticConfigParams := &StaticConfigParams{
+		DynamicWeightChangesReload: true,
+	}
+
+	vsc := newVirtualServerConfigurator(&cfgParams, true, false, staticConfigParams, false, &fakeBV)
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			resultSplitClients, resultLocations, _, resultMaps, resultKeyValZones, resultKeyVals, resultTwoWaySplitClients := generateSplits(
+				test.splits,
+				upstreamNamer,
+				crUpstreams,
+				variableNamer,
+				scIndex,
+				&cfgParams,
+				errorPageDetails{},
+				originalPath,
+				"",
+				enableSnippets,
+				returnLocationIndex,
+				true,
+				"coffee",
+				"default",
+				vsc.warnings,
+				vsc.DynamicWeightChangesReload,
+			)
+
+			if !cmp.Equal(test.expectedSplitClients, resultSplitClients) {
+				t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", cmp.Diff(test.expectedSplitClients, resultSplitClients))
+			}
+			if !cmp.Equal(expectedLocations, resultLocations) {
+				t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", cmp.Diff(expectedLocations, resultLocations))
+			}
+
+			if !cmp.Equal(expectedMaps, resultMaps) {
+				t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", cmp.Diff(expectedMaps, resultMaps))
+			}
+
+			if !cmp.Equal(expectedKeyValZones, resultKeyValZones) {
+				t.Errorf("generateSplits() resultKeyValZones mismatch (-want +got):\n%s", cmp.Diff(expectedKeyValZones, resultKeyValZones))
+			}
+
+			if !cmp.Equal(expectedKeyVals, resultKeyVals) {
+				t.Errorf("generateSplits() resultKeyVals mismatch (-want +got):\n%s", cmp.Diff(expectedKeyVals, resultKeyVals))
+			}
+
+			if !cmp.Equal(expectedTwoWaySplitClients, resultTwoWaySplitClients) {
+				t.Errorf("generateSplits() resultTwoWaySplitClients mismatch (-want +got):\n%s", cmp.Diff(expectedTwoWaySplitClients, resultTwoWaySplitClients))
 			}
 		})
 	}
@@ -9156,7 +10901,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 		},
 	}
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 
 	expected := routingCfg{
@@ -9217,6 +10962,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	cfgParams := ConfigParams{}
 	locSnippet := ""
 	enableSnippets := false
+	weightChangesDynamicReload := false
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -9233,7 +10979,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	}
 
 	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams,
-		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{})
+		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{}, weightChangesDynamicReload)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -9342,7 +11088,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		},
 	}
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2
 
@@ -9617,6 +11363,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 	enableSnippets := false
+	weightChangesDynamicReload := false
 	locSnippets := ""
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
@@ -9646,6 +11393,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		"",
 		"",
 		Warnings{},
+		weightChangesDynamicReload,
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
@@ -9724,7 +11472,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		},
 	}
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
-	variableNamer := newVariableNamer(&virtualServer)
+	variableNamer := NewVSVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2
 	errorPages := []conf_v1.ErrorPage{
@@ -10028,6 +11776,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 	enableSnippets := false
+	weightChangesWithoutReload := false
 	locSnippets := ""
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
@@ -10056,6 +11805,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		"coffee",
 		"default",
 		Warnings{},
+		weightChangesWithoutReload,
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
@@ -10777,6 +12527,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			test.isResolverConfigured,
 			&StaticConfigParams{},
 			isWildcardEnabled,
+			&fakeBV,
 		)
 		result := vsc.generateEndpointsForUpstream(test.vsEx.VirtualServer, namespace, test.upstream, test.vsEx)
 		if !reflect.DeepEqual(result, test.expected) {
@@ -10817,7 +12568,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	}
 
 	for _, lbMethod := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
@@ -10851,7 +12602,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
@@ -10952,7 +12703,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{}, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{}, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
@@ -12055,10 +13806,38 @@ func TestAddWafConfig(t *testing.T) {
 			expected: &validationResults{},
 			msg:      "valid waf config, disable waf",
 		},
+		{
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApBundle: "NginxDefaultPolicy.tgz",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:      true,
+					ApLogBundle: "secops_dashboard.tgz",
+					LogDest:     "syslog:server=127.0.0.1:1514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"ns1/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"ns2/logconf": "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+				},
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/ns2-logconf"},
+			},
+			expected: &validationResults{},
+			msg:      "valid waf config using bundle",
+		},
 	}
 
 	for _, test := range tests {
-		polCfg := newPoliciesConfig()
+		polCfg := newPoliciesConfig(&fakeBV)
 		result := polCfg.addWAFConfig(test.wafInput, test.polKey, test.polNamespace, test.apResources)
 		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
 			t.Errorf("policiesCfg.addWAFConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
@@ -12775,4 +14554,16 @@ var (
 			},
 		},
 	}
+
+	fakeBV = fakeBundleValidator{}
 )
+
+type fakeBundleValidator struct{}
+
+func (*fakeBundleValidator) validate(bundle string) (string, error) {
+	bundle = fmt.Sprintf("/etc/nginx/waf/bundles/%s", bundle)
+	if strings.Contains(bundle, "invalid") {
+		return bundle, fmt.Errorf("invalid bundle %s", bundle)
+	}
+	return bundle, nil
+}

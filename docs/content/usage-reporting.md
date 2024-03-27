@@ -1,6 +1,6 @@
 ---
 title: "Enabling Usage Reporting"
-description: "This page outlines how to enable Usage Reporting for the NGINX Ingress Controller and how to view the usage data through the API."
+description: "This page outlines how to enable Usage Reporting for NGINX Ingress Controller and how to view the usage data through the API."
 weight: 1800
 doctypes: ["concept"]
 toc: true
@@ -9,7 +9,7 @@ docs: "DOCS-1445"
 
 ## Overview
 
-Usage Reporting is a Kubernetes controller that connects to the NGINX Management Suite and reports the number of NGINX Ingress Controller nodes in the cluster. It is installed as a Kubernetes Deployment in the same cluster as the NGINX Ingress Controller whose nodes you would like reported.
+Usage Reporting is a Kubernetes controller that connects to the NGINX Management Suite and reports the number of NGINX Ingress Controller nodes in the cluster. It is installed as a Kubernetes Deployment in the same cluster as NGINX Ingress Controller, whose nodes you would like reported.
 
 To use Usage Reporting, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.nginx.com/products/nginx-management-suite/). Usage Reporting is a requirement of the new Flexible Consumption Program for NGINX Ingress Controller, used to calculate costs.
 
@@ -23,7 +23,7 @@ To deploy Usage Reporting, you must have the following:
 In addition to the software requirements, you will need:
 
 - Access to an NGINX Management Suite username and password for basic authentication. You will need the URL of your NGINX Management Suite system, and a username and password for Usage Reporting. The Usage Reporting user account must have access to the `/api/platform/v1/k8s-usage` endpoint.
-- Access to the Kubernetes cluster where the NGINX Ingress Controller is deployed, with the ability to deploy a Kubernetes Deployment and a Kubernetes Secret.
+- Access to the Kubernetes cluster where NGINX Ingress Controller is deployed, with the ability to deploy a Kubernetes Deployment and a Kubernetes Secret.
 - Access to public internet to pull the Usage Reporting image. This image is hosted in the NGINX container registry at `docker-registry.nginx.com/cluster-connector`. You can pull the image and push it to a private container registry for deployment.
 
 [//]: # ( TODO: Update the image and tag after publish)

@@ -135,7 +135,7 @@ This single YAML file creates CRDs for the following resources:
 - `DosProtectedResource`
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-dos.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/deploy/crds-nap-dos.yaml
 ```
 
 {{%/tab%}}
