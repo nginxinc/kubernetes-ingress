@@ -101,7 +101,6 @@ Refer to the below code-block for guidance:
 #        securityContext:
 #          allowPrivilegeEscalation: false
 #          readOnlyRootFilesystem: true
-#          runAsUser: 101 #nginx
 #          runAsNonRoot: true
 #          capabilities:
 #            drop:
