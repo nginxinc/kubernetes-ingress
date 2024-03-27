@@ -4,7 +4,7 @@ import pytest
 import requests
 from requests.exceptions import ConnectionError
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import create_gc_from_yaml, delete_gc, patch_gc_from_yaml, read_gc
+from suite.utils.custom_resources_utils import create_gc_from_yaml, delete_gc, patch_gc_from_yaml
 from suite.utils.resources_utils import (
     create_secret_from_yaml,
     delete_secret,
