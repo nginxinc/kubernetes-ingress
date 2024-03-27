@@ -2086,6 +2086,15 @@ func generateLocationForReturn(path string, locationSnippets []string, actionRet
 		code = 200
 	}
 
+	var headers []version2.Header
+
+	for _, h := range actionReturn.Headers {
+		headers = append(headers, version2.Header{
+			Name:  h.Name,
+			Value: h.Value,
+		})
+	}
+
 	retLocName := fmt.Sprintf("@return_%d", retLocIndex)
 
 	return version2.Location{
@@ -2107,6 +2116,7 @@ func generateLocationForReturn(path string, locationSnippets []string, actionRet
 			Return: version2.Return{
 				Text: actionReturn.Body,
 			},
+			Headers: headers,
 		}
 }
 
