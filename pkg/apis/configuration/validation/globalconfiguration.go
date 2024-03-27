@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/golang/glog"
-
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -56,7 +54,6 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 		idxPath := fieldPath.Index(i)
 		portProtocolKey := generatePortProtocolKey(l.Port, l.Protocol)
 		listenerErrs := gcv.validateListener(l, idxPath)
-		glog.Infof("validating listener name: %s, error: %s", l.Name, listenerErrs)
 		if len(listenerErrs) > 0 {
 			allErrs = append(allErrs, listenerErrs...)
 		} else if listenerNames.Has(l.Name) {
@@ -75,7 +72,6 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 					allErrs = append(allErrs, field.Forbidden(fieldPath, msg))
 				} else {
 					validListeners = append(validListeners, l)
-					glog.Infof("valid listener: name: %s, port: %v", l.Name, l.Port)
 				}
 			case "TCP", "UDP":
 				if l.Protocol == "HTTP" {
@@ -85,7 +81,6 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 					allErrs = append(allErrs, field.Forbidden(fieldPath, msg))
 				} else {
 					validListeners = append(validListeners, l)
-					glog.Infof("valid listener: name: %s, port: %v", l.Name, l.Port)
 				}
 			}
 		} else {
@@ -93,12 +88,8 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 			portProtocolCombinations.Insert(portProtocolKey)
 			portProtocolMap[l.Port] = l.Protocol
 			validListeners = append(validListeners, l)
-			glog.Infof("valid listener name: %s, port: %v", l.Name, l.Port)
 		}
 	}
-
-	glog.Infof("valid listeners: %v", validListeners)
-
 	return validListeners, allErrs
 }
 
@@ -122,10 +113,8 @@ func validateGlobalConfigurationListenerName(name string, fieldPath *field.Path)
 }
 
 func (gcv *GlobalConfigurationValidator) validateListenerPort(name string, port int, fieldPath *field.Path) field.ErrorList {
-	glog.Infof("check forbidden ports: %v, port: %v", gcv.forbiddenListenerPorts, port)
 	if gcv.forbiddenListenerPorts[port] {
 		msg := fmt.Sprintf("Listener %v: port %v is forbidden", name, port)
-		glog.Infof("forbidden port: %v, port: %v", gcv.forbiddenListenerPorts, port)
 		return field.ErrorList{field.Forbidden(fieldPath, msg)}
 	}
 
