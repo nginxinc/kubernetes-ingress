@@ -281,9 +281,12 @@ func ParseProxyBuffersSpec(s string) (string, error) {
 func parseProxySetHeaders(proxySetHeaders []string) ([]version2.Header, error) {
 	var headers []version2.Header
 	for _, header := range proxySetHeaders {
-		parts := strings.Split(header, " ")
+		parts := strings.SplitN(header, " ", 2)
 		if len(parts) < 2 {
 			return nil, fmt.Errorf("invalid header format: %s", header)
+		}
+		if strings.Contains(parts[1], " ") {
+			return nil, fmt.Errorf("multple values found: %s", header)
 		}
 		headers = append(headers, version2.Header{Name: parts[0], Value: parts[1]})
 	}
