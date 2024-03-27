@@ -46,6 +46,8 @@ jobs:
       ic_version: ${{ steps.vars.outputs.ic_version }}
       publish_images: ${{ steps.vars.outputs.publish }}
       docker_md5: ${{ steps.vars.outputs.docker_md5 }}
+      build_tag: ${{ steps.vars.outputs.build_tag }}
+      stable_tag: ${{ steps.vars.outputs.stable_tag }}
       forked_workflow: ${{ (github.event.pull_request.head.repo.full_name != github.repository) && ! (startsWith(github.ref, 'refs/heads/release-') || github.ref_name == 'main') }}
     steps:
       - name: Checkout Repository
@@ -96,6 +98,8 @@ jobs:
           echo "publish=$publish" >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh build_tag >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
@@ -241,10 +245,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - image: debian
+          - base-os: debian
+            image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-ingress
+            tag: ${{ needs.checks.outputs.build_tag }}
             type: oss
             platforms: "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
-          - image: debian-plus
+          - base-os: debian-plus
+            image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
+            tag: ${{ needs.checks.outputs.build_tag }}
             type: plus
             platforms: "linux/arm64, linux/amd64"
     permissions:
@@ -289,7 +297,7 @@ jobs:
       - name: Check if base images exist
         id: base_exists
         run: |
-          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}; then
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.base-os }}; then
             echo "exists=0" >> $GITHUB_OUTPUT
           else
             echo "exists=1" >> $GITHUB_OUTPUT
@@ -301,34 +309,34 @@ jobs:
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+          cache-from: type=gha,scope=${{ matrix.base-os }}
+          cache-to: type=gha,scope=${{ matrix.base-os }},mode=max
           target: common
-          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.base-os }}
           platforms: ${{ matrix.platforms }}
           pull: true
           push: true
           build-args: |
-            BUILD_OS=${{ matrix.image }}
+            BUILD_OS=${{ matrix.base-os }}
             IC_VERSION=${{ needs.checks.outputs.ic_version }}
           secrets: |
             ${{ matrix.type == 'plus' && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
             ${{ matrix.type == 'plus' && format('"nginx-repo.key={0}"', secrets.NGINX_KEY) || '' }}
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
 
-      - name: Build Docker Image ${{ matrix.image }}
+      - name: Build Docker Image ${{ matrix.base-os }}
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-from: type=gha,scope=${{ matrix.base-os }}
           target: goreleaser${{ needs.checks.outputs.forked_workflow == 'false' && '-prebuilt' || '' }}
-          tags: ${{ matrix.type }}:${{ github.sha }}
+          tags: "${{ matrix.image }}:${{ matrix.tag }}"
           pull: true
           load: true
           build-args: |
-            BUILD_OS=${{ matrix.image }}
-            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.image }}
+            BUILD_OS=${{ matrix.base-os }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ matrix.type }}:${{ needs.checks.outputs.docker_md5 }}-${{ matrix.base-os }}
             IC_VERSION=CI
           secrets: |
             ${{ matrix.type == 'plus' && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
@@ -338,7 +346,7 @@ jobs:
         id: k8s
         run: |
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
-          kind load docker-image ${{ matrix.type }}:${{ github.sha }} --name ${{ github.run_id }}
+          kind load docker-image ${{ matrix.image }}:${{ matrix.tag }} --name ${{ github.run_id }}
 
       - name: Install Chart
         run: >
@@ -453,6 +461,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
+      - name: Set image variables
+        id: image_details
+        run: |
+          echo "name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(matrix.images.nap_modules, 'dos') && '-dos' || '' }}${{ contains(matrix.images.nap_modules, 'waf') && '-nap' || '' }}/nginx${{ contains(matrix.images.image, 'plus') && '-plus' || '' }}-ingress" >> $GITHUB_OUTPUT
+          echo "build_tag=${{ needs.checks.outputs.build_tag }}${{ contains(matrix.images.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.images.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.images.target, 'aws') && '-mktpl' || '' }}${{ contains(matrix.images.image, 'fips') && '-fips' || ''}}" >> $GITHUB_OUTPUT
+          echo "stable_tag=${{ needs.checks.outputs.stable_tag }}${{ contains(matrix.images.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.images.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.images.target, 'aws') && '-mktpl' || '' }}${{ contains(matrix.images.image, 'fips') && '-fips' || ''}}" >> $GITHUB_OUTPUT
+
       - name: NAP modules
         id: nap_modules
         run: |
@@ -553,7 +568,7 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.images.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
           cache-to: type=gha,scope=${{ matrix.images.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: goreleaser${{ needs.checks.outputs.forked_workflow == 'false' && '-prebuilt' || '' }}
-          tags: "docker.io/nginx/nginx${{ contains(matrix.images.image, 'plus') && '-plus' || '' }}-ingress:${{ matrix.images.image }}${{ contains(matrix.images.marker, 'dos') && '-dos' || '' }}${{ contains(matrix.images.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}"
+          tags: "${{ steps.image_details.outputs.name }}:${{ steps.image_details.outputs.build_tag }}"
           load: true
           pull: true
           build-args: |
@@ -572,8 +587,8 @@ jobs:
         uses: ./.github/actions/smoke-tests
         with:
           image-type: ${{ matrix.images.image }}
-          image-name: docker.io/nginx/nginx${{ contains(matrix.images.image, 'plus') && '-plus' || '' }}-ingress
-          tag: ${{ matrix.images.image }}${{ contains(matrix.images.marker, 'dos') && '-dos' || '' }}${{ contains(matrix.images.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}
+          image-name: ${{ steps.image_details.outputs.name }}
+          tag: ${{ steps.image_details.outputs.build_tag }}
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
           k8s-version: ${{ matrix.k8s }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
