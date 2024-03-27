@@ -274,7 +274,9 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	if input.CertManagerEnabled {
-		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient, isDynamicNs))
+		if lbc.certManagerController, err = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient, isDynamicNs)); err != nil {
+			glog.Fatalf("failed to initialize CertManager: %v", err)
+		}
 	}
 
 	if input.ExternalDNSEnabled {
@@ -1156,7 +1158,10 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 			nsi.start()
 		}
 		if lbc.certManagerController != nil {
-			lbc.certManagerController.AddNewNamespacedInformer(key)
+			if err := lbc.certManagerController.AddNewNamespacedInformer(key); err != nil {
+				lbc.syncQueue.Requeue(task, err)
+				return
+			}
 		}
 		if lbc.externalDNSController != nil {
 			lbc.externalDNSController.AddNewNamespacedInformer(key)

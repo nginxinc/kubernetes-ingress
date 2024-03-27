@@ -17,6 +17,7 @@ package certmanager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -108,31 +109,42 @@ func BuildOpts(ctx context.Context, kc *rest.Config, cl kubernetes.Interface, ns
 	}
 }
 
-func (c *CmController) newNamespacedInformer(ns string) *namespacedInformer {
+func (c *CmController) newNamespacedInformer(ns string) (*namespacedInformer, error) {
 	nsi := &namespacedInformer{}
 	nsi.stopCh = make(chan struct{})
 	nsi.cmSharedInformerFactory = cm_informers.NewSharedInformerFactoryWithOptions(c.cmClient, resyncPeriod, cm_informers.WithNamespace(ns))
 	nsi.kubeSharedInformerFactory = kubeinformers.NewSharedInformerFactoryWithOptions(c.kubeClient, resyncPeriod, kubeinformers.WithNamespace(ns))
 	nsi.vsSharedInformerFactory = vsinformers.NewSharedInformerFactoryWithOptions(c.vsClient, resyncPeriod, vsinformers.WithNamespace(ns))
 
-	c.addHandlers(nsi)
+	if err := c.addHandlers(nsi); err != nil {
+		return nil, err
+	}
 
 	c.informerGroup[ns] = nsi
-	return nsi
+	return nsi, nil
 }
 
-func (c *CmController) addHandlers(nsi *namespacedInformer) {
+func (c *CmController) addHandlers(nsi *namespacedInformer) error {
 	nsi.vsLister = nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Lister()
-	nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(&controllerpkg.QueuingEventHandler{
+	vsInformer := nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer()
+	vsHandlerReg, err := vsInformer.AddEventHandler(&controllerpkg.QueuingEventHandler{
 		Queue: c.queue,
 	})
-	nsi.mustSync = append(nsi.mustSync, nsi.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().HasSynced)
+	if err != nil {
+		return err
+	}
+	nsi.mustSync = append(nsi.mustSync, vsHandlerReg.HasSynced)
 
-	nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().AddEventHandler(&controllerpkg.BlockingEventHandler{
+	cmInformer := nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer()
+	cmHandlerReg, err := cmInformer.AddEventHandler(&controllerpkg.BlockingEventHandler{
 		WorkFunc: certificateHandler(c.queue),
 	})
+	if err != nil {
+		return err
+	}
 	nsi.cmLister = nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Lister()
-	nsi.mustSync = append(nsi.mustSync, nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().HasSynced)
+	nsi.mustSync = append(nsi.mustSync, cmHandlerReg.HasSynced)
+	return nil
 }
 
 func (c *CmController) processItem(ctx context.Context, key string) error {
@@ -200,7 +212,7 @@ func certificateHandler(queue workqueue.RateLimitingInterface) func(obj interfac
 }
 
 // NewCmController creates a new CmController
-func NewCmController(opts *CmOpts) *CmController {
+func NewCmController(opts *CmOpts) (*CmController, error) {
 	// Create a cert-manager api client
 	intcl, _ := cm_clientset.NewForConfig(opts.kubeConfig)
 
@@ -221,11 +233,14 @@ func NewCmController(opts *CmOpts) *CmController {
 			// no initial namespaces with watched label - skip creating informers for now
 			break
 		}
-		cm.newNamespacedInformer(ns)
+		_, err := cm.newNamespacedInformer(ns)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	cm.register()
-	return cm
+	return cm, nil
 }
 
 // Run will set up the event handlers for types we are interested in, as well
@@ -305,16 +320,20 @@ func (c *CmController) runWorker(ctx context.Context) {
 }
 
 // AddNewNamespacedInformer adds watchers for a new namespace
-func (c *CmController) AddNewNamespacedInformer(ns string) {
+func (c *CmController) AddNewNamespacedInformer(ns string) error {
 	glog.V(3).Infof("Adding or Updating cert-manager Watchers for Namespace: %v", ns)
 	nsi := getNamespacedInformer(ns, c.informerGroup)
 	if nsi == nil {
-		nsi = c.newNamespacedInformer(ns)
+		nsi, err := c.newNamespacedInformer(ns)
+		if err != nil {
+			return err
+		}
 		nsi.start()
 	}
 	if !cache.WaitForCacheSync(nsi.stopCh, nsi.mustSync...) {
-		return
+		return errors.New("failed to sync the cache")
 	}
+	return nil
 }
 
 // RemoveNamespacedInformer removes watchers for a namespace we are no longer watching
