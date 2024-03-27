@@ -239,7 +239,7 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
   helm-tests:
-    name: Helm Tests
+    name: Helm Tests ${{ matrix.base-os }}
     runs-on: ubuntu-22.04
     needs: [checks, binaries]
     strategy:
@@ -353,8 +353,8 @@ jobs:
           helm install
           ${{ matrix.type }}
           .
-          --set controller.image.repository=${{ matrix.type }}
-          --set controller.image.tag=${{ github.sha }}
+          --set controller.image.repository=${{ matrix.image }}
+          --set controller.image.tag=${{ matrix.tag }}
           --set controller.service.type=NodePort
           --set controller.nginxplus=${{ contains(matrix.type, 'plus') && 'true' || 'false' }}
           --wait
