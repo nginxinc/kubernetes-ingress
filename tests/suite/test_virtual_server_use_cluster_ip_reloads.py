@@ -4,6 +4,7 @@ from suite.utils.resources_utils import (
     get_reload_count,
     scale_deployment,
     wait_before_test,
+    wait_until_all_pods_are_ready,
 )
 
 
@@ -28,6 +29,7 @@ class TestVSUseClusterIP:
     def test_use_cluster_ip_reloads(
         self, kube_apis, ingress_controller_endpoint, crd_ingress_controller, virtual_server_setup
     ):
+        wait_until_all_pods_are_ready(kube_apis.v1, virtual_server_setup.namespace)
         print("Step 1: get initial reload count")
         initial_reload_count = get_reload_count(virtual_server_setup.metrics_url)
 
