@@ -1,0 +1,10 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.org/mergeable-ingress-type: "master"
+  name: use-cluster-ip-ingress-master
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: use-cluster-ip.example.com

@@ -534,34 +534,21 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 			endps = []string{}
 		}
 
-		if cfg.UseClusterIP {
-			fqdn := fmt.Sprintf("%s.%s.svc.cluster.local:%d", backend.Service.Name, ingEx.Ingress.Namespace, backend.Service.Port.Number)
+		for _, endp := range endps {
 			upsServers = append(upsServers, version1.UpstreamServer{
-				Address:     fqdn,
+				Address:     endp,
 				MaxFails:    cfg.MaxFails,
 				MaxConns:    cfg.MaxConns,
 				FailTimeout: cfg.FailTimeout,
 				SlowStart:   cfg.SlowStart,
 				Resolve:     isExternalNameSvc,
 			})
+		}
+		if len(upsServers) > 0 {
+			sort.Slice(upsServers, func(i, j int) bool {
+				return upsServers[i].Address < upsServers[j].Address
+			})
 			ups.UpstreamServers = upsServers
-		} else {
-			for _, endp := range endps {
-				upsServers = append(upsServers, version1.UpstreamServer{
-					Address:     endp,
-					MaxFails:    cfg.MaxFails,
-					MaxConns:    cfg.MaxConns,
-					FailTimeout: cfg.FailTimeout,
-					SlowStart:   cfg.SlowStart,
-					Resolve:     isExternalNameSvc,
-				})
-			}
-			if len(upsServers) > 0 {
-				sort.Slice(upsServers, func(i, j int) bool {
-					return upsServers[i].Address < upsServers[j].Address
-				})
-				ups.UpstreamServers = upsServers
-			}
 		}
 	}
 

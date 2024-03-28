@@ -842,35 +842,51 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 	}
 
 	endpointSlice := obj.(*discovery_v1.EndpointSlice)
-	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, endpointSlice.Labels["kubernetes.io/service-name"])
+	svcName := endpointSlice.Labels["kubernetes.io/service-name"]
+	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, svcName)
 
 	resourceExes := lbc.createExtendedResources(svcResource)
 
 	if len(resourceExes.IngressExes) > 0 {
-		resourcesFound = true
-		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
-		err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
-		if err != nil {
-			glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.IngressExes, err)
+		for _, ingEx := range resourceExes.IngressExes {
+			if lbc.ingressRequiresEndpointsUpdate(ingEx, svcName) {
+				resourcesFound = true
+				glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
+				err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
+				if err != nil {
+					glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.IngressExes, err)
+				}
+				break
+			}
 		}
 	}
 
 	if len(resourceExes.MergeableIngresses) > 0 {
-		resourcesFound = true
-		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
-		err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
-		if err != nil {
-			glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.MergeableIngresses, err)
+		for _, mergeableIngresses := range resourceExes.MergeableIngresses {
+			if lbc.mergeableIngressRequiresEndpointsUpdate(mergeableIngresses, svcName) {
+				resourcesFound = true
+				glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
+				err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
+				if err != nil {
+					glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.MergeableIngresses, err)
+				}
+				break
+			}
 		}
 	}
 
 	if lbc.areCustomResourcesEnabled {
 		if len(resourceExes.VirtualServerExes) > 0 {
-			resourcesFound = true
-			glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.VirtualServerExes)
-			err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
-			if err != nil {
-				glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.VirtualServerExes, err)
+			for _, vsEx := range resourceExes.VirtualServerExes {
+				if lbc.virtualServerRequiresEndpointsUpdate(vsEx, svcName) {
+					resourcesFound = true
+					glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.VirtualServerExes)
+					err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
+					if err != nil {
+						glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.VirtualServerExes, err)
+					}
+					break
+				}
 			}
 		}
 
@@ -884,6 +900,63 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 		}
 	}
 	return resourcesFound
+}
+
+func (lbc *LoadBalancerController) virtualServerRequiresEndpointsUpdate(vsEx *configs.VirtualServerEx, serviceName string) bool {
+	for _, upstream := range vsEx.VirtualServer.Spec.Upstreams {
+		if upstream.Service == serviceName && !upstream.UseClusterIP {
+			return true
+		}
+	}
+
+	for _, vsr := range vsEx.VirtualServerRoutes {
+		for _, upstream := range vsr.Spec.Upstreams {
+			if upstream.Service == serviceName && !upstream.UseClusterIP {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (lbc *LoadBalancerController) ingressRequiresEndpointsUpdate(ingressEx *configs.IngressEx, serviceName string) bool {
+	hasUseClusterIPAnnotation := ingressEx.Ingress.Annotations[useClusterIPAnnotation] == "true"
+
+	for _, rule := range ingressEx.Ingress.Spec.Rules {
+		if http := rule.HTTP; http != nil {
+			for _, path := range http.Paths {
+				if path.Backend.Service != nil && path.Backend.Service.Name == serviceName {
+					if !hasUseClusterIPAnnotation {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	if http := ingressEx.Ingress.Spec.DefaultBackend; http != nil {
+		if http.Service != nil && http.Service.Name == serviceName {
+			if !hasUseClusterIPAnnotation {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (lbc *LoadBalancerController) mergeableIngressRequiresEndpointsUpdate(mergeableIngresses *configs.MergeableIngresses, serviceName string) bool {
+	masterIngress := mergeableIngresses.Master
+	minions := mergeableIngresses.Minions
+
+	for _, minion := range minions {
+		if lbc.ingressRequiresEndpointsUpdate(minion, serviceName) {
+			return true
+		}
+	}
+
+	return lbc.ingressRequiresEndpointsUpdate(masterIngress, serviceName)
 }
 
 func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) configs.ExtendedResources {
@@ -2793,6 +2866,7 @@ func (lbc *LoadBalancerController) createMergeableIngresses(ingConfig *IngressCo
 }
 
 func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, validHosts map[string]bool, validMinionPaths map[string]bool) *configs.IngressEx {
+	var endps []string
 	ingEx := &configs.IngressEx{
 		Ingress:          ing,
 		ValidHosts:       validHosts,
@@ -2874,6 +2948,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 	ingEx.HealthChecks = make(map[string]*api_v1.Probe)
 	ingEx.ExternalNameSvcs = make(map[string]bool)
 	ingEx.PodsByIP = make(map[string]configs.PodInfo)
+	hasUseClusterIP := ingEx.Ingress.Annotations[configs.UseClusterIPAnnotation] == "true"
 
 	if ing.Spec.DefaultBackend != nil {
 		podEndps := []podEndpoint{}
@@ -2892,7 +2967,11 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			glog.Warningf("Error retrieving endpoints for the service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
 		}
 
-		endps := getIPAddressesFromEndpoints(podEndps)
+		if svc != nil && !external && hasUseClusterIP {
+			endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, ing.Spec.DefaultBackend.Service.Port.Number)}
+		} else {
+			endps = getIPAddressesFromEndpoints(podEndps)
+		}
 
 		// endps is empty if there was any error before this point
 		ingEx.Endpoints[ing.Spec.DefaultBackend.Service.Name+configs.GetBackendPortAsString(ing.Spec.DefaultBackend.Service.Port)] = endps
@@ -2948,7 +3027,11 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 				glog.Warningf("Error retrieving endpoints for the service %v: %v", path.Backend.Service.Name, err)
 			}
 
-			endps := getIPAddressesFromEndpoints(podEndps)
+			if svc != nil && !external && hasUseClusterIP {
+				endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, path.Backend.Service.Port.Number)}
+			} else {
+				endps = getIPAddressesFromEndpoints(podEndps)
+			}
 
 			// endps is empty if there was any error before this point
 			ingEx.Endpoints[path.Backend.Service.Name+configs.GetBackendPortAsString(path.Backend.Service.Port)] = endps
