@@ -2967,7 +2967,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			glog.Warningf("Error retrieving endpoints for the service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
 		}
 
-		if svc != nil && hasUseClusterIP {
+		if svc != nil && !external && hasUseClusterIP {
 			endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, ing.Spec.DefaultBackend.Service.Port.Number)}
 		} else {
 			endps = getIPAddressesFromEndpoints(podEndps)
@@ -3027,7 +3027,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 				glog.Warningf("Error retrieving endpoints for the service %v: %v", path.Backend.Service.Name, err)
 			}
 
-			if svc != nil && hasUseClusterIP {
+			if svc != nil && !external && hasUseClusterIP {
 				endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, path.Backend.Service.Port.Number)}
 			} else {
 				endps = getIPAddressesFromEndpoints(podEndps)
