@@ -8,7 +8,7 @@ toc: true
 weight: 1600
 ---
 
-This document showss a basic Ingress resource definition which load balances requests for two services as part of a single application.
+This document shows a basic Ingress resource definition which load balances requests for two services as part of a single application.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
