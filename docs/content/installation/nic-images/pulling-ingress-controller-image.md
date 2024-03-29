@@ -7,7 +7,7 @@ toc: true
 weight: 100
 ---
 
-Learn how to pull an F5 NGINX Plus Ingress Controller image those with NGINX App Protect WAF and NGINX App Protect DoS from the official F5 Docker registry and upload it to your private registry. 
+Learn how to pull an F5 NGINX Plus Ingress Controller image, including those with NGINX App Protect WAF and NGINX App Protect DoS, from the official F5 Docker registry and upload it to your private registry. 
 
 This guide covers the prerequisites, image tagging, and troubleshooting steps.
 
