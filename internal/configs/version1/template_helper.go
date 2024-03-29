@@ -88,6 +88,7 @@ func ValidateProxySetHeader(header string) error {
 // generateProxySetHeaders takes an ingress annotations map
 // and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
 // It returns a string containing the generated Nginx configuration.
+
 func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string) (string, error) {
 	var result strings.Builder
 	var proxySetHeaders, ingressType string
@@ -122,6 +123,36 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
 					}
 				}
+				proxySetHeaders, ok = ingressAnnotations["nginx.org/proxy-set-headers"]
+				if !ok {
+					return "", nil
+				}
+				if proxySetHeaders == "" {
+					return "", nil
+				}
+
+				headers = strings.Split(proxySetHeaders, ",")
+				for _, header := range headers {
+					header = strings.TrimSpace(header)
+					headerParts := strings.SplitN(header, " ", 2)
+					headerName := strings.TrimSpace(headerParts[0])
+					if err := ValidateProxySetHeader(headerName); err != nil {
+						return "", err
+					}
+					if len(headerParts) > 1 {
+						headerValue := strings.TrimSpace(headerParts[1])
+						if strings.Contains(headerValue, " ") {
+							return "", errors.New("multiple values found in header: " + header)
+						}
+						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
+					} else {
+						headerValue := strings.TrimSpace(headerParts[0])
+						headerValue = strings.ReplaceAll(headerValue, "-", "_")
+						headerValue = strings.ToLower(headerValue)
+						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
+					}
+				}
+			} else {
 				proxySetHeaders, ok = ingressAnnotations["nginx.org/proxy-set-headers"]
 				if !ok {
 					return "", nil
