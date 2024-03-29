@@ -85,4 +85,4 @@ build-dev:
 	hugo --gc -e development
 
 deploy-preview: hugo-mod
-	hugo --gc -b ${NETLIFY_DEPLOY_URL}/nginx-gateway-fabric/
+	hugo --gc -b ${NETLIFY_DEPLOY_URL}/nginx-ingress-controller/
