@@ -85,87 +85,52 @@ func ValidateProxySetHeader(header string) error {
 	return nil
 }
 
-// generateProxySetHeaders takes an ingress annotations map
+// generateProxySetHeaders takes a location and an ingress annotations map
 // and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
 // It returns a string containing the generated Nginx configuration.
-
 func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string) (string, error) {
 	var result strings.Builder
 	var proxySetHeaders, ingressType string
 	var headers []string
 	var ok bool
 	ingressType, ok = loc.MinionIngress.Annotations["nginx.org/mergeable-ingress-type"]
-	if ok {
-		if ingressType == "minion" {
-			glog.Info("Is Minion")
-			glog.Infof("Proxy Set Header for %s - %s", loc.Path, loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"])
-			proxySetHeaders, ok = loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"]
-			if ok {
-				// We want to set headers for a specific location, and NOT use the master...
-				headers = strings.Split(proxySetHeaders, ",")
-				for _, header := range headers {
-					header = strings.TrimSpace(header)
-					headerParts := strings.SplitN(header, " ", 2)
-					headerName := strings.TrimSpace(headerParts[0])
-					if err := ValidateProxySetHeader(headerName); err != nil {
-						return "", err
-					}
-					if len(headerParts) > 1 {
-						headerValue := strings.TrimSpace(headerParts[1])
-						if strings.Contains(headerValue, " ") {
-							return "", errors.New("multiple values found in header: " + header)
-						}
-						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
-					} else {
-						headerValue := strings.TrimSpace(headerParts[0])
-						headerValue = strings.ReplaceAll(headerValue, "-", "_")
-						headerValue = strings.ToLower(headerValue)
-						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
-					}
-				}
-				proxySetHeaders, ok = ingressAnnotations["nginx.org/proxy-set-headers"]
-				if !ok {
-					return "", nil
-				}
-				if proxySetHeaders == "" {
-					return "", nil
-				}
+	if ok && ingressType == "minion" {
+		glog.Infof("Proxy Set Header for %s - %s", loc.Path, loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"])
 
-				headers = strings.Split(proxySetHeaders, ",")
-				for _, header := range headers {
-					header = strings.TrimSpace(header)
-					headerParts := strings.SplitN(header, " ", 2)
-					headerName := strings.TrimSpace(headerParts[0])
-					if err := ValidateProxySetHeader(headerName); err != nil {
-						return "", err
+		minionHeaders := make(map[string]bool)
+		proxySetHeaders, ok = loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"]
+		if ok {
+			headers = strings.Split(proxySetHeaders, ",")
+			for _, header := range headers {
+				header = strings.TrimSpace(header)
+				headerParts := strings.SplitN(header, " ", 2)
+				headerName := strings.TrimSpace(headerParts[0])
+				minionHeaders[headerName] = true
+				if err := ValidateProxySetHeader(headerName); err != nil {
+					return "", err
+				}
+				if len(headerParts) > 1 {
+					headerValue := strings.TrimSpace(headerParts[1])
+					if strings.Contains(headerValue, " ") {
+						return "", errors.New("multiple values found in header: " + header)
 					}
-					if len(headerParts) > 1 {
-						headerValue := strings.TrimSpace(headerParts[1])
-						if strings.Contains(headerValue, " ") {
-							return "", errors.New("multiple values found in header: " + header)
-						}
-						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
-					} else {
-						headerValue := strings.TrimSpace(headerParts[0])
-						headerValue = strings.ReplaceAll(headerValue, "-", "_")
-						headerValue = strings.ToLower(headerValue)
-						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
-					}
+					result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
+				} else {
+					headerValue := strings.TrimSpace(headerParts[0])
+					headerValue = strings.ReplaceAll(headerValue, "-", "_")
+					headerValue = strings.ToLower(headerValue)
+					result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
 				}
-			} else {
-				proxySetHeaders, ok = ingressAnnotations["nginx.org/proxy-set-headers"]
-				if !ok {
-					return "", nil
-				}
-				if proxySetHeaders == "" {
-					return "", nil
-				}
-
-				headers = strings.Split(proxySetHeaders, ",")
-				for _, header := range headers {
-					header = strings.TrimSpace(header)
-					headerParts := strings.SplitN(header, " ", 2)
-					headerName := strings.TrimSpace(headerParts[0])
+			}
+		}
+		proxySetHeaders, ok = ingressAnnotations["nginx.org/proxy-set-headers"]
+		if ok && proxySetHeaders != "" {
+			headers = strings.Split(proxySetHeaders, ",")
+			for _, header := range headers {
+				header = strings.TrimSpace(header)
+				headerParts := strings.SplitN(header, " ", 2)
+				headerName := strings.TrimSpace(headerParts[0])
+				if _, exists := minionHeaders[headerName]; !exists {
 					if err := ValidateProxySetHeader(headerName); err != nil {
 						return "", err
 					}
