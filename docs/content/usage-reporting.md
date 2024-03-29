@@ -1,15 +1,17 @@
 ---
-title: "Enabling Usage Reporting"
-description: "This page outlines how to enable Usage Reporting for NGINX Ingress Controller and how to view the usage data through the API."
-weight: 1800
-doctypes: ["concept"]
+docs: DOCS-1445
+doctypes:
+- concept
+title: Enabling Usage Reporting
 toc: true
-docs: "DOCS-1445"
+weight: 1800
 ---
+
+This page describes how to enable Usage Reporting for NGINX Ingress Controller and how to view the usage data through the API.
 
 ## Overview
 
-Usage Reporting is a Kubernetes controller that connects to the NGINX Management Suite and reports the number of NGINX Ingress Controller nodes in the cluster. It is installed as a Kubernetes Deployment in the same cluster as NGINX Ingress Controller, whose nodes you would like reported.
+Usage Reporting is a Kubernetes controller that connects to the NGINX Management Suite and reports the number of NGINX Ingress Controller nodes in the cluster. It is installed as a Kubernetes Deployment in the same cluster as NGINX Ingress Controller whose nodes you would like reported.
 
 To use Usage Reporting, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.nginx.com/products/nginx-management-suite/). Usage Reporting is a requirement of the new Flexible Consumption Program for NGINX Ingress Controller, used to calculate costs.
 

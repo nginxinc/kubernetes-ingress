@@ -1,13 +1,10 @@
 ---
-title: "Customize OIDC Configuration with NGINX Ingress Controller"
-description: |
-  How to Customize the default OIDC Configuration with NGINX Ingress Controller
-weight: 1800
-doctypes: ["concept"]
+doctypes:
+- concept
+title: Customize OIDC Configuration with NGINX Ingress Controller
 toc: true
+weight: 1800
 ---
-
-# Overview
 
 The F5 NGINX Ingress Controller implements OpenID Connect (OIDC) using the NGINX OpenID Connect Reference implementation: [nginx-openid-connect](https://github.com/nginxinc/nginx-openid-connect).
 

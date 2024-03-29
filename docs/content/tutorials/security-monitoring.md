@@ -1,8 +1,9 @@
 ---
-title: "Connect NGINX App Protect WAF to NGINX Security Monitoring"
-weight: 1800
-doctypes: ["concept"]
+doctypes:
+- concept
+title: Connect NGINX App Protect WAF to NGINX Security Monitoring
 toc: true
+weight: 1800
 ---
 
 This document explains how to use NGINX Ingress Controller to configure NGINX Agent for sending F5 NGINX App Protect WAF metrics to NGINX Security Monitoring.

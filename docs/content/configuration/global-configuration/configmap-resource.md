@@ -1,19 +1,17 @@
 ---
-title: ConfigMap Resource
-
-description: "The ConfigMap resources allows you to customize or fine tune NGINX behavior."
-weight: 1600
-doctypes: [""]
+docs: DOCS-586
+doctypes:
+- ''
+title: ConfigMap Resources
 toc: true
-docs: "DOCS-586"
+weight: 1600
 ---
 
-
-The ConfigMap resources allows you to customize or fine tune NGINX behavior. For example, set the number of worker processes or customize the access log format.
+The ConfigMap Resources allows you to customize or fine tune NGINX behavior. Examples include setting the number of worker processes or customizing the access log format.
 
 ## Using ConfigMap
 
-1. Our [installation instructions](/nginx-ingress-controller/installation/installation-with-manifests) deploy an empty ConfigMap while the default installation manifests specify it in the command-line arguments of the Ingress Controller. However, if you customized the manifests, to use ConfigMap, make sure to specify the ConfigMap resource to use through the [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) of the Ingress Controller.
+1. The [Installation with Manifests]({{< relref "/installation/installing-nic/installation-with-manifests.md" >}}) documentation deploy an empty ConfigMap while the default installation manifests specify it in the command-line arguments of the Ingress Controller. However, if you customized the manifests, to use ConfigMap, make sure to specify the ConfigMap resource to use the [command-line arguments]({{< relref "/configuration/global-configuration/command-line-arguments" >}}) of NGINX Ingress Controller.
 
 1. Create a ConfigMap file with the name *nginx-config.yaml* and set the values
 that make sense for your setup:

@@ -1,12 +1,14 @@
 ---
-title: "Configuring VirtualServer with custom HTTP and HTTPS listener ports"
-description: |
-  This tutorial outlines how to configure and deploy a VirtualServer resource with custom HTTP and HTTPS listener ports.
-weight: 1800
-doctypes: ["concept"]
+docs: DOCS-1452
+doctypes:
+- concept
+title: Configuring VirtualServer with custom HTTP and HTTPS listener ports
 toc: true
-docs: "DOCS-1452"
+weight: 1800
 ---
+
+This tutorial outlines how to configure and deploy a VirtualServer resource with custom HTTP and HTTPS listener ports.
+
 ## Configuring a VirtualServer with custom HTTP and HTTPS listener ports.
 
 VirtualServer can explicitly define custom HTTP and HTTPS listener ports using the `spec.listener.http` and `spec.listener.https` fields.

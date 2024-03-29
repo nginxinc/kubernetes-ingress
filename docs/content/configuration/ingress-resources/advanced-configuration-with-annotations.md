@@ -1,24 +1,21 @@
 ---
+docs: DOCS-591
+doctypes:
+- ''
 title: Advanced Configuration with Annotations
-description: "This document explains how to use advanced features using annotations."
-weight: 1700
-doctypes: [""]
 toc: true
-docs: "DOCS-591"
+weight: 1700
 ---
 
+This document explains how to enable advanced features with Annotations.
 
-The Ingress resource only allows you to use basic NGINX features -- host and path-based routing and TLS termination. Thus, advanced features like rewriting the request URI or inserting additional response headers are not available.
+The Ingress resource can only use basic NGINX features such as host or path-based routing and TLS termination. Advanced features like rewriting the request URI or inserting additional response headers can be enabled with Annotations. Outside of advanced features, Annotations are necessary for customizing NGINX behavior such as setting the value of connection timeouts.
 
-In addition to using advanced features, often it is necessary to customize or fine tune NGINX behavior. For example, set the value of connection timeouts.
-
-Annotations applied to an Ingress resource allow you to use advanced NGINX features and customize/fine tune NGINX behavior for that Ingress resource.
-
-Customization and fine-tuning is also available through the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource). Annotations take precedence over the ConfigMap.
+Customization is also available through the [ConfigMap]({{< relref "/configuration/global-configuration/configmap-resource.md" >}}): Annotations take priority over the ConfigMap.
 
 ## Using Annotations
 
-Here is an example of using annotations to customize the configuration for a particular Ingress resource:
+This example uses Annotations to customize the configuration for an Ingress resource:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -56,7 +53,7 @@ spec:
 
 ## Validation
 
-The Ingress Controller validates the annotations of Ingress resources. If an Ingress is invalid, the Ingress Controller will reject it: the Ingress will continue to exist in the cluster, but the Ingress Controller will ignore it.
+NGINX Ingress Controller validates the annotations of Ingress resources. If an Ingress is invalid, NGINX Ingress Controller will reject it: the Ingress will continue to exist in the cluster, but the Ingress Controller will ignore it.
 
 You can check if the Ingress Controller successfully applied the configuration for an Ingress. For our example `cafe-ingress-with-annotations` Ingress, we can run:
 

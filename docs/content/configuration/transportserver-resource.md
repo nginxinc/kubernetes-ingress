@@ -1,12 +1,11 @@
 ---
+docs: DOCS-598
+doctypes:
+- ''
 title: TransportServer Resource
-description: "The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing."
-weight: 1900
-doctypes: [""]
 toc: true
-docs: "DOCS-598"
+weight: 1900
 ---
-
 
 The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 

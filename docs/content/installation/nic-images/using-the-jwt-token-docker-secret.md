@@ -1,17 +1,15 @@
 ---
-title: "Getting the NGINX Ingress Controller Image with JWT"
-description: "Use your NGINX Ingress Controller subscription JWT token to get the NGINX Plus Ingress Controller image from the F5 Docker registry."
-weight: 150
-doctypes: [""]
+docs: DOCS-1454
+doctypes:
+- ''
+title: Getting the NGINX Ingress Controller Image with JWT
 toc: true
-docs: "DOCS-1454"
+weight: 150
 ---
 
-{{<custom-styles>}}
+Follow the steps in this document to pull the NGINX Plus Ingress Controller image from the F5 Docker registry into your Kubernetes cluster using your JWT token.
 
 ## Overview
-
-Follow the steps in this document to pull the NGINX Plus Ingress Controller image from the F5 Docker registry into your Kubernetes cluster using your JWT token.
 
 {{<important>}}
 An NGINX Plus subscription certificate and key will not work with the F5 Docker registry.

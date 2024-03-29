@@ -1,5 +1,5 @@
 ---
-docs: "DOCS-1463"
+docs: DOCS-1463
 ---
 
 To make sure your NGINX Ingress Controller pods reach the `Ready` state, you'll need to create custom resource definitions (CRDs) for various components.
