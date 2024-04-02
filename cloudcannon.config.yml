@@ -21,7 +21,7 @@ collections_config:
     filter: strict
     parse_branch_index: true
     description: ''
-    icon: notes
+    icon: article
     _editables:
     _inputs:
     _select_data:
@@ -37,7 +37,7 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Page
-        icon: notes
+        icon: note_add
         _editables:
         _inputs:
         _select_data:
@@ -46,7 +46,7 @@ collections_config:
     path: content/configuration
     output: true
     description: ''
-    icon: notes
+    icon: event_available
     _editables:
     _inputs:
     _select_data:
@@ -62,11 +62,11 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Configuration
-        icon: notes
+        icon: note_add
   includes:
     path: content/includes
     output: true
-    icon: notes
+    icon: event_available
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
@@ -78,11 +78,11 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Includes
-        icon: notes
+        icon: note_add
   installation:
     path: content/installation
     output: true
-    icon: notes
+    icon: event_available
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
@@ -94,11 +94,11 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Installation
-        icon: notes
+        icon: note_add
   logging-and-monitoring:
     path: content/logging-and-monitoring
     output: true
-    icon: notes
+    icon: event_available
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
@@ -110,11 +110,11 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Installation
-        icon: notes
+        icon: note_add
   overview:
     path: content/overview
     output: true
-    icon: notes
+    icon: event_available
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
@@ -126,11 +126,11 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Installation
-        icon: notes
+        icon: note_add
   troubleshooting:
     path: content/troubleshooting
     output: true
-    icon: notes
+    icon: event_available
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
@@ -142,11 +142,11 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Installation
-        icon: notes
+        icon: note_add
   tutorials:
     path: content/tutorials
     output: true
-    icon: notes
+    icon: event_available
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
@@ -158,7 +158,7 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Installation
-        icon: notes
+        icon: note_add
 _snippets_imports:
   hugo:
     exclude:
@@ -170,7 +170,10 @@ _inputs:
   weight:
     type: number
     options:
+      min: 100
+      max:
       step: 100
+      empty_type: 'null'
 _snippets:
   important:
     template: hugo_paired_shortcode_named_args
@@ -198,6 +201,31 @@ _snippets:
       shortcode_name: note
       content_key: content_markdown
       named_args: []
+    _inputs:
+      content_markdown:
+        type: markdown
+        options:
+          allow_resize: true
+          allow_custom_markup: false
+          remove_custom_markup: false
+          initial_height: 320
+          blockquote: true
+          bold: true
+          bulletedlist: true
+          code: true
+          embed: true
+          format: p h1 h2 h3 h4 h5 h6
+          horizontalrule: true
+          image: true
+          image_size_attributes: true
+          italic: true
+          numberedlist: true
+          redo: true
+          snippet: true
+          table: true
+          underline: true
+          undo: true
+        cascade: true
   see-also:
     template: hugo_paired_shortcode_named_args
     inline: false
