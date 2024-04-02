@@ -1,13 +1,10 @@
 ---
-title: "Customize OIDC Configuration with NGINX Ingress Controller"
-description: |
-  How to Customize the default OIDC Configuration with NGINX Ingress Controller
-weight: 1800
-doctypes: ["concept"]
+doctypes:
+- concept
+title: Customize OIDC Configuration with NGINX Ingress Controller
 toc: true
+weight: 1800
 ---
-
-# Overview
 
 The F5 NGINX Ingress Controller implements OpenID Connect (OIDC) using the NGINX OpenID Connect Reference implementation: [nginx-openid-connect](https://github.com/nginxinc/nginx-openid-connect).
 
@@ -30,7 +27,7 @@ Run the below command to generate a ConfigMap with the contents of the `oidc.con
 **NOTE** The ConfigMap must be deployed in the same `namespace` as the F5 NGINX Ingress Controller.
 
 ```console
-kubectl create configmap oidc-config-map --from-literal=oidc.conf="$(curl -k https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/internal/configs/oidc/oidc.conf)"
+kubectl create configmap oidc-config-map --from-literal=oidc.conf="$(curl -k https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/internal/configs/oidc/oidc.conf)"
 ```
 
 Use the `kubectl describe` command to confirm the contents of the ConfigMap are correct.

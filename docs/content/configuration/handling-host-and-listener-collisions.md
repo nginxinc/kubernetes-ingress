@@ -1,14 +1,13 @@
 ---
+docs: DOCS-590
+doctypes:
+- ''
 title: Handling Host and Listener Collisions
-description: "This document explains how the Ingress Controller handles host and listener collisions among resources."
-weight: 1700
-doctypes: [""]
 toc: true
-docs: "DOCS-590"
+weight: 1700
 ---
 
-
-This document explains how the Ingress Controller handles host and listener collisions among resources.
+This document explains how NGINX Ingress Controller handles host and listener collisions among resources.
 
 ## Winner Selection Algorithm
 
@@ -87,7 +86,7 @@ Similarly, if `cafe-ingress` was created first, it will win `cafe.example.com` a
 
 It is possible to merge configuration for multiple Ingress resources for the same host. One common use case for this approach is distributing resources across multiple namespaces. See the [Cross-namespace Configuration](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/) doc for more information.
 
-It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/cross-namespace-configuration) on GitHub.
+It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/custom-resources/cross-namespace-configuration) on GitHub.
 
 It is *not* possible to merge configuration for multiple TransportServer resources.
 

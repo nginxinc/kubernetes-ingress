@@ -1,14 +1,14 @@
 ---
+docs: DOCS-1181
+doctypes:
+- concept
 title: NGINX Ingress Controller and Open Service Mesh
-description: |
-  Use NGINX Ingress Controller with Open Service Mesh.
-weight: 1800
-doctypes: ["concept"]
 toc: true
-docs: "DOCS-1181"
+weight: 1800
 ---
 
-## This document outlines how to integrate F5 NGINX Ingress Controller with Open Service Mesh (OSM)
+
+This document outlines how to integrate F5 NGINX Ingress Controller with Open Service Mesh (OSM)
 
 Open Service Mesh will work with both versions of [F5 NGINX Ingress controller](https://github.com/nginxinc/kubernetes-ingress): the free as well as the NGINX Plus versions.
 

@@ -1,15 +1,15 @@
 ---
-title: "Product Telemetry"
-description: "Learn why NGINX Ingress Controller collects telemetry, and understand how and what it gathers."
-weight: 500
+title: Product Telemetry
 toc: true
+weight: 500
 ---
+
+Learn why NGINX Ingress Controller collects telemetry, and understand how and what it gathers.
 
 ## Overview
 
 NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users.
 This data is used to triage development work, prioritizing features and functionality that will benefit the most people.
-
 
 Product telemetry is enabled by default, collected once every 24 hours. It's then sent to a service managed by F5 over HTTPS.
 

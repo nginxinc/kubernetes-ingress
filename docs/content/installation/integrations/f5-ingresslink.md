@@ -1,12 +1,13 @@
 ---
+docs: DOCS-600
+doctypes:
+- concept
 title: F5 BIG-IP
-description: |
-  Learn how to use NGINX Ingress Controller with F5 IngressLink to configure your F5 BIG-IP device.
-weight: 300
-doctypes: ["concept"]
 toc: true
-docs: "DOCS-600"
+weight: 300
 ---
+
+Learn how to use NGINX Ingress Controller with F5 IngressLink to configure your F5 BIG-IP device.
 
 F5 IngressLink is the integration between NGINX Ingress Controller and [F5 BIG-IP Container Ingress Services](https://clouddocs.f5.com/containers/latest/) (CIS) that configures an F5 BIG-IP device as a load balancer for NGINX Ingress Controller pods.
 

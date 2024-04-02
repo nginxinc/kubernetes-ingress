@@ -1,14 +1,13 @@
 ---
+docs: DOCS-618
+doctypes:
+- ''
 title: OpenTracing
-description: "Learn how to use OpenTracing with NGINX Ingress Controller."
-weight: 400
-doctypes: [""]
-aliases:
-  - /opentracing/
 toc: true
-docs: "DOCS-618"
+weight: 400
 ---
 
+Learn how to use OpenTracing with NGINX Ingress Controller.
 
 NGINX Ingress Controller supports [OpenTracing](https://opentracing.io/) with the third-party module [opentracing-contrib/nginx-opentracing](https://github.com/opentracing-contrib/nginx-opentracing).
 
