@@ -1,0 +1,536 @@
+base_url: /
+source: docs
+paths:
+  data: data
+  collections: content
+  includes: layouts
+  layouts: layouts
+  static: static
+  uploads: static/uploads
+  source: docs
+  archetypes: archetypes
+  assets: assets
+  content: content
+  pages: content
+  publish: public
+  config: ''
+collections_config:
+  pages:
+    path: content
+    output: true
+    filter: strict
+    parse_branch_index: true
+    description: ''
+    icon: notes
+    _editables:
+    _inputs:
+    _select_data:
+    _structures:
+    disable_add: false
+    disable_add_folder: false
+    disable_file_actions: false
+    schemas:
+      default:
+        path: .cloudcannon/schemas/default.md
+        reorder_inputs: true
+        hide_extra_inputs: true
+        remove_empty_inputs: false
+        remove_extra_inputs: false
+        name: Page
+        icon: notes
+        _editables:
+        _inputs:
+        _select_data:
+        _structures:
+  configuration:
+    path: content/configuration
+    output: true
+    description: ''
+    icon: notes
+    _editables:
+    _inputs:
+    _select_data:
+    _structures:
+    disable_add: false
+    disable_add_folder: false
+    disable_file_actions: false
+    schemas:
+      default:
+        path: .cloudcannon/schemas/default.md
+        reorder_inputs: true
+        hide_extra_inputs: true
+        remove_empty_inputs: false
+        remove_extra_inputs: false
+        name: Configuration
+        icon: notes
+  includes:
+    path: content/includes
+    output: true
+    icon: notes
+    disable_add: false
+    disable_add_folder: false
+    disable_file_actions: false
+    schemas:
+      default:
+        path: .cloudcannon/schemas/includes.md
+        reorder_inputs: true
+        hide_extra_inputs: true
+        remove_empty_inputs: false
+        remove_extra_inputs: false
+        name: Includes
+        icon: notes
+  installation:
+    path: content/installation
+    output: true
+    icon: notes
+    disable_add: false
+    disable_add_folder: false
+    disable_file_actions: false
+    schemas:
+      default:
+        path: .cloudcannon/schemas/default.md
+        reorder_inputs: true
+        hide_extra_inputs: true
+        remove_empty_inputs: false
+        remove_extra_inputs: false
+        name: Installation
+        icon: notes
+  logging-and-monitoring:
+    path: content/logging-and-monitoring
+    output: true
+    icon: notes
+    disable_add: false
+    disable_add_folder: false
+    disable_file_actions: false
+    schemas:
+      default:
+        path: .cloudcannon/schemas/default.md
+        reorder_inputs: true
+        hide_extra_inputs: true
+        remove_empty_inputs: false
+        remove_extra_inputs: false
+        name: Installation
+        icon: notes
+  overview:
+    path: content/overview
+    output: true
+    icon: notes
+    disable_add: false
+    disable_add_folder: false
+    disable_file_actions: false
+    schemas:
+      default:
+        path: .cloudcannon/schemas/default.md
+        reorder_inputs: true
+        hide_extra_inputs: true
+        remove_empty_inputs: false
+        remove_extra_inputs: false
+        name: Installation
+        icon: notes
+  troubleshooting:
+    path: content/troubleshooting
+    output: true
+    icon: notes
+    disable_add: false
+    disable_add_folder: false
+    disable_file_actions: false
+    schemas:
+      default:
+        path: .cloudcannon/schemas/default.md
+        reorder_inputs: true
+        hide_extra_inputs: true
+        remove_empty_inputs: false
+        remove_extra_inputs: false
+        name: Installation
+        icon: notes
+  tutorials:
+    path: content/tutorials
+    output: true
+    icon: notes
+    disable_add: false
+    disable_add_folder: false
+    disable_file_actions: false
+    schemas:
+      default:
+        path: .cloudcannon/schemas/default.md
+        reorder_inputs: true
+        hide_extra_inputs: true
+        remove_empty_inputs: false
+        remove_extra_inputs: false
+        name: Installation
+        icon: notes
+_snippets_imports:
+  hugo:
+    exclude:
+      - hugo_youtube
+      - hugo_twitter
+      - hugo_vimeo
+      - hugo_instagram
+_inputs:
+  weight:
+    type: number
+    options:
+      step: 100
+_snippets:
+  important:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: Important
+      subtext:
+        - key: content_markdown
+        - Important note in a callout box.
+      icon: priority_high
+    definitions:
+      shortcode_name: important
+      content_key: content_markdown
+      named_args: []
+  note:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: Note
+      subtext:
+        - key: content_markdown
+        - Note in callout box.
+      icon: edit_note
+    definitions:
+      shortcode_name: note
+      content_key: content_markdown
+      named_args: []
+  see-also:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: See also
+      subtext:
+        - key: content_markdown
+        - See Also note in callout box.
+      icon: visibility
+    definitions:
+      shortcode_name: see-also
+      content_key: content_markdown
+      named_args: []
+  before-you-begin:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: Befor You Begin
+      subtext:
+        - key: content_markdown
+        - Before You Begin note in callout box.
+      icon: front_hand
+    definitions:
+      shortcode_name: before-you-begin
+      content_key: content_markdown
+      named_args: []
+  deprecated:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: Deprecated
+      subtext:
+        - key: content_markdown
+        - Deprecated callout in a box.
+      icon: delete
+    definitions:
+      shortcode_name: deprecated
+      content_key: content_markdown
+      named_args: []
+  caution:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: Caution
+      subtext:
+        - key: content_markdown
+        - Caution callout in a box.
+      icon: announcement
+    definitions:
+      shortcode_name: caution
+      content_key: content_markdown
+      named_args: []
+  warning:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: Warning
+      subtext:
+        - key: content_markdown
+        - Warning callout in a box.
+      icon: warning
+    definitions:
+      shortcode_name: warning
+      content_key: content_markdown
+      named_args: []
+  call-out:
+    template: hugo_paired_shortcode_positional_args
+    inline: false
+    preview:
+      text:
+        - key: callout_title
+        - Callout
+      subtext:
+        - key: content_markdown
+        - Custome callout with title in a box.
+      icon:
+        - key: icon_param
+        - document
+    definitions:
+      shortcode_name: call-out
+      content_key: content_markdown
+      positional_args:
+        - editor_key: icon_param
+          type: string
+        - editor_key: callout_title
+          type: string
+  Internal comment:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: Comment (Internal only)
+      subtext:
+        - key: content_markdown
+        - Internal comment that will not be rendered in the page.
+      icon: tag
+    definitions:
+      shortcode_name: comment
+      content_key: content_markdown
+      named_args: []
+  include:
+    template: hugo_shortcode_positional_args
+    inline: true
+    preview:
+      text: Include
+      subtext:
+        - key: url
+        - Include snippet.
+      icon: file_copy
+    definitions:
+      shortcode_name: include
+      positional_args:
+        - editor_key: url
+          type: string
+  bootstrap-table:
+    template: hugo_paired_shortcode_positional_args
+    inline: false
+    preview:
+      text: Bootstrap Table
+      subtext:
+        - key: content_markdown_table
+        - type: code
+        - Markdown table using Bootstrap.
+      icon: table_chart
+    definitions:
+      shortcode_name: bootstrap-table
+      content_key: content_markdown_table
+      positional_args:
+        - editor_key: table_style
+    _inputs:
+      content_markdown_table:
+        type: code
+        cascade: true
+  raw-html:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text: Raw HTML
+      subtext:
+        - key: content_code_block
+        - Raw HTML Code.
+      icon: html
+    definitions:
+      shortcode_name: raw-html
+      content_key: content_code_block
+      named_args: []
+  img:
+    template: hugo_shortcode_named_args
+    inline: true
+    preview:
+      text:
+        - key: src
+        - Image
+      subtext:
+        - key: alt
+        - Alternative text
+      icon: image
+    definitions:
+      shortcode_name: img
+      named_args:
+        - editor_key: src
+          type: string
+        - editor_key: caption
+          optional: true
+          type: string
+        - editor_key: alt
+          optional: true
+          type: string
+        - editor_key: width
+          optional: true
+          type: string
+        - editor_key: height
+          optional: true
+          type: string
+  tab group:
+    template: hugo_paired_shortcode_named_args
+    inline: false
+    preview:
+      text:
+        - key: name
+        - Tab group section
+      subtext:
+        - key: content_code_block
+        - Tabs content
+      icon: tab
+    definitions:
+      shortcode_name: tabs
+      content_key: content_code_block
+      named_args:
+        - editor_key: name
+          type: string
+  tab section:
+    template: hugo_paired_markdown_shortcode_named_args
+    inline: false
+    preview:
+      text:
+        - key: name
+        - Tab inside tabbed section
+      subtext:
+        - key: tab_content
+        - Tab content
+      icon: tab
+    definitions:
+      shortcode_name: tabs
+      content_key: tab_content
+      named_args:
+        - editor_key: name
+          type: string
+  beta-badge:
+    template: hugo_shortcode_positional_args
+    inline: false
+    preview:
+      text: This topic documents an early access feature.
+      subtext: >-
+        These features are provided for you to try before they are generally
+        available. You shouldn't use early access features for production
+        purposes.
+      icon: science
+    definitions:
+      shortcode_name: beta-badge
+  relref:
+    template: hugo_shortcode_positional_args
+    inline: true
+    preview:
+      view: inline
+      icon: link
+      text:
+        - key: url
+        - Empty URL
+    definitions:
+      shortcode_name: relref
+      positional_args:
+        - editor_key: url
+          type: string
+  link:
+    template: hugo_shortcode_positional_args
+    inline: true
+    preview:
+      text:
+        - key: text
+        - Link to download a file
+      icon: system_update_alt
+    definitions:
+      shortcode_name: link
+      positional_args:
+        - editor_key: url
+          type: string
+        - editor_key: text
+  fontawesome-Icon:
+    template: hugo_shortcode_positional_args
+    inline: true
+    preview:
+      view: inline
+      text: FA-icon
+      icon:
+        - key: icon_name
+    definitions:
+      shortcode_name: fa
+      positional_args:
+        - editor_key: icon_name
+          type: string
+        - editor_key: styles
+          type: string
+          optional: true
+          remove_empty: true
+  icon-resolved:
+    template: hugo_markdown_shortcode_named_args
+    inline: true
+    preview:
+      text: Resolved Bug Icon
+      icon: bug_report
+    definitions:
+      shortcode_name: icon-resolved
+      content_key: content_markdown
+      named_args: []
+  icon-bug:
+    template: hugo_markdown_shortcode_named_args
+    inline: true
+    preview:
+      text: Bug Icon
+      icon: bug_report
+    definitions:
+      shortcode_name: icon-bug
+      content_key: content_markdown
+      named_args: []
+  shortversions:
+    template: hugo_shortcode_positional_args
+    inline: false
+    preview:
+      text: Shortversions - This shortcode has been deprecated
+      icon: format_list_numbered
+    definitions:
+      shortcode_name: shortversions
+      positional_args:
+        - editor_key: from
+          type: string
+        - editor_key: to
+          type: string
+        - editor_key: product
+          type: string
+  versions:
+    template: hugo_shortcode_positional_args
+    inline: false
+    preview:
+      text: Versions - This shortcode has been deprecated
+      icon: format_list_numbered
+    definitions:
+      shortcode_name: versions
+      positional_args:
+        - editor_key: from
+          type: string
+        - editor_key: to
+          type: string
+        - editor_key: product
+          type: string
+data_config: {}
+timezone: Etc/UTC
+commit_templates:
+  - template_string: '{commit_type}: {message|trim} {breaking_change|if=breaking_change_message}'
+    _inputs:
+      commit_type:
+        type: select
+        options:
+          allow_empty: true
+          values:
+            - feature
+            - fix
+            - refactor
+            - update
+        cascade: true
+      breaking_change_message:
+        type: text
+        cascade: true
+    extra_data:
+      breaking_change: |-
+
+        ⚠️ {breaking_change_message}
