@@ -1,7 +1,6 @@
 import pytest
 from settings import TEST_DATA
 from suite.utils.resources_utils import (
-    assert_pods_scaled_to_count,
     create_example_app,
     create_ingress_from_yaml,
     create_secret_from_yaml,
@@ -15,6 +14,8 @@ from suite.utils.resources_utils import (
     wait_before_test,
 )
 from suite.utils.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yaml
+
+from tests.suite.utils.custom_assertions import assert_pods_scaled_to_count
 
 
 class UseClusterIPSetup:

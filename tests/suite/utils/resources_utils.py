@@ -1734,36 +1734,3 @@ def get_resource_metrics(kube_apis, plural, namespace="nginx-ingress") -> str:
     else:
         return "Invalid plural specified. Please use 'pods' or 'nodes' as the plural"
     return metrics["items"]
-
-
-def assert_pods_scaled_to_count(apps_v1_api, v1, deployment_name, namespace, expected_count, timeout=60, interval=1):
-    """
-    Check if the number of pods for a given deployment has scaled down to the expected count.
-
-    :param apps_v1_api: AppsV1Api
-    :param v1: CoreV1Api
-    :param deployment_name: name of the deployment to check.
-    :param namespace: namespace of the deployment.
-    :param expected_count: expected number of pods after scaling.
-    :param timeout: Maximum time to wait for the expected count to be met.
-    :param interval: Time to wait between checks.
-    """
-    end_time = time.time() + timeout
-    while time.time() < end_time:
-        selector = ",".join(
-            [
-                f"{key}={value}"
-                for key, value in apps_v1_api.read_namespaced_deployment(
-                    deployment_name, namespace
-                ).spec.selector.match_labels.items()
-            ]
-        )
-        pods = v1.list_namespaced_pod(namespace, label_selector=selector)
-        pod_count = len(pods.items)
-        if pod_count == expected_count:
-            print(f"Expected {expected_count} pods, found {pod_count} for '{deployment_name}' in '{namespace}'.")
-            return
-        time.sleep(interval)
-    assert (
-        False
-    ), f"Expected {expected_count} pods, but found {pod_count} for '{deployment_name}' in '{namespace}' after {timeout} seconds."

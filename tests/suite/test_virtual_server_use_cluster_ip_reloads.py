@@ -1,11 +1,12 @@
 import pytest
 from suite.utils.resources_utils import (
-    assert_pods_scaled_to_count,
     get_reload_count,
     scale_deployment,
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
+
+from tests.suite.utils.custom_assertions import assert_pods_scaled_to_count
 
 
 @pytest.mark.vs
