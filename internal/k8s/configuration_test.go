@@ -2339,7 +2339,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	var expectedChanges []ResourceChange
 	var expectedProblems []ConfigurationProblem
 
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
+	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2394,7 +2394,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	}
 	expectedProblems = nil
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC1)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC1.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2458,7 +2458,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	}
 	expectedProblems = nil
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC2)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC2.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2492,10 +2492,10 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 		},
 	}
 	expectedErrMsg := "spec.listeners[0].port: Invalid value: -1: must be between 1 and 65535, inclusive"
-	expectedGC2 := gc.DeepCopy()
-	expectedGC2.Spec.Listeners = append(expectedGC2.Spec.Listeners[:0], expectedGC2.Spec.Listeners[1:]...)
+	expectedGC3 := invalidGC.DeepCopy()
+	expectedGC3.Spec.Listeners = invalidGC.Spec.Listeners[1:]
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(invalidGC)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(invalidGC.DeepCopy())
 	glog.Infof("changes: %v", changes)
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
@@ -2508,7 +2508,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned error %v but expected %v", err, expectedErrMsg)
 	}
 	storedGC = configuration.GetGlobalConfiguration()
-	if diff := cmp.Diff(invalidGC, storedGC); diff != "" {
+	if diff := cmp.Diff(expectedGC3, storedGC); diff != "" {
 		t.Errorf("GetGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
 
