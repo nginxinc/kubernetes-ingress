@@ -1,16 +1,15 @@
 ---
+docs: DOCS-606
+doctypes:
+- ''
 title: Running Multiple NGINX Ingress Controllers
-
-description: "Learn how to run multiple NGINX Ingress Controllers."
-weight: 400
-doctypes: [""]
-aliases:
-    - /multiple-ingress-controllers/
 toc: true
-docs: "DOCS-606"
+weight: 400
 ---
 
-This document explains the following topics:
+This document describes how to run multiple NGINX Ingress Controllers.
+
+It explains the following topics:
 
 - Ingress class concept.
 - How to run NGINX Ingress Controller in the same cluster with another Ingress Controller, such as an Ingress Controller for a cloud HTTP load balancer, and prevent any conflicts between the Ingress Controllers.

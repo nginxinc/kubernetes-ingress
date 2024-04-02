@@ -1,15 +1,13 @@
 ---
-title: "Troubleshooting with NGINX App Protect WAF"
-description: "This document describes how to troubleshoot problems when using NGINX Ingress Controller and the NGINX App Protect WAF module."
-weight: 700
-docs: "DOCS-1460"
-doctypes: [""]
+docs: DOCS-1460
+doctypes:
+- ''
+title: Troubleshooting with NGINX App Protect WAF
 toc: true
-aliases:
- - /content/troubleshooting/troubleshooting-with-app-protect
+weight: 700
 ---
 
-This document describes how to troubleshoot problems with NGINX Ingress Controller with the [App Protect](/nginx-app-protect/) module enabled.
+This document describes how to troubleshoot problems when using NGINX Ingress Controller and the NGINX App Protect WAF module.
 
 For general troubleshooting of NGINX Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting/troubleshoot-common" >}}) documentation.
 
