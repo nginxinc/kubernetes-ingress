@@ -592,3 +592,185 @@ func TestGenerateProxySetHeadersForInvalidHeadersForErrorsInMaster(t *testing.T)
 		})
 	}
 }
+
+func TestGenerateProxySetHeadersForValidHeadersInMasterAndTwoMinions(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name              string
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			name: "One Master Header and a unique header in Coffee and Tea",
+			masterAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-Coffee",
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-Tea",
+			},
+			wantCoffeeHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				"proxy_set_header X-Forwarded-Coffee $http_x_forwarded_coffee;",
+			},
+			wantTeaHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				"proxy_set_header X-Forwarded-Tea $http_x_forwarded_tea;",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			generatedMasterConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.masterAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedCoffeeConfig, err := generateProxySetHeaders(&Location{Path: "coffee"}, tc.coffeeAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedTeaConfig, err := generateProxySetHeaders(&Location{Path: "tea"}, tc.teaAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			generatedCoffeeConfig = generatedMasterConfig + "\n" + generatedCoffeeConfig
+			generatedTeaConfig = generatedMasterConfig + "\n" + generatedTeaConfig
+
+			for _, wantHeader := range tc.wantCoffeeHeaders {
+				if !strings.Contains(generatedCoffeeConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+				}
+			}
+
+			for _, wantHeader := range tc.wantTeaHeaders {
+				if !strings.Contains(generatedTeaConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated tea config", wantHeader)
+				}
+			}
+		})
+	}
+}
+
+func TestGenerateProxySetHeadersForValidHeadersInMinionOverrideMaster(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name              string
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			name: "Coffee Overrides Master and Master still in Tea",
+			masterAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC coffee",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC "coffee"`,
+			},
+			wantTeaHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			generatedMasterConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.masterAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedCoffeeConfig, err := generateProxySetHeaders(&Location{Path: "coffee"}, tc.coffeeAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedTeaConfig, err := generateProxySetHeaders(&Location{Path: "tea"}, tc.teaAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			generatedCoffeeConfig = generatedMasterConfig + "\n" + generatedCoffeeConfig
+			generatedTeaConfig = generatedMasterConfig + "\n" + generatedTeaConfig
+
+			for _, wantHeader := range tc.wantCoffeeHeaders {
+				if !strings.Contains(generatedCoffeeConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+				}
+			}
+
+			for _, wantHeader := range tc.wantTeaHeaders {
+				if !strings.Contains(generatedTeaConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated tea config", wantHeader)
+				}
+			}
+		})
+	}
+}
+
+func TestGenerateProxySetHeadersForValidHeadersInOnlyOneMinion(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name              string
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			name: "Header in Coffee but not Tea or Master",
+			coffeeAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC coffee",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC "coffee"`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			generatedMasterConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.masterAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedCoffeeConfig, err := generateProxySetHeaders(&Location{Path: "coffee"}, tc.coffeeAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedTeaConfig, err := generateProxySetHeaders(&Location{Path: "tea"}, tc.teaAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			generatedCoffeeConfig = generatedMasterConfig + "\n" + generatedCoffeeConfig
+			generatedTeaConfig = generatedMasterConfig + "\n" + generatedTeaConfig
+
+			for _, wantHeader := range tc.wantCoffeeHeaders {
+				if !strings.Contains(generatedCoffeeConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+				}
+			}
+
+			for _, wantHeader := range tc.wantTeaHeaders {
+				if !strings.Contains(generatedTeaConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated tea config", wantHeader)
+				}
+			}
+		})
+	}
+}
