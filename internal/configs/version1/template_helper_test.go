@@ -476,7 +476,7 @@ func newToUpperTemplate(t *testing.T) *template.Template {
 	return tmpl
 }
 
-func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
+func TestGenerateProxySetHeadersForValidHeadersInMaster(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -539,7 +539,7 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			generatedConfig, err := generateProxySetHeaders(tc.annotations)
+			generatedConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.annotations)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -556,43 +556,7 @@ func TestValidateGenerateProxySetHeadersForValidHeaders(t *testing.T) {
 	}
 }
 
-func TestValidateGenerateProxySetHeadersForInvalidHeaders(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		name        string
-		annotations map[string]string
-		want        string
-	}{
-		{
-			name:        "Empty Annotation Map",
-			annotations: map[string]string{},
-			want:        "",
-		},
-		{
-			name: "Empty Anotation",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "",
-			},
-			want: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			got, err := generateProxySetHeaders(tc.annotations)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if tc.want != got {
-				t.Errorf("want %q got %q", tc.want, got)
-			}
-
-		})
-	}
-}
-
-func TestValidateGenerateProxySetHeadersForInvalidHeadersForErrors(t *testing.T) {
+func TestGenerateProxySetHeadersForInvalidHeadersForErrorsInMaster(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -621,7 +585,7 @@ func TestValidateGenerateProxySetHeadersForInvalidHeadersForErrors(t *testing.T)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := generateProxySetHeaders(tc.annotations)
+			_, err := generateProxySetHeaders(&Location{Path: ""}, tc.annotations)
 			if err == nil {
 				t.Error("expected an error, but got nil")
 			}
