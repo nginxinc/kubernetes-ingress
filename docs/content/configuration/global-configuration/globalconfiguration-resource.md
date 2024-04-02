@@ -1,22 +1,20 @@
 ---
+docs: DOCS-588
+doctypes:
+- ''
 title: GlobalConfiguration Resource
-
-description: "The GlobalConfiguration resource allows you to define the global configuration parameters of the Ingress Controller."
-weight: 2000
-doctypes: [""]
 toc: true
-docs: "DOCS-588"
+weight: 2000
 ---
 
+The GlobalConfiguration resource allows you to define the global configuration parameters of NGINX Ingress Controller. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-The GlobalConfiguration resource allows you to define the global configuration parameters of the Ingress Controller. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
-
-The resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources](/nginx-ingress-controller/configuration/transportserver-resource) and
-can be used to configure custom listerners for VirtualServers as specified [here](/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports).
+The resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources]({{< relref "/configuration/transportserver-resource.md" >}}) and
+can be used to [configure custom listeners for VirtualServers]({{< relref "tutorials/virtual-server-with-custom-listener-ports" >}}).
 
 ## Prerequisites
 
-When [installing](/nginx-ingress-controller/installation/installation-with-manifests) the Ingress Controller, you need to reference a GlobalConfiguration resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument. The Ingress Controller only needs one GlobalConfiguration resource.
+When [installing NGINX Ingress Controller using Manifests]({{< relref "/installation/installing-nic/installation-with-manifests.md" >}}), you need to reference a GlobalConfiguration resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument. NGINX Ingress Controller only needs one GlobalConfiguration resource.
 
 ## GlobalConfiguration Specification
 

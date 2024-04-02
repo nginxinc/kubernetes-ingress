@@ -1,5 +1,5 @@
 ---
-docs: "DOCS-1462"
+docs: DOCS-1462
 ---
 
 You have two options for deploying NGINX Ingress Controller:
