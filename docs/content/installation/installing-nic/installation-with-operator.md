@@ -9,10 +9,6 @@ weight: 300
 
 This document explains how to use NGINX Ingress Operator to install NGINX Ingress Controller.
 
-{{< note >}}
-NGINX Ingress Operator isn't compatible with NGINX Ingress Controller 3.5.0 at this time.  We'll update this guide and remove this note when we release a compatible version.
-{{< /note >}}
-
 ## Before you start
 
 {{<note>}} We recommend the most recent stable version of NGINX Ingress Controller, available on the GitHub repository's [releases page]({{< relref "releases.md" >}}). {{</note>}}
