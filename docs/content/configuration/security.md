@@ -1,15 +1,14 @@
 ---
-title: Security
-description: "NGINX Ingress Controller security recommendations."
-weight: 1500
-doctypes: [""]
+docs: DOCS-597
+doctypes:
+- ''
+title: Security Recommendations
 toc: true
-docs: "DOCS-597"
+weight: 1500
 ---
 
-
-The security of the Ingress Controller is paramount to the success of our Users, however, the Ingress Controller is deployed by a User in their environment, and as such, the User takes responsibility
-for securing a deployment of the Ingress Controller.
+The security of NGINX Ingress Controller is paramount to the success of our Users, however, NGINX Ingress Controller is deployed by a User in their environment, and as such, the User takes responsibility
+for securing a deployment of NGINX Ingress Controller.
 We strongly recommend every User read and understand the following security concerns.
 
 ## Kubernetes

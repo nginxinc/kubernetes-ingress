@@ -1,13 +1,15 @@
 ---
+docs: DOCS-605
+doctypes:
+- install
 title: Getting the F5 Registry NGINX Ingress Controller Image
-description: "Learn how to pull an F5 NGINX Plus Ingress Controller image—including those with NGINX App Protect WAF and NGINX App Protect DoS—from the official F5 Docker registry and upload it to your private registry. This guide covers the prerequisites, image tagging, and troubleshooting steps."
-weight: 100
-doctypes: ["install"]
 toc: true
-docs: "DOCS-605"
+weight: 100
 ---
 
-{{<custom-styles>}}
+Learn how to pull an F5 NGINX Plus Ingress Controller image, including those with NGINX App Protect WAF and NGINX App Protect DoS, from the official F5 Docker registry and upload it to your private registry. 
+
+This guide covers the prerequisites, image tagging, and troubleshooting steps.
 
 ---
 

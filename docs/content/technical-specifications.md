@@ -1,12 +1,13 @@
 ---
+docs: DOCS-617
+doctypes:
+- concept
 title: Technical Specifications
-description: "NGINX Ingress Controller Technical Specifications."
-weight: 200
-doctypes: ["concept"]
 toc: true
-docs: "DOCS-617"
+weight: 200
 ---
 
+This page describes technical specifications for NGINX Ingress Controller, such as its version compatibility with Kubernetes and other NGINX software.
 
 ## Supported NGINX Ingress Controller Versions
 

@@ -1,12 +1,13 @@
 ---
+docs: DOCS-580
+doctypes:
+- ''
 title: Configuration
-
-description: "This document describes how to configure the NGINX App Protect Dos module."
-weight: 200
-doctypes: [""]
 toc: true
-docs: "DOCS-580"
+weight: 200
 ---
+
+This document describes how to configure the NGINX App Protect DoS module.
 
 > Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/app-protect-dos).
 

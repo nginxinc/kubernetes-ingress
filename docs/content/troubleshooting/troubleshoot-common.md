@@ -1,16 +1,16 @@
 ---
-title: "Troubleshooting Common Issues"
-date: 2021-07-13T21:01:29-06:00
-description: "This page describes how to troubleshoot common problems with NGINX Ingress Controller."
-weight: 100
+docs: DOCS-1459
+doctypes:
+- troubleshooting
 draft: false
+tags:
+- docs
+title: Troubleshooting Common Issues
 toc: true
-tags: [ "docs" ]
-doctypes: ["troubleshooting"]
-aliases:
- - /content/troubleshooting/troubleshoot-ingress-controller
-docs: "DOCS-1459"
+weight: 100
 ---
+
+This page describes how to troubleshoot common problems with NGINX Ingress Controller.
 
 ## Common Problems
 

@@ -1,16 +1,18 @@
 ---
+docs: DOCS-615
+doctypes:
+- ''
 title: Status Page
-
-description: "This document explains how to get access to the stub status in NGINX and the dashboard in NGINX Plus."
-weight: 1900
-doctypes: [""]
 toc: true
-docs: "DOCS-615"
+weight: 1900
 ---
 
+This document explains how to get access to the stub status in NGINX and the dashboard in NGINX Plus.
 
 NGINX comes with a status page that reports basic metrics about NGINX called the [stub status](https://nginx.org/en/docs/http/ngx_http_stub_status_module.html).
+
 NGINX Plus comes with a [dashboard](https://docs.nginx.com/nginx/admin-guide/monitoring/live-activity-monitoring/) that reports key load-balancing and performance metrics.
+
 NGINX App Protect DoS comes with a [dashboard](https://docs.nginx.com/nginx-app-protect-dos/monitoring/live-activity-monitoring/) that shows the status and information of the protected objects.
 This doc shows how to get access to the stub status/dashboard.
 

@@ -1,11 +1,13 @@
 ---
+description: NGINX Ingress Controller Release Notes.
+docs: DOCS-616
+doctypes:
+- concept
 title: Releases
-description: "NGINX Ingress Controller Release Notes."
-weight: 2100
-doctypes: ["concept"]
 toc: true
-docs: "DOCS-616"
+weight: 2100
 ---
+
 ## 3.4.3
 
 19 Feb 2024

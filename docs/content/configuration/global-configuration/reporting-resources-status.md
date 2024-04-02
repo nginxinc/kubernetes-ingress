@@ -1,22 +1,18 @@
 ---
+docs: DOCS-589
+doctypes:
+- ''
 title: Reporting Resources Status
-
-description:
-weight: 1900
-doctypes: [""]
-aliases:
-    - /report-ingress-status/
 toc: true
-docs: "DOCS-589"
+weight: 1900
 ---
-
 
 ## Ingress Resources
 
 An Ingress resource can have a status that includes the address (an IP address or a DNS name), through which the hosts of that Ingress resource are publicly accessible.
 You can see the address in the output of the `kubectl get ingress` command, in the ADDRESS column, as shown below:
 
-```
+```shell
 $ kubectl get ingresses
 NAME           HOSTS              ADDRESS           PORTS     AGE
 cafe-ingress   cafe.example.com   12.13.23.123      80, 443   2m
@@ -31,7 +27,7 @@ The Ingress Controller must be configured to report an Ingress status:
 
 See the docs about [ConfigMap keys](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) and [Command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments).
 
-Notes: The Ingress Controller does not clear the status of Ingress resources when it is being shut down.
+Notes: NGINX Ingress Controller does not clear the status of Ingress resources when it is being shut down.
 
 ## VirtualServer and VirtualServerRoute Resources
 

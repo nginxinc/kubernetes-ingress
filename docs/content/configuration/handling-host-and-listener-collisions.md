@@ -1,14 +1,13 @@
 ---
+docs: DOCS-590
+doctypes:
+- ''
 title: Handling Host and Listener Collisions
-description: "This document explains how the Ingress Controller handles host and listener collisions among resources."
-weight: 1700
-doctypes: [""]
 toc: true
-docs: "DOCS-590"
+weight: 1700
 ---
 
-
-This document explains how the Ingress Controller handles host and listener collisions among resources.
+This document explains how NGINX Ingress Controller handles host and listener collisions among resources.
 
 ## Winner Selection Algorithm
 

@@ -1,16 +1,15 @@
 ---
+docs: DOCS-599
+doctypes:
+- ''
 title: VirtualServer and VirtualServerRoute Resources
-description: "The VirtualServer and VirtualServerRoute resources are load balancing configurations recommended as an alternative to the Ingress resource."
-weight: 1600
-doctypes: [""]
-aliases:
-    - /virtualserver-and-virtualserverroute/
 toc: true
-docs: "DOCS-599"
+weight: 1600
 ---
 
+VirtualServer and VirtualServerRoute resources are load balancing configurations recommended as an alternative to the Ingress resource.
 
-The VirtualServer and VirtualServerRoute resources, introduced in release 1.5, enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
+They enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
 This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources) folder in our GitHub repo.
 

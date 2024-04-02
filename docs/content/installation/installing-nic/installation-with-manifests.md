@@ -1,29 +1,27 @@
 ---
+docs: DOCS-603
+doctypes:
+- ''
 title: Installation with Manifests
-description: "This guide explains how to install NGINX Ingress Controller in a Kubernetes cluster using manifests. In addition, it provides instructions on how to set up role-based access control, create both common and custom resources, and uninstall NGINX Ingress Controller."
-weight: 200
-doctypes: [""]
-aliases:
-    - /installation/
 toc: true
-docs: "DOCS-603"
+weight: 200
 ---
 
-{{<custom-styles>}}
+This guide explains how to use Manifests to install NGINX Ingress Controller, then create both common and custom resources and set up role-based access control.
 
 ## Before you start
 
 ### Get the NGINX Controller Image
 
-{{<note>}}Always use the most up-to-date stable release listed on the [releases page]({{< relref "releases.md" >}}).{{</note>}}
+{{<note>}} Always use the latest stable release listed on the [releases page]({{< relref "releases.md" >}}). {{</note>}}
 
 Choose one of the following methods to get the NGINX Ingress Controller image:
 
 - **NGINX Ingress Controller**: Download the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
 - **NGINX Plus Ingress Controller**: You have two options for this, both requiring an NGINX Ingress Controller subscription.
 
-  - Download the image using your NGINX Ingress Controller subscription certificate and key. See the [Getting the F5 Registry NGINX Ingress Controller Image]({{< relref "installation/nic-images/pulling-ingress-controller-image.md" >}}) guide.
-  - Use your NGINX Ingress Controller subscription JWT token to get the image: Instructions are in [Getting the NGINX Ingress Controller Image with JWT]({{< relref "installation/nic-images/using-the-jwt-token-docker-secret.md" >}}).
+  - Download the image using your NGINX Ingress Controller subscription certificate and key. Read the [Getting the F5 Registry NGINX Ingress Controller Image]({{< relref "installation/nic-images/pulling-ingress-controller-image.md" >}}) guide.
+  - Use your NGINX Ingress Controller subscription JWT token to get the image: Read the [Getting the NGINX Ingress Controller Image with JWT]({{< relref "installation/nic-images/using-the-jwt-token-docker-secret.md" >}}).
 
 - **Build your own image**: To build your own image, follow the [Building NGINX Ingress Controller]({{< relref "installation/building-nginx-ingress-controller.md" >}}) guide.
 

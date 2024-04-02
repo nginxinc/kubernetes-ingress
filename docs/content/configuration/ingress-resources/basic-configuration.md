@@ -1,15 +1,14 @@
 ---
+description: The example in this document shows a basic Ingress resource definition.
+docs: DOCS-593
+doctypes:
+- ''
 title: Basic Configuration
-
-description: "The example in this document shows a basic Ingress resource definition."
-weight: 1600
-doctypes: [""]
 toc: true
-docs: "DOCS-593"
+weight: 1600
 ---
 
-
-The example below shows a basic Ingress resource definition. It load balances requests for two services -- coffee and tea -- comprising a hypothetical *cafe* app hosted at `cafe.example.com`:
+This document shows a basic Ingress resource definition which load balances requests for two services as part of a single application.
 
 ```yaml
 apiVersion: networking.k8s.io/v1

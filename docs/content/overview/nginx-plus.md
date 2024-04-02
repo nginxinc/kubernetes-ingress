@@ -1,14 +1,12 @@
 ---
+docs: DOCS-611
+doctypes:
+- concept
 title: Extensibility with NGINX Plus
-description: "This document explains how F5 NGINX Plus can extend the functionality of the F5 NGINX Ingress Controller."
 weight: 300
-doctypes: ["concept"]
-docs: "DOCS-611"
-aliases:
-  - /nginx-plus/
 ---
 
-<br>
+This document explains how F5 NGINX Plus can extend the functionality of the F5 NGINX Ingress Controller.
 
 NGINX Ingress Controller works with [NGINX](https://nginx.org/) as well as [NGINX Plus](https://www.nginx.com/products/nginx/), a commercial closed source version of NGINX which has additional features and support from NGINX Inc. NGINX Ingress Controller can leverage functionality from NGINX Plus to extend its base capabilities.
 
