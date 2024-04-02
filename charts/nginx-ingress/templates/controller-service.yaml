@@ -50,7 +50,7 @@ spec:
     targetPort: {{ .Values.controller.service.httpPort.targetPort }}
     protocol: TCP
     name: http
-  {{- if eq .Values.controller.service.type "NodePort" }}
+  {{- if or (eq .Values.controller.service.type "LoadBalancer") (eq .Values.controller.service.type "NodePort") }}
     nodePort: {{ .Values.controller.service.httpPort.nodePort }}
   {{- end }}
 {{- end }}
@@ -59,7 +59,7 @@ spec:
     targetPort: {{ .Values.controller.service.httpsPort.targetPort }}
     protocol: TCP
     name: https
-  {{- if eq .Values.controller.service.type "NodePort" }}
+  {{- if or (eq .Values.controller.service.type "LoadBalancer") (eq .Values.controller.service.type "NodePort") }}
     nodePort: {{ .Values.controller.service.httpsPort.nodePort }}
   {{- end }}
 {{- end }}
