@@ -285,7 +285,7 @@ server {
 		proxy_read_timeout {{$location.ProxyReadTimeout}};
 		proxy_send_timeout {{$location.ProxySendTimeout}};
 		client_max_body_size {{$location.ClientMaxBodySize}};
-        {{- $proxySetHeaders := generateProxySetHeaders $.Ingress.Annotations }}
+        {{- $proxySetHeaders := generateProxySetHeaders $location $.Ingress.Annotations }}
         {{$proxySetHeaders}}
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;
