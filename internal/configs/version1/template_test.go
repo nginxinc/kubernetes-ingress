@@ -829,207 +829,64 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
 	}
 }
 
-func TestExecuteTemplate_ForIngressForNGINXWithValidProxySetHeadersAnnotationVariations(t *testing.T) {
+func TestExecuteTemplate_ForIngressForNGINXPlusMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation(t *testing.T) {
 	t.Parallel()
 
-	tmpl := newNGINXIngressTmpl(t)
+	tmpl := newNGINXPlusIngressTmpl(t)
 	testCases := []struct {
-		name             string
-		annotations      map[string]string
-		wantProxyHeaders []string
+		name              string
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
 	}{
 		{
-			name: "One Header",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+			name: "Header in Coffee but not Tea or Master",
+			coffeeAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC coffee",
 			},
-			wantProxyHeaders: []string{
-				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
-			},
-		},
-		{
-			name: "Two Headers",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC",
-			},
-			wantProxyHeaders: []string{
-				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
-				"proxy_set_header BVC $http_bvc;",
-			},
-		},
-		{
-			name: "Two Headers with One Value",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC test",
-			},
-			wantProxyHeaders: []string{
-				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
-				`proxy_set_header BVC "test";`,
-			},
-		},
-		{
-			name: "Three Headers",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC,X-Forwarded-Test",
-			},
-			wantProxyHeaders: []string{
-				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
-				"proxy_set_header BVC $http_bvc;",
-				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
-			},
-		},
-		{
-			name: "Three Headers with Two Values",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC abc,BVC bat,X-Forwarded-Test",
-			},
-			wantProxyHeaders: []string{
-				`proxy_set_header X-Forwarded-ABC "abc";`,
-				`proxy_set_header BVC "bat";`,
-				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC "coffee"`,
 			},
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-			ingressCfg.Ingress.Annotations = tc.annotations
+			ingressCfg := ingressCfgMasterMinionNGINXPlusMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation
 
 			err := tmpl.Execute(buf, ingressCfg)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			for _, wantProxyHeader := range tc.wantProxyHeaders {
-				if !strings.Contains(buf.String(), wantProxyHeader) {
-					t.Errorf("want %q in generated config", wantProxyHeader)
-				}
+			generatedMasterConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.masterAnnotations)
+			if err != nil {
+				t.Fatal(err)
 			}
-		})
-	}
-}
-func TestExecuteTemplate_ForIngressForNGINXPlusWithValidProxySetHeadersAnnotationVariations(t *testing.T) {
-	t.Parallel()
-
-	tmpl := newNGINXPlusIngressTmpl(t)
-	testCases := []struct {
-		name             string
-		annotations      map[string]string
-		wantProxyHeaders []string
-	}{
-		{
-			name: "One Header",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
-			},
-			wantProxyHeaders: []string{
-				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
-			},
-		},
-		{
-			name: "Two Headers",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC",
-			},
-			wantProxyHeaders: []string{
-				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
-				"proxy_set_header BVC $http_bvc;",
-			},
-		},
-		{
-			name: "Two Headers with One Value",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC test",
-			},
-			wantProxyHeaders: []string{
-				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
-				`proxy_set_header BVC "test";`,
-			},
-		},
-		{
-			name: "Three Headers",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC,X-Forwarded-Test",
-			},
-			wantProxyHeaders: []string{
-				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
-				"proxy_set_header BVC $http_bvc;",
-				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
-			},
-		},
-		{
-			name: "Three Headers with Two Values",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC abc,BVC bat,X-Forwarded-Test",
-			},
-			wantProxyHeaders: []string{
-				`proxy_set_header X-Forwarded-ABC "abc";`,
-				`proxy_set_header BVC "bat";`,
-				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			buf := &bytes.Buffer{}
-			ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-			ingressCfg.Ingress.Annotations = tc.annotations
-
-			err := tmpl.Execute(buf, ingressCfg)
+			generatedCoffeeConfig, err := generateProxySetHeaders(&Location{Path: "coffee"}, tc.coffeeAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedTeaConfig, err := generateProxySetHeaders(&Location{Path: "tea"}, tc.teaAnnotations)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			for _, wantProxyHeader := range tc.wantProxyHeaders {
-				if !strings.Contains(buf.String(), wantProxyHeader) {
-					t.Errorf("want %q in generated config", wantProxyHeader)
+			generatedCoffeeConfig = generatedMasterConfig + "\n" + generatedCoffeeConfig
+			generatedTeaConfig = generatedMasterConfig + "\n" + generatedTeaConfig
+
+			for _, wantHeader := range tc.wantCoffeeHeaders {
+				if !strings.Contains(generatedCoffeeConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated coffee config", wantHeader)
 				}
 			}
-		})
-	}
-}
 
-func TestExecuteTemplate_ForIngressForNGINXPlusWithInvalidProxySetHeadersAnnotationVariations(t *testing.T) {
-	t.Parallel()
-
-	tmpl := newNGINXPlusIngressTmpl(t)
-	testCases := []struct {
-		name        string
-		annotations map[string]string
-	}{
-		{
-			name: "Header with Number",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC1",
-			},
-		},
-		{
-			name: "Headers With Special Characters",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC!,BVC§",
-			},
-		},
-		{
-			name: "One Header with Two Value",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC test test2",
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			buf := &bytes.Buffer{}
-			ingressCfg := ingressCfgWithProxySetHeadersAnnotationGeneric
-			ingressCfg.Ingress.Annotations = tc.annotations
-
-			err := tmpl.Execute(buf, ingressCfg)
-
-			if err == nil {
-				t.Fatal("expected an error, but got nil")
+			for _, wantHeader := range tc.wantTeaHeaders {
+				if !strings.Contains(generatedTeaConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated tea config", wantHeader)
+				}
 			}
 		})
 	}
@@ -2638,58 +2495,79 @@ var (
 			},
 		},
 	}
-	// Testing proxysetheader annotation
-	ingressCfgWithProxySetHeadersAnnotationGeneric = IngressNginxConfig{
+
+	// ingressCfgMasterMinionNGINXPlusMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation holds data to test the following scenario:
+	//
+	// Ingress Master - Minion
+	//  - Master: without `proxy-set-headers` annotation
+	//  - Minion 1 (cafe-ingress-coffee-minion): with `proxy-set-headers` annotation
+	//  - Minion 2 (cafe-ingress-tea-minion): with `proxy-set-headers` annotation
+	ingressCfgMasterMinionNGINXPlusMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation = IngressNginxConfig{
+		Upstreams: []Upstream{
+			coffeeUpstreamNginxPlus,
+			teaUpstreamNGINXPlus,
+		},
 		Servers: []Server{
 			{
-				Name:         "test.example.com",
-				ServerTokens: "off",
-				StatusZone:   "test.example.com",
-				JWTAuth: &JWTAuth{
-					Key:                  "/etc/nginx/secrets/key.jwk",
-					Realm:                "closed site",
-					Token:                "$cookie_auth_token",
-					RedirectLocationName: "@login_url-default-cafe-ingress",
-				},
-				SSL:               true,
-				SSLCertificate:    "secret.pem",
-				SSLCertificateKey: "secret.pem",
-				SSLPorts:          []int{443},
-				SSLRedirect:       true,
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
 				Locations: []Location{
 					{
-						Path:                "/tea/[A-Z0-9]{3}",
-						Upstream:            testUpstream,
-						ProxyConnectTimeout: "10s",
-						ProxyReadTimeout:    "10s",
-						ProxySendTimeout:    "10s",
-						ClientMaxBodySize:   "2m",
-						JWTAuth: &JWTAuth{
-							Key:   "/etc/nginx/secrets/location-key.jwk",
-							Realm: "closed site",
-							Token: "$cookie_auth_token",
-						},
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstreamNginxPlus,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
 						MinionIngress: &Ingress{
-							Name:      "tea-minion",
+							Name:      "cafe-ingress-coffee-minion",
 							Namespace: "default",
+							Annotations: map[string]string{
+								"nginx.org/mergeable-ingress-type": "minion",
+								"nginx.org/proxy-set-headers":      "X-Forwarded-coffee",
+							},
 						},
+						ProxySSLName: "coffee-svc.default.svc",
 					},
-				},
-				HealthChecks: map[string]HealthCheck{"test": healthCheck},
-				JWTRedirectLocations: []JWTRedirectLocation{
 					{
-						Name:     "@login_url-default-cafe-ingress",
-						LoginURL: "https://test.example.com/login",
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstreamNGINXPlus,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-tea-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"nginx.org/mergeable-ingress-type": "minion",
+								"nginx.org/proxy-set-headers":      "X-Forwarded-tea",
+							},
+						},
+						ProxySSLName: "tea-svc.default.svc",
 					},
 				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]HealthCheck),
 			},
 		},
-		Upstreams: []Upstream{testUpstream},
-		Keepalive: "16",
 		Ingress: Ingress{
-			Name:        "cafe-ingress",
-			Namespace:   "default",
-			Annotations: map[string]string{},
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+			},
 		},
 	}
 )
