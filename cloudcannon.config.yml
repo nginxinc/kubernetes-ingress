@@ -29,6 +29,10 @@ collections_config:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+    add_options:
+      - name: Add Page
+        schema: default
+        icon: note_add
     schemas:
       default:
         path: .cloudcannon/schemas/default.md
@@ -37,7 +41,7 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Page
-        icon: note_add
+        icon: article
         _editables:
         _inputs:
         _select_data:
@@ -54,6 +58,10 @@ collections_config:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+    add_options:
+      - name: Add Configuration
+        schema: default
+        icon: note_add
     schemas:
       default:
         path: .cloudcannon/schemas/default.md
@@ -62,7 +70,7 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Configuration
-        icon: note_add
+        icon: article
   includes:
     path: content/includes
     output: true
@@ -70,6 +78,10 @@ collections_config:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+    add_options:
+      - name: Add Includes
+        schema: default
+        icon: note_add
     schemas:
       default:
         path: .cloudcannon/schemas/includes.md
@@ -78,7 +90,7 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Includes
-        icon: note_add
+        icon: article
   installation:
     path: content/installation
     output: true
@@ -86,6 +98,10 @@ collections_config:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+    add_options:
+      - name: Add Installation
+        schema: default
+        icon: note_add
     schemas:
       default:
         path: .cloudcannon/schemas/default.md
@@ -94,7 +110,7 @@ collections_config:
         remove_empty_inputs: false
         remove_extra_inputs: false
         name: Installation
-        icon: note_add
+        icon: article
   logging-and-monitoring:
     path: content/logging-and-monitoring
     output: true
@@ -102,6 +118,10 @@ collections_config:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+    add_options:
+      - name: Add Logging and Monitoring
+        schema: default
+        icon: note_add
     schemas:
       default:
         path: .cloudcannon/schemas/default.md
@@ -109,8 +129,8 @@ collections_config:
         hide_extra_inputs: true
         remove_empty_inputs: false
         remove_extra_inputs: false
-        name: Installation
-        icon: note_add
+        name: Logging and Monitoring
+        icon: article
   overview:
     path: content/overview
     output: true
@@ -118,6 +138,10 @@ collections_config:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+    add_options:
+      - name: Add Overview
+        schema: default
+        icon: note_add
     schemas:
       default:
         path: .cloudcannon/schemas/default.md
@@ -125,8 +149,8 @@ collections_config:
         hide_extra_inputs: true
         remove_empty_inputs: false
         remove_extra_inputs: false
-        name: Installation
-        icon: note_add
+        name: Overview
+        icon: article
   troubleshooting:
     path: content/troubleshooting
     output: true
@@ -134,6 +158,10 @@ collections_config:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+    add_options:
+      - name: Add Troubleshooting
+        schema: default
+        icon: note_add
     schemas:
       default:
         path: .cloudcannon/schemas/default.md
@@ -141,8 +169,8 @@ collections_config:
         hide_extra_inputs: true
         remove_empty_inputs: false
         remove_extra_inputs: false
-        name: Installation
-        icon: note_add
+        name: Troubleshooting
+        icon: article
   tutorials:
     path: content/tutorials
     output: true
@@ -150,6 +178,10 @@ collections_config:
     disable_add: false
     disable_add_folder: false
     disable_file_actions: false
+    add_options:
+      - name: Add Tutorial
+        schema: default
+        icon: note_add
     schemas:
       default:
         path: .cloudcannon/schemas/default.md
@@ -157,8 +189,8 @@ collections_config:
         hide_extra_inputs: true
         remove_empty_inputs: false
         remove_extra_inputs: false
-        name: Installation
-        icon: note_add
+        name: Tutorial
+        icon: article
 _snippets_imports:
   hugo:
     exclude:
