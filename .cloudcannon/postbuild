@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd docs
+mv public nginx-ingress-controller 
+mkdir -p public
+mv nginx-ingress-controller  public
+mv public/nginx-ingress-controller/_cloudcannon public
+
+## Find and fix broken images and links caused by how the baseURL is set in the config.yml
+find public -type f -name "*.html" -exec sed -i 's/="\/\//="\//g' {} \;
