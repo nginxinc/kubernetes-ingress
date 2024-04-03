@@ -89,7 +89,7 @@ func printDefaultHeaderValues(headerParts []string, headerName string) string {
 	return fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue)
 }
 
-func printHeadersLessThanOne(headerParts []string, header string, headerName string) (string, error) {
+func printHeadersGreaterThanOne(headerParts []string, header string, headerName string) (string, error) {
 	headerValue := strings.TrimSpace(headerParts[1])
 	if strings.Contains(headerValue, " ") {
 		return "", errors.New("multiple values found in header: " + header)
@@ -104,6 +104,34 @@ func splittingHeaders(header string) (string, []string, string) {
 	return header, headerParts, headerName
 }
 
+//func printMinionProySetHeaders(loc *Location, result strings.Builder) (error, strings.Builder) {
+//	proxySetHeaders, ok := loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"]
+//	if ok {
+//		headers := strings.Split(proxySetHeaders, ",")
+//		for _, header := range headers {
+//			header, headerParts, headerName := splittingHeaders(header)
+//			err := validateProxySetHeader(headerName)
+//			if err != nil {
+//				return err, strings.Builder{}
+//			}
+//			if len(headerParts) > 1 {
+//				output, err := printHeadersGreaterThanOne(headerParts, header, headerName)
+//				if err != nil {
+//					return err, strings.Builder{}
+//				}
+//				result.WriteString(output)
+//				return nil, result
+//			} else {
+//				output := printDefaultHeaderValues(headerParts, headerName)
+//				result.WriteString(output)
+//				return nil, result
+//			}
+//		}
+//	}
+//
+//	return nil, strings.Builder{}
+//}
+
 // generateProxySetHeaders takes a location and an ingress annotations map
 // and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
 // It returns a string containing the generated Nginx configuration.
@@ -115,7 +143,6 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 	isMergable := loc.MinionIngress != nil
 	var ok bool
 	if !isMergable {
-		glog.Info("In Ingress")
 		proxySetHeaders, ok = ingressAnnotations["nginx.org/proxy-set-headers"]
 		if ok {
 			headers = strings.Split(proxySetHeaders, ",")
@@ -126,7 +153,7 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 					return "", err
 				}
 				if len(headerParts) > 1 {
-					output, err = printHeadersLessThanOne(headerParts, header, headerName)
+					output, err = printHeadersGreaterThanOne(headerParts, header, headerName)
 					result.WriteString(output)
 				} else {
 					output = printDefaultHeaderValues(headerParts, headerName)
@@ -140,22 +167,19 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 		ingressType, isMergable = loc.MinionIngress.Annotations["nginx.org/mergeable-ingress-type"]
 		if ingressType == "minion" {
 			glog.Infof("Proxy Set Header for %s - %s", loc.Path, loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"])
-
 			minionHeaders := make(map[string]bool)
 			proxySetHeaders, ok = loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"]
 			if ok {
 				headers = strings.Split(proxySetHeaders, ",")
 				for _, header := range headers {
-					header = strings.TrimSpace(header)
-					headerParts := strings.SplitN(header, " ", 2)
-					headerName := strings.TrimSpace(headerParts[0])
-					minionHeaders[headerName] = true
+					header, headerParts, headerName := splittingHeaders(header)
 					err := validateProxySetHeader(headerName)
 					if err != nil {
 						return "", err
 					}
 					if len(headerParts) > 1 {
-						output, err = printHeadersLessThanOne(headerParts, header, headerName)
+						output, err = printHeadersGreaterThanOne(headerParts, header, headerName)
+						minionHeaders[headerName] = true
 						if err != nil {
 							return "", err
 						}
@@ -170,15 +194,13 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 			if ok {
 				headers = strings.Split(proxySetHeaders, ",")
 				for _, header := range headers {
-					header = strings.TrimSpace(header)
-					headerParts := strings.SplitN(header, " ", 2)
-					headerName := strings.TrimSpace(headerParts[0])
+					header, headerParts, headerName := splittingHeaders(header)
 					if _, ok := minionHeaders[headerName]; !ok {
 						if err := validateProxySetHeader(headerName); err != nil {
 							return "", err
 						}
 						if len(headerParts) > 1 {
-							output, err := printHeadersLessThanOne(headerParts, header, headerName)
+							output, err := printHeadersGreaterThanOne(headerParts, header, headerName)
 							if err != nil {
 								return "", err
 							}
