@@ -71,12 +71,9 @@ func makePathWithRegex(path, regexType string) string {
 	}
 }
 
-// ValidateProxySetHeader takes a header string
-// returns an error if the header contains special characters or numbers.
-// If the header is valid, it returns nil.
 var setHeader = regexp.MustCompile("[a-zA-Z]+$")
 
-func ValidateProxySetHeader(header string) error {
+func validateProxySetHeader(header string) error {
 	header = strings.TrimSpace(header)
 
 	if !setHeader.MatchString(header) {
@@ -84,6 +81,32 @@ func ValidateProxySetHeader(header string) error {
 	}
 	return nil
 }
+
+//func printDefaultHeaderValues(headerParts []string, headerName string) string {
+//	var result strings.Builder
+//	headerValue := strings.TrimSpace(headerParts[0])
+//	headerValue = strings.ReplaceAll(headerValue, "-", "_")
+//	headerValue = strings.ToLower(headerValue)
+//	result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
+//	return result.String()
+//}
+//
+//func printHeadersLessThanOne(headerParts []string, header string, headerName string) (string, error) {
+//	var result strings.Builder
+//	headerValue := strings.TrimSpace(headerParts[1])
+//	if strings.Contains(headerValue, " ") {
+//		return "", errors.New("multiple values found in header: " + header)
+//	}
+//	result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
+//	return result.String(), nil
+//}
+//
+//func splittingHeaders(header string) (string, []string, string) {
+//	header = strings.TrimSpace(header)
+//	headerParts := strings.SplitN(header, " ", 2)
+//	headerName := strings.TrimSpace(headerParts[0])
+//	return header, headerParts, headerName
+//}
 
 // generateProxySetHeaders takes a location and an ingress annotations map
 // and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
@@ -97,13 +120,14 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 	if !isMergable {
 		glog.Info("In Ingress")
 		proxySetHeaders, ok = ingressAnnotations["nginx.org/proxy-set-headers"]
-		if ok && proxySetHeaders != "" {
+		if ok {
 			headers = strings.Split(proxySetHeaders, ",")
 			for _, header := range headers {
 				header = strings.TrimSpace(header)
 				headerParts := strings.SplitN(header, " ", 2)
 				headerName := strings.TrimSpace(headerParts[0])
-				if err := ValidateProxySetHeader(headerName); err != nil {
+				err := validateProxySetHeader(headerName)
+				if err != nil {
 					return "", err
 				}
 				if len(headerParts) > 1 {
@@ -136,7 +160,8 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 					headerParts := strings.SplitN(header, " ", 2)
 					headerName := strings.TrimSpace(headerParts[0])
 					minionHeaders[headerName] = true
-					if err := ValidateProxySetHeader(headerName); err != nil {
+					err := validateProxySetHeader(headerName)
+					if err != nil {
 						return "", err
 					}
 					if len(headerParts) > 1 {
@@ -154,14 +179,14 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 				}
 			}
 			proxySetHeaders, ok = ingressAnnotations["nginx.org/proxy-set-headers"]
-			if ok && proxySetHeaders != "" {
+			if ok {
 				headers = strings.Split(proxySetHeaders, ",")
 				for _, header := range headers {
 					header = strings.TrimSpace(header)
 					headerParts := strings.SplitN(header, " ", 2)
 					headerName := strings.TrimSpace(headerParts[0])
-					if _, exists := minionHeaders[headerName]; !exists {
-						if err := ValidateProxySetHeader(headerName); err != nil {
+					if _, ok := minionHeaders[headerName]; !ok {
+						if err := validateProxySetHeader(headerName); err != nil {
 							return "", err
 						}
 						if len(headerParts) > 1 {
