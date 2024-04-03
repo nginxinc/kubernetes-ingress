@@ -357,6 +357,7 @@ jobs:
           --set controller.image.tag=${{ matrix.tag }}
           --set controller.service.type=NodePort
           --set controller.nginxplus=${{ contains(matrix.type, 'plus') && 'true' || 'false' }}
+          --set controller.telemetryReporting.enable=false
           --wait
         working-directory: ${{ github.workspace }}/charts/nginx-ingress
 
