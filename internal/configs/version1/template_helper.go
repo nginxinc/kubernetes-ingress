@@ -82,37 +82,34 @@ func validateProxySetHeader(header string) error {
 	return nil
 }
 
-//func printDefaultHeaderValues(headerParts []string, headerName string) string {
-//	var result strings.Builder
-//	headerValue := strings.TrimSpace(headerParts[0])
-//	headerValue = strings.ReplaceAll(headerValue, "-", "_")
-//	headerValue = strings.ToLower(headerValue)
-//	result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
-//	return result.String()
-//}
-//
-//func printHeadersLessThanOne(headerParts []string, header string, headerName string) (string, error) {
-//	var result strings.Builder
-//	headerValue := strings.TrimSpace(headerParts[1])
-//	if strings.Contains(headerValue, " ") {
-//		return "", errors.New("multiple values found in header: " + header)
-//	}
-//	result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
-//	return result.String(), nil
-//}
-//
-//func splittingHeaders(header string) (string, []string, string) {
-//	header = strings.TrimSpace(header)
-//	headerParts := strings.SplitN(header, " ", 2)
-//	headerName := strings.TrimSpace(headerParts[0])
-//	return header, headerParts, headerName
-//}
+func printDefaultHeaderValues(headerParts []string, headerName string) string {
+	headerValue := strings.TrimSpace(headerParts[0])
+	headerValue = strings.ReplaceAll(headerValue, "-", "_")
+	headerValue = strings.ToLower(headerValue)
+	return fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue)
+}
+
+func printHeadersLessThanOne(headerParts []string, header string, headerName string) (string, error) {
+	headerValue := strings.TrimSpace(headerParts[1])
+	if strings.Contains(headerValue, " ") {
+		return "", errors.New("multiple values found in header: " + header)
+	}
+	return fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue), nil
+}
+
+func splittingHeaders(header string) (string, []string, string) {
+	header = strings.TrimSpace(header)
+	headerParts := strings.SplitN(header, " ", 2)
+	headerName := strings.TrimSpace(headerParts[0])
+	return header, headerParts, headerName
+}
 
 // generateProxySetHeaders takes a location and an ingress annotations map
 // and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
 // It returns a string containing the generated Nginx configuration.
 func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string) (string, error) {
 	var result strings.Builder
+	var output string
 	var proxySetHeaders, ingressType string
 	var headers []string
 	isMergable := loc.MinionIngress != nil
@@ -123,24 +120,17 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 		if ok {
 			headers = strings.Split(proxySetHeaders, ",")
 			for _, header := range headers {
-				header = strings.TrimSpace(header)
-				headerParts := strings.SplitN(header, " ", 2)
-				headerName := strings.TrimSpace(headerParts[0])
+				header, headerParts, headerName := splittingHeaders(header)
 				err := validateProxySetHeader(headerName)
 				if err != nil {
 					return "", err
 				}
 				if len(headerParts) > 1 {
-					headerValue := strings.TrimSpace(headerParts[1])
-					if strings.Contains(headerValue, " ") {
-						return "", errors.New("multiple values found in header: " + header)
-					}
-					result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
+					output, err = printHeadersLessThanOne(headerParts, header, headerName)
+					result.WriteString(output)
 				} else {
-					headerValue := strings.TrimSpace(headerParts[0])
-					headerValue = strings.ReplaceAll(headerValue, "-", "_")
-					headerValue = strings.ToLower(headerValue)
-					result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
+					output = printDefaultHeaderValues(headerParts, headerName)
+					result.WriteString(output)
 				}
 			}
 		}
@@ -165,16 +155,14 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 						return "", err
 					}
 					if len(headerParts) > 1 {
-						headerValue := strings.TrimSpace(headerParts[1])
-						if strings.Contains(headerValue, " ") {
-							return "", errors.New("multiple values found in header: " + header)
+						output, err = printHeadersLessThanOne(headerParts, header, headerName)
+						if err != nil {
+							return "", err
 						}
-						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
+						result.WriteString(output)
 					} else {
-						headerValue := strings.TrimSpace(headerParts[0])
-						headerValue = strings.ReplaceAll(headerValue, "-", "_")
-						headerValue = strings.ToLower(headerValue)
-						result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
+						output = printDefaultHeaderValues(headerParts, headerName)
+						result.WriteString(output)
 					}
 				}
 			}
@@ -190,16 +178,14 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 							return "", err
 						}
 						if len(headerParts) > 1 {
-							headerValue := strings.TrimSpace(headerParts[1])
-							if strings.Contains(headerValue, " ") {
-								return "", errors.New("multiple values found in header: " + header)
+							output, err := printHeadersLessThanOne(headerParts, header, headerName)
+							if err != nil {
+								return "", err
 							}
-							result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue))
+							result.WriteString(output)
 						} else {
-							headerValue := strings.TrimSpace(headerParts[0])
-							headerValue = strings.ReplaceAll(headerValue, "-", "_")
-							headerValue = strings.ToLower(headerValue)
-							result.WriteString(fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue))
+							output = printDefaultHeaderValues(headerParts, headerName)
+							result.WriteString(output)
 						}
 					}
 				}
