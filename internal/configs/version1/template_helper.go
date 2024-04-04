@@ -70,7 +70,6 @@ var setHeader = regexp.MustCompile("[a-zA-Z]+$")
 
 func validateProxySetHeader(header string) error {
 	header = strings.TrimSpace(header)
-
 	if !setHeader.MatchString(header) {
 		return errors.New("invalid header syntax")
 	}
@@ -99,6 +98,9 @@ func splitHeaders(header string) (string, []string, string) {
 	return header, headerParts, headerName
 }
 
+// minionProxySetHeaders takes an ingress annotations map and a bool map
+// and generates proxy_set_header headers for minions based on the nginx.org/proxy-set-headers annotation in a mergable ingress.
+// It returns a string containing the generated proxy headers and a header.
 func minionProxySetHeaders(loc *Location, minionHeaders map[string]bool) (string, map[string]bool, error) {
 	proxySetHeaders, ok := loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"]
 	if !ok {
@@ -127,6 +129,9 @@ func minionProxySetHeaders(loc *Location, minionHeaders map[string]bool) (string
 	return combinedMinions, minionHeaders, nil
 }
 
+// masterProxySetHeaders takes an ingress annotations map, a string and a bool map
+// and generates proxy_set_header headers for master based on the nginx.org/proxy-set-headers annotation in a mergable ingress..
+// It returns a string containing the generated proxy headers and a header.
 func masterProxySetHeaders(ingressAnnotations map[string]string, masters string, minionHeaders map[string]bool) (string, error) {
 	proxySetHeaders, ok := ingressAnnotations["nginx.org/proxy-set-headers"]
 	if !ok {
@@ -154,6 +159,9 @@ func masterProxySetHeaders(ingressAnnotations map[string]string, masters string,
 	return masters, nil
 }
 
+// notMergeableProxySetHeaders takes an ingress annotations map
+// and generates proxy_set_header headers based on the nginx.org/proxy-set-headers annotation in a nonmergeable ingress.
+// It returns a string containing the generated proxy headers and a header.
 func notMergeableProxySetHeaders(ingressAnnotations map[string]string) (string, error) {
 	proxySetHeaders, ok := ingressAnnotations["nginx.org/proxy-set-headers"]
 	if !ok {
@@ -181,6 +189,9 @@ func notMergeableProxySetHeaders(ingressAnnotations map[string]string) (string, 
 	return result, nil
 }
 
+// generateProxySetHeaders takes a location and an ingress annotations map
+// and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
+// It returns a string containing the generated Nginx configuration to the template.
 func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string) (string, error) {
 	isMergeable := loc.MinionIngress != nil
 	if !isMergeable {
