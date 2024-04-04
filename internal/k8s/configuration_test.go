@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/glog"
-
 	"github.com/google/go-cmp/cmp"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
@@ -2496,11 +2494,9 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	expectedGC3.Spec.Listeners = invalidGC.Spec.Listeners[1:]
 
 	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(invalidGC.DeepCopy())
-	glog.Infof("changes: %v", changes)
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
-	glog.Infof("problems: %v", problems)
 	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}

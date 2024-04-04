@@ -8,7 +8,6 @@ from suite.utils.custom_resources_utils import create_gc_from_yaml, delete_gc, p
 from suite.utils.resources_utils import (
     create_secret_from_yaml,
     delete_secret,
-    get_events,
     get_events_for_object,
     get_first_pod_name,
     wait_before_test,
@@ -171,7 +170,7 @@ class TestVirtualServerCustomListeners:
                 "expected_gc_error_msg": "Listener http-8085: port 9113 is forbidden",
             },
             {
-                "gc_yaml": "global-configuration-forbidden-port-ts",
+                "gc_yaml": "global-configuration-forbidden-port-preceding-udp",
                 "vs_yaml": "virtual-server",
                 "http_listener_in_config": True,
                 "https_listener_in_config": True,
@@ -352,7 +351,7 @@ class TestVirtualServerCustomListeners:
                 "expected_gc_error_msg": "Listener http-8085: port 9113 is forbidden",
             },
             {
-                "gc_yaml": "global-configuration-forbidden-port-ts",
+                "gc_yaml": "global-configuration-forbidden-port-preceding-udp",
                 "vs_yaml": "virtual-server",
                 "http_listener_in_config": True,
                 "https_listener_in_config": True,

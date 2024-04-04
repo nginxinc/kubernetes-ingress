@@ -122,7 +122,9 @@ class TestTransportServerStatus:
         """
         Test TransportServer status with another listener invalid.
         """
-        global_config_file = f"{TEST_DATA}/transport-server-status/standard/global-configuration-invalid-udp.yaml"
+        global_config_file = (
+            f"{TEST_DATA}/transport-server-status/standard/global-configuration-invalid-preceding-udp.yaml"
+        )
         gc_resource = patch_gc_from_yaml(
             kube_apis.custom_objects, "nginx-configuration", global_config_file, "nginx-ingress"
         )

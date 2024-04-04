@@ -1553,14 +1553,9 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
 	} else {
 		glog.V(2).Infof("Adding or Updating GlobalConfiguration: %v\n", key)
-		glog.Infof("current listener map: %v", lbc.configuration.listenerMap)
-		glog.Infof("current listeners: %v", lbc.configuration.listeners)
 
 		gc := obj.(*conf_v1.GlobalConfiguration)
 		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
-
-		glog.Infof("new listener map: %v", lbc.configuration.listenerMap)
-		glog.Infof("new listeners: %v", lbc.configuration.listeners)
 	}
 
 	updateErr := lbc.processChangesFromGlobalConfiguration(changes)
