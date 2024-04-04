@@ -415,7 +415,6 @@ RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --m
 
 ############################################# Download delve #############################################
 FROM golang:1.22-alpine@sha256:0466223b8544fb7d4ff04748acc4d75a608234bf4e79563bff208d2060c0dd79 AS debug-builder
-ARG IC_VERSION
 ARG TARGETARCH
 
 WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/
