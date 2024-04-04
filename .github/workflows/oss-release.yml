@@ -6,33 +6,25 @@ on:
       gcr_release_registry:
         required: true
         type: boolean
-        default: true
       ecr_public_registry:
         required: true
         type: boolean
-        default: true
       dockerhub_public_registry:
         required: true
         type: boolean
-        default: true
       quay_public_registry:
         required: true
         type: boolean
-        default: true
       github_public_registry:
         required: true
         type: boolean
-        default: true
       source_tag:
         required: true
         type: string
-        default: 'stable'
       target_tag:
         required: true
         type: string
-        default: 'edge'
       short_target_tag:
-        required: false
         type: string
         default: ''
       dry_run:
@@ -43,33 +35,25 @@ on:
       gcr_release_registry:
         required: true
         type: boolean
-        default: true
       ecr_public_registry:
         required: true
         type: boolean
-        default: true
       dockerhub_public_registry:
         required: true
         type: boolean
-        default: true
       quay_public_registry:
         required: true
         type: boolean
-        default: true
       github_public_registry:
         required: true
         type: boolean
-        default: true
       source_tag:
         required: true
         type: string
-        default: 'stable'
       target_tag:
         required: true
         type: string
-        default: 'edge'
       short_target_tag:
-        required: false
         type: string
         default: ''
       dry_run:

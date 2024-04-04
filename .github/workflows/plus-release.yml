@@ -6,33 +6,25 @@ on:
       nginx_registry:
         required: true
         type: boolean
-        default: true
       gcr_release_registry:
         required: true
         type: boolean
-        default: true
       gcr_mktpl_registry:
         required: true
         type: boolean
-        default: false
       ecr_mktpl_registry:
         required: true
         type: boolean
-        default: false
       az_mktpl_registry:
         required: true
         type: boolean
-        default: false
       source_tag:
         required: true
         type: string
-        default: 'stable'
       target_tag:
         required: true
         type: string
-        default: 'edge'
       short_target_tag:
-        required: false
         type: string
         default: ''
       dry_run:
@@ -43,33 +35,25 @@ on:
       nginx_registry:
         required: true
         type: boolean
-        default: true
       gcr_release_registry:
         required: true
         type: boolean
-        default: true
       gcr_mktpl_registry:
         required: true
         type: boolean
-        default: false
       ecr_mktpl_registry:
         required: true
         type: boolean
-        default: false
       az_mktpl_registry:
         required: true
         type: boolean
-        default: false
       source_tag:
         required: true
         type: string
-        default: 'stable'
       target_tag:
         required: true
         type: string
-        default: 'edge'
       short_target_tag:
-        required: false
         type: string
         default: ''
       dry_run:

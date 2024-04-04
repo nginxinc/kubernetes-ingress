@@ -6,11 +6,9 @@ on:
       source_tag:
         required: true
         type: string
-        default: 'build'
       target_tag:
         required: true
         type: string
-        default: 'stable'
       dry_run:
         type: boolean
         default: false
@@ -19,11 +17,9 @@ on:
       source_tag:
         required: true
         type: string
-        default: 'build'
       target_tag:
         required: true
         type: string
-        default: 'stable'
       dry_run:
         type: boolean
         default: false
