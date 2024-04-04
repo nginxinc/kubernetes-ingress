@@ -187,7 +187,6 @@ func printMasterProySetHeaders(ingressAnnotations map[string]string, result *str
 // It returns a string containing the generated Nginx configuration.
 func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string) (string, error) {
 	var result strings.Builder
-	var ingressType string
 	isMergable := loc.MinionIngress != nil
 	if !isMergable {
 		err, result := printNotMergableProxySetHeaders(ingressAnnotations, &result)
@@ -196,19 +195,16 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 		}
 		return result.String(), nil
 	}
-	if loc.MinionIngress != nil {
-		ingressType, isMergable = loc.MinionIngress.Annotations["nginx.org/mergeable-ingress-type"]
-		if ingressType == "minion" {
-			glog.Infof("Proxy Set Header for %s - %s", loc.Path, loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"])
-			minionHeaders := make(map[string]bool)
-			err, result, minionHeaders := printMinionProySetHeaders(loc, &result, minionHeaders)
-			if err != nil {
-				return "", err
-			}
-			err, result = printMasterProySetHeaders(ingressAnnotations, result, minionHeaders)
-			if err != nil {
-				return "", err
-			}
+	if isMergable {
+		glog.Infof("Proxy Set Header for %s - %s", loc.Path, loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"])
+		minionHeaders := make(map[string]bool)
+		err, result, minionHeaders := printMinionProySetHeaders(loc, &result, minionHeaders)
+		if err != nil {
+			return "", err
+		}
+		err, result = printMasterProySetHeaders(ingressAnnotations, result, minionHeaders)
+		if err != nil {
+			return "", err
 		}
 	}
 	return result.String(), nil
