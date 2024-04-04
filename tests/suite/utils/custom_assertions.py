@@ -268,3 +268,24 @@ def assert_proxy_entries_exist(config) -> None:
     assert "proxy_next_upstream error timeout;" in config
     assert "proxy_next_upstream_timeout 0s;" in config
     assert "proxy_next_upstream_tries 0;" in config
+
+
+def wait_for_text_in_response(url, expected_text, host, timeout=30, interval=1):
+    """
+    Polls an HTTP endpoint until a given text is found in the response or a timeout is reached.
+
+    :param url: The URL to poll.
+    :param expected_text: The text to look for in the response.
+    :param host: The value of the Host header in the request.
+    :param timeout: The maximum time to wait for the condition to be met, in seconds.
+    :param interval: The time to wait between polls, in seconds.
+    :raises: AssertionError if the timeout is reached before the text is found in the response.
+    """
+    start_time = time.time()
+    while True:
+        response = requests.get(url, headers={"host": host})
+        if expected_text in response.text:
+            break
+        if time.time() - start_time > timeout:
+            raise AssertionError(f"Timeout reached: '{expected_text}' not found in response within {timeout} seconds")
+        time.sleep(interval)

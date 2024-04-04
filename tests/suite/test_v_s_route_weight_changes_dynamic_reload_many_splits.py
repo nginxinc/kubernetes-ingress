@@ -17,7 +17,7 @@ from suite.utils.resources_utils import (
 from suite.utils.yaml_utils import get_first_host_from_yaml, get_paths_from_vsr_yaml, get_route_namespace_from_vs_yaml
 from yaml.loader import Loader
 
-from tests.suite.utils.custom_assertions import wait_and_assert_status_code
+from tests.suite.utils.custom_assertions import wait_and_assert_status_code, wait_for_text_in_response
 from tests.suite.utils.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
     create_virtual_server_from_yaml,
@@ -151,6 +151,7 @@ class TestVSRWeightChangesDynamicReloadManySplits:
 
         and also that weight-changes-dynamic-reload is set to true
         """
+        wait_until_all_pods_are_ready(kube_apis.v1, vsr_weight_changes_dynamic_reload_many_splits_setup.namespace)
         swap_weights_config = (
             f"{TEST_DATA}/virtual-server-route-weight-changes-dynamic-reload/virtual-server-route-many-splits-swap.yaml"
         )
@@ -158,11 +159,11 @@ class TestVSRWeightChangesDynamicReloadManySplits:
         print("Step 1: Get a response from the backend.")
         backends32_url = f"{vsr_weight_changes_dynamic_reload_many_splits_setup.backends_url}32"
         wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host)
-        resp = requests.get(
-            backends32_url,
-            headers={"host": vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host},
+
+        expected_text = "backend1"
+        wait_for_text_in_response(
+            backends32_url, expected_text, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host
         )
-        assert "backend1" in resp.text
 
         print("Step 2: Apply a configuration that swaps the weights (0 100) to (100 0).")
         patch_v_s_route_from_yaml(
@@ -175,9 +176,8 @@ class TestVSRWeightChangesDynamicReloadManySplits:
         print("Step 3: Verify hitting the other backend.")
         ensure_response_from_backend(backends32_url, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host)
         wait_and_assert_status_code(200, backends32_url, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host)
-        wait_before_test(1)
-        resp = requests.get(
-            backends32_url,
-            headers={"host": vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host},
+
+        expected_text = "backend2"
+        wait_for_text_in_response(
+            backends32_url, expected_text, vsr_weight_changes_dynamic_reload_many_splits_setup.vs_host
         )
-        assert "backend2" in resp.text
