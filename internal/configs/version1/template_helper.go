@@ -19,10 +19,6 @@ func trim(s string) string {
 	return strings.TrimSpace(s)
 }
 
-func replace(s string, old, new string) string { return strings.ReplaceAll(s, old, new) }
-
-func concat(s1, s2 string) string { return s1 + s2 }
-
 // makeLocationPath takes location and Ingress annotations and returns
 // modified location path with added regex modifier or the original path
 // if no path-regex annotation is present in ingressAnnotations
@@ -104,7 +100,7 @@ func splittingHeaders(header string) (string, []string, string) {
 	return header, headerParts, headerName
 }
 
-func printMinionProySetHeaders(loc *Location, result *strings.Builder, minionHeaders map[string]bool) (error, *strings.Builder, map[string]bool) {
+func printMinionProySetHeaders(loc *Location, result *strings.Builder, minionHeaders map[string]bool) (*strings.Builder, map[string]bool, error) {
 	proxySetHeaders, ok := loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"]
 	if ok {
 		headers := strings.Split(proxySetHeaders, ",")
@@ -112,13 +108,13 @@ func printMinionProySetHeaders(loc *Location, result *strings.Builder, minionHea
 			header, headerParts, headerName := splittingHeaders(header)
 			err := validateProxySetHeader(headerName)
 			if err != nil {
-				return err, nil, nil
+				return nil, nil, err
 			}
 			if len(headerParts) > 1 {
 				output, err := printHeadersGreaterThanOne(headerParts, header, headerName)
 				minionHeaders[headerName] = true
 				if err != nil {
-					return err, nil, nil
+					return nil, nil, err
 				}
 				result.WriteString(output)
 			} else {
@@ -127,36 +123,10 @@ func printMinionProySetHeaders(loc *Location, result *strings.Builder, minionHea
 			}
 		}
 	}
-
-	return nil, result, minionHeaders
+	return result, minionHeaders, nil
 }
 
-func printNotMergableProxySetHeaders(ingressAnnotations map[string]string, result *strings.Builder) (error, *strings.Builder) {
-	proxySetHeaders, ok := ingressAnnotations["nginx.org/proxy-set-headers"]
-	if ok {
-		headers := strings.Split(proxySetHeaders, ",")
-		for _, header := range headers {
-			header, headerParts, headerName := splittingHeaders(header)
-			err := validateProxySetHeader(headerName)
-			if err != nil {
-				return err, nil
-			}
-			if len(headerParts) > 1 {
-				output, err := printHeadersGreaterThanOne(headerParts, header, headerName)
-				if err != nil {
-					return err, nil
-				}
-				result.WriteString(output)
-			} else {
-				output := printDefaultHeaderValues(headerParts, headerName)
-				result.WriteString(output)
-			}
-		}
-	}
-	return nil, result
-}
-
-func printMasterProySetHeaders(ingressAnnotations map[string]string, result *strings.Builder, minionHeaders map[string]bool) (error, *strings.Builder) {
+func printMasterProySetHeaders(ingressAnnotations map[string]string, result *strings.Builder, minionHeaders map[string]bool) (*strings.Builder, error) {
 	proxySetHeaders, ok := ingressAnnotations["nginx.org/proxy-set-headers"]
 	if ok {
 		headers := strings.Split(proxySetHeaders, ",")
@@ -164,12 +134,12 @@ func printMasterProySetHeaders(ingressAnnotations map[string]string, result *str
 			header, headerParts, headerName := splittingHeaders(header)
 			if _, ok := minionHeaders[headerName]; !ok {
 				if err := validateProxySetHeader(headerName); err != nil {
-					return err, nil
+					return nil, err
 				}
 				if len(headerParts) > 1 {
 					output, err := printHeadersGreaterThanOne(headerParts, header, headerName)
 					if err != nil {
-						return err, nil
+						return nil, err
 					}
 					result.WriteString(output)
 				} else {
@@ -179,33 +149,54 @@ func printMasterProySetHeaders(ingressAnnotations map[string]string, result *str
 			}
 		}
 	}
-	return nil, result
+	return result, nil
 }
 
-// generateProxySetHeaders takes a location and an ingress annotations map
-// and generates proxy_set_header directives based on the nginx.org/proxy-set-headers annotation.
-// It returns a string containing the generated Nginx configuration.
+func printNotMergableProxySetHeaders(ingressAnnotations map[string]string) (string, error) {
+	var result string
+	proxySetHeaders, ok := ingressAnnotations["nginx.org/proxy-set-headers"]
+	if ok {
+		headers := strings.Split(proxySetHeaders, ",")
+		for _, header := range headers {
+			header, headerParts, headerName := splittingHeaders(header)
+			err := validateProxySetHeader(headerName)
+			if err != nil {
+				return "", err
+			}
+			if len(headerParts) > 1 {
+				output, err := printHeadersGreaterThanOne(headerParts, header, headerName)
+				if err != nil {
+					return "nil", err
+				}
+				result += output
+			} else {
+				output := printDefaultHeaderValues(headerParts, headerName)
+				result += output
+			}
+		}
+	}
+	return result, nil
+}
+
 func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string) (string, error) {
 	var result strings.Builder
 	isMergable := loc.MinionIngress != nil
 	if !isMergable {
-		err, result := printNotMergableProxySetHeaders(ingressAnnotations, &result)
+		result, err := printNotMergableProxySetHeaders(ingressAnnotations)
 		if err != nil {
 			return "", err
 		}
-		return result.String(), nil
+		return result, nil
 	}
-	if isMergable {
-		glog.Infof("Proxy Set Header for %s - %s", loc.Path, loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"])
-		minionHeaders := make(map[string]bool)
-		err, result, minionHeaders := printMinionProySetHeaders(loc, &result, minionHeaders)
-		if err != nil {
-			return "", err
-		}
-		err, result = printMasterProySetHeaders(ingressAnnotations, result, minionHeaders)
-		if err != nil {
-			return "", err
-		}
+	glog.Infof("Proxy Set Header for %s - %s", loc.Path, loc.MinionIngress.Annotations["nginx.org/proxy-set-headers"])
+	minionHeaders := make(map[string]bool)
+	_, minionHeaders, err := printMinionProySetHeaders(loc, &result, minionHeaders)
+	if err != nil {
+		return "", err
+	}
+	_, err = printMasterProySetHeaders(ingressAnnotations, &result, minionHeaders)
+	if err != nil {
+		return "", err
 	}
 	return result.String(), nil
 }
@@ -213,8 +204,6 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 var helperFunctions = template.FuncMap{
 	"split":                   split,
 	"trim":                    trim,
-	"replace":                 replace,
-	"concat":                  concat,
 	"contains":                strings.Contains,
 	"hasPrefix":               strings.HasPrefix,
 	"hasSuffix":               strings.HasSuffix,
