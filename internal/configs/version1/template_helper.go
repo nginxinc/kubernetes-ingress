@@ -166,7 +166,7 @@ func printNotMergableProxySetHeaders(ingressAnnotations map[string]string) (stri
 			if len(headerParts) > 1 {
 				output, err := printHeadersGreaterThanOne(headerParts, header, headerName)
 				if err != nil {
-					return "nil", err
+					return "", err
 				}
 				result += output
 			} else {
