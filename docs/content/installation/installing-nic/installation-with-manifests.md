@@ -22,7 +22,7 @@ Choose one of the following methods to get the NGINX Ingress Controller image:
 
   - Download the image using your NGINX Ingress Controller subscription certificate and key. Read the [Getting the F5 Registry NGINX Ingress Controller Image]({{< relref "installation/nic-images/pulling-ingress-controller-image.md" >}}) guide.
   - Use your NGINX Ingress Controller subscription JWT token to get the image: Read the [Getting the NGINX Ingress Controller Image with JWT]({{< relref "installation/nic-images/using-the-jwt-token-docker-secret.md" >}}).
-
+ 
 - **Build your own image**: To build your own image, follow the [Building NGINX Ingress Controller]({{< relref "installation/building-nginx-ingress-controller.md" >}}) guide.
 
 ### Clone the repository
@@ -36,6 +36,10 @@ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch <version_n
 For example, if you want to use version 3.5.0, the command would be `git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.0`.
 
 This guide assumes you are using the latest release.
+
+### App Protect DoS
+
+To use App Protect DoS, install the App Protect DoS Arbitrator using the provided manifests in the same namespace as the NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
 
 ---
 
