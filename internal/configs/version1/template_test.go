@@ -829,10 +829,10 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
 	}
 }
 
-func TestExecuteTemplate_ForIngressForNGINXPlusMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation(t *testing.T) {
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation(t *testing.T) {
 	t.Parallel()
 
-	tmpl := newNGINXPlusIngressTmpl(t)
+	tmpl := newNGINXIngressTmpl(t)
 	testCases := []struct {
 		name              string
 		masterAnnotations map[string]string
@@ -842,19 +842,177 @@ func TestExecuteTemplate_ForIngressForNGINXPlusMasterWithoutProxySetHeadersMinio
 		wantTeaHeaders    []string
 	}{
 		{
-			name: "Header in Coffee but not Tea or Master",
+			name: "Header in Tea and Coffee with no Master",
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+			},
 			coffeeAnnotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC coffee",
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Coffee",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-Coffee $http_x_forwarded_coffee;`,
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Minion tea",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-Minion "tea"`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+			err := tmpl.Execute(buf, ingressCfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			generatedMasterConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.masterAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedCoffeeConfig, err := generateProxySetHeaders(&Location{Path: "coffee"}, tc.coffeeAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedTeaConfig, err := generateProxySetHeaders(&Location{Path: "tea"}, tc.teaAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			generatedCoffeeConfig = generatedMasterConfig + "\n" + generatedCoffeeConfig
+			generatedTeaConfig = generatedMasterConfig + "\n" + generatedTeaConfig
+
+			for _, wantHeader := range tc.wantCoffeeHeaders {
+				if !strings.Contains(generatedCoffeeConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+				}
+			}
+
+			for _, wantHeader := range tc.wantTeaHeaders {
+				if !strings.Contains(generatedTeaConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated tea config", wantHeader)
+				}
+			}
+		})
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXWithProxySetHeadersAnnotationInMasterOnly(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		name              string
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			name: "Annotation in Master showing master defaults in minions",
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;`,
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+			err := tmpl.Execute(buf, ingressCfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			generatedMasterConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.masterAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedCoffeeConfig, err := generateProxySetHeaders(&Location{Path: "coffee"}, tc.coffeeAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generatedTeaConfig, err := generateProxySetHeaders(&Location{Path: "tea"}, tc.teaAnnotations)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			generatedCoffeeConfig = generatedMasterConfig + "\n" + generatedCoffeeConfig
+			generatedTeaConfig = generatedMasterConfig + "\n" + generatedTeaConfig
+
+			for _, wantHeader := range tc.wantCoffeeHeaders {
+				if !strings.Contains(generatedCoffeeConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+				}
+			}
+
+			for _, wantHeader := range tc.wantTeaHeaders {
+				if !strings.Contains(generatedTeaConfig, wantHeader) {
+					t.Errorf("expected header %q not found in generated tea config", wantHeader)
+				}
+			}
+		})
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXWithProxySetHeadersAnnotationForMinionOverrideMaster(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		name              string
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			name: "Coffee Overrides Master and Master still in Tea",
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC coffee",
 			},
 			wantCoffeeHeaders: []string{
 				`proxy_set_header X-Forwarded-ABC "coffee"`,
 			},
+			wantTeaHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
 		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			ingressCfg := ingressCfgMasterMinionNGINXPlusMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation
+			ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
 
 			err := tmpl.Execute(buf, ingressCfg)
 			if err != nil {
@@ -2495,81 +2653,6 @@ var (
 			},
 		},
 	}
-
-	// ingressCfgMasterMinionNGINXPlusMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation holds data to test the following scenario:
-	//
-	// Ingress Master - Minion
-	//  - Master: without `proxy-set-headers` annotation
-	//  - Minion 1 (cafe-ingress-coffee-minion): with `proxy-set-headers` annotation
-	//  - Minion 2 (cafe-ingress-tea-minion): with `proxy-set-headers` annotation
-	ingressCfgMasterMinionNGINXPlusMasterWithoutProxySetHeadersMinionsWithProxySetHeadersAnnotation = IngressNginxConfig{
-		Upstreams: []Upstream{
-			coffeeUpstreamNginxPlus,
-			teaUpstreamNGINXPlus,
-		},
-		Servers: []Server{
-			{
-				Name:         "cafe.example.com",
-				ServerTokens: "on",
-				Locations: []Location{
-					{
-						Path:                "/coffee",
-						ServiceName:         "coffee-svc",
-						Upstream:            coffeeUpstreamNginxPlus,
-						ProxyConnectTimeout: "60s",
-						ProxyReadTimeout:    "60s",
-						ProxySendTimeout:    "60s",
-						ClientMaxBodySize:   "1m",
-						ProxyBuffering:      true,
-						MinionIngress: &Ingress{
-							Name:      "cafe-ingress-coffee-minion",
-							Namespace: "default",
-							Annotations: map[string]string{
-								"nginx.org/mergeable-ingress-type": "minion",
-								"nginx.org/proxy-set-headers":      "X-Forwarded-coffee",
-							},
-						},
-						ProxySSLName: "coffee-svc.default.svc",
-					},
-					{
-						Path:                "/tea",
-						ServiceName:         "tea-svc",
-						Upstream:            teaUpstreamNGINXPlus,
-						ProxyConnectTimeout: "60s",
-						ProxyReadTimeout:    "60s",
-						ProxySendTimeout:    "60s",
-						ClientMaxBodySize:   "1m",
-						ProxyBuffering:      true,
-						MinionIngress: &Ingress{
-							Name:      "cafe-ingress-tea-minion",
-							Namespace: "default",
-							Annotations: map[string]string{
-								"nginx.org/mergeable-ingress-type": "minion",
-								"nginx.org/proxy-set-headers":      "X-Forwarded-tea",
-							},
-						},
-						ProxySSLName: "tea-svc.default.svc",
-					},
-				},
-				SSL:               true,
-				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
-				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
-				StatusZone:        "cafe.example.com",
-				HSTSMaxAge:        2592000,
-				Ports:             []int{80},
-				SSLPorts:          []int{443},
-				SSLRedirect:       true,
-				HealthChecks:      make(map[string]HealthCheck),
-			},
-		},
-		Ingress: Ingress{
-			Name:      "cafe-ingress-master",
-			Namespace: "default",
-			Annotations: map[string]string{
-				"nginx.org/mergeable-ingress-type": "master",
-			},
-		},
-	}
 )
 
 var testUpstream = Upstream{
@@ -2596,3 +2679,34 @@ var (
 		Headers:      headers,
 	}
 )
+
+func createProxySetHeaderIngressConfig(masterAnnotations map[string]string, minion1Annotations map[string]string, minion2Annotations map[string]string) IngressNginxConfig {
+	return IngressNginxConfig{
+		Servers: []Server{
+			{
+				Name: "cafe.example.com",
+				Locations: []Location{
+					{
+						MinionIngress: &Ingress{
+							Name:        "cafe-ingress-coffee-minion",
+							Namespace:   "default",
+							Annotations: minion1Annotations,
+						},
+					},
+					{
+						MinionIngress: &Ingress{
+							Name:        "cafe-ingress-tea-minion",
+							Namespace:   "default",
+							Annotations: minion2Annotations,
+						},
+					},
+				},
+			},
+		},
+		Ingress: Ingress{
+			Name:        "cafe-ingress-master",
+			Namespace:   "default",
+			Annotations: masterAnnotations,
+		},
+	}
+}
