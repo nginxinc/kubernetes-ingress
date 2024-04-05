@@ -1238,6 +1238,80 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithAnnotationForProxy
 	}
 }
 
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterMinionsWithDifferentHeadersForProxySetHeadersAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Coffee espresso",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-Coffee "espresso"`,
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Tea chai",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-Tea "chai"`,
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		generatedMasterConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.masterAnnotations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		generatedCoffeeConfig, err := generateProxySetHeaders(&Location{Path: "coffee"}, tc.coffeeAnnotations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		generatedTeaConfig, err := generateProxySetHeaders(&Location{Path: "tea"}, tc.teaAnnotations)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		generatedCoffeeConfig = generatedMasterConfig + "\n" + generatedCoffeeConfig
+		generatedTeaConfig = generatedMasterConfig + "\n" + generatedTeaConfig
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(generatedCoffeeConfig, wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(generatedTeaConfig, wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+	}
+}
+
 func TestExecuteTemplate_ForMergeableIngressForNGINXWithProxySetHeadersAnnotationForMinionOverrideMaster(t *testing.T) {
 	t.Parallel()
 
@@ -1263,6 +1337,85 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXWithProxySetHeadersAnnotatio
 			},
 			wantTeaHeaders: []string{
 				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		generatedMasterConfig, err := generateProxySetHeaders(&Location{Path: ""}, tc.masterAnnotations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		generatedCoffeeConfig, err := generateProxySetHeaders(&Location{Path: "coffee"}, tc.coffeeAnnotations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		generatedTeaConfig, err := generateProxySetHeaders(&Location{Path: "tea"}, tc.teaAnnotations)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		generatedCoffeeConfig = generatedMasterConfig + "\n" + generatedCoffeeConfig
+		generatedTeaConfig = generatedMasterConfig + "\n" + generatedTeaConfig
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(generatedCoffeeConfig, wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(generatedTeaConfig, wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterMinionsWithMultipleDifferentHeadersForProxySetHeadersAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC,BVC,Location master",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Coffee espresso,X-Forwarded-Minion coffee, Location minion",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-Coffee "espresso"`,
+				`proxy_set_header X-Forwarded-Minion "coffee"`,
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				"proxy_set_header BVC $http_bvc;",
+				`proxy_set_header Location "minion"`,
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Tea chai",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-Tea "chai"`,
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				"proxy_set_header BVC $http_bvc;",
+				`proxy_set_header Location "master"`,
 			},
 		},
 	}
