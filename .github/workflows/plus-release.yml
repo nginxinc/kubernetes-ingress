@@ -1,0 +1,309 @@
+name: "Release NGINX Ingress Controller Plus Images"
+
+on:
+  workflow_dispatch:
+    inputs:
+      nginx_registry:
+        required: true
+        type: boolean
+      gcr_release_registry:
+        required: true
+        type: boolean
+      gcr_mktpl_registry:
+        required: true
+        type: boolean
+      ecr_mktpl_registry:
+        required: true
+        type: boolean
+      az_mktpl_registry:
+        required: true
+        type: boolean
+      source_tag:
+        required: true
+        type: string
+      target_tag:
+        required: true
+        type: string
+      short_target_tag:
+        type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      nginx_registry:
+        required: true
+        type: boolean
+      gcr_release_registry:
+        required: true
+        type: boolean
+      gcr_mktpl_registry:
+        required: true
+        type: boolean
+      ecr_mktpl_registry:
+        required: true
+        type: boolean
+      az_mktpl_registry:
+        required: true
+        type: boolean
+      source_tag:
+        required: true
+        type: string
+      target_tag:
+        required: true
+        type: string
+      short_target_tag:
+        type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  release-to-gcr-release-registry:
+    name: Push images to the GCR Release Registry
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ inputs.gcr_release_registry }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Authenticate to Google Cloud
+        id: gcr-auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.gcr-auth.outputs.access_token }}
+
+      - name: Install latest skopeo
+        uses: ./.github/actions/install-skopeo
+
+      - name: Publish Plus images
+        run: |
+          export CONFIG_PATH=.github/config/config-plus-gcr-release
+          export SOURCE_TAG=${{ inputs.source_tag }}
+          export TARGET_TAG=${{ inputs.target_tag }}
+          if ${{ inputs.dry_run }}; then
+            export DRY_RUN=true
+          fi
+          if [ "${{ inputs.short_target_tag }}" != "" ]; then
+            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
+          fi
+          .github/scripts/copy-images.sh
+
+  release-to-nginx-registry:
+    name: Push Plus images to the NGINX Registry
+    runs-on: 'kic-plus'
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ inputs.nginx_registry }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Authenticate to Google Cloud
+        id: gcr-auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.gcr-auth.outputs.access_token }}
+
+      - name: Get Id Token
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        id: idtoken
+        with:
+          script: |
+            let id_token = await core.getIDToken()
+            core.setOutput('id_token', id_token)
+
+      - name: Login to NGINX Registry
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: docker-mgmt.nginx.com
+          username: ${{ steps.idtoken.outputs.id_token }}
+          password: ${{ github.actor }}
+
+      - name: Install latest skopeo
+        uses: ./.github/actions/install-skopeo
+
+      - name: Publish images
+        run: |
+          export CONFIG_PATH=.github/config/config-plus-nginx
+          export SOURCE_TAG=${{ inputs.source_tag }}
+          export TARGET_TAG=${{ inputs.target_tag }}
+          if ${{ inputs.dry_run }}; then
+            export DRY_RUN=true
+          fi
+          if [ "${{ inputs.short_target_tag }}" != "" ]; then
+            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
+          fi
+          .github/scripts/copy-images.sh
+
+  release-plus-to-gcr-marketplace-registry:
+    name: Push Plus images to the GCR Marketplace Registry
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ inputs.gcr_mktpl_registry }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Authenticate to Google Cloud
+        id: gcr-priv-auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Authenticate to Google Cloud Marketplace
+        id: gcr-mktpl-auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
+
+      - name: Install latest skopeo
+        uses: ./.github/actions/install-skopeo
+
+      - name: Publish Plus images
+        run: |
+          export CONFIG_PATH=.github/config/config-plus-gcr-public
+          export SOURCE_TAG=${{ inputs.source_tag }}
+          export TARGET_TAG=${{ inputs.target_tag }}
+          export SOURCE_OPTS="--src-registry-token ${{ steps.gcr-priv-auth.outputs.access_token }}"
+          export TARGET_OPTS="--dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }}"
+          if ${{ inputs.dry_run }}; then
+            export DRY_RUN=true
+          fi
+          if [ "${{ inputs.short_target_tag }}" != "" ]; then
+            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
+          fi
+          .github/scripts/copy-images.sh
+
+  release-plus-to-ecr-marketplace-registry:
+    name: Push Plus images to the AWS Marketplace Registry
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ inputs.ecr_mktpl_registry }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Authenticate to Google Cloud
+        id: gcr-auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.gcr-auth.outputs.access_token }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
+
+      - name: Login to ECR
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Install latest skopeo
+        uses: ./.github/actions/install-skopeo
+
+      - name: Publish images
+        run: |
+          export CONFIG_PATH=.github/config/config-plus-ecr
+          export SOURCE_TAG=${{ inputs.source_tag }}
+          export TARGET_TAG=${{ inputs.target_tag }}
+          if ${{ inputs.dry_run }}; then
+            export DRY_RUN=true
+          fi
+          .github/scripts/copy-images.sh
+
+  release-plus-to-azure-marketplace-registry:
+    name: Push Plus images to the Azure Marketplace Registry
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ inputs.az_mktpl_registry }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Authenticate to Google Cloud
+        id: gcr-auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.gcr-auth.outputs.access_token }}
+
+      - name: Login to ACR
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: nginxmktpl.azurecr.io
+          username: ${{ secrets.AZ_MKTPL_ID }}
+          password: ${{ secrets.AZ_MKTPL_SECRET }}
+
+      - name: Install latest skopeo
+        uses: ./.github/actions/install-skopeo
+
+      - name: Publish images
+        run: |
+          export CONFIG_PATH=.github/config/config-plus-azure
+          export SOURCE_TAG=${{ inputs.source_tag }}
+          export TARGET_TAG=${{ inputs.target_tag }}
+          if ${{ inputs.dry_run }}; then
+            export DRY_RUN=true
+          fi
+          .github/scripts/copy-images.sh
