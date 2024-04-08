@@ -34,7 +34,7 @@ We value community input and would love to see you at our next community call. A
 | **2024-03-11** | **4 PM**       | **4 PM** |
 | **2024-03-25** | **4 PM**       | **4 PM** |
 | **2024-04-08** | **4 PM**       | **3 PM** |
-| **2024-04-22** | **4 PM**       | **3 PM** |
+| **2024-06-05** | **4 PM**       | **3 PM** |
 
 ---
 
