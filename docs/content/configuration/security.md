@@ -7,9 +7,9 @@ toc: true
 weight: 1500
 ---
 
-NGINX Ingress Controller follows Kubernetes best practices. A good starting point is the official Kubernetes documentation for [Securing a Cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/). 
+NGINX Ingress Controller follows Kubernetes best practices: this page outlines configuration specific to NGINX Ingress Controller you may require, including links to examples in the [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/tree/release-3.5).
 
-This page outlines configuration specific to NGINX Ingress Controller you may require, including links to examples in the [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/tree/release-3.5).
+For general guidance, we recommend the official Kubernetes documentation for [Securing a Cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/). 
 
 ## RBAC and Service Accounts
 
@@ -26,9 +26,6 @@ By default, the ServiceAccount has access to all Secret resources in the cluster
 
 [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) are required by NGINX Ingress Controller for certificates and privacy keys, which Kubernetes stores unencrypted by default. We recommend following the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) to store these Secrets using at-rest encryption.
 
-## Prometheus
-
-If Prometheus metrics are [enabled]({{< relref "/logging-and-monitoring/prometheus.md" >}}), we recommend [using HTTPS]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-prometheus-tls-secret" >}}).
 
 ## Configure root filesystem as read-only
 
@@ -76,8 +73,23 @@ The block below shows the code you will look for:
 #          name: nginx-log
 ```
 
+## Prometheus
+
+If Prometheus metrics are [enabled]({{< relref "/logging-and-monitoring/prometheus.md" >}}), we recommend [using HTTPS]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-prometheus-tls-secret" >}}).
+
 ## Snippets
 
-Snippets allow you to insert raw NGINX config into different contexts of NGINX configuration and are supported for [Ingress](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/), [VirtualServer/VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#using-snippets), and [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource/#using-snippets) resources. Additionally, the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource#snippets-and-custom-templates) resource configures snippets globally.
+Snippets allow raw NGINX configuration to be inserted into resources. They are intended for advanced NGINX users and could create vulnerabilities in a cluster if misused.
 
-Snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument. Note that for the ConfigMap resource, snippets are always enabled.
+Snippets are disabled by default. To use snippets, set the [**enable-snippets**]({{< relref"configuration/global-configuration/command-line-arguments.md#cmdoption-enable-snippets" >}}) command-line argument.
+
+{{< caution >}}
+ Snippets are **always** enabled for ConfigMap.
+{{< /caution >}}
+
+For more information, read the following: 
+
+- [Advanced Configuration using Snippets]({{< relref "/configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) 
+- [Using Snippets with VirtualServer/VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md#using-snippets" >}})
+- [Using Snippets with TransportServer]({{< relref "/configuration/transportserver-resource.md#using-snippets" >}})
+- [ConfigMap Snippets and Custom Templates]({{< relref "configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}})
