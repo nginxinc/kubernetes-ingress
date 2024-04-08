@@ -700,7 +700,7 @@ func createExpectedConfigForMergeableCafeIngressWithUseClusterIP() version1.Ingr
 		UpstreamZoneSize: upstreamZoneSize,
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "coffee-svc.default.svc.cluster.local:80",
+				Address:     "10.0.0.1:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
@@ -803,7 +803,7 @@ func createExpectedConfigForCafeIngressWithUseClusterIP() version1.IngressNginxC
 		UpstreamZoneSize: upstreamZoneSize,
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "coffee-svc.default.svc.cluster.local:80",
+				Address:     "10.0.0.1:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
@@ -817,7 +817,7 @@ func createExpectedConfigForCafeIngressWithUseClusterIP() version1.IngressNginxC
 		UpstreamZoneSize: upstreamZoneSize,
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "tea-svc.default.svc.cluster.local:80",
+				Address:     "10.0.0.2:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
