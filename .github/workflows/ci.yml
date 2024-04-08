@@ -5,31 +5,11 @@ on:
     branches:
       - main
       - release-*
-      - image-build-refactor
   pull_request:
     branches:
       - main
       - release-*
   merge_group:
-  schedule:
-    - cron: "0 4 * * *" # run every day at 04:00 UTC
-
-# TODO
-## add labels (here?)
-## certify ubi images (here?)
-## tag on post merge as edge
-## notify when images published (here?)
-## goreleaser notify when release complete (#announce) (here?)
-## binary stored in azure
-## binary added to Github release
-## Trigger
-### Image release flow
-### Operator
-### GCP Marketplace
-### AWS Marketplace
-### Azure Marketplace
-### GitHub release
-
 
 defaults:
   run:
@@ -81,6 +61,18 @@ jobs:
           echo $files
           cat $GITHUB_OUTPUT
         shell: bash --noprofile --norc -o pipefail {0}
+
+      - name: Filter only docs changes
+        id: docs
+        run: |
+          files=$(git diff --name-only HEAD^ | egrep -v "^docs/")
+          if [ -z "$files" ]; then
+            echo "docs_only=true" >> $GITHUB_OUTPUT
+          else
+            echo "docs_only=false" >> $GITHUB_OUTPUT
+          fi
+          echo $files
+          cat $GITHUB_OUTPUT
 
       - name: Setup Golang Environment
         uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
@@ -182,9 +174,11 @@ jobs:
         with:
           go-version-file: go.mod
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
       - name: Run Tests
         run: make cover
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@125fc84a9a348dbcf27191600683ec096ec9021c # v4.4.1
         with:
@@ -303,11 +297,12 @@ jobs:
     with:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
-      tag: ${{ needs.checks.outputs.build_tag }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      branch: ${{ github.head_ref && github.head_ref || github.ref }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
+      docs-only: ${{ needs.checks.outputs.docs_only == 'true' }}
+      tag: ${{ needs.checks.outputs.build_tag }}
+      branch: ${{ github.head_ref && github.head_ref || github.ref }}
     permissions:
       contents: read
       actions: read
@@ -339,6 +334,7 @@ jobs:
       branch: ${{ github.head_ref && github.head_ref || github.ref }}
       tag: ${{ needs.checks.outputs.build_tag }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
+      docs-only: ${{ needs.checks.outputs.docs_only == 'true' }}
     permissions:
       contents: read
       security-events: write
@@ -395,6 +391,7 @@ jobs:
       tag: ${{ needs.checks.outputs.build_tag }}
       nap-modules: ${{ matrix.nap_modules }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
+      docs-only: ${{ needs.checks.outputs.docs_only == 'true' }}
     permissions:
       contents: read
       security-events: write
@@ -432,7 +429,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' || needs.checks.outputs.docs_only == 'false' }}
 
       - name: Login to GCR
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
@@ -440,7 +437,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' || needs.checks.outputs.docs_only == 'false' }}
 
       - name: Check if stable image exists
         id: stable_exists
@@ -450,23 +447,23 @@ jobs:
           else
             echo "exists=1" >> $GITHUB_OUTPUT
           fi
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' || needs.checks.outputs.docs_only == 'false' }}
 
       - name: Pull build image
         run: |
           docker pull ${{ matrix.image }}:${{ needs.checks.outputs.build_tag }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.stable_exists.outputs.exists != 0 }}
+        if: ${{ ( needs.checks.outputs.forked_workflow == 'false' || needs.checks.outputs.docs_only == 'false' ) && steps.stable_exists.outputs.exists != 0 }}
 
       - name: Fetch Cached Artifacts
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'true' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
-        if: ${{ needs.checks.outputs.forked_workflow == 'true' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Docker Image ${{ matrix.base-os }}
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
@@ -484,14 +481,14 @@ jobs:
           secrets: |
             ${{ matrix.type == 'plus' && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
             ${{ matrix.type == 'plus' && format('"nginx-repo.key={0}"', secrets.NGINX_KEY) || '' }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'true' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Deploy Kubernetes
         id: k8s
         run: |
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
           kind load docker-image "${{ matrix.image }}:${{ matrix.tag }}" --name ${{ github.run_id }}
-        if: ${{ steps.stable_exists.outputs.exists != 0 }}
+        if: ${{ steps.stable_exists.outputs.exists != 0 && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Install Chart
         run: >
@@ -505,12 +502,12 @@ jobs:
           --set controller.telemetryReporting.enable=false
           --wait
         working-directory: ${{ github.workspace }}/charts/nginx-ingress
-        if: ${{ steps.stable_exists.outputs.exists != 0 }}
+        if: ${{ steps.stable_exists.outputs.exists != 0 && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Expose Test Ingresses
         run: |
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress-controller 8080:80 8443:443 &
-        if: ${{ steps.stable_exists.outputs.exists != 0 }}
+        if: ${{ steps.stable_exists.outputs.exists != 0 && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Test HTTP
         run: |
@@ -522,7 +519,7 @@ jobs:
             fi
             printf '.'; counter=$(($counter+1)); sleep 5;
           done
-        if: ${{ steps.stable_exists.outputs.exists != 0 }}
+        if: ${{ steps.stable_exists.outputs.exists != 0 && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Test HTTPS
         run: |
@@ -534,7 +531,7 @@ jobs:
             fi
             printf '.'; counter=$(($counter+1)); sleep 5;
           done
-        if: ${{ steps.stable_exists.outputs.exists != 0 }}
+        if: ${{ steps.stable_exists.outputs.exists != 0 && needs.checks.outputs.docs_only == 'false' }}
 
   setup-matrix:
     if: ${{ needs.checks.outputs.docs_only != 'true' }}
@@ -552,11 +549,7 @@ jobs:
 
       - id: set-matrix
         run: |
-          if [ "${{ github.event_name }}" == "schedule" ]; then
-            echo "matrix=$(cat .github/data/matrix-regression.json | jq -c --argjson latest '${{ needs.checks.outputs.latest_kindest_node_versions }}' '.k8s += $latest')" >> $GITHUB_OUTPUT
-          else
-            echo "matrix=$(cat .github/data/matrix-smoke.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
-          fi
+          echo "matrix=$(cat .github/data/matrix-smoke.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
@@ -568,7 +561,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Login to GCR
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
@@ -576,7 +569,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Check if test image exists
         id: check-image
@@ -584,7 +577,7 @@ jobs:
           docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}
         shell: bash
         continue-on-error: true
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Test-Runner Container
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
@@ -596,7 +589,7 @@ jobs:
           pull: true
           push: ${{ needs.checks.outputs.forked_workflow == 'false' }}
           load: false
-        if: ${{ steps.check-image.outcome == 'failure' }}
+        if: ${{ steps.check-image.outcome == 'failure' && needs.checks.outputs.docs_only == 'false' }}
 
   smoke-tests:
     if: ${{ needs.checks.outputs.docs_only != 'true' }}
@@ -627,7 +620,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Login to GCR
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
@@ -635,7 +628,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Check if stable image exists
         id: stable_exists
@@ -645,7 +638,7 @@ jobs:
           else
             echo "exists=1" >> $GITHUB_OUTPUT
           fi
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: NAP modules
         id: nap_modules
@@ -657,15 +650,14 @@ jobs:
       - name: Pull build image
         run: |
           docker pull ${{ steps.image_details.outputs.name }}:${{ steps.image_details.outputs.build_tag }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.stable_exists.outputs.exists != 0 }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.stable_exists.outputs.exists != 0 && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Fetch Cached Artifacts
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
-          fail-on-cache-miss: true
-        if: ${{ needs.checks.outputs.forked_workflow == 'true' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Check if test image exists
         id: check-image
@@ -673,7 +665,7 @@ jobs:
           docker manifest inspect "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
         shell: bash
         continue-on-error: true
-        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Test-Runner Container
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
@@ -685,7 +677,7 @@ jobs:
           pull: true
           push: ${{ needs.checks.outputs.forked_workflow == 'false' }}
           load: ${{ needs.checks.outputs.forked_workflow == 'true' }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'true' || steps.check-image.outcome == 'failure' }}
+        if: ${{ ( needs.checks.outputs.forked_workflow == 'true' || steps.check-image.outcome == 'failure' ) && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build ${{ matrix.images.image }} Container
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
@@ -707,7 +699,7 @@ jobs:
             ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.crt={0}"', secrets.NGINX_AP_CRT) || format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) }}
             ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.key={0}"', secrets.NGINX_AP_KEY) || format('"nginx-repo.key={0}"', secrets.NGINX_KEY) }}
             ${{ contains(matrix.images.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ needs.checks.outputs.forked_workflow == 'true' }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Run Smoke Tests
         id: smoke-tests
@@ -720,7 +712,7 @@ jobs:
           k8s-version: ${{ matrix.k8s }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
-        if: ${{ steps.stable_exists.outputs.exists != 0 }}
+        if: ${{ steps.stable_exists.outputs.exists != 0 && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Upload Test Results
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
@@ -755,4 +747,4 @@ jobs:
       target_tag: ${{ needs.checks.outputs.stable_tag }}
       dry_run: false
     secrets: inherit
-    if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.smoke-results.result == 'success' && needs.checks.outputs.stable_image_exists != 0 }}
+    if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.smoke-results.result == 'success' && needs.checks.outputs.stable_image_exists != 0 && needs.checks.outputs.docs_only == 'false' }}
