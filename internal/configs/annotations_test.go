@@ -198,7 +198,7 @@ func TestParseProxySetHeaderInvalidInputString(t *testing.T) {
 	}
 }
 
-// ParseProxyHeader ensures that the string value contains only letters
+// ParseProxySetHeader ensures that the string value contains only letters
 func ParseProxySetHeader(headers []string) error {
 	for _, header := range headers {
 		if err := ValidateProxySetHeader(header); err != nil {
