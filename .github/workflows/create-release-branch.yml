@@ -1,0 +1,69 @@
+name: "Create release branch"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        required: true
+        type: string
+        default: '0.0'
+      source_branch:
+        required: false
+        type: string
+        default: 'main'
+      branch_prefix:
+        required: false
+        type: string
+        default: 'release-'
+      update:
+        type: boolean
+        default: false
+      dry_run:
+        type: boolean
+        default: false
+
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  create:
+    name: Create release branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout NIC repo
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          ref: ${{ inputs.source_branch }}
+
+      - name: Create new release branch
+        run: |
+          branch="${{ inputs.branch_prefix }}${{ inputs.release_version }}"
+          if git rev-parse --verify remotes/origin/${branch}; then
+            git checkout ${branch}
+            git pull
+            if ${{ inputs.update }}; then
+              echo "Updating from ${{ inputs.source_branch }}."
+              git merge -Xtheirs ${{ inputs.source_branch }} -m "chore: Merge branch ${{ inputs.source_branch }} into ${branch}"
+            else
+              echo "UPDATE not requested.  Not making any changes"
+            fi
+          else
+            git checkout -b ${branch}
+          fi
+
+          echo "Pushing to branch $branch"
+          if ! ${{ inputs.dry_run }}; then
+              git push origin "${branch}"
+          else
+              echo "DRY RUN not making any changes"
+              git push --dry-run origin "${branch}"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.NGINX_PAT }}
