@@ -208,7 +208,6 @@ def annotations_grpc_setup(
         error_text,
     )
 
-@pytest.mark.alex
 @pytest.mark.ingresses
 @pytest.mark.annotations
 @pytest.mark.parametrize("annotations_setup", ["standard", "mergeable"], indirect=True)
