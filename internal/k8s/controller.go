@@ -3111,14 +3111,14 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	}
 
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
-		secretKey := virtualServer.Namespace + "/" + virtualServer.Spec.TLS.Secret
+		scrtKey := virtualServer.Namespace + "/" + virtualServer.Spec.TLS.Secret
 
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-		if secretRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for VirtualServer %v: %v", secretKey, virtualServer.Name, secretRef.Error)
+		scrtRef := lbc.secretStore.GetSecret(scrtKey)
+		if scrtRef.Error != nil {
+			glog.Warningf("Error trying to get the secret %v for VirtualServer %v: %v", scrtKey, virtualServer.Name, scrtRef.Error)
 		}
 
-		virtualServerEx.SecretRefs[secretKey] = secretRef
+		virtualServerEx.SecretRefs[scrtKey] = scrtRef
 	}
 
 	policies, policyErrors := lbc.getPolicies(virtualServer.Spec.Policies, virtualServer.Namespace)
@@ -3717,17 +3717,17 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		}
 	}
 
-	secretRefs := make(map[string]*secrets.SecretReference)
+	scrtRefs := make(map[string]*secrets.SecretReference)
 
 	if transportServer.Spec.TLS != nil && transportServer.Spec.TLS.Secret != "" {
-		secretKey := transportServer.Namespace + "/" + transportServer.Spec.TLS.Secret
+		scrtKey := transportServer.Namespace + "/" + transportServer.Spec.TLS.Secret
 
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-		if secretRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for TransportServer %v: %v", secretKey, transportServer.Name, secretRef.Error)
+		scrtRef := lbc.secretStore.GetSecret(scrtKey)
+		if scrtRef.Error != nil {
+			glog.Warningf("Error trying to get the secret %v for TransportServer %v: %v", scrtKey, transportServer.Name, scrtRef.Error)
 		}
 
-		secretRefs[secretKey] = secretRef
+		scrtRefs[scrtKey] = scrtRef
 	}
 
 	return &configs.TransportServerEx{
@@ -3737,7 +3737,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		PodsByIP:         podsByIP,
 		ExternalNameSvcs: externalNameSvcs,
 		DisableIPV6:      disableIPV6,
-		SecretRefs:       secretRefs,
+		SecretRefs:       scrtRefs,
 	}
 }
 
