@@ -245,6 +245,7 @@ class TestAnnotations:
                     "nginx.org/hsts": "True",
                     "nginx.org/hsts-behind-proxy": "True",
                     "nginx.org/upstream-zone-size": "124k",
+                    "nginx.org/proxy-set-headers": "X-Forwarded-ABC",
                 },
                 [
                     "proxy_send_timeout 10s;",
@@ -255,6 +256,7 @@ class TestAnnotations:
                     "if ($http_x_forwarded_proto = 'https')",
                     'set $hsts_header_val "max-age=2592000; preload";',
                     " 124k;",
+                    "proxy_set_headers X-Forwarded-ABC $htto_x_forwarded_abc;",
                 ],
                 ["proxy_send_timeout 60s;", "if ($https = on)", " 256k;"],
             )
@@ -455,6 +457,8 @@ class TestAnnotations:
                     "nginx.org/proxy-send-timeout": "invalid",
                     "nginx.org/max-conns": "-10",
                     "nginx.org/upstream-zone-size": "-10I'm S±!@£$%^&*()invalid",
+                    "nginx.org/proxy-set-headers": "abc!123"
+
                 }
             )
         ],
@@ -483,7 +487,7 @@ class TestAnnotations:
         assert "No such file or directory" in result_conf
         assert_event_count_increased(annotations_setup.ingress_error_event_text, initial_count, new_events)
 
-
+@pytest.mark.alex
 @pytest.mark.ingresses
 @pytest.mark.annotations
 @pytest.mark.parametrize("annotations_setup", ["mergeable"], indirect=True)
@@ -493,8 +497,8 @@ class TestMergeableFlows:
         [
             (
                 f"{TEST_DATA}/annotations/mergeable/minion-annotations-differ.yaml",
-                ["proxy_send_timeout 25s;", "proxy_send_timeout 33s;", "max_conns=1048;", "max_conns=1024;"],
-                ["proxy_send_timeout 10s;", "max_conns=108;"],
+                ["proxy_send_timeout 25s;", "proxy_send_timeout 33s;", "max_conns=1048;", "max_conns=1024;",'proxy_set_headers X-Forwarded-ABC "minionA";','proxy_set_headers X-Forwarded-ABC "minionB";'],
+                ["proxy_send_timeout 10s;", "max_conns=108;" , 'proxy_set_headers X-Forwarded-ABC "master";'],
             ),
         ],
     )
