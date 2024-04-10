@@ -86,7 +86,7 @@ func defaultHeaderValues(headerParts []string, headerName string) string {
 func headersGreaterThanOne(headerParts []string, header string, headerName string) (string, error) {
 	headerValue := strings.TrimSpace(headerParts[1])
 	if strings.Contains(headerValue, " ") {
-		return "", errors.New("multiple values found in header: " + header)
+		return "", fmt.Errorf("multiple values found in header: %s", header)
 	}
 	return fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue), nil
 }
@@ -132,28 +132,28 @@ func minionProxySetHeaders(loc *Location, minionHeaders map[string]bool) (string
 // masterProxySetHeaders takes an ingress annotations map, a string and a bool map
 // and generates proxy_set_header headers for master based on the nginx.org/proxy-set-headers annotation in a mergable ingress..
 // It returns a string containing the generated proxy headers and a header.
-func masterProxySetHeaders(ingressAnnotations map[string]string, masters string, minionHeaders map[string]bool) (string, error) {
-	proxySetHeaders, ok := ingressAnnotations["nginx.org/proxy-set-headers"]
+func masterProxySetHeaders(masters string, minionHeaders map[string]bool, proxySetHeaders string, ok bool) (string, error) {
 	if !ok {
 		return "", nil
 	}
 	headers := strings.Split(proxySetHeaders, ",")
 	for _, header := range headers {
 		header, headerParts, headerName := splitHeaders(header)
-		if _, ok := minionHeaders[headerName]; !ok {
-			if err := validateProxySetHeader(headerName); err != nil {
+		if _, ok := minionHeaders[headerName]; ok {
+			continue
+		}
+		if err := validateProxySetHeader(headerName); err != nil {
+			return "", err
+		}
+		if len(headerParts) > 1 {
+			output, err := headersGreaterThanOne(headerParts, header, headerName)
+			if err != nil {
 				return "", err
 			}
-			if len(headerParts) > 1 {
-				output, err := headersGreaterThanOne(headerParts, header, headerName)
-				if err != nil {
-					return "", err
-				}
-				masters += output
-			} else {
-				output := defaultHeaderValues(headerParts, headerName)
-				masters += output
-			}
+			masters += output
+		} else {
+			output := defaultHeaderValues(headerParts, headerName)
+			masters += output
 		}
 	}
 	return masters, nil
@@ -206,7 +206,11 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 	if err != nil {
 		return "", err
 	}
-	combinedHeaders, err := masterProxySetHeaders(ingressAnnotations, minions, minionHeaders)
+	proxySetHeaders, ok := ingressAnnotations["nginx.org/proxy-set-headers"]
+	if !ok {
+		return minions, nil
+	}
+	combinedHeaders, err := masterProxySetHeaders(minions, minionHeaders, proxySetHeaders, ok)
 	if err != nil {
 		return "", err
 	}
