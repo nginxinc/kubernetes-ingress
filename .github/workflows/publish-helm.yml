@@ -1,9 +1,11 @@
 name: Publish Helm Chart
 
 on:
-  push:
-    branches:
-      - republish-helm
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Release Helm chart from branch"
+        required: true
 
 defaults:
   run:
@@ -27,7 +29,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
-          ref: refs/heads/release-3.5
+          ref: refs/heads/${{ inputs.branch }}
 
       - name: Output Variables
         id: vars
@@ -48,7 +50,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
-          ref: refs/heads/release-3.5
+          ref: refs/heads/${{ inputs.branch }}
           path: kic
 
       - name: Login to GitHub Container Registry
