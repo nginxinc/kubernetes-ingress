@@ -2,8 +2,9 @@ package configs
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"slices"
+
+	"github.com/golang/glog"
 )
 
 // JWTKeyAnnotation is the annotation where the Secret with a JWK is specified.

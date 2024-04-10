@@ -3,10 +3,11 @@ package configs
 import (
 	"errors"
 	"fmt"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -277,7 +278,7 @@ func ParseProxyBuffersSpec(s string) (string, error) {
 	return "", errors.New("invalid proxy buffers string")
 }
 
-// parseProxySetHeaders ensures that the string space-seperated list of headers
+// parseProxySetHeaders ensures that the string space-separated list of headers
 func parseProxySetHeaders(proxySetHeaders []string) ([]version2.Header, error) {
 	var headers []version2.Header
 	for _, header := range proxySetHeaders {

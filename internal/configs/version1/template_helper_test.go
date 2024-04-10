@@ -232,6 +232,7 @@ func TestMakeLocationPath_ForIngress(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
 func TestSplitInputString(t *testing.T) {
 	t.Parallel()
 

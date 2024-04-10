@@ -1,8 +1,9 @@
 package configs
 
 import (
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"strings"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
