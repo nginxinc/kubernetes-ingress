@@ -79,7 +79,6 @@ class TestTransportServerStatus:
             transport_server_setup.name,
         )
         self.restore_ts(kube_apis, transport_server_setup)
-        print(response)
         assert (
             response["status"]
             and response["status"]["reason"] == "Rejected"
@@ -152,12 +151,11 @@ class TestTransportServerStatus:
         gc_event_latest = gc_events[-1]
         print(gc_event_latest)
         assert (
-            gc_event_latest.reason == "WithError"
+            gc_event_latest.reason == "AddedOrUpdatedWithError"
             and gc_event_latest.type == "Warning"
             and "GlobalConfiguration nginx-ingress/nginx-configuration is updated with errors: "
             "spec.listeners[0].port: Forbidden: Listener dns-udp: port 9113 is forbidden" in gc_event_latest.message
         )
-        wait_before_test()
 
     def test_valid_status_invalid_tcp_listener(self, kube_apis, crd_ingress_controller, transport_server_setup):
         """
@@ -191,9 +189,8 @@ class TestTransportServerStatus:
         gc_event_latest = gc_events[-1]
         print(gc_event_latest)
         assert (
-            gc_event_latest.reason == "WithError"
+            gc_event_latest.reason == "AddedOrUpdatedWithError"
             and gc_event_latest.type == "Warning"
             and "GlobalConfiguration nginx-ingress/nginx-configuration is updated with errors: "
             "spec.listeners[1].port: Forbidden: Listener dns-tcp: port 9113 is forbidden" in gc_event_latest.message
         )
-        wait_before_test()

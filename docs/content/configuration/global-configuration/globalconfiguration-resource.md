@@ -148,7 +148,7 @@ Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
   Normal   Updated   55s   nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration was updated
-  Warning  WithError  6s    nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration is invalid and was rejected: spec.listeners: Duplicate value: "Duplicated port/protocol combination 53/UDP"
+  Warning  AddedOrUpdatedWithError  6s    nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration is invalid and was rejected: spec.listeners: Duplicate value: "Duplicated port/protocol combination 53/UDP"
 ```
 
-Note how the events section includes a Warning event with the WithError reason.
+Note how the events section includes a Warning event with the AddedOrUpdatedWithError reason.

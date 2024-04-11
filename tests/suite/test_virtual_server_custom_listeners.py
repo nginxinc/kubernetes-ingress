@@ -283,7 +283,7 @@ class TestVirtualServerCustomListeners:
             print(gc_event_latest)
             if test_setup["expected_gc_error_msg"]:
                 assert (
-                    gc_event_latest.reason == "WithError"
+                    gc_event_latest.reason == "AddedOrUpdatedWithError"
                     and gc_event_latest.type == "Warning"
                     and test_setup["expected_gc_error_msg"] in gc_event_latest.message
                 )
@@ -385,7 +385,6 @@ class TestVirtualServerCustomListeners:
         global_config_file = f"{TEST_DATA}/virtual-server-custom-listeners/global-configuration.yaml"
         gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
         vs_custom_listeners = f"{TEST_DATA}/virtual-server-custom-listeners/virtual-server.yaml"
-        wait_before_test()
 
         print("\nStep 2: Create VS with custom listener (http-8085, https-8445)")
         patch_virtual_server_from_yaml(
@@ -477,7 +476,7 @@ class TestVirtualServerCustomListeners:
             print(gc_event_latest)
             if test_setup["expected_gc_error_msg"]:
                 assert (
-                    gc_event_latest.reason == "WithError"
+                    gc_event_latest.reason == "AddedOrUpdatedWithError"
                     and gc_event_latest.type == "Warning"
                     and test_setup["expected_gc_error_msg"] in gc_event_latest.message
                 )
