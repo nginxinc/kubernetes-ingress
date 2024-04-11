@@ -1,0 +1,60 @@
+name: "Bump the IC & Helm chart version"
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        required: true
+        type: string
+        default: 'main'
+      ic_version:
+        required: true
+        type: string
+        default: '0.0.0'
+      helm_chart_version:
+        required: true
+        type: string
+        default: '0.0.0'
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  version-bump:
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          ref: ${{ inputs.source_branch }}
+
+      - name: Replace Versions
+        run: |
+          yq -i e '.version = env(CHART_VERSION) | .appVersion = env(IC_VERSION)' kubernetes-ingress/charts/nginx-ingress/Chart.yaml
+          cat kubernetes-ingress/charts/nginx-ingress/Chart.yaml
+          cat > kubernetes-ingress/.github/data/version.txt << EOF
+          IC_VERSION=${IC_VERSION}
+          HELM_CHART_VERSION=${CHART_VERSION}
+          EOF
+          cat kubernetes-ingress/.github/data/version.txt
+        env:
+          IC_VERSION: ${{ inputs.ic_version }}
+          CHART_VERSION: ${{ inputs.helm_chart_version }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@70a41aba780001da0a30141984ae2a0c95d8704e # v6.0.2
+        with:
+          token: ${{ secrets.NGINX_PAT }}
+          commit-message: Version Bump for ${{ github.event.inputs.ic_version }}
+          title: Version Bump for ${{ github.event.inputs.ic_version }}
+          branch: chore/version-bump-${{ github.event.inputs.ic_version }}
+          author: nginx-bot <integrations@nginx.com>
+          labels: chore
+          body: |
+            This automated PR updates the NIC & Helm chart versions for the upcoming ${{ github.event.inputs.ic_version }} release.
