@@ -284,7 +284,7 @@ func parseProxySetHeaders(proxySetHeaders []string) ([]version2.Header, error) {
 	for _, header := range proxySetHeaders {
 		parts := strings.SplitN(header, " ", 2)
 		if len(parts) < 2 {
-			return nil, fmt.Errorf("invalid header format: %s", header)
+			return nil, fmt.Errorf("no value found for header %s using default header value", header)
 		}
 		if strings.Contains(parts[1], " ") {
 			return nil, fmt.Errorf("multple values found: %s", header)
