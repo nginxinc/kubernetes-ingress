@@ -13,17 +13,20 @@ chore:
 tests:
   - any:
       - head-branch: ['^tests/', '^test/']
-      - changed-files: ['tests/**/*', 'perf-tests/**/*']
-  - all:
-      - changed-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
+      - changed-files:
+        - any-glob-to-any-file: ['tests/**/*', 'perf-tests/**/*']
+        - all-globs-to-all-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
 
 documentation:
   - head-branch: ['^docs/', '^doc/']
-  - changed-files: '**/*.md'
+  - changed-files:
+    - any-glob-to-any-file: '**/*.md'
 
 dependencies:
   - head-branch: ['^deps/', '^dep/', '^dependabot/', 'pre-commit-ci-update-config']
-  - changed-files: ['go.mod', 'go.sum']
+  - changed-files:
+    - any-glob-to-any-file: ['go.mod', 'go.sum']
 
 helm_chart:
-  - changed-files: ['charts/nginx-ingress/**/*']
+  - changed-files:
+    - any-glob-to-any-file: 'charts/nginx-ingress/**/*'
