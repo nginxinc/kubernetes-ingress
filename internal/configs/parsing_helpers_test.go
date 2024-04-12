@@ -712,7 +712,7 @@ func TestInvalidParseProxySetHeaders(t *testing.T) {
 	}{
 		{
 			name:    "Invalid header format with value missing",
-			headers: []string{"Header2"},
+			headers: []string{"Header!"},
 		},
 		{
 			name:    "Valid header format with value with space",

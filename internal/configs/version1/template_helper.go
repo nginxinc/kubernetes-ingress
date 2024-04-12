@@ -66,7 +66,7 @@ func makePathWithRegex(path, regexType string) string {
 	}
 }
 
-var setHeader = regexp.MustCompile("[a-zA-Z]+$")
+var setHeader = regexp.MustCompile("^[-A-Za-z0-9]+$")
 
 func validateProxySetHeader(header string) error {
 	header = strings.TrimSpace(header)

@@ -486,6 +486,15 @@ func TestGenerateProxySetHeadersForValidHeadersInMaster(t *testing.T) {
 		wantProxyHeaders []string
 	}{
 		{
+			name: "Header with Number",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC1",
+			},
+			wantProxyHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC1 $http_x_forwarded_abc1;",
+			},
+		},
+		{
 			name: "One Header",
 			annotations: map[string]string{
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
@@ -564,12 +573,6 @@ func TestGenerateProxySetHeadersForInvalidHeadersForErrorsInMaster(t *testing.T)
 		name        string
 		annotations map[string]string
 	}{
-		{
-			name: "Header with Number",
-			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC1",
-			},
-		},
 		{
 			name: "Headers With Special Characters",
 			annotations: map[string]string{

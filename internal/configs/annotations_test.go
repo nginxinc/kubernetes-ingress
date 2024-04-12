@@ -1,11 +1,8 @@
 package configs
 
 import (
-	"errors"
 	"reflect"
-	"regexp"
 	"sort"
-	"strings"
 	"testing"
 
 	networking "k8s.io/api/networking/v1"
@@ -164,58 +161,6 @@ func TestMergeMasterAnnotationsIntoMinion(t *testing.T) {
 	if !reflect.DeepEqual(expectedMergedAnnotations, minionAnnotations) {
 		t.Errorf("mergeMasterAnnotationsIntoMinion returned %v, but expected %v", minionAnnotations, expectedMergedAnnotations)
 	}
-}
-
-func TestParseProxySetHeaderInputString(t *testing.T) {
-	t.Parallel()
-	headers1 := []string{"X-Forwarded-For"}
-	headers2 := []string{"ABC"}
-	headers3 := []string{"Test"}
-
-	headers := [][]string{headers1, headers2, headers3}
-	for _, header := range headers {
-		err := ParseProxySetHeader(header)
-		if err != nil {
-			t.Errorf("want nil, got error on valid input: %+v", header)
-		}
-	}
-}
-
-func TestParseProxySetHeaderInvalidInputString(t *testing.T) {
-	t.Parallel()
-	headers1 := []string{"X-Forwarded-For1"}
-	headers2 := []string{"ABC!"}
-	headers3 := []string{""}
-	headers4 := []string{" "}
-
-	headers := [][]string{headers1, headers2, headers3, headers4}
-	for _, header := range headers {
-		err := ParseProxySetHeader(header)
-		if err == nil {
-			t.Errorf("want error on input %+v, got nil", header)
-		}
-	}
-}
-
-// ParseProxySetHeader ensures that the string value contains only letters
-func ParseProxySetHeader(headers []string) error {
-	for _, header := range headers {
-		if err := ValidateProxySetHeader(header); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-var setHeader = regexp.MustCompile("[a-zA-Z]+$")
-
-func ValidateProxySetHeader(header string) error {
-	header = strings.TrimSpace(header)
-
-	if !setHeader.MatchString(header) {
-		return errors.New("error: invalid header syntax")
-	}
-	return nil
 }
 
 func TestParseRateLimitAnnotations(t *testing.T) {
