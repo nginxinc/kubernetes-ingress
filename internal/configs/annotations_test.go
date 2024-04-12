@@ -202,7 +202,6 @@ func TestParseProxySetHeaderInvalidInputString(t *testing.T) {
 func ParseProxySetHeader(headers []string) error {
 	for _, header := range headers {
 		if err := ValidateProxySetHeader(header); err != nil {
-			fmt.Println("errored header = ", header)
 			return err
 		}
 	}
