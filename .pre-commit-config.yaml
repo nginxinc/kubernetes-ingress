@@ -59,12 +59,12 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 24.3.0
+    rev: 24.4.0
     hooks:
       - id: black
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.1
+    rev: 0.28.2
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
