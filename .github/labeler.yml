@@ -9,10 +9,12 @@ bug:
 
 chore:
   - head-branch: ['^chore/']
+  - changed-files:
+    - any-glob-to-any-file: ['.github/**/*', 'hack/**/*']
+    - all-globs-to-any-files: ['*', '!*.md']
 
 tests:
-  - any:
-      - head-branch: ['^tests/', '^test/']
+  - all:
       - changed-files:
         - any-glob-to-any-file: ['tests/**/*', 'perf-tests/**/*']
         - all-globs-to-all-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
