@@ -141,3 +141,7 @@ require (
 )
 
 replace github.com/golang/glog => github.com/nginxinc/glog v1.1.2
+
+replace google.golang.org/protobuf v1.26.0 => google.golang.org/protobuf v1.33.0
+
+replace google.golang.org/protobuf v1.26.0-rc.1 => google.golang.org/protobuf v1.33.0
