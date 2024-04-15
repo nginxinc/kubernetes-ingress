@@ -8,10 +8,10 @@ bug:
   - head-branch: ['^fix/', '^bug/']
 
 chore:
-  - head-branch: ['^chore/']
-  - changed-files:
-    - any-glob-to-any-file: ['.github/**/*', 'hack/**/*']
-    - all-globs-to-any-files: ['*', '!*.md']
+  - all:
+    - changed-files:
+      - any-glob-to-any-file: ['.github/**/*', 'hack/**/*', '*']
+      - all-globs-to-any-files: ['!*.md']
 
 tests:
   - all:
