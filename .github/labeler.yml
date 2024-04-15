@@ -23,7 +23,7 @@ go:
 
 python:
   - changed-files:
-    - any-glob-to-any-file: ['**/*.py', '**/requirements.txt']
+    - any-glob-to-any-file: ['tests/**/*.py', 'tests/**/requirements.txt', 'tests/**/*.yaml', 'perf-tests/**/*.py', 'perf-tests/**/*.yaml']
 
 tests:
   - all:
