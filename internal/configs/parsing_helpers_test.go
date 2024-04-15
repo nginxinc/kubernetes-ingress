@@ -704,28 +704,3 @@ func TestParseFloat64(t *testing.T) {
 		}
 	}
 }
-
-func TestInvalidParseProxySetHeaders(t *testing.T) {
-	testCases := []struct {
-		name    string
-		headers []string
-	}{
-		{
-			name:    "Invalid header format with value missing",
-			headers: []string{"Header!"},
-		},
-		{
-			name:    "Valid header format with value with space",
-			headers: []string{"X-Forwarded A BC"},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := parseProxySetHeaders(tc.headers)
-			if err == nil {
-				t.Error("expected an error, but got nil")
-			}
-		})
-	}
-}

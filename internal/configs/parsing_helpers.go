@@ -278,20 +278,18 @@ func ParseProxyBuffersSpec(s string) (string, error) {
 	return "", errors.New("invalid proxy buffers string")
 }
 
-// parseProxySetHeaders ensures that the string space-separated list of headers
-func parseProxySetHeaders(proxySetHeaders []string) ([]version2.Header, error) {
+// parseProxySetHeaders ensures that the string colon-separated list of headers and values
+func parseProxySetHeaders(proxySetHeaders []string) []version2.Header {
 	var headers []version2.Header
 	for _, header := range proxySetHeaders {
-		parts := strings.SplitN(header, " ", 2)
-		if len(parts) < 2 {
-			return nil, fmt.Errorf("no value found for header %s using default header value", header)
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 1 {
+			headers = append(headers, version2.Header{Name: parts[0], Value: ""})
+		} else {
+			headers = append(headers, version2.Header{Name: parts[0], Value: parts[1]})
 		}
-		if strings.Contains(parts[1], " ") {
-			return nil, fmt.Errorf("multple values found: %s", header)
-		}
-		headers = append(headers, version2.Header{Name: parts[0], Value: parts[1]})
 	}
-	return headers, nil
+	return headers
 }
 
 // ParsePortList ensures that the string is a comma-separated list of port numbers

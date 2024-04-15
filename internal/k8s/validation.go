@@ -421,7 +421,11 @@ func validateProxySetHeaderAnnotation(context *annotationValidationContext) fiel
 	for _, header := range headers {
 		header = strings.TrimSpace(header)
 
-		parts := strings.SplitN(header, " ", 2)
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 1 && strings.Contains(header, " ") {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "invalid header syntax - spaces are not allowed in header"))
+		}
+
 		if len(parts) != 2 {
 			parts = append(parts, "")
 		}

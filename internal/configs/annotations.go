@@ -214,10 +214,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 	}
 
 	if proxySetHeaders, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-set-headers", ingEx.Ingress, ","); exists {
-		parsedHeaders, err := parseProxySetHeaders(proxySetHeaders)
-		if err != nil {
-			glog.Errorf("ingress %s/%s: invalid value nginx.org/proxy-set-headers: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), proxySetHeaders, err)
-		}
+		parsedHeaders := parseProxySetHeaders(proxySetHeaders)
 		cfgParams.ProxySetHeaders = parsedHeaders
 	}
 

@@ -516,7 +516,7 @@ func TestGenerateProxySetHeadersForValidHeadersInMaster(t *testing.T) {
 		{
 			name: "Two Headers with One Value",
 			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC test",
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC,BVC: test",
 			},
 			wantProxyHeaders: []string{
 				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
@@ -537,12 +537,21 @@ func TestGenerateProxySetHeadersForValidHeadersInMaster(t *testing.T) {
 		{
 			name: "Three Headers with Two Value",
 			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC abc,BVC bat,X-Forwarded-Test",
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC: abc,BVC: bat,X-Forwarded-Test",
 			},
 			wantProxyHeaders: []string{
 				`proxy_set_header X-Forwarded-ABC "abc";`,
 				`proxy_set_header BVC "bat";`,
 				"proxy_set_header X-Forwarded-Test $http_x_forwarded_test;",
+			},
+		},
+		{
+			name: "One Header with Two Value",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC: test test2",
+			},
+			wantProxyHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC "test test2";`,
 			},
 		},
 	}
@@ -580,9 +589,9 @@ func TestGenerateProxySetHeadersForInvalidHeadersForErrorsInMaster(t *testing.T)
 			},
 		},
 		{
-			name: "One Header with Two Value",
+			name: "Headers with invalid Format",
 			annotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC test test2",
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC test",
 			},
 		},
 	}
@@ -680,7 +689,7 @@ func TestGenerateProxySetHeadersForValidHeadersInMinionOverrideMaster(t *testing
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
 			},
 			coffeeAnnotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC coffee",
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC: coffee",
 			},
 			wantCoffeeHeaders: []string{
 				`proxy_set_header X-Forwarded-ABC "coffee"`,
@@ -738,7 +747,7 @@ func TestGenerateProxySetHeadersForValidHeadersInOnlyOneMinion(t *testing.T) {
 		{
 			name: "Header in Coffee but not Tea or Master",
 			coffeeAnnotations: map[string]string{
-				"nginx.org/proxy-set-headers": "X-Forwarded-ABC coffee",
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC: coffee",
 			},
 			wantCoffeeHeaders: []string{
 				`proxy_set_header X-Forwarded-ABC "coffee"`,

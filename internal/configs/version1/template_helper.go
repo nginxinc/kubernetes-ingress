@@ -71,7 +71,7 @@ var setHeader = regexp.MustCompile("^[-A-Za-z0-9]+$")
 func validateProxySetHeader(header string) error {
 	header = strings.TrimSpace(header)
 	if !setHeader.MatchString(header) {
-		return errors.New("invalid header syntax")
+		return errors.New("invalid header syntax - syntax must be header: value")
 	}
 	return nil
 }
@@ -83,19 +83,16 @@ func defaultHeaderValues(headerParts []string, headerName string) string {
 	return fmt.Sprintf("\n\t\tproxy_set_header %s $http_%s;", headerName, headerValue)
 }
 
-func headersGreaterThanOne(headerParts []string, header string, headerName string) (string, error) {
+func headersGreaterThanOne(headerParts []string, headerName string) string {
 	headerValue := strings.TrimSpace(headerParts[1])
-	if strings.Contains(headerValue, " ") {
-		return "", fmt.Errorf("multiple values found in header: %s", header)
-	}
-	return fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue), nil
+	return fmt.Sprintf("\n\t\tproxy_set_header %s %q;", headerName, headerValue)
 }
 
-func splitHeaders(header string) (string, []string, string) {
+func splitHeaders(header string) ([]string, string) {
 	header = strings.TrimSpace(header)
-	headerParts := strings.SplitN(header, " ", 2)
+	headerParts := strings.SplitN(header, ":", 2)
 	headerName := strings.TrimSpace(headerParts[0])
-	return header, headerParts, headerName
+	return headerParts, headerName
 }
 
 // minionProxySetHeaders takes a location and a bool map
@@ -109,17 +106,14 @@ func minionProxySetHeaders(loc *Location, minionHeaders map[string]bool) (string
 	var combinedMinions string
 	headers := strings.Split(proxySetHeaders, ",")
 	for _, header := range headers {
-		header, headerParts, headerName := splitHeaders(header)
+		headerParts, headerName := splitHeaders(header)
 		err := validateProxySetHeader(headerName)
 		if err != nil {
 			return "", nil, err
 		}
 		if len(headerParts) > 1 {
-			output, err := headersGreaterThanOne(headerParts, header, headerName)
+			output := headersGreaterThanOne(headerParts, headerName)
 			minionHeaders[headerName] = true
-			if err != nil {
-				return "", nil, err
-			}
 			combinedMinions += output
 		} else {
 			output := defaultHeaderValues(headerParts, headerName)
@@ -138,7 +132,7 @@ func standardIngressOrMasterProxySetHeaders(result string, minionHeaders map[str
 	}
 	headers := strings.Split(proxySetHeaders, ",")
 	for _, header := range headers {
-		header, headerParts, headerName := splitHeaders(header)
+		headerParts, headerName := splitHeaders(header)
 		if isMergeable {
 			if _, ok := minionHeaders[headerName]; ok {
 				continue
@@ -148,10 +142,7 @@ func standardIngressOrMasterProxySetHeaders(result string, minionHeaders map[str
 			return "", err
 		}
 		if len(headerParts) > 1 {
-			output, err := headersGreaterThanOne(headerParts, header, headerName)
-			if err != nil {
-				return "", err
-			}
+			output := headersGreaterThanOne(headerParts, headerName)
 			result += output
 		} else {
 			output := defaultHeaderValues(headerParts, headerName)

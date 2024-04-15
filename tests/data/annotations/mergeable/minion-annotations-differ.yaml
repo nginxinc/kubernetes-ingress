@@ -21,7 +21,7 @@ metadata:
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/proxy-send-timeout: "25s"
     nginx.org/max-conns: "1048"
-    nginx.org/proxy-set-headers: "X-Forwarded-ABC minionA"
+    nginx.org/proxy-set-headers: "X-Forwarded-ABC: minionA"
 spec:
   rules:
   - host: annotations.example.com
@@ -44,7 +44,7 @@ metadata:
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/proxy-send-timeout: "33s"
     nginx.org/max-conns: "1024"
-    nginx.org/proxy-set-headers: "X-Forwarded-ABC minionB"
+    nginx.org/proxy-set-headers: "X-Forwarded-ABC: minionB"
 spec:
   rules:
   - host: annotations.example.com
