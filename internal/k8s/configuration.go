@@ -601,15 +601,12 @@ func (c *Configuration) AddOrUpdateGlobalConfiguration(gc *conf_v1.GlobalConfigu
 	var problems []ConfigurationProblem
 
 	validationErr := c.globalConfigurationValidator.ValidateGlobalConfiguration(gc)
-	if validationErr != nil {
-		c.globalConfiguration = nil
-	} else {
-		c.globalConfiguration = gc
-	}
 
+	c.globalConfiguration = gc
 	c.setGlobalConfigListenerMap()
 
 	listenerChanges, listenerProblems := c.rebuildListeners()
+
 	changes = append(changes, listenerChanges...)
 	problems = append(problems, listenerProblems...)
 
