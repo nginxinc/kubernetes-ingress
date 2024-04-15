@@ -180,23 +180,23 @@ server {
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header Connection $connection_upgrade;
 		{{- else}}
-		{{- if $.Keepalive}}proxy_set_header Connection "";{{end}}
+		{{- if $.Keepalive}}
+		proxy_set_header Connection "";{{end}}
 		{{- end}}
-
 		{{- if $location.LocationSnippets}}
 		{{range $value := $location.LocationSnippets}}
 		{{$value}}{{end}}
 		{{- end}}
-
 		{{- with $location.BasicAuth }}
 		auth_basic {{ printf "%q" .Realm }};
 		auth_basic_user_file {{ .Secret }};
 		{{- end }}
-
 		proxy_connect_timeout {{$location.ProxyConnectTimeout}};
 		proxy_read_timeout {{$location.ProxyReadTimeout}};
 		proxy_send_timeout {{$location.ProxySendTimeout}};
 		client_max_body_size {{$location.ClientMaxBodySize}};
+		{{- $proxySetHeaders := generateProxySetHeaders $location $.Ingress.Annotations -}}
+		{{$proxySetHeaders}}
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

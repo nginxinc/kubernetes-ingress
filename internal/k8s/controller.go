@@ -1566,9 +1566,9 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 		eventMessage := fmt.Sprintf("GlobalConfiguration %s was added or updated", key)
 
 		if validationErr != nil {
-			eventTitle = "Rejected"
+			eventTitle = "AddedOrUpdatedWithError"
 			eventType = api_v1.EventTypeWarning
-			eventMessage = fmt.Sprintf("GlobalConfiguration %s is invalid and was rejected: %v", key, validationErr)
+			eventMessage = fmt.Sprintf("GlobalConfiguration %s is updated with errors: %v", key, validationErr)
 		}
 
 		if updateErr != nil {
