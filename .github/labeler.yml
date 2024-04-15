@@ -8,14 +8,16 @@ bug:
   - head-branch: ['^fix/', '^bug/']
 
 chore:
-  - head-branch: ['^chore/']
+  - all:
+    - changed-files:
+      - any-glob-to-any-file: ['.github/**/*', 'hack/**/*', '*']
+      - all-globs-to-all-files: ['!*.md']
 
 tests:
-  - any:
-      - head-branch: ['^tests/', '^test/']
-      - changed-files:
-        - any-glob-to-any-file: ['tests/**/*', 'perf-tests/**/*']
-        - all-globs-to-all-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
+  - all:
+    - changed-files:
+      - any-glob-to-any-file: ['tests/**/*', 'perf-tests/**/*']
+      - all-globs-to-all-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
 
 documentation:
   - head-branch: ['^docs/', '^doc/']
