@@ -34,7 +34,7 @@ const AppProtectDosProtectedAnnotation = "appprotectdos.f5.com/app-protect-dos-r
 // nginxMeshInternalRoute specifies if the ingress resource is an internal route.
 const nginxMeshInternalRouteAnnotation = "nsm.nginx.com/internal-route"
 
-var masterBlacklist = map[string]bool{
+var masterDenylist = map[string]bool{
 	"nginx.org/rewrites":                      true,
 	"nginx.org/ssl-services":                  true,
 	"nginx.org/grpc-services":                 true,
@@ -46,7 +46,7 @@ var masterBlacklist = map[string]bool{
 	UseClusterIPAnnotation:                    true,
 }
 
-var minionBlacklist = map[string]bool{
+var minionDenylist = map[string]bool{
 	"nginx.org/proxy-hide-headers":                      true,
 	"nginx.org/proxy-pass-headers":                      true,
 	"nginx.org/redirect-to-https":                       true,
@@ -552,7 +552,7 @@ func filterMasterAnnotations(annotations map[string]string) []string {
 	var removedAnnotations []string
 
 	for key := range annotations {
-		if _, notAllowed := masterBlacklist[key]; notAllowed {
+		if _, notAllowed := masterDenylist[key]; notAllowed {
 			removedAnnotations = append(removedAnnotations, key)
 			delete(annotations, key)
 		}
@@ -565,7 +565,7 @@ func filterMinionAnnotations(annotations map[string]string) []string {
 	var removedAnnotations []string
 
 	for key := range annotations {
-		if _, notAllowed := minionBlacklist[key]; notAllowed {
+		if _, notAllowed := minionDenylist[key]; notAllowed {
 			removedAnnotations = append(removedAnnotations, key)
 			delete(annotations, key)
 		}
