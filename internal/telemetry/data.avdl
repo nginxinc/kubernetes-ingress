@@ -50,5 +50,6 @@ It is the UID of the `kube-system` Namespace. */
 
 		/** Ingresses is the number of Ingresses. */
 		long? Ingresses = null;
+
 	}
 }

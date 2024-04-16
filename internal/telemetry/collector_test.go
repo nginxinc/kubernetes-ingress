@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
