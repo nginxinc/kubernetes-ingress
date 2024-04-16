@@ -364,6 +364,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			CustomK8sClientReader: input.ConfClient,
 			Period:                24 * time.Hour,
 			Configurator:          lbc.configurator,
+			SecretStore:           lbc.secretStore,
 			Version:               input.NICVersion,
 			PodNSName: types.NamespacedName{
 				Namespace: os.Getenv("POD_NAMESPACE"),
