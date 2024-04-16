@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"time"
 
-	secretStore "github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
@@ -60,7 +60,7 @@ type CollectorConfig struct {
 	Configurator *configs.Configurator
 
 	// SecretStore for access to secrets managed by NIC.
-	SecretStore secretStore.SecretStore
+	SecretStore secrets.SecretStore
 
 	// Version represents NIC version.
 	Version string
