@@ -116,6 +116,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			TransportServers:    int64(report.TransportServers),
 			Replicas:            int64(report.NICReplicaCount),
 			Secrets:             int64(report.Secrets),
+			Services:            int64(report.ServiceCount),
 		},
 	}
 
@@ -141,6 +142,7 @@ type Report struct {
 	NICReplicaCount     int
 	VirtualServers      int
 	VirtualServerRoutes int
+	ServiceCount        int
 	TransportServers    int
 	Secrets             int
 }
@@ -150,10 +152,12 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	vsCount := 0
 	vsrCount := 0
 	tsCount := 0
+	serviceCount := 0
 
 	if c.Config.Configurator != nil {
 		vsCount, vsrCount = c.Config.Configurator.GetVirtualServerCounts()
 		tsCount = c.Config.Configurator.GetTransportServerCounts()
+		serviceCount = c.Config.Configurator.GetServiceCount()
 	}
 
 	clusterID, err := c.ClusterID(ctx)
@@ -203,6 +207,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		NICReplicaCount:     replicas,
 		VirtualServers:      vsCount,
 		VirtualServerRoutes: vsrCount,
+		ServiceCount:        serviceCount,
 		TransportServers:    tsCount,
 		Secrets:             secrets,
 	}, err

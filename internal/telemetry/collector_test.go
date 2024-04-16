@@ -666,6 +666,268 @@ func TestCountSecretsAddTwoSecretsAndDeleteOne(t *testing.T) {
 	}
 }
 
+func TestCountVirtualServersServices(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
+		virtualServers            []*configs.VirtualServerEx
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 VirtualServer with 2 upstreams",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{
+							Upstreams: []conf_v1.Upstream{
+								{
+									Name:    "coffee",
+									Service: "coffee-svc",
+								},
+								{
+									Name:    "coffee2",
+									Service: "coffee-svc2",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+		{
+			testName: "Same service in 2 upstreams is only counted once",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 1,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{
+							Upstreams: []conf_v1.Upstream{
+								{
+									Name:    "coffee",
+									Service: "same-svc",
+								},
+								{
+									Name:    "coffee2",
+									Service: "same-svc",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			Configurator:    configurator,
+			Version:         telemetryNICData.ProjectVersion,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
+		}
+
+		for _, vs := range test.virtualServers {
+			_, err := configurator.AddOrUpdateVirtualServer(vs)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			vs := test.virtualServers[i]
+			key := getResourceKey(vs.VirtualServer.Namespace, vs.VirtualServer.Name)
+			err := configurator.DeleteVirtualServer(key, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount))
+		}
+	}
+}
+
+func TestCountTransportServersServices(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
+		transportServers          []*configs.TransportServerEx
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 TransportServer with 2 upstreams",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			transportServers: []*configs.TransportServerEx{
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "coffee",
+							},
+							Upstreams: []conf_v1.TransportServerUpstream{
+								{
+									Name:    "coffee",
+									Service: "coffee-svc",
+								},
+								{
+									Name:    "coffee2",
+									Service: "coffee-svc2",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+		{
+			testName: "Same service in 2 upstreams is only counted once",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 1,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			transportServers: []*configs.TransportServerEx{
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "coffee",
+							},
+							Upstreams: []conf_v1.TransportServerUpstream{
+								{
+									Name:    "coffee",
+									Service: "same-svc",
+								},
+								{
+									Name:    "coffee2",
+									Service: "same-svc",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			Configurator:    configurator,
+			Version:         telemetryNICData.ProjectVersion,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
+		}
+
+		for _, ts := range test.transportServers {
+			_, err := configurator.AddOrUpdateTransportServer(ts)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			ts := test.transportServers[i]
+			key := getResourceKey(ts.TransportServer.Namespace, ts.TransportServer.Name)
+			err := configurator.DeleteTransportServer(key)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount))
+		}
+	}
+}
+
 func getResourceKey(namespace, name string) string {
 	return fmt.Sprintf("%s_%s", namespace, name)
 }

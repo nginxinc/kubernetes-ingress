@@ -33,6 +33,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **TransportServers** The number of TransportServer resources managed by NGINX Ingress Controller.
 - **Replicas** Number of Deployment replicas, or Daemonset instances.
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
+- **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
 
 ## Opt out
 
