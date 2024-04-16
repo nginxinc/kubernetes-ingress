@@ -67,6 +67,7 @@ jobs:
           fi
           echo $files
           cat $GITHUB_OUTPUT
+        shell: bash --noprofile --norc -o pipefail {0}
 
       - name: Setup Golang Environment
         uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
