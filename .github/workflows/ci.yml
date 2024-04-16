@@ -37,7 +37,7 @@ jobs:
     name: Checks and variables
     runs-on: ubuntu-22.04
     outputs:
-      docs_only: ${{ steps.docs.outputs.docs_only == 'true' }}
+      docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
       latest_kindest_node_versions: ${{ steps.vars.outputs.latest_kindest_node_versions }}
       go_path: ${{ steps.vars.outputs.go_path }}
