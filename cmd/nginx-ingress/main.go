@@ -135,7 +135,7 @@ func main() {
 		nginxManager.CreateTLSPassthroughHostsConfig(emptyFile)
 	}
 
-	cpcfg := startChildProcesses(nginxManager)
+	process := startChildProcesses(nginxManager)
 
 	plusClient := createPlusClient(*nginxPlus, useFakeNginxManager, nginxManager)
 
@@ -227,7 +227,7 @@ func main() {
 		}()
 	}
 
-	go handleTermination(lbc, nginxManager, syslogListener, cpcfg)
+	go handleTermination(lbc, nginxManager, syslogListener, process)
 
 	lbc.Run()
 
@@ -439,7 +439,7 @@ func getAgentVersionInfo(nginxManager nginx.Manager) string {
 	return nginxManager.AgentVersion()
 }
 
-type childProcessConfig struct {
+type childProcesses struct {
 	nginxDone      chan error
 	aPPluginEnable bool
 	aPPluginDone   chan error
@@ -449,7 +449,9 @@ type childProcessConfig struct {
 	agentDone      chan error
 }
 
-func startChildProcesses(nginxManager nginx.Manager) childProcessConfig {
+// newChildProcesses starts the several child processes based on flags set.
+// AppProtect. AppProtectDos, Agent.
+func startChildProcesses(nginxManager nginx.Manager) childProcesses {
 	var aPPluginDone chan error
 
 	if *appProtect {
@@ -473,7 +475,7 @@ func startChildProcesses(nginxManager nginx.Manager) childProcessConfig {
 		nginxManager.AgentStart(agentDone, *agentInstanceGroup)
 	}
 
-	return childProcessConfig{
+	return childProcesses{
 		nginxDone:      nginxDone,
 		aPPluginEnable: *appProtect,
 		aPPluginDone:   aPPluginDone,
@@ -566,7 +568,7 @@ func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *
 	}
 }
 
-// getSocketClient gets an http.Client with the a unix socket transport.
+// getSocketClient gets a http.Client with a unix socket transport.
 func getSocketClient(sockPath string) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
@@ -594,7 +596,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	return secret, nil
 }
 
-func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, cpcfg childProcessConfig) {
+func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, cpcfg childProcesses) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 

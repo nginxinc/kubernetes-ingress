@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
@@ -236,8 +238,8 @@ func TestCollectClusterVersion(t *testing.T) {
 	}
 
 	td := telemetry.Data{
-		telData,
-		nicResourceCounts,
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
 	}
 
 	want := fmt.Sprintf("%+v", &td)
@@ -345,6 +347,7 @@ func TestCountVirtualServers(t *testing.T) {
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
 			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			SecretStore:     newSecretStore(t),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
 		})
@@ -510,6 +513,7 @@ func TestCountTransportServers(t *testing.T) {
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
 			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			SecretStore:     newSecretStore(t),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
 		})
@@ -522,7 +526,7 @@ func TestCountTransportServers(t *testing.T) {
 		}
 
 		for _, ts := range test.transportServers {
-			_, err := configurator.AddOrUpdateTransportServer(ts)
+			_, err = configurator.AddOrUpdateTransportServer(ts)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -540,7 +544,7 @@ func TestCountTransportServers(t *testing.T) {
 		for i := 0; i < test.deleteCount; i++ {
 			ts := test.transportServers[i]
 			key := getResourceKey(ts.TransportServer.Namespace, ts.TransportServer.Name)
-			err := configurator.DeleteTransportServer(key)
+			err = configurator.DeleteTransportServer(key)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -554,6 +558,111 @@ func TestCountTransportServers(t *testing.T) {
 		if !cmp.Equal(test.expectedTraceDataOnDelete.TransportServers, gotTraceDataOnDelete.TransportServers) {
 			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.TransportServers, gotTraceDataOnDelete.TransportServers))
 		}
+	}
+}
+
+func TestCountSecretsWithTwoSecrets(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		SecretStore:     newSecretStore(t),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	// Add multiple secrets.
+	cfg.SecretStore.AddOrUpdateSecret(secret1)
+	cfg.SecretStore.AddOrUpdateSecret(secret2)
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		Secrets:             2,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestCountSecretsAddTwoSecretsAndDeleteOne(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		SecretStore:     newSecretStore(t),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	// Add multiple secrets.
+	cfg.SecretStore.AddOrUpdateSecret(secret1)
+	cfg.SecretStore.AddOrUpdateSecret(secret2)
+
+	// Delete one secret.
+	cfg.SecretStore.DeleteSecret(fmt.Sprintf("%s/%s", secret2.Namespace, secret2.Name))
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		Secrets:             1,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
 
@@ -597,6 +706,12 @@ func newConfigurator(t *testing.T) *configs.Configurator {
 		IsLatencyMetricsEnabled: false,
 	})
 	return cnf
+}
+
+func newSecretStore(t *testing.T) *secrets.LocalSecretStore {
+	t.Helper()
+	configurator := newConfigurator(t)
+	return secrets.NewLocalSecretStore(configurator)
 }
 
 // newTestClientset takes k8s runtime objects and returns a k8s fake clientset.
