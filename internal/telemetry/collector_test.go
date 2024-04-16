@@ -561,7 +561,7 @@ func TestCountTransportServers(t *testing.T) {
 	}
 }
 
-func TestCountSecretsWithTwoSecret(t *testing.T) {
+func TestCountSecretsWithTwoSecrets(t *testing.T) {
 	t.Parallel()
 
 	buf := &bytes.Buffer{}
