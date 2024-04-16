@@ -7,46 +7,46 @@
 		/** The time our edge ingested the event */
 		long ingestTime;
 
-		
+
 		/** ProjectName is the name of the project. */
 		string? ProjectName = null;
-		
+
 		/** ProjectVersion is the version of the project. */
 		string? ProjectVersion = null;
-		
+
 		/** ProjectArchitecture is the architecture of the project. For example, "amd64". */
 		string? ProjectArchitecture = null;
-		
+
 		/** ClusterID is the unique id of the Kubernetes cluster where the project is installed.
 It is the UID of the `kube-system` Namespace. */
 		string? ClusterID = null;
-		
+
 		/** ClusterVersion is the Kubernetes version of the cluster. */
 		string? ClusterVersion = null;
-		
+
 		/** ClusterPlatform is the Kubernetes platform of the cluster. */
 		string? ClusterPlatform = null;
-		
+
 		/** InstallationID is the unique id of the project installation in the cluster. */
 		string? InstallationID = null;
-		
+
 		/** ClusterNodeCount is the number of nodes in the cluster. */
 		long? ClusterNodeCount = null;
-		
+
 		/** VirtualServers is the number of VirtualServer resources managed by the Ingress Controller. */
 		long? VirtualServers = null;
-		
+
 		/** VirtualServerRoutes is the number of VirtualServerRoute resources managed by the Ingress Controller. */
 		long? VirtualServerRoutes = null;
-		
+
 		/** TransportServers is the number of TransportServer resources managed by the Ingress Controller. */
 		long? TransportServers = null;
-		
+
 		/** Replicas is the number of NIC replicas. */
 		long? Replicas = null;
-		
+
 		/** Secrets is the number of Secret resources managed by the Ingress Controller. */
 		long? Secrets = null;
-		
+
 	}
 }
