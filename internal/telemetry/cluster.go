@@ -115,6 +115,14 @@ func (c *Collector) InstallationID(ctx context.Context) (_ string, err error) {
 	}
 }
 
+// Secrets returns the number of secrets watched by NIC.
+func (c *Collector) Secrets() (int, error) {
+	if c.Config.SecretStore == nil {
+		return 0, errors.New("nil secret store")
+	}
+	return len(c.Config.SecretStore.GetSecretReferenceMap()), nil
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.

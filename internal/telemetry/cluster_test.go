@@ -892,3 +892,24 @@ var (
 		},
 	}
 )
+
+// Secrets for testing.
+var (
+	secret1 = &apiCoreV1.Secret{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "tls-secret-1",
+			Namespace: "default",
+		},
+		Type: apiCoreV1.SecretTypeTLS,
+		Data: map[string][]byte{},
+	}
+
+	secret2 = &apiCoreV1.Secret{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "tls-secret-2",
+			Namespace: "default",
+		},
+		Type: apiCoreV1.SecretTypeTLS,
+		Data: map[string][]byte{},
+	}
+)

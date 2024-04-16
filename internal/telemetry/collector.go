@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
@@ -56,6 +58,9 @@ type CollectorConfig struct {
 	Period time.Duration
 
 	Configurator *configs.Configurator
+
+	// SecretStore for access to secrets managed by NIC.
+	SecretStore secrets.SecretStore
 
 	// Version represents NIC version.
 	Version string
@@ -110,6 +115,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			VirtualServerRoutes: int64(report.VirtualServerRoutes),
 			TransportServers:    int64(report.TransportServers),
 			Replicas:            int64(report.NICReplicaCount),
+			Secrets:             int64(report.Secrets),
 		},
 	}
 
@@ -136,6 +142,7 @@ type Report struct {
 	VirtualServers      int
 	VirtualServerRoutes int
 	TransportServers    int
+	Secrets             int
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -179,6 +186,11 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
 	}
 
+	secrets, err := c.Secrets()
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
+	}
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -192,5 +204,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		VirtualServers:      vsCount,
 		VirtualServerRoutes: vsrCount,
 		TransportServers:    tsCount,
+		Secrets:             secrets,
 	}, err
 }

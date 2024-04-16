@@ -39,11 +39,14 @@ It is the UID of the `kube-system` Namespace. */
 		/** VirtualServerRoutes is the number of VirtualServerRoute resources managed by the Ingress Controller. */
 		long? VirtualServerRoutes = null;
 
-		/** TransportServers is the number of TransportServer resources  by the Ingress Controller. */
+		/** TransportServers is the number of TransportServer resources managed by the Ingress Controller. */
 		long? TransportServers = null;
 
 		/** Replicas is the number of NIC replicas. */
 		long? Replicas = null;
+
+		/** Secrets is the number of Secret resources managed by the Ingress Controller. */
+		long? Secrets = null;
 
 	}
 }
