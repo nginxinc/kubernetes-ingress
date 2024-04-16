@@ -749,6 +749,7 @@ func TestCountVirtualServersServices(t *testing.T) {
 			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
+			SecretStore:     newSecretStore(t),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -883,6 +884,7 @@ func TestCountTransportServersServices(t *testing.T) {
 			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
+			SecretStore:     newSecretStore(t),
 		})
 		if err != nil {
 			t.Fatal(err)
