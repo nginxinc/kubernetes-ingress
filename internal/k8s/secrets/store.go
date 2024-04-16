@@ -156,3 +156,8 @@ func (s *FakeSecretStore) GetSecret(key string) *SecretReference {
 
 	return secretRef
 }
+
+// GetSecretReferenceMap returns a map that maps a secret key <namespace/name> to a SecretReference
+func (s *FakeSecretStore) GetSecretReferenceMap() map[string]*SecretReference {
+	return s.secrets
+}

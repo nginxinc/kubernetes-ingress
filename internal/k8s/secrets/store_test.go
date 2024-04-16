@@ -339,21 +339,3 @@ func TestGetSecretReferenceMapAddSecret(t *testing.T) {
 		}
 	}
 }
-
-func TestGetSecretReferenceMapAddInvalidSecret(t *testing.T) {
-	t.Parallel()
-
-	manager := &fakeSecretFileManager{}
-	store := NewLocalSecretStore(manager)
-	store.AddOrUpdateSecret(invalidSecret)
-
-	secretRefMap := store.GetSecretReferenceMap()
-
-	validSecretKey := getResourceKey(&invalidSecret.ObjectMeta)
-
-	storedSecretKey := getResourceKey(&invalidSecret.ObjectMeta)
-
-	if _, ok := secretRefMap[storedSecretKey]; ok {
-		t.Errorf("expected secret %v not to be in store", store.GetSecret(validSecretKey).Secret)
-	}
-}

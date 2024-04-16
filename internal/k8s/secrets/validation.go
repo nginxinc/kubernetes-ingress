@@ -44,7 +44,7 @@ func ValidateTLSSecret(secret *api_v1.Secret) error {
 
 	_, err := tls.X509KeyPair(secret.Data[api_v1.TLSCertKey], secret.Data[api_v1.TLSPrivateKeyKey])
 	if err != nil {
-		return fmt.Errorf("Failed to validate TLS cert and key: %w", err)
+		return fmt.Errorf("failed to validate TLS cert and key: %w", err)
 	}
 
 	return nil
@@ -86,7 +86,7 @@ func ValidateCASecret(secret *api_v1.Secret) error {
 
 	_, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return fmt.Errorf("Failed to validate certificate: %w", err)
+		return fmt.Errorf("failed to validate certificate: %w", err)
 	}
 
 	return nil
