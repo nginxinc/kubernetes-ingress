@@ -13,7 +13,6 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -47,23 +46,23 @@ type Collector struct {
 
 // CollectorConfig contains configuration options for a Collector
 type CollectorConfig struct {
-	// K8sClientReader is a kubernetes client.
-	K8sClientReader kubernetes.Interface
-
-	// CustomK8sClientReader is a kubernetes client for our CRDs.
-	// Note: May not need this client.
-	CustomK8sClientReader k8s_nginx.Interface
-
 	// Period to collect telemetry
 	Period time.Duration
 
+	// K8sClientReader is a kubernetes client.
+	K8sClientReader kubernetes.Interface
+
+	// Version represents NIC version.
+	Version string
+
+	// GlobalConfiguration represents the use of a GlobalConfiguration resource.
+	GlobalConfiguration bool
+
+	// Configurator is a struct for configuring NGINX.
 	Configurator *configs.Configurator
 
 	// SecretStore for access to secrets managed by NIC.
 	SecretStore secrets.SecretStore
-
-	// Version represents NIC version.
-	Version string
 
 	// PodNSName represents NIC Pod's NamespacedName.
 	PodNSName types.NamespacedName
@@ -117,6 +116,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			Replicas:            int64(report.NICReplicaCount),
 			Secrets:             int64(report.Secrets),
 			Ingresses:           int64(report.IngressCount),
+			GlobalConfiguration: report.GlobalConfiguration,
 		},
 	}
 
@@ -145,6 +145,7 @@ type Report struct {
 	TransportServers    int
 	Secrets             int
 	IngressCount        int
+	GlobalConfiguration bool
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -188,7 +189,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
 	}
 
-	secrets, err := c.Secrets()
+	secretCount, err := c.Secrets()
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
 	}
@@ -207,7 +208,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		VirtualServers:      vsCount,
 		VirtualServerRoutes: vsrCount,
 		TransportServers:    tsCount,
-		Secrets:             secrets,
+		Secrets:             secretCount,
 		IngressCount:        ingressCount,
+		GlobalConfiguration: c.Config.GlobalConfiguration,
 	}, err
 }

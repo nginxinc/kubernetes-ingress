@@ -763,6 +763,64 @@ func TestCountSecretsAddTwoSecretsAndDeleteOne(t *testing.T) {
 	}
 }
 
+func TestCollectGlobalConfiguration(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		globalConfiguration bool
+	}{
+		{
+			globalConfiguration: true,
+		},
+		{
+			globalConfiguration: false,
+		},
+	}
+
+	for _, test := range testCases {
+		buf := &bytes.Buffer{}
+		exp := &telemetry.StdoutExporter{Endpoint: buf}
+		cfg := telemetry.CollectorConfig{
+			Configurator:        newConfigurator(t),
+			K8sClientReader:     newTestClientset(node1, kubeNS),
+			SecretStore:         newSecretStore(t),
+			Version:             telemetryNICData.ProjectVersion,
+			GlobalConfiguration: test.globalConfiguration,
+		}
+
+		c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Collect(context.Background())
+
+		telData := tel.Data{
+			ProjectName:         telemetryNICData.ProjectName,
+			ProjectVersion:      telemetryNICData.ProjectVersion,
+			ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+			ClusterNodeCount:    1,
+			ClusterID:           telemetryNICData.ClusterID,
+			ClusterVersion:      telemetryNICData.ClusterVersion,
+			ClusterPlatform:     "other",
+		}
+
+		nicResourceCounts := telemetry.NICResourceCounts{
+			GlobalConfiguration: test.globalConfiguration,
+		}
+
+		td := telemetry.Data{
+			Data:              telData,
+			NICResourceCounts: nicResourceCounts,
+		}
+
+		want := fmt.Sprintf("%+v", &td)
+		got := buf.String()
+		if !cmp.Equal(want, got) {
+			t.Error(cmp.Diff(want, got))
+		}
+	}
+}
+
 func createCafeIngressEx() configs.IngressEx {
 	cafeIngress := networkingV1.Ingress{
 		ObjectMeta: metaV1.ObjectMeta{

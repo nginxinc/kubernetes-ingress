@@ -74,4 +74,6 @@ type NICResourceCounts struct {
 	Secrets int64
 	// Ingresses is the number of Ingresses.
 	Ingresses int64
+	// GlobalConfiguration indicates if a GlobalConfiguration resource is used.
+	GlobalConfiguration bool
 }
