@@ -214,6 +214,7 @@ type NewLoadBalancerControllerInput struct {
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
+	TelemetryReportingEndpoint   string
 	NICVersion                   string
 	DynamicWeightChangesReload   bool
 }
@@ -352,8 +353,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
 		exporterCfg := telemetry.ExporterCfg{
-			Endpoint: "oss.edge.df.f5.com:443",
+			Endpoint: input.TelemetryReportingEndpoint,
 		}
+
+		glog.V(3).Infof("Telemetry Endpoint: %s", input.TelemetryReportingEndpoint)
 
 		exporter, err := telemetry.NewExporter(exporterCfg)
 		if err != nil {
