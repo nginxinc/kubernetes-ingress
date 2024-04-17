@@ -140,7 +140,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/ \
-	&& apk add --no-cache app-protect app-protect-attack-signatures app-protect-threat-campaigns
+	&& apk add --no-cache app-protect=~31.4.815 app-protect-attack-signatures app-protect-threat-campaigns
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
@@ -200,7 +200,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	## end of duplicated code
 	&& if [ -z "${NGINX_AGENT##true}" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	apt-get install --no-install-recommends --no-install-suggests -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect=31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	apt-get install --no-install-recommends --no-install-suggests -y app-protect-dos; \
@@ -276,7 +276,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
 	&& rpm --import /tmp/app-protect-security-updates.key \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	dnf --nodocs install -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
+	dnf --nodocs install -y app-protect-31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	# fix for CVEs
 	&& dnf upgrade -y curl ncurses \
@@ -324,7 +324,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
 	&& rpm --import /tmp/app-protect-security-updates.key \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	dnf --nodocs install -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
+	dnf --nodocs install -y app-protect-31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	dnf --nodocs install -y app-protect-dos; \
