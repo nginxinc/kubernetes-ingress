@@ -740,6 +740,67 @@ func TestCountVirtualServersServices(t *testing.T) {
 			},
 			deleteCount: 1,
 		},
+		{
+			testName: "A backup service is counted in addition to the primary service",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{
+							Upstreams: []conf_v1.Upstream{
+								{
+									Name:    "coffee",
+									Service: "same-svc",
+									Backup:  "backup-service",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+		{
+			testName: "A grpc service is counted in addition to the primary service and backup service",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 3,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: v1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{
+							Upstreams: []conf_v1.Upstream{
+								{
+									Name:    "coffee",
+									Service: "same-svc",
+									Backup:  "backup-service",
+									HealthCheck: &conf_v1.HealthCheck{
+										GRPCService: "grpc-service",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
 	}
 
 	for _, test := range testCases {

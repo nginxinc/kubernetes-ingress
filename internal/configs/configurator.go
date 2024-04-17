@@ -1563,6 +1563,14 @@ func (cnf *Configurator) addVSAndVSRServicesToSet(set map[string]bool) {
 		for _, upstream := range vs.VirtualServer.Spec.Upstreams {
 			svc := upstream.Service
 			addServiceToSet(set, ns, svc)
+
+			if upstream.Backup != "" {
+				addServiceToSet(set, ns, upstream.Backup)
+			}
+
+			if upstream.HealthCheck != nil && upstream.HealthCheck.GRPCService != "" {
+				addServiceToSet(set, ns, upstream.HealthCheck.GRPCService)
+			}
 		}
 
 		for _, vsr := range vs.VirtualServerRoutes {
@@ -1570,6 +1578,14 @@ func (cnf *Configurator) addVSAndVSRServicesToSet(set map[string]bool) {
 			for _, upstream := range vsr.Spec.Upstreams {
 				svc := upstream.Service
 				addServiceToSet(set, ns, svc)
+
+				if upstream.Backup != "" {
+					addServiceToSet(set, ns, upstream.Backup)
+				}
+
+				if upstream.HealthCheck != nil && upstream.HealthCheck.GRPCService != "" {
+					addServiceToSet(set, ns, upstream.HealthCheck.GRPCService)
+				}
 			}
 		}
 	}
@@ -1582,6 +1598,11 @@ func (cnf *Configurator) addTSServicesToSet(set map[string]bool) {
 		for _, upstream := range ts.TransportServer.Spec.Upstreams {
 			svc := upstream.Service
 			addServiceToSet(set, ns, svc)
+
+			if upstream.Backup != "" {
+				addServiceToSet(set, ns, upstream.Backup)
+			}
+
 		}
 	}
 }
