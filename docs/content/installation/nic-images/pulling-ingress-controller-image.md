@@ -58,6 +58,12 @@ To pull an image, follow these steps. Replace `<version-tag>` with the specific 
    docker pull private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:<version-tag>
    ```
 
+- For NGINX Plus Ingress Controller with NGINX App Protect WAF and DoS, run:
+
+   ```shell
+   docker pull private-registry.nginx.com/nginx-ic-nap-dos/nginx-plus-ingress:<version-tag>
+   ```
+
 You can use the Docker registry API to list the available image tags by running the following commands. Replace `<path-to-client.key>` with the location of your client key and `<path-to-client.cert>` with the location of your client certificate. The `jq` command is used to format the JSON output for easier reading.
 
 ```json
