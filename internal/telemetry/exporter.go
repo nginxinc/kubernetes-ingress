@@ -74,4 +74,6 @@ type NICResourceCounts struct {
 	Secrets int64
 	// Services is the number of services referenced by NGINX Ingress Controller in the cluster
 	Services int64
+	// Ingresses is the number of Ingresses.
+	Ingresses int64
 }

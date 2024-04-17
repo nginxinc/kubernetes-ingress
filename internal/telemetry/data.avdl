@@ -51,5 +51,8 @@ It is the UID of the `kube-system` Namespace. */
 		/** Services is the number of services in the cluster referenced by NGINX Ingress Controller */
 		long? Services = null;
 
+		/** Ingresses is the number of Ingresses. */
+		long? Ingresses = null;
+
 	}
 }

@@ -123,6 +123,19 @@ func (c *Collector) Secrets() (int, error) {
 	return len(c.Config.SecretStore.GetSecretReferenceMap()), nil
 }
 
+// IngressCount returns number of Ingresses in the namespaces watched by NIC.
+func (c *Collector) IngressCount() int {
+	if c.Config.Configurator == nil {
+		return 0
+	}
+	ic := c.Config.Configurator.GetIngressCounts()
+	total := 0
+	for _, v := range ic {
+		total += v
+	}
+	return total
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.
