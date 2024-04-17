@@ -33,20 +33,23 @@ It is the UID of the `kube-system` Namespace. */
 		/** ClusterNodeCount is the number of nodes in the cluster. */
 		long? ClusterNodeCount = null;
 
-		/** VirtualServers is the number of VirtualServer resources managed by the Ingress Controller. */
+		/** VirtualServers is the number of VirtualServer resources managed by NGINX Ingress Controller. */
 		long? VirtualServers = null;
 
-		/** VirtualServerRoutes is the number of VirtualServerRoute resources managed by the Ingress Controller. */
+		/** VirtualServerRoutes is the number of VirtualServerRoute resources managed by NGINX Ingress Controller. */
 		long? VirtualServerRoutes = null;
 
-		/** TransportServers is the number of TransportServer resources managed by the Ingress Controller. */
+		/** TransportServers is the number of TransportServer resources by NGINX Ingress Controller. */
 		long? TransportServers = null;
 
-		/** Replicas is the number of NIC replicas. */
+		/** Replicas is the number of NGINX Ingress Controller replicas. */
 		long? Replicas = null;
 
 		/** Secrets is the number of Secret resources managed by the Ingress Controller. */
 		long? Secrets = null;
+
+		/** Services is the number of services in the cluster referenced by NGINX Ingress Controller */
+		long? Services = null;
 
 		/** Ingresses is the number of Ingresses. */
 		long? Ingresses = null;

@@ -36,6 +36,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
 - **Ingress Count** Number of Ingresses.
 - **Ingress Classes** Number of Ingress Classes.
+- **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
 
 
 ## Opt out
