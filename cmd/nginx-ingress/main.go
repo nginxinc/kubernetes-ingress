@@ -42,7 +42,8 @@ import (
 
 // Injected during build
 var (
-	version string
+	version           string
+	telemetryEndpoint string
 )
 
 const (
@@ -212,6 +213,7 @@ func main() {
 		IsIPV6Disabled:               *disableIPV6,
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
+		TelemetryReportingEndpoint:   telemetryEndpoint,
 		NICVersion:                   version,
 		DynamicWeightChangesReload:   *enableDynamicWeightChangesReload,
 	}
