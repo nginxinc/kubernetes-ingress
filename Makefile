@@ -11,8 +11,8 @@ TARGET                        ?= local ## The target of the build. Possible valu
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
 ARCH                          ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
 GOOS                          ?= linux ## The OS of the binary. For example linux, darwin
-NGINX_AGENT					  ?= true
-TELEMETRY_ENDPOINT 			  ?= oss.edge.df.f5.com:443
+NGINX_AGENT                   ?= true
+TELEMETRY_ENDPOINT            ?= oss.edge.df.f5.com:443
 
 # Additional flags added here can be accessed in main.go.
 # e.g. `main.version` maps to `var version` in main.go
