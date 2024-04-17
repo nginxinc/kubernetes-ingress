@@ -473,7 +473,7 @@ This table maps the Ingress-NGINX Controller annotations to NGINX Ingress Contro
 {{% /bootstrap-table %}}
 
 1. Ingress-NGINX Controller implements some of its load balancing algorithms with Lua, which may not have an equivalent in NGINX Ingress Controller.
-1. To redirect HTTP (80) traffic to HTTPS (443), NGINX Ingress Controller uses native NGINX `if` conditions while Ingress-NGINX Controller uses Lua.
+1. To redirect HTTP (80) traffic to HTTPS (443), NGINX Ingress Controller uses built-in NGINX `if` conditions while Ingress-NGINX Controller uses Lua.
 
 The following two snippets outline Ingress-NGINX Controller annotations that correspond to annotations for NGINX Ingress Controller with NGINX Plus.
 
