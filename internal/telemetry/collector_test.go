@@ -332,6 +332,7 @@ func TestIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
 		VirtualServerRoutes: 0,
 		TransportServers:    0,
 		Ingresses:           1,
+		Services:            2,
 	}
 
 	td := telemetry.Data{
