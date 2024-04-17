@@ -1,6 +1,6 @@
 # Support for custom proxy headers
 
-NGINX and NGINX Plus support customization of proxy headers through annotations in Ingress.
+You can customize proxy headers for NGINX and NGINX Plus using Ingress annotations.
 
 NGINX Ingress Controller provides the following annotation for configuring custom proxy headers:
 
@@ -18,7 +18,7 @@ When using the ``proxy-set-headers`` annotation, the specified headers will be a
 
 ### Example 1: Setting a Single Custom Header With Default Value
 
-In the following example, the ``nginx.org/proxy-set-headers`` annotation is used to set a single custom header named `X-Forwarded-ABC`.
+In the following example, the ``nginx.org/proxy-set-headers`` annotation is used to set a single custom header named `X-Forwarded-ABC`:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -50,7 +50,7 @@ Corresponding NGINX config file snippet:
 
 ### Example 2: Setting Multiple Custom Headers With Default Values
 
-In this example, the ``nginx.org/proxy-set-headers`` annotation is used to set multiple custom headers: `X-Forwarded-ABC` and `ABC2`.
+In this example, the ``nginx.org/proxy-set-headers`` annotation is used to set multiple custom headers, `X-Forwarded-ABC` and `ABC2`:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -72,7 +72,7 @@ spec:
 
 Corresponding NGINX config file snippet:
 
-```bash
+```shell
 ...
 
   proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;
@@ -121,7 +121,7 @@ If different headers are specified in both master and minions, both sets of anno
 
 ### Example 1: Headers in both Master and Minions
 
-In this example, we add a custom header and value to each minion with defaults for Master
+In this example, we add a custom header and value to each minion with defaults for master:
 
 Content of `cafe-master.yaml`:
 
@@ -220,7 +220,7 @@ location /tea {
 
 ### Example 2: Minion Override Master Header
 
-In this example, a header is in both a master and a minion, in the minion it has a different value and therefore overrides master.
+In this example, a header is in both a master and a minion; in the minion it has a different value and therefore overrides master.
 
 Content of `cafe-master.yaml`:
 
@@ -231,7 +231,7 @@ metadata:
   name: cafe-ingress-master
   annotations:
     nginx.org/mergeable-ingress-type: "master"
-    nginx.org/proxy-set-headers: "X-Forwarded-ABC master"
+    nginx.org/proxy-set-headers: "X-Forwarded-ABC: master"
 spec:
   ingressClassName: nginx
   tls:
@@ -251,7 +251,7 @@ metadata:
   name: cafe-ingress-coffee-minion
   annotations:
     nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/proxy-set-headers: "X-Forwarded-Coffee cappuccino,X-Forwarded-ABC coffee"
+    nginx.org/proxy-set-headers: "X-Forwarded-Coffee: cappuccino,X-Forwarded-ABC: coffee"
 spec:
   ingressClassName: nginx
   rules:
@@ -276,7 +276,7 @@ metadata:
   name: cafe-ingress-tea-minion
   annotations:
     nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/proxy-set-headers: "X-Forwarded-Tea greenTea,X-Forwarded-Minion tea"
+    nginx.org/proxy-set-headers: "X-Forwarded-Tea: greenTea,X-Forwarded-Minion: tea"
 spec:
   ingressClassName: nginx
   rules:
@@ -294,7 +294,7 @@ spec:
 
 Corresponding NGINX config file snippet:
 
-```bash
+```shell
 ...
 
  location /coffee {
@@ -317,7 +317,7 @@ location /tea {
 
 ### Example 3: No Annotation in Minion
 
-In this example, we add the annotation in master to add a custom header and value to a minion without the annotation
+In this example, we use the annotation in master to add a custom header and value to a minion without an annotation:
 
 Content of `cafe-master.yaml`:
 
@@ -348,7 +348,7 @@ metadata:
   name: cafe-ingress-coffee-minion
   annotations:
     nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/proxy-set-headers: "X-Forwarded-Coffee cappuccino"
+    nginx.org/proxy-set-headers: "X-Forwarded-Coffee: cappuccino"
 spec:
   ingressClassName: nginx
   rules:
@@ -390,7 +390,7 @@ spec:
 
 Corresponding NGINX config file snippet:
 
-```bash
+```shell
 ...
 
  location /coffee {
