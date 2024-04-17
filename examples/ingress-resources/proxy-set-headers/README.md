@@ -40,7 +40,7 @@ spec:
 
 Corresponding NGINX config file snippet:
 
-```bash
+```shell
 ...
 
   proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;
@@ -105,7 +105,7 @@ spec:
 
 Corresponding NGINX config file snippet:
 
-```bash
+```shell
 ...
 
   proxy_set_header X-Forwarded-ABC "test";
@@ -195,7 +195,7 @@ spec:
 
 Corresponding NGINX config file snippet:
 
-```bash
+```shell
 ...
 
  location /coffee {
