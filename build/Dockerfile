@@ -278,7 +278,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	dnf --nodocs install -y app-protect-31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
-	# fix for CVEss
+	# fix for CVEs
 	&& dnf upgrade -y curl ncurses \
 	&& subscription-manager unregister \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
