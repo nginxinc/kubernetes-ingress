@@ -1089,6 +1089,167 @@ func TestCountTransportServersServices(t *testing.T) {
 	}
 }
 
+func TestCountIngressesServices(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
+		ingress                   configs.IngressEx
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 Ingress with 2 services",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			ingress:     createCafeIngressEx(),
+			deleteCount: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		test := tc
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			Configurator:    configurator,
+			Version:         telemetryNICData.ProjectVersion,
+			SecretStore:     newSecretStore(t),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
+		}
+
+		_, err = configurator.AddOrUpdateIngress(&test.ingress)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			ing := test.ingress
+
+			key := fmt.Sprintf("%s/%s", ing.Ingress.Namespace, ing.Ingress.Name)
+			err := configurator.DeleteIngress(key, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount))
+		}
+	}
+}
+
+func TestCountMergeableIngressesServices(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
+		ingress                   *configs.MergeableIngresses
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 MergeableIngress with 2 services",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			ingress:     createMergeableCafeIngress(),
+			deleteCount: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		test := tc
+
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			Configurator:    configurator,
+			Version:         telemetryNICData.ProjectVersion,
+			SecretStore:     newSecretStore(t),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
+		}
+
+		_, err = configurator.AddOrUpdateMergeableIngress(test.ingress)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			ing := test.ingress
+
+			key := fmt.Sprintf("%s/%s", ing.Master.Ingress.Namespace, ing.Master.Ingress.Name)
+			err := configurator.DeleteIngress(key, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount))
+		}
+	}
+}
+
 func createCafeIngressEx() configs.IngressEx {
 	cafeIngress := networkingV1.Ingress{
 		ObjectMeta: metaV1.ObjectMeta{
@@ -1160,6 +1321,159 @@ func createCafeIngressEx() configs.IngressEx {
 		},
 	}
 	return cafeIngressEx
+}
+
+func createMergeableCafeIngress() *configs.MergeableIngresses {
+	master := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
+		Spec: networkingV1.IngressSpec{
+			TLS: []networkingV1.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{ // HTTP must not be nil for Master
+							Paths: []networkingV1.HTTPIngressPath{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	coffeeMinion := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "cafe-ingress-coffee-minion",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "minion",
+			},
+		},
+		Spec: networkingV1.IngressSpec{
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/coffee",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	teaMinion := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "cafe-ingress-tea-minion",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "minion",
+			},
+		},
+		Spec: networkingV1.IngressSpec{
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/tea",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	mergeableIngresses := &configs.MergeableIngresses{
+		Master: &configs.IngressEx{
+			Ingress: &master,
+			Endpoints: map[string][]string{
+				"coffee-svc80": {"10.0.0.1:80"},
+				"tea-svc80":    {"10.0.0.2:80"},
+			},
+			ValidHosts: map[string]bool{
+				"cafe.example.com": true,
+			},
+			SecretRefs: map[string]*secrets.SecretReference{
+				"cafe-secret": {
+					Secret: &coreV1.Secret{
+						Type: coreV1.SecretTypeTLS,
+					},
+					Path:  "/etc/nginx/secrets/default-cafe-secret",
+					Error: nil,
+				},
+			},
+		},
+		Minions: []*configs.IngressEx{
+			{
+				Ingress: &coffeeMinion,
+				Endpoints: map[string][]string{
+					"coffee-svc80": {"10.0.0.1:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/coffee": true,
+				},
+				SecretRefs: map[string]*secrets.SecretReference{},
+			},
+			{
+				Ingress: &teaMinion,
+				Endpoints: map[string][]string{
+					"tea-svc80": {"10.0.0.2:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/tea": true,
+				},
+				SecretRefs: map[string]*secrets.SecretReference{},
+			},
+		},
+	}
+
+	return mergeableIngresses
 }
 
 func getResourceKey(namespace, name string) string {

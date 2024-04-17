@@ -960,6 +960,7 @@ func (cnf *Configurator) DeleteIngress(key string, skipReload bool) error {
 
 	delete(cnf.ingresses, name)
 	delete(cnf.minions, name)
+	delete(cnf.mergeableIngresses, name)
 
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.deleteIngressMetricsLabels(key)
