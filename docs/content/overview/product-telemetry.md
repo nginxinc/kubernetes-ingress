@@ -35,6 +35,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **Replicas** Number of Deployment replicas, or Daemonset instances.
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
 - **Ingress Count** Number of Ingresses.
+- **Ingress Classes** Number of Ingress Classes.
 
 
 ## Opt out
