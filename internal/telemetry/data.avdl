@@ -48,5 +48,8 @@ It is the UID of the `kube-system` Namespace. */
 		/** Secrets is the number of Secret resources managed by the Ingress Controller. */
 		long? Secrets = null;
 
+		/** Ingresses is the number of Ingresses. */
+		long? Ingresses = null;
+
 	}
 }

@@ -72,4 +72,6 @@ type NICResourceCounts struct {
 	Replicas int64
 	// Secrets is the number of Secret resources managed by the Ingress Controller.
 	Secrets int64
+	// Ingresses is the number of Ingresses.
+	Ingresses int64
 }
