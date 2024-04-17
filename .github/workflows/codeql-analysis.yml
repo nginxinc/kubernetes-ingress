@@ -21,7 +21,33 @@ permissions:
   contents: read
 
 jobs:
+  checks:
+    name: Checks and variables
+    runs-on: ubuntu-22.04
+    outputs:
+      docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          fetch-depth: 0
+
+      - name: Filter only docs changes
+        id: docs
+        run: |
+          files=$(git diff --name-only HEAD^ | egrep -v "^docs/")
+          if [ -z "$files" ]; then
+            echo "docs_only=true" >> $GITHUB_OUTPUT
+          else
+            echo "docs_only=false" >> $GITHUB_OUTPUT
+          fi
+          echo $files
+          cat $GITHUB_OUTPUT
+        shell: bash --noprofile --norc -o pipefail {0}
+
   analyze:
+    if: ${{ needs.checks.outputs.docs_only != 'true' }}
+    needs: [checks]
     permissions:
       actions: read # for github/codeql-action/init to get workflow details
       contents: read # for actions/checkout to fetch code

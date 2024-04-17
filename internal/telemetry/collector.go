@@ -116,6 +116,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			TransportServers:    int64(report.TransportServers),
 			Replicas:            int64(report.NICReplicaCount),
 			Secrets:             int64(report.Secrets),
+			Ingresses:           int64(report.IngressCount),
 		},
 	}
 
@@ -143,6 +144,7 @@ type Report struct {
 	VirtualServerRoutes int
 	TransportServers    int
 	Secrets             int
+	IngressCount        int
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -190,6 +192,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
 	}
+	ingressCount := c.IngressCount()
 
 	return Report{
 		Name:                "NIC",
@@ -205,5 +208,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		VirtualServerRoutes: vsrCount,
 		TransportServers:    tsCount,
 		Secrets:             secrets,
+		IngressCount:        ingressCount,
 	}, err
 }

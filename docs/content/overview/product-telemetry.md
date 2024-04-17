@@ -20,6 +20,7 @@ If you would prefer to avoid sending any telemetry data, you can [opt-out](#opt-
 ## Data Collected
 
 These are the data points collected and reported by NGINX Ingress Controller:
+
 - **Project Name** The name of the software, which will be labelled `NIC`.
 - **Project Version** NGINX Ingress Controller version.
 - **Project Architecture** The architecture of the kubernetes environment. (e.g. amd64, arm64, etc...)
@@ -33,6 +34,8 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **TransportServers** The number of TransportServer resources managed by NGINX Ingress Controller.
 - **Replicas** Number of Deployment replicas, or Daemonset instances.
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
+- **Ingress Count** Number of Ingresses.
+
 
 ## Opt out
 
