@@ -54,5 +54,8 @@ It is the UID of the `kube-system` Namespace. */
 		/** Ingresses is the number of Ingresses. */
 		long? Ingresses = null;
 
+		/** IngressClasses is the number of Ingress Classes. */
+		long? IngressClasses = null;
+
 	}
 }
