@@ -764,6 +764,101 @@ func TestCountSecretsAddTwoSecretsAndDeleteOne(t *testing.T) {
 	}
 }
 
+func TestIngressClassCountReportsNoIngressClasses(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		Ingresses:           0,
+		IngressClasses:      0,
+	}
+
+	td := telemetry.Data{
+		telData,
+		nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestIngressClassCountReportsIngressClasses(t *testing.T) {
+	t.Parallel()
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS, ingressClassList),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		Ingresses:           0,
+		IngressClasses:      1,
+	}
+
+	td := telemetry.Data{
+		telData,
+		nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
 func TestCountVirtualServersServices(t *testing.T) {
 	t.Parallel()
 
