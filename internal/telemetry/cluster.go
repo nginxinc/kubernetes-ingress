@@ -136,6 +136,15 @@ func (c *Collector) IngressCount() int {
 	return total
 }
 
+// IngressClassCount returns number of Ingress Classes.
+func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
+	ic, err := c.Config.K8sClientReader.NetworkingV1().IngressClasses().List(ctx, metaV1.ListOptions{})
+	if err != nil {
+		return 0, err
+	}
+	return len(ic.Items), nil
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.

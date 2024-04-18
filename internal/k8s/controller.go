@@ -356,19 +356,17 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			Endpoint: input.TelemetryReportingEndpoint,
 		}
 
-		glog.V(3).Infof("Telemetry Endpoint: %s", input.TelemetryReportingEndpoint)
-
 		exporter, err := telemetry.NewExporter(exporterCfg)
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry exporter: %v", err)
 		}
 		collectorConfig := telemetry.CollectorConfig{
-			K8sClientReader:       input.KubeClient,
-			CustomK8sClientReader: input.ConfClient,
-			Period:                24 * time.Hour,
-			Configurator:          lbc.configurator,
-			SecretStore:           lbc.secretStore,
-			Version:               input.NICVersion,
+			Period:              24 * time.Hour,
+			K8sClientReader:     input.KubeClient,
+			Version:             input.NICVersion,
+			GlobalConfiguration: lbc.watchGlobalConfiguration,
+			Configurator:        lbc.configurator,
+			SecretStore:         lbc.secretStore,
 			PodNSName: types.NamespacedName{
 				Namespace: os.Getenv("POD_NAMESPACE"),
 				Name:      os.Getenv("POD_NAME"),
