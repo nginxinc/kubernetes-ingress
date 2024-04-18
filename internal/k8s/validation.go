@@ -437,17 +437,8 @@ func validateProxySetHeaderAnnotation(context *annotationValidationContext) fiel
 
 		value := strings.TrimSpace(parts[1])
 
-		var invalidCharsList []string
-		invalidChars := []string{"{", "}", "$"}
-		for _, c := range invalidChars {
-			if strings.Contains(value, c) {
-				invalidCharsList = append(invalidCharsList, c)
-			}
-		}
-
-		if len(invalidCharsList) > 0 {
-			msg := fmt.Sprintf("invalid character(s) in value: %s", strings.Join(invalidCharsList, ", "))
-			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, msg))
+		if strings.Contains(value, "$") {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "invalid character in value: $"))
 		}
 
 		if name == "" {
