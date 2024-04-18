@@ -120,6 +120,7 @@ The table below summarizes the available annotations.
 |``nginx.org/proxy-hide-headers`` | ``proxy-hide-headers`` | Sets the value of one or more  [proxy_hide_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header) directives. Example: ``"nginx.org/proxy-hide-headers": "header-a,header-b"`` | N/A |  |
 |``nginx.org/proxy-pass-headers`` | ``proxy-pass-headers`` | Sets the value of one or more   [proxy_pass_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header) directives. Example: ``"nginx.org/proxy-pass-headers": "header-a,header-b"`` | N/A |  |
 |``nginx.org/rewrites`` | N/A | Configures URI rewriting using [proxy_pass](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass) directive. | N/A | [Rewrites Support](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/ingress-resources/rewrites). |
+|``nginx.org/proxy-set-headers`` | N/A | Enables customization of proxy headers and values using the [proxy_set_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) directive. Example: ``"nginx.org/proxy-set-headers": "header-a: valueA,header-b: valueB,header-c:  valueC"``   | N/A |  [Proxy Set Headers](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/ingress-resources/proxy-set-headers). |
 {{% /table %}}
 
 ### Auth and SSL/TLS

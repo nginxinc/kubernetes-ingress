@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
@@ -56,6 +58,9 @@ type CollectorConfig struct {
 	Period time.Duration
 
 	Configurator *configs.Configurator
+
+	// SecretStore for access to secrets managed by NIC.
+	SecretStore secrets.SecretStore
 
 	// Version represents NIC version.
 	Version string
@@ -110,6 +115,10 @@ func (c *Collector) Collect(ctx context.Context) {
 			VirtualServerRoutes: int64(report.VirtualServerRoutes),
 			TransportServers:    int64(report.TransportServers),
 			Replicas:            int64(report.NICReplicaCount),
+			Secrets:             int64(report.Secrets),
+			Services:            int64(report.ServiceCount),
+			Ingresses:           int64(report.IngressCount),
+			IngressClasses:      int64(report.IngressClassCount),
 		},
 	}
 
@@ -135,7 +144,11 @@ type Report struct {
 	NICReplicaCount     int
 	VirtualServers      int
 	VirtualServerRoutes int
+	ServiceCount        int
 	TransportServers    int
+	Secrets             int
+	IngressCount        int
+	IngressClassCount   int
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -143,10 +156,12 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	vsCount := 0
 	vsrCount := 0
 	tsCount := 0
+	serviceCount := 0
 
 	if c.Config.Configurator != nil {
 		vsCount, vsrCount = c.Config.Configurator.GetVirtualServerCounts()
 		tsCount = c.Config.Configurator.GetTransportServerCounts()
+		serviceCount = c.Config.Configurator.GetServiceCount()
 	}
 
 	clusterID, err := c.ClusterID(ctx)
@@ -179,6 +194,16 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
 	}
 
+	secrets, err := c.Secrets()
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
+	}
+	ingressCount := c.IngressCount()
+	ingressClassCount, err := c.IngressClassCount(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
+	}
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -191,6 +216,10 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		NICReplicaCount:     replicas,
 		VirtualServers:      vsCount,
 		VirtualServerRoutes: vsrCount,
+		ServiceCount:        serviceCount,
 		TransportServers:    tsCount,
+		Secrets:             secrets,
+		IngressCount:        ingressCount,
+		IngressClassCount:   ingressClassCount,
 	}, err
 }

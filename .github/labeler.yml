@@ -11,7 +11,19 @@ chore:
   - all:
     - changed-files:
       - any-glob-to-any-file: ['.github/**/*', 'hack/**/*', '*']
-      - all-globs-to-all-files: ['!*.md']
+      - all-globs-to-all-files: ['!*.md', '!go.mod', '!go.sum', '!*.go']
+
+github_actions:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/**/*.yml', '.github/**/*.yaml', '.github/**/*.md']
+
+go:
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.go', 'go.mod', 'go.sum']
+
+python:
+  - changed-files:
+    - any-glob-to-any-file: ['tests/**/*.py', 'tests/**/requirements.txt', 'tests/**/*.yaml', 'perf-tests/**/*.py', 'perf-tests/**/*.yaml']
 
 tests:
   - all:
@@ -32,3 +44,7 @@ dependencies:
 helm_chart:
   - changed-files:
     - any-glob-to-any-file: 'charts/nginx-ingress/**/*'
+
+docker:
+  - changed-files:
+    - any-glob-to-any-file: '**/Dockerfile'
