@@ -123,6 +123,7 @@ type Configurator struct {
 	templateExecutorV2        *version2.TemplateExecutor
 	ingresses                 map[string]*IngressEx
 	minions                   map[string]map[string]bool
+	mergeableIngresses        map[string]*MergeableIngresses
 	virtualServers            map[string]*VirtualServerEx
 	transportServers          map[string]*TransportServerEx
 	tlsPassthroughPairs       map[string]tlsPassthroughPair
@@ -180,6 +181,7 @@ func NewConfigurator(p ConfiguratorParams) *Configurator {
 		templateExecutor:          p.TemplateExecutor,
 		templateExecutorV2:        p.TemplateExecutorV2,
 		minions:                   make(map[string]map[string]bool),
+		mergeableIngresses:        make(map[string]*MergeableIngresses),
 		tlsPassthroughPairs:       make(map[string]tlsPassthroughPair),
 		isPlus:                    p.IsPlus,
 		isWildcardEnabled:         p.IsWildcardEnabled,
@@ -475,6 +477,9 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		minionName := objectMetaToFileName(&minion.Ingress.ObjectMeta)
 		cnf.minions[name][minionName] = true
 	}
+
+	cnf.mergeableIngresses[name] = mergeableIngs
+
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateIngressMetricsLabels(mergeableIngs.Master, nginxCfg.Upstreams)
 	}
@@ -955,6 +960,7 @@ func (cnf *Configurator) DeleteIngress(key string, skipReload bool) error {
 
 	delete(cnf.ingresses, name)
 	delete(cnf.minions, name)
+	delete(cnf.mergeableIngresses, name)
 
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.deleteIngressMetricsLabels(key)
@@ -1540,6 +1546,106 @@ func (cnf *Configurator) GetIngressCounts() map[string]int {
 	}
 
 	return counters
+}
+
+// GetServiceCount returns the total number of unique services referenced by Ingresses, VS's, VSR's, and TS's
+func (cnf *Configurator) GetServiceCount() int {
+	setOfUniqueServices := make(map[string]bool)
+	cnf.addVSAndVSRServicesToSet(setOfUniqueServices)
+	cnf.addTSServicesToSet(setOfUniqueServices)
+	cnf.addIngressesServicesToSet(setOfUniqueServices)
+	return len(setOfUniqueServices)
+}
+
+// addVSAndVSRServicesToSet adds services from VirtualServers and VirtualServerRoutes to the set
+func (cnf *Configurator) addVSAndVSRServicesToSet(set map[string]bool) {
+	for _, vs := range cnf.virtualServers {
+		ns := vs.VirtualServer.Namespace
+		for _, upstream := range vs.VirtualServer.Spec.Upstreams {
+			svc := upstream.Service
+			addServiceToSet(set, ns, svc)
+
+			if upstream.Backup != "" {
+				addServiceToSet(set, ns, upstream.Backup)
+			}
+
+			if upstream.HealthCheck != nil && upstream.HealthCheck.GRPCService != "" {
+				addServiceToSet(set, ns, upstream.HealthCheck.GRPCService)
+			}
+		}
+
+		for _, vsr := range vs.VirtualServerRoutes {
+			ns := vsr.Namespace
+			for _, upstream := range vsr.Spec.Upstreams {
+				svc := upstream.Service
+				addServiceToSet(set, ns, svc)
+
+				if upstream.Backup != "" {
+					addServiceToSet(set, ns, upstream.Backup)
+				}
+
+				if upstream.HealthCheck != nil && upstream.HealthCheck.GRPCService != "" {
+					addServiceToSet(set, ns, upstream.HealthCheck.GRPCService)
+				}
+			}
+		}
+	}
+}
+
+// addTSServicesToSet adds services from TransportServers to the set
+func (cnf *Configurator) addTSServicesToSet(set map[string]bool) {
+	for _, ts := range cnf.transportServers {
+		ns := ts.TransportServer.Namespace
+		for _, upstream := range ts.TransportServer.Spec.Upstreams {
+			svc := upstream.Service
+			addServiceToSet(set, ns, svc)
+
+			if upstream.Backup != "" {
+				addServiceToSet(set, ns, upstream.Backup)
+			}
+
+		}
+	}
+}
+
+// addIngressesServicesToSet adds services from Ingresses to the set
+func (cnf *Configurator) addIngressesServicesToSet(set map[string]bool) {
+	for _, ing := range cnf.ingresses {
+		cnf.addIngressServicesToSet(ing, set)
+	}
+	for _, mergeIngs := range cnf.mergeableIngresses {
+		cnf.addIngressServicesToSet(mergeIngs.Master, set)
+		for _, minion := range mergeIngs.Minions {
+			cnf.addIngressServicesToSet(minion, set)
+		}
+	}
+}
+
+// addIngressServicesToSet processes a single ingress and adds its services to the set
+func (cnf *Configurator) addIngressServicesToSet(ing *IngressEx, set map[string]bool) {
+	if ing == nil || ing.Ingress == nil {
+		return
+	}
+	ns := ing.Ingress.Namespace
+	if ing.Ingress.Spec.DefaultBackend != nil && ing.Ingress.Spec.DefaultBackend.Service != nil {
+		svc := ing.Ingress.Spec.DefaultBackend.Service.Name
+		addServiceToSet(set, ns, svc)
+	}
+	for _, rule := range ing.Ingress.Spec.Rules {
+		if rule.HTTP != nil {
+			for _, path := range rule.HTTP.Paths {
+				if path.Backend.Service != nil {
+					svc := path.Backend.Service.Name
+					addServiceToSet(set, ns, svc)
+				}
+			}
+		}
+	}
+}
+
+// Helper function to add services to the set
+func addServiceToSet(set map[string]bool, ns string, svc string) {
+	set[fmt.Sprintf("%s/%s", ns, svc)] = true
 }
 
 // GetVirtualServerCounts returns the total count of
