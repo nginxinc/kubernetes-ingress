@@ -21,7 +21,6 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 	networkingV1 "k8s.io/api/networking/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
@@ -368,7 +367,7 @@ func TestCountVirtualServers(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -389,7 +388,7 @@ func TestCountVirtualServers(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -398,7 +397,7 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "tea",
 						},
@@ -419,7 +418,7 @@ func TestCountVirtualServers(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -428,7 +427,7 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "tea",
 						},
@@ -514,7 +513,7 @@ func TestCountTransportServers(t *testing.T) {
 			transportServers: []*configs.TransportServerEx{
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -539,7 +538,7 @@ func TestCountTransportServers(t *testing.T) {
 			transportServers: []*configs.TransportServerEx{
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -552,7 +551,7 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "tea",
 						},
@@ -577,7 +576,7 @@ func TestCountTransportServers(t *testing.T) {
 			transportServers: []*configs.TransportServerEx{
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -590,7 +589,7 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "tea",
 						},
@@ -785,7 +784,7 @@ func TestCountVirtualServersServices(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -817,7 +816,7 @@ func TestCountVirtualServersServices(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -849,7 +848,7 @@ func TestCountVirtualServersServices(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -878,7 +877,7 @@ func TestCountVirtualServersServices(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -975,7 +974,7 @@ func TestCountTransportServersServices(t *testing.T) {
 			transportServers: []*configs.TransportServerEx{
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -1010,7 +1009,7 @@ func TestCountTransportServersServices(t *testing.T) {
 			transportServers: []*configs.TransportServerEx{
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
