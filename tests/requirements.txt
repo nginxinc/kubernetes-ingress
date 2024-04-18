@@ -207,17 +207,17 @@ cryptography==42.0.5 \
     # via
     #   -r requirements.txt
     #   pyopenssl
-flaky==3.8.0 \
-    --hash=sha256:06152dc0582c18e2cc3d241feece008c074b17e1292658cb39ff8464ae19bd89 \
-    --hash=sha256:3b4b9f5c15829c919c8e05b15582fa1c9c7f20a303581dd5d0bc56a66441389c
+flaky==3.8.1 \
+    --hash=sha256:194ccf4f0d3a22b2de7130f4b62e45e977ac1b5ccad74d4d48f3005dcc38815e \
+    --hash=sha256:47204a81ec905f3d5acfbd61daeabcada8f9d4031616d9bcb0618461729699f5
     # via -r requirements.txt
 forcediphttpsadapter==1.1.0 \
     --hash=sha256:0d224cf6e8e50eb788c9f5994a7afa6d389bac6dbe540b7dfd77a32590ad0153 \
     --hash=sha256:5e7662ece61735585332d09b87d94fffe4752469d5c0d3feff48746e5d70744b
     # via -r requirements.txt
-google-auth==2.28.2 \
-    --hash=sha256:80b8b4969aa9ed5938c7828308f20f035bc79f9d8fb8120bf9dc8db20b41ba30 \
-    --hash=sha256:9fd67bbcd40f16d9d42f950228e9cf02a2ded4ae49198b27432d0cded5a74c38
+google-auth==2.29.0 \
+    --hash=sha256:672dff332d073227550ffc7457868ac4218d6c500b155fe6cc17d2b13602c360 \
+    --hash=sha256:d452ad095688cd52bae0ad6fafe027f6a6d6f560e810fec20914e17a09526415
     # via
     #   -r requirements.txt
     #   kubernetes
@@ -341,9 +341,9 @@ grpcio-tools==1.62.1 \
     --hash=sha256:fdd987a580b4474769adfd40144486f54bcc73838d5ec5d3647a17883ea78e76 \
     --hash=sha256:fe71ca30aabe42591e84ecb9694c0297dc699cc20c5b24d2cb267fb0fc01f947
     # via -r requirements.txt
-idna==3.6 \
-    --hash=sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca \
-    --hash=sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f
+idna==3.7 \
+    --hash=sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc \
+    --hash=sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0
     # via
     #   -r requirements.txt
     #   requests
@@ -453,18 +453,18 @@ pluggy==1.4.0 \
     # via
     #   -r requirements.txt
     #   pytest
-protobuf==4.25.3 \
-    --hash=sha256:19b270aeaa0099f16d3ca02628546b8baefe2955bbe23224aaf856134eccf1e4 \
-    --hash=sha256:209ba4cc916bab46f64e56b85b090607a676f66b473e6b762e6f1d9d591eb2e8 \
-    --hash=sha256:25b5d0b42fd000320bd7830b349e3b696435f3b329810427a6bcce6a5492cc5c \
-    --hash=sha256:7c8daa26095f82482307bc717364e7c13f4f1c99659be82890dcfc215194554d \
-    --hash=sha256:c053062984e61144385022e53678fbded7aea14ebb3e0305ae3592fb219ccfa4 \
-    --hash=sha256:d4198877797a83cbfe9bffa3803602bbe1625dc30d8a097365dbc762e5790faa \
-    --hash=sha256:e3c97a1555fd6388f857770ff8b9703083de6bf1f9274a002a332d65fbb56c8c \
-    --hash=sha256:e7cb0ae90dd83727f0c0718634ed56837bfeeee29a5f82a7514c03ee1364c019 \
-    --hash=sha256:f0700d54bcf45424477e46a9f0944155b46fb0639d69728739c0e47bab83f2b9 \
-    --hash=sha256:f1279ab38ecbfae7e456a108c5c0681e4956d5b1090027c1de0f934dfdb4b35c \
-    --hash=sha256:f4f118245c4a087776e0a8408be33cf09f6c547442c00395fbfb116fac2f8ac2
+protobuf==5.26.1 \
+    --hash=sha256:38aa5f535721d5bb99861166c445c4105c4e285c765fbb2ac10f116e32dcd46d \
+    --hash=sha256:3c388ea6ddfe735f8cf69e3f7dc7611e73107b60bdfcf5d0f024c3ccd3794e23 \
+    --hash=sha256:7ee014c2c87582e101d6b54260af03b6596728505c79f17c8586e7523aaa8f8c \
+    --hash=sha256:8ca2a1d97c290ec7b16e4e5dff2e5ae150cc1582f55b5ab300d45cb0dfa90e51 \
+    --hash=sha256:9b557c317ebe6836835ec4ef74ec3e994ad0894ea424314ad3552bc6e8835b4e \
+    --hash=sha256:b9ba3ca83c2e31219ffbeb9d76b63aad35a3eb1544170c55336993d7a18ae72c \
+    --hash=sha256:d693d2504ca96750d92d9de8a103102dd648fda04540495535f0fec7577ed8fc \
+    --hash=sha256:da612f2720c0183417194eeaa2523215c4fcc1a1949772dc65f05047e08d5932 \
+    --hash=sha256:e6039957449cb918f331d32ffafa8eb9255769c96aa0560d9a5bf0b4e00a2a33 \
+    --hash=sha256:f7417703f841167e5a27d48be13389d52ad705ec09eade63dfc3180a959215d7 \
+    --hash=sha256:fbfe61e7ee8c1860855696e3ac6cfd1b01af5498facc6834fcc345c9684fb2ca
     # via
     #   -r requirements.txt
     #   grpcio-tools
@@ -472,22 +472,22 @@ py==1.11.0 \
     --hash=sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719 \
     --hash=sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378
     # via -r requirements.txt
-pyasn1==0.5.1 \
-    --hash=sha256:4439847c58d40b1d0a573d07e3856e95333f1976294494c325775aeca506eb58 \
-    --hash=sha256:6d391a96e59b23130a5cfa74d6fd7f388dbbe26cc8f1edf39fdddf08d9d6676c
+pyasn1==0.6.0 \
+    --hash=sha256:3a35ab2c4b5ef98e17dfdec8ab074046fbda76e281c5a706ccd82328cfc8f64c \
+    --hash=sha256:cca4bb0f2df5504f02f6f8a775b6e416ff9b0b3b16f7ee80b5a3153d9b804473
     # via
     #   -r requirements.txt
     #   pyasn1-modules
     #   rsa
-pyasn1-modules==0.3.0 \
-    --hash=sha256:5bd01446b736eb9d31512a30d46c1ac3395d676c6f3cafa4c03eb54b9925631c \
-    --hash=sha256:d3ccd6ed470d9ffbc716be08bd90efbd44d0734bc9303818f7336070984a162d
+pyasn1-modules==0.4.0 \
+    --hash=sha256:831dbcea1b177b28c9baddf4c6d1013c24c3accd14a1873fffaa6a2e905f17b6 \
+    --hash=sha256:be04f15b66c206eed667e0bb5ab27e2b1855ea54a842e5037738099e8ca4ae0b
     # via
     #   -r requirements.txt
     #   google-auth
-pycparser==2.21 \
-    --hash=sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9 \
-    --hash=sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206
+pycparser==2.22 \
+    --hash=sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6 \
+    --hash=sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc
     # via
     #   -r requirements.txt
     #   cffi
@@ -590,9 +590,9 @@ requests==2.31.0 \
     #   forcediphttpsadapter
     #   kubernetes
     #   requests-oauthlib
-requests-oauthlib==1.4.0 \
-    --hash=sha256:7a3130d94a17520169e38db6c8d75f2c974643788465ecc2e4b36d288bf13033 \
-    --hash=sha256:acee623221e4a39abcbb919312c8ff04bd44e7e417087fb4bd5e2a2f53d5e79a
+requests-oauthlib==2.0.0 \
+    --hash=sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36 \
+    --hash=sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9
     # via
     #   -r requirements.txt
     #   kubernetes

@@ -2337,7 +2337,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	var expectedChanges []ResourceChange
 	var expectedProblems []ConfigurationProblem
 
-	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc)
+	changes, problems, err := configuration.AddOrUpdateGlobalConfiguration(gc.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2392,7 +2392,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	}
 	expectedProblems = nil
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC1)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC1.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2456,7 +2456,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 	}
 	expectedProblems = nil
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC2)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(updatedGC2.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2467,7 +2467,7 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
 	}
 
-	// Make GlobalConfiguration Invalid
+	// Make listener for TransportServer ts1 invalid
 
 	invalidGC := updatedGC2.DeepCopy()
 	invalidGC.Spec.Listeners[0].Port = -1
@@ -2480,13 +2480,6 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 				TransportServer: ts1,
 			},
 		},
-		{
-			Op: Delete,
-			Resource: &TransportServerConfiguration{
-				ListenerPort:    7000,
-				TransportServer: ts2,
-			},
-		},
 	}
 	expectedProblems = []ConfigurationProblem{
 		{
@@ -2495,16 +2488,12 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 			Reason:  "Rejected",
 			Message: "Listener tcp-7777 doesn't exist",
 		},
-		{
-			Object:  ts2,
-			IsError: false,
-			Reason:  "Rejected",
-			Message: "Listener tcp-8888 doesn't exist",
-		},
 	}
 	expectedErrMsg := "spec.listeners[0].port: Invalid value: -1: must be between 1 and 65535, inclusive"
+	expectedGC3 := invalidGC.DeepCopy()
+	expectedGC3.Spec.Listeners = invalidGC.Spec.Listeners[1:]
 
-	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(invalidGC)
+	changes, problems, err = configuration.AddOrUpdateGlobalConfiguration(invalidGC.DeepCopy())
 	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -2515,11 +2504,11 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned error %v but expected %v", err, expectedErrMsg)
 	}
 	storedGC = configuration.GetGlobalConfiguration()
-	if diff := cmp.Diff(nilGC, storedGC); diff != "" {
+	if diff := cmp.Diff(expectedGC3, storedGC); diff != "" {
 		t.Errorf("GetGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
 
-	// Restore
+	// Restore GlobalConfiguration
 
 	expectedChanges = []ResourceChange{
 		{
@@ -2527,13 +2516,6 @@ func TestAddOrUpdateGlobalConfigurationThenAddTransportServer(t *testing.T) {
 			Resource: &TransportServerConfiguration{
 				ListenerPort:    8888,
 				TransportServer: ts1,
-			},
-		},
-		{
-			Op: AddOrUpdate,
-			Resource: &TransportServerConfiguration{
-				ListenerPort:    7000,
-				TransportServer: ts2,
 			},
 		},
 	}

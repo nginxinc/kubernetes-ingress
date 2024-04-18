@@ -1,19 +1,15 @@
 ---
-title: "Migrating from Ingress-NGINX Controller to NGINX Ingress Controller"
-date: 2023-09-29T16:31:21+01:00
-description: "This document describes how to migrate from the community-maintained Ingress-NGINX Controller to the F5 NGINX Ingress Controller."
-weight: 500
+docs: DOCS-1469
+doctypes:
+- tutorial
+tags:
+- docs
+title: Migrating from Ingress-NGINX Controller to NGINX Ingress Controller
 toc: true
-tags: [ "docs" ]
-docs: "DOCS-1469"
-categories: ["installation", "platform management"]
-doctypes: ["tutorial"]
-journeys: ["getting started"]
-personas: ["devops"]
-authors: ["Jason Williams"]
+weight: 500
 ---
 
-<br>
+This document describes how to migrate from the community-maintained Ingress-NGINX Controller to the F5 NGINX Ingress Controller.
 
 ## Overview
 
@@ -477,7 +473,7 @@ This table maps the Ingress-NGINX Controller annotations to NGINX Ingress Contro
 {{% /bootstrap-table %}}
 
 1. Ingress-NGINX Controller implements some of its load balancing algorithms with Lua, which may not have an equivalent in NGINX Ingress Controller.
-1. To redirect HTTP (80) traffic to HTTPS (443), NGINX Ingress Controller uses native NGINX `if` conditions while Ingress-NGINX Controller uses Lua.
+1. To redirect HTTP (80) traffic to HTTPS (443), NGINX Ingress Controller uses built-in NGINX `if` conditions while Ingress-NGINX Controller uses Lua.
 
 The following two snippets outline Ingress-NGINX Controller annotations that correspond to annotations for NGINX Ingress Controller with NGINX Plus.
 

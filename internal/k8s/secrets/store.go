@@ -25,6 +25,7 @@ type SecretStore interface {
 	AddOrUpdateSecret(secret *api_v1.Secret)
 	DeleteSecret(key string)
 	GetSecret(key string) *SecretReference
+	GetSecretReferenceMap() map[string]*SecretReference
 }
 
 // LocalSecretStore implements SecretStore interface.
@@ -101,6 +102,11 @@ func (s *LocalSecretStore) GetSecret(key string) *SecretReference {
 	return secretRef
 }
 
+// GetSecretReferenceMap returns a map that maps a secret key <namespace/name> to a SecretReference
+func (s *LocalSecretStore) GetSecretReferenceMap() map[string]*SecretReference {
+	return s.secrets
+}
+
 func getResourceKey(meta *metav1.ObjectMeta) string {
 	return fmt.Sprintf("%s/%s", meta.Namespace, meta.Name)
 }
@@ -149,4 +155,9 @@ func (s *FakeSecretStore) GetSecret(key string) *SecretReference {
 	}
 
 	return secretRef
+}
+
+// GetSecretReferenceMap returns a map that maps a secret key <namespace/name> to a SecretReference
+func (s *FakeSecretStore) GetSecretReferenceMap() map[string]*SecretReference {
+	return s.secrets
 }

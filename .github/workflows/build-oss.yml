@@ -51,7 +51,7 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
@@ -63,7 +63,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
+        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
 
       - name: DockerHub Login
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
@@ -224,7 +224,7 @@ jobs:
         if: ${{ github.ref_type == 'tag' && contains(inputs.image, 'ubi') }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d # 0.18.0
+        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # 0.19.0
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -233,7 +233,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
+        uses: github/codeql-action/upload-sarif@4355270be187e1b672a7a1c7c7bae5afdc1ab94a # v3.24.10
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"

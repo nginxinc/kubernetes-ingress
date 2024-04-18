@@ -1,13 +1,15 @@
 ---
+docs: DOCS-607
+doctypes:
+- ''
 title: Using the AWS Marketplace NGINX Ingress Controller Image
-description: "This guide walks you through the steps to set up NGINX Ingress Controller using the AWS Marketplace."
-weight: 200
-doctypes: [""]
 toc: true
-docs: "DOCS-607"
+weight: 200
 ---
 
-## Before you being
+This guide walks you through the steps to set up NGINX Ingress Controller using the AWS Marketplace
+
+## Before you begin
 
 Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This involves some extra steps to make sure everything works as it should.
 

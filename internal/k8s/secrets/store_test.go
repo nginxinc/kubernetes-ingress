@@ -2,6 +2,7 @@ package secrets
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -101,7 +102,7 @@ func TestAddOrUpdateSecret(t *testing.T) {
 	// Make the secret invalid
 
 	expectedManager = &fakeSecretFileManager{
-		DeletedSecret: "default/tls-secret",
+		DeletedSecret: fmt.Sprintf("%s/%s", validSecret.Namespace, validSecret.Name),
 	}
 
 	manager.Reset()
@@ -116,7 +117,7 @@ func TestAddOrUpdateSecret(t *testing.T) {
 	expectedSecretRef = &SecretReference{
 		Secret: invalidSecret,
 		Path:   "",
-		Error:  errors.New("Failed to validate TLS cert and key: x509: malformed certificate"),
+		Error:  errors.New("failed to validate TLS cert and key: x509: malformed certificate"),
 	}
 	expectedManager = &fakeSecretFileManager{}
 
@@ -301,5 +302,40 @@ func TestDeleteSecretInvalidSecret(t *testing.T) {
 
 	if diff := cmp.Diff(expectedManager, manager); diff != "" {
 		t.Errorf("DeleteSecret() returned unexpected result (-want +got):\n%s", diff)
+	}
+}
+
+func TestGetSecretReferenceMapAddSecret(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName          string
+		manager           *fakeSecretFileManager
+		secret            *api_v1.Secret
+		expectedSecretKey string
+	}{
+		{
+			testName:          "Add valid secret to store",
+			manager:           &fakeSecretFileManager{},
+			secret:            validSecret,
+			expectedSecretKey: getResourceKey(&validSecret.ObjectMeta),
+		},
+		{
+			testName:          "Add invalid secret to store",
+			manager:           &fakeSecretFileManager{},
+			secret:            invalidSecret,
+			expectedSecretKey: getResourceKey(&invalidSecret.ObjectMeta),
+		},
+	}
+
+	for _, test := range testCases {
+		store := NewLocalSecretStore(test.manager)
+		store.AddOrUpdateSecret(test.secret)
+
+		secretRefMap := store.GetSecretReferenceMap()
+
+		if _, ok := secretRefMap[test.expectedSecretKey]; !ok {
+			t.Errorf("test case %s expected secret %v to be in store", test.testName, store.GetSecret(test.expectedSecretKey).Secret)
+		}
 	}
 }

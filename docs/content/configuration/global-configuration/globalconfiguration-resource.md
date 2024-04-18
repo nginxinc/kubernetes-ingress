@@ -1,22 +1,20 @@
 ---
+docs: DOCS-588
+doctypes:
+- ''
 title: GlobalConfiguration Resource
-
-description: "The GlobalConfiguration resource allows you to define the global configuration parameters of the Ingress Controller."
-weight: 2000
-doctypes: [""]
 toc: true
-docs: "DOCS-588"
+weight: 2000
 ---
 
+The GlobalConfiguration resource allows you to define the global configuration parameters of NGINX Ingress Controller. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-The GlobalConfiguration resource allows you to define the global configuration parameters of the Ingress Controller. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
-
-The resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources](/nginx-ingress-controller/configuration/transportserver-resource) and
-can be used to configure custom listerners for VirtualServers as specified [here](/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports).
+The resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources]({{< relref "/configuration/transportserver-resource.md" >}}) and
+can be used to [configure custom listeners for VirtualServers]({{< relref "tutorials/virtual-server-with-custom-listener-ports" >}}).
 
 ## Prerequisites
 
-When [installing](/nginx-ingress-controller/installation/installation-with-manifests) the Ingress Controller, you need to reference a GlobalConfiguration resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument. The Ingress Controller only needs one GlobalConfiguration resource.
+When [installing NGINX Ingress Controller using Manifests]({{< relref "/installation/installing-nic/installation-with-manifests.md" >}}), you need to reference a GlobalConfiguration resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument. NGINX Ingress Controller only needs one GlobalConfiguration resource.
 
 ## GlobalConfiguration Specification
 
@@ -126,12 +124,7 @@ If a resource is not rejected (it doesn't violate the structural schema), the In
 
 #### Comprehensive Validation
 
-The Ingress Controller validates the fields of a GlobalConfiguration resource. If a resource is invalid, the Ingress Controller will not use it. Consider the following two cases:
-
-1. When the Ingress Controller pod starts, if the GlobalConfiguration resource is invalid, the Ingress Controller will fail to start and exit with an error.
-1. When the Ingress Controller is running, if the GlobalConfiguration resource becomes invalid, the Ingress Controller will ignore the new version. It will report an error and continue to use the previous version. When the resource becomes valid again, the Ingress Controller will start using it.
-
-**Note**: If a GlobalConfiguration is deleted while the Ingress Controller is running, the controller will keep using the previous version of the resource.
+The Ingress Controller validates the fields of a GlobalConfiguration resource. If a GlobalConfiguration resource is partially invalid, the Ingress Controller use the valid listeners and emit events about invalid listeners.
 
 You can check if the Ingress Controller successfully applied the configuration for a GlobalConfiguration. For our  `nginx-configuration` GlobalConfiguration, we can run:
 
@@ -146,7 +139,7 @@ Events:
 
 Note how the events section includes a Normal event with the Updated reason that informs us that the configuration was successfully applied.
 
-If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a GlobalConfiguration `nginx-configuration` with two or more listeners that have the same protocol UDP and port 53, you will get:
+If you create a GlobalConfiguration `nginx-configuration` with two or more listeners that have the same protocol UDP and port 53, you will get:
 
 ```
 $ kubectl describe gc nginx-configuration -n nginx-ingress
@@ -155,7 +148,7 @@ Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
   Normal   Updated   55s   nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration was updated
-  Warning  Rejected  6s    nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration is invalid and was rejected: spec.listeners: Duplicate value: "Duplicated port/protocol combination 53/UDP"
+  Warning  AddedOrUpdatedWithError  6s    nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration is invalid and was rejected: spec.listeners: Duplicate value: "Duplicated port/protocol combination 53/UDP"
 ```
 
-Note how the events section includes a Warning event with the Rejected reason.
+Note how the events section includes a Warning event with the AddedOrUpdatedWithError reason.

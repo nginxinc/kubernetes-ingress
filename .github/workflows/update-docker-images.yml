@@ -64,7 +64,7 @@ jobs:
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
-        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ steps.md5.outputs.go_code_md5 }}
@@ -132,7 +132,7 @@ jobs:
         if: ${{ needs.variables.outputs.binary-cache-hit != 'true' }}
 
       - name: Store Artifacts in Cache
-        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.variables.outputs.go-md5 }}

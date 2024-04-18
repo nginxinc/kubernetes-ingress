@@ -13,6 +13,7 @@ IP_FAMILY               = dual
 IC_TYPE                 ?= nginx-ingress ## The Ingress Controller type to use, "nginx-ingress" or "nginx-plus-ingress".  Defaults to "nginx-ingress"
 SHOW_IC_LOGS            ?= no ## Should the tests show the Ingress Controller logs on failure, "yes" or "no". Defaults to "no"
 TEST_TAG                ?= latest ## The Tag to use for the test image. e.g. commitsha
+REGISTRY                ?= docker.io ## The registry where the image is located. For example, docker.io
 PREFIX                  ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
 TAG                     ?= edge ## The tag of the image. For example, edge
 K8S_CLUSTER_NAME        ?= local ## The name used when creating/using a Kind Kubernetes cluster
@@ -20,7 +21,11 @@ K8S_CLUSTER_VERSION     ?= $(shell grep -m1 'FROM kindest/node' < ${DOCKERFILEPA
 K8S_TIMEOUT             ?= 75s ## The timeout used when creating a Kind Kubernetes cluster
 AD_SECRET               ?=
 PYTEST_ARGS             ?=
+ifeq (${REGISTRY},)
 BUILD_IMAGE             := $(strip $(PREFIX)):$(strip $(TAG))
+else
+BUILD_IMAGE             := $(strip $(REGISTRY))/$(strip $(PREFIX)):$(strip $(TAG))
+endif
 
 .PHONY: help ## Show this help
 help: ## Show available make targets
@@ -79,7 +84,7 @@ delete-kind-cluster: ## Delete a Kind K8S cluster
 
 .PHONY: image-load
 image-load: ## Load the image into the Kind K8S cluster
-	@kind load docker-image docker.io/$(strip $(PREFIX)):$(strip $(TAG)) --name $(K8S_CLUSTER_NAME)
+	@kind load docker-image $(BUILD_IMAGE) --name $(K8S_CLUSTER_NAME)
 
 
 .PHONY: test-lint

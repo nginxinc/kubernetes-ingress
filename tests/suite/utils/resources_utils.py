@@ -1493,6 +1493,20 @@ def replace_service(v1: CoreV1Api, name, namespace, body) -> str:
     return resp.metadata.name
 
 
+def get_events_for_object(v1: CoreV1Api, namespace, object_name) -> []:
+    """
+    Get the list of events of an objectin a namespace.
+
+    :param v1: CoreV1Api
+    :param namespace: namespace
+    :param object_name: object name
+    :return: []
+    """
+    print(f"Get the events for {object_name} in the namespace: {namespace}")
+    events = v1.list_namespaced_event(namespace)
+    return [event for event in events.items if event.involved_object.name == object_name]
+
+
 def get_events(v1: CoreV1Api, namespace) -> []:
     """
     Get the list of events in a namespace.

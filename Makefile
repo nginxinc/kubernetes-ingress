@@ -4,22 +4,23 @@ GIT_TAG = $(shell git tag --sort=-version:refname | head -n1 || echo untagged)
 VERSION = $(VER)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
-# Additional flags added here can be accessed in main.go.
-# e.g. `main.version` maps to `var version` in main.go
-GO_LINKER_FLAGS_VARS = -X main.version=${VERSION}
-GO_LINKER_FLAGS_OPTIONS = -s -w
-GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_OPTIONS) $(GO_LINKER_FLAGS_VARS)
-DEBUG_GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_VARS)
-DEBUG_GO_GC_FLAGS = all=-N -l
-
-# variables that can be overridden by the user
+# Variables that can be overridden
 PREFIX                        ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
 TAG                           ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
 TARGET                        ?= local ## The target of the build. Possible values: local, container and download
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
 ARCH                          ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
 GOOS                          ?= linux ## The OS of the binary. For example linux, darwin
-NGINX_AGENT					  ?= true
+NGINX_AGENT                   ?= true
+TELEMETRY_ENDPOINT            ?= oss.edge.df.f5.com:443
+
+# Additional flags added here can be accessed in main.go.
+# e.g. `main.version` maps to `var version` in main.go
+GO_LINKER_FLAGS_VARS = -X main.version=${VERSION} -X main.telemetryEndpoint=${TELEMETRY_ENDPOINT}
+GO_LINKER_FLAGS_OPTIONS = -s -w
+GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_OPTIONS) $(GO_LINKER_FLAGS_VARS)
+DEBUG_GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_VARS)
+DEBUG_GO_GC_FLAGS = all=-N -l
 
 # final docker build command
 DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .

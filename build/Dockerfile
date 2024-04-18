@@ -8,14 +8,14 @@ ARG NGINX_AGENT=false
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM opentracing/nginx-opentracing:nginx-1.25.4@sha256:435e34daea58cbd4d552c9ba5c6e78b084276fc747f092f4e31d7ed39274b2d7 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.4@sha256:aa7bdee95afeec4edfacddf3a025a73e283b01628c1ba04597843a2a22855323 as opentracing-lib
 FROM opentracing/nginx-opentracing:nginx-1.25.4-alpine@sha256:ad42445a721582fa78885e7bcd38c5215db8ddc866b5ed4daeb05e50b7bc7bd4 as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 as alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.1.2-alpine3.19@sha256:67595f52053f328fd731bf493d8dc72c1fd956e5f1a2f9a579cc78c5f5f50daa as alpine-fips-3.19
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.25.4-alpine@sha256:02d8d94023878cedf3e3acc55372932a9ba1478b6e2f3357786d916c2af743ba AS alpine
+FROM nginx:1.25.4-alpine@sha256:31bad00311cb5eeb8a6648beadcf67277a175da89989f14727420a80e2e76742 AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -27,7 +27,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.25.4@sha256:6db391d1c0cfb30588ba0bf72ea999404f2764febf0f1f196acd5867ac7efa7e AS debian
+FROM nginx:1.25.4@sha256:b72dad1d013c5e4c4fb817f884aa163287bf147482562f12c56368ca1c2a3705 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -50,7 +50,7 @@ LABEL name="NGINX Ingress Controller" \
 	release="1" \
 	summary="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	description="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	io.k8s.description="The NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	io.k8s.description="NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 COPY --link --chown=101:0 LICENSE /licenses/
@@ -140,7 +140,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/ \
-	&& apk add --no-cache app-protect app-protect-attack-signatures app-protect-threat-campaigns
+	&& apk add --no-cache app-protect=~31.4.815 app-protect-attack-signatures app-protect-threat-campaigns
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
@@ -200,7 +200,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	## end of duplicated code
 	&& if [ -z "${NGINX_AGENT##true}" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	apt-get install --no-install-recommends --no-install-suggests -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect=31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	apt-get install --no-install-recommends --no-install-suggests -y app-protect-dos; \
@@ -276,7 +276,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
 	&& rpm --import /tmp/app-protect-security-updates.key \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	dnf --nodocs install -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
+	dnf --nodocs install -y app-protect-31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	# fix for CVEs
 	&& dnf upgrade -y curl ncurses \
@@ -287,7 +287,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf clean all
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF & DoS #############################################
-FROM redhat/ubi8@sha256:bce7e9f69fb7d4533447232478fd825811c760288f87a35699f9c8f030f2c1a6 as ubi-8-plus-nap
+FROM redhat/ubi8@sha256:edc34f89cf9c818c2fb28b8ea1780f384db563ce4293dc0ab8e73ec01791e5af as ubi-8-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -324,7 +324,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
 	&& rpm --import /tmp/app-protect-security-updates.key \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	dnf --nodocs install -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
+	dnf --nodocs install -y app-protect-31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	dnf --nodocs install -y app-protect-dos; \
@@ -400,7 +400,7 @@ LABEL org.opencontainers.image.version="${IC_VERSION}" \
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.22-alpine@sha256:0466223b8544fb7d4ff04748acc4d75a608234bf4e79563bff208d2060c0dd79 AS builder
+FROM golang:1.22-alpine@sha256:cdc86d9f363e8786845bea2040312b4efa321b828acdeb26f393faa864d887b0 AS builder
 ARG IC_VERSION
 ARG TARGETARCH
 
@@ -413,8 +413,7 @@ RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --m
 
 
 ############################################# Download delve #############################################
-FROM golang:1.22-alpine@sha256:0466223b8544fb7d4ff04748acc4d75a608234bf4e79563bff208d2060c0dd79 AS debug-builder
-ARG IC_VERSION
+FROM golang:1.22-alpine@sha256:cdc86d9f363e8786845bea2040312b4efa321b828acdeb26f393faa864d887b0 AS debug-builder
 ARG TARGETARCH
 
 WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/
