@@ -12,6 +12,13 @@ rules:
   - list
   - watch
 - apiGroups:
+  - "apps"
+  resources:
+  - replicasets
+  - daemonsets
+  verbs:
+  - get
+- apiGroups:
   - ""
   resources:
   - services
@@ -120,6 +127,7 @@ rules:
   - ingressclasses
   verbs:
   - get
+  - list
 - apiGroups:
     - cis.f5.com
   resources:

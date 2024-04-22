@@ -1,13 +1,14 @@
 ---
-title: "Building NGINX Ingress Controller"
-description: "Learn how to build an NGINX Ingress Controller image from source codes and upload it to a private Docker registry. You'll also find information on the Makefile targets and variables."
-weight: 200
-doctypes: ["installation"]
+description: 
+docs: DOCS-1453
+doctypes:
+- installation
+title: Building NGINX Ingress Controller
 toc: true
-docs: "DOCS-1453"
+weight: 200
 ---
 
-{{<custom-styles>}}
+Learn how to build an NGINX Ingress Controller image from source code and upload it to a private Docker registry. You'll also find information on the Makefile targets and variables.
 
 {{<call-out "tip" "Pre-built image alternatives" >}}If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
 
@@ -42,10 +43,10 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
     cd kubernetes-ingress
     ```
 
-    For instance if you want to clone version v3.4.3, the commands to run would be:
+    For instance if you want to clone version v3.5.0, the commands to run would be:
 
     ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.4.3
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.0
     cd kubernetes-ingress
     ```
 
@@ -176,7 +177,7 @@ The _Makefile_ includes several key variables. You have the option to either mod
 |-----------------------------------------|---------------|
 | _ARCH_                                | Defines the architecture for the image and binary. The default is `amd64`, but you can also choose from `arm64`, `arm`, `ppc64le`, and `s390x`.   |
 | _PREFIX_                              | Gives the image its name. The default is `nginx/nginx-ingress`.  |
-| _TAG_                                 | Adds a tag to the image. This is often the version of the NGINX Ingress Controller.   |
+| _TAG_                                 | Adds a tag to the image. This is often the version of NGINX Ingress Controller.   |
 | _DOCKER\_BUILD\_OPTIONS_                | Allows for additional [options](https://docs.docker.com/engine/reference/commandline/build/#options) during the `docker build` process, like `--pull`.  |
 | _TARGET_                              | <p>Determines the build environment. NGINX Ingress Controller compiles locally in a Golang environment by default. Ensure the NGINX Ingress Controller repo resides in your `$GOPATH` if you select this option.</p><p>Alternatively, you can set `TARGET=container` to build using a Docker [Golang](https://hub.docker.com/_/golang/) container. To skip compiling the binary if you're on a specific tag or the latest `main` branch commit, set `TARGET=download`.</p>  |
 {{</bootstrap-table>}}

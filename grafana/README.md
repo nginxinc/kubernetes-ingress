@@ -1,6 +1,6 @@
 # Grafana Dashboard
 
-We provide the official Grafana dashboard that visualizes the metrics exposed by the NGINX Ingress Controller. The
+We provide the official Grafana dashboard that visualizes the metrics exposed by NGINX Ingress Controller. The
 dashboard allows you to filter metrics per Ingress Controller replica or see the metrics from all replicas.
 
 ## Prerequisites

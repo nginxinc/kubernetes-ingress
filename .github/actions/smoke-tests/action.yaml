@@ -2,12 +2,6 @@ name: Run Smoke Tests
 description: Run Smoke Tests for the project
 
 inputs:
-  go-md5:
-    required: true
-    type: string
-  base-image-md5:
-    required: true
-    type: string
   k8s-version:
     description: Kubernetes version to use
     required: false
@@ -15,10 +9,15 @@ inputs:
     description: Timeout to use
     default: 75s
     required: false
-  image:
-    description: Docker image to use
-    default: debian
-    required: false
+  image-type:
+    description: Image type to test
+    required: true
+  image-name:
+    description: Docker image name to test
+    required: true
+  tag:
+    description: Docker image tag to test
+    required: true
   test-image:
     description: Test Docker image to use
     default: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:latest
@@ -26,26 +25,8 @@ inputs:
   marker:
     description: Marker to use
     required: false
-  nginx-key:
-    description: Nginx key to use
-    required: false
-  nginx-crt:
-    description: Nginx cert to use
-    required: false
   azure-ad-secret:
     description: Azure Active Directory secret for JWKs
-    required: false
-  rhel-license:
-    description: RHEL license for UBI builds
-    required: false
-  gcr-workload-identity-secret:
-    description: Google Workflow Identity secret
-    required: false
-  gcr-service-account-secret:
-    description: Google Service Account secret
-    required: false
-  forked-workflow:
-    description: Does this workflow full access to repo resources?
     required: false
 
 outputs:
@@ -56,89 +37,23 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Fetch Cached Artifacts
-      uses: actions/cache@v3
-      with:
-        path: ${{ github.workspace }}/dist
-        key: nginx-ingress-${{ inputs.go-md5 }}
-
-    - name: Ingress type
-      id: ingress-type
-      run: |
-        echo "name=nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress" >> $GITHUB_OUTPUT
-        echo "tag=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}-${{ github.sha }}" >> $GITHUB_OUTPUT
-        echo "modules=${{ contains(inputs.marker, 'appprotect') && 'waf' || '' }}${{ contains(inputs.marker, 'dos') && 'dos' || '' }}" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Authenticate to Google Cloud
-      id: auth
-      uses: google-github-actions/auth@v2
-      with:
-        token_format: access_token
-        workload_identity_provider: ${{ inputs.gcr-workload-identity-secret }}
-        service_account: ${{ inputs.gcr-service-account-secret }}
-      if: ${{ ! inputs.forked-workflow }}
-
-    - name: Login to GCR
-      uses: docker/login-action@v3
-      with:
-        registry: gcr.io
-        username: oauth2accesstoken
-        password: ${{ steps.auth.outputs.access_token }}
-      if: ${{ ! inputs.forked-workflow }}
-
-    - name: Build ${{ inputs.image }} Container
-      uses: docker/build-push-action@v3
-      with:
-        file: build/Dockerfile
-        context: "."
-        cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}${{ contains(inputs.marker, 'appprotect') && '-nap' || '' }}
-        target: goreleaser${{ inputs.forked-workflow && '' || '-prebuilt' }}
-        tags: "docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}"
-        load: true
-        pull: true
-        build-args: |
-          BUILD_OS=${{ inputs.image }}
-          PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/${{ contains(inputs.image, 'plus') && 'plus' || 'oss' }}:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ contains(inputs.marker, 'appprotect') && '-waf' || '' }}${{ contains(inputs.marker, 'dos') && '-dos' || '' }}
-          IC_VERSION=CI
-          ${{ steps.ingress-type.outputs.modules != '' && format('NAP_MODULES={0}', steps.ingress-type.outputs.modules) || '' }}
-          ${{ contains(inputs.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
-        secrets: |
-          ${{ contains(inputs.image, 'plus') && format('"nginx-repo.crt={0}"', inputs.nginx-crt) || '' }}
-          ${{ contains(inputs.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
-          ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', inputs.rhel-license) || '' }}
-
     - name: Deploy Kubernetes
       id: k8s
       run: |
         make -f tests/Makefile create-kind-cluster K8S_CLUSTER_NAME=${{ github.run_id }} K8S_CLUSTER_VERSION=${{ inputs.k8s-version }} K8S_TIMEOUT=${{ inputs.k8s-timeout }}
-        make -f tests/Makefile image-load PREFIX=nginx/${{ steps.ingress-type.outputs.name }} TAG=${{ steps.ingress-type.outputs.tag }} K8S_CLUSTER_NAME=${{ github.run_id }}
+        make -f tests/Makefile image-load REGISTRY="" PREFIX=${{ inputs.image-name }} TAG=${{ inputs.tag }} K8S_CLUSTER_NAME=${{ github.run_id }}
         marker="${{ inputs.marker }}"
         nospaces="${marker// /_}"
         sanitized_marker="${nospaces//\'/}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
         echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
-        echo "cluster=$(echo nginx-${{ inputs.image }}-$name)" >> $GITHUB_OUTPUT
+        echo "cluster=$(echo nginx-${{ inputs.image-type }}-$name)" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Setup Kubeconfig
       run: |
         sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' ~/.kube/kind/config
       shell: bash
-
-    - name: Build Test-Runner Container
-      uses: docker/build-push-action@v3
-      with:
-        file: tests/Dockerfile
-        context: "."
-        cache-from: type=gha,scope=test-runner
-        tags: ${{ inputs.test-image }}
-        pull: true
-        load: true
-      if: ${{ inputs.forked-workflow }}
 
     - name: Run Smoke Tests
       run: |
@@ -149,9 +64,9 @@ runs:
         -v ${{ github.workspace }}/tests:/workspace/tests \
         -v ~/.kube/kind/config:/root/.kube/config ${{ inputs.test-image }} \
         --context=kind-${{ github.run_id }} \
-        --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} \
+        --image=${{ inputs.image-name }}:${{ inputs.tag }} \
         --image-pull-policy=Never \
-        --ic-type=${{ steps.ingress-type.outputs.name }} \
+        --ic-type=nginx${{ contains(inputs.image-type, 'plus') && '-plus' || '' }}-ingress \
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
         --html=tests-${{ steps.k8s.outputs.cluster }}.html \
         --self-contained-html \

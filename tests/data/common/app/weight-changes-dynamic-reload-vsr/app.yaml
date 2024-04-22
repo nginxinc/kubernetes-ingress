@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend1
+  template:
+    metadata:
+      labels:
+        app: backend1
+    spec:
+      containers:
+      - name: backend1
+        image: nginxdemos/nginx-hello:plain-text
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend1-svc
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: backend1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend2
+  template:
+    metadata:
+      labels:
+        app: backend2
+    spec:
+      containers:
+      - name: backend2
+        image: nginxdemos/nginx-hello:plain-text
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend2-svc
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: backend2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend3
+  template:
+    metadata:
+      labels:
+        app: backend3
+    spec:
+      containers:
+      - name: backend3
+        image: nginxdemos/nginx-hello:plain-text
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend3-svc
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: backend3
+---

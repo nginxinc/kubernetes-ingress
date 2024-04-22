@@ -27,6 +27,8 @@ events {
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
+    map_hash_max_size {{.MapHashMaxSize}};
+    map_hash_bucket_size {{.MapHashBucketSize}};
 
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}

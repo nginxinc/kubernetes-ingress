@@ -29,6 +29,7 @@ from suite.utils.resources_utils import (
     get_file_contents,
     get_first_pod_name,
     get_ingress_nginx_template_conf,
+    get_resource_metrics,
     replace_ingress_with_ap_annotations,
     wait_before_test,
     wait_for_event_increment,
@@ -71,7 +72,9 @@ def enable_prometheus_port(
 
 
 @pytest.fixture(scope="class")
-def appprotect_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> AppProtectSetup:
+def appprotect_setup(
+    request, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, test_namespace
+) -> AppProtectSetup:
     """
     Deploy simple application and all the AppProtect(dataguard-alarm) resources under test in one namespace.
 
@@ -106,6 +109,16 @@ def appprotect_setup(request, kube_apis, ingress_controller_endpoint, test_names
 
     def fin():
         print("Clean up:")
+        print("Collect resource usage metrics")
+        pod_metrics = get_resource_metrics(kube_apis.custom_objects, "pods", ingress_controller_prerequisites.namespace)
+        with open("ap_pod_metrics.json", "w+") as f:
+            json.dump(pod_metrics, f, ensure_ascii=False, indent=4)
+        node_metrics = get_resource_metrics(
+            kube_apis.custom_objects, "nodes", ingress_controller_prerequisites.namespace
+        )
+        with open("ap_node_metrics.json", "w+") as f:
+            json.dump(node_metrics, f, ensure_ascii=False, indent=4)
+
         delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
         delete_common_app(kube_apis, "simple", test_namespace)

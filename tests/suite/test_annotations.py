@@ -245,6 +245,7 @@ class TestAnnotations:
                     "nginx.org/hsts": "True",
                     "nginx.org/hsts-behind-proxy": "True",
                     "nginx.org/upstream-zone-size": "124k",
+                    "nginx.org/proxy-set-headers": "X-Forwarded-ABC",
                 },
                 [
                     "proxy_send_timeout 10s;",
@@ -255,6 +256,7 @@ class TestAnnotations:
                     "if ($http_x_forwarded_proto = 'https')",
                     'set $hsts_header_val "max-age=2592000; preload";',
                     " 124k;",
+                    "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
                 ],
                 ["proxy_send_timeout 60s;", "if ($https = on)", " 256k;"],
             )
@@ -288,7 +290,6 @@ class TestAnnotations:
             ingress_controller_prerequisites.namespace,
         )
         new_events = get_events(kube_apis.v1, annotations_setup.namespace)
-
         assert_event_count_increased(annotations_setup.ingress_event_text, initial_count, new_events)
         for _ in expected_strings:
             assert _ in result_conf
@@ -455,6 +456,7 @@ class TestAnnotations:
                     "nginx.org/proxy-send-timeout": "invalid",
                     "nginx.org/max-conns": "-10",
                     "nginx.org/upstream-zone-size": "-10I'm S±!@£$%^&*()invalid",
+                    "nginx.org/proxy-set-headers": "abc!123",
                 }
             )
         ],
@@ -493,8 +495,19 @@ class TestMergeableFlows:
         [
             (
                 f"{TEST_DATA}/annotations/mergeable/minion-annotations-differ.yaml",
-                ["proxy_send_timeout 25s;", "proxy_send_timeout 33s;", "max_conns=1048;", "max_conns=1024;"],
-                ["proxy_send_timeout 10s;", "max_conns=108;"],
+                [
+                    "proxy_send_timeout 25s;",
+                    "proxy_send_timeout 33s;",
+                    "max_conns=1048;",
+                    "max_conns=1024;",
+                    'proxy_set_header X-Forwarded-ABC "minionA";',
+                    'proxy_set_header X-Forwarded-ABC "minionB";',
+                ],
+                [
+                    "proxy_send_timeout 10s;",
+                    "max_conns=108;",
+                    "proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+                ],
             ),
         ],
     )
@@ -520,8 +533,51 @@ class TestMergeableFlows:
             ingress_controller_prerequisites.namespace,
         )
         new_events = get_events(kube_apis.v1, annotations_setup.namespace)
-
         assert_event_count_increased(annotations_setup.ingress_event_text, initial_count, new_events)
+        for _ in expected_strings:
+            assert _ in result_conf
+        for _ in unexpected_strings:
+            assert _ not in result_conf
+
+
+@pytest.mark.ingresses
+@pytest.mark.annotations
+@pytest.mark.parametrize("annotations_setup", ["standard"], indirect=True)
+class TestStandardFlows:
+    @pytest.mark.parametrize(
+        "yaml_file, expected_strings, unexpected_strings",
+        [
+            (
+                f"{TEST_DATA}/annotations/standard/annotations-ingress.yaml",
+                ["proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;", "proxy_set_header ABC $http_abc;"],
+                [
+                    'proxy_set_header X-Forwarded-ABC "ABC";',
+                ],
+            ),
+        ],
+    )
+    def test_standard_ingress(
+        self,
+        kube_apis,
+        annotations_setup,
+        ingress_controller_prerequisites,
+        yaml_file,
+        expected_strings,
+        unexpected_strings,
+    ):
+        initial_events = get_events(kube_apis.v1, annotations_setup.namespace)
+        initial_count = get_event_count(annotations_setup.ingress_event_text, initial_events)
+        print("Case 8: standard ingress")
+        replace_ingresses_from_yaml(kube_apis.networking_v1, annotations_setup.namespace, yaml_file)
+        wait_before_test(1)
+        result_conf = get_ingress_nginx_template_conf(
+            kube_apis.v1,
+            annotations_setup.namespace,
+            annotations_setup.ingress_name,
+            annotations_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
+        new_events = get_events(kube_apis.v1, annotations_setup.namespace)
         for _ in expected_strings:
             assert _ in result_conf
         for _ in unexpected_strings:
@@ -564,7 +620,6 @@ class TestGrpcFlows:
             ingress_controller_prerequisites.namespace,
         )
         new_events = get_events(kube_apis.v1, annotations_grpc_setup.namespace)
-
         assert_event_count_increased(annotations_grpc_setup.ingress_event_text, initial_count, new_events)
         for _ in expected_strings:
             assert _ in result_conf

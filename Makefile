@@ -4,21 +4,23 @@ GIT_TAG = $(shell git tag --sort=-version:refname | head -n1 || echo untagged)
 VERSION = $(VER)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
-# Additional flags added here can be accessed in main.go.
-# e.g. `main.version` maps to `var version` in main.go
-GO_LINKER_FLAGS_VARS = -X main.version=${VERSION}
-GO_LINKER_FLAGS_OPTIONS = -s -w
-GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_OPTIONS) $(GO_LINKER_FLAGS_VARS)
-DEBUG_GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_VARS)
-DEBUG_GO_GC_FLAGS = all=-N -l
-
-# variables that can be overridden by the user
+# Variables that can be overridden
 PREFIX                        ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
 TAG                           ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
 TARGET                        ?= local ## The target of the build. Possible values: local, container and download
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) ## The options for the docker build command. For example, --pull
 ARCH                          ?= amd64 ## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets
 GOOS                          ?= linux ## The OS of the binary. For example linux, darwin
+NGINX_AGENT                   ?= true
+TELEMETRY_ENDPOINT            ?= oss.edge.df.f5.com:443
+
+# Additional flags added here can be accessed in main.go.
+# e.g. `main.version` maps to `var version` in main.go
+GO_LINKER_FLAGS_VARS = -X main.version=${VERSION} -X main.telemetryEndpoint=${TELEMETRY_ENDPOINT}
+GO_LINKER_FLAGS_OPTIONS = -s -w
+GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_OPTIONS) $(GO_LINKER_FLAGS_VARS)
+DEBUG_GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_VARS)
+DEBUG_GO_GC_FLAGS = all=-N -l
 
 # final docker build command
 DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
@@ -86,6 +88,11 @@ update-crds: ## Update CRDs
 	kustomize build config/crd/app-protect-dos --load-restrictor='LoadRestrictionsNone' >deploy/crds-nap-dos.yaml
 	kustomize build config/crd/app-protect-waf --load-restrictor='LoadRestrictionsNone' >deploy/crds-nap-waf.yaml
 
+.PHONY: telemetry-schema
+telemetry-schema: ## Generate the telemetry Schema
+	go generate internal/telemetry/exporter.go
+	gofumpt -w internal/telemetry/*_generated.go
+
 .PHONY: certificate-and-key
 certificate-and-key: ## Create default cert and key
 	./build/generate_default_cert_and_key.sh
@@ -136,7 +143,7 @@ alpine-image-plus-fips: build ## Create Docker image for Ingress Controller (Alp
 
 .PHONY: alpine-image-nap-plus-fips
 alpine-image-nap-plus-fips: build ## Create Docker image for Ingress Controller (Alpine with NGINX Plus, NGINX App Protect WAF and FIPS)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus-nap-fips
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus-nap-fips --build-arg NGINX_AGENT=$(NGINX_AGENT)
 
 .PHONY: debian-image-plus
 debian-image-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
@@ -144,7 +151,7 @@ debian-image-plus: build ## Create Docker image for Ingress Controller (Debian w
 
 .PHONY: debian-image-nap-plus
 debian-image-nap-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and NGINX App Protect WAF)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=waf
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=waf --build-arg NGINX_AGENT=$(NGINX_AGENT)
 
 .PHONY: debian-image-dos-plus
 debian-image-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and NGINX App Protect DoS)
@@ -152,7 +159,7 @@ debian-image-dos-plus: build ## Create Docker image for Ingress Controller (Debi
 
 .PHONY: debian-image-nap-dos-plus
 debian-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus, NGINX App Protect WAF and DoS)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=waf,dos
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg NAP_MODULES=waf,dos  --build-arg NGINX_AGENT=$(NGINX_AGENT)
 
 .PHONY: ubi-image
 ubi-image: build ## Create Docker image for Ingress Controller (UBI)
@@ -164,7 +171,7 @@ ubi-image-plus: build ## Create Docker image for Ingress Controller (UBI with NG
 
 .PHONY: ubi-image-nap-plus
 ubi-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and NGINX App Protect WAF)
-	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-9-plus-nap --build-arg NAP_MODULES=waf
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-9-plus-nap --build-arg NAP_MODULES=waf --build-arg NGINX_AGENT=$(NGINX_AGENT)
 
 .PHONY: ubi-image-dos-plus
 ubi-image-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and NGINX App Protect DoS)
@@ -172,7 +179,7 @@ ubi-image-dos-plus: build ## Create Docker image for Ingress Controller (UBI wit
 
 .PHONY: ubi-image-nap-dos-plus
 ubi-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus, NGINX App Protect WAF and DoS)
-	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-8-plus-nap --build-arg NAP_MODULES=waf,dos
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-8-plus-nap --build-arg NAP_MODULES=waf,dos  --build-arg NGINX_AGENT=$(NGINX_AGENT)
 
 .PHONY: all-images ## Create all the Docker images for Ingress Controller
 all-images: alpine-image alpine-image-plus alpine-image-plus-fips alpine-image-nap-plus-fips debian-image debian-image-plus debian-image-nap-plus debian-image-dos-plus debian-image-nap-dos-plus ubi-image ubi-image-plus ubi-image-nap-plus ubi-image-dos-plus ubi-image-nap-dos-plus
