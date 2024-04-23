@@ -20,6 +20,8 @@ func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
 	attrs = append(attrs, attribute.Int64("Secrets", d.Secrets))
 	attrs = append(attrs, attribute.Int64("Services", d.Services))
 	attrs = append(attrs, attribute.Int64("Ingresses", d.Ingresses))
+	attrs = append(attrs, attribute.Int64("IngressClasses", d.IngressClasses))
+	attrs = append(attrs, attribute.Bool("GlobalConfiguration", d.GlobalConfiguration))
 
 	return attrs
 }

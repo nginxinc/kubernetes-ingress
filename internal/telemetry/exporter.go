@@ -22,7 +22,10 @@ type StdoutExporter struct {
 
 // Export takes context and trace data and writes to the endpoint.
 func (e *StdoutExporter) Export(_ context.Context, data tel.Exportable) error {
-	fmt.Fprintf(e.Endpoint, "%+v", data)
+	_, err := fmt.Fprintf(e.Endpoint, "%+v", data)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -74,6 +77,10 @@ type NICResourceCounts struct {
 	Secrets int64
 	// Services is the number of services referenced by NGINX Ingress Controller in the cluster
 	Services int64
-	// Ingresses is the number of Ingresses.
+	// Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller.
 	Ingresses int64
+	// IngressClasses is the number of Ingress Classes.
+	IngressClasses int64
+	// GlobalConfiguration indicates if a GlobalConfiguration resource is used.
+	GlobalConfiguration bool
 }
