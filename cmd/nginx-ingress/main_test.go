@@ -211,11 +211,10 @@ func TestMinimumK8sVersion3(t *testing.T) {
 		discoveryClient.FakedServerVersion = correctVersion
 
 		// Get the server version as a sanity check
-		actualVersion, err := discoveryClient.ServerVersion()
+		_, err := discoveryClient.ServerVersion()
 		if err != nil {
 			t.Fatalf("Failed to get server version: %v", err)
 		}
-		fmt.Printf("Kubernetes version: %s\n", actualVersion.String())
 
 		// Verify if the mocked server version is as expected.
 		if err := confirmMinimumK8sVersionCriteria(clientset); err != nil {
@@ -232,11 +231,10 @@ func TestMinimumK8sVersion3(t *testing.T) {
 		discoveryClient.FakedServerVersion = wrongVersion
 
 		// Get the server version as a sanity check
-		actualVersion, err := discoveryClient.ServerVersion()
+		_, err := discoveryClient.ServerVersion()
 		if err != nil {
 			t.Fatalf("Failed to get server version: %v", err)
 		}
-		fmt.Printf("Kubernetes version: %s\n", actualVersion.String())
 
 		// Verify if the mocked server version returns an error as we are testing for < 1.22 (v1.19.2).
 		if err := confirmMinimumK8sVersionCriteria(clientset); err == nil {
