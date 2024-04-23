@@ -214,6 +214,7 @@ type NewLoadBalancerControllerInput struct {
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
+	TelemetryReportingEndpoint   string
 	NICVersion                   string
 	DynamicWeightChangesReload   bool
 }
@@ -352,7 +353,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
 		exporterCfg := telemetry.ExporterCfg{
-			Endpoint: "oss.edge.df.f5.com:443",
+			Endpoint: input.TelemetryReportingEndpoint,
 		}
 
 		exporter, err := telemetry.NewExporter(exporterCfg)
@@ -360,11 +361,12 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			glog.Fatalf("failed to initialize telemetry exporter: %v", err)
 		}
 		collectorConfig := telemetry.CollectorConfig{
-			K8sClientReader:       input.KubeClient,
-			CustomK8sClientReader: input.ConfClient,
-			Period:                24 * time.Hour,
-			Configurator:          lbc.configurator,
-			Version:               input.NICVersion,
+			Period:              24 * time.Hour,
+			K8sClientReader:     input.KubeClient,
+			Version:             input.NICVersion,
+			GlobalConfiguration: lbc.watchGlobalConfiguration,
+			Configurator:        lbc.configurator,
+			SecretStore:         lbc.secretStore,
 			PodNSName: types.NamespacedName{
 				Namespace: os.Getenv("POD_NAMESPACE"),
 				Name:      os.Getenv("POD_NAME"),

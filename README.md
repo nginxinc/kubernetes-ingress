@@ -24,17 +24,17 @@ This repo provides an implementation of an Ingress Controller for NGINX and NGIN
 
 We value community input and would love to see you at our next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
 
-**When**: Every other Monday at 4 PM Irish Time.  
 **Zoom Link**: [KIC - GitHub Issues Triage](https://f5networks.zoom.us/j/91421953779?pwd=197738)  
 **Password**: `197738`  
 **Slack**: Join our channel `#nginx-ingress-controller` on the [NGINX Community Slack](https://nginxcommunity.slack.com/channels/nginx-ingress-controller) for updates and discussions.  
+**When**: 15:00 GMT / [Convert to your timezone](https://dateful.com/convert/gmt?t=15), every other Monday.
 
-| **Date**      | **Irish Time** | **GMT**  |
-| -------------- | -------------- | -------- |
-| **2024-05-06** | **4 PM**       | **3 PM** |
-| **2024-05-20** | **4 PM**       | **3 PM** |
-| **2024-06-03** | **4 PM**       | **3 PM** |
-| **2024-06-17** | **4 PM**       | **3 PM** |
+| **Community Call Dates**|
+| -------------- |
+| **2024-05-06** |
+| **2024-05-20** |
+| **2024-06-03** |
+| **2024-06-17** |
 
 ---
 

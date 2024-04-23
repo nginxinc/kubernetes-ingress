@@ -37,6 +37,7 @@ jobs:
     name: Checks and variables
     runs-on: ubuntu-22.04
     outputs:
+      docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
       latest_kindest_node_versions: ${{ steps.vars.outputs.latest_kindest_node_versions }}
       go_path: ${{ steps.vars.outputs.go_path }}
@@ -52,6 +53,21 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          fetch-depth: 0
+
+      - name: Filter only docs changes
+        id: docs
+        run: |
+          files=$(git diff --name-only HEAD^ | egrep -v "^docs/")
+          if [ -z "$files" ]; then
+            echo "docs_only=true" >> $GITHUB_OUTPUT
+          else
+            echo "docs_only=false" >> $GITHUB_OUTPUT
+          fi
+          echo $files
+          cat $GITHUB_OUTPUT
+        shell: bash --noprofile --norc -o pipefail {0}
 
       - name: Setup Golang Environment
         uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
@@ -241,6 +257,7 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
   helm-tests:
+    if: ${{ needs.checks.outputs.docs_only != 'true' }}
     name: Helm Tests ${{ matrix.base-os }}
     runs-on: ubuntu-22.04
     needs: [checks, binaries]
@@ -390,6 +407,7 @@ jobs:
           done
 
   setup-matrix:
+    if: ${{ needs.checks.outputs.docs_only != 'true' }}
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-22.04
     needs: [binaries, checks]
@@ -451,6 +469,7 @@ jobs:
         if: ${{ steps.check-image.outcome == 'failure' }}
 
   smoke-tests:
+    if: ${{ needs.checks.outputs.docs_only != 'true' }}
     name: ${{ matrix.images.label }} ${{ matrix.images.image }} ${{ matrix.k8s }} smoke tests
     runs-on: ubuntu-22.04
     needs: [checks, setup-matrix]
@@ -619,6 +638,7 @@ jobs:
           fi
 
   build-docker:
+    if: ${{ needs.checks.outputs.docs_only != 'true' }}
     name: Build Docker OSS
     needs: [checks, smoke-results]
     strategy:
@@ -647,6 +667,7 @@ jobs:
     secrets: inherit
 
   build-docker-plus:
+    if: ${{ needs.checks.outputs.docs_only != 'true' }}
     name: Build Docker Plus
     needs: [checks, smoke-results, release-notes]
     strategy:
@@ -678,6 +699,7 @@ jobs:
     secrets: inherit
 
   build-docker-nap:
+    if: ${{ needs.checks.outputs.docs_only != 'true' }}
     name: Build Docker NAP
     needs: [checks, smoke-results, release-notes]
     strategy:
