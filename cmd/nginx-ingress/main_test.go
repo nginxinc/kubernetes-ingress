@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -15,6 +16,8 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -375,6 +378,98 @@ func TestGetAndValidateSecret(t *testing.T) {
 		_, err := kAPI.getAndValidateSecret("default/my-secret")
 		if err == nil {
 			t.Errorf("Expected an error in retrieving secret but %v returned", err)
+		}
+	}
+}
+
+// Utility function to check if a namespace
+func expectedNs(watchNsLabelList string, ns []string) bool {
+	wNs := strings.Split(watchNsLabelList, ",")
+	resultOk := false
+	for _, n := range wNs {
+		// fmt.Println("list: ", n)
+		nsNameWithDelimiter := strings.Split(n, "=")
+		// fmt.Println("WithDelimit: ", nsNameWithDelimiter)
+		nsNameOnly := ""
+		if len(nsNameWithDelimiter) > 1 {
+			nsNameOnly = nsNameWithDelimiter[1]
+			// fmt.Println("name-only: ", nsNameOnly)
+		}
+		isValid := slices.Contains(ns, nsNameOnly)
+
+		resultOk = resultOk || isValid
+	}
+	return resultOk
+}
+
+// This test uses a fake client to create 2 namespaces, ns1 and ns2
+// We use these objects to test the retreival of namespaces based on the
+// watchedNamespacesLabel input
+func TestGetWatchedNamespaces(t *testing.T) {
+	// Create a new fake clientset
+	clientset := fake.NewSimpleClientset()
+	ctx := context.Background()
+
+	// Create label for test1-namespace
+	ns1Labels := map[string]string{
+		"namespace": "ns1",
+		"app":       "my-application",
+		"version":   "v1",
+	}
+
+	// Create the ns1 namespace using the fake clientset
+	_, err := clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "test-namespace",
+			Labels: ns1Labels,
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create namespace: %v", err)
+	}
+
+	// Create label for test2-namespace
+	ns2Labels := map[string]string{
+		"namespace": "ns2",
+		"app":       "my-application",
+		"version":   "v1",
+	}
+
+	// Create the ns2 namespace using the fake clientset
+	_, err = clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "ns2",
+			Labels: ns2Labels,
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create namespace: %v", err)
+	}
+
+	// This section is testing the presence of the watchedNamespaceLabels
+	{
+		// Create a list of 'watched' namespaces
+		watchNsLabelList := "namespace=ns2, version=v1"
+		watchNamespaceLabel = &watchNsLabelList
+		ns := getWatchedNamespaces(clientset)
+
+		if len(ns) == 0 {
+			t.Errorf("Expected namespaces-list not to be empty")
+		}
+
+		resultOk := expectedNs(watchNsLabelList, ns)
+		if !resultOk {
+			t.Errorf("Expected namespaces-list to be %v, got %v", watchNsLabelList, ns)
+		}
+	}
+
+	// This section is testing the absence (ns3) of the watchedNamespaceLabels
+	{
+		watchNsLabelList := "namespace=ns3, version=v1"
+		watchNamespaceLabel = &watchNsLabelList
+		ns := getWatchedNamespaces(clientset)
+		if len(ns) != 0 {
+			t.Errorf("Expected expected an empty namespaces-list but got %v", ns)
 		}
 	}
 }
