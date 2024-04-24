@@ -384,9 +384,9 @@ func checkNamespaces(kubeClient kubernetes.Interface) {
 	if *watchNamespaceLabel != "" {
 		watchNamespaces = getWatchedNamespaces(kubeClient)
 	} else {
-		checkNamespaceExists(kubeClient, watchNamespaces)
+		_ = checkNamespaceExists(kubeClient, watchNamespaces)
 	}
-	checkNamespaceExists(kubeClient, watchSecretNamespaces)
+	_ = checkNamespaceExists(kubeClient, watchSecretNamespaces)
 }
 
 // This is a helper function for fetching the all the namespaces in the cluster
@@ -405,15 +405,18 @@ func getWatchedNamespaces(kubeClient kubernetes.Interface) (newWatchNamespaces [
 }
 
 // This is a helper function for confirming the presence of input  namespaces
-func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) {
+func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) bool {
+	hasErrors := false
 	for _, ns := range namespaces {
 		if ns != "" {
 			_, err := kubeClient.CoreV1().Namespaces().Get(context.TODO(), ns, meta_v1.GetOptions{})
 			if err != nil {
 				glog.Warningf("Error when getting Namespace %v: %v", ns, err)
 			}
+			hasErrors = hasErrors || err != nil
 		}
 	}
+	return hasErrors
 }
 
 func createConfigClient(config *rest.Config) (configClient k8s_nginx.Interface, err error) {

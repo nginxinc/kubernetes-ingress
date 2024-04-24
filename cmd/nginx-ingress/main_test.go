@@ -420,7 +420,7 @@ func TestGetWatchedNamespaces(t *testing.T) {
 	// Create the ns1 namespace using the fake clientset
 	_, err := clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   "test-namespace",
+			Name:   "ns1",
 			Labels: ns1Labels,
 		},
 	}, metav1.CreateOptions{})
@@ -470,6 +470,48 @@ func TestGetWatchedNamespaces(t *testing.T) {
 		ns := getWatchedNamespaces(clientset)
 		if len(ns) != 0 {
 			t.Errorf("Expected expected an empty namespaces-list but got %v", ns)
+		}
+	}
+}
+
+func TestCheckNamespaceExists(t *testing.T) {
+	// Create a new fake clientset
+	clientset := fake.NewSimpleClientset()
+	ctx := context.Background()
+
+	// Create label for test1-namespace
+	ns1Labels := map[string]string{
+		"namespace": "ns1",
+		"app":       "my-application",
+		"version":   "v1",
+	}
+
+	// Create the ns1 namespace using the fake clientset
+	_, err := clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "ns1",
+			Labels: ns1Labels,
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create namespace: %v", err)
+	}
+
+	// This block is to test the successful case i.e. where the searched namespace exists
+	{
+		nsList := []string{"ns1"}
+		hasErrors := checkNamespaceExists(clientset, nsList)
+		if hasErrors {
+			t.Errorf("Expected namespaces-list %v to be present, got error", nsList)
+		}
+	}
+
+	// This block is to test the failure case i.e. where the searched namespace does not exists
+	{
+		nsList := []string{"ns2"}
+		hasErrors := checkNamespaceExists(clientset, nsList)
+		if !hasErrors {
+			t.Errorf("Expected namespaces-list %v to be absent, but got no errors", nsList)
 		}
 	}
 }
