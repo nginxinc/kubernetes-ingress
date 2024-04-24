@@ -2,6 +2,9 @@ name: Cache Update
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - cache-update-fix
 
 defaults:
   run:
@@ -88,6 +91,7 @@ jobs:
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       publish-image: false
+      forked-workflow: true
     permissions:
       contents: read
       actions: read
@@ -117,6 +121,7 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: false
+      forked-workflow: true
     permissions:
       contents: read
       security-events: write
@@ -171,6 +176,7 @@ jobs:
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: false
+      forked-workflow: true
     permissions:
       contents: read
       security-events: write
