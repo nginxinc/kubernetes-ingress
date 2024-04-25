@@ -57,6 +57,9 @@ It is the UID of the `kube-system` Namespace. */
 		/** IngressClasses is the number of Ingress Classes. */
 		long? IngressClasses = null;
 
+		/** Policies is the number of policy resources managed by the NGINX Ingress Controller */
+		long? Policies = null;
+
 		/** GlobalConfiguration indicates if a GlobalConfiguration resource is used. */
 		boolean? GlobalConfiguration = null;
 

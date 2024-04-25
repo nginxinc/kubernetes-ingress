@@ -250,6 +250,47 @@ func TestCollectClusterVersion(t *testing.T) {
 	}
 }
 
+func TestCollectPolicyCount(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+		PolicyCountFn: func() []*conf_v1.Policy {
+			return []*conf_v1.Policy{}
+		},
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	td := telemetry.Data{
+		Data: tel.Data{
+			ProjectName:         telemetryNICData.ProjectName,
+			ProjectVersion:      telemetryNICData.ProjectVersion,
+			ClusterVersion:      telemetryNICData.ClusterVersion,
+			ClusterPlatform:     telemetryNICData.ClusterPlatform,
+			ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+			ClusterNodeCount:    telemetryNICData.ClusterNodeCount,
+			ClusterID:           telemetryNICData.ClusterID,
+		},
+		NICResourceCounts: telemetry.NICResourceCounts{
+			Policies: 0,
+		},
+	}
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
 func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 	t.Parallel()
 
@@ -1535,6 +1576,18 @@ func newSecretStore(t *testing.T) *secrets.LocalSecretStore {
 	configurator := newConfigurator(t)
 	return secrets.NewLocalSecretStore(configurator)
 }
+
+//
+//func newLoadBalancerController(t *testing.T) *k8s.LoadBalancerController {
+//	t.Helper()
+//
+//	lbc := k8s.NewLoadBalancerController(k8s.NewLoadBalancerControllerInput{
+//		NginxConfigurator: newConfigurator(t),
+//		IsNginxPlus:       false,
+//	})
+//
+//	return lbc
+//}
 
 // newTestClientset takes k8s runtime objects and returns a k8s fake clientset.
 // The clientset is configured to return kubernetes version v1.29.2.
