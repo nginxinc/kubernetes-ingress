@@ -2968,6 +2968,14 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 		}
 
 		if svc != nil && !external && hasUseClusterIP {
+			if ing.Spec.DefaultBackend.Service.Port.Number == 0 {
+				for _, port := range svc.Spec.Ports {
+					if port.Name == ing.Spec.DefaultBackend.Service.Port.Name {
+						ing.Spec.DefaultBackend.Service.Port.Number = port.Port
+						break
+					}
+				}
+			}
 			endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, ing.Spec.DefaultBackend.Service.Port.Number)}
 		} else {
 			endps = getIPAddressesFromEndpoints(podEndps)
@@ -3028,6 +3036,14 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			}
 
 			if svc != nil && !external && hasUseClusterIP {
+				if path.Backend.Service.Port.Number == 0 {
+					for _, port := range svc.Spec.Ports {
+						if port.Name == path.Backend.Service.Port.Name {
+							path.Backend.Service.Port.Number = port.Port
+							break
+						}
+					}
+				}
 				endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, path.Backend.Service.Port.Number)}
 			} else {
 				endps = getIPAddressesFromEndpoints(podEndps)
