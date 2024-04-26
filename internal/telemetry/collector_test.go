@@ -273,104 +273,74 @@ func TestCollectMultiplePolicies(t *testing.T) {
 	}
 }
 
-//
-//func TestCountPolicies(t *testing.T) {
-//	t.Parallel()
-//
-//	state := "Valid"
-//	reason := "AddedOrUpdated"
-//	msg := "Configuration was added or updated"
-//
-//	testCases := []struct {
-//		testName                  string
-//		expectedTraceDataOnAdd    telemetry.Report
-//		expectedTraceDataOnDelete telemetry.Report
-//		policiesVirtualServer     []*configs.VirtualServerEx
-//		deleteCount               int
-//	}{
-//		{
-//			testName: "Create and delete 1 VirtualServer",
-//			expectedTraceDataOnAdd: telemetry.Report{
-//				PolicyCount: 1,
-//			},
-//			expectedTraceDataOnDelete: telemetry.Report{
-//				PolicyCount: 0,
-//			},
-//			policiesVirtualServer: []*configs.VirtualServerEx{
-//				{
-//					VirtualServer: &conf_v1.VirtualServer{
-//						ObjectMeta: metaV1.ObjectMeta{
-//							Namespace: "ns-1",
-//							Name:      "my-pol",
-//						},
-//						Spec: conf_v1.VirtualServerSpec{
-//							Policies: make([]conf_v1.PolicyReference, 0),
-//						},
-//					},
-//					Policies: map[string]*conf_v1.Policy{
-//						conf_v1.PolicyStatus{}
-//
-//					},
-//				},
-//			},
-//			deleteCount: 1,
-//		},
-//	}
-//
-//	t.Parallel()
-//
-//	for _, test := range testCases {
-//		configurator := newConfigurator(t)
-//
-//		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
-//			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
-//			SecretStore:     newSecretStore(t),
-//			Configurator:    configurator,
-//			Version:         telemetryNICData.ProjectVersion,
-//		})
-//		if err != nil {
-//			t.Fatal(err)
-//		}
-//		c.Config.PodNSName = types.NamespacedName{
-//			Namespace: "nginx-ingress",
-//			Name:      "nginx-ingress",
-//		}
-//
-//		for _, vs := range test.virtualServers {
-//			_, err := configurator.AddOrUpdateVirtualServer(vs)
-//			if err != nil {
-//				t.Fatal(err)
-//			}
-//		}
-//
-//		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
-//		if err != nil {
-//			t.Fatal(err)
-//		}
-//
-//		if !cmp.Equal(test.expectedTraceDataOnAdd.VirtualServers, gotTraceDataOnAdd.VirtualServers) {
-//			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.VirtualServers, gotTraceDataOnAdd.VirtualServers))
-//		}
-//
-//		for i := 0; i < test.deleteCount; i++ {
-//			vs := test.virtualServers[i]
-//			key := getResourceKey(vs.VirtualServer.Namespace, vs.VirtualServer.Name)
-//			err := configurator.DeleteVirtualServer(key, false)
-//			if err != nil {
-//				t.Fatal(err)
-//			}
-//		}
-//
-//		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
-//		if err != nil {
-//			t.Fatal(err)
-//		}
-//
-//		if !cmp.Equal(test.expectedTraceDataOnDelete.VirtualServers, gotTraceDataOnDelete.VirtualServers) {
-//			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.VirtualServers, gotTraceDataOnDelete.VirtualServers))
-//		}
-//	}
-//}
+func TestCollectEmptyPolicy(t *testing.T) {
+	t.Parallel()
+
+	fn := func() []*conf_v1.Policy {
+		return []*conf_v1.Policy{&policy0}
+	}
+
+	cfg := telemetry.CollectorConfig{
+		PolicyCount: fn,
+	}
+	collector, err := telemetry.NewCollector(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := collector.PolicyCount()
+
+	want := 1
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
+
+func TestCollectNilPolicy(t *testing.T) {
+	t.Parallel()
+
+	fn := func() []*conf_v1.Policy {
+		return []*conf_v1.Policy{}
+	}
+
+	cfg := telemetry.CollectorConfig{
+		PolicyCount: fn,
+	}
+	collector, err := telemetry.NewCollector(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := collector.PolicyCount()
+
+	want := 0
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
+
+func TestCollectPolicyWithNilFunction(t *testing.T) {
+	t.Parallel()
+
+	fn := func() []*conf_v1.Policy {
+		return nil
+	}
+
+	cfg := telemetry.CollectorConfig{
+		PolicyCount: fn,
+	}
+	collector, err := telemetry.NewCollector(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := collector.PolicyCount()
+
+	want := 0
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
 
 func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 	t.Parallel()
@@ -1715,6 +1685,7 @@ var telemetryNICData = tel.Data{
 
 // Policies used for testing for PolicyCount method
 var (
+	policy0 = conf_v1.Policy{}
 	policy1 = conf_v1.Policy{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Policy",
