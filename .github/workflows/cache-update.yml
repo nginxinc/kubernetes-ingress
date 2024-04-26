@@ -20,15 +20,17 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
+      docker_md5: ${{ steps.vars.outputs.docker_md5 }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
 
       - name: Output Variables
         id: vars
         run: |
           ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
           source .github/data/version.txt
           echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
@@ -43,7 +45,7 @@ jobs:
       contents: write # for lucacome/draft-release
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
         with:
           fetch-depth: 0
 
@@ -87,7 +89,9 @@ jobs:
       platforms: ${{ matrix.platforms }}
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       publish-image: false
+      forked-workflow: true
     permissions:
       contents: read
       actions: read
@@ -115,8 +119,10 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: false
+      forked-workflow: true
     permissions:
       contents: read
       security-events: write
@@ -168,9 +174,11 @@ jobs:
       image: ${{ matrix.image }}
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: false
+      forked-workflow: true
     permissions:
       contents: read
       security-events: write
