@@ -273,11 +273,11 @@ func TestCollectMultiplePolicies(t *testing.T) {
 	}
 }
 
-func TestCollectEmptyPolicy(t *testing.T) {
+func TestCollectSinglePolicy(t *testing.T) {
 	t.Parallel()
 
 	fn := func() []*conf_v1.Policy {
-		return []*conf_v1.Policy{&policy0}
+		return []*conf_v1.Policy{&policy1}
 	}
 
 	cfg := telemetry.CollectorConfig{
@@ -296,7 +296,7 @@ func TestCollectEmptyPolicy(t *testing.T) {
 	}
 }
 
-func TestCollectNilPolicy(t *testing.T) {
+func TestCollectNoPolicies(t *testing.T) {
 	t.Parallel()
 
 	fn := func() []*conf_v1.Policy {
@@ -322,12 +322,8 @@ func TestCollectNilPolicy(t *testing.T) {
 func TestCollectPolicyWithNilFunction(t *testing.T) {
 	t.Parallel()
 
-	fn := func() []*conf_v1.Policy {
-		return nil
-	}
-
 	cfg := telemetry.CollectorConfig{
-		PolicyCount: fn,
+		PolicyCount: nil,
 	}
 	collector, err := telemetry.NewCollector(cfg)
 	if err != nil {
@@ -1685,7 +1681,6 @@ var telemetryNICData = tel.Data{
 
 // Policies used for testing for PolicyCount method
 var (
-	policy0 = conf_v1.Policy{}
 	policy1 = conf_v1.Policy{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Policy",
