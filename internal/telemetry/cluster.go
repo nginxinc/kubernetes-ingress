@@ -147,10 +147,10 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 
 // PolicyCount returns number of Policies watched by NIC.
 func (c *Collector) PolicyCount() int {
-	if nil != c.Config.PolicyCountFn {
-		return len(c.Config.PolicyCountFn())
+	if c.Config.PolicyCount == nil {
+		return 0
 	}
-	return 0
+	return len(c.Config.PolicyCount())
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

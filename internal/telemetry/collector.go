@@ -69,8 +69,8 @@ type CollectorConfig struct {
 	// PodNSName represents NIC Pod's NamespacedName.
 	PodNSName types.NamespacedName
 
-	// PolicyCountFn represents the use of the function getAllPolicies
-	PolicyCountFn func() []*conf_v1.Policy
+	// PolicyCount gets all policies
+	PolicyCount func() []*conf_v1.Policy
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -212,7 +212,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
 	}
 
-	policy := c.PolicyCount()
+	policyCount := c.PolicyCount()
 
 	return Report{
 		Name:                "NIC",
@@ -231,7 +231,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		Secrets:             secretCount,
 		IngressCount:        ingressCount,
 		IngressClassCount:   ingressClassCount,
-		PolicyCount:         policy,
+		PolicyCount:         policyCount,
 		GlobalConfiguration: c.Config.GlobalConfiguration,
 	}, err
 }

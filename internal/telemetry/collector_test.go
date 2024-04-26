@@ -250,46 +250,127 @@ func TestCollectClusterVersion(t *testing.T) {
 	}
 }
 
-func TestCollectPolicyCount(t *testing.T) {
+func TestCollectMultiplePolicies(t *testing.T) {
 	t.Parallel()
 
-	buf := &bytes.Buffer{}
-	exp := &telemetry.StdoutExporter{Endpoint: buf}
-	cfg := telemetry.CollectorConfig{
-		Configurator:    newConfigurator(t),
-		K8sClientReader: newTestClientset(node1, kubeNS),
-		Version:         telemetryNICData.ProjectVersion,
-		PolicyCountFn: func() []*conf_v1.Policy {
-			return []*conf_v1.Policy{}
-		},
+	fn := func() []*conf_v1.Policy {
+		return []*conf_v1.Policy{&policy1, &policy2, &policy3}
 	}
 
-	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	cfg := telemetry.CollectorConfig{
+		PolicyCount: fn,
+	}
+	collector, err := telemetry.NewCollector(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.Collect(context.Background())
+	got := collector.PolicyCount()
 
-	td := telemetry.Data{
-		Data: tel.Data{
-			ProjectName:         telemetryNICData.ProjectName,
-			ProjectVersion:      telemetryNICData.ProjectVersion,
-			ClusterVersion:      telemetryNICData.ClusterVersion,
-			ClusterPlatform:     telemetryNICData.ClusterPlatform,
-			ProjectArchitecture: telemetryNICData.ProjectArchitecture,
-			ClusterNodeCount:    telemetryNICData.ClusterNodeCount,
-			ClusterID:           telemetryNICData.ClusterID,
-		},
-		NICResourceCounts: telemetry.NICResourceCounts{
-			Policies: 0,
-		},
-	}
-	want := fmt.Sprintf("%+v", &td)
-	got := buf.String()
-	if !cmp.Equal(want, got) {
-		t.Error(cmp.Diff(want, got))
+	want := 3
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
 	}
 }
+
+//
+//func TestCountPolicies(t *testing.T) {
+//	t.Parallel()
+//
+//	state := "Valid"
+//	reason := "AddedOrUpdated"
+//	msg := "Configuration was added or updated"
+//
+//	testCases := []struct {
+//		testName                  string
+//		expectedTraceDataOnAdd    telemetry.Report
+//		expectedTraceDataOnDelete telemetry.Report
+//		policiesVirtualServer     []*configs.VirtualServerEx
+//		deleteCount               int
+//	}{
+//		{
+//			testName: "Create and delete 1 VirtualServer",
+//			expectedTraceDataOnAdd: telemetry.Report{
+//				PolicyCount: 1,
+//			},
+//			expectedTraceDataOnDelete: telemetry.Report{
+//				PolicyCount: 0,
+//			},
+//			policiesVirtualServer: []*configs.VirtualServerEx{
+//				{
+//					VirtualServer: &conf_v1.VirtualServer{
+//						ObjectMeta: metaV1.ObjectMeta{
+//							Namespace: "ns-1",
+//							Name:      "my-pol",
+//						},
+//						Spec: conf_v1.VirtualServerSpec{
+//							Policies: make([]conf_v1.PolicyReference, 0),
+//						},
+//					},
+//					Policies: map[string]*conf_v1.Policy{
+//						conf_v1.PolicyStatus{}
+//
+//					},
+//				},
+//			},
+//			deleteCount: 1,
+//		},
+//	}
+//
+//	t.Parallel()
+//
+//	for _, test := range testCases {
+//		configurator := newConfigurator(t)
+//
+//		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+//			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+//			SecretStore:     newSecretStore(t),
+//			Configurator:    configurator,
+//			Version:         telemetryNICData.ProjectVersion,
+//		})
+//		if err != nil {
+//			t.Fatal(err)
+//		}
+//		c.Config.PodNSName = types.NamespacedName{
+//			Namespace: "nginx-ingress",
+//			Name:      "nginx-ingress",
+//		}
+//
+//		for _, vs := range test.virtualServers {
+//			_, err := configurator.AddOrUpdateVirtualServer(vs)
+//			if err != nil {
+//				t.Fatal(err)
+//			}
+//		}
+//
+//		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+//		if err != nil {
+//			t.Fatal(err)
+//		}
+//
+//		if !cmp.Equal(test.expectedTraceDataOnAdd.VirtualServers, gotTraceDataOnAdd.VirtualServers) {
+//			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.VirtualServers, gotTraceDataOnAdd.VirtualServers))
+//		}
+//
+//		for i := 0; i < test.deleteCount; i++ {
+//			vs := test.virtualServers[i]
+//			key := getResourceKey(vs.VirtualServer.Namespace, vs.VirtualServer.Name)
+//			err := configurator.DeleteVirtualServer(key, false)
+//			if err != nil {
+//				t.Fatal(err)
+//			}
+//		}
+//
+//		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+//		if err != nil {
+//			t.Fatal(err)
+//		}
+//
+//		if !cmp.Equal(test.expectedTraceDataOnDelete.VirtualServers, gotTraceDataOnDelete.VirtualServers) {
+//			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.VirtualServers, gotTraceDataOnDelete.VirtualServers))
+//		}
+//	}
+//}
 
 func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 	t.Parallel()
@@ -1631,3 +1712,43 @@ var telemetryNICData = tel.Data{
 	ClusterNodeCount:    1,
 	ClusterPlatform:     "other",
 }
+
+// Policies used for testing for PolicyCount method
+var (
+	policy1 = conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy1",
+			Namespace: "default",
+		},
+		Spec:   conf_v1.PolicySpec{},
+		Status: conf_v1.PolicyStatus{},
+	}
+	policy2 = conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy2",
+			Namespace: "default",
+		},
+		Spec:   conf_v1.PolicySpec{},
+		Status: conf_v1.PolicyStatus{},
+	}
+	policy3 = conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec:   conf_v1.PolicySpec{},
+		Status: conf_v1.PolicyStatus{},
+	}
+)
