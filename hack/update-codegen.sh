@@ -31,6 +31,7 @@ fi
 # --output-base    because this script should also be able to run inside the vendor dir of
 #                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
+chmod +x "${CODEGEN_PKG}"/generate-internal-groups.sh
 bash "${CODEGEN_PKG}"/generate-groups.sh "deepcopy,client,informer,lister" \
   github.com/nginxinc/kubernetes-ingress/pkg/client github.com/nginxinc/kubernetes-ingress/pkg/apis \
   "configuration:v1alpha1,v1 dos:v1beta1 externaldns:v1" \
