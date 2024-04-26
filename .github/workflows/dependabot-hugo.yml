@@ -26,7 +26,7 @@ jobs:
         uses: dependabot/fetch-metadata@0fb21704c18a42ce5aa8d720ea4b912f5e6babef # v2.0.0
 
       - name: Checkout Repository
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
         if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'go_modules' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
         with:
           ref: ${{ github.head_ref }}
