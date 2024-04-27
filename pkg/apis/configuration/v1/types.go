@@ -275,7 +275,6 @@ type ErrorPage struct {
 // ErrorPageReturn defines a return for an ErrorPage.
 type ErrorPageReturn struct {
 	ActionReturn `json:",inline"`
-	Headers      []Header `json:"headers"`
 }
 
 // ErrorPageRedirect defines a redirect for an ErrorPage.

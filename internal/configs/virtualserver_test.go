@@ -9100,11 +9100,11 @@ func TestGenerateSplits(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -11125,11 +11125,11 @@ func TestGenerateMatchesConfig(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -11542,11 +11542,11 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -12943,9 +12943,9 @@ func TestGenerateErrorPages(t *testing.T) {
 					Codes: []int{404, 405, 500, 502},
 					Return: &conf_v1.ErrorPageReturn{
 						ActionReturn: conf_v1.ActionReturn{
-							Code: 200,
+							Code:    200,
+							Headers: nil,
 						},
-						Headers: nil,
 					},
 					Redirect: nil,
 				},
@@ -13024,11 +13024,11 @@ func TestGenerateErrorPageLocations(t *testing.T) {
 							Code: 200,
 							Type: "application/json",
 							Body: "Hello World",
-						},
-						Headers: []conf_v1.Header{
-							{
-								Name:  "HeaderName",
-								Value: "HeaderValue",
+							Headers: []conf_v1.Header{
+								{
+									Name:  "HeaderName",
+									Value: "HeaderValue",
+								},
 							},
 						},
 					},
