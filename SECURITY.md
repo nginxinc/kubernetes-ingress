@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-We advise users to run the most recent release of the NGINX Ingress Controller, and we issue software updates to the
+We advise users to run the most recent release of NGINX Ingress Controller, and we issue software updates to the
 most recent release. We provide technical support for F5 customers who are using the most recent version of the NGINX
 Ingress Controller, and any version released within two years of the current release.
 

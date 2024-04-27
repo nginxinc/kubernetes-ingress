@@ -30,9 +30,6 @@ on:
       publish-aws-market-place:
         required: false
         type: boolean
-      publish-gcp-market-place:
-        required: false
-        type: boolean
       publish-nginx-reqistry:
         required: false
         type: boolean
@@ -56,12 +53,12 @@ jobs:
     runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-22.04' || 'kic-plus' }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
         with:
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
@@ -73,7 +70,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -85,29 +82,12 @@ jobs:
         if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
         if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
-
-      - name: Authenticate to Google Cloud Marketplace
-        id: auth-mktpl
-        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
-        with:
-          token_format: access_token
-          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
-          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
-        if: ${{ inputs.publish-gcp-market-place }}
-
-      - name: Login to GCR for Marketplace
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
-        with:
-          registry: gcr.io
-          username: oauth2accesstoken
-          password: ${{ steps.auth-mktpl.outputs.access_token }}
-        if: ${{ inputs.publish-gcp-market-place }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
@@ -116,7 +96,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
         if: ${{ inputs.publish-aws-market-place }}
       - name: Login to ECR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
         if: ${{ inputs.publish-aws-market-place }}
@@ -131,7 +111,7 @@ jobs:
         if: ${{ inputs.publish-nginx-reqistry }}
 
       - name: Login to NGINX Registry
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: docker-mgmt.nginx.com
           username: ${{ steps.idtoken.outputs.id_token }}
@@ -144,7 +124,6 @@ jobs:
         with:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
-            name=gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }},enable=${{ inputs.publish-gcp-market-place && ! contains(inputs.target, 'aws') && ! contains(inputs.image, 'alpine') && ! contains(inputs.image, 'ubi') }}
             name=docker-mgmt.nginx.com/nginx-ic${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ inputs.publish-nginx-reqistry && ! contains(inputs.target, 'aws') }}
             name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ inputs.publish-aws-market-place && contains(inputs.target, 'aws') }}
           flavor: |
@@ -165,17 +144,51 @@ jobs:
       - name: NAP modules
         id: nap_modules
         run: |
+          [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ inputs.nap_modules }}"
           [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="both" || modules="${{ inputs.nap_modules }}"
           echo "modules=${modules}" >> $GITHUB_OUTPUT
+          echo "name=${name}" >> $GITHUB_OUTPUT
         if: ${{ inputs.nap_modules != '' }}
 
-      - name: Build Plus Docker image
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+      - name: Check if base images exist
+        id: base_exists
+        run: |
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}; then
+            echo "exists=0" >> $GITHUB_OUTPUT
+          else
+            echo "exists=1" >> $GITHUB_OUTPUT
+          fi
+        if: ${{ ! inputs.forked-workflow }}
+
+      - name: Build Base Container
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}
-          cache-to: type=gha,scope=${{ inputs.image }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},mode=max
+          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
+          target: common
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          platforms: ${{ inputs.platforms }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ inputs.image }}
+            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
+            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
+          secrets: |
+            "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
+            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+        if: ${{ ! inputs.forked-workflow && steps.base_exists.outputs.exists != 0 }}
+
+      - name: Build Plus Docker image
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: ${{ inputs.target }}${{ ! inputs.forked-workflow && '-prebuilt' || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -189,10 +202,10 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ contains(inputs.nap_modules, 'waf') && '-waf' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}
+            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
             IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
-            ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', inputs.nap_modules) || '' }}
-            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ (contains(inputs.target, 'aws') && inputs.nap_modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
@@ -241,7 +254,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
+        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # 0.19.0
         continue-on-error: true
         with:
           image-ref: ${{ steps.trivy-tag.outputs.tag }}
@@ -251,14 +264,14 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3.24.5
+        uses: github/codeql-action/upload-sarif@8f596b4ae3cb3c588a5c46780b86dd53fef16c52 # v3.25.2
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
         if: ${{ inputs.publish-image }}
 
       - name: Upload Scan Results
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         continue-on-error: true
         with:
           name: "trivy-results-${{ inputs.image }}.sarif"

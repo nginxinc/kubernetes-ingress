@@ -45,13 +45,13 @@ jobs:
       image_digest: ${{ steps.build-push.outputs.digest }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
         with:
           ref: ${{ inputs.tag != '' && format('refs/tags/v{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
@@ -63,17 +63,17 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
 
       - name: DockerHub Login
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ inputs.publish-image }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -88,13 +88,13 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: public.ecr.aws
         if: ${{ inputs.publish-image }}
 
       - name: Login to Quay.io
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
@@ -111,12 +111,39 @@ jobs:
         if: ${{ ! inputs.forked-workflow }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
         if: ${{ ! inputs.forked-workflow }}
+
+      - name: Check if base images exist
+        id: base_exists
+        run: |
+          if docker manifest inspect gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ inputs.base-image-md5 }}-${{ inputs.image }}; then
+            echo "exists=0" >> $GITHUB_OUTPUT
+          else
+            echo "exists=1" >> $GITHUB_OUTPUT
+          fi
+        if: ${{ ! inputs.forked-workflow }}
+
+      - name: Build Base Container
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        with:
+          file: build/Dockerfile
+          context: "."
+          cache-from: type=gha,scope=${{ inputs.image }}
+          cache-to: type=gha,scope=${{ inputs.image }},mode=max
+          target: common
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ inputs.base-image-md5 }}-${{ inputs.image }}
+          platforms: ${{ inputs.platforms }}
+          pull: true
+          push: true
+          build-args: |
+            BUILD_OS=${{ inputs.image }}
+            IC_VERSION=${{ inputs.tag }}
+        if: ${{ ! inputs.forked-workflow && steps.base_exists.outputs.exists != 0 }}
 
       - name: Get short tag
         id: tag
@@ -159,7 +186,7 @@ jobs:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Build Docker image
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         id: build-push
         with:
           file: build/Dockerfile
@@ -179,7 +206,7 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ inputs.base-image-md5 }}-${{ inputs.image }}
+            ${{ ! inputs.forked-workflow && format('PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:{0}-{1}', inputs.base-image-md5, inputs.image) || '' }}
             IC_VERSION=${{ (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release-')) && 'CI' || steps.meta.outputs.version }}
 
       - name: Certify Images
@@ -197,7 +224,7 @@ jobs:
         if: ${{ github.ref_type == 'tag' && contains(inputs.image, 'ubi') }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # 0.17.0
+        uses: aquasecurity/trivy-action@d710430a6722f083d3b36b8339ff66b32f22ee55 # 0.19.0
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -206,13 +233,13 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@47b3d888fe66b639e431abf22ebca059152f1eea # v3.24.5
+        uses: github/codeql-action/upload-sarif@8f596b4ae3cb3c588a5c46780b86dd53fef16c52 # v3.25.2
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
 
       - name: Upload Scan Results
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         continue-on-error: true
         with:
           name: "trivy-results-${{ inputs.image }}.sarif"

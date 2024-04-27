@@ -1182,7 +1182,10 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     dep["spec"]["template"]["spec"]["containers"][0]["image"] = cli_arguments["image"]
     dep["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = cli_arguments["image-pull-policy"]
     dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(
-        ["-default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret"]
+        [
+            f"-default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret",
+            f"-enable-telemetry-reporting=false",
+        ]
     )
     if args is not None:
         dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(args)
@@ -1490,6 +1493,20 @@ def replace_service(v1: CoreV1Api, name, namespace, body) -> str:
     return resp.metadata.name
 
 
+def get_events_for_object(v1: CoreV1Api, namespace, object_name) -> []:
+    """
+    Get the list of events of an objectin a namespace.
+
+    :param v1: CoreV1Api
+    :param namespace: namespace
+    :param object_name: object name
+    :return: []
+    """
+    print(f"Get the events for {object_name} in the namespace: {namespace}")
+    events = v1.list_namespaced_event(namespace)
+    return [event for event in events.items if event.involved_object.name == object_name]
+
+
 def get_events(v1: CoreV1Api, namespace) -> []:
     """
     Get the list of events in a namespace.
@@ -1704,3 +1721,30 @@ def get_last_log_entry(kube_apis, pod_name, namespace) -> str:
     # Our log entries end in '\n' which means the final entry when we split on a new line
     # is an empty string. Return the second to last entry instead.
     return logs.split("\n")[-2]
+
+
+def get_resource_metrics(kube_apis, plural, namespace="nginx-ingress") -> str:
+    """
+    :param kube_apis: kube apis
+    :param namespace: the namespace
+    :param plural: the plural of the resource
+    """
+    if plural == "pods":
+        metrics = kube_apis.list_namespaced_custom_object("metrics.k8s.io", "v1beta1", namespace, plural)
+        while metrics["items"] == []:
+            wait_before_test()
+            try:
+                metrics = kube_apis.list_namespaced_custom_object("metrics.k8s.io", "v1beta1", namespace, plural)
+            except ApiException as e:
+                print(f"Error: {e}")
+    elif plural == "nodes":
+        metrics = kube_apis.list_cluster_custom_object("metrics.k8s.io", "v1beta1", plural)
+        while metrics["items"] == []:
+            wait_before_test()
+            try:
+                metrics = kube_apis.list_cluster_custom_object("metrics.k8s.io", "v1beta1", plural)
+            except ApiException as e:
+                print(f"Error: {e}")
+    else:
+        return "Invalid plural specified. Please use 'pods' or 'nodes' as the plural"
+    return metrics["items"]

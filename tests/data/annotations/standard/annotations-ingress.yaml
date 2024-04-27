@@ -3,6 +3,7 @@ kind: Ingress
 metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
+    nginx.org/proxy-set-headers: "X-Forwarded-ABC,ABC"
   name: annotations-ingress
 spec:
   rules:

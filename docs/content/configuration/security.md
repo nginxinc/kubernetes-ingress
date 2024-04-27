@@ -1,15 +1,14 @@
 ---
-title: Security
-description: "NGINX Ingress Controller security recommendations."
-weight: 1500
-doctypes: [""]
+docs: DOCS-597
+doctypes:
+- ''
+title: Security Recommendations
 toc: true
-docs: "DOCS-597"
+weight: 1500
 ---
 
-
-The security of the Ingress Controller is paramount to the success of our Users, however, the Ingress Controller is deployed by a User in their environment, and as such, the User takes responsibility
-for securing a deployment of the Ingress Controller.
+The security of NGINX Ingress Controller is paramount to the success of our Users, however, NGINX Ingress Controller is deployed by a User in their environment, and as such, the User takes responsibility
+for securing a deployment of NGINX Ingress Controller.
 We strongly recommend every User read and understand the following security concerns.
 
 ## Kubernetes
@@ -22,10 +21,10 @@ In addition, the following relating more specifically to Ingress Controller.
 The Ingress Controller is deployed within a Kubernetes environment, this environment must be secured.
 Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users.
 The Ingress Controller requires a service account which is configured using RBAC.
-We strongly recommend using the [RBAC configuration](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.3/deployments/rbac/rbac.yaml) provided in our standard deployment configuration. It is configured with the least amount of privilege required for the Ingress Controller to work.
+We strongly recommend using the [RBAC configuration](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/deployments/rbac/rbac.yaml) provided in our standard deployment configuration. It is configured with the least amount of privilege required for the Ingress Controller to work.
 
-We strongly recommend inspecting the RBAC configuration for [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.3/deployments/rbac/rbac.yaml)
-or for [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.3/charts/nginx-ingress/templates/rbac.yaml) to understand what access the Ingress Controller service account has and to which resources. For example, by default the service account has access to all Secret resources in the cluster.
+We strongly recommend inspecting the RBAC configuration for [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/deployments/rbac/rbac.yaml)
+or for [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/charts/nginx-ingress/templates/clusterrole.yaml) to understand what access the Ingress Controller service account has and to which resources. For example, by default the service account has access to all Secret resources in the cluster.
 
 ### Certificates and Privacy Keys
 

@@ -1,16 +1,15 @@
 ---
+docs: DOCS-592
+doctypes:
+- ''
 title: Advanced Configuration with Snippets
-description: "Snippets allow you to insert raw NGINX config into different contexts of the NGINX configurations that the Ingress Controller generates."
-weight: 1800
-doctypes: [""]
 toc: true
-docs: "DOCS-592"
+weight: 1800
 ---
 
+Snippets allow you to insert raw NGINX config into different contexts of the NGINX configurations that NGINX Ingress Controller generates. Snippets are intended for advanced NGINX users who need more control over the generated NGINX configuration, and can be used in cases where Annotations and ConfigMap entries would not apply. 
 
-Snippets allow you to insert raw NGINX config into different contexts of the NGINX configurations that the Ingress Controller generates. These should be used as a last-resort solution in cases where annotations and ConfigMap entries cannot help. Snippets are intended for advanced NGINX users who need more control over the generated NGINX configuration.
-
-Snippets are also available through the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource). Annotations take precedence over the ConfigMap.
+Snippets are also available through the [ConfigMap]({{< relref "/configuration/global-configuration/configmap-resource.md" >}})
 
 ## Using Snippets
 

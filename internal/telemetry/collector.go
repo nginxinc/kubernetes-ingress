@@ -7,9 +7,13 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+
+	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
@@ -42,20 +46,26 @@ type Collector struct {
 
 // CollectorConfig contains configuration options for a Collector
 type CollectorConfig struct {
-	// K8sClientReader is a kubernetes client.
-	K8sClientReader kubernetes.Interface
-
-	// CustomK8sClientReader is a kubernetes client for our CRDs.
-	// Note: May not need this client.
-	CustomK8sClientReader k8s_nginx.Interface
-
 	// Period to collect telemetry
 	Period time.Duration
 
-	Configurator *configs.Configurator
+	// K8sClientReader is a kubernetes client.
+	K8sClientReader kubernetes.Interface
 
 	// Version represents NIC version.
 	Version string
+
+	// GlobalConfiguration represents the use of a GlobalConfiguration resource.
+	GlobalConfiguration bool
+
+	// Configurator is a struct for configuring NGINX.
+	Configurator *configs.Configurator
+
+	// SecretStore for access to secrets managed by NIC.
+	SecretStore secrets.SecretStore
+
+	// PodNSName represents NIC Pod's NamespacedName.
+	PodNSName types.NamespacedName
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -83,46 +93,135 @@ func (c *Collector) Start(ctx context.Context) {
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	data, err := c.BuildReport(ctx)
+	report, err := c.BuildReport(ctx)
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: %v", err)
 	}
-	err = c.Exporter.Export(ctx, data)
+
+	nicData := Data{
+		tel.Data{
+			ProjectName:         report.Name,
+			ProjectVersion:      c.Config.Version,
+			ProjectArchitecture: runtime.GOARCH,
+			ClusterID:           report.ClusterID,
+			ClusterVersion:      report.ClusterVersion,
+			ClusterPlatform:     report.ClusterPlatform,
+			InstallationID:      report.InstallationID,
+			ClusterNodeCount:    int64(report.ClusterNodeCount),
+		},
+		NICResourceCounts{
+			VirtualServers:      int64(report.VirtualServers),
+			VirtualServerRoutes: int64(report.VirtualServerRoutes),
+			TransportServers:    int64(report.TransportServers),
+			Replicas:            int64(report.NICReplicaCount),
+			Secrets:             int64(report.Secrets),
+			Services:            int64(report.ServiceCount),
+			Ingresses:           int64(report.IngressCount),
+			IngressClasses:      int64(report.IngressClassCount),
+			GlobalConfiguration: report.GlobalConfiguration,
+		},
+	}
+
+	err = c.Exporter.Export(ctx, &nicData)
 	if err != nil {
 		glog.Errorf("Error exporting telemetry data: %v", err)
 	}
-	glog.V(3).Infof("Exported telemetry data: %+v", data)
+	glog.V(3).Infof("Telemetry data collected: %+v", nicData)
 }
 
-// BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
-	pm := ProjectMeta{
-		Name:    "NIC",
-		Version: c.Config.Version,
-	}
-	d := Data{
-		ProjectMeta: pm,
-		Arch:        runtime.GOARCH,
-	}
+// Report holds collected NIC telemetry data. It is the package internal
+// data structure used for decoupling types between the NIC `telemetry`
+// package and the imported `telemetry` exporter.
+type Report struct {
+	Name                string
+	Version             string
+	Architecture        string
+	ClusterID           string
+	ClusterVersion      string
+	ClusterPlatform     string
+	ClusterNodeCount    int
+	InstallationID      string
+	NICReplicaCount     int
+	VirtualServers      int
+	VirtualServerRoutes int
+	ServiceCount        int
+	TransportServers    int
+	Secrets             int
+	IngressCount        int
+	IngressClassCount   int
+	GlobalConfiguration bool
+}
 
-	var err error
+// BuildReport takes context, collects telemetry data and builds the report.
+func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
+	vsCount := 0
+	vsrCount := 0
+	tsCount := 0
+	serviceCount := 0
 
 	if c.Config.Configurator != nil {
-		vsCount, vsrCount := c.Config.Configurator.GetVirtualServerCounts()
-		d.VirtualServers, d.VirtualServerRoutes = int64(vsCount), int64(vsrCount)
-		d.TransportServers = int64(c.Config.Configurator.GetTransportServerCounts())
+		vsCount, vsrCount = c.Config.Configurator.GetVirtualServerCounts()
+		tsCount = c.Config.Configurator.GetTransportServerCounts()
+		serviceCount = c.Config.Configurator.GetServiceCount()
 	}
 
-	if d.NodeCount, err = c.NodeCount(ctx); err != nil {
-		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
-	}
-
-	if d.ClusterID, err = c.ClusterID(ctx); err != nil {
+	clusterID, err := c.ClusterID(ctx)
+	if err != nil {
 		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
 	}
 
-	if d.K8sVersion, err = c.K8sVersion(); err != nil {
+	nodes, err := c.NodeCount(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
+	}
+
+	version, err := c.ClusterVersion()
+	if err != nil {
 		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
 	}
-	return d, err
+
+	platform, err := c.Platform(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Platform: %v", err)
+	}
+
+	replicas, err := c.ReplicaCount(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Replicas: %v", err)
+	}
+
+	installationID, err := c.InstallationID(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
+	}
+
+	secretCount, err := c.Secrets()
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
+	}
+	ingressCount := c.IngressCount()
+	ingressClassCount, err := c.IngressClassCount(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
+	}
+
+	return Report{
+		Name:                "NIC",
+		Version:             c.Config.Version,
+		Architecture:        runtime.GOARCH,
+		ClusterID:           clusterID,
+		ClusterVersion:      version,
+		ClusterPlatform:     platform,
+		ClusterNodeCount:    nodes,
+		InstallationID:      installationID,
+		NICReplicaCount:     replicas,
+		VirtualServers:      vsCount,
+		VirtualServerRoutes: vsrCount,
+		ServiceCount:        serviceCount,
+		TransportServers:    tsCount,
+		Secrets:             secretCount,
+		IngressCount:        ingressCount,
+		IngressClassCount:   ingressClassCount,
+		GlobalConfiguration: c.Config.GlobalConfiguration,
+	}, err
 }

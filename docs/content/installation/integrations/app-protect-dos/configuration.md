@@ -1,14 +1,15 @@
 ---
+docs: DOCS-580
+doctypes:
+- ''
 title: Configuration
-
-description: "This document describes how to configure the NGINX App Protect Dos module."
-weight: 200
-doctypes: [""]
 toc: true
-docs: "DOCS-580"
+weight: 200
 ---
 
-> Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/app-protect-dos).
+This document describes how to configure the NGINX App Protect DoS module.
+
+> Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/ingress-resources/app-protect-dos).
 
 ## App Protect DoS Configuration
 
@@ -158,4 +159,4 @@ Then add a reference in the `DosProtectedResource` to the `APDosLogConf`:
 
 ## Global Configuration
 
-The NGINX Ingress Controller has a set of global configuration parameters that align with those available in the NGINX App Protect DoS module. See [ConfigMap keys]({{< relref "configuration/global-configuration/configmap-resource.md#modules" >}}) for the complete list. The App Protect parameters use the `app-protect-dos*` prefix.
+NGINX Ingress Controller has a set of global configuration parameters that align with those available in the NGINX App Protect DoS module. See [ConfigMap keys]({{< relref "configuration/global-configuration/configmap-resource.md#modules" >}}) for the complete list. The App Protect parameters use the `app-protect-dos*` prefix.

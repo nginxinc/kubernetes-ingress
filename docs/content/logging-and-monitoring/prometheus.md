@@ -1,17 +1,13 @@
 ---
+docs: DOCS-614
+doctypes:
+- concept
 title: Prometheus
-
-description: "The Ingress Controller exposes a number of metrics in the Prometheus format."
-weight: 2000
-doctypes: ["concept"]
-aliases:
-  - /prometheus/
 toc: true
-docs: "DOCS-614"
+weight: 2000
 ---
 
-
-The Ingress Controller exposes a number of metrics in the [Prometheus](https://prometheus.io/) format. Those include NGINX/NGINX Plus and the Ingress Controller metrics.
+NGINX Ingress Controller exposes metrics in the [Prometheus](https://prometheus.io/) format. Those include NGINX/NGINX Plus and the Ingress Controller metrics.
 
 ## Enabling Metrics
 
@@ -43,7 +39,7 @@ If you're using *Helm* to install the Ingress Controller, to enable Prometheus m
 ### Using ServiceMonitor
 
 When deploying with *Helm*, you can deploy a `Service` and `ServiceMonitor` resource using the `prometheus.service.*` and `prometheus.serviceMonitor.*` parameters.
-When these resources are deployed, Prometheus metrics exposed by the NGINX Ingress Controller can be captured and enumerated using a `Prometheus` resource alongside a Prometheus Operator deployment.
+When these resources are deployed, Prometheus metrics exposed by NGINX Ingress Controller can be captured and enumerated using a `Prometheus` resource alongside a Prometheus Operator deployment.
 
 To view metrics captured this way, the following is required:
 * The latest ServiceMonitor CRD from the [prometheus-operator](https://github.com/prometheus-operator/prometheus-operator) repository:

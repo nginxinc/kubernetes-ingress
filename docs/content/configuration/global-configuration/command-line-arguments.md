@@ -1,27 +1,16 @@
 ---
+docs: DOCS-585
+doctypes:
+- ''
 title: Command-line Arguments
-description:
-weight: 1700
-doctypes: [""]
 toc: true
-docs: "DOCS-585"
+weight: 1700
 ---
 
-{{< custom-styles >}}
+NGINX Ingress Controller supports several command-line arguments, which are passed to it based on your installation method:
 
-<style>
-   h3 {
-     border-top: 1px solid #ccc;
-     padding-top:20px;
-   }
-</style>
-
-NGINX Ingress Controller supports several command-line arguments. Setting the arguments depends on how you install NGINX Ingress Controller:
-
-- If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install NGINX Ingress Controller, to set the command-line arguments, modify those manifests accordingly. See the [Installation with Manifests]({{<relref "/installation/installing-nic/installation-with-manifests.md">}}) documentation.
-- If you're using *Helm* to install NGINX Ingress Controller, modify the parameters of the Helm chart that correspond to the command-line arguments. See the [Installation with Helm]({{<relref "/installation/installing-nic/installation-with-helm.md">}}) documentation.
-
-Below we describe the available command-line arguments:
+- If you're using *Kubernetes Manifests* (Deployment or DaemonSet) to install NGINX Ingress Controller, modify the Manifests to set the command-line arguments. Read [Installation with Manifests]({{<relref "/installation/installing-nic/installation-with-manifests.md">}}) for more information.
+- If you're using *Helm* to install NGINX Ingress Controller, modify the parameters of the Helm chart to set the command-line arguments. Read [Installation with Helm]({{<relref "/installation/installing-nic/installation-with-helm.md">}}) documentation for more information.
 
 <a name="cmdoption-enable-snippets"></a>
 
@@ -535,3 +524,39 @@ Used to activate or deactivate lazy loading for SSL Certificates.
 The default value is `true`.
 
 <a name="cmdoption-ssl-dynamic-reload"></a>
+
+### -weight-changes-dynamic-reload
+
+Enables the ability to change the weight distribution of two-way split clients without reloading NGINX.
+
+Requires [-nginx-plus](#cmdoption-nginx-plus).
+
+Using this feature may require increasing `map_hash_bucket_size`, `map_hash_max_size`, `variable_hash_bucket_size`, and `variable_hash_max_size` in the ConfigMap based on the number of two-way splits.
+
+The default value is `false`.
+
+- If the argument is set, but `nginx-plus` is set to false, NGINX Ingress Controller will ignore the flag.
+
+<a name="cmdoption-weight-changes-dynamic-reload"></a>
+
+### -enable-telemetry-reporting
+
+Enable gathering and reporting of software telemetry.
+
+The default value is `true`.
+
+<a name="cmdoption-enable-telemetry-reporting"></a>
+
+### -agent
+
+Enable NGINX Agent which can used with `-enable-app-protect` to send events to Security Monitoring.
+
+The default value is `false`.
+
+<a name="cmdoption-agent"></a>
+
+### -agent-instance-group
+
+Specify the instance group name to use for the NGINX Ingress Controller deployment when using `-agent`.
+
+<a name="cmdoption-agent-instance-group"></a>

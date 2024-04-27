@@ -30,9 +30,10 @@ jobs:
       versions: ${{ steps.versions.outputs.matrix }}
       go-md5: ${{ steps.md5.outputs.go_code_md5 }}
       binary-cache-hit: ${{ steps.binary-cache.outputs.cache-hit }}
+      base-image-md5: ${{ steps.md5.outputs.docker_md5 }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
         with:
           fetch-depth: 0
 
@@ -43,7 +44,7 @@ jobs:
           echo "tag=${tag//v}" >> $GITHUB_OUTPUT
 
       - name: Checkout Repository at ${{ steps.kic.outputs.tag }}
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
         with:
           ref: refs/tags/v${{ steps.kic.outputs.tag }}
 
@@ -57,11 +58,13 @@ jobs:
 
       - name: Set Go MD5sums
         id: md5
-        run: echo go_code_md5=$(find . -type f \( -name "*.go" -o -name go.mod -o -name go.sum -o -name "*.tmpl" \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }') >> $GITHUB_OUTPUT
+        run: |
+          ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ steps.md5.outputs.go_code_md5 }}
@@ -104,7 +107,7 @@ jobs:
     needs: [check, variables]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
         with:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
@@ -129,7 +132,7 @@ jobs:
         if: ${{ needs.variables.outputs.binary-cache-hit != 'true' }}
 
       - name: Store Artifacts in Cache
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.variables.outputs.go-md5 }}
@@ -144,6 +147,7 @@ jobs:
       image: debian
       tag: ${{ needs.variables.outputs.kic-tag }}
       go-md5: ${{ needs.variables.outputs.go-md5 }}
+      base-image-md5: ${{ needs.variables.outputs.base-image-md5 }}
     permissions:
       contents: read
       actions: read
@@ -162,6 +166,7 @@ jobs:
       image: alpine
       tag: ${{ needs.variables.outputs.kic-tag }}
       go-md5: ${{ needs.variables.outputs.go-md5 }}
+      base-image-md5: ${{ needs.variables.outputs.base-image-md5 }}
     permissions:
       contents: read
       actions: read
@@ -180,6 +185,7 @@ jobs:
       image: ubi
       tag: ${{ needs.variables.outputs.kic-tag }}
       go-md5: ${{ needs.variables.outputs.go-md5 }}
+      base-image-md5: ${{ needs.variables.outputs.base-image-md5 }}
     permissions:
       contents: read
       actions: read

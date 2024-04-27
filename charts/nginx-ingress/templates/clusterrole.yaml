@@ -56,11 +56,19 @@ rules:
   verbs:
   - list
 - apiGroups:
+  - "apps"
+  resources:
+  - replicasets
+  - daemonsets
+  verbs:
+  - get
+- apiGroups:
   - networking.k8s.io
   resources:
   - ingressclasses
   verbs:
   - get
+  - list
 {{- if .Values.controller.reportIngressStatus.enable }}
 - apiGroups:
   - networking.k8s.io

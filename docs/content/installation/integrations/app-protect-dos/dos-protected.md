@@ -1,16 +1,17 @@
 ---
+docs: DOCS-581
+doctypes:
+- ''
 title: DoS Protected Resource
-
-description: "Dos Protected Resource Specification"
-weight: 300
-doctypes: [""]
 toc: true
-docs: "DOCS-581"
+weight: 300
 ---
 
-> Note: This feature is only available in NGINX Plus with AppProtectDos.
+NGINX App Protect DoS Protected Resource Specification
 
-> Note: The feature is implemented using the NGINX Plus [NGINX App Protect Dos Module](/nginx-app-protect-dos/deployment-guide/learn-about-deployment/).
+> Note: This feature is only available in NGINX Plus with App Protect DoS.
+
+> Note: The feature is implemented using the NGINX Plus [NGINX App Protect DoS Module](/nginx-app-protect-dos/deployment-guide/learn-about-deployment/).
 
 ## DoS Protected Resource Specification
 

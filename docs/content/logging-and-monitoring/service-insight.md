@@ -1,21 +1,17 @@
 ---
+docs: DOCS-1180
+doctypes:
+- ''
 title: Service Insight
-
-description: "The Ingress Controller exposes the Service Insight endpoint."
-weight: 2100
-doctypes: [""]
-aliases:
-    - /service-insight/
 toc: true
-docs: "DOCS-1180"
+weight: 2100
 ---
 
-
 The Service Insight feature is available only for F5 NGINX Plus. The F5 NGINX Ingress Controller exposes an endpoint which provides host statistics for services exposed using the VirtualServer (VS) and TransportServer (TS) resources.
+
 It exposes data in JSON format and returns HTTP status codes.
-The response body holds information about the total, down and the unhealthy number of
-upstream pods associated with the configured hostname.
-Returned HTTP codes indicate the health of the service.
+
+The response body holds information about the total, down and the unhealthy number of upstream pods associated with the configured hostname. Returned HTTP codes indicate the health of the service.
 
 The service is indicated as not healthy (HTTP response code different than 200 OK) if all upstreams (pods) are determined unhealthy by NGINX Plus.
 The service is healthy if at least one upstream pod is healthy as determined by NGINX Plus. In this case, the endpoint returns HTTP code 200 OK.

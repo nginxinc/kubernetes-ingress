@@ -1,0 +1,22 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: backends
+spec:
+  host: virtual-server-route.example.com
+  upstreams:
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  subroutes:
+  - path: "/backends/backends"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
