@@ -1244,6 +1244,11 @@ func (in *TransportServerUpstream) DeepCopyInto(out *TransportServerUpstream) {
 		*out = new(TransportServerHealthCheck)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.BackupPort != nil {
+		in, out := &in.BackupPort, &out.BackupPort
+		*out = new(uint16)
+		**out = **in
+	}
 	return
 }
 
@@ -1306,6 +1311,11 @@ func (in *Upstream) DeepCopyInto(out *Upstream) {
 	if in.SessionCookie != nil {
 		in, out := &in.SessionCookie, &out.SessionCookie
 		*out = new(SessionCookie)
+		**out = **in
+	}
+	if in.BackupPort != nil {
+		in, out := &in.BackupPort, &out.BackupPort
+		*out = new(uint16)
 		**out = **in
 	}
 	return

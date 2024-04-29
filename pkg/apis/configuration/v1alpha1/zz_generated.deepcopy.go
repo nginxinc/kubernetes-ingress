@@ -577,6 +577,16 @@ func (in *TransportServerUpstream) DeepCopyInto(out *TransportServerUpstream) {
 		*out = new(TransportServerHealthCheck)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Backup != nil {
+		in, out := &in.Backup, &out.Backup
+		*out = new(string)
+		**out = **in
+	}
+	if in.BackupPort != nil {
+		in, out := &in.BackupPort, &out.BackupPort
+		*out = new(int)
+		**out = **in
+	}
 	return
 }
 
