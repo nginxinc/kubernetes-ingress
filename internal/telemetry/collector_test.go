@@ -250,6 +250,94 @@ func TestCollectClusterVersion(t *testing.T) {
 	}
 }
 
+func TestCollectMultiplePolicies(t *testing.T) {
+	t.Parallel()
+
+	fn := func() []*conf_v1.Policy {
+		return []*conf_v1.Policy{&policy1, &policy2, &policy3}
+	}
+
+	cfg := telemetry.CollectorConfig{
+		Policies: fn,
+	}
+	collector, err := telemetry.NewCollector(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := collector.PolicyCount()
+
+	want := 3
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
+
+func TestCollectSinglePolicy(t *testing.T) {
+	t.Parallel()
+
+	fn := func() []*conf_v1.Policy {
+		return []*conf_v1.Policy{&policy1}
+	}
+
+	cfg := telemetry.CollectorConfig{
+		Policies: fn,
+	}
+	collector, err := telemetry.NewCollector(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := collector.PolicyCount()
+
+	want := 1
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
+
+func TestCollectNoPolicies(t *testing.T) {
+	t.Parallel()
+
+	fn := func() []*conf_v1.Policy {
+		return []*conf_v1.Policy{}
+	}
+
+	cfg := telemetry.CollectorConfig{
+		Policies: fn,
+	}
+	collector, err := telemetry.NewCollector(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := collector.PolicyCount()
+
+	want := 0
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
+
+func TestCollectPolicyWithNilFunction(t *testing.T) {
+	t.Parallel()
+
+	cfg := telemetry.CollectorConfig{
+		Policies: nil,
+	}
+	collector, err := telemetry.NewCollector(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := collector.PolicyCount()
+
+	want := 0
+
+	if want != got {
+		t.Errorf("want %d, got %d", want, got)
+	}
+}
+
 func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 	t.Parallel()
 
@@ -1578,3 +1666,43 @@ var telemetryNICData = tel.Data{
 	ClusterNodeCount:    1,
 	ClusterPlatform:     "other",
 }
+
+// Policies used for testing for PolicyCount method
+var (
+	policy1 = conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy1",
+			Namespace: "default",
+		},
+		Spec:   conf_v1.PolicySpec{},
+		Status: conf_v1.PolicyStatus{},
+	}
+	policy2 = conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy2",
+			Namespace: "default",
+		},
+		Spec:   conf_v1.PolicySpec{},
+		Status: conf_v1.PolicyStatus{},
+	}
+	policy3 = conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec:   conf_v1.PolicySpec{},
+		Status: conf_v1.PolicyStatus{},
+	}
+)
