@@ -4368,10 +4368,6 @@ func (lbc *LoadBalancerController) addInternalRouteServer() {
 }
 
 func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *conf_v1.VirtualServer, vsNew *conf_v1.VirtualServer) {
-	if lbc.haltIfVSConfigInvalid(vsNew) {
-		return
-	}
-
 	var weightUpdates []configs.WeightUpdate
 	var splitClientsIndex int
 	variableNamer := configs.NewVSVariableNamer(vsNew)
@@ -4381,7 +4377,7 @@ func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *co
 		for j, matchNew := range routeNew.Matches {
 			matchOld := routeOld.Matches[j]
 			if len(matchNew.Splits) == 2 {
-				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight && matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
+				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight || matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
 					weightUpdates = append(weightUpdates, configs.WeightUpdate{
 						Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
 						Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
@@ -4394,7 +4390,7 @@ func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *co
 			}
 		}
 		if len(routeNew.Splits) == 2 {
-			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight && routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
+			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight || routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
 				weightUpdates = append(weightUpdates, configs.WeightUpdate{
 					Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
 					Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
@@ -4407,14 +4403,39 @@ func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *co
 			splitClientsIndex++
 		}
 	}
+
+	if len(weightUpdates) == 0 {
+		return
+	}
+
+	if vsOld.Status.State == conf_v1.StateInvalid {
+		lbc.AddSyncQueue(vsNew)
+		return
+	}
+
+	if lbc.haltIfVSConfigInvalid(vsNew) {
+		return
+	}
+
 	for _, weight := range weightUpdates {
 		lbc.configurator.UpsertSplitClientsKeyVal(weight.Zone, weight.Key, weight.Value)
 	}
 }
 
 func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *conf_v1.VirtualServerRoute, vsrNew *conf_v1.VirtualServerRoute) {
+	if !lbc.vsrHasWeightChanges(vsrOld, vsrNew) {
+		return
+	}
+
+	if vsrOld.Status.State == conf_v1.StateInvalid {
+		changes, problems := lbc.configuration.AddOrUpdateVirtualServerRoute(vsrNew)
+		lbc.processProblems(problems)
+		lbc.processChanges(changes)
+		return
+	}
+
 	halt, vsEx := lbc.haltIfVSRConfigInvalid(vsrNew)
-	if halt {
+	if vsEx == nil {
 		return
 	}
 
@@ -4429,7 +4450,7 @@ func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *
 		for j, matchNew := range routeNew.Matches {
 			matchOld := routeOld.Matches[j]
 			if len(matchNew.Splits) == 2 {
-				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight && matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
+				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight || matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
 					weightUpdates = append(weightUpdates, configs.WeightUpdate{
 						Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
 						Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
@@ -4442,7 +4463,7 @@ func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *
 			}
 		}
 		if len(routeNew.Splits) == 2 {
-			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight && routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
+			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight || routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
 				weightUpdates = append(weightUpdates, configs.WeightUpdate{
 					Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
 					Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
@@ -4454,6 +4475,11 @@ func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *
 			splitClientsIndex++
 		}
 	}
+
+	if halt {
+		return
+	}
+
 	for _, weight := range weightUpdates {
 		lbc.configurator.UpsertSplitClientsKeyVal(weight.Zone, weight.Key, weight.Value)
 	}
@@ -4515,9 +4541,27 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 
 	changes, problems := lbc.configuration.rebuildHosts()
 
+	if validationError != nil {
+
+		kind := getResourceKeyWithKind(virtualServerKind, &vsNew.ObjectMeta)
+		for i := range changes {
+			k := changes[i].Resource.GetKeyWithKind()
+
+			if k == kind {
+				changes[i].Error = validationError.Error()
+			}
+		}
+		p := ConfigurationProblem{
+			Object:  vsNew,
+			IsError: true,
+			Reason:  "Rejected",
+			Message: fmt.Sprintf("VirtualServer %s was rejected with error: %s", getResourceKey(&vsNew.ObjectMeta), validationError.Error()),
+		}
+		problems = append(problems, p)
+	}
+
 	if len(problems) > 0 {
 		lbc.processProblems(problems)
-		return true
 	}
 
 	if len(changes) == 0 {
@@ -4530,11 +4574,34 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 			case *VirtualServerConfiguration:
 				lbc.updateVirtualServerStatusAndEvents(impl, configs.Warnings{}, nil)
 			}
+		} else if c.Op == Delete {
+			switch impl := c.Resource.(type) {
+			case *VirtualServerConfiguration:
+				key := getResourceKey(&impl.VirtualServer.ObjectMeta)
+
+				deleteErr := lbc.configurator.DeleteVirtualServer(key, false)
+				if deleteErr != nil {
+					glog.Errorf("Error when deleting configuration for VirtualServer %v: %v", key, deleteErr)
+				}
+
+				var vsExists bool
+				var err error
+
+				ns, _, _ := cache.SplitMetaNamespaceKey(key)
+				_, vsExists, err = lbc.getNamespacedInformer(ns).virtualServerLister.GetByKey(key)
+				if err != nil {
+					glog.Errorf("Error when getting VirtualServer for %v: %v", key, err)
+				}
+
+				if vsExists {
+					lbc.UpdateVirtualServerStatusAndEventsOnDelete(impl, c.Error, deleteErr)
+				}
+			}
 		}
 	}
 
 	lbc.configuration.virtualServers[key] = vsNew
-	return false
+	return len(problems) > 0
 }
 
 func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.VirtualServerRoute) (bool, *configs.VirtualServerEx) {
@@ -4545,17 +4612,13 @@ func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.Virtua
 
 	validationError := lbc.configuration.virtualServerValidator.ValidateVirtualServerRoute(vsrNew)
 	if validationError != nil {
-		delete(lbc.configuration.virtualServerRoutes, key)
+		lbc.AddSyncQueue(vsrNew)
+		return true, nil
 	} else {
 		lbc.configuration.virtualServerRoutes[key] = vsrNew
 	}
 
-	changes, problems := lbc.configuration.rebuildHosts()
-
-	if len(problems) > 0 {
-		lbc.processProblems(problems)
-		return true, nil
-	}
+	changes, _ := lbc.configuration.rebuildHosts()
 
 	if len(changes) == 0 {
 		return true, nil
@@ -4578,4 +4641,20 @@ func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.Virtua
 
 	lbc.configuration.virtualServerRoutes[key] = vsrNew
 	return false, vsEx
+}
+
+func (lbc *LoadBalancerController) vsrHasWeightChanges(vsrOld *conf_v1.VirtualServerRoute, vsrNew *conf_v1.VirtualServerRoute) bool {
+	for i, routeNew := range vsrNew.Spec.Subroutes {
+		routeOld := vsrOld.Spec.Subroutes[i]
+		for j, matchNew := range routeNew.Matches {
+			matchOld := routeOld.Matches[j]
+			if len(matchNew.Splits) == 2 && (matchNew.Splits[0].Weight != matchOld.Splits[0].Weight || matchNew.Splits[1].Weight != matchOld.Splits[1].Weight) {
+				return true
+			}
+		}
+		if len(routeNew.Splits) == 2 && (routeNew.Splits[0].Weight != routeOld.Splits[0].Weight || routeNew.Splits[1].Weight != routeOld.Splits[1].Weight) {
+			return true
+		}
+	}
+	return false
 }
