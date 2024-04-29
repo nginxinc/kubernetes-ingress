@@ -81,6 +81,8 @@ type NICResourceCounts struct {
 	Ingresses int64
 	// IngressClasses is the number of Ingress Classes.
 	IngressClasses int64
+	// Policies is the number of policy resources managed by NGINX Ingress Controller
+	Policies int64
 	// GlobalConfiguration indicates if a GlobalConfiguration resource is used.
 	GlobalConfiguration bool
 }
