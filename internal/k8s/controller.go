@@ -356,19 +356,17 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			Endpoint: input.TelemetryReportingEndpoint,
 		}
 
-		glog.V(3).Infof("Telemetry Endpoint: %s", input.TelemetryReportingEndpoint)
-
 		exporter, err := telemetry.NewExporter(exporterCfg)
 		if err != nil {
 			glog.Fatalf("failed to initialize telemetry exporter: %v", err)
 		}
 		collectorConfig := telemetry.CollectorConfig{
-			K8sClientReader:       input.KubeClient,
-			CustomK8sClientReader: input.ConfClient,
-			Period:                24 * time.Hour,
-			Configurator:          lbc.configurator,
-			SecretStore:           lbc.secretStore,
-			Version:               input.NICVersion,
+			Period:              24 * time.Hour,
+			K8sClientReader:     input.KubeClient,
+			Version:             input.NICVersion,
+			GlobalConfiguration: lbc.watchGlobalConfiguration,
+			Configurator:        lbc.configurator,
+			SecretStore:         lbc.secretStore,
 			PodNSName: types.NamespacedName{
 				Namespace: os.Getenv("POD_NAMESPACE"),
 				Name:      os.Getenv("POD_NAME"),
@@ -2972,6 +2970,14 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 		}
 
 		if svc != nil && !external && hasUseClusterIP {
+			if ing.Spec.DefaultBackend.Service.Port.Number == 0 {
+				for _, port := range svc.Spec.Ports {
+					if port.Name == ing.Spec.DefaultBackend.Service.Port.Name {
+						ing.Spec.DefaultBackend.Service.Port.Number = port.Port
+						break
+					}
+				}
+			}
 			endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, ing.Spec.DefaultBackend.Service.Port.Number)}
 		} else {
 			endps = getIPAddressesFromEndpoints(podEndps)
@@ -3032,6 +3038,14 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			}
 
 			if svc != nil && !external && hasUseClusterIP {
+				if path.Backend.Service.Port.Number == 0 {
+					for _, port := range svc.Spec.Ports {
+						if port.Name == path.Backend.Service.Port.Name {
+							path.Backend.Service.Port.Number = port.Port
+							break
+						}
+					}
+				}
 				endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, path.Backend.Service.Port.Number)}
 			} else {
 				endps = getIPAddressesFromEndpoints(podEndps)

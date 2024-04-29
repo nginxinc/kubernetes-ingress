@@ -7,7 +7,9 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	appsV1 "k8s.io/api/apps/v1"
 	apiCoreV1 "k8s.io/api/core/v1"
+	networkingV1 "k8s.io/api/networking/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -911,5 +913,28 @@ var (
 		},
 		Type: apiCoreV1.SecretTypeTLS,
 		Data: map[string][]byte{},
+	}
+)
+
+// IngressClass for testing.
+var (
+	ingressClassList = &networkingV1.IngressClassList{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "List",
+			APIVersion: "v1",
+		},
+		ListMeta: metaV1.ListMeta{},
+		Items: []networkingV1.IngressClass{
+			{
+				TypeMeta: metaV1.TypeMeta{
+					Kind:       "IngressClass",
+					APIVersion: "networking.k8s.io/v1",
+				},
+				ObjectMeta: metaV1.ObjectMeta{},
+				Spec: networkingV1.IngressClassSpec{
+					Controller: "nginx.org/ingress-controller",
+				},
+			},
+		},
 	}
 )
