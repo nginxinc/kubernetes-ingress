@@ -33,7 +33,7 @@ jobs:
       base-image-md5: ${{ steps.md5.outputs.docker_md5 }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           fetch-depth: 0
 
@@ -44,7 +44,7 @@ jobs:
           echo "tag=${tag//v}" >> $GITHUB_OUTPUT
 
       - name: Checkout Repository at ${{ steps.kic.outputs.tag }}
-        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           ref: refs/tags/v${{ steps.kic.outputs.tag }}
 
@@ -107,7 +107,7 @@ jobs:
     needs: [check, variables]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}

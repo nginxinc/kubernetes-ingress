@@ -589,6 +589,12 @@ func TestGenerateProxySetHeadersForInvalidHeadersForErrorsInMaster(t *testing.T)
 			},
 		},
 		{
+			name: "Header Value With invalid Characters",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded ABC$",
+			},
+		},
+		{
 			name: "Headers with invalid Format",
 			annotations: map[string]string{
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC test",
