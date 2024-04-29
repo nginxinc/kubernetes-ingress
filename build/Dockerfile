@@ -168,7 +168,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for Debian with NGINX Plus and App Protect WAF/DoS #############################################
-FROM debian:12-slim@sha256:155280b00ee0133250f7159b567a07d7cd03b1645714c3a7458b2287b0ca83cb as debian-plus-nap
+FROM debian:11-slim@sha256:715354035496a48b9c4c8f146a6f751de70449913773038776eb1f3d01c93989 as debian-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
