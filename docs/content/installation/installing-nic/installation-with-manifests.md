@@ -37,6 +37,10 @@ For example, if you want to use version 3.5.0, the command would be `git clone h
 
 This guide assumes you are using the latest release.
 
+### App Protect DoS
+
+To use App Protect DoS, install the App Protect DoS Arbitrator using the provided manifests in the same namespace as the NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
+
 ---
 
 ## Set up role-based access control (RBAC) {#configure-rbac}
