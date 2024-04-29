@@ -58,7 +58,7 @@ func (c *Collector) ClusterID(ctx context.Context) (string, error) {
 	return string(cluster.UID), nil
 }
 
-// ClusterVersion returns a string respresenting the K8s version.
+// ClusterVersion returns a string representing the K8s version.
 // It returns an error if the underlying k8s API client errors.
 func (c *Collector) ClusterVersion() (string, error) {
 	sv, err := c.Config.K8sClientReader.Discovery().ServerVersion()
@@ -143,6 +143,14 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 		return 0, err
 	}
 	return len(ic.Items), nil
+}
+
+// PolicyCount returns number of Policies watched by NIC.
+func (c *Collector) PolicyCount() int {
+	if c.Config.Policies == nil {
+		return 0
+	}
+	return len(c.Config.Policies())
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

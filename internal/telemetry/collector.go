@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"time"
 
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
@@ -66,6 +68,9 @@ type CollectorConfig struct {
 
 	// PodNSName represents NIC Pod's NamespacedName.
 	PodNSName types.NamespacedName
+
+	// Policies gets all policies
+	Policies func() []*conf_v1.Policy
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -118,6 +123,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			Services:            int64(report.ServiceCount),
 			Ingresses:           int64(report.IngressCount),
 			IngressClasses:      int64(report.IngressClassCount),
+			Policies:            int64(report.PolicyCount),
 			GlobalConfiguration: report.GlobalConfiguration,
 		},
 	}
@@ -149,6 +155,7 @@ type Report struct {
 	Secrets             int
 	IngressCount        int
 	IngressClassCount   int
+	PolicyCount         int
 	GlobalConfiguration bool
 }
 
@@ -205,6 +212,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
 	}
 
+	policyCount := c.PolicyCount()
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -222,6 +231,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		Secrets:             secretCount,
 		IngressCount:        ingressCount,
 		IngressClassCount:   ingressClassCount,
+		PolicyCount:         policyCount,
 		GlobalConfiguration: c.Config.GlobalConfiguration,
 	}, err
 }
