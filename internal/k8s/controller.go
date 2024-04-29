@@ -371,7 +371,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 				Namespace: os.Getenv("POD_NAMESPACE"),
 				Name:      os.Getenv("POD_NAME"),
 			},
-			PolicyCount: lbc.getAllPolicies,
+			Policies: lbc.getAllPolicies,
 		}
 		collector, err := telemetry.NewCollector(
 			collectorConfig,

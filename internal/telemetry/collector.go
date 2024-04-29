@@ -69,8 +69,8 @@ type CollectorConfig struct {
 	// PodNSName represents NIC Pod's NamespacedName.
 	PodNSName types.NamespacedName
 
-	// PolicyCount gets all policies
-	PolicyCount func() []*conf_v1.Policy
+	// Policies gets all policies
+	Policies func() []*conf_v1.Policy
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.

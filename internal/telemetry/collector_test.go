@@ -258,7 +258,7 @@ func TestCollectMultiplePolicies(t *testing.T) {
 	}
 
 	cfg := telemetry.CollectorConfig{
-		PolicyCount: fn,
+		Policies: fn,
 	}
 	collector, err := telemetry.NewCollector(cfg)
 	if err != nil {
@@ -281,7 +281,7 @@ func TestCollectSinglePolicy(t *testing.T) {
 	}
 
 	cfg := telemetry.CollectorConfig{
-		PolicyCount: fn,
+		Policies: fn,
 	}
 	collector, err := telemetry.NewCollector(cfg)
 	if err != nil {
@@ -304,7 +304,7 @@ func TestCollectNoPolicies(t *testing.T) {
 	}
 
 	cfg := telemetry.CollectorConfig{
-		PolicyCount: fn,
+		Policies: fn,
 	}
 	collector, err := telemetry.NewCollector(cfg)
 	if err != nil {
@@ -323,7 +323,7 @@ func TestCollectPolicyWithNilFunction(t *testing.T) {
 	t.Parallel()
 
 	cfg := telemetry.CollectorConfig{
-		PolicyCount: nil,
+		Policies: nil,
 	}
 	collector, err := telemetry.NewCollector(cfg)
 	if err != nil {
@@ -1623,18 +1623,6 @@ func newSecretStore(t *testing.T) *secrets.LocalSecretStore {
 	configurator := newConfigurator(t)
 	return secrets.NewLocalSecretStore(configurator)
 }
-
-//
-//func newLoadBalancerController(t *testing.T) *k8s.LoadBalancerController {
-//	t.Helper()
-//
-//	lbc := k8s.NewLoadBalancerController(k8s.NewLoadBalancerControllerInput{
-//		NginxConfigurator: newConfigurator(t),
-//		IsNginxPlus:       false,
-//	})
-//
-//	return lbc
-//}
 
 // newTestClientset takes k8s runtime objects and returns a k8s fake clientset.
 // The clientset is configured to return kubernetes version v1.29.2.
