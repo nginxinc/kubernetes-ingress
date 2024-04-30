@@ -106,7 +106,7 @@ class TestVSRCannedResponses:
         assert (
             resp.headers["content-type"] == "user-type"
             and resp_content == "line1\nline2"
-            and resp.headers['coffee-test-header'] == "espresso"
+            and resp.headers["coffee-test-header"] == "espresso"
         )
 
         new_events_ns = get_events(kube_apis.v1, v_s_route_setup.namespace)
