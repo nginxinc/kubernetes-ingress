@@ -11,3 +11,4 @@ spec:
         code: "301"
         type: 100
         body: True
+        headers: "String"
