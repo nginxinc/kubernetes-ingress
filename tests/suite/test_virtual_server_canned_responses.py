@@ -77,7 +77,7 @@ class TestVSCannedResponse:
         assert (
             resp.headers["content-type"] == "text/plain"
             and resp_content == "line1\nline2\nline3\n"
-            and resp.headers['coffee-test-header'] == "espresso"
+            and resp.headers["coffee-test-header"] == "espresso"
         )
 
     def test_update(self, kube_apis, crd_ingress_controller, virtual_server_setup):
@@ -101,7 +101,7 @@ class TestVSCannedResponse:
         assert (
             resp.headers["content-type"] == "user-type"
             and resp_content == "line1\nline2"
-            and resp.headers['coffee-test-header'] == "latte"
+            and resp.headers["coffee-test-header"] == "latte"
         )
 
         vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
