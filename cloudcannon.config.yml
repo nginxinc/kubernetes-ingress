@@ -572,6 +572,43 @@ _snippets:
           type: string
         - editor_key: product
           type: string
+_editables:
+  text:
+    allow_custom_markup: true
+    remove_custom_markup: false
+    bold: true
+    copyformatting: true
+    italic: true
+    link: true
+    redo: true
+    removeformat: true
+    strike: true
+    subscript: true
+    superscript: true
+    underline: true
+    undo: true
+  content:
+    allow_custom_markup: true
+    remove_custom_markup: false
+    bold: true
+    copyformatting: true
+    italic: true
+    link: true
+    redo: true
+    removeformat: true
+    strike: true
+    subscript: true
+    superscript: true
+    underline: true
+    undo: true
+    code: true
+    blockquote: true
+    bulletedlist: true
+    numberedlist: true  
+    embed: true
+    format: p h1 h2 h3 h4 h5 h6
+    table: true
+    snippet: true
 data_config: {}
 timezone: Etc/UTC
 commit_templates:
