@@ -31,10 +31,10 @@ We value community input and would love to see you at our next community call. A
 
 | **Community Call Dates**|
 | -------------- |
-| **2024-05-06** |
 | **2024-05-20** |
 | **2024-06-03** |
 | **2024-06-17** |
+| **2024-06-31** |
 
 ---
 
