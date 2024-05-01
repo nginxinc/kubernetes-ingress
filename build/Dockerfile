@@ -11,7 +11,7 @@ ARG NGINX_AGENT=false
 FROM opentracing/nginx-opentracing:nginx-1.26.0@sha256:d4cf6abce9be18707c2c47a858e2869394fa51636f41c13e706794028439cd60 as opentracing-lib
 FROM opentracing/nginx-opentracing:nginx-1.26.0-alpine@sha256:00a2a88cf8d433a10e22158f5ba7acffa4989242c677f7e9e2a4d7fcce6b3888 as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 as alpine-fips-3.17
-FROM ghcr.io/nginxinc/alpine-fips:0.1.2-alpine3.19@sha256:67595f52053f328fd731bf493d8dc72c1fd956e5f1a2f9a579cc78c5f5f50daa as alpine-fips-3.19
+FROM ghcr.io/nginxinc/alpine-fips:0.2.0-alpine3.19@sha256:1744ae3a8e795daf771f3f7df33b83160981545abb1f1597338e2769d06aa1cc as alpine-fips-3.19
 
 
 ############################################# Base image for Alpine #############################################
