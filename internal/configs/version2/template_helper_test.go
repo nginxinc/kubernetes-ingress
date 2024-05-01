@@ -274,6 +274,7 @@ func newContainsTemplate(t *testing.T) *template.Template {
 	}
 	return tmpl
 }
+
 func TestReplaceAll(t *testing.T) {
 	t.Parallel()
 
