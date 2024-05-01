@@ -29,12 +29,13 @@ We value community input and would love to see you at our next community call. A
 **Slack**: Join our channel `#nginx-ingress-controller` on the [NGINX Community Slack](https://nginxcommunity.slack.com/channels/nginx-ingress-controller) for updates and discussions.  
 **When**: 15:00 GMT / [Convert to your timezone](https://dateful.com/convert/gmt?t=15), every other Monday.
 
-| **Community Call Dates**|
-| -------------- |
-| **2024-05-06** |
-| **2024-05-20** |
-| **2024-06-03** |
-| **2024-06-17** |
+| **Community Call Dates** | Notes                        |
+| ------------------------ | ---------------------------- |
+| **2024-05-07**           | On Tuesday, just this once   |
+| **2024-05-20**           |                              |
+| **2024-06-03**           |                              |
+| **2024-06-17**           |                              |
+| **2024-06-31**           |                              |
 
 ---
 
