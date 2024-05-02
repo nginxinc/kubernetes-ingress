@@ -27,12 +27,17 @@ if [[ ! -d ${CODEGEN_PKG} ]]; then
   go mod download
 fi
 
-# generate the code with:
-# --output-base    because this script should also be able to run inside the vendor dir of
-#                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
-#                  instead of the $GOPATH directly. For normal projects this can be dropped.
-bash "${CODEGEN_PKG}"/generate-groups.sh "deepcopy,client,informer,lister" \
-  github.com/nginxinc/kubernetes-ingress/pkg/client github.com/nginxinc/kubernetes-ingress/pkg/apis \
-  "configuration:v1alpha1,v1 dos:v1beta1 externaldns:v1" \
-  --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
-  --go-header-file "${SCRIPT_ROOT}"/hack/boilerplate.go.txt
+source "${CODEGEN_PKG}/kube_codegen.sh"
+
+THIS_PKG="github.com/nginxinc/kubernetes-ingress"
+
+kube::codegen::gen_helpers \
+    --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
+    "${SCRIPT_ROOT}/pkg/apis"
+
+kube::codegen::gen_client \
+    --with-watch \
+    --output-dir "${SCRIPT_ROOT}/pkg/client" \
+    --output-pkg "${THIS_PKG}/pkg/client" \
+    --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
+    "${SCRIPT_ROOT}/pkg/apis"
