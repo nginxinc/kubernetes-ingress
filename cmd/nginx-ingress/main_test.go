@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
@@ -44,8 +45,13 @@ func TestGetNginxVersionInfo(t *testing.T) {
 	mc := collectors.NewLocalManagerMetricsCollector(constLabels)
 	nginxManager, _ := createNginxManager(mc)
 	nginxInfo, _ := getNginxVersionInfo(nginxManager)
+
 	if nginxInfo.String() == "" {
 		t.Errorf("Error when getting nginx version, empty string")
+	}
+
+	if !nginxInfo.IsPlus {
+		t.Errorf("Error version is not nginx-plus")
 	}
 }
 
@@ -84,17 +90,6 @@ func TestGetAppProtectVersionInfo(t *testing.T) {
 			t.Errorf("Error reading AppProtect Version file: %v", err)
 		}
 	}
-	// Test for file reader returning an empty version
-	//{
-	//	mockFileHandle := &MockFileHandle{
-	//		FileContent: []byte("\n"),
-	//		ReadErr:     nil,
-	//	}
-	//	version, _ := getAppProtectVersionInfo(mockFileHandle)
-	//	if version == "" {
-	//		t.Errorf("Error with AppProtect Version, is empty")
-	//	}
-	//}
 }
 
 func TestCreateGlobalConfigurationValidator(t *testing.T) {
@@ -387,16 +382,12 @@ func expectedNs(watchNsLabelList string, ns []string) bool {
 	wNs := strings.Split(watchNsLabelList, ",")
 	resultOk := false
 	for _, n := range wNs {
-		// fmt.Println("list: ", n)
 		nsNameWithDelimiter := strings.Split(n, "=")
-		// fmt.Println("WithDelimit: ", nsNameWithDelimiter)
 		nsNameOnly := ""
 		if len(nsNameWithDelimiter) > 1 {
 			nsNameOnly = nsNameWithDelimiter[1]
-			// fmt.Println("name-only: ", nsNameOnly)
 		}
 		isValid := slices.Contains(ns, nsNameOnly)
-
 		resultOk = resultOk || isValid
 	}
 	return resultOk
@@ -513,5 +504,94 @@ func TestCheckNamespaceExists(t *testing.T) {
 		if !hasErrors {
 			t.Errorf("Expected namespaces-list %v to be absent, but got no errors", nsList)
 		}
+	}
+}
+
+func TestCreateConfigClient(t *testing.T) {
+	*enableCustomResources = true
+	{
+		*proxyURL = "localhost"
+		config, err := getClientConfig()
+		if err != nil {
+			t.Errorf("Failed to get client config: %v", err)
+		}
+
+		// This code block tests the working scenario
+		{
+			_, err := createConfigClient(config)
+			if err != nil {
+				t.Errorf("Failed to create client config: %v", err)
+			}
+		}
+	}
+}
+
+func TestCreateNginxManager(t *testing.T) {
+	constLabels := map[string]string{"class": *ingressClass}
+	mgrCollector, _, _ := createManagerAndControllerCollectors(constLabels)
+	nginxMgr, _ := createNginxManager(mgrCollector)
+
+	if nginxMgr == nil {
+		t.Errorf("Failed to create nginx manager")
+	}
+}
+
+func TestProcessDefaultServerSecret(t *testing.T) {
+	kAPI := &KubernetesAPI{
+		Client: fake.NewSimpleClientset(),
+	}
+	mgr := nginx.NewFakeManager("/etc/nginx")
+	{
+		sslRejectHandshake, err := kAPI.processDefaultServerSecret(mgr)
+		if err != nil {
+			t.Errorf("Failed to process default server secret: %v", err)
+		}
+
+		if !sslRejectHandshake {
+			t.Errorf("Expected sslRejectHandshake to be false")
+		}
+	}
+
+	{
+		*defaultServerSecret = "/etc/nginx/ssl/myNonExistentSecret.crt"
+		sslRejectHandshake, err := kAPI.processDefaultServerSecret(mgr)
+		if err == nil {
+			t.Errorf("Failed to process default server secret")
+		}
+
+		if sslRejectHandshake {
+			t.Errorf("Expected sslRejectHandshake to be true")
+		}
+
+	}
+}
+
+func TestProcessWildcardSecret(t *testing.T) {
+	kAPI := &KubernetesAPI{
+		Client: fake.NewSimpleClientset(),
+	}
+	mgr := nginx.NewFakeManager("/etc/nginx")
+	{
+		wildcardTLSSecret, err := kAPI.processWildcardSecret(mgr)
+		if err != nil {
+			t.Errorf("Failed to process wildcard server secret: %v", err)
+		}
+
+		if wildcardTLSSecret {
+			t.Errorf("Expected wildcardTLSSecret to be false")
+		}
+	}
+
+	{
+		*wildcardTLSSecret = "/etc/nginx/ssl/myNonExistentSecret.crt"
+		wildcardTLSSecret, err := kAPI.processWildcardSecret(mgr)
+		if err == nil {
+			t.Errorf("Failed to process wildcard server secret, expected error")
+		}
+
+		if wildcardTLSSecret {
+			t.Errorf("Expected wildcardTLSSecret to be false")
+		}
+
 	}
 }

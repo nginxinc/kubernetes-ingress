@@ -135,12 +135,12 @@ func main() {
 
 	var agentVersion string
 	if *agent {
-		agentVersion = getAgentVersionInfo(nginxManager)
+		agentVersion = nginxManager.AgentVersion()
 	}
 
 	go updateSelfWithVersionInfo(kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
 
-	templateExecutor, err := createV1TemplateExecutors()
+	templateExecutorV1, err := createV1TemplateExecutors()
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -150,12 +150,15 @@ func main() {
 		glog.Fatal(err)
 	}
 
-	sslRejectHandshake, err := processDefaultServerSecret(kubeClient, nginxManager)
+	kAPI := &KubernetesAPI{
+		Client: kubeClient,
+	}
+	sslRejectHandshake, err := kAPI.processDefaultServerSecret(nginxManager)
 	if err != nil {
 		glog.Fatal(err)
 	}
 
-	isWildcardEnabled, err := processWildcardSecret(kubeClient, nginxManager)
+	isWildcardEnabled, err := kAPI.processWildcardSecret(nginxManager)
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -167,7 +170,7 @@ func main() {
 	}
 
 	cfgParams := configs.NewDefaultConfigParams(*nginxPlus)
-	cfgParams, err = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
+	cfgParams, err = kAPI.processConfigMaps(cfgParams, nginxManager, templateExecutorV1)
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -198,7 +201,7 @@ func main() {
 		NginxVersion:                   nginxVersion,
 	}
 
-	if err := processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager); err != nil {
+	if err := processNginxConfig(staticCfgParams, cfgParams, templateExecutorV1, nginxManager); err != nil {
 		glog.Fatal(err)
 	}
 
@@ -219,7 +222,7 @@ func main() {
 		NginxManager:                        nginxManager,
 		StaticCfgParams:                     staticCfgParams,
 		Config:                              cfgParams,
-		TemplateExecutor:                    templateExecutor,
+		TemplateExecutor:                    templateExecutorV1,
 		TemplateExecutorV2:                  templateExecutorV2,
 		LatencyCollector:                    latencyCollector,
 		LabelUpdater:                        plusCollector,
@@ -336,7 +339,7 @@ func getKubeClient(config *rest.Config) (kubeClient *kubernetes.Clientset, err e
 	return kubeClient, err
 }
 
-// This function checks that KIC is running on at least a prescribed minimum k8s version or higher for supportability
+// This function checks that NIC is running on at least a prescribed minimum k8s version or higher for supportability
 // Anything lower throws than the prescribed version, an error is returned to the caller
 func confirmMinimumK8sVersionCriteria(kubeClient kubernetes.Interface) (err error) {
 	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
@@ -545,10 +548,6 @@ func getAppProtectVersionInfo(fd FileHandle) (version string, err error) {
 	return version, err
 }
 
-func getAgentVersionInfo(nginxManager nginx.Manager) string {
-	return nginxManager.AgentVersion()
-}
-
 type childProcesses struct {
 	nginxDone      chan error
 	aPPluginEnable bool
@@ -598,12 +597,9 @@ func startChildProcesses(nginxManager nginx.Manager) childProcesses {
 
 // Applies the server secret config as provided via the cmdline option -default-server-tls-secret or the default
 // Returns a boolean for rejecting the SSL handshake
-func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (sslRejectHandshake bool, err error) {
+func (kAPI KubernetesAPI) processDefaultServerSecret(nginxManager nginx.Manager) (sslRejectHandshake bool, err error) {
 	sslRejectHandshake = false
 	if *defaultServerSecret != "" {
-		kAPI := &KubernetesAPI{
-			Client: kubeClient,
-		}
 		secret, err := kAPI.getAndValidateSecret(*defaultServerSecret)
 		if err != nil {
 			return sslRejectHandshake, fmt.Errorf("error trying to get the default server TLS secret %v: %w", *defaultServerSecret, err)
@@ -627,12 +623,9 @@ func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager n
 
 // Applies the wildcard server secret config as provided via the cmdline option -wildcard-tls-secret or the default
 // Returns a boolean for rejecting the SSL handshake
-func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (isWildcardTLSSecret bool, err error) {
+func (kAPI KubernetesAPI) processWildcardSecret(nginxManager nginx.Manager) (isWildcardTLSSecret bool, err error) {
 	isWildcardTLSSecret = false
 	if *wildcardTLSSecret != "" {
-		kAPI := &KubernetesAPI{
-			Client: kubeClient,
-		}
 		secret, err := kAPI.getAndValidateSecret(*wildcardTLSSecret)
 		if err != nil {
 			return isWildcardTLSSecret, fmt.Errorf("error trying to get the wildcard TLS secret %v: %w", *wildcardTLSSecret, err)
@@ -927,13 +920,13 @@ func processGlobalConfiguration() (err error) {
 
 // Parses a ConfigMap resource for customizing NGINX configuration provided via the cmdline option -nginx-configmaps
 // Returns an error if unable to parse the ConfigMap
-func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) (*configs.ConfigParams, error) {
+func (kAPI KubernetesAPI) processConfigMaps(cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) (*configs.ConfigParams, error) {
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing the nginx-configmaps argument: %w", err)
 		}
-		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
+		cfm, err := kAPI.Client.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("error when getting %v: %w", *nginxConfigMaps, err)
 		}
