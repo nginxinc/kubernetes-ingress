@@ -584,6 +584,9 @@ return:
   code: 200
   type: text/plain
   body: "Hello World\n"
+  headers:
+  - name: x-coffee
+    value: espresso
 ```
 
 {{% table %}}
@@ -592,9 +595,26 @@ return:
 |``code`` | The status code of the response. The allowed values are: ``2XX``, ``4XX`` or ``5XX``. The default is ``200``. | ``int`` | No |
 |``type`` | The MIME type of the response. The default is ``text/plain``. | ``string`` | No |
 |``body`` | The body of the response. Supports NGINX variables*. Variables must be enclosed in curly brackets. For example: ``Request is ${request_uri}\n``. | ``string`` | Yes |
+|``headers`` | The custom headers of the response. | [[]Action.Return.Header](#actionreturnheader) | No |
 {{% /table %}}
 
 \* -- Supported NGINX variables: `$request_uri`, `$request_method`, `$request_body`, `$scheme`, `$http_`, `$args`, `$arg_`, `$cookie_`, `$host`, `$request_time`, `$request_length`, `$nginx_version`, `$pid`, `$connection`, `$remote_addr`, `$remote_port`, `$time_iso8601`, `$time_local`, `$server_addr`, `$server_port`, `$server_name`, `$server_protocol`, `$connections_active`, `$connections_reading`, `$connections_writing` and `$connections_waiting`.
+
+### Action.Return.Header
+
+The header defines an HTTP Header for a canned response in an actionReturn:
+
+```yaml
+name: x-coffee
+value: espresso
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``name`` | The name of the header. | ``string`` | Yes |
+|``value`` | The value of the header. | ``string`` | Yes |
+{{% /table %}}
 
 ### Action.Proxy
 
@@ -891,7 +911,7 @@ return:
 |``code`` | The status code of the response. The default is the status code of the original response. | ``int`` | No |
 |``type`` | The MIME type of the response. The default is ``text/html``. | ``string`` | No |
 |``body`` | The body of the response. Supported NGINX variable: ``$upstream_status`` . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | Yes |
-|``headers`` | The custom headers of the response. | [errorPage.Return.Header](#errorpagereturnheader) | No |
+|``headers`` | The custom headers of the response. | [[]errorPage.Return.Header](#errorpagereturnheader) | No |
 {{% /table %}}
 
 ### ErrorPage.Return.Header
