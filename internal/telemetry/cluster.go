@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
-
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -148,11 +145,12 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 	return len(ic.Items), nil
 }
 
-// PolicyCount returns the count of fields in each PolicySpec
-func (c *Collector) PolicyCount() v1.PolicySpecMap {
-	policyCounters := make(v1.PolicySpecMap)
+// PolicyCount returns the count in each Policy
+func (c *Collector) PolicyCount() map[string]int {
+	policyCounters := make(map[string]int)
+
 	if c.Config.Policies == nil {
-		return map[string]int{}
+		return policyCounters
 	}
 
 	policies := c.Config.Policies()
@@ -163,19 +161,23 @@ func (c *Collector) PolicyCount() v1.PolicySpecMap {
 	for _, policy := range policies {
 		spec := policy.Spec
 
-		specValue := reflect.ValueOf(spec)
-		specType := specValue.Type()
-
-		for i := 0; i < specValue.NumField(); i++ {
-			field := specValue.Field(i)
-			fieldName := specType.Field(i).Name
-
-			if field.Kind() == reflect.Ptr && !field.IsNil() {
-				if _, ok := policyCounters[fieldName]; !ok {
-					policyCounters[fieldName] = 0
-				}
-				policyCounters[fieldName]++
-			}
+		switch {
+		case spec.AccessControl != nil:
+			policyCounters["AccessControl"]++
+		case spec.RateLimit != nil:
+			policyCounters["RateLimit"]++
+		case spec.JWTAuth != nil:
+			policyCounters["JWTAuth"]++
+		case spec.BasicAuth != nil:
+			policyCounters["BasicAuth"]++
+		case spec.IngressMTLS != nil:
+			policyCounters["IngressMTLS"]++
+		case spec.EgressMTLS != nil:
+			policyCounters["EgressMTLS"]++
+		case spec.OIDC != nil:
+			policyCounters["OIDC"]++
+		case spec.WAF != nil:
+			policyCounters["WAF"]++
 		}
 	}
 	return policyCounters
