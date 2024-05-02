@@ -42,13 +42,15 @@ import (
 
 // Injected during build
 var (
-	version string
+	version           string
+	telemetryEndpoint string
 )
 
 const (
 	nginxVersionLabel      = "app.nginx.org/version"
 	versionLabel           = "app.kubernetes.io/version"
 	appProtectVersionLabel = "appprotect.f5.com/version"
+	agentVersionLabel      = "app.nginx.org/agent-version"
 	appProtectVersionPath  = "/opt/app_protect/VERSION"
 )
 
@@ -81,11 +83,14 @@ func main() {
 		appProtectVersion = getAppProtectVersionInfo()
 	}
 
-	go updateSelfWithVersionInfo(kubeClient, version, appProtectVersion, nginxVersion, 10, time.Second*5)
+	var agentVersion string
+	if *agent {
+		agentVersion = getAgentVersionInfo(nginxManager)
+	}
+
+	go updateSelfWithVersionInfo(kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors()
-
-	aPPluginDone, aPPDosAgentDone := startApAgentsAndPlugins(nginxManager)
 
 	sslRejectHandshake := processDefaultServerSecret(kubeClient, nginxManager)
 
@@ -119,6 +124,7 @@ func main() {
 		SSLRejectHandshake:             sslRejectHandshake,
 		EnableCertManager:              *enableCertManager,
 		DynamicSSLReload:               *enableDynamicSSLReload,
+		DynamicWeightChangesReload:     *enableDynamicWeightChangesReload,
 		StaticSSLPath:                  nginxManager.GetSecretsDir(),
 		NginxVersion:                   nginxVersion,
 	}
@@ -130,32 +136,37 @@ func main() {
 		nginxManager.CreateTLSPassthroughHostsConfig(emptyFile)
 	}
 
-	nginxDone := make(chan error, 1)
-	nginxManager.Start(nginxDone)
+	process := startChildProcesses(nginxManager)
 
 	plusClient := createPlusClient(*nginxPlus, useFakeNginxManager, nginxManager)
 
 	plusCollector, syslogListener, latencyCollector := createPlusAndLatencyCollectors(registry, constLabels, kubeClient, plusClient, staticCfgParams.NginxServiceMesh)
 	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
-		NginxManager:              nginxManager,
-		StaticCfgParams:           staticCfgParams,
-		Config:                    cfgParams,
-		TemplateExecutor:          templateExecutor,
-		TemplateExecutorV2:        templateExecutorV2,
-		LatencyCollector:          latencyCollector,
-		LabelUpdater:              plusCollector,
-		IsPlus:                    *nginxPlus,
-		IsWildcardEnabled:         isWildcardEnabled,
-		IsPrometheusEnabled:       *enablePrometheusMetrics,
-		IsLatencyMetricsEnabled:   *enableLatencyMetrics,
-		IsDynamicSSLReloadEnabled: *enableDynamicSSLReload,
-		NginxVersion:              nginxVersion,
+		NginxManager:                        nginxManager,
+		StaticCfgParams:                     staticCfgParams,
+		Config:                              cfgParams,
+		TemplateExecutor:                    templateExecutor,
+		TemplateExecutorV2:                  templateExecutorV2,
+		LatencyCollector:                    latencyCollector,
+		LabelUpdater:                        plusCollector,
+		IsPlus:                              *nginxPlus,
+		IsWildcardEnabled:                   isWildcardEnabled,
+		IsPrometheusEnabled:                 *enablePrometheusMetrics,
+		IsLatencyMetricsEnabled:             *enableLatencyMetrics,
+		IsDynamicSSLReloadEnabled:           *enableDynamicSSLReload,
+		IsDynamicWeightChangesReloadEnabled: *enableDynamicWeightChangesReload,
+		NginxVersion:                        nginxVersion,
 	})
 
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
-	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager), cr_validation.IsExternalDNSEnabled(*enableExternalDNS))
+	virtualServerValidator := cr_validation.NewVirtualServerValidator(
+		cr_validation.IsPlus(*nginxPlus),
+		cr_validation.IsDosEnabled(*appProtectDos),
+		cr_validation.IsCertManagerEnabled(*enableCertManager),
+		cr_validation.IsExternalDNSEnabled(*enableExternalDNS),
+	)
 
 	if *enableServiceInsight {
 		createHealthProbeEndpoint(kubeClient, plusClient, cnf)
@@ -202,7 +213,9 @@ func main() {
 		IsIPV6Disabled:               *disableIPV6,
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
-		TelemetryReportingPeriod:     *telemetryReportingPeriod,
+		TelemetryReportingEndpoint:   telemetryEndpoint,
+		NICVersion:                   version,
+		DynamicWeightChangesReload:   *enableDynamicWeightChangesReload,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
@@ -216,11 +229,7 @@ func main() {
 		}()
 	}
 
-	if *appProtect || *appProtectDos {
-		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPPluginDone, aPPDosAgentDone, *appProtect, *appProtectDos)
-	} else {
-		go handleTermination(lbc, nginxManager, syslogListener, nginxDone)
-	}
+	go handleTermination(lbc, nginxManager, syslogListener, process)
 
 	lbc.Run()
 
@@ -428,7 +437,23 @@ func getAppProtectVersionInfo() string {
 	return version
 }
 
-func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error) {
+func getAgentVersionInfo(nginxManager nginx.Manager) string {
+	return nginxManager.AgentVersion()
+}
+
+type childProcesses struct {
+	nginxDone      chan error
+	aPPluginEnable bool
+	aPPluginDone   chan error
+	aPDosEnable    bool
+	aPDosDone      chan error
+	agentEnable    bool
+	agentDone      chan error
+}
+
+// newChildProcesses starts the several child processes based on flags set.
+// AppProtect. AppProtectDos, Agent.
+func startChildProcesses(nginxManager nginx.Manager) childProcesses {
 	var aPPluginDone chan error
 
 	if *appProtect {
@@ -442,7 +467,25 @@ func startApAgentsAndPlugins(nginxManager nginx.Manager) (chan error, chan error
 		aPPDosAgentDone = make(chan error, 1)
 		nginxManager.AppProtectDosAgentStart(aPPDosAgentDone, *appProtectDosDebug, *appProtectDosMaxDaemons, *appProtectDosMaxWorkers, *appProtectDosMemory)
 	}
-	return aPPluginDone, aPPDosAgentDone
+
+	nginxDone := make(chan error, 1)
+	nginxManager.Start(nginxDone)
+
+	var agentDone chan error
+	if *agent {
+		agentDone = make(chan error, 1)
+		nginxManager.AgentStart(agentDone, *agentInstanceGroup)
+	}
+
+	return childProcesses{
+		nginxDone:      nginxDone,
+		aPPluginEnable: *appProtect,
+		aPPluginDone:   aPPluginDone,
+		aPDosEnable:    *appProtectDos,
+		aPDosDone:      aPPDosAgentDone,
+		agentEnable:    *agent,
+		agentDone:      agentDone,
+	}
 }
 
 func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
@@ -527,41 +570,7 @@ func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *
 	}
 }
 
-func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone chan error) {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGTERM)
-
-	exitStatus := 0
-	exited := false
-
-	select {
-	case err := <-nginxDone:
-		if err != nil {
-			glog.Errorf("nginx command exited with an error: %v", err)
-			exitStatus = 1
-		} else {
-			glog.Info("nginx command exited successfully")
-		}
-		exited = true
-	case <-signalChan:
-		glog.Info("Received SIGTERM, shutting down")
-	}
-
-	glog.Info("Shutting down the controller")
-	lbc.Stop()
-
-	if !exited {
-		glog.Info("Shutting down NGINX")
-		nginxManager.Quit()
-		<-nginxDone
-	}
-	listener.Stop()
-
-	glog.Infof("Exiting with a status: %v", exitStatus)
-	os.Exit(exitStatus)
-}
-
-// getSocketClient gets an http.Client with the a unix socket transport.
+// getSocketClient gets a http.Client with a unix socket transport.
 func getSocketClient(sockPath string) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
@@ -589,29 +598,33 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	return secret, nil
 }
 
-func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, pluginDone, agentDosDone chan error, appProtectEnabled, appProtectDosEnabled bool) {
+func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, cpcfg childProcesses) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
 	select {
-	case err := <-nginxDone:
-		glog.Fatalf("nginx command exited unexpectedly with status: %v", err)
-	case err := <-pluginDone:
+	case err := <-cpcfg.nginxDone:
+		if err != nil {
+			glog.Fatalf("nginx command exited unexpectedly with status: %v", err)
+		} else {
+			glog.Info("nginx command exited successfully")
+		}
+	case err := <-cpcfg.aPPluginDone:
 		glog.Fatalf("AppProtectPlugin command exited unexpectedly with status: %v", err)
-	case err := <-agentDosDone:
+	case err := <-cpcfg.aPDosDone:
 		glog.Fatalf("AppProtectDosAgent command exited unexpectedly with status: %v", err)
 	case <-signalChan:
 		glog.Infof("Received SIGTERM, shutting down")
 		lbc.Stop()
 		nginxManager.Quit()
-		<-nginxDone
-		if appProtectEnabled {
+		<-cpcfg.nginxDone
+		if cpcfg.aPPluginEnable {
 			nginxManager.AppProtectPluginQuit()
-			<-pluginDone
+			<-cpcfg.aPPluginDone
 		}
-		if appProtectDosEnabled {
+		if cpcfg.aPDosEnable {
 			nginxManager.AppProtectDosAgentQuit()
-			<-agentDosDone
+			<-cpcfg.aPDosDone
 		}
 		listener.Stop()
 	}
@@ -791,7 +804,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, appProtectVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
+func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, appProtectVersion, agentVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
 	podUpdated := false
 
 	for i := 0; (i < maxRetries || maxRetries == 0) && !podUpdated; i++ {
@@ -815,6 +828,9 @@ func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, appPro
 		labels[versionLabel] = strings.TrimPrefix(version, "v")
 		if appProtectVersion != "" {
 			labels[appProtectVersionLabel] = appProtectVersion
+		}
+		if agentVersion != "" {
+			labels[agentVersionLabel] = agentVersion
 		}
 		newPod.ObjectMeta.Labels = labels
 

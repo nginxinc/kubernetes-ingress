@@ -23,13 +23,13 @@ const ClientSecretKey = "client-secret"
 const HtpasswdFileKey = "htpasswd"
 
 // SecretTypeCA contains a certificate authority for TLS certificate verification. #nosec G101
-const SecretTypeCA api_v1.SecretType = "nginx.org/ca"
+const SecretTypeCA api_v1.SecretType = "nginx.org/ca" //nolint:gosec // G101: Potential hardcoded credentials - false positive
 
 // SecretTypeJWK contains a JWK (JSON Web Key) for validating JWTs (JSON Web Tokens). #nosec G101
-const SecretTypeJWK api_v1.SecretType = "nginx.org/jwk"
+const SecretTypeJWK api_v1.SecretType = "nginx.org/jwk" //nolint:gosec // G101: Potential hardcoded credentials - false positive
 
 // SecretTypeOIDC contains an OIDC client secret for use in oauth flows. #nosec G101
-const SecretTypeOIDC api_v1.SecretType = "nginx.org/oidc"
+const SecretTypeOIDC api_v1.SecretType = "nginx.org/oidc" //nolint:gosec // G101: Potential hardcoded credentials - false positive
 
 // SecretTypeHtpasswd contains an htpasswd file for use in HTTP Basic authorization.. #nosec G101
 const SecretTypeHtpasswd api_v1.SecretType = "nginx.org/htpasswd" // #nosec G101
@@ -44,7 +44,7 @@ func ValidateTLSSecret(secret *api_v1.Secret) error {
 
 	_, err := tls.X509KeyPair(secret.Data[api_v1.TLSCertKey], secret.Data[api_v1.TLSPrivateKeyKey])
 	if err != nil {
-		return fmt.Errorf("Failed to validate TLS cert and key: %w", err)
+		return fmt.Errorf("failed to validate TLS cert and key: %w", err)
 	}
 
 	return nil
@@ -86,7 +86,7 @@ func ValidateCASecret(secret *api_v1.Secret) error {
 
 	_, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return fmt.Errorf("Failed to validate certificate: %w", err)
+		return fmt.Errorf("failed to validate certificate: %w", err)
 	}
 
 	return nil

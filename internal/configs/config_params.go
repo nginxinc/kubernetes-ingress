@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
@@ -70,6 +71,7 @@ type ConfigParams struct {
 	ProxyHideHeaders                       []string
 	ProxyMaxTempFileSize                   string
 	ProxyPassHeaders                       []string
+	ProxySetHeaders                        []version2.Header
 	ProxyProtocol                          bool
 	ProxyReadTimeout                       string
 	ProxySendTimeout                       string
@@ -150,6 +152,7 @@ type StaticConfigParams struct {
 	EnableCertManager              bool
 	DynamicSSLReload               bool
 	StaticSSLPath                  string
+	DynamicWeightChangesReload     bool
 	NginxVersion                   nginx.Version
 }
 
@@ -197,8 +200,8 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		LBMethod:                      "random two least_conn",
 		MainErrorLogLevel:             "notice",
 		ResolverIPV6:                  true,
-		MainKeepaliveTimeout:          "65s",
-		MainKeepaliveRequests:         100,
+		MainKeepaliveTimeout:          "75s",
+		MainKeepaliveRequests:         1000,
 		VariablesHashBucketSize:       256,
 		VariablesHashMaxSize:          1024,
 		LimitReqKey:                   "${binary_remote_addr}",

@@ -1,14 +1,13 @@
 ---
+docs: DOCS-579
+doctypes:
+- ''
 title: Building NGINX Ingress Controller with NGINX App Protect WAF
-description: "This document explains how to build a F5 NGINX Ingress Controller image with F5 NGINX App Protect WAF from source code."
-weight: 1800
-doctypes: [""]
 toc: true
-docs: "DOCS-579"
-aliases: ["/app-protect/installation/"]
+weight: 1800
 ---
 
-{{< custom-styles >}}
+This document explains how to build a F5 NGINX Ingress Controller image with F5 NGINX App Protect WAF from source code.
 
 {{<call-out "tip" "Pre-built image alternatives" >}} If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
 
@@ -29,7 +28,7 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 1. Clone the NGINX Ingress Controller repository:
 
     ```console
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.4.2
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.0
     cd kubernetes-ingress
     ```
 
@@ -139,7 +138,7 @@ This single YAML file creates CRDs for the following resources:
 - `APUserSig`
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-waf.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds-nap-waf.yaml
 ```
 
 {{%/tab%}}
@@ -217,7 +216,7 @@ To enable the NGINX App Protect DoS Module:
 
 {{< include "installation/manifests/verify-pods-are-running.md" >}}
 
-For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.2/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.2/examples/ingress-resources/app-protect-waf" >}}).
+For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/ingress-resources/app-protect-waf" >}}).
 
 ---
 

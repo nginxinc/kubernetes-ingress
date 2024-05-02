@@ -1,15 +1,14 @@
 ---
+description: The example in this document shows a basic Ingress resource definition.
+docs: DOCS-593
+doctypes:
+- ''
 title: Basic Configuration
-
-description: "The example in this document shows a basic Ingress resource definition."
-weight: 1600
-doctypes: [""]
 toc: true
-docs: "DOCS-593"
+weight: 1600
 ---
 
-
-The example below shows a basic Ingress resource definition. It load balances requests for two services -- coffee and tea -- comprising a hypothetical *cafe* app hosted at `cafe.example.com`:
+This document shows a basic Ingress resource definition which load balances requests for two services as part of a single application.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -53,7 +52,7 @@ Here is a breakdown of what this Ingress resource definition means:
   - The rule with the path `/coffee` instructs NGINX to distribute the requests with the `/coffee` URI among the pods of the *coffee* service, which is deployed with the name `coffee‑svc` in the cluster.
   - Both rules instruct NGINX to distribute the requests to `port 80` of the corresponding service (the `servicePort` field).
 
-> For complete instructions on deploying the Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.2/examples/ingress-resources/complete-example) in our GitHub repository.
+> For complete instructions on deploying the Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/ingress-resources/complete-example) in our GitHub repository.
 
 > To learn more about the Ingress resource, see the [Ingress resource documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/) in the Kubernetes docs.
 
@@ -108,7 +107,7 @@ Starting from Kubernetes 1.18, you can use the following new features:
 
 ## Restrictions
 
-The NGINX Ingress Controller imposes the following restrictions on Ingress resources:
+NGINX Ingress Controller imposes the following restrictions on Ingress resources:
 
 - When defining an Ingress resource, the `host` field is required.
 - The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions).

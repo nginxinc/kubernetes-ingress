@@ -12,7 +12,6 @@ import (
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	listersV1 "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/configuration/v1"
 	extdnslisters "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/externaldns/v1"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -84,16 +83,17 @@ func NewController(opts *ExtDNSOpts) *ExtDNSController {
 
 func (c *ExtDNSController) newNamespacedInformer(ns string) *namespacedInformer {
 	nsi := &namespacedInformer{sharedInformerFactory: k8s_nginx_informers.NewSharedInformerFactoryWithOptions(c.client, c.resync, k8s_nginx_informers.WithNamespace(ns))}
+	nsi.stopCh = make(chan struct{})
 	nsi.vsLister = nsi.sharedInformerFactory.K8s().V1().VirtualServers().Lister()
 	nsi.extdnslister = nsi.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Lister()
 
-	nsi.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(
+	nsi.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler( //nolint:errcheck,gosec
 		&QueuingEventHandler{
 			Queue: c.queue,
 		},
 	)
 
-	nsi.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().AddEventHandler(&BlockingEventHandler{
+	nsi.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().AddEventHandler(&BlockingEventHandler{ //nolint:errcheck,gosec
 		WorkFunc: externalDNSHandler(c.queue),
 	})
 

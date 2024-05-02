@@ -137,7 +137,6 @@ func (su *statusUpdater) updateIngressWithStatus(ing networking.Ingress, status 
 	var ingCopy *networking.Ingress
 	var exists bool
 	ingCopy, exists, err = su.getNamespacedInformer(ns).ingressLister.GetByKeySafe(key)
-
 	if err != nil {
 		glog.V(3).Infof("error getting ing from Store by key: %v", err)
 		return err
@@ -427,7 +426,6 @@ func (su *statusUpdater) UpdateTransportServerStatus(ts *conf_v1.TransportServer
 	var err error
 
 	tsLatest, exists, err = su.getNamespacedInformer(ts.Namespace).transportServerLister.Get(ts)
-
 	if err != nil {
 		glog.V(3).Infof("error getting TransportServer from Store: %v", err)
 		return err
@@ -475,7 +473,6 @@ func (su *statusUpdater) UpdateVirtualServerStatus(vs *conf_v1.VirtualServer, st
 	var err error
 
 	vsLatest, exists, err = su.getNamespacedInformer(vs.Namespace).virtualServerLister.Get(vs)
-
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServer from Store: %v", err)
 		return err
@@ -538,7 +535,6 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *con
 	var err error
 
 	vsrLatest, exists, err = su.getNamespacedInformer(vsr.Namespace).virtualServerRouteLister.Get(vsr)
-
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
 		return err
@@ -578,7 +574,6 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *conf_v1.VirtualServ
 	var err error
 
 	vsrLatest, exists, err = su.getNamespacedInformer(vsr.Namespace).virtualServerRouteLister.Get(vsr)
-
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
 		return err
@@ -614,7 +609,6 @@ func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *conf_v1.Virtua
 	var err error
 
 	vsLatest, exists, err = su.getNamespacedInformer(vs.Namespace).virtualServerLister.Get(vs)
-
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServer from Store: %v", err)
 		return err
@@ -642,7 +636,6 @@ func (su *statusUpdater) updateVirtualServerRouteExternalEndpoints(vsr *conf_v1.
 	var err error
 
 	vsrLatest, exists, err = su.getNamespacedInformer(vsr.Namespace).virtualServerRouteLister.Get(vsr)
-
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
 		return err
@@ -690,7 +683,6 @@ func (su *statusUpdater) UpdatePolicyStatus(pol *conf_v1.Policy, state string, r
 	var err error
 
 	polLatest, exists, err = su.getNamespacedInformer(pol.Namespace).policyLister.Get(pol)
-
 	if err != nil {
 		glog.V(3).Infof("error getting policy from Store: %v", err)
 		return err

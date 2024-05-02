@@ -41,7 +41,7 @@ const (
 )
 
 // DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server. #nosec G101
-const DefaultServerSecretPath = "/etc/nginx/secrets/default"
+const DefaultServerSecretPath = "/etc/nginx/secrets/default" //nolint:gosec // G101: Potential hardcoded credentials - false positive
 
 // DefaultSecretPath is the full default path to where secrets are stored and accessed.
 const DefaultSecretPath = "/etc/nginx/secrets" // #nosec G101
@@ -84,6 +84,13 @@ type ExtendedResources struct {
 	TransportServerExes []*TransportServerEx
 }
 
+// WeightUpdate holds the information about the weight updates for weight changes without reloading.
+type WeightUpdate struct {
+	Zone  string
+	Key   string
+	Value string
+}
+
 type tlsPassthroughPair struct {
 	Host       string
 	UnixSocket string
@@ -116,6 +123,7 @@ type Configurator struct {
 	templateExecutorV2        *version2.TemplateExecutor
 	ingresses                 map[string]*IngressEx
 	minions                   map[string]map[string]bool
+	mergeableIngresses        map[string]*MergeableIngresses
 	virtualServers            map[string]*VirtualServerEx
 	transportServers          map[string]*TransportServerEx
 	tlsPassthroughPairs       map[string]tlsPassthroughPair
@@ -133,19 +141,20 @@ type Configurator struct {
 // ConfiguratorParams is a collection of parameters used for the
 // NewConfigurator() function
 type ConfiguratorParams struct {
-	NginxManager              nginx.Manager
-	StaticCfgParams           *StaticConfigParams
-	Config                    *ConfigParams
-	TemplateExecutor          *version1.TemplateExecutor
-	TemplateExecutorV2        *version2.TemplateExecutor
-	LabelUpdater              collector.LabelUpdater
-	LatencyCollector          latCollector.LatencyCollector
-	IsPlus                    bool
-	IsPrometheusEnabled       bool
-	IsWildcardEnabled         bool
-	IsLatencyMetricsEnabled   bool
-	IsDynamicSSLReloadEnabled bool
-	NginxVersion              nginx.Version
+	NginxManager                        nginx.Manager
+	StaticCfgParams                     *StaticConfigParams
+	Config                              *ConfigParams
+	TemplateExecutor                    *version1.TemplateExecutor
+	TemplateExecutorV2                  *version2.TemplateExecutor
+	LabelUpdater                        collector.LabelUpdater
+	LatencyCollector                    latCollector.LatencyCollector
+	IsPlus                              bool
+	IsPrometheusEnabled                 bool
+	IsWildcardEnabled                   bool
+	IsLatencyMetricsEnabled             bool
+	IsDynamicSSLReloadEnabled           bool
+	IsDynamicWeightChangesReloadEnabled bool
+	NginxVersion                        nginx.Version
 }
 
 // NewConfigurator creates a new Configurator.
@@ -172,6 +181,7 @@ func NewConfigurator(p ConfiguratorParams) *Configurator {
 		templateExecutor:          p.TemplateExecutor,
 		templateExecutorV2:        p.TemplateExecutorV2,
 		minions:                   make(map[string]map[string]bool),
+		mergeableIngresses:        make(map[string]*MergeableIngresses),
 		tlsPassthroughPairs:       make(map[string]tlsPassthroughPair),
 		isPlus:                    p.IsPlus,
 		isWildcardEnabled:         p.IsWildcardEnabled,
@@ -467,6 +477,9 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		minionName := objectMetaToFileName(&minion.Ingress.ObjectMeta)
 		cnf.minions[name][minionName] = true
 	}
+
+	cnf.mergeableIngresses[name] = mergeableIngs
+
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateIngressMetricsLabels(mergeableIngs.Master, nginxCfg.Upstreams)
 	}
@@ -555,13 +568,21 @@ func (cnf *Configurator) deleteVirtualServerMetricsLabels(key string) {
 
 // AddOrUpdateVirtualServer adds or updates NGINX configuration for the VirtualServer resource.
 func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
-	_, warnings, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
+	_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
 	if err != nil {
 		return warnings, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
 	}
 
+	if len(weightUpdates) > 0 {
+		cnf.EnableReloads()
+	}
+
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		return warnings, fmt.Errorf("error reloading NGINX for VirtualServer %v/%v: %w", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
+	}
+
+	for _, weightUpdate := range weightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return warnings, nil
@@ -571,7 +592,8 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 	return cnf.nginxManager.CreateOpenTracingTracerConfig(content)
 }
 
-func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (bool, Warnings, error) {
+func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (bool, Warnings, []WeightUpdate, error) {
+	var weightUpdates []WeightUpdate
 	apResources := cnf.updateApResourcesForVs(virtualServerEx)
 	dosResources := map[string]*appProtectDosResource{}
 	for k, v := range virtualServerEx.DosProtectedEx {
@@ -584,11 +606,11 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
-	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled, nil)
 	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, apResources, dosResources)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
-		return false, warnings, fmt.Errorf("error generating VirtualServer config: %v: %w", name, err)
+		return false, warnings, weightUpdates, fmt.Errorf("error generating VirtualServer config: %v: %w", name, err)
 	}
 	changed := cnf.nginxManager.CreateConfig(name, content)
 
@@ -597,23 +619,40 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateVirtualServerMetricsLabels(virtualServerEx, vsCfg.Upstreams)
 	}
-	return changed, warnings, nil
+
+	if cnf.staticCfgParams.DynamicWeightChangesReload && len(vsCfg.TwoWaySplitClients) > 0 {
+		for _, splitClient := range vsCfg.TwoWaySplitClients {
+			if len(splitClient.Weights) != 2 {
+				continue
+			}
+			variableNamer := *NewVSVariableNamer(virtualServerEx.VirtualServer)
+			value := variableNamer.GetNameOfKeyOfMapForWeights(splitClient.SplitClientsIndex, splitClient.Weights[0], splitClient.Weights[1])
+			weightUpdates = append(weightUpdates, WeightUpdate{Zone: splitClient.ZoneName, Key: splitClient.Key, Value: value})
+		}
+	}
+	return changed, warnings, weightUpdates, nil
 }
 
 // AddOrUpdateVirtualServers adds or updates NGINX configuration for multiple VirtualServer resources.
 func (cnf *Configurator) AddOrUpdateVirtualServers(virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	for _, vsEx := range virtualServerExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return allWarnings, err
 		}
 		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		return allWarnings, fmt.Errorf("error when reloading NGINX when updating Policy: %w", err)
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return allWarnings, nil
@@ -794,6 +833,7 @@ func (cnf *Configurator) addOrUpdateHtpasswdSecret(secret *api_v1.Secret) string
 // AddOrUpdateResources adds or updates configuration for resources.
 func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloadIfUnchanged bool) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 	configsChanged := false
 
 	updateResource := func(updateFunc func() (bool, Warnings, error), namespace, name string) error {
@@ -802,6 +842,20 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 			return fmt.Errorf("error adding or updating resource %v/%v: %w", namespace, name, err)
 		}
 		allWarnings.Add(warnings)
+		if changed {
+			configsChanged = true
+		}
+		return nil
+	}
+
+	updateVSResource := func(updateFunc func() (bool, Warnings, []WeightUpdate, error), namespace, name string) error {
+		changed, warnings, weightUpdates, err := updateFunc()
+		if err != nil {
+			return fmt.Errorf("error adding or updating resource %v/%v: %w", namespace, name, err)
+		}
+		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
+
 		if changed {
 			configsChanged = true
 		}
@@ -827,7 +881,7 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 	}
 
 	for _, vsEx := range resources.VirtualServerExes {
-		err := updateResource(func() (bool, Warnings, error) {
+		err := updateVSResource(func() (bool, Warnings, []WeightUpdate, error) {
 			return cnf.addOrUpdateVirtualServer(vsEx)
 		}, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name)
 		if err != nil {
@@ -906,6 +960,7 @@ func (cnf *Configurator) DeleteIngress(key string, skipReload bool) error {
 
 	delete(cnf.ingresses, name)
 	delete(cnf.minions, name)
+	delete(cnf.mergeableIngresses, name)
 
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.deleteIngressMetricsLabels(key)
@@ -924,6 +979,10 @@ func (cnf *Configurator) DeleteIngress(key string, skipReload bool) error {
 func (cnf *Configurator) DeleteVirtualServer(key string, skipReload bool) error {
 	name := getFileNameForVirtualServerFromKey(key)
 	cnf.nginxManager.DeleteConfig(name)
+
+	if cnf.isPlus {
+		cnf.nginxManager.DeleteKeyValStateFiles(name)
+	}
 
 	delete(cnf.virtualServers, name)
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
@@ -962,6 +1021,7 @@ func (cnf *Configurator) deleteTransportServer(key string) error {
 	name := getFileNameForTransportServerFromKey(key)
 	cnf.nginxManager.DeleteStreamConfig(name)
 
+	delete(cnf.transportServers, name)
 	// update TLS Passthrough Hosts config in case we have a TLS Passthrough TransportServer
 	if _, exists := cnf.tlsPassthroughPairs[key]; exists {
 		delete(cnf.tlsPassthroughPairs, key)
@@ -1044,7 +1104,7 @@ func (cnf *Configurator) UpdateEndpointsForVirtualServers(virtualServerExes []*V
 
 	for _, vs := range virtualServerExes {
 		// It is safe to ignore warnings here as no new warnings should appear when updating Endpoints for VirtualServers
-		_, _, err := cnf.addOrUpdateVirtualServer(vs)
+		_, _, _, err := cnf.addOrUpdateVirtualServer(vs)
 		if err != nil {
 			return fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
 		}
@@ -1165,6 +1225,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 		}
 
 		for _, path := range rule.HTTP.Paths {
+			path := path // address gosec G601
 			endps, exists := ingEx.Endpoints[path.Backend.Service.Name+GetBackendPortAsString(path.Backend.Service.Port)]
 			if exists {
 				if _, isExternalName := ingEx.ExternalNameSvcs[path.Backend.Service.Name]; isExternalName {
@@ -1224,6 +1285,7 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources ExtendedResources) (Warnings, error) {
 	cnf.cfgParams = cfgParams
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	if cnf.cfgParams.MainServerSSLDHParamFileContent != nil {
 		fileName, err := cnf.nginxManager.CreateDHParam(*cnf.cfgParams.MainServerSSLDHParamFileContent)
@@ -1276,11 +1338,12 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		allWarnings.Add(warnings)
 	}
 	for _, vsEx := range resources.VirtualServerExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return allWarnings, err
 		}
 		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	for _, tsEx := range resources.TransportServerExes {
@@ -1302,6 +1365,10 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		return allWarnings, fmt.Errorf("error when updating config from ConfigMap: %w", err)
 	}
 
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
+	}
+
 	return allWarnings, nil
 }
 
@@ -1319,11 +1386,13 @@ func (cnf *Configurator) ReloadForBatchUpdates(batchReloadsEnabled bool) error {
 // UpdateVirtualServers updates VirtualServers.
 func (cnf *Configurator) UpdateVirtualServers(updatedVSExes []*VirtualServerEx, deletedKeys []string) []error {
 	var errList []error
+	var allWeightUpdates []WeightUpdate
 	for _, vsEx := range updatedVSExes {
-		_, _, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, _, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			errList = append(errList, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err))
 		}
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	for _, key := range deletedKeys {
@@ -1335,6 +1404,10 @@ func (cnf *Configurator) UpdateVirtualServers(updatedVSExes []*VirtualServerEx, 
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		errList = append(errList, fmt.Errorf("error when updating VirtualServer: %w", err))
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return errList
@@ -1468,21 +1541,128 @@ func (cnf *Configurator) GetIngressCounts() map[string]int {
 		}
 	}
 
-	for _, min := range cnf.minions {
-		counters["minion"] += len(min)
+	for _, minion := range cnf.minions {
+		counters["minion"] += len(minion)
 	}
 
 	return counters
 }
 
-// GetVirtualServerCounts returns the total count of VS/VSR resources that are handled by the Ingress Controller
-func (cnf *Configurator) GetVirtualServerCounts() (vsCount int, vsrCount int) {
-	vsCount = len(cnf.virtualServers)
+// GetServiceCount returns the total number of unique services referenced by Ingresses, VS's, VSR's, and TS's
+func (cnf *Configurator) GetServiceCount() int {
+	setOfUniqueServices := make(map[string]bool)
+	cnf.addVSAndVSRServicesToSet(setOfUniqueServices)
+	cnf.addTSServicesToSet(setOfUniqueServices)
+	cnf.addIngressesServicesToSet(setOfUniqueServices)
+	return len(setOfUniqueServices)
+}
+
+// addVSAndVSRServicesToSet adds services from VirtualServers and VirtualServerRoutes to the set
+func (cnf *Configurator) addVSAndVSRServicesToSet(set map[string]bool) {
+	for _, vs := range cnf.virtualServers {
+		ns := vs.VirtualServer.Namespace
+		for _, upstream := range vs.VirtualServer.Spec.Upstreams {
+			svc := upstream.Service
+			addServiceToSet(set, ns, svc)
+
+			if upstream.Backup != "" {
+				addServiceToSet(set, ns, upstream.Backup)
+			}
+
+			if upstream.HealthCheck != nil && upstream.HealthCheck.GRPCService != "" {
+				addServiceToSet(set, ns, upstream.HealthCheck.GRPCService)
+			}
+		}
+
+		for _, vsr := range vs.VirtualServerRoutes {
+			ns := vsr.Namespace
+			for _, upstream := range vsr.Spec.Upstreams {
+				svc := upstream.Service
+				addServiceToSet(set, ns, svc)
+
+				if upstream.Backup != "" {
+					addServiceToSet(set, ns, upstream.Backup)
+				}
+
+				if upstream.HealthCheck != nil && upstream.HealthCheck.GRPCService != "" {
+					addServiceToSet(set, ns, upstream.HealthCheck.GRPCService)
+				}
+			}
+		}
+	}
+}
+
+// addTSServicesToSet adds services from TransportServers to the set
+func (cnf *Configurator) addTSServicesToSet(set map[string]bool) {
+	for _, ts := range cnf.transportServers {
+		ns := ts.TransportServer.Namespace
+		for _, upstream := range ts.TransportServer.Spec.Upstreams {
+			svc := upstream.Service
+			addServiceToSet(set, ns, svc)
+
+			if upstream.Backup != "" {
+				addServiceToSet(set, ns, upstream.Backup)
+			}
+
+		}
+	}
+}
+
+// addIngressesServicesToSet adds services from Ingresses to the set
+func (cnf *Configurator) addIngressesServicesToSet(set map[string]bool) {
+	for _, ing := range cnf.ingresses {
+		cnf.addIngressServicesToSet(ing, set)
+	}
+	for _, mergeIngs := range cnf.mergeableIngresses {
+		cnf.addIngressServicesToSet(mergeIngs.Master, set)
+		for _, minion := range mergeIngs.Minions {
+			cnf.addIngressServicesToSet(minion, set)
+		}
+	}
+}
+
+// addIngressServicesToSet processes a single ingress and adds its services to the set
+func (cnf *Configurator) addIngressServicesToSet(ing *IngressEx, set map[string]bool) {
+	if ing == nil || ing.Ingress == nil {
+		return
+	}
+	ns := ing.Ingress.Namespace
+	if ing.Ingress.Spec.DefaultBackend != nil && ing.Ingress.Spec.DefaultBackend.Service != nil {
+		svc := ing.Ingress.Spec.DefaultBackend.Service.Name
+		addServiceToSet(set, ns, svc)
+	}
+	for _, rule := range ing.Ingress.Spec.Rules {
+		if rule.HTTP != nil {
+			for _, path := range rule.HTTP.Paths {
+				if path.Backend.Service != nil {
+					svc := path.Backend.Service.Name
+					addServiceToSet(set, ns, svc)
+				}
+			}
+		}
+	}
+}
+
+// Helper function to add services to the set
+func addServiceToSet(set map[string]bool, ns string, svc string) {
+	set[fmt.Sprintf("%s/%s", ns, svc)] = true
+}
+
+// GetVirtualServerCounts returns the total count of
+// VirtualServer and VirtualServerRoute resources that are handled by the Ingress Controller
+func (cnf *Configurator) GetVirtualServerCounts() (int, int) {
+	vsCount := len(cnf.virtualServers)
+	vsrCount := 0
 	for _, vs := range cnf.virtualServers {
 		vsrCount += len(vs.VirtualServerRoutes)
 	}
-
 	return vsCount, vsrCount
+}
+
+// GetTransportServerCounts returns the total count of
+// TransportServer resources that are handled by the Ingress Controller
+func (cnf *Configurator) GetTransportServerCounts() (tsCount int) {
+	return len(cnf.transportServers)
 }
 
 // AddOrUpdateSpiffeCerts writes Spiffe certs and keys to disk and reloads NGINX
@@ -1631,6 +1811,7 @@ func (cnf *Configurator) AddOrUpdateResourcesThatUseDosProtected(ingExes []*Ingr
 
 func (cnf *Configurator) addOrUpdateIngressesAndVirtualServers(ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	for _, ingEx := range ingExes {
 		_, warnings, err := cnf.addOrUpdateIngress(ingEx)
@@ -1649,11 +1830,16 @@ func (cnf *Configurator) addOrUpdateIngressesAndVirtualServers(ingExes []*Ingres
 	}
 
 	for _, vs := range vsExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vs)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vs)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
 		}
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 		allWarnings.Add(warnings)
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return allWarnings, nil
@@ -1765,4 +1951,9 @@ func (cnf *Configurator) DeleteSecret(key string) {
 // DynamicSSLReloadEnabled is used to check if dynamic reloading of SSL certificates is enabled
 func (cnf *Configurator) DynamicSSLReloadEnabled() bool {
 	return cnf.isDynamicSSLReloadEnabled
+}
+
+// UpsertSplitClientsKeyVal upserts a key-value pair in a keyzal zone for weight changes without reloads.
+func (cnf *Configurator) UpsertSplitClientsKeyVal(zoneName, key, value string) {
+	cnf.nginxManager.UpsertSplitClientsKeyVal(zoneName, key, value)
 }

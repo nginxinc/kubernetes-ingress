@@ -1,15 +1,11 @@
 ---
+docs: DOCS-595
+doctypes:
+- ''
 title: Custom Annotations
-
-description: "Custom annotations enable you to quickly extend the Ingress resource to support many advanced features of NGINX, such as rate limiting, caching, etc."
-weight: 1900
-doctypes: [""]
-aliases:
-    - /custom-annotations/
 toc: true
-docs: "DOCS-595"
+weight: 1900
 ---
-
 
 Custom annotations enable you to quickly extend the Ingress resource to support many advanced features of NGINX, such as rate limiting, caching, etc.
 
@@ -23,7 +19,7 @@ Custom annotations allow you to add an annotation for an NGINX feature that is n
 
 ## Usage
 
-The Ingress Controller generates NGINX configuration for Ingress resources by executing a configuration template. See [NGINX template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.2/internal/configs/version1/nginx.ingress.tmpl) or [NGINX Plus template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.2/internal/configs/version1/nginx-plus.ingress.tmpl).
+The Ingress Controller generates NGINX configuration for Ingress resources by executing a configuration template. See [NGINX template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/internal/configs/version1/nginx.ingress.tmpl) or [NGINX Plus template](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/internal/configs/version1/nginx-plus.ingress.tmpl).
 
 To support custom annotations, the template has access to the information about the Ingress resource - its *name*, *namespace* and *annotations*. It is possible to check if a particular annotation present in the Ingress resource and conditionally insert NGINX configuration directives at multiple NGINX contexts - `http`, `server`, `location` or `upstream`. Additionally, you can get the value that is set to the annotation.
 
@@ -116,6 +112,7 @@ Helper functions can be used in the Ingress template to parse the values of cust
 | ``hasSuffix`` | ``s, suffix string`` | ``bool`` | Tests whether the string ``suffix`` is a suffix of the string ``s``. |
 | ``toLower`` | ``s string`` | ``bool`` | Converts all letters in the string ``s`` to their lower case. |
 | ``toUpper`` | ``s string`` | ``bool`` | Converts all letters in the string ``s`` to their upper case. |
+| ``replaceAll`` | ``s, old, new string`` | ``string`` | Replaces all occurrences of ``old`` with ``new`` in the string ``s``. |
 {{% /table %}}
 
 Consider the following custom annotation `custom.nginx.org/allowed-ips`, which expects a comma-separated list of IP addresses:
@@ -144,4 +141,4 @@ deny all;
 
 ## Example
 
-See the [custom annotations example](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.2/examples/ingress-resources/custom-annotations).
+See the [custom annotations example](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/examples/ingress-resources/custom-annotations).

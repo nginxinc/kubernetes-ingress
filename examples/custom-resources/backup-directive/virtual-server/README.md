@@ -27,11 +27,11 @@ When this happens, you should get a response from the `external-cafe` instead.
    ```
 
    We configure the `-watch-namespace` flag to only watch the `nginx-ingress` and `default` namespaces.
-   This ensures that the NGINX Ingress Controller will treat our service in the `external-ns` namespace
+   This ensures that NGINX Ingress Controller will treat our service in the `external-ns` namespace
    as an external service.
 
 2. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
-   instructions to deploy the NGINX Ingress Controller.
+   instructions to deploy NGINX Ingress Controller.
 
 3. Save the public IP address of the Ingress Controller into a shell variable:
 
@@ -92,7 +92,7 @@ Note that the backup service is configured with cluster domain name of the exter
 Run the below curl command to get a response from your application. In this example we hit the `/coffee` endpoint:
 
    ```shell
-   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
+   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure
    ```
 
    ```shell
@@ -115,7 +115,7 @@ Run the below curl command to get a response from your application. In this exam
 2. Run the below curl command. Notice that Server name in the response is `coffee-backup-<id>` instead of `coffee-<id>`
 
    ```shell
-   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
+   curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure
    ```
 
 3. Check response from the backup service

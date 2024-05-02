@@ -119,16 +119,12 @@ func makeVirtualServer() v1.VirtualServer {
 	}
 }
 
-func createPointerFromString(s string) *string {
-	return &s
-}
-
 func TestValidateFailsOnMissingBackupPort(t *testing.T) {
 	t.Parallel()
 
 	vs := makeVirtualServer()
 	// setup only backup name, missing backup port
-	vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+	vs.Spec.Upstreams[1].Backup = "backup-service"
 
 	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
 	err := vsv.ValidateVirtualServer(&vs)
@@ -165,7 +161,7 @@ func TestValidateFailsOnNotSupportedLBMethodForBackup(t *testing.T) {
 			t.Parallel()
 
 			vs := makeVirtualServer()
-			vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+			vs.Spec.Upstreams[1].Backup = "backup-service"
 			vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
 
 			// Not supported load balancing method
@@ -184,7 +180,7 @@ func TestValidateBackup(t *testing.T) {
 	t.Parallel()
 
 	vs := makeVirtualServer()
-	vs.Spec.Upstreams[1].Backup = createPointerFromString("backup-service")
+	vs.Spec.Upstreams[1].Backup = "backup-service"
 	vs.Spec.Upstreams[1].BackupPort = createPointerFromUInt16(8080)
 
 	vsv := &VirtualServerValidator{isPlus: true, isDosEnabled: true}
@@ -4327,39 +4323,39 @@ func TestValidateErrorPageReturn(t *testing.T) {
 	tests := []v1.ErrorPageReturn{
 		{
 			ActionReturn: v1.ActionReturn{
-				Code: 200,
-				Type: "",
-				Body: "Could not process request, try again",
+				Code:    200,
+				Type:    "",
+				Body:    "Could not process request, try again",
+				Headers: nil,
 			},
-			Headers: nil,
 		},
 		{
 			ActionReturn: v1.ActionReturn{
 				Code: 0,
 				Type: "",
 				Body: "Could not process request, try again. Upstream status ${upstream_status}",
-			},
-			Headers: []v1.Header{
-				{
-					Name:  "Set-Cookie",
-					Value: "mycookie=true",
+				Headers: []v1.Header{
+					{
+						Name:  "Set-Cookie",
+						Value: "mycookie=true",
+					},
 				},
 			},
 		},
 		{
 			ActionReturn: v1.ActionReturn{
-				Code: 200,
-				Type: "application/json",
-				Body: `{\"message\": \"Could not process request, try again\", \"upstream_status\": \"${upstream_status}\"}`,
+				Code:    200,
+				Type:    "application/json",
+				Body:    `{\"message\": \"Could not process request, try again\", \"upstream_status\": \"${upstream_status}\"}`,
+				Headers: nil,
 			},
-			Headers: nil,
 		},
 	}
 
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageReturn(&epr, field.NewPath("return"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateErrorPageReturn(%v) returned errors for valid input: %v", epr, allErrs)
@@ -4410,11 +4406,11 @@ func TestValidateErrorPageReturnFails(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"Could not process request, try again\", \"status\": \"${status}\"}`,
-				},
-				Headers: []v1.Header{
-					{
-						Name:  "Set-Cookie$_%^$  -",
-						Value: "mycookie=true",
+					Headers: []v1.Header{
+						{
+							Name:  "Set-Cookie$_%^$  -",
+							Value: "mycookie=true",
+						},
 					},
 				},
 			},
@@ -4424,6 +4420,7 @@ func TestValidateErrorPageReturnFails(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, test := range tests {
+		test := test // address gosec G601
 		allErrs := vsv.validateErrorPageReturn(&test.epr, field.NewPath("return"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateErrorPageReturn(%v) returned no errors for invalid input for the case of %v", test.epr, test.msg)
@@ -4451,7 +4448,7 @@ func TestValidateErrorPageRedirect(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageRedirect(&epr, field.NewPath("redirect"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateErrorPageRedirect(%v) returned errors for valid input: %v", epr, allErrs)
@@ -4497,7 +4494,7 @@ func TestValidateErrorPageRedirectFails(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
+		epr := epr // address gosec G601
 		allErrs := vsv.validateErrorPageRedirect(&epr, field.NewPath("redirect"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateErrorPageRedirect(%v) returned no errors for invalid input", epr)

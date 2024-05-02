@@ -1,11 +1,13 @@
 ---
+docs: DOCS-1455
+doctypes:
+- ''
 title: Using the GCP Marketplace NGINX Ingress Controller Image
-description: "Follow these steps to deploy F5 NGINX Ingress Controller through the GCP Marketplace."
-weight: 300
-doctypes: [""]
 toc: true
-docs: "DOCS-000"
+weight: 300
 ---
+
+Follow these steps to deploy F5 NGINX Ingress Controller through the GCP Marketplace.
 
 ## Overview
 

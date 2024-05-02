@@ -1,14 +1,14 @@
 ---
+docs: DOCS-1181
+doctypes:
+- concept
 title: NGINX Ingress Controller and Open Service Mesh
-description: |
-  Use NGINX Ingress Controller with Open Service Mesh.
-weight: 1800
-doctypes: ["concept"]
 toc: true
-docs: "DOCS-1181"
+weight: 1800
 ---
 
-## This document outlines how to integrate F5 NGINX Ingress Controller with Open Service Mesh (OSM)
+
+This document outlines how to integrate F5 NGINX Ingress Controller with Open Service Mesh (OSM)
 
 Open Service Mesh will work with both versions of [F5 NGINX Ingress controller](https://github.com/nginxinc/kubernetes-ingress): the free as well as the NGINX Plus versions.
 
@@ -17,7 +17,7 @@ Below is a link to the official F5 NGINX Ingress Controller documentation.
 
 # Integrating NGINX Ingress Controller with Open Service Mesh
 
-There are two ways to integrate the NGINX Ingress Controller with Open Service Mesh (OSM):
+There are two ways to integrate NGINX Ingress Controller with Open Service Mesh (OSM):
 
 1. Injecting an envoy sidecar directly with NGINX Ingress Controller.
 2. Using the Open Service Mesh `ingressBackend` "proxy" feature.
@@ -213,7 +213,7 @@ By running the following command, you will install OSM into the cluster with the
 osm install --mesh-name osm-nginx --osm-namespace osm-system
 ```
 
-Once OSM has been installed, this next command will mark the NGINX Ingress Controller as part of the OSM mesh, while also disabling sidecar injection.
+Once OSM has been installed, this next command will mark NGINX Ingress Controller as part of the OSM mesh, while also disabling sidecar injection.
 *NOTE*: The nginx-ingress name can be created as part of the NGINX Ingress install process, or manually. If you are creating it manually, the namespace must created before you "add" the namespace to Open Service Mesh.
 
 ```console

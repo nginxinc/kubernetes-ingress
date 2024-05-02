@@ -60,7 +60,7 @@ Note: Ingress Resources with more than one host cannot be used.
 
 ## Example
 
-In this example we deploy the NGINX Ingress Controller, a simple web application and then configure load balancing for
+In this example we deploy NGINX Ingress Controller, a simple web application and then configure load balancing for
 that application using Ingress resources with the `nginx.org/mergeable-ingress-type` annotations.
 
 ## Running the Example

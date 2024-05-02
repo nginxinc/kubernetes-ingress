@@ -174,7 +174,32 @@ func (*FakeManager) AppProtectDosAgentStart(_ chan error, _ bool, _ int, _ int, 
 	glog.V(3).Infof("Starting FakeAppProtectDosAgent")
 }
 
+// AgentQuit is a fake implementation AppProtectAgentQuit
+func (*FakeManager) AgentQuit() {
+	glog.V(3).Infof("Quitting FakeAgent")
+}
+
+// AgentStart is a fake implementation of AppProtectAgentStart
+func (*FakeManager) AgentStart(_ chan error, _ string) {
+	glog.V(3).Infof("Starting FakeAgent")
+}
+
+// AgentVersion is a fake implementation of AppProtectAgentStart
+func (*FakeManager) AgentVersion() string {
+	return "v0.00.0-00000000"
+}
+
 // GetSecretsDir is a fake implementation
 func (fm *FakeManager) GetSecretsDir() string {
 	return fm.secretsPath
+}
+
+// UpsertSplitClientsKeyVal is a fake implementation of UpsertSplitClientsKeyVal
+func (fm *FakeManager) UpsertSplitClientsKeyVal(_ string, _ string, _ string) {
+	glog.V(3).Infof("Creating split clients key")
+}
+
+// DeleteKeyValStateFiles is a fake implementation of DeleteKeyValStateFiles
+func (fm *FakeManager) DeleteKeyValStateFiles(_ string) {
+	glog.V(3).Infof("Deleting keyval state files")
 }

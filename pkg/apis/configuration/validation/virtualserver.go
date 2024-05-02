@@ -255,11 +255,11 @@ func validatePositiveIntOrZeroFromPointer(n *int, fieldPath *field.Path) field.E
 	return nil
 }
 
-func validateBackupNameFromPointer(backup *string, fieldPath *field.Path) field.ErrorList {
-	if backup == nil {
+func validateBackupName(backup string, fieldPath *field.Path) field.ErrorList {
+	if backup == "" {
 		return nil
 	}
-	backupName := *backup
+	backupName := backup
 	return validateServiceName(backupName, fieldPath.Child("backup"))
 }
 
@@ -572,6 +572,7 @@ func (vsv *VirtualServerValidator) validateUpstreams(upstreams []v1.Upstream, fi
 	upstreamNames = sets.Set[string]{}
 
 	for i, u := range upstreams {
+		u := u // address gosec G601
 		idxPath := fieldPath.Index(i)
 
 		upstreamErrors := validateUpstreamName(u.Name, idxPath.Child("name"))
@@ -624,15 +625,15 @@ func (vsv *VirtualServerValidator) validateUpstreams(upstreams []v1.Upstream, fi
 //
 // Backup can't be used with load balancing methods: 'hash', 'hash_ip' and 'random'.
 // Ref.: https://nginx.org/en/docs/http/ngx_http_upstream_module.html
-func validateBackup(backup *string, backupPort *uint16, lbMethod string, idxPath *field.Path) field.ErrorList {
-	if backup == nil && backupPort == nil {
+func validateBackup(backup string, backupPort *uint16, lbMethod string, idxPath *field.Path) field.ErrorList {
+	if backup == "" && backupPort == nil {
 		return nil
 	}
 	allErrs := field.ErrorList{}
-	if backup != nil && backupPort == nil {
+	if backup != "" && backupPort == nil {
 		allErrs = append(allErrs, field.Invalid(idxPath.Child("backupPort"), backupPort, "both backup and backup port must be specified"))
 	}
-	if backup == nil && backupPort != nil {
+	if backup == "" && backupPort != nil {
 		allErrs = append(allErrs, field.Invalid(idxPath.Child("backup"), backup, "both backup and backup port must be specified"))
 	}
 
@@ -642,7 +643,7 @@ func validateBackup(backup *string, backupPort *uint16, lbMethod string, idxPath
 		))
 	}
 
-	allErrs = append(allErrs, validateBackupNameFromPointer(backup, idxPath.Child("backup"))...)
+	allErrs = append(allErrs, validateBackupName(backup, idxPath.Child("backup"))...)
 	allErrs = append(allErrs, validateBackupPortFromPointer(backupPort, idxPath.Child("backupPort"))...)
 	return allErrs
 }

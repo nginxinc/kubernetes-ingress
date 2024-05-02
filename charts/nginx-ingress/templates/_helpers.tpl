@@ -61,6 +61,24 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+Pod labels
+*/}}
+{{- define "nginx-ingress.podLabels" -}}
+{{- include "nginx-ingress.selectorLabels" . }}
+{{- if .Values.nginxServiceMesh.enable }}
+nsm.nginx.com/enable-ingress: "true"
+nsm.nginx.com/enable-egress: "{{ .Values.nginxServiceMesh.enableEgress }}"
+nsm.nginx.com/{{ .Values.controller.kind }}: {{ include "nginx-ingress.controller.fullname" . }}
+{{- end }}
+{{- if and .Values.nginxAgent.enable (eq (.Values.nginxAgent.customConfigMap | default "") "") }}
+agent-configuration-revision-hash: {{ include "nginx-ingress.agentConfiguration" . | sha1sum | trunc 8 | quote }}
+{{- end }}
+{{- if .Values.controller.pod.extraLabels }}
+{{ toYaml .Values.controller.pod.extraLabels }}
+{{- end }}
+{{- end }}
+
+{{/*
 Selector labels
 */}}
 {{- define "nginx-ingress.selectorLabels" -}}
@@ -80,6 +98,17 @@ Expand the name of the configmap.
 {{ .Values.controller.customConfigMap }}
 {{- else -}}
 {{- default (include "nginx-ingress.fullname" .) .Values.controller.config.name -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Expand the name of the configmap used for NGINX Agent.
+*/}}
+{{- define "nginx-ingress.agentConfigName" -}}
+{{- if ne (.Values.nginxAgent.customConfigMap | default "") "" -}}
+{{ .Values.nginxAgent.customConfigMap }}
+{{- else -}}
+{{- printf "%s-agent-config"  (include "nginx-ingress.fullname" . | trunc 49 | trimSuffix "-") -}}
 {{- end -}}
 {{- end -}}
 
@@ -135,9 +164,34 @@ Expand image name.
 {{- end -}}
 
 {{/*
+return if readOnlyRootFilesystem is enabled or not.
+*/}}
+{{- define "nginx-ingress.readOnlyRootFilesystem" -}}
+{{- if or .Values.controller.readOnlyRootFilesystem (and .Values.controller.securityContext .Values.controller.securityContext.readOnlyRootFilesystem) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
 Build the args for the service binary.
 */}}
 {{- define "nginx-ingress.args" -}}
+{{- if and .Values.controller.debug .Values.controller.debug.enable }}
+- --listen=:2345
+- --headless=true
+- --log=true
+- --log-output=debugger,debuglineerr,gdbwire,lldbout,rpc,dap,fncall,minidump,stack
+- --accept-multiclient
+- --api-version=2
+- exec
+- ./nginx-ingress
+{{- if .Values.controller.debug.continue }}
+- --continue
+{{- end }}
+- --
+{{- end -}}
 - -nginx-plus={{ .Values.controller.nginxplus }}
 - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
 - -enable-app-protect={{ .Values.controller.appprotect.enable }}
@@ -223,5 +277,145 @@ Build the args for the service binary.
 - -ready-status-port={{ .Values.controller.readyStatus.port }}
 - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
 - -ssl-dynamic-reload={{ .Values.controller.enableSSLDynamicReload }}
-- -enable-telemetry-reporting={{ .Values.controller.enableTelemetryReporting}}
+- -enable-telemetry-reporting={{ .Values.controller.telemetryReporting.enable}}
+- -weight-changes-dynamic-reload={{ .Values.controller.enableWeightChangesDynamicReload}}
+{{- if .Values.nginxAgent.enable }}
+- -agent=true
+- -agent-instance-group={{ default (include "nginx-ingress.controller.fullname" .) .Values.nginxAgent.instanceGroup }}
+{{- end }}
 {{- end -}}
+
+{{/*
+Volumes for controller.
+*/}}
+{{- define "nginx-ingress.volumes" -}}
+{{- $volumesSet := "false" }}
+volumes:
+{{- if eq (include "nginx-ingress.volumeEntries" .) "" -}}
+{{ toYaml list | printf " %s" }}
+{{- else }}
+{{ include "nginx-ingress.volumeEntries" . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+List of volumes for controller.
+*/}}
+{{- define "nginx-ingress.volumeEntries" -}}
+{{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
+- name: nginx-etc
+  emptyDir: {}
+- name: nginx-cache
+  emptyDir: {}
+- name: nginx-lib
+  emptyDir: {}
+- name: nginx-log
+  emptyDir: {}
+{{- end }}
+{{- if .Values.controller.volumes }}
+{{ toYaml .Values.controller.volumes }}
+{{- end }}
+{{- if .Values.nginxAgent.enable }}
+- name: agent-conf
+  configMap:
+    name: {{ include "nginx-ingress.agentConfigName" . }}
+- name: agent-dynamic
+  emptyDir: {}
+{{- if and .Values.nginxAgent.instanceManager.tls (or (ne (.Values.nginxAgent.instanceManager.tls.secret | default "") "") (ne (.Values.nginxAgent.instanceManager.tls.caSecret | default "") "")) }}
+- name: nginx-agent-tls
+  projected:
+    sources:
+{{- if ne .Values.nginxAgent.instanceManager.tls.secret "" }}
+      - secret:
+          name: {{ .Values.nginxAgent.instanceManager.tls.secret }}
+{{- end }}
+{{- if ne .Values.nginxAgent.instanceManager.tls.caSecret "" }}
+      - secret:
+          name: {{ .Values.nginxAgent.instanceManager.tls.caSecret }}
+{{- end }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Volume mounts for controller.
+*/}}
+{{- define "nginx-ingress.volumeMounts" -}}
+{{- $volumesSet := "false" }}
+volumeMounts:
+{{- if eq (include "nginx-ingress.volumeMountEntries" .) "" -}}
+{{ toYaml list | printf " %s" }}
+{{- else }}
+{{ include "nginx-ingress.volumeMountEntries" . }}
+{{- end -}}
+{{- end -}}
+
+{{- define "nginx-ingress.volumeMountEntries" -}}
+{{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
+- mountPath: /etc/nginx
+  name: nginx-etc
+- mountPath: /var/cache/nginx
+  name: nginx-cache
+- mountPath: /var/lib/nginx
+  name: nginx-lib
+- mountPath: /var/log/nginx
+  name: nginx-log
+{{- end }}
+{{- if .Values.controller.volumeMounts }}
+{{ toYaml .Values.controller.volumeMounts }}
+{{- end }}
+{{- if .Values.nginxAgent.enable }}
+- name: agent-conf
+  mountPath: /etc/nginx-agent/nginx-agent.conf
+  subPath: nginx-agent.conf
+- name: agent-dynamic
+  mountPath: /var/lib/nginx-agent
+{{- if and .Values.nginxAgent.instanceManager.tls (or (ne (.Values.nginxAgent.instanceManager.tls.secret | default "") "") (ne (.Values.nginxAgent.instanceManager.tls.caSecret | default "") "")) }}
+- name: nginx-agent-tls
+  mountPath: /etc/ssl/nms
+  readOnly: true
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "nginx-ingress.agentConfiguration" -}}
+log:
+  level: {{ .Values.nginxAgent.logLevel }}
+  path: ""
+server:
+  host: {{ required ".Values.nginxAgent.instanceManager.host is required when setting .Values.nginxAgent.enable to true" .Values.nginxAgent.instanceManager.host }}
+  grpcPort: {{ .Values.nginxAgent.instanceManager.grpcPort }}
+{{- if ne (.Values.nginxAgent.instanceManager.sni | default "") ""  }}
+  metrics: {{ .Values.nginxAgent.instanceManager.sni }}
+  command: {{ .Values.nginxAgent.instanceManager.sni }}
+{{- end }}
+{{- if .Values.nginxAgent.instanceManager.tls  }}
+tls:
+  enable: {{ .Values.nginxAgent.instanceManager.tls.enable | default true }}
+  skip_verify: {{ .Values.nginxAgent.instanceManager.tls.skipVerify | default false }}
+  {{- if ne .Values.nginxAgent.instanceManager.tls.caSecret "" }}
+  ca: "/etc/ssl/nms/ca.crt"
+  {{- end }}
+  {{- if ne .Values.nginxAgent.instanceManager.tls.secret "" }}
+  cert: "/etc/ssl/nms/tls.crt"
+  key: "/etc/ssl/nms/tls.key"
+  {{- end }}
+{{- end }}
+features:
+  - registration
+  - nginx-counting
+  - metrics-sender
+  - dataplane-status
+extensions:
+  - nginx-app-protect
+  - nap-monitoring
+nginx_app_protect:
+  report_interval: 15s
+  precompiled_publication: true
+nap_monitoring:
+  collector_buffer_size: {{ .Values.nginxAgent.napMonitoring.collectorBufferSize }}
+  processor_buffer_size: {{ .Values.nginxAgent.napMonitoring.processorBufferSize }}
+  syslog_ip: {{ .Values.nginxAgent.syslog.host }}
+  syslog_port: {{ .Values.nginxAgent.syslog.port }}
+
+{{ end -}}

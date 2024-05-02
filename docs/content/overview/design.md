@@ -1,13 +1,13 @@
 ---
+docs: DOCS-609
+doctypes:
+- reference
 title: How NGINX Ingress Controller is Designed
-description: "This document explains how the F5 NGINX Ingress Controller is designed, and how it works with NGINX and NGINX Plus."
-weight: 200
-doctypes: ["reference"]
 toc: true
-docs: "DOCS-609"
+weight: 200
 ---
 
-<br>
+This document explains how the F5 NGINX Ingress Controller is designed, and how it differs when using NGINX or NGINX Plus.
 
 The intended audience for this information is primarily the two following groups:
 

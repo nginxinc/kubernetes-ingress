@@ -1,12 +1,14 @@
 ---
+docs: DOCS-1461
+doctypes:
+- ''
 title: Troubleshooting VirtualServer Resources
-description: "This page describes how to troubleshoot VirtualServer and VirtualServer Resource Events."
-weight: 500
-doctypes: [""]
 toc: true
-aliases:
- - /content/troubleshooting/virtualserver-virtualserverroute
+weight: 500
 ---
+
+This page describes how to troubleshoot VirtualServer and VirtualServer Resource Events.
+
 ## Inspecting VirtualServer and VirtualServerRoute Resource Events
 
 After creating or updating a VirtualServer resource, you can immediately check if the NGINX configuration for that resource was successfully by using `kubectl describe vs <resource-name>`:

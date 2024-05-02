@@ -28,40 +28,43 @@ FILE_TO_UPDATE_HELM_CHART_VERSION=(
 )
 
  usage() {
-    echo "Usage: $0 <ic_version> <helm_chart_version>"
+    echo "Usage: $0 <current_ic_version> <current_helm_chart_version> <new_ic_version> <new_helm_chart_version>"
     exit 1
  }
 
-if ! command -v yq > /dev/null 2>&1; then
-    echo "ERROR: yq command not found in \$PATH, cannot continue, exiting..."
-    exit 2
-fi
+current_ic_version=$1
+current_helm_chart_version=$2
+new_ic_version=$3
+new_helm_chart_version=$4
 
-ic_version=$1
-helm_chart_version=$2
-
-if [ -z "${ic_version}" ]; then
+if [ -z "${current_ic_version}" ]; then
     usage
 fi
 
-if [ -z "${helm_chart_version}" ]; then
+if [ -z "${current_helm_chart_version}" ]; then
     usage
 fi
 
-current_ic_version=$(yq '.appVersion' <"${HELM_CHART_PATH}/Chart.yaml")
+if [ -z "${new_ic_version}" ]; then
+    usage
+fi
+
+if [ -z "${new_helm_chart_version}" ]; then
+    usage
+fi
+
 escaped_current_ic_version=$(printf '%s' "$current_ic_version" | sed -e 's/\./\\./g');
-current_helm_chart_version=$(yq '.version' <"${HELM_CHART_PATH}/Chart.yaml")
 escaped_current_helm_chart_version=$(printf '%s' "$current_helm_chart_version" | sed -e 's/\./\\./g');
 
 echo "Updating versions: "
-echo "ic_version: ${current_ic_version} -> ${ic_version}"
-echo "helm_chart_version: ${current_helm_chart_version} -> ${helm_chart_version}"
+echo "ic_version: ${current_ic_version} -> ${new_ic_version}"
+echo "helm_chart_version: ${current_helm_chart_version} -> ${new_helm_chart_version}"
 
-regex_ic="s#$escaped_current_ic_version#$ic_version#g"
-regex_helm="s#$escaped_current_helm_chart_version#$helm_chart_version#g"
+regex_ic="s#$escaped_current_ic_version#$new_ic_version#g"
+regex_helm="s#$escaped_current_helm_chart_version#$new_helm_chart_version#g"
 
 mv "${HELM_CHART_PATH}/values.schema.json" "${TMPDIR}/"
-jq --arg version "${ic_version}" \
+jq --arg version "${new_ic_version}" \
     '.properties.controller.properties.image.properties.tag.default = $version | .properties.controller.properties.image.properties.tag.examples[0] = $version | .properties.controller.examples[0].image.tag = $version | .properties.controller.properties.image.examples[0].tag = $version | .examples[0].controller.image.tag = $version' \
     ${TMPDIR}/values.schema.json \
     > "${HELM_CHART_PATH}/values.schema.json"

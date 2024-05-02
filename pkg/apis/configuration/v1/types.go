@@ -125,7 +125,7 @@ type Upstream struct {
 	UseClusterIP             bool              `json:"use-cluster-ip"`
 	NTLM                     bool              `json:"ntlm"`
 	Type                     string            `json:"type"`
-	Backup                   *string           `json:"backup"`
+	Backup                   string            `json:"backup"`
 	BackupPort               *uint16           `json:"backupPort"`
 }
 
@@ -209,9 +209,10 @@ type ActionRedirect struct {
 
 // ActionReturn defines a return in an Action.
 type ActionReturn struct {
-	Code int    `json:"code"`
-	Type string `json:"type"`
-	Body string `json:"body"`
+	Code    int      `json:"code"`
+	Type    string   `json:"type"`
+	Body    string   `json:"body"`
+	Headers []Header `json:"headers"`
 }
 
 // ActionProxy defines a proxy in an Action.
@@ -274,7 +275,6 @@ type ErrorPage struct {
 // ErrorPageReturn defines a return for an ErrorPage.
 type ErrorPageReturn struct {
 	ActionReturn `json:",inline"`
-	Headers      []Header `json:"headers"`
 }
 
 // ErrorPageRedirect defines a redirect for an ErrorPage.
@@ -479,7 +479,7 @@ type TransportServerUpstream struct {
 	MaxConns            *int                        `json:"maxConns"`
 	HealthCheck         *TransportServerHealthCheck `json:"healthCheck"`
 	LoadBalancingMethod string                      `json:"loadBalancingMethod"`
-	Backup              *string                     `json:"backup"`
+	Backup              string                      `json:"backup"`
 	BackupPort          *uint16                     `json:"backupPort"`
 }
 
@@ -670,7 +670,8 @@ type WAF struct {
 
 // SecurityLog defines the security log of a WAF policy.
 type SecurityLog struct {
-	Enable    bool   `json:"enable"`
-	ApLogConf string `json:"apLogConf"`
-	LogDest   string `json:"logDest"`
+	Enable      bool   `json:"enable"`
+	ApLogConf   string `json:"apLogConf"`
+	ApLogBundle string `json:"apLogBundle"`
+	LogDest     string `json:"logDest"`
 }

@@ -1,3 +1,7 @@
+---
+docs: DOCS-1463
+---
+
 To make sure your NGINX Ingress Controller pods reach the `Ready` state, you'll need to create custom resource definitions (CRDs) for various components.
 
 Alternatively, you can disable this requirement by setting the `-enable-custom-resources` command-line argument to `false`.
@@ -19,7 +23,7 @@ This single YAML file creates CRDs for the following resources:
 - [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}})
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds.yaml
 ```
 
 {{%/tab%}}

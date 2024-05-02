@@ -1,20 +1,9 @@
 ---
+description: null
+docs: DOCS-1446
 title: Glossary
-description:
 weight: 10000
-menu:
-  docs:
-    parent: NGINX Ingress Controller
 ---
-
-{{<custom-styles>}}
-
-<style>
-h2 {
-  border-top: 1px solid #ccc;
-  padding-top:20px;
-}
-</style>
 
 ## Ingress {#ingress}
 
