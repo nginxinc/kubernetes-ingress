@@ -79,7 +79,7 @@ class TestVSRCannedResponses:
         resp_content = resp.content.decode("utf-8")
         assert resp.headers["content-type"] == "text/plain" and resp_content == "line1\nline2\nline3\n"
 
-    def test_update(self, kube_apis, crd_ingress_controller, v_s_route_setup):
+    def test_update(self, kube_apis, crd_ingress_controller, v_s_route_setup, ingress_controller_prerequisites):
         req_host = f"{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         req_url_1 = f"http://{req_host}{v_s_route_setup.route_m.paths[0]}"
         req_url_2 = f"http://{req_host}{v_s_route_setup.route_m.paths[1]}"
@@ -101,8 +101,22 @@ class TestVSRCannedResponses:
         assert resp.headers["content-type"] == "some/type" and resp_content == "{}"
 
         wait_and_assert_status_code(201, req_url_2, v_s_route_setup.vs_host)
+
+        wait_before_test(5)
         resp = requests.get(req_url_2, headers={"host": v_s_route_setup.vs_host})
         resp_content = resp.content.decode("utf-8")
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        nginx_config = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            v_s_route_setup.namespace,
+            v_s_route_setup.vs_name,
+            ic_pod_name,
+            ingress_controller_prerequisites.namespace,)
+        print("HEADERS: ")
+        print(resp.headers)
+        print(nginx_config)
+
+
         assert (
             resp.headers["content-type"] == "user-type"
             and resp_content == "line1\nline2"
