@@ -111,11 +111,11 @@ class TestVSRCannedResponses:
             v_s_route_setup.namespace,
             v_s_route_setup.vs_name,
             ic_pod_name,
-            ingress_controller_prerequisites.namespace,)
+            ingress_controller_prerequisites.namespace,
+        )
         print("HEADERS: ")
         print(resp.headers)
         print(nginx_config)
-
 
         assert (
             resp.headers["content-type"] == "user-type"
