@@ -57,8 +57,29 @@ It is the UID of the `kube-system` Namespace. */
 		/** IngressClasses is the number of Ingress Classes. */
 		long? IngressClasses = null;
 
-		/** Policies is the number of policy resources managed by the NGINX Ingress Controller */
-		long? Policies = null;
+		/** AccessControlPolicies is the number of AccessControl policies managed by NGINX Ingress Controller */
+		long? AccessControlPolicies = null;
+
+		/** RateLimitPolicies is the number of RateLimit policies managed by NGINX Ingress Controller */
+		long? RateLimitPolicies = null;
+
+		/** JWTAuthPolicies is the number of JWTAuth policies managed by NGINX Ingress Controller */
+		long? JWTAuthPolicies = null;
+
+		/** BasicAuthPolicies is the number of BasicAuth policies managed by NGINX Ingress Controller */
+		long? BasicAuthPolicies = null;
+
+		/** IngressMTLSPolicies is the number of IngressMTLS policies managed by NGINX Ingress Controller */
+		long? IngressMTLSPolicies = null;
+
+		/** EgressMTLSPolicies is the number of EgressMTLS policies managed by NGINX Ingress Controller */
+		long? EgressMTLSPolicies = null;
+
+		/** OIDCPolicies is the number of OIDC policies managed by NGINX Ingress Controller */
+		long? OIDCPolicies = null;
+
+		/** WAFPolicies is the number of WAF policies managed by NGINX Ingress Controller */
+		long? WAFPolicies = null;
 
 		/** GlobalConfiguration indicates if a GlobalConfiguration resource is used. */
 		boolean? GlobalConfiguration = null;

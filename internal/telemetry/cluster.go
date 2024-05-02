@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
+
+	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -145,12 +148,37 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 	return len(ic.Items), nil
 }
 
-// PolicyCount returns number of Policies watched by NIC.
-func (c *Collector) PolicyCount() int {
+// PolicyCount returns the count of fields in each PolicySpec
+func (c *Collector) PolicyCount() v1.PolicySpecMap {
+	policyCounters := make(v1.PolicySpecMap)
 	if c.Config.Policies == nil {
-		return 0
+		return map[string]int{}
 	}
-	return len(c.Config.Policies())
+
+	policies := c.Config.Policies()
+	if policies == nil {
+		return policyCounters
+	}
+
+	for _, policy := range policies {
+		spec := policy.Spec
+
+		specValue := reflect.ValueOf(spec)
+		specType := specValue.Type()
+
+		for i := 0; i < specValue.NumField(); i++ {
+			field := specValue.Field(i)
+			fieldName := specType.Field(i).Name
+
+			if field.Kind() == reflect.Ptr && !field.IsNil() {
+				if _, ok := policyCounters[fieldName]; !ok {
+					policyCounters[fieldName] = 0
+				}
+				policyCounters[fieldName]++
+			}
+		}
+	}
+	return policyCounters
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

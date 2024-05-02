@@ -81,8 +81,22 @@ type NICResourceCounts struct {
 	Ingresses int64
 	// IngressClasses is the number of Ingress Classes.
 	IngressClasses int64
-	// Policies is the number of policy resources managed by NGINX Ingress Controller
-	Policies int64
+	// AccessControlPolicies is the number of AccessControl policies managed by NGINX Ingress Controller
+	AccessControlPolicies int64
+	// RateLimitPolicies is the number of RateLimit policies managed by NGINX Ingress Controller
+	RateLimitPolicies int64
+	// JWTAuthPolicies is the number of JWTAuth policies managed by NGINX Ingress Controller
+	JWTAuthPolicies int64
+	// BasicAuthPolicies is the number of BasicAuth policies managed by NGINX Ingress Controller
+	BasicAuthPolicies int64
+	// IngressMTLSPolicies is the number of IngressMTLS policies managed by NGINX Ingress Controller
+	IngressMTLSPolicies int64
+	// EgressMTLSPolicies is the number of EgressMTLS policies managed by NGINX Ingress Controller
+	EgressMTLSPolicies int64
+	// OIDCPolicies is the number of OIDC policies managed by NGINX Ingress Controller
+	OIDCPolicies int64
+	// WAFPolicies is the number of WAF policies managed by NGINX Ingress Controller
+	WAFPolicies int64
 	// GlobalConfiguration indicates if a GlobalConfiguration resource is used.
 	GlobalConfiguration bool
 }

@@ -579,6 +579,9 @@ type PolicySpec struct {
 	WAF           *WAF           `json:"waf"`
 }
 
+// PolicySpecMap represents a map where policy names map to their specifications.
+type PolicySpecMap map[string]int
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PolicyList is a list of the Policy resources.
