@@ -261,35 +261,35 @@ func TestCollectPolicyCount(t *testing.T) {
 		{
 			name: "SinglePolicy",
 			policies: func() []*conf_v1.Policy {
-				return []*conf_v1.Policy{&egressMTLSPolicy}
+				return []*conf_v1.Policy{egressMTLSPolicy}
 			},
 			want: 1,
 		},
 		{
 			name: "MultiplePolicies",
 			policies: func() []*conf_v1.Policy {
-				return []*conf_v1.Policy{&rateLimitPolicy, &wafPolicy, &oidcPolicy}
+				return []*conf_v1.Policy{rateLimitPolicy, wafPolicy, oidcPolicy}
 			},
 			want: 3,
 		},
 		{
 			name: "MultipleSamePolicies",
 			policies: func() []*conf_v1.Policy {
-				return []*conf_v1.Policy{&rateLimitPolicy, &rateLimitPolicy}
+				return []*conf_v1.Policy{rateLimitPolicy, rateLimitPolicy}
 			},
 			want: 2,
 		},
 		{
 			name: "SingleInvalidPolicy",
 			policies: func() []*conf_v1.Policy {
-				return []*conf_v1.Policy{&rateLimitPolicyInvalid}
+				return []*conf_v1.Policy{rateLimitPolicyInvalid}
 			},
 			want: 0,
 		},
 		{
 			name: "MultiplePoliciesOneValidOneInvalid",
 			policies: func() []*conf_v1.Policy {
-				return []*conf_v1.Policy{&rateLimitPolicy, &rateLimitPolicyInvalid}
+				return []*conf_v1.Policy{rateLimitPolicy, rateLimitPolicyInvalid}
 			},
 			want: 1,
 		},
@@ -329,6 +329,62 @@ func TestCollectPolicyCount(t *testing.T) {
 				t.Errorf("want %d policies, got %d", tc.want, got)
 			}
 		})
+	}
+}
+
+func TestCollectPoliciesReport(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+		Policies: func() []*conf_v1.Policy {
+			return []*conf_v1.Policy{
+				egressMTLSPolicy,
+				egressMTLSPolicy,
+				rateLimitPolicyInvalid,
+				wafPolicy,
+				wafPolicy,
+				oidcPolicy,
+			}
+		},
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		RateLimitPolicies:  0,
+		WAFPolicies:        2,
+		OIDCPolicies:       1,
+		EgressMTLSPolicies: 2,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
 
@@ -1663,7 +1719,7 @@ var telemetryNICData = tel.Data{
 
 // Policies used for testing for PolicyCount method
 var (
-	rateLimitPolicy = conf_v1.Policy{
+	rateLimitPolicy = &conf_v1.Policy{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Policy",
 			APIVersion: "k8s.nginx.org/v1",
@@ -1677,7 +1733,8 @@ var (
 		},
 		Status: conf_v1.PolicyStatus{},
 	}
-	rateLimitPolicyInvalid = conf_v1.Policy{
+
+	rateLimitPolicyInvalid = &conf_v1.Policy{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Policy",
 			APIVersion: "k8s.nginx.org/v1",
@@ -1689,7 +1746,8 @@ var (
 		Spec:   conf_v1.PolicySpec{},
 		Status: conf_v1.PolicyStatus{},
 	}
-	egressMTLSPolicy = conf_v1.Policy{
+
+	egressMTLSPolicy = &conf_v1.Policy{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Policy",
 			APIVersion: "k8s.nginx.org/v1",
@@ -1703,7 +1761,8 @@ var (
 		},
 		Status: conf_v1.PolicyStatus{},
 	}
-	oidcPolicy = conf_v1.Policy{
+
+	oidcPolicy = &conf_v1.Policy{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Policy",
 			APIVersion: "k8s.nginx.org/v1",
@@ -1717,7 +1776,8 @@ var (
 		},
 		Status: conf_v1.PolicyStatus{},
 	}
-	wafPolicy = conf_v1.Policy{
+
+	wafPolicy = &conf_v1.Policy{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Policy",
 			APIVersion: "k8s.nginx.org/v1",
