@@ -1,5 +1,5 @@
 name: Certify Openshift Image
-description: This action with attempt to certify an image for use in Openshift
+description: This action will attempt to certify an image for use in Openshift
 
 inputs:
   image:
