@@ -266,7 +266,7 @@ jobs:
       github_public_registry: true
       source_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}"
       target_tag: ${{ matrix.tag }}
-      dry_run: ${{ inputs.dry_run || true }}
+      dry_run: ${{ inputs.dry_run || false }}
     permissions:
       contents: read
       id-token: write
@@ -292,7 +292,7 @@ jobs:
       az_mktpl_registry: false
       source_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}"
       target_tag: ${{ matrix.tag }}
-      dry_run: ${{ inputs.dry_run || true }}
+      dry_run: ${{ inputs.dry_run || false }}
     permissions:
       contents: read
       id-token: write
