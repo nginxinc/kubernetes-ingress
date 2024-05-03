@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	validators "k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -112,7 +113,7 @@ func getValidTargets(endpoints []vsapi.ExternalEndpoint) (extdnsapi.Targets, str
 	for _, e := range endpoints {
 		if e.IP != "" {
 			glog.V(3).Infof("IP is defined: %v", e.IP)
-			if errMsg := validators.IsValidIP(e.IP); len(errMsg) > 0 {
+			if errMsg := validators.IsValidIP(field.NewPath(""), e.IP); len(errMsg) > 0 {
 				continue
 			}
 			ip := netutils.ParseIPSloppy(e.IP)
