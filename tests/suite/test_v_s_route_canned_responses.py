@@ -103,6 +103,7 @@ class TestVSRCannedResponses:
         wait_and_assert_status_code(201, req_url_2, v_s_route_setup.vs_host)
         resp = requests.get(req_url_2, headers={"host": v_s_route_setup.vs_host})
         resp_content = resp.content.decode("utf-8")
+        print(resp.headers)
         assert (
             resp.headers["content-type"] == "user-type"
             and resp_content == "line1\nline2"

@@ -74,6 +74,7 @@ class TestVSCannedResponse:
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
         resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
         resp_content = resp.content.decode("utf-8")
+        print(resp.headers)
         assert (
             resp.headers["content-type"] == "text/plain"
             and resp_content == "line1\nline2\nline3\n"
@@ -98,6 +99,7 @@ class TestVSCannedResponse:
         wait_and_assert_status_code(201, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
         resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
         resp_content = resp.content.decode("utf-8")
+        print(resp.headers)
         assert (
             resp.headers["content-type"] == "user-type"
             and resp_content == "line1\nline2"
