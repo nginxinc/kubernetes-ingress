@@ -1,20 +1,24 @@
-name: "Create Tag on release branch"
+name: Release NIC
 
 on:
   workflow_dispatch:
     inputs:
-      release_branch:
+      nic_version:
+        description: "Version to release"
         required: true
         type: string
-        default: 'release-0.0'
-      tag:
-        required: false
+      chart_version:
+        description: "Helm Chart version to release"
+        required: true
         type: string
-        default: 'vx.x.x'
+      release_branch:
+        description: "Branch to release from"
+        required: true
+        type: string
       dry_run:
+        description: "Dry Run?"
         type: boolean
         default: false
-
 
 defaults:
   run:
@@ -24,9 +28,9 @@ permissions:
   contents: read
 
 jobs:
-  create:
+  tag:
     name: Create Tag on release branch in NIC repo
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
@@ -38,7 +42,7 @@ jobs:
       - name: Create new release Tag
         run: |
           branch="${{ inputs.release_branch }}"
-          tag="${{ inputs.tag }}"
+          tag="v${{ inputs.nic_version }}"
           if git rev-parse --verify refs/tags/${tag}; then
             echo "Adding tag ${tag}."
             git tag -a ${tag} -m "Version ${tag#v*}"
@@ -54,3 +58,16 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.NGINX_PAT }}
+
+  publish-helm-chart:
+    name: Publish Helm Chart
+    uses: ./.github/workflows/publish-helm.yml
+    with:
+      branch: ${{ inputs.release_branch }}
+      ic_version: ${{ inputs.nic_version }}
+      chart_version: ${{ inputs.chart_version }}
+      nginx_helm_repo: true
+    permissions:
+      contents: write # for pushing to Helm Charts repository
+      packages: write # for helm to push to GHCR
+    secrets: inherit

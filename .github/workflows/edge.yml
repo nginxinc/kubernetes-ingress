@@ -11,7 +11,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.ref_name }}-ci
+  group: ${{ github.ref_name }}-edge
   cancel-in-progress: true
 
 permissions:
@@ -253,4 +253,18 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    secrets: inherit
+
+  publish-helm-chart:
+    name: Publish Helm Chart
+    needs: [checks ]
+    uses: ./.github/workflows/publish-helm.yml
+    with:
+      branch: ${{ github.ref_name }}
+      ic_version: 0.0.0-edge
+      chart_version: edge
+      nginx_helm_repo: false
+    permissions:
+      contents: write # for pushing to Helm Charts repository
+      packages: write # for helm to push to GHCR
     secrets: inherit
