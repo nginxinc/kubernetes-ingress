@@ -24,15 +24,13 @@ permissions:
   contents: read
 
 jobs:
-  checks:
-    name: Get versions of base images
+  variables:
+    name: Set variables for workflow
     runs-on: ubuntu-22.04
     outputs:
       tag: ${{ steps.kic.outputs.tag }}
-      short_tag: ${{ steps.kic.outputs.stag }}
-      branch: ${{ steps.kic.outputs.branch }}
-      go_code_md5: ${{ steps.md5.outputs.go_code_md5 }}
-      docker_md5: ${{ steps.md5.outputs.docker_md5 }}
+      short_tag: ${{ steps.kic.outputs.short }}
+      date: ${{ steps.kic.outputs.date }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
@@ -266,10 +264,9 @@ jobs:
       dockerhub_public_registry: true
       quay_public_registry: true
       github_public_registry: true
-      source_tag: ${{ needs.checks.outputs.tag }}
-      target_tag: ${{ needs.checks.outputs.tag }}
-      short_target_tag: ${{ needs.checks.outputs.short_tag }}
-      dry_run: false
+      source_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}"
+      target_tag: ${{ matrix.tag }}
+      dry_run: ${{ inputs.dry_run || false }}
     permissions:
       contents: read
       id-token: write
