@@ -249,6 +249,14 @@ jobs:
   release-oss-public:
     name: Publish Docker OSS ${{ needs.variables.outputs.tag }} to Public Registries
     needs: [variables, patch-oss-images]
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ needs.variables.outputs.tag }}"
+          - "${{ needs.variables.outputs.short_tag }}"
+          - "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}"
+          - "latest"
     uses: ./.github/workflows/oss-release.yml
     with:
       gcr_release_registry: false
@@ -257,7 +265,7 @@ jobs:
       quay_public_registry: true
       github_public_registry: true
       source_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}"
-      target_tag: ${{ needs.variables.outputs.tag }}
+      target_tag: ${{ matrix.tag }}
       dry_run: ${{ inputs.dry_run || true }}
     permissions:
       contents: read
@@ -291,7 +299,7 @@ jobs:
     secrets: inherit
 
   release-plus-marketplace:
-    name: Publish Docker Plus ${{ needs.variables.outputs.tag }} to Marketplace registries
+    name: Publish Docker Plus ${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }} to Marketplace registries
     needs: [variables, patch-plus-images, patch-plus-nap-images]
     uses: ./.github/workflows/plus-release.yml
     with:
