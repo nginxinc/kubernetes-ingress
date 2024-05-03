@@ -140,7 +140,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/ \
-	&& apk add --no-cache app-protect app-protect-attack-signatures app-protect-threat-campaigns 
+	&& apk add --no-cache app-protect app-protect-attack-signatures app-protect-threat-campaigns
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
