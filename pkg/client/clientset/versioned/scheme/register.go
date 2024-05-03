@@ -18,8 +18,8 @@ var Scheme = runtime.NewScheme()
 var Codecs = serializer.NewCodecFactory(Scheme)
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
-	k8sv1alpha1.AddToScheme,
 	k8sv1.AddToScheme,
+	k8sv1alpha1.AddToScheme,
 	appprotectdosv1beta1.AddToScheme,
 	externaldnsv1.AddToScheme,
 }
