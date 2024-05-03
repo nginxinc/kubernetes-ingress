@@ -62,18 +62,6 @@ jobs:
           cat $GITHUB_OUTPUT
         shell: bash --noprofile --norc -o pipefail {0}
 
-      - name: Filter only docs changes
-        id: docs
-        run: |
-          files=$(git diff --name-only HEAD^ | egrep -v "^docs/")
-          if [ -z "$files" ]; then
-            echo "docs_only=true" >> $GITHUB_OUTPUT
-          else
-            echo "docs_only=false" >> $GITHUB_OUTPUT
-          fi
-          echo $files
-          cat $GITHUB_OUTPUT
-
       - name: Setup Golang Environment
         uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
