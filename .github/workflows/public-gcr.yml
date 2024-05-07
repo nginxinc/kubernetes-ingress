@@ -61,7 +61,7 @@ jobs:
 
       - name: Copy Plus image tag
         run: |
-          skopeo copy -a --src-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} --dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:3.3.1 docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:paul
+          skopeo --debug copy -a --src-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} --dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:3.3.1 docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:paul
 
   # release-plus-to-gcr-marketplace-registry:
   #   name: Push Plus images to the GCR Marketplace Registry
