@@ -1,0 +1,84 @@
+name: "Interact with Public GCR"
+
+on:
+  push:
+    branches:
+      - update-fixes
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  list-gcr-marketplace-tags:
+    name: List tags in GCR Public registry
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - name: Authenticate to Google Cloud Marketplace
+        id: gcr-mktpl-auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
+
+      - name: Install latest skopeo
+        uses: ./.github/actions/install-skopeo
+
+      - name: Publish Plus images
+        run: |
+          skopeo list-tags --registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress
+
+  # release-plus-to-gcr-marketplace-registry:
+  #   name: Push Plus images to the GCR Marketplace Registry
+  #   runs-on: ubuntu-22.04
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   if: ${{ inputs.gcr_mktpl_registry }}
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+  #     - name: Authenticate to Google Cloud
+  #       id: gcr-priv-auth
+  #       uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+  #       with:
+  #         token_format: access_token
+  #         workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+  #         service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+  #     - name: Authenticate to Google Cloud Marketplace
+  #       id: gcr-mktpl-auth
+  #       uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+  #       with:
+  #         token_format: access_token
+  #         workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
+  #         service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
+
+  #     - name: Install latest skopeo
+  #       uses: ./.github/actions/install-skopeo
+
+  #     - name: Publish Plus images
+  #       run: |
+  #         export CONFIG_PATH=.github/config/config-plus-gcr-public
+  #         export SOURCE_TAG=${{ inputs.source_tag }}
+  #         export TARGET_TAG=${{ inputs.target_tag }}
+  #         export SOURCE_OPTS="--src-registry-token ${{ steps.gcr-priv-auth.outputs.access_token }}"
+  #         export TARGET_OPTS="--dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }}"
+  #         if ${{ inputs.dry_run }}; then
+  #           export DRY_RUN=true
+  #         fi
+  #         if [ "${{ inputs.short_target_tag }}" != "" ]; then
+  #           export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
+  #         fi
+  #         .github/scripts/copy-images.sh
