@@ -7,7 +7,7 @@ via the following keys:
 - `main-template` - Sets the main NGINX configuration template.
 - `ingress-template` - Sets the Ingress NGINX configuration template for an Ingress resource.
 - `virtualserver-template` - Sets the NGINX configuration template for an VirtualServer resource.
-- `transportserver-template` - Sets the NGINX configuration template for an TransportServer resource.
+- `transportserver-template` - Sets the NGINX configuration template for a TransportServer resource.
 
 ## Example
 
