@@ -115,16 +115,23 @@ func (c *Collector) Collect(ctx context.Context) {
 			ClusterNodeCount:    int64(report.ClusterNodeCount),
 		},
 		NICResourceCounts{
-			VirtualServers:      int64(report.VirtualServers),
-			VirtualServerRoutes: int64(report.VirtualServerRoutes),
-			TransportServers:    int64(report.TransportServers),
-			Replicas:            int64(report.NICReplicaCount),
-			Secrets:             int64(report.Secrets),
-			Services:            int64(report.ServiceCount),
-			Ingresses:           int64(report.IngressCount),
-			IngressClasses:      int64(report.IngressClassCount),
-			Policies:            int64(report.PolicyCount),
-			GlobalConfiguration: report.GlobalConfiguration,
+			VirtualServers:        int64(report.VirtualServers),
+			VirtualServerRoutes:   int64(report.VirtualServerRoutes),
+			TransportServers:      int64(report.TransportServers),
+			Replicas:              int64(report.NICReplicaCount),
+			Secrets:               int64(report.Secrets),
+			Services:              int64(report.ServiceCount),
+			Ingresses:             int64(report.IngressCount),
+			IngressClasses:        int64(report.IngressClassCount),
+			AccessControlPolicies: int64(report.AccessControlCount),
+			RateLimitPolicies:     int64(report.RateLimitCount),
+			JWTAuthPolicies:       int64(report.JWTAuthCount),
+			BasicAuthPolicies:     int64(report.BasicAuthCount),
+			IngressMTLSPolicies:   int64(report.IngressMTLSCount),
+			EgressMTLSPolicies:    int64(report.EgressMTLSCount),
+			OIDCPolicies:          int64(report.OIDCCount),
+			WAFPolicies:           int64(report.WAFCount),
+			GlobalConfiguration:   report.GlobalConfiguration,
 		},
 	}
 
@@ -155,7 +162,14 @@ type Report struct {
 	Secrets             int
 	IngressCount        int
 	IngressClassCount   int
-	PolicyCount         int
+	AccessControlCount  int
+	RateLimitCount      int
+	JWTAuthCount        int
+	BasicAuthCount      int
+	IngressMTLSCount    int
+	EgressMTLSCount     int
+	OIDCCount           int
+	WAFCount            int
 	GlobalConfiguration bool
 }
 
@@ -212,7 +226,16 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
 	}
 
-	policyCount := c.PolicyCount()
+	policies := c.PolicyCount()
+
+	accessControlCount := policies["AccessControl"]
+	rateLimitCount := policies["RateLimit"]
+	jwtAuthCount := policies["JWTAuth"]
+	basicAuthCount := policies["BasicAuth"]
+	ingressMTLSCount := policies["IngressMTLS"]
+	egressMTLSCount := policies["EgressMTLS"]
+	oidcCount := policies["OIDC"]
+	wafCount := policies["WAF"]
 
 	return Report{
 		Name:                "NIC",
@@ -231,7 +254,14 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		Secrets:             secretCount,
 		IngressCount:        ingressCount,
 		IngressClassCount:   ingressClassCount,
-		PolicyCount:         policyCount,
+		AccessControlCount:  accessControlCount,
+		RateLimitCount:      rateLimitCount,
+		JWTAuthCount:        jwtAuthCount,
+		BasicAuthCount:      basicAuthCount,
+		IngressMTLSCount:    ingressMTLSCount,
+		EgressMTLSCount:     egressMTLSCount,
+		OIDCCount:           oidcCount,
+		WAFCount:            wafCount,
 		GlobalConfiguration: c.Config.GlobalConfiguration,
 	}, err
 }
