@@ -37,7 +37,14 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
 - **Ingresses** The number of Ingress resources managed by the NGINX Ingress Controller.
 - **IngressClasses** Number of Ingress Classes in the cluster.
-- **Policies** Number of policy resources managed by NGINX Ingress Controller
+- **AccessControlPolicies** Number of AccessControl policies.
+- **RateLimitPolicies** Number of RateLimit policies.
+- **JWTAuthPolicies** Number of JWTAuth policies.
+- **BasicAuthPolicies** Number of BasicAuth policies.
+- **IngressMTLSPolicies** Number of IngressMTLS policies.
+- **EgressMTLSPolicies** Number of EgressMTLS policies.
+- **OIDCPolicies** Number of OIDC policies.
+- **WAFPolicies** Number of WAF policies.
 - **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.
 
 ## Opt out

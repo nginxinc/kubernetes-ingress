@@ -145,12 +145,42 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 	return len(ic.Items), nil
 }
 
-// PolicyCount returns number of Policies watched by NIC.
-func (c *Collector) PolicyCount() int {
+// PolicyCount returns the count in each Policy
+func (c *Collector) PolicyCount() map[string]int {
+	policyCounters := make(map[string]int)
+
 	if c.Config.Policies == nil {
-		return 0
+		return policyCounters
 	}
-	return len(c.Config.Policies())
+
+	policies := c.Config.Policies()
+	if policies == nil {
+		return policyCounters
+	}
+
+	for _, policy := range policies {
+		spec := policy.Spec
+
+		switch {
+		case spec.AccessControl != nil:
+			policyCounters["AccessControl"]++
+		case spec.RateLimit != nil:
+			policyCounters["RateLimit"]++
+		case spec.JWTAuth != nil:
+			policyCounters["JWTAuth"]++
+		case spec.BasicAuth != nil:
+			policyCounters["BasicAuth"]++
+		case spec.IngressMTLS != nil:
+			policyCounters["IngressMTLS"]++
+		case spec.EgressMTLS != nil:
+			policyCounters["EgressMTLS"]++
+		case spec.OIDC != nil:
+			policyCounters["OIDC"]++
+		case spec.WAF != nil:
+			policyCounters["WAF"]++
+		}
+	}
+	return policyCounters
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID
