@@ -58,7 +58,7 @@ func (c *Collector) ClusterID(ctx context.Context) (string, error) {
 	return string(cluster.UID), nil
 }
 
-// ClusterVersion returns a string respresenting the K8s version.
+// ClusterVersion returns a string representing the K8s version.
 // It returns an error if the underlying k8s API client errors.
 func (c *Collector) ClusterVersion() (string, error) {
 	sv, err := c.Config.K8sClientReader.Discovery().ServerVersion()
@@ -143,6 +143,44 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 		return 0, err
 	}
 	return len(ic.Items), nil
+}
+
+// PolicyCount returns the count in each Policy
+func (c *Collector) PolicyCount() map[string]int {
+	policyCounters := make(map[string]int)
+
+	if c.Config.Policies == nil {
+		return policyCounters
+	}
+
+	policies := c.Config.Policies()
+	if policies == nil {
+		return policyCounters
+	}
+
+	for _, policy := range policies {
+		spec := policy.Spec
+
+		switch {
+		case spec.AccessControl != nil:
+			policyCounters["AccessControl"]++
+		case spec.RateLimit != nil:
+			policyCounters["RateLimit"]++
+		case spec.JWTAuth != nil:
+			policyCounters["JWTAuth"]++
+		case spec.BasicAuth != nil:
+			policyCounters["BasicAuth"]++
+		case spec.IngressMTLS != nil:
+			policyCounters["IngressMTLS"]++
+		case spec.EgressMTLS != nil:
+			policyCounters["EgressMTLS"]++
+		case spec.OIDC != nil:
+			policyCounters["OIDC"]++
+		case spec.WAF != nil:
+			policyCounters["WAF"]++
+		}
+	}
+	return policyCounters
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

@@ -2,6 +2,7 @@ package configs
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -794,6 +795,93 @@ func createExpectedConfigForMergeableCafeIngressWithUseClusterIP() version1.Ingr
 	return expected
 }
 
+func createExpectedConfigForCafeIngressWithUseClusterIPNamedPorts() version1.IngressNginxConfig {
+	upstreamZoneSize := "256k"
+
+	coffeeUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-cafe.example.com-coffee-svc-custom-port-name",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "10.109.204.250:3000",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+
+	teaUpstream := version1.Upstream{
+		Name:             "default-cafe-ingress-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: upstreamZoneSize,
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "10.109.204.250:80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+
+	expected := version1.IngressNginxConfig{
+		Upstreams: []version1.Upstream{
+			coffeeUpstream,
+			teaUpstream,
+		},
+		Servers: []version1.Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []version1.Location{
+					{
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						ProxySSLName:        "coffee-svc.default.svc",
+					},
+					{
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						ProxySSLName:        "tea-svc.default.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]version1.HealthCheck),
+			},
+		},
+		Ingress: version1.Ingress{
+			Name:      "cafe-ingress",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class": "nginx",
+				"nginx.org/use-cluster-ip":    "true",
+			},
+		},
+	}
+	return expected
+}
+
 func createExpectedConfigForCafeIngressWithUseClusterIP() version1.IngressNginxConfig {
 	upstreamZoneSize := "256k"
 
@@ -889,6 +977,50 @@ func TestGenerateNginxCfgWithUseClusterIP(t *testing.T) {
 	configParams := NewDefaultConfigParams(isPlus)
 
 	expected := createExpectedConfigForCafeIngressWithUseClusterIP()
+
+	result, warnings := generateNginxCfg(NginxCfgParams{
+		staticParams:         &StaticConfigParams{},
+		ingEx:                &cafeIngressEx,
+		apResources:          nil,
+		dosResource:          nil,
+		isMinion:             false,
+		isPlus:               false,
+		baseCfgParams:        configParams,
+		isResolverConfigured: false,
+		isWildcardEnabled:    false,
+	})
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgWithUseClusterIPWithNamedPorts(t *testing.T) {
+	t.Parallel()
+	customPort := 3000
+	customPortName := "custom-port-name"
+	clusterIP := "10.109.204.250"
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["nginx.org/use-cluster-ip"] = "true"
+	cafeIngressEx.Endpoints["coffee-svccustom-port-name"] = make([]string, 1)
+
+	// coffee will use a named port
+	cafeIngressEx.Endpoints["coffee-svccustom-port-name"][0] = fmt.Sprintf("%s:%d", clusterIP, customPort)
+
+	// tea will not use a named port
+	cafeIngressEx.Endpoints["tea-svc80"][0] = fmt.Sprintf("%s:%d", clusterIP, 80)
+
+	// unset the port number and set the port name for the /coffee path
+	cafeIngressEx.Ingress.Spec.Rules[0].HTTP.Paths[0].Backend.Service.Port.Number = 0
+	cafeIngressEx.Ingress.Spec.Rules[0].HTTP.Paths[0].Backend.Service.Port.Name = customPortName
+
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expected := createExpectedConfigForCafeIngressWithUseClusterIPNamedPorts()
 
 	result, warnings := generateNginxCfg(NginxCfgParams{
 		staticParams:         &StaticConfigParams{},
