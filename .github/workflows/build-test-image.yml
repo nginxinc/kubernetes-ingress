@@ -7,6 +7,8 @@ on:
         description: "Force rebuild of test image"
         required: false
         default: "false"
+  schedule:
+    - cron: "0 3 * * *" # run every day at 03:00 UTC
 
 defaults:
   run:
