@@ -36,7 +36,7 @@ jobs:
 
       - name: List Plus image tags
         run: |
-          skopeo list-tags --registry-token ${{ steps.gcr-mktpl-auth.outputs.auth_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress
+          skopeo list-tags --registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress
 
   # copy-gcr-marketplace-tag:
   #   name: Copy tag in GCR Public registry
