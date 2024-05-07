@@ -13,33 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  # list-gcr-marketplace-tags:
-  #   name: List tags in GCR Public registry
-  #   runs-on: ubuntu-22.04
-  #   permissions:
-  #     contents: read
-  #     id-token: write
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
-
-  #     - name: Authenticate to Google Cloud Marketplace
-  #       id: gcr-mktpl-auth
-  #       uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
-  #       with:
-  #         token_format: access_token
-  #         workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
-  #         service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
-
-  #     - name: Install latest skopeo
-  #       uses: ./.github/actions/install-skopeo
-
-  #     - name: List Plus image tags
-  #       run: |
-  #         skopeo list-tags --registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress
-
-  copy-gcr-marketplace-tag:
-    name: Copy tag in GCR Public registry
+  list-gcr-marketplace-tags:
+    name: List tags in GCR Public registry
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -59,9 +34,34 @@ jobs:
       - name: Install latest skopeo
         uses: ./.github/actions/install-skopeo
 
-      - name: Copy Plus image tag
+      - name: List Plus image tags
         run: |
-          skopeo --debug copy -a --src-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} --dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:3.3.1 docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:paul
+          skopeo list-tags --registry-token ${{ steps.gcr-mktpl-auth.outputs.auth_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress
+
+  # copy-gcr-marketplace-tag:
+  #   name: Copy tag in GCR Public registry
+  #   runs-on: ubuntu-22.04
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+  #     - name: Authenticate to Google Cloud Marketplace
+  #       id: gcr-mktpl-auth
+  #       uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+  #       with:
+  #         token_format: access_token
+  #         workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
+  #         service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
+
+  #     - name: Install latest skopeo
+  #       uses: ./.github/actions/install-skopeo
+
+  #     - name: Copy Plus image tag
+  #       run: |
+  #         skopeo --debug copy -a --src-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} --dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:3.3.1 docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:paul
 
   # release-plus-to-gcr-marketplace-registry:
   #   name: Push Plus images to the GCR Marketplace Registry
