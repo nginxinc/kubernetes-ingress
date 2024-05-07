@@ -173,7 +173,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 |``main-template`` | Sets the main NGINX configuration template. | By default the template is read from the file in the container. | [Custom Templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates). |
 |``ingress-template`` | Sets the NGINX configuration template for an Ingress resource. | By default the template is read from the file on the container. | [Custom Templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates). |
 |``virtualserver-template`` | Sets the NGINX configuration template for an VirtualServer resource. | By default the template is read from the file on the container. | [Custom Templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates). |
-|``transportserver-template`` | Sets the NGINX configuration template for an TransportServer resource. | By default the template is read from the file on the container. | [Custom Templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates). |
+|``transportserver-template`` | Sets the NGINX configuration template for a TransportServer resource. | By default the template is read from the file on the container. | [Custom Templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates). |
 {{% /table %}}
 
 ### Modules {#modules}
