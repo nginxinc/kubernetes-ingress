@@ -270,6 +270,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write # for docker/build-push-action to push to GHCR
     secrets: inherit
 
   release-plus-nginx-gcr:
