@@ -112,6 +112,7 @@ Helper functions can be used in the Ingress template to parse the values of cust
 | ``hasSuffix`` | ``s, suffix string`` | ``bool`` | Tests whether the string ``suffix`` is a suffix of the string ``s``. |
 | ``toLower`` | ``s string`` | ``bool`` | Converts all letters in the string ``s`` to their lower case. |
 | ``toUpper`` | ``s string`` | ``bool`` | Converts all letters in the string ``s`` to their upper case. |
+| ``replaceAll`` | ``s, old, new string`` | ``string`` | Replaces all occurrences of ``old`` with ``new`` in the string ``s``. |
 {{% /table %}}
 
 Consider the following custom annotation `custom.nginx.org/allowed-ips`, which expects a comma-separated list of IP addresses:
