@@ -99,4 +99,6 @@ type NICResourceCounts struct {
 	WAFPolicies int64
 	// GlobalConfiguration indicates if a GlobalConfiguration resource is used.
 	GlobalConfiguration bool
+	// IngressAnnotation is the list of annotations resources managed by NGINX Ingress Controller
+	IngressAnnotation []string
 }

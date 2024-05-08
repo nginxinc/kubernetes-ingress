@@ -1426,6 +1426,108 @@ func TestStreamUpstreamsForName_ReturnsStreamUpstreamsNamesOnValidServiceName(t 
 	}
 }
 
+func TestGetIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+
+	ingress := &IngressEx{
+		Ingress: &networking.Ingress{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "test-ingress",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"nginx.org/proxy-connect-timeout": "60s",
+					"nginx.org/proxy-set-header":      "X-Forwarded-ABC",
+					"nginx.org/proxy-read-timeout":    "60s",
+				},
+			},
+		},
+	}
+
+	_, err := tcnf.AddOrUpdateIngress(ingress)
+	if err != nil {
+		t.Fatalf("AddOrUpdateIngress returned error: %v", err)
+	}
+
+	annotationList := tcnf.GetIngressAnnotations()
+
+	expectedAnnotations := map[string]bool{
+		"nginx.org/proxy-connect-timeout": true,
+		"nginx.org/proxy-set-header":      true,
+		"nginx.org/proxy-read-timeout":    true,
+	}
+
+	if len(annotationList) != len(expectedAnnotations) {
+		t.Errorf("got %d annotations, want %d", len(annotationList), len(expectedAnnotations))
+	}
+
+	for annotationKey := range expectedAnnotations {
+		found := false
+		for _, annotation := range annotationList {
+			if annotation == annotationKey {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("wanted annotation %q not found in retrieved annotations", annotationKey)
+		}
+	}
+}
+
+func TestGetInvalidIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+
+	ingress := &IngressEx{
+		Ingress: &networking.Ingress{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "test-ingress",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"nginx.org/proxy-connect": "s",
+					"nginx.org/proxy-set":     "X-ABC@£@",
+					"nginx.org/proxy-read":    "60s",
+				},
+			},
+		},
+	}
+
+	_, err := tcnf.AddOrUpdateIngress(ingress)
+	if err != nil {
+		t.Fatalf("AddOrUpdateIngress returned error: %v", err)
+	}
+
+	expectedAnnotations := map[string]bool{
+		"nginx.org/proxy-connect-timeout": true,
+		"nginx.org/proxy-set-header":      true,
+		"nginx.org/proxy-read":            true,
+	}
+
+	annotationList := tcnf.GetIngressAnnotations()
+
+	if len(annotationList) != len(expectedAnnotations) {
+		t.Logf("got %d annotations, want %d", len(annotationList), len(expectedAnnotations))
+		return
+	}
+
+	for annotationKey := range expectedAnnotations {
+		found := false
+		for _, annotation := range annotationList {
+			if annotation == annotationKey {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Logf("wanted annotation %q not found in retrieved annotations", annotationKey)
+			return
+		}
+	}
+}
+
 var (
 	invalidVirtualServerEx = &VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{},

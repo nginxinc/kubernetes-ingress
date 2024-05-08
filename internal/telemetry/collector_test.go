@@ -154,8 +154,8 @@ func TestCollectNodeCountInClusterWithThreeNodes(t *testing.T) {
 	}
 
 	td := telemetry.Data{
-		telData,
-		nicResourceCounts,
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
 	}
 
 	want := fmt.Sprintf("%+v", &td)
@@ -423,8 +423,193 @@ func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 	}
 
 	td := telemetry.Data{
-		telData,
-		nicResourceCounts,
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestMergeableIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	masterAnnotations := map[string]string{
+		"nginx.org/mergeable-ingress-type": "master",
+	}
+	coffeeAnnotations := map[string]string{
+		"nginx.org/mergeable-ingress-type": "minion",
+		"nginx.org/proxy-set-header":       "X-Forwarded-ABC",
+	}
+	teaAnnotations := map[string]string{
+		"nginx.org/mergeable-ingress-type": "minion",
+		"nginx.org/proxy-set-header":       "X-Forwarded-Tea: Chai",
+	}
+
+	configurator := newConfiguratorWithMergeableIngressCustomAnnotations(t, masterAnnotations, coffeeAnnotations, teaAnnotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	expectedAnnotations := []string{
+		"nginx.org/mergeable-ingress-type",
+		"nginx.org/proxy-set-header",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		Ingresses:         3,
+		Services:          2,
+		IngressAnnotation: expectedAnnotations,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestInvalidMergeableIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	masterAnnotations := map[string]string{
+		"nginx.org/ingress-type": "master",
+	}
+	coffeeAnnotations := map[string]string{
+		"nginx.org/mergeable-ingress-type": "minion",
+	}
+	teaAnnotations := map[string]string{
+		"nginx.org/mergeable-type": "minion",
+		"nginx.org/proxy-set":      "X-$-ABC",
+	}
+
+	configurator := newConfiguratorWithMergeableIngressCustomAnnotations(t, masterAnnotations, coffeeAnnotations, teaAnnotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	expectedAnnotations := []string{
+		"nginx.org/mergeable-ingress-type",
+		"nginx.org/proxy-set-header",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		Ingresses:         3,
+		Services:          2,
+		IngressAnnotation: expectedAnnotations,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestStandardIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	annotations := map[string]string{
+		"nginx.org/proxy-set-header": "X-Forwarded-ABC",
+	}
+
+	configurator := newConfiguratorWithIngressWithCustomAnnotations(t, annotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	expectedAnnotations := []string{
+		"nginx.org/proxy-set-header",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		Ingresses:         1,
+		Services:          2,
+		IngressAnnotation: expectedAnnotations,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
 	}
 
 	want := fmt.Sprintf("%+v", &td)
@@ -473,13 +658,69 @@ func TestIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
 	}
 
 	td := telemetry.Data{
-		telData,
-		nicResourceCounts,
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
 	}
 
 	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
 	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestInvalidStandardIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	annotations := map[string]string{
+		"nginx.org/proxy-set-header": "X-Forwarded-ABC",
+	}
+
+	configurator := newConfiguratorWithIngressWithCustomAnnotations(t, annotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	expectedAnnotations := []string{
+		"nginx.org/mergeable-ingress-type",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		Ingresses:         3,
+		Services:          2,
+		IngressAnnotation: expectedAnnotations,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
 	}
 }
@@ -1392,9 +1633,6 @@ func createCafeIngressEx() configs.IngressEx {
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      "cafe-ingress",
 			Namespace: "default",
-			Annotations: map[string]string{
-				"kubernetes.io/ingress.class": "nginx",
-			},
 		},
 		Spec: networkingV1.IngressSpec{
 			TLS: []networkingV1.IngressTLS{
@@ -1613,6 +1851,221 @@ func createMergeableCafeIngress() *configs.MergeableIngresses {
 	return mergeableIngresses
 }
 
+func createMergeableIngressWithCustomAnnotations(masterAnnotations, coffeeAnnotations, teaAnnotations map[string]string) *configs.MergeableIngresses {
+	master := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:        "cafe-ingress-master",
+			Namespace:   "default",
+			Annotations: masterAnnotations,
+		},
+		Spec: networkingV1.IngressSpec{
+			TLS: []networkingV1.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{ // HTTP must not be nil for Master
+							Paths: []networkingV1.HTTPIngressPath{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	coffeeMinion := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:        "cafe-ingress-coffee-minion",
+			Namespace:   "default",
+			Annotations: coffeeAnnotations,
+		},
+		Spec: networkingV1.IngressSpec{
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/coffee",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	teaMinion := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:        "cafe-ingress-tea-minion",
+			Namespace:   "default",
+			Annotations: teaAnnotations,
+		},
+		Spec: networkingV1.IngressSpec{
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/tea",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	mergeableIngresses := &configs.MergeableIngresses{
+		Master: &configs.IngressEx{
+			Ingress: &master,
+			Endpoints: map[string][]string{
+				"coffee-svc80": {"10.0.0.1:80"},
+				"tea-svc80":    {"10.0.0.2:80"},
+			},
+			ValidHosts: map[string]bool{
+				"cafe.example.com": true,
+			},
+			SecretRefs: map[string]*secrets.SecretReference{
+				"cafe-secret": {
+					Secret: &coreV1.Secret{
+						Type: coreV1.SecretTypeTLS,
+					},
+					Path:  "/etc/nginx/secrets/default-cafe-secret",
+					Error: nil,
+				},
+			},
+		},
+		Minions: []*configs.IngressEx{
+			{
+				Ingress: &coffeeMinion,
+				Endpoints: map[string][]string{
+					"coffee-svc80": {"10.0.0.1:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/coffee": true,
+				},
+				SecretRefs: map[string]*secrets.SecretReference{},
+			},
+			{
+				Ingress: &teaMinion,
+				Endpoints: map[string][]string{
+					"tea-svc80": {"10.0.0.2:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/tea": true,
+				},
+				SecretRefs: map[string]*secrets.SecretReference{},
+			},
+		},
+	}
+
+	return mergeableIngresses
+}
+
+func createCafeIngressExWithCustmAnnotations(annotations map[string]string) configs.IngressEx {
+	cafeIngress := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:        "cafe-ingress",
+			Namespace:   "default",
+			Annotations: annotations,
+		},
+		Spec: networkingV1.IngressSpec{
+			TLS: []networkingV1.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/coffee",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+								{
+									Path: "/tea",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	cafeIngressEx := configs.IngressEx{
+		Ingress: &cafeIngress,
+		Endpoints: map[string][]string{
+			"coffee-svc80": {"10.0.0.1:80"},
+			"tea-svc80":    {"10.0.0.2:80"},
+		},
+		ExternalNameSvcs: map[string]bool{},
+		ValidHosts: map[string]bool{
+			"cafe.example.com": true,
+		},
+		SecretRefs: map[string]*secrets.SecretReference{
+			"cafe-secret": {
+				Secret: &coreV1.Secret{
+					Type: coreV1.SecretTypeTLS,
+				},
+				Path: "/etc/nginx/secrets/default-cafe-secret",
+			},
+		},
+	}
+	return cafeIngressEx
+}
+
 func getResourceKey(namespace, name string) string {
 	return fmt.Sprintf("%s_%s", namespace, name)
 }
@@ -1623,6 +2076,30 @@ func newConfiguratorWithIngress(t *testing.T) *configs.Configurator {
 	ingressEx := createCafeIngressEx()
 	c := newConfigurator(t)
 	_, err := c.AddOrUpdateIngress(&ingressEx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+func newConfiguratorWithIngressWithCustomAnnotations(t *testing.T, annotations map[string]string) *configs.Configurator {
+	t.Helper()
+
+	ingressEx := createCafeIngressExWithCustmAnnotations(annotations)
+	c := newConfigurator(t)
+	_, err := c.AddOrUpdateIngress(&ingressEx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+func newConfiguratorWithMergeableIngressCustomAnnotations(t *testing.T, masterAnnotations, coffeeAnnotations, teaAnnotations map[string]string) *configs.Configurator {
+	t.Helper()
+
+	ingressEx := createMergeableIngressWithCustomAnnotations(masterAnnotations, coffeeAnnotations, teaAnnotations)
+	c := newConfigurator(t)
+	_, err := c.AddOrUpdateMergeableIngress(ingressEx)
 	if err != nil {
 		t.Fatal(err)
 	}

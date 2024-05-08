@@ -1548,6 +1548,42 @@ func (cnf *Configurator) GetIngressCounts() map[string]int {
 	return counters
 }
 
+// GetIngressAnnotations returns a list of annotation keys set across all Ingress resources
+func (cnf *Configurator) GetIngressAnnotations() []string {
+	if cnf == nil || cnf.ingresses == nil {
+		return nil
+	}
+
+	annotationSet := make(map[string]bool)
+
+	if len(cnf.ingresses) > 0 {
+		for _, ing := range cnf.ingresses {
+			if ing != nil && ing.Ingress != nil && ing.Ingress.Annotations != nil {
+				for key := range ing.Ingress.Annotations {
+					annotationSet[key] = true
+				}
+			}
+		}
+	}
+
+	for _, ing := range cnf.mergeableIngresses {
+		for _, minionIng := range ing.Minions {
+			if minionIng != nil && minionIng.Ingress.Annotations != nil {
+				for key := range minionIng.Ingress.Annotations {
+					annotationSet[key] = true
+				}
+			}
+		}
+	}
+
+	var annotations []string
+	for key := range annotationSet {
+		annotations = append(annotations, key)
+	}
+
+	return annotations
+}
+
 // GetServiceCount returns the total number of unique services referenced by Ingresses, VS's, VSR's, and TS's
 func (cnf *Configurator) GetServiceCount() int {
 	setOfUniqueServices := make(map[string]bool)
