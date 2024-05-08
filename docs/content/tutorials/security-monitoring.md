@@ -12,7 +12,7 @@ This document explains how to use NGINX Ingress Controller to configure NGINX Ag
 
 This guide assumes that you have an installation of NGINX Instance Manager with [NGINX Security Monitoring](https://docs.nginx.com/nginx-management-suite/installation/vm-bare-metal/install-security-monitoring/) which is reachable from the Kubernetes cluster on which NGINX Ingress Controller is deployed.
 
-If you use custom container images, NGINX Agent must be installed along with NGINX App Protect WAF. See the [Dockerfile](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/build/Dockerfile) for examples of how to install NGINX Agent or the [NGINX Agent installation documentation](https://docs.nginx.com/nginx-agent/installation-upgrade/) for more information.
+If you use custom container images, NGINX Agent must be installed along with NGINX App Protect WAF. See the [Dockerfile](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/build/Dockerfile) for examples of how to install NGINX Agent or the [NGINX Agent installation documentation](https://docs.nginx.com/nginx-agent/installation-upgrade/) for more information.
 
 ## Deploying NGINX Ingress Controller with NGINX Agent configuration 
 
@@ -89,7 +89,7 @@ Once NGINX Ingress Controller is installed the pods will be visible in the NGINX
 
 NGINX Agent runs a syslog listener which NGINX App Protect WAF can be configured to send logs to, which will then allow NGINX Agent to send metrics to NGINX Security Monitoring. The following examples show how to configure NGINX App Protect WAF to log to NGINX Agent.
 
-- [Custom Resources example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/custom-resources/security-monitoring)
-- [Ingress Resources example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/ingress-resources/security-monitoring)
+- [Custom Resources example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/security-monitoring)
+- [Ingress Resources example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/security-monitoring)
 
 {{< note >}} Modifying the APLogConf in the examples may result in the Security Monitoring integration not working, as NGINX Agent expects a specific log format.{{< /note >}}
