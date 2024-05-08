@@ -10,15 +10,17 @@ docs: "DOCS-616"
 
 08 May 2024
 
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
-### <i class="fa-solid fa-rocket"></i> Features
-
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [5463](https://github.com/nginxinc/kubernetes-ingress/pull/5463) Don't reload when use-cluster-ip endpoints update
+- [5464](https://github.com/nginxinc/kubernetes-ingress/pull/5464) Fix status for invalid vs and vsr, for weight changes dynamic reload
+- [5470](https://github.com/nginxinc/kubernetes-ingress/pull/5470) Add support for named ports in ingresses which use-cluster-ip
 
 ### <i class="fa-solid fa-box"></i> Helm Chart
+- [5315](https://github.com/nginxinc/kubernetes-ingress/pull/5315) Update helm flag in docs for enableWeightChangesDynamicReload
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+- [5511](https://github.com/nginxinc/kubernetes-ingress/pull/5511) & [5391](https://github.com/nginxinc/kubernetes-ingress/pull/5391) Go updates
+- [5490](https://github.com/nginxinc/kubernetes-ingress/pull/5490) Pin app-protect module version to 4.8.1
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
