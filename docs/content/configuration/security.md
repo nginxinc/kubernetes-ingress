@@ -11,7 +11,9 @@ NGINX Ingress Controller follows Kubernetes best practices: this page outlines c
 
 For general guidance, we recommend the official Kubernetes documentation for [Securing a Cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/). 
 
-## RBAC and Service Accounts
+## Kubernetes recommendations
+
+### RBAC and Service Accounts
 
 Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users. 
 
@@ -22,12 +24,14 @@ NGINX Ingress Controller requires RBAC to configure a [ServiceUser](https://kube
 
 By default, the ServiceAccount has access to all Secret resources in the cluster.
 
-## Secrets
+### Secrets
 
 [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) are required by NGINX Ingress Controller for certificates and privacy keys, which Kubernetes stores unencrypted by default. We recommend following the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) to store these Secrets using at-rest encryption.
 
 
-## Configure root filesystem as read-only
+## NGINX Ingress Controller recommendations
+
+### Configure root filesystem as read-only
 
 {{< caution >}}
  This feature is not compatible with [NGINX App Protect WAF](https://docs.nginx.com/nginx-app-protect-waf/) or [NGINX App Protect DoS](https://docs.nginx.com/nginx-app-protect-dos/).
@@ -73,11 +77,11 @@ The block below shows the code you will look for:
 #          name: nginx-log
 ```
 
-## Prometheus
+### Prometheus
 
 If Prometheus metrics are [enabled]({{< relref "/logging-and-monitoring/prometheus.md" >}}), we recommend [using HTTPS]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-prometheus-tls-secret" >}}).
 
-## Snippets
+### Snippets
 
 Snippets allow raw NGINX configuration to be inserted into resources. They are intended for advanced NGINX users and could create vulnerabilities in a cluster if misused.
 
