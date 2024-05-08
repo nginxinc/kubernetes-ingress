@@ -224,7 +224,7 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
           AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
           AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
-          GORELEASER_CURRENT_TAG: ${{ needs.checks.outputs.ic_version }}
+          GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
