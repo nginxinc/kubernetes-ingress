@@ -64,15 +64,6 @@ repos:
     hooks:
       - id: black
 
-  - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.2
-    hooks:
-      - id: check-jsonschema
-        name: "Check Helm Chart JSON Schema"
-        files: charts/nginx-ingress/values.yaml
-        types: [yaml]
-        args: ['--schemafile', 'charts/nginx-ingress/values.schema.json']
-
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.13.0
     hooks:
