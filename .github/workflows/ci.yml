@@ -790,7 +790,7 @@ jobs:
           if [ ${{ github.ref_type }} != "tag" ]; then
             helm_versions="--app-version edge --version 0.0.0-edge"
           else
-            helm_versions="--app-version ${{ steps.checks.outputs.ic_version }} --version ${{ steps.checks.outputs.chart_version }}"
+            helm_versions="--app-version ${{ needs.checks.outputs.ic_version }} --version ${{ needs.checks.outputs.chart_version }}"
           fi
           output=$(helm package ${helm_versions} kic/charts/nginx-ingress)
           echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
