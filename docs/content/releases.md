@@ -7,6 +7,40 @@ title: Releases
 toc: true
 weight: 2100
 ---
+## 3.5.1
+
+08 May 2024
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [5463](https://github.com/nginxinc/kubernetes-ingress/pull/5463) Don't reload when use-cluster-ip endpoints update
+- [5464](https://github.com/nginxinc/kubernetes-ingress/pull/5464) Fix status for invalid vs and vsr, for weight changes dynamic reload
+- [5470](https://github.com/nginxinc/kubernetes-ingress/pull/5470) Add support for named ports in ingresses which use-cluster-ip
+
+### <i class="fa-solid fa-box"></i> Helm Chart
+- [5315](https://github.com/nginxinc/kubernetes-ingress/pull/5315) Update helm flag in docs for enableWeightChangesDynamicReload
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+- [5511](https://github.com/nginxinc/kubernetes-ingress/pull/5511) & [5391](https://github.com/nginxinc/kubernetes-ingress/pull/5391) Go updates
+- [5490](https://github.com/nginxinc/kubernetes-ingress/pull/5490) Pin app-protect module version to 4.8.1
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.5.1 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.5.1),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.5.1 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.5.1 source code
+- For Helm, use version 1.2.1 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.23-1.29.
+
 ## 3.5.0
 
 26 Mar 2024
