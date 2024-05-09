@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -444,12 +445,14 @@ func TestMergeableIngressAnnotations(t *testing.T) {
 		"nginx.org/mergeable-ingress-type": "master",
 	}
 	coffeeAnnotations := map[string]string{
-		"nginx.org/mergeable-ingress-type": "minion",
-		"nginx.org/proxy-set-header":       "X-Forwarded-ABC",
+		"nginx.org/mergeable-ingress-type":     "minion",
+		"nginx.org/proxy-set-header":           "X-Forwarded-ABC",
+		"appprotect.f5.com/app-protect-enable": "False",
 	}
 	teaAnnotations := map[string]string{
 		"nginx.org/mergeable-ingress-type": "minion",
 		"nginx.org/proxy-set-header":       "X-Forwarded-Tea: Chai",
+		"nginx.com/health-checks":          "False",
 	}
 
 	configurator := newConfiguratorWithMergeableIngressCustomAnnotations(t, masterAnnotations, coffeeAnnotations, teaAnnotations)
@@ -466,36 +469,18 @@ func TestMergeableIngressAnnotations(t *testing.T) {
 	}
 	c.Collect(context.Background())
 
-	telData := tel.Data{
-		ProjectName:         telemetryNICData.ProjectName,
-		ProjectVersion:      telemetryNICData.ProjectVersion,
-		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
-		ClusterNodeCount:    1,
-		ClusterID:           telemetryNICData.ClusterID,
-		ClusterVersion:      telemetryNICData.ClusterVersion,
-		ClusterPlatform:     "other",
-	}
-
 	expectedAnnotations := []string{
 		"nginx.org/mergeable-ingress-type",
 		"nginx.org/proxy-set-header",
+		"nginx.com/health-checks",
+		"appprotect.f5.com/app-protect-enable",
 	}
 
-	nicResourceCounts := telemetry.NICResourceCounts{
-		Ingresses:         3,
-		Services:          2,
-		IngressAnnotation: expectedAnnotations,
-	}
-
-	td := telemetry.Data{
-		Data:              telData,
-		NICResourceCounts: nicResourceCounts,
-	}
-
-	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
-	if !cmp.Equal(want, got) {
-		t.Error(cmp.Diff(want, got))
+	for _, expectedAnnotation := range expectedAnnotations {
+		if !strings.Contains(got, expectedAnnotation) {
+			t.Errorf("expected %v in %v", expectedAnnotation, got)
+		}
 	}
 }
 
@@ -506,14 +491,16 @@ func TestInvalidMergeableIngressAnnotations(t *testing.T) {
 	exp := &telemetry.StdoutExporter{Endpoint: buf}
 
 	masterAnnotations := map[string]string{
-		"nginx.org/ingress-type": "master",
+		"nginx.org/ingress-type":                           "master",
+		"kubectl.kubernetes.io/last-applied-configuration": "s",
 	}
 	coffeeAnnotations := map[string]string{
 		"nginx.org/mergeable-ingress-type": "minion",
 	}
 	teaAnnotations := map[string]string{
-		"nginx.org/mergeable-type": "minion",
-		"nginx.org/proxy-set":      "X-$-ABC",
+		"nginx.org/mergeable-type":                   "minion",
+		"nginx.org/proxy-set":                        "X-$-ABC",
+		"nginx.ingress.kubernetes.io/rewrite-target": "/",
 	}
 
 	configurator := newConfiguratorWithMergeableIngressCustomAnnotations(t, masterAnnotations, coffeeAnnotations, teaAnnotations)
@@ -530,36 +517,17 @@ func TestInvalidMergeableIngressAnnotations(t *testing.T) {
 	}
 	c.Collect(context.Background())
 
-	telData := tel.Data{
-		ProjectName:         telemetryNICData.ProjectName,
-		ProjectVersion:      telemetryNICData.ProjectVersion,
-		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
-		ClusterNodeCount:    1,
-		ClusterID:           telemetryNICData.ClusterID,
-		ClusterVersion:      telemetryNICData.ClusterVersion,
-		ClusterPlatform:     "other",
-	}
-
 	expectedAnnotations := []string{
-		"nginx.org/mergeable-ingress-type",
+		"kubectl.kubernetes.io/last-applied-configuration",
 		"nginx.org/proxy-set-header",
+		"nginx.ingress.kubernetes.io/rewrite-target",
 	}
 
-	nicResourceCounts := telemetry.NICResourceCounts{
-		Ingresses:         3,
-		Services:          2,
-		IngressAnnotation: expectedAnnotations,
-	}
-
-	td := telemetry.Data{
-		Data:              telData,
-		NICResourceCounts: nicResourceCounts,
-	}
-
-	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
-	if cmp.Equal(want, got) {
-		t.Error(cmp.Diff(want, got))
+	for _, expectedAnnotation := range expectedAnnotations {
+		if strings.Contains(got, expectedAnnotation) {
+			t.Errorf("expected %v in %v", expectedAnnotation, got)
+		}
 	}
 }
 
@@ -570,7 +538,10 @@ func TestStandardIngressAnnotations(t *testing.T) {
 	exp := &telemetry.StdoutExporter{Endpoint: buf}
 
 	annotations := map[string]string{
-		"nginx.org/proxy-set-header": "X-Forwarded-ABC",
+		"appprotect.f5.com/app-protect-enable": "False",
+		"nginx.org/proxy-set-header":           "X-Forwarded-ABC",
+		"ingress.kubernetes.io/ssl-redirect":   "True",
+		"nginx.com/slow-start":                 "0s",
 	}
 
 	configurator := newConfiguratorWithIngressWithCustomAnnotations(t, annotations)
@@ -587,35 +558,60 @@ func TestStandardIngressAnnotations(t *testing.T) {
 	}
 	c.Collect(context.Background())
 
-	telData := tel.Data{
-		ProjectName:         telemetryNICData.ProjectName,
-		ProjectVersion:      telemetryNICData.ProjectVersion,
-		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
-		ClusterNodeCount:    1,
-		ClusterID:           telemetryNICData.ClusterID,
-		ClusterVersion:      telemetryNICData.ClusterVersion,
-		ClusterPlatform:     "other",
+	expectedAnnotations := []string{
+		"appprotect.f5.com/app-protect-enable",
+		"nginx.org/proxy-set-header",
+		"nginx.com/slow-start",
+		"ingress.kubernetes.io/ssl-redirect",
 	}
+
+	got := buf.String()
+	for _, expectedAnnotation := range expectedAnnotations {
+		if !strings.Contains(got, expectedAnnotation) {
+			t.Errorf("expected %v in %v", expectedAnnotation, got)
+		}
+	}
+}
+
+func TestInvalidStandardIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	annotations := map[string]string{
+		"alb.ingress.kubernetes.io/group.order":      "0",
+		"alb.ingress.kubernetes.io/ip-address-type":  "ipv4",
+		"alb.ingress.kubernetes.io/scheme":           "internal",
+		"nginx.ingress.kubernetes.io/rewrite-target": "/",
+	}
+
+	configurator := newConfiguratorWithIngressWithCustomAnnotations(t, annotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
 
 	expectedAnnotations := []string{
-		"nginx.org/proxy-set-header",
+		"alb.ingress.kubernetes.io/scheme",
+		"alb.ingress.kubernetes.io/group.order",
+		"alb.ingress.kubernetes.io/ip-address-type",
+		"nginx.ingress.kubernetes.io/rewrite-target",
 	}
 
-	nicResourceCounts := telemetry.NICResourceCounts{
-		Ingresses:         1,
-		Services:          2,
-		IngressAnnotation: expectedAnnotations,
-	}
-
-	td := telemetry.Data{
-		Data:              telData,
-		NICResourceCounts: nicResourceCounts,
-	}
-
-	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
-	if !cmp.Equal(want, got) {
-		t.Error(cmp.Diff(want, got))
+	for _, expectedAnnotation := range expectedAnnotations {
+		if strings.Contains(got, expectedAnnotation) {
+			t.Errorf("expected %v in %v", expectedAnnotation, got)
+		}
 	}
 }
 
@@ -665,62 +661,6 @@ func TestIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
 	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
 	if !cmp.Equal(want, got) {
-		t.Error(cmp.Diff(want, got))
-	}
-}
-
-func TestInvalidStandardIngressAnnotations(t *testing.T) {
-	t.Parallel()
-
-	buf := &bytes.Buffer{}
-	exp := &telemetry.StdoutExporter{Endpoint: buf}
-
-	annotations := map[string]string{
-		"nginx.org/proxy-set-header": "X-Forwarded-ABC",
-	}
-
-	configurator := newConfiguratorWithIngressWithCustomAnnotations(t, annotations)
-
-	cfg := telemetry.CollectorConfig{
-		Configurator:    configurator,
-		K8sClientReader: newTestClientset(node1, kubeNS),
-		Version:         telemetryNICData.ProjectVersion,
-	}
-
-	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
-	if err != nil {
-		t.Fatal(err)
-	}
-	c.Collect(context.Background())
-
-	telData := tel.Data{
-		ProjectName:         telemetryNICData.ProjectName,
-		ProjectVersion:      telemetryNICData.ProjectVersion,
-		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
-		ClusterNodeCount:    1,
-		ClusterID:           telemetryNICData.ClusterID,
-		ClusterVersion:      telemetryNICData.ClusterVersion,
-		ClusterPlatform:     "other",
-	}
-
-	expectedAnnotations := []string{
-		"nginx.org/mergeable-ingress-type",
-	}
-
-	nicResourceCounts := telemetry.NICResourceCounts{
-		Ingresses:         3,
-		Services:          2,
-		IngressAnnotation: expectedAnnotations,
-	}
-
-	td := telemetry.Data{
-		Data:              telData,
-		NICResourceCounts: nicResourceCounts,
-	}
-
-	want := fmt.Sprintf("%+v", &td)
-	got := buf.String()
-	if cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
 	}
 }
@@ -1995,7 +1935,7 @@ func createMergeableIngressWithCustomAnnotations(masterAnnotations, coffeeAnnota
 	return mergeableIngresses
 }
 
-func createCafeIngressExWithCustmAnnotations(annotations map[string]string) configs.IngressEx {
+func createCafeIngressExWithCustomAnnotations(annotations map[string]string) configs.IngressEx {
 	cafeIngress := networkingV1.Ingress{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:        "cafe-ingress",
@@ -2085,7 +2025,7 @@ func newConfiguratorWithIngress(t *testing.T) *configs.Configurator {
 func newConfiguratorWithIngressWithCustomAnnotations(t *testing.T, annotations map[string]string) *configs.Configurator {
 	t.Helper()
 
-	ingressEx := createCafeIngressExWithCustmAnnotations(annotations)
+	ingressEx := createCafeIngressExWithCustomAnnotations(annotations)
 	c := newConfigurator(t)
 	_, err := c.AddOrUpdateIngress(&ingressEx)
 	if err != nil {

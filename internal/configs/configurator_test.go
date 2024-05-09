@@ -1437,9 +1437,9 @@ func TestGetIngressAnnotations(t *testing.T) {
 				Name:      "test-ingress",
 				Namespace: "default",
 				Annotations: map[string]string{
-					"nginx.org/proxy-connect-timeout": "60s",
-					"nginx.org/proxy-set-header":      "X-Forwarded-ABC",
-					"nginx.org/proxy-read-timeout":    "60s",
+					"appprotect.f5.com/app-protect-enable": "False",
+					"nginx.org/proxy-set-header":           "X-Forwarded-ABC",
+					"ingress.kubernetes.io/ssl-redirect":   "True",
 				},
 			},
 		},
@@ -1452,26 +1452,24 @@ func TestGetIngressAnnotations(t *testing.T) {
 
 	annotationList := tcnf.GetIngressAnnotations()
 
-	expectedAnnotations := map[string]bool{
-		"nginx.org/proxy-connect-timeout": true,
-		"nginx.org/proxy-set-header":      true,
-		"nginx.org/proxy-read-timeout":    true,
+	expectedAnnotations := []string{
+		"appprotect.f5.com/app-protect-enable",
+		"nginx.org/proxy-set-header",
+		"ingress.kubernetes.io/ssl-redirect",
 	}
 
 	if len(annotationList) != len(expectedAnnotations) {
 		t.Errorf("got %d annotations, want %d", len(annotationList), len(expectedAnnotations))
 	}
 
-	for annotationKey := range expectedAnnotations {
-		found := false
-		for _, annotation := range annotationList {
-			if annotation == annotationKey {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("wanted annotation %q not found in retrieved annotations", annotationKey)
+	foundAnnotations := make(map[string]bool)
+	for _, annotation := range annotationList {
+		foundAnnotations[annotation] = true
+	}
+
+	for _, expected := range expectedAnnotations {
+		if !foundAnnotations[expected] {
+			t.Errorf("expected annotation %q not found", expected)
 		}
 	}
 }
@@ -1487,9 +1485,10 @@ func TestGetInvalidIngressAnnotations(t *testing.T) {
 				Name:      "test-ingress",
 				Namespace: "default",
 				Annotations: map[string]string{
-					"nginx.org/proxy-connect": "s",
-					"nginx.org/proxy-set":     "X-ABC@£@",
-					"nginx.org/proxy-read":    "60s",
+					"kubectl.kubernetes.io/last-applied-configuration": "s",
+					"alb.ingress.kubernetes.io/group.order":            "0",
+					"alb.ingress.kubernetes.io/ip-address-type":        "ipv4",
+					"alb.ingress.kubernetes.io/scheme":                 "internal",
 				},
 			},
 		},
@@ -1500,30 +1499,22 @@ func TestGetInvalidIngressAnnotations(t *testing.T) {
 		t.Fatalf("AddOrUpdateIngress returned error: %v", err)
 	}
 
-	expectedAnnotations := map[string]bool{
-		"nginx.org/proxy-connect-timeout": true,
-		"nginx.org/proxy-set-header":      true,
-		"nginx.org/proxy-read":            true,
+	expectedAnnotations := []string{
+		"alb.ingress.kubernetes.io/scheme",
+		"alb.ingress.kubernetes.io/group.order",
+		"alb.ingress.kubernetes.io/ip-address-type",
 	}
 
 	annotationList := tcnf.GetIngressAnnotations()
 
-	if len(annotationList) != len(expectedAnnotations) {
-		t.Logf("got %d annotations, want %d", len(annotationList), len(expectedAnnotations))
-		return
+	foundAnnotations := make(map[string]bool)
+	for _, annotation := range annotationList {
+		foundAnnotations[annotation] = true
 	}
 
-	for annotationKey := range expectedAnnotations {
-		found := false
-		for _, annotation := range annotationList {
-			if annotation == annotationKey {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Logf("wanted annotation %q not found in retrieved annotations", annotationKey)
-			return
+	for _, expected := range expectedAnnotations {
+		if foundAnnotations[expected] {
+			t.Errorf("expected annotation %q not found", expected)
 		}
 	}
 }

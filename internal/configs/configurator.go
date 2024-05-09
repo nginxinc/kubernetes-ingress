@@ -772,7 +772,7 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 		if err != nil {
 			return false, nil, err
 		}
-		return (changed || ptChanged), warnings, nil
+		return changed || ptChanged, warnings, nil
 	}
 	return changed, warnings, nil
 }
@@ -1555,26 +1555,8 @@ func (cnf *Configurator) GetIngressAnnotations() []string {
 	}
 
 	annotationSet := make(map[string]bool)
-
-	if len(cnf.ingresses) > 0 {
-		for _, ing := range cnf.ingresses {
-			if ing != nil && ing.Ingress != nil && ing.Ingress.Annotations != nil {
-				for key := range ing.Ingress.Annotations {
-					annotationSet[key] = true
-				}
-			}
-		}
-	}
-
-	for _, ing := range cnf.mergeableIngresses {
-		for _, minionIng := range ing.Minions {
-			if minionIng != nil && minionIng.Ingress.Annotations != nil {
-				for key := range minionIng.Ingress.Annotations {
-					annotationSet[key] = true
-				}
-			}
-		}
-	}
+	annotationSet = cnf.getMinionIngressAnnotation(annotationSet)
+	annotationSet = cnf.getStandardIngressAnnotation(annotationSet)
 
 	var annotations []string
 	for key := range annotationSet {
@@ -1582,6 +1564,40 @@ func (cnf *Configurator) GetIngressAnnotations() []string {
 	}
 
 	return annotations
+}
+
+// getStandardIngressAnnotation returns a map of allowedAnnotations detected in Standard or Master Ingresses
+func (cnf *Configurator) getStandardIngressAnnotation(annotationSet map[string]bool) map[string]bool {
+	for _, ing := range cnf.ingresses {
+		if ing != nil && ing.Ingress != nil && ing.Ingress.Annotations != nil {
+			for key := range ing.Ingress.Annotations {
+				for _, allowedAnnotationKey := range allowedAnnotationKeys {
+					if strings.Contains(key, allowedAnnotationKey) {
+						annotationSet[key] = true
+					}
+				}
+			}
+		}
+	}
+	return annotationSet
+}
+
+// getMinionIngressAnnotation returns a map of allowedAnnotations detected in Minion Ingresses
+func (cnf *Configurator) getMinionIngressAnnotation(annotationSet map[string]bool) map[string]bool {
+	for _, ing := range cnf.mergeableIngresses {
+		for _, minionIng := range ing.Minions {
+			if minionIng != nil && minionIng.Ingress.Annotations != nil {
+				for key := range minionIng.Ingress.Annotations {
+					for _, allowedAnnotationKey := range allowedAnnotationKeys {
+						if strings.Contains(key, allowedAnnotationKey) {
+							annotationSet[key] = true
+						}
+					}
+				}
+			}
+		}
+	}
+	return annotationSet
 }
 
 // GetServiceCount returns the total number of unique services referenced by Ingresses, VS's, VSR's, and TS's
