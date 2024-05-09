@@ -77,6 +77,12 @@ ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-9.repo ap
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-dos-8.repo app-protect-dos-8.repo
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-11.repo debian-plus-11.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-12.repo debian-plus-12.sources
+# TEST repo files for WAF v5 packages for Debian 11 and 12
+# https://raw.githubusercontent.com/shaun-nx/k8s-common/waf-v5-debian-repo/files/plus-nap-waf-v5-debian-11.repo
+# https://raw.githubusercontent.com/shaun-nx/k8s-common/waf-v5-debian-repo/files/plus-nap-waf-v5-debian-12.repo
+ADD --link --chown=101:0 https://raw.githubusercontent.com/shaun-nx/k8s-common/8c1482f84a80268b70c68987871626e0537e6e94/files/plus-nap-waf-v5-debian-11.repo plus-nap-waf-v5-debian-11.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/shaun-nx/k8s-common/waf-v5-debian-repo/files/plus-nap-waf-v5-debian-12.repo plus-nap-waf-v5-debian-12.sources
+# ########
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-debian-11.repo nap-waf-11.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-dos-debian-11.repo nap-dos-11.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/agent-debian-11.repo debian-agent-11.sources
@@ -180,10 +186,13 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=debian-plus-11.sources,target=/etc/apt/sources.list.d/nginx-plus.sources \
 	--mount=type=bind,from=nginx-files,src=nap-waf-11.sources,target=/tmp/app-protect.sources \
 	--mount=type=bind,from=nginx-files,src=nap-dos-11.sources,target=/tmp/app-protect-dos.sources \
+	# Sources for Debian 11 for WAF v5
+	--mount=type=bind,from=nginx-files,src=plus-nap-waf-v5-debian-11.sources,target=/tmp/v5-app-protect.sources \
 	--mount=type=bind,from=nginx-files,src=debian-agent-11.sources,target=/etc/apt/sources.list.d/nginx-agent.sources \
 	## the code below is duplicated from the debian-plus image because NAP doesn't support debian 12
 	if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	cp /tmp/app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
+	# cp /tmp/app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
+	cp /tmp/v5-app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	cp /tmp/app-protect-dos.sources /etc/apt/sources.list.d/app-protect-dos.sources; \
@@ -200,7 +209,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	## end of duplicated code
 	&& if [ -z "${NGINX_AGENT##true}" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	apt-get install --no-install-recommends --no-install-suggests -y app-protect=31+4.815* app-protect-engine=10.624* app-protect-common=10.624* app-protect-compiler=10.624* app-protect-plugin=5.24* nginx-plus-module-appprotect=31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	apt-get install --no-install-recommends --no-install-suggests -y app-protect-dos; \
@@ -358,8 +367,8 @@ RUN --mount=type=bind,target=/tmp [ -n "${BUILD_OS##*plus*}" ] && exit 0; mkdir 
 
 # run only on nap waf build
 RUN --mount=type=bind,target=/tmp [ -n "${NAP_MODULES##*waf*}" ] && exit 0; mkdir -p /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
-	&& chown -R 101:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ \
-	&& chmod -R g=u /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ \
+	&& chown -R 101:0 /etc/app_protect /var/log/app_protect/ /opt/app_protect/ \
+	&& chmod -R g=u /etc/app_protect /var/log/app_protect/ /opt/app_protect/ \
 	&& touch /etc/nginx/waf/nac-usersigs/index.conf \
 	&& if [ -z "${NGINX_AGENT##true}" ]; then mkdir -p /etc/ssl/nms /opt/nms-nap-compiler \
 	&& chown -R 101:0 /etc/ssl/nms /opt/nms-nap-compiler \

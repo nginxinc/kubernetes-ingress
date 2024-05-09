@@ -454,12 +454,12 @@ type childProcesses struct {
 // newChildProcesses starts the several child processes based on flags set.
 // AppProtect. AppProtectDos, Agent.
 func startChildProcesses(nginxManager nginx.Manager) childProcesses {
-	var aPPluginDone chan error
+	// var aPPluginDone chan error
 
-	if *appProtect {
-		aPPluginDone = make(chan error, 1)
-		nginxManager.AppProtectPluginStart(aPPluginDone, *appProtectLogLevel)
-	}
+	// if *appProtect {
+	// 	aPPluginDone = make(chan error, 1)
+	// 	nginxManager.AppProtectPluginStart(aPPluginDone, *appProtectLogLevel)
+	// }
 
 	var aPPDosAgentDone chan error
 
@@ -480,11 +480,11 @@ func startChildProcesses(nginxManager nginx.Manager) childProcesses {
 	return childProcesses{
 		nginxDone:      nginxDone,
 		aPPluginEnable: *appProtect,
-		aPPluginDone:   aPPluginDone,
-		aPDosEnable:    *appProtectDos,
-		aPDosDone:      aPPDosAgentDone,
-		agentEnable:    *agent,
-		agentDone:      agentDone,
+		// aPPluginDone:   aPPluginDone,
+		aPDosEnable: *appProtectDos,
+		aPDosDone:   aPPDosAgentDone,
+		agentEnable: *agent,
+		agentDone:   agentDone,
 	}
 }
 
