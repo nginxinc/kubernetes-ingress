@@ -19,8 +19,8 @@ Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/r
 
 NGINX Ingress Controller requires RBAC to configure a [ServiceUser](https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts), and provides least privilege access in its standard deployment configurations:
 
-- [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/deployments/rbac/rbac.yaml)
-- [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/deployments/rbac/rbac.yaml)
+- [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.1/deployments/rbac/rbac.yaml)
+- [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.1/deployments/rbac/rbac.yaml)
 
 By default, the ServiceAccount has access to all Secret resources in the cluster.
 
