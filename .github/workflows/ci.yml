@@ -371,13 +371,14 @@ jobs:
         run: >
           helm install
           ${{ matrix.type }}
-          ${{ github.workspace }}/charts/nginx-ingress
+          .
           --set controller.image.repository=${{ matrix.image }}
           --set controller.image.tag=${{ matrix.tag }}
           --set controller.service.type=NodePort
           --set controller.nginxplus=${{ contains(matrix.type, 'plus') && 'true' || 'false' }}
           --set controller.telemetryReporting.enable=false
           --wait
+        working-directory: ${{ github.workspace }}/charts/nginx-ingress
 
       - name: Expose Test Ingresses
         run: |
