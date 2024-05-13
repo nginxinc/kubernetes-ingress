@@ -1,13 +1,14 @@
 ---
-title: "Building NGINX Ingress Controller"
-description: "Learn how to build an NGINX Ingress Controller image from source codes and upload it to a private Docker registry. You'll also find information on the Makefile targets and variables."
-weight: 200
-doctypes: ["installation"]
+description: 
+docs: DOCS-1453
+doctypes:
+- installation
+title: Building NGINX Ingress Controller
 toc: true
-docs: "DOCS-1453"
+weight: 200
 ---
 
-{{<custom-styles>}}
+Learn how to build an NGINX Ingress Controller image from source code and upload it to a private Docker registry. You'll also find information on the Makefile targets and variables.
 
 {{<call-out "tip" "Pre-built image alternatives" >}}If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
 
@@ -42,10 +43,10 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
     cd kubernetes-ingress
     ```
 
-    For instance if you want to clone version v3.4.3, the commands to run would be:
+    For instance if you want to clone version v3.5.1, the commands to run would be:
 
     ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.4.3
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.1
     cd kubernetes-ingress
     ```
 

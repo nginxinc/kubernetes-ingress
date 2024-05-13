@@ -1,12 +1,14 @@
 ---
-title: Which Ingress Controller Do I Need?
-description: This document describes the key differences between the community Ingress-NGINX Controller and F5 NGINX Ingress Controller.
-weight: 400
-doctypes: ["concept"]
-toc: true
-docs: "DOCS-610"
+docs: DOCS-610
+doctypes:
+- concept
 draft: true
+title: Which Ingress Controller Do I Need?
+toc: true
+weight: 400
 ---
+
+This document describes the key differences between the community Ingress-NGINX Controller and F5 NGINX Ingress Controller.
 
 There are two NGINX-based Ingress Controller implementations out there: the one made by NGINX ([nginxinc/kubernetes-ingress](https://github.com/nginxinc/kubernetes-ingress)) and the one made by Kubernetes ([kubernetes/ingress-nginx](https://github.com/kubernetes/ingress-nginx)). In this document, we explain the key differences between those implementations. This information should help you to choose an appropriate implementation for your requirements or move from one implementation to the other.
 
@@ -26,11 +28,11 @@ The table below summarizes the key difference between nginxinc/kubernetes-ingres
 | NGINX version | [Custom](https://github.com/kubernetes/ingress-nginx/tree/main/images/nginx) NGINX build that includes several third-party modules | NGINX official mainline [build](https://github.com/nginxinc/docker-nginx) | NGINX Plus |
 | Commercial support | N/A | N/A | Included |
 | **Load balancing configuration via the Ingress resource** |
-| Merging Ingress rules with the same host | Supported | Supported via [Mergeable Ingresses](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/mergeable-ingress-types) | Supported via [Mergeable Ingresses](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/mergeable-ingress-types) |
+| Merging Ingress rules with the same host | Supported | Supported via [Mergeable Ingresses](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/mergeable-ingress-types) | Supported via [Mergeable Ingresses](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/mergeable-ingress-types) |
 | HTTP load balancing extensions - Annotations | See the [supported annotations](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/) | See the [supported annotations](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/) | See the [supported annotations](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/)|
 | HTTP load balancing extensions -- ConfigMap | See the [supported ConfigMap keys](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/) | See the [supported ConfigMap keys](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) | See the [supported ConfigMap keys](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) |
 | TCP/UDP | Supported via a ConfigMap | Supported via custom resources | Supported via custom resources |
-| Websocket  | Supported | Supported via an [annotation](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/websocket) | Supported via an [annotation](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/websocket) |
+| Websocket  | Supported | Supported via an [annotation](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/websocket) | Supported via an [annotation](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/websocket) |
 | TCP SSL Passthrough | Supported via a ConfigMap | Supported via custom resources | Supported via custom resources |
 | JWT validation | Not supported | Not supported | Supported |
 | Session persistence | Supported via a third-party module | Not supported | Supported |

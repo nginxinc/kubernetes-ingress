@@ -214,6 +214,7 @@ type NewLoadBalancerControllerInput struct {
 	IsIPV6Disabled               bool
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
+	TelemetryReportingEndpoint   string
 	NICVersion                   string
 	DynamicWeightChangesReload   bool
 }
@@ -352,7 +353,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
 		exporterCfg := telemetry.ExporterCfg{
-			Endpoint: "oss.edge.df.f5.com:443",
+			Endpoint: input.TelemetryReportingEndpoint,
 		}
 
 		exporter, err := telemetry.NewExporter(exporterCfg)
@@ -360,15 +361,17 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			glog.Fatalf("failed to initialize telemetry exporter: %v", err)
 		}
 		collectorConfig := telemetry.CollectorConfig{
-			K8sClientReader:       input.KubeClient,
-			CustomK8sClientReader: input.ConfClient,
-			Period:                24 * time.Hour,
-			Configurator:          lbc.configurator,
-			Version:               input.NICVersion,
+			Period:              24 * time.Hour,
+			K8sClientReader:     input.KubeClient,
+			Version:             input.NICVersion,
+			GlobalConfiguration: lbc.watchGlobalConfiguration,
+			Configurator:        lbc.configurator,
+			SecretStore:         lbc.secretStore,
 			PodNSName: types.NamespacedName{
 				Namespace: os.Getenv("POD_NAMESPACE"),
 				Name:      os.Getenv("POD_NAME"),
 			},
+			Policies: lbc.getAllPolicies,
 		}
 		collector, err := telemetry.NewCollector(
 			collectorConfig,
@@ -842,35 +845,51 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 	}
 
 	endpointSlice := obj.(*discovery_v1.EndpointSlice)
-	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, endpointSlice.Labels["kubernetes.io/service-name"])
+	svcName := endpointSlice.Labels["kubernetes.io/service-name"]
+	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, svcName)
 
 	resourceExes := lbc.createExtendedResources(svcResource)
 
 	if len(resourceExes.IngressExes) > 0 {
-		resourcesFound = true
-		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
-		err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
-		if err != nil {
-			glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.IngressExes, err)
+		for _, ingEx := range resourceExes.IngressExes {
+			if lbc.ingressRequiresEndpointsUpdate(ingEx, svcName) {
+				resourcesFound = true
+				glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
+				err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
+				if err != nil {
+					glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.IngressExes, err)
+				}
+				break
+			}
 		}
 	}
 
 	if len(resourceExes.MergeableIngresses) > 0 {
-		resourcesFound = true
-		glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
-		err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
-		if err != nil {
-			glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.MergeableIngresses, err)
+		for _, mergeableIngresses := range resourceExes.MergeableIngresses {
+			if lbc.mergeableIngressRequiresEndpointsUpdate(mergeableIngresses, svcName) {
+				resourcesFound = true
+				glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
+				err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
+				if err != nil {
+					glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.MergeableIngresses, err)
+				}
+				break
+			}
 		}
 	}
 
 	if lbc.areCustomResourcesEnabled {
 		if len(resourceExes.VirtualServerExes) > 0 {
-			resourcesFound = true
-			glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.VirtualServerExes)
-			err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
-			if err != nil {
-				glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.VirtualServerExes, err)
+			for _, vsEx := range resourceExes.VirtualServerExes {
+				if lbc.virtualServerRequiresEndpointsUpdate(vsEx, svcName) {
+					resourcesFound = true
+					glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.VirtualServerExes)
+					err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
+					if err != nil {
+						glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.VirtualServerExes, err)
+					}
+					break
+				}
 			}
 		}
 
@@ -884,6 +903,63 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 		}
 	}
 	return resourcesFound
+}
+
+func (lbc *LoadBalancerController) virtualServerRequiresEndpointsUpdate(vsEx *configs.VirtualServerEx, serviceName string) bool {
+	for _, upstream := range vsEx.VirtualServer.Spec.Upstreams {
+		if upstream.Service == serviceName && !upstream.UseClusterIP {
+			return true
+		}
+	}
+
+	for _, vsr := range vsEx.VirtualServerRoutes {
+		for _, upstream := range vsr.Spec.Upstreams {
+			if upstream.Service == serviceName && !upstream.UseClusterIP {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (lbc *LoadBalancerController) ingressRequiresEndpointsUpdate(ingressEx *configs.IngressEx, serviceName string) bool {
+	hasUseClusterIPAnnotation := ingressEx.Ingress.Annotations[useClusterIPAnnotation] == "true"
+
+	for _, rule := range ingressEx.Ingress.Spec.Rules {
+		if http := rule.HTTP; http != nil {
+			for _, path := range http.Paths {
+				if path.Backend.Service != nil && path.Backend.Service.Name == serviceName {
+					if !hasUseClusterIPAnnotation {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	if http := ingressEx.Ingress.Spec.DefaultBackend; http != nil {
+		if http.Service != nil && http.Service.Name == serviceName {
+			if !hasUseClusterIPAnnotation {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (lbc *LoadBalancerController) mergeableIngressRequiresEndpointsUpdate(mergeableIngresses *configs.MergeableIngresses, serviceName string) bool {
+	masterIngress := mergeableIngresses.Master
+	minions := mergeableIngresses.Minions
+
+	for _, minion := range minions {
+		if lbc.ingressRequiresEndpointsUpdate(minion, serviceName) {
+			return true
+		}
+	}
+
+	return lbc.ingressRequiresEndpointsUpdate(masterIngress, serviceName)
 }
 
 func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) configs.ExtendedResources {
@@ -1493,9 +1569,9 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 		eventMessage := fmt.Sprintf("GlobalConfiguration %s was added or updated", key)
 
 		if validationErr != nil {
-			eventTitle = "Rejected"
+			eventTitle = "AddedOrUpdatedWithError"
 			eventType = api_v1.EventTypeWarning
-			eventMessage = fmt.Sprintf("GlobalConfiguration %s is invalid and was rejected: %v", key, validationErr)
+			eventMessage = fmt.Sprintf("GlobalConfiguration %s is updated with errors: %v", key, validationErr)
 		}
 
 		if updateErr != nil {
@@ -2793,6 +2869,7 @@ func (lbc *LoadBalancerController) createMergeableIngresses(ingConfig *IngressCo
 }
 
 func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, validHosts map[string]bool, validMinionPaths map[string]bool) *configs.IngressEx {
+	var endps []string
 	ingEx := &configs.IngressEx{
 		Ingress:          ing,
 		ValidHosts:       validHosts,
@@ -2874,6 +2951,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 	ingEx.HealthChecks = make(map[string]*api_v1.Probe)
 	ingEx.ExternalNameSvcs = make(map[string]bool)
 	ingEx.PodsByIP = make(map[string]configs.PodInfo)
+	hasUseClusterIP := ingEx.Ingress.Annotations[configs.UseClusterIPAnnotation] == "true"
 
 	if ing.Spec.DefaultBackend != nil {
 		podEndps := []podEndpoint{}
@@ -2892,7 +2970,19 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			glog.Warningf("Error retrieving endpoints for the service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
 		}
 
-		endps := getIPAddressesFromEndpoints(podEndps)
+		if svc != nil && !external && hasUseClusterIP {
+			if ing.Spec.DefaultBackend.Service.Port.Number == 0 {
+				for _, port := range svc.Spec.Ports {
+					if port.Name == ing.Spec.DefaultBackend.Service.Port.Name {
+						ing.Spec.DefaultBackend.Service.Port.Number = port.Port
+						break
+					}
+				}
+			}
+			endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, ing.Spec.DefaultBackend.Service.Port.Number)}
+		} else {
+			endps = getIPAddressesFromEndpoints(podEndps)
+		}
 
 		// endps is empty if there was any error before this point
 		ingEx.Endpoints[ing.Spec.DefaultBackend.Service.Name+configs.GetBackendPortAsString(ing.Spec.DefaultBackend.Service.Port)] = endps
@@ -2948,7 +3038,19 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 				glog.Warningf("Error retrieving endpoints for the service %v: %v", path.Backend.Service.Name, err)
 			}
 
-			endps := getIPAddressesFromEndpoints(podEndps)
+			if svc != nil && !external && hasUseClusterIP {
+				if path.Backend.Service.Port.Number == 0 {
+					for _, port := range svc.Spec.Ports {
+						if port.Name == path.Backend.Service.Port.Name {
+							path.Backend.Service.Port.Number = port.Port
+							break
+						}
+					}
+				}
+				endps = []string{ipv6SafeAddrPort(svc.Spec.ClusterIP, path.Backend.Service.Port.Number)}
+			} else {
+				endps = getIPAddressesFromEndpoints(podEndps)
+			}
 
 			// endps is empty if there was any error before this point
 			ingEx.Endpoints[path.Backend.Service.Name+configs.GetBackendPortAsString(path.Backend.Service.Port)] = endps
@@ -3028,14 +3130,14 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	}
 
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
-		secretKey := virtualServer.Namespace + "/" + virtualServer.Spec.TLS.Secret
+		scrtKey := virtualServer.Namespace + "/" + virtualServer.Spec.TLS.Secret
 
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-		if secretRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for VirtualServer %v: %v", secretKey, virtualServer.Name, secretRef.Error)
+		scrtRef := lbc.secretStore.GetSecret(scrtKey)
+		if scrtRef.Error != nil {
+			glog.Warningf("Error trying to get the secret %v for VirtualServer %v: %v", scrtKey, virtualServer.Name, scrtRef.Error)
 		}
 
-		virtualServerEx.SecretRefs[secretKey] = secretRef
+		virtualServerEx.SecretRefs[scrtKey] = scrtRef
 	}
 
 	policies, policyErrors := lbc.getPolicies(virtualServer.Spec.Policies, virtualServer.Namespace)
@@ -3634,17 +3736,17 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		}
 	}
 
-	secretRefs := make(map[string]*secrets.SecretReference)
+	scrtRefs := make(map[string]*secrets.SecretReference)
 
 	if transportServer.Spec.TLS != nil && transportServer.Spec.TLS.Secret != "" {
-		secretKey := transportServer.Namespace + "/" + transportServer.Spec.TLS.Secret
+		scrtKey := transportServer.Namespace + "/" + transportServer.Spec.TLS.Secret
 
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-		if secretRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for TransportServer %v: %v", secretKey, transportServer.Name, secretRef.Error)
+		scrtRef := lbc.secretStore.GetSecret(scrtKey)
+		if scrtRef.Error != nil {
+			glog.Warningf("Error trying to get the secret %v for TransportServer %v: %v", scrtKey, transportServer.Name, scrtRef.Error)
 		}
 
-		secretRefs[secretKey] = secretRef
+		scrtRefs[scrtKey] = scrtRef
 	}
 
 	return &configs.TransportServerEx{
@@ -3654,7 +3756,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		PodsByIP:         podsByIP,
 		ExternalNameSvcs: externalNameSvcs,
 		DisableIPV6:      disableIPV6,
-		SecretRefs:       secretRefs,
+		SecretRefs:       scrtRefs,
 	}
 }
 
@@ -4285,10 +4387,6 @@ func (lbc *LoadBalancerController) addInternalRouteServer() {
 }
 
 func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *conf_v1.VirtualServer, vsNew *conf_v1.VirtualServer) {
-	if lbc.haltIfVSConfigInvalid(vsNew) {
-		return
-	}
-
 	var weightUpdates []configs.WeightUpdate
 	var splitClientsIndex int
 	variableNamer := configs.NewVSVariableNamer(vsNew)
@@ -4298,7 +4396,7 @@ func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *co
 		for j, matchNew := range routeNew.Matches {
 			matchOld := routeOld.Matches[j]
 			if len(matchNew.Splits) == 2 {
-				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight && matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
+				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight || matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
 					weightUpdates = append(weightUpdates, configs.WeightUpdate{
 						Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
 						Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
@@ -4311,7 +4409,7 @@ func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *co
 			}
 		}
 		if len(routeNew.Splits) == 2 {
-			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight && routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
+			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight || routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
 				weightUpdates = append(weightUpdates, configs.WeightUpdate{
 					Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
 					Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
@@ -4324,14 +4422,39 @@ func (lbc *LoadBalancerController) processVSWeightChangesDynamicReload(vsOld *co
 			splitClientsIndex++
 		}
 	}
+
+	if len(weightUpdates) == 0 {
+		return
+	}
+
+	if vsOld.Status.State == conf_v1.StateInvalid {
+		lbc.AddSyncQueue(vsNew)
+		return
+	}
+
+	if lbc.haltIfVSConfigInvalid(vsNew) {
+		return
+	}
+
 	for _, weight := range weightUpdates {
 		lbc.configurator.UpsertSplitClientsKeyVal(weight.Zone, weight.Key, weight.Value)
 	}
 }
 
 func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *conf_v1.VirtualServerRoute, vsrNew *conf_v1.VirtualServerRoute) {
+	if !lbc.vsrHasWeightChanges(vsrOld, vsrNew) {
+		return
+	}
+
+	if vsrOld.Status.State == conf_v1.StateInvalid {
+		changes, problems := lbc.configuration.AddOrUpdateVirtualServerRoute(vsrNew)
+		lbc.processProblems(problems)
+		lbc.processChanges(changes)
+		return
+	}
+
 	halt, vsEx := lbc.haltIfVSRConfigInvalid(vsrNew)
-	if halt {
+	if vsEx == nil {
 		return
 	}
 
@@ -4346,7 +4469,7 @@ func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *
 		for j, matchNew := range routeNew.Matches {
 			matchOld := routeOld.Matches[j]
 			if len(matchNew.Splits) == 2 {
-				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight && matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
+				if matchNew.Splits[0].Weight != matchOld.Splits[0].Weight || matchNew.Splits[1].Weight != matchOld.Splits[1].Weight {
 					weightUpdates = append(weightUpdates, configs.WeightUpdate{
 						Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
 						Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
@@ -4359,7 +4482,7 @@ func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *
 			}
 		}
 		if len(routeNew.Splits) == 2 {
-			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight && routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
+			if routeNew.Splits[0].Weight != routeOld.Splits[0].Weight || routeNew.Splits[1].Weight != routeOld.Splits[1].Weight {
 				weightUpdates = append(weightUpdates, configs.WeightUpdate{
 					Zone:  variableNamer.GetNameOfKeyvalZoneForSplitClientIndex(splitClientsIndex),
 					Key:   variableNamer.GetNameOfKeyvalKeyForSplitClientIndex(splitClientsIndex),
@@ -4371,6 +4494,11 @@ func (lbc *LoadBalancerController) processVSRWeightChangesDynamicReload(vsrOld *
 			splitClientsIndex++
 		}
 	}
+
+	if halt {
+		return
+	}
+
 	for _, weight := range weightUpdates {
 		lbc.configurator.UpsertSplitClientsKeyVal(weight.Zone, weight.Key, weight.Value)
 	}
@@ -4432,9 +4560,27 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 
 	changes, problems := lbc.configuration.rebuildHosts()
 
+	if validationError != nil {
+
+		kind := getResourceKeyWithKind(virtualServerKind, &vsNew.ObjectMeta)
+		for i := range changes {
+			k := changes[i].Resource.GetKeyWithKind()
+
+			if k == kind {
+				changes[i].Error = validationError.Error()
+			}
+		}
+		p := ConfigurationProblem{
+			Object:  vsNew,
+			IsError: true,
+			Reason:  "Rejected",
+			Message: fmt.Sprintf("VirtualServer %s was rejected with error: %s", getResourceKey(&vsNew.ObjectMeta), validationError.Error()),
+		}
+		problems = append(problems, p)
+	}
+
 	if len(problems) > 0 {
 		lbc.processProblems(problems)
-		return true
 	}
 
 	if len(changes) == 0 {
@@ -4447,11 +4593,34 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 			case *VirtualServerConfiguration:
 				lbc.updateVirtualServerStatusAndEvents(impl, configs.Warnings{}, nil)
 			}
+		} else if c.Op == Delete {
+			switch impl := c.Resource.(type) {
+			case *VirtualServerConfiguration:
+				key := getResourceKey(&impl.VirtualServer.ObjectMeta)
+
+				deleteErr := lbc.configurator.DeleteVirtualServer(key, false)
+				if deleteErr != nil {
+					glog.Errorf("Error when deleting configuration for VirtualServer %v: %v", key, deleteErr)
+				}
+
+				var vsExists bool
+				var err error
+
+				ns, _, _ := cache.SplitMetaNamespaceKey(key)
+				_, vsExists, err = lbc.getNamespacedInformer(ns).virtualServerLister.GetByKey(key)
+				if err != nil {
+					glog.Errorf("Error when getting VirtualServer for %v: %v", key, err)
+				}
+
+				if vsExists {
+					lbc.UpdateVirtualServerStatusAndEventsOnDelete(impl, c.Error, deleteErr)
+				}
+			}
 		}
 	}
 
 	lbc.configuration.virtualServers[key] = vsNew
-	return false
+	return len(problems) > 0
 }
 
 func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.VirtualServerRoute) (bool, *configs.VirtualServerEx) {
@@ -4462,17 +4631,13 @@ func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.Virtua
 
 	validationError := lbc.configuration.virtualServerValidator.ValidateVirtualServerRoute(vsrNew)
 	if validationError != nil {
-		delete(lbc.configuration.virtualServerRoutes, key)
+		lbc.AddSyncQueue(vsrNew)
+		return true, nil
 	} else {
 		lbc.configuration.virtualServerRoutes[key] = vsrNew
 	}
 
-	changes, problems := lbc.configuration.rebuildHosts()
-
-	if len(problems) > 0 {
-		lbc.processProblems(problems)
-		return true, nil
-	}
+	changes, _ := lbc.configuration.rebuildHosts()
 
 	if len(changes) == 0 {
 		return true, nil
@@ -4495,4 +4660,20 @@ func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.Virtua
 
 	lbc.configuration.virtualServerRoutes[key] = vsrNew
 	return false, vsEx
+}
+
+func (lbc *LoadBalancerController) vsrHasWeightChanges(vsrOld *conf_v1.VirtualServerRoute, vsrNew *conf_v1.VirtualServerRoute) bool {
+	for i, routeNew := range vsrNew.Spec.Subroutes {
+		routeOld := vsrOld.Spec.Subroutes[i]
+		for j, matchNew := range routeNew.Matches {
+			matchOld := routeOld.Matches[j]
+			if len(matchNew.Splits) == 2 && (matchNew.Splits[0].Weight != matchOld.Splits[0].Weight || matchNew.Splits[1].Weight != matchOld.Splits[1].Weight) {
+				return true
+			}
+		}
+		if len(routeNew.Splits) == 2 && (routeNew.Splits[0].Weight != routeOld.Splits[0].Weight || routeNew.Splits[1].Weight != routeOld.Splits[1].Weight) {
+			return true
+		}
+	}
+	return false
 }

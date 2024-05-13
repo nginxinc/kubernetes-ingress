@@ -58,7 +58,7 @@ func (c *Collector) ClusterID(ctx context.Context) (string, error) {
 	return string(cluster.UID), nil
 }
 
-// ClusterVersion returns a string respresenting the K8s version.
+// ClusterVersion returns a string representing the K8s version.
 // It returns an error if the underlying k8s API client errors.
 func (c *Collector) ClusterVersion() (string, error) {
 	sv, err := c.Config.K8sClientReader.Discovery().ServerVersion()
@@ -113,6 +113,74 @@ func (c *Collector) InstallationID(ctx context.Context) (_ string, err error) {
 	default:
 		return "", fmt.Errorf("expected pod owner reference to be ReplicaSet or DeamonSet, got %s", podOwner[0].Kind)
 	}
+}
+
+// Secrets returns the number of secrets watched by NIC.
+func (c *Collector) Secrets() (int, error) {
+	if c.Config.SecretStore == nil {
+		return 0, errors.New("nil secret store")
+	}
+	return len(c.Config.SecretStore.GetSecretReferenceMap()), nil
+}
+
+// IngressCount returns number of Ingresses in the namespaces watched by NIC.
+func (c *Collector) IngressCount() int {
+	if c.Config.Configurator == nil {
+		return 0
+	}
+	ic := c.Config.Configurator.GetIngressCounts()
+	total := 0
+	for _, v := range ic {
+		total += v
+	}
+	return total
+}
+
+// IngressClassCount returns number of Ingress Classes.
+func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
+	ic, err := c.Config.K8sClientReader.NetworkingV1().IngressClasses().List(ctx, metaV1.ListOptions{})
+	if err != nil {
+		return 0, err
+	}
+	return len(ic.Items), nil
+}
+
+// PolicyCount returns the count in each Policy
+func (c *Collector) PolicyCount() map[string]int {
+	policyCounters := make(map[string]int)
+
+	if c.Config.Policies == nil {
+		return policyCounters
+	}
+
+	policies := c.Config.Policies()
+	if policies == nil {
+		return policyCounters
+	}
+
+	for _, policy := range policies {
+		spec := policy.Spec
+
+		switch {
+		case spec.AccessControl != nil:
+			policyCounters["AccessControl"]++
+		case spec.RateLimit != nil:
+			policyCounters["RateLimit"]++
+		case spec.JWTAuth != nil:
+			policyCounters["JWTAuth"]++
+		case spec.BasicAuth != nil:
+			policyCounters["BasicAuth"]++
+		case spec.IngressMTLS != nil:
+			policyCounters["IngressMTLS"]++
+		case spec.EgressMTLS != nil:
+			policyCounters["EgressMTLS"]++
+		case spec.OIDC != nil:
+			policyCounters["OIDC"]++
+		case spec.WAF != nil:
+			policyCounters["WAF"]++
+		}
+	}
+	return policyCounters
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

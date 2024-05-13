@@ -1,6 +1,9 @@
 package version1
 
-import "github.com/nginxinc/kubernetes-ingress/internal/nginx"
+import (
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+)
 
 // UpstreamLabels describes the Prometheus labels for an NGINX upstream.
 type UpstreamLabels struct {
@@ -166,6 +169,7 @@ type Location struct {
 	ProxyConnectTimeout  string
 	ProxyReadTimeout     string
 	ProxySendTimeout     string
+	ProxySetHeaders      []version2.Header
 	ClientMaxBodySize    string
 	Websocket            bool
 	Rewrite              string

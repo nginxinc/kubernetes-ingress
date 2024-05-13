@@ -1,24 +1,13 @@
 ---
+docs: DOCS-604
+doctypes:
+- ''
 title: Installation with the NGINX Ingress Operator
-description: "This document explains how to install NGINX Ingress Controller in your Kubernetes cluster using NGINX Ingress Operator."
-weight: 300
-doctypes: [""]
 toc: true
-docs: "DOCS-604"
+weight: 300
 ---
 
-{{<custom-styles>}}
-
-<style>
-h2 {
-  border-top: 1px solid #ccc;
-  padding-top:20px;
-}
-</style>
-
-{{< note >}}
-NGINX Ingress Operator isn't compatible with NGINX Ingress Controller 3.4.3 at this time.  We'll update this guide and remove this note when we release a compatible version.
-{{< /note >}}
+This document explains how to use NGINX Ingress Operator to install NGINX Ingress Controller.
 
 ## Before you start
 
@@ -51,7 +40,7 @@ spec:
     image:
       pullPolicy: IfNotPresent
       repository: nginx/nginx-ingress
-      tag: 3.4.3-ubi
+      tag: 3.5.1-ubi
     ingressClass:
       name: nginx
     kind: deployment

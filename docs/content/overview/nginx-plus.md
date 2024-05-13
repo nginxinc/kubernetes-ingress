@@ -1,14 +1,12 @@
 ---
+docs: DOCS-611
+doctypes:
+- concept
 title: Extensibility with NGINX Plus
-description: "This document explains how F5 NGINX Plus can extend the functionality of the F5 NGINX Ingress Controller."
 weight: 300
-doctypes: ["concept"]
-docs: "DOCS-611"
-aliases:
-  - /nginx-plus/
 ---
 
-<br>
+This document explains how F5 NGINX Plus can extend the functionality of the F5 NGINX Ingress Controller.
 
 NGINX Ingress Controller works with [NGINX](https://nginx.org/) as well as [NGINX Plus](https://www.nginx.com/products/nginx/), a commercial closed source version of NGINX which has additional features and support from NGINX Inc. NGINX Ingress Controller can leverage functionality from NGINX Plus to extend its base capabilities.
 
@@ -16,9 +14,9 @@ NGINX Ingress Controller works with [NGINX](https://nginx.org/) as well as [NGIN
 
 - _Real-time metrics_: Metrics for NGINX Plus and application performance are available through the API or the [NGINX Status Page]({{< relref "logging-and-monitoring/status-page">}}). These metrics can also be exported to [Prometheus]({{< relref "logging-and-monitoring/prometheus">}}).
 - _Additional load balancing methods_: The `least_time` and `random two least_time` methods and their derivatives become available. The NGINX [`ngx_http_upstream_module` documentation](https://nginx.org/en/docs/http/ngx_http_upstream_module.html) has the complete list of load balancing methods.
-- _Session persistence_: The *sticky cookie* method becomes available. See the [Ingress Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/session-persistence) and [Custom Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/session-persistence) examples.
-- _Active health checks_:  See the [Ingress Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/health-checks) and [Custom Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/health-checks) examples.
-- _JWT validation_: See the [Ingress Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/jwt) and [Custom Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/jwt) examples.
+- _Session persistence_: The *sticky cookie* method becomes available. See the [Ingress Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/session-persistence) and [Custom Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/session-persistence) examples.
+- _Active health checks_:  See the [Ingress Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/health-checks) and [Custom Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/health-checks) examples.
+- _JWT validation_: See the [Ingress Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/jwt) and [Custom Resource](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/jwt) examples.
 
 For a comprehensive guide of NGINX Plus features available with Ingress resources, see the [ConfigMap]({{< relref "configuration/global-configuration/configmap-resource">}}) and [Annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations">}}) documentation.
 

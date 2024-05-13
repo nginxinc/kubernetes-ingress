@@ -68,6 +68,7 @@ rules:
   - ingressclasses
   verbs:
   - get
+  - list
 {{- if .Values.controller.reportIngressStatus.enable }}
 - apiGroups:
   - networking.k8s.io

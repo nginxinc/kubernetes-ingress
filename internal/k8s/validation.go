@@ -32,6 +32,7 @@ const (
 	proxySendTimeoutAnnotation            = "nginx.org/proxy-send-timeout"
 	proxyHideHeadersAnnotation            = "nginx.org/proxy-hide-headers"
 	proxyPassHeadersAnnotation            = "nginx.org/proxy-pass-headers" // #nosec G101
+	proxySetHeadersAnnotation             = "nginx.org/proxy-set-headers"
 	clientMaxBodySizeAnnotation           = "nginx.org/client-max-body-size"
 	redirectToHTTPSAnnotation             = "nginx.org/redirect-to-https"
 	sslRedirectAnnotation                 = "ingress.kubernetes.io/ssl-redirect"
@@ -167,6 +168,9 @@ var (
 		},
 		proxyPassHeadersAnnotation: {
 			validateHTTPHeadersAnnotation,
+		},
+		proxySetHeadersAnnotation: {
+			validateProxySetHeaderAnnotation,
 		},
 		clientMaxBodySizeAnnotation: {
 			validateRequiredAnnotation,
@@ -405,6 +409,46 @@ func validateHTTPHeadersAnnotation(context *annotationValidationContext) field.E
 		header = strings.TrimSpace(header)
 		for _, msg := range validation.IsHTTPHeaderName(header) {
 			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, msg))
+		}
+	}
+	return allErrs
+}
+
+func validateProxySetHeaderAnnotation(context *annotationValidationContext) field.ErrorList {
+	var allErrs field.ErrorList
+	headers := strings.Split(context.value, commaDelimiter)
+
+	for _, header := range headers {
+		header = strings.TrimSpace(header)
+
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 1 && strings.Contains(header, " ") {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "invalid header syntax - spaces are not allowed in header"))
+		}
+
+		if len(parts) != 2 {
+			parts = append(parts, "")
+		}
+
+		name := strings.TrimSpace(parts[0])
+		for _, msg := range validation.IsHTTPHeaderName(name) {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, name, msg))
+		}
+
+		value := strings.TrimSpace(parts[1])
+
+		if strings.Contains(value, "$") {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "invalid character in value: $"))
+		}
+
+		if name == "" {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "empty header name: "+header))
+			continue
+		}
+
+		if name == "" && value == "" {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, "invalid header syntax: "+header))
+			continue
 		}
 	}
 	return allErrs

@@ -1,13 +1,11 @@
 ---
-title: "Customizing NGINX Ingress Controller Ports"
-description: |
-  How to customize F5 NGINX Ingress Controller ports.
-weight: 1800
-doctypes: ["concept"]
+docs: DOCS-1449
+doctypes:
+- concept
+title: Customizing NGINX Ingress Controller Ports
 toc: true
-docs: "DOCS-1449"
+weight: 1800
 ---
-## Customizing NGINX Ingress Controller Ports
 
 This document explains how to change the default ports that NGINX Ingress Controller is configured to use, as well as how to add additional `listen` settings. For more information, please read the [NGINX Listen documentation](http://nginx.org/en/docs/http/ngx_http_core_module.html#listen).
 
@@ -89,7 +87,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx/nginx-ingress:3.4.3
+      - image: nginx/nginx-ingress:3.5.1
         imagePullPolicy: IfNotPresent
         name: nginx-ingress
         ports:

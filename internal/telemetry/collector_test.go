@@ -11,13 +11,16 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	coreV1 "k8s.io/api/core/v1"
+	networkingV1 "k8s.io/api/networking/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
@@ -236,6 +239,240 @@ func TestCollectClusterVersion(t *testing.T) {
 	}
 
 	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestCollectPolicyCount(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name     string
+		policies func() []*conf_v1.Policy
+		want     int
+	}{
+		{
+			name: "SinglePolicy",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{egressMTLSPolicy}
+			},
+			want: 1,
+		},
+		{
+			name: "MultiplePolicies",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{rateLimitPolicy, wafPolicy, oidcPolicy}
+			},
+			want: 3,
+		},
+		{
+			name: "MultipleSamePolicies",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{rateLimitPolicy, rateLimitPolicy}
+			},
+			want: 2,
+		},
+		{
+			name: "SingleInvalidPolicy",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{rateLimitPolicyInvalid}
+			},
+			want: 0,
+		},
+		{
+			name: "MultiplePoliciesOneValidOneInvalid",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{rateLimitPolicy, rateLimitPolicyInvalid}
+			},
+			want: 1,
+		},
+		{
+			name:     "NoPolicies",
+			policies: func() []*conf_v1.Policy { return []*conf_v1.Policy{} },
+			want:     0,
+		},
+		{
+			name:     "NilPolicies",
+			policies: nil,
+			want:     0,
+		},
+		{
+			name:     "NilPolicyValue",
+			policies: func() []*conf_v1.Policy { return nil },
+			want:     0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var got int
+			cfg := telemetry.CollectorConfig{
+				Policies: tc.policies,
+			}
+			collector, err := telemetry.NewCollector(cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			for _, polCount := range collector.PolicyCount() {
+				got += polCount
+			}
+
+			if tc.want != got {
+				t.Errorf("want %d policies, got %d", tc.want, got)
+			}
+		})
+	}
+}
+
+func TestCollectPoliciesReport(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+		Policies: func() []*conf_v1.Policy {
+			return []*conf_v1.Policy{
+				egressMTLSPolicy,
+				egressMTLSPolicy,
+				rateLimitPolicyInvalid,
+				wafPolicy,
+				wafPolicy,
+				oidcPolicy,
+			}
+		},
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		RateLimitPolicies:  0,
+		WAFPolicies:        2,
+		OIDCPolicies:       1,
+		EgressMTLSPolicies: 2,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		Ingresses:           0,
+	}
+
+	td := telemetry.Data{
+		telData,
+		nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	configurator := newConfiguratorWithIngress(t)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		Ingresses:           1,
+		Services:            2,
+	}
+
+	td := telemetry.Data{
 		telData,
 		nicResourceCounts,
 	}
@@ -268,7 +505,7 @@ func TestCountVirtualServers(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -289,7 +526,7 @@ func TestCountVirtualServers(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -298,7 +535,7 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "tea",
 						},
@@ -319,7 +556,7 @@ func TestCountVirtualServers(t *testing.T) {
 			virtualServers: []*configs.VirtualServerEx{
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -328,7 +565,7 @@ func TestCountVirtualServers(t *testing.T) {
 				},
 				{
 					VirtualServer: &conf_v1.VirtualServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "tea",
 						},
@@ -345,6 +582,7 @@ func TestCountVirtualServers(t *testing.T) {
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
 			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			SecretStore:     newSecretStore(t),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
 		})
@@ -413,7 +651,7 @@ func TestCountTransportServers(t *testing.T) {
 			transportServers: []*configs.TransportServerEx{
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -438,7 +676,7 @@ func TestCountTransportServers(t *testing.T) {
 			transportServers: []*configs.TransportServerEx{
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -451,7 +689,7 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "tea",
 						},
@@ -476,7 +714,7 @@ func TestCountTransportServers(t *testing.T) {
 			transportServers: []*configs.TransportServerEx{
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "coffee",
 						},
@@ -489,7 +727,7 @@ func TestCountTransportServers(t *testing.T) {
 				},
 				{
 					TransportServer: &conf_v1.TransportServer{
-						ObjectMeta: v1.ObjectMeta{
+						ObjectMeta: metaV1.ObjectMeta{
 							Namespace: "ns-1",
 							Name:      "tea",
 						},
@@ -510,8 +748,439 @@ func TestCountTransportServers(t *testing.T) {
 
 		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
 			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			SecretStore:     newSecretStore(t),
 			Configurator:    configurator,
 			Version:         telemetryNICData.ProjectVersion,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
+		}
+
+		for _, ts := range test.transportServers {
+			_, err = configurator.AddOrUpdateTransportServer(ts)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd.TransportServers, gotTraceDataOnAdd.TransportServers) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.TransportServers, gotTraceDataOnAdd.TransportServers))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			ts := test.transportServers[i]
+			key := getResourceKey(ts.TransportServer.Namespace, ts.TransportServer.Name)
+			err = configurator.DeleteTransportServer(key)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete.TransportServers, gotTraceDataOnDelete.TransportServers) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.TransportServers, gotTraceDataOnDelete.TransportServers))
+		}
+	}
+}
+
+func TestCountSecretsWithTwoSecrets(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		SecretStore:     newSecretStore(t),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	// Add multiple secrets.
+	cfg.SecretStore.AddOrUpdateSecret(secret1)
+	cfg.SecretStore.AddOrUpdateSecret(secret2)
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		Secrets:             2,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestCountSecretsAddTwoSecretsAndDeleteOne(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		SecretStore:     newSecretStore(t),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	// Add multiple secrets.
+	cfg.SecretStore.AddOrUpdateSecret(secret1)
+	cfg.SecretStore.AddOrUpdateSecret(secret2)
+
+	// Delete one secret.
+	cfg.SecretStore.DeleteSecret(fmt.Sprintf("%s/%s", secret2.Namespace, secret2.Name))
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		Secrets:             1,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestCountVirtualServersServices(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
+		virtualServers            []*configs.VirtualServerEx
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 VirtualServer with 2 upstreams",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: metaV1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{
+							Upstreams: []conf_v1.Upstream{
+								{
+									Name:    "coffee",
+									Service: "coffee-svc",
+								},
+								{
+									Name:    "coffee2",
+									Service: "coffee-svc2",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+		{
+			testName: "Same service in 2 upstreams is only counted once",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 1,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: metaV1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{
+							Upstreams: []conf_v1.Upstream{
+								{
+									Name:    "coffee",
+									Service: "same-svc",
+								},
+								{
+									Name:    "coffee2",
+									Service: "same-svc",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+		{
+			testName: "A backup service is counted in addition to the primary service",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: metaV1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{
+							Upstreams: []conf_v1.Upstream{
+								{
+									Name:    "coffee",
+									Service: "same-svc",
+									Backup:  "backup-service",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+		{
+			testName: "A grpc service is counted in addition to the primary service and backup service",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 3,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			virtualServers: []*configs.VirtualServerEx{
+				{
+					VirtualServer: &conf_v1.VirtualServer{
+						ObjectMeta: metaV1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.VirtualServerSpec{
+							Upstreams: []conf_v1.Upstream{
+								{
+									Name:    "coffee",
+									Service: "same-svc",
+									Backup:  "backup-service",
+									HealthCheck: &conf_v1.HealthCheck{
+										GRPCService: "grpc-service",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			Configurator:    configurator,
+			Version:         telemetryNICData.ProjectVersion,
+			SecretStore:     newSecretStore(t),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
+		}
+
+		for _, vs := range test.virtualServers {
+			_, err := configurator.AddOrUpdateVirtualServer(vs)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			vs := test.virtualServers[i]
+			key := getResourceKey(vs.VirtualServer.Namespace, vs.VirtualServer.Name)
+			err := configurator.DeleteVirtualServer(key, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount))
+		}
+	}
+}
+
+func TestCountTransportServersServices(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
+		transportServers          []*configs.TransportServerEx
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 TransportServer with 2 upstreams",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			transportServers: []*configs.TransportServerEx{
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: metaV1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "coffee",
+							},
+							Upstreams: []conf_v1.TransportServerUpstream{
+								{
+									Name:    "coffee",
+									Service: "coffee-svc",
+								},
+								{
+									Name:    "coffee2",
+									Service: "coffee-svc2",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+		{
+			testName: "Same service in 2 upstreams is only counted once",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 1,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			transportServers: []*configs.TransportServerEx{
+				{
+					TransportServer: &conf_v1.TransportServer{
+						ObjectMeta: metaV1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "coffee",
+						},
+						Spec: conf_v1.TransportServerSpec{
+							Action: &conf_v1.TransportServerAction{
+								Pass: "coffee",
+							},
+							Upstreams: []conf_v1.TransportServerUpstream{
+								{
+									Name:    "coffee",
+									Service: "same-svc",
+								},
+								{
+									Name:    "coffee2",
+									Service: "same-svc",
+								},
+							},
+						},
+					},
+				},
+			},
+			deleteCount: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			Configurator:    configurator,
+			Version:         telemetryNICData.ProjectVersion,
+			SecretStore:     newSecretStore(t),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -533,8 +1202,8 @@ func TestCountTransportServers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !cmp.Equal(test.expectedTraceDataOnAdd.TransportServers, gotTraceDataOnAdd.TransportServers) {
-			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.TransportServers, gotTraceDataOnAdd.TransportServers))
+		if !cmp.Equal(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount))
 		}
 
 		for i := 0; i < test.deleteCount; i++ {
@@ -551,14 +1220,413 @@ func TestCountTransportServers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !cmp.Equal(test.expectedTraceDataOnDelete.TransportServers, gotTraceDataOnDelete.TransportServers) {
-			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.TransportServers, gotTraceDataOnDelete.TransportServers))
+		if !cmp.Equal(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount))
 		}
 	}
 }
 
+func TestCountIngressesServices(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
+		ingress                   configs.IngressEx
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 Ingress with 2 services",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			ingress:     createCafeIngressEx(),
+			deleteCount: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		test := tc
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			Configurator:    configurator,
+			Version:         telemetryNICData.ProjectVersion,
+			SecretStore:     newSecretStore(t),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
+		}
+
+		_, err = configurator.AddOrUpdateIngress(&test.ingress)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			ing := test.ingress
+
+			key := fmt.Sprintf("%s/%s", ing.Ingress.Namespace, ing.Ingress.Name)
+			err := configurator.DeleteIngress(key, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount))
+		}
+	}
+}
+
+func TestCountMergeableIngressesServices(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		testName                  string
+		expectedTraceDataOnAdd    telemetry.Report
+		expectedTraceDataOnDelete telemetry.Report
+		ingress                   *configs.MergeableIngresses
+		deleteCount               int
+	}{
+		{
+			testName: "Create and delete 1 MergeableIngress with 2 services",
+			expectedTraceDataOnAdd: telemetry.Report{
+				ServiceCount: 2,
+			},
+			expectedTraceDataOnDelete: telemetry.Report{
+				ServiceCount: 0,
+			},
+			ingress:     createMergeableCafeIngress(),
+			deleteCount: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		test := tc
+
+		configurator := newConfigurator(t)
+
+		c, err := telemetry.NewCollector(telemetry.CollectorConfig{
+			K8sClientReader: newTestClientset(kubeNS, node1, pod1, replica),
+			Configurator:    configurator,
+			Version:         telemetryNICData.ProjectVersion,
+			SecretStore:     newSecretStore(t),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Config.PodNSName = types.NamespacedName{
+			Namespace: "nginx-ingress",
+			Name:      "nginx-ingress",
+		}
+
+		_, err = configurator.AddOrUpdateMergeableIngress(test.ingress)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotTraceDataOnAdd, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnAdd.ServiceCount, gotTraceDataOnAdd.ServiceCount))
+		}
+
+		for i := 0; i < test.deleteCount; i++ {
+			ing := test.ingress
+
+			key := fmt.Sprintf("%s/%s", ing.Master.Ingress.Namespace, ing.Master.Ingress.Name)
+			err := configurator.DeleteIngress(key, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotTraceDataOnDelete, err := c.BuildReport(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !cmp.Equal(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount) {
+			t.Error(cmp.Diff(test.expectedTraceDataOnDelete.ServiceCount, gotTraceDataOnDelete.ServiceCount))
+		}
+	}
+}
+
+func createCafeIngressEx() configs.IngressEx {
+	cafeIngress := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "cafe-ingress",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class": "nginx",
+			},
+		},
+		Spec: networkingV1.IngressSpec{
+			TLS: []networkingV1.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/coffee",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+								{
+									Path: "/tea",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	cafeIngressEx := configs.IngressEx{
+		Ingress: &cafeIngress,
+		Endpoints: map[string][]string{
+			"coffee-svc80": {"10.0.0.1:80"},
+			"tea-svc80":    {"10.0.0.2:80"},
+		},
+		ExternalNameSvcs: map[string]bool{},
+		ValidHosts: map[string]bool{
+			"cafe.example.com": true,
+		},
+		SecretRefs: map[string]*secrets.SecretReference{
+			"cafe-secret": {
+				Secret: &coreV1.Secret{
+					Type: coreV1.SecretTypeTLS,
+				},
+				Path: "/etc/nginx/secrets/default-cafe-secret",
+			},
+		},
+	}
+	return cafeIngressEx
+}
+
+func createMergeableCafeIngress() *configs.MergeableIngresses {
+	master := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
+		Spec: networkingV1.IngressSpec{
+			TLS: []networkingV1.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{ // HTTP must not be nil for Master
+							Paths: []networkingV1.HTTPIngressPath{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	coffeeMinion := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "cafe-ingress-coffee-minion",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "minion",
+			},
+		},
+		Spec: networkingV1.IngressSpec{
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/coffee",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	teaMinion := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "cafe-ingress-tea-minion",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "minion",
+			},
+		},
+		Spec: networkingV1.IngressSpec{
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/tea",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	mergeableIngresses := &configs.MergeableIngresses{
+		Master: &configs.IngressEx{
+			Ingress: &master,
+			Endpoints: map[string][]string{
+				"coffee-svc80": {"10.0.0.1:80"},
+				"tea-svc80":    {"10.0.0.2:80"},
+			},
+			ValidHosts: map[string]bool{
+				"cafe.example.com": true,
+			},
+			SecretRefs: map[string]*secrets.SecretReference{
+				"cafe-secret": {
+					Secret: &coreV1.Secret{
+						Type: coreV1.SecretTypeTLS,
+					},
+					Path:  "/etc/nginx/secrets/default-cafe-secret",
+					Error: nil,
+				},
+			},
+		},
+		Minions: []*configs.IngressEx{
+			{
+				Ingress: &coffeeMinion,
+				Endpoints: map[string][]string{
+					"coffee-svc80": {"10.0.0.1:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/coffee": true,
+				},
+				SecretRefs: map[string]*secrets.SecretReference{},
+			},
+			{
+				Ingress: &teaMinion,
+				Endpoints: map[string][]string{
+					"tea-svc80": {"10.0.0.2:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/tea": true,
+				},
+				SecretRefs: map[string]*secrets.SecretReference{},
+			},
+		},
+	}
+
+	return mergeableIngresses
+}
+
 func getResourceKey(namespace, name string) string {
 	return fmt.Sprintf("%s_%s", namespace, name)
+}
+
+func newConfiguratorWithIngress(t *testing.T) *configs.Configurator {
+	t.Helper()
+
+	ingressEx := createCafeIngressEx()
+	c := newConfigurator(t)
+	_, err := c.AddOrUpdateIngress(&ingressEx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
 }
 
 func newConfigurator(t *testing.T) *configs.Configurator {
@@ -596,7 +1664,14 @@ func newConfigurator(t *testing.T) *configs.Configurator {
 		IsPrometheusEnabled:     false,
 		IsLatencyMetricsEnabled: false,
 	})
+
 	return cnf
+}
+
+func newSecretStore(t *testing.T) *secrets.LocalSecretStore {
+	t.Helper()
+	configurator := newConfigurator(t)
+	return secrets.NewLocalSecretStore(configurator)
 }
 
 // newTestClientset takes k8s runtime objects and returns a k8s fake clientset.
@@ -641,3 +1716,79 @@ var telemetryNICData = tel.Data{
 	ClusterNodeCount:    1,
 	ClusterPlatform:     "other",
 }
+
+// Policies used for testing for PolicyCount method
+var (
+	rateLimitPolicy = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			RateLimit: &conf_v1.RateLimit{},
+		},
+		Status: conf_v1.PolicyStatus{},
+	}
+
+	rateLimitPolicyInvalid = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "INVALID-rate-limit-policy",
+			Namespace: "default",
+		},
+		Spec:   conf_v1.PolicySpec{},
+		Status: conf_v1.PolicyStatus{},
+	}
+
+	egressMTLSPolicy = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			EgressMTLS: &conf_v1.EgressMTLS{},
+		},
+		Status: conf_v1.PolicyStatus{},
+	}
+
+	oidcPolicy = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			OIDC: &conf_v1.OIDC{},
+		},
+		Status: conf_v1.PolicyStatus{},
+	}
+
+	wafPolicy = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			WAF: &conf_v1.WAF{},
+		},
+		Status: conf_v1.PolicyStatus{},
+	}
+)

@@ -1,15 +1,15 @@
 ---
-title: "Product Telemetry"
-description: "Learn why NGINX Ingress Controller collects telemetry, and understand how and what it gathers."
-weight: 500
+title: Product Telemetry
 toc: true
+weight: 500
 ---
+
+Learn why NGINX Ingress Controller collects telemetry, and understand how and what it gathers.
 
 ## Overview
 
 NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users.
 This data is used to triage development work, prioritizing features and functionality that will benefit the most people.
-
 
 Product telemetry is enabled by default, collected once every 24 hours. It's then sent to a service managed by F5 over HTTPS.
 
@@ -20,6 +20,7 @@ If you would prefer to avoid sending any telemetry data, you can [opt-out](#opt-
 ## Data Collected
 
 These are the data points collected and reported by NGINX Ingress Controller:
+
 - **Project Name** The name of the software, which will be labelled `NIC`.
 - **Project Version** NGINX Ingress Controller version.
 - **Project Architecture** The architecture of the kubernetes environment. (e.g. amd64, arm64, etc...)
@@ -32,6 +33,19 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **VirtualServerRoutes** The number of VirtualServerRoute resources managed by NGINX Ingress Controller.
 - **TransportServers** The number of TransportServer resources managed by NGINX Ingress Controller.
 - **Replicas** Number of Deployment replicas, or Daemonset instances.
+- **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
+- **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
+- **Ingresses** The number of Ingress resources managed by the NGINX Ingress Controller.
+- **IngressClasses** Number of Ingress Classes in the cluster.
+- **AccessControlPolicies** Number of AccessControl policies.
+- **RateLimitPolicies** Number of RateLimit policies.
+- **JWTAuthPolicies** Number of JWTAuth policies.
+- **BasicAuthPolicies** Number of BasicAuth policies.
+- **IngressMTLSPolicies** Number of IngressMTLS policies.
+- **EgressMTLSPolicies** Number of EgressMTLS policies.
+- **OIDCPolicies** Number of OIDC policies.
+- **WAFPolicies** Number of WAF policies.
+- **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.
 
 ## Opt out
 

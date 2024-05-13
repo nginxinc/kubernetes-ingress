@@ -103,7 +103,11 @@ class TestVSRCannedResponses:
         wait_and_assert_status_code(201, req_url_2, v_s_route_setup.vs_host)
         resp = requests.get(req_url_2, headers={"host": v_s_route_setup.vs_host})
         resp_content = resp.content.decode("utf-8")
-        assert resp.headers["content-type"] == "user-type" and resp_content == "line1\nline2"
+        assert (
+            resp.headers["content-type"] == "user-type"
+            and resp_content == "line1\nline2"
+            and resp.headers["coffee-test-header"] == "espresso"
+        )
 
         new_events_ns = get_events(kube_apis.v1, v_s_route_setup.namespace)
         assert_event_count_increased(vs_event_text, initial_count_vs, new_events_ns)
@@ -148,6 +152,7 @@ class TestVSRCannedResponses:
                 and "action.return.type in body must be of type" in ex.body
                 and "action.return.body in body must be of type" in ex.body
                 and "action.return.code in body must be of type" in ex.body
+                and "action.return.headers in body must be of type" in ex.body
             )
         except Exception as ex:
             pytest.fail(f"An unexpected exception is raised: {ex}")

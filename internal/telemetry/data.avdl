@@ -39,11 +39,50 @@ It is the UID of the `kube-system` Namespace. */
 		/** VirtualServerRoutes is the number of VirtualServerRoute resources managed by the Ingress Controller. */
 		long? VirtualServerRoutes = null;
 
-		/** TransportServers is the number of TransportServer resources  by the Ingress Controller. */
+		/** TransportServers is the number of TransportServer resources managed by the Ingress Controller. */
 		long? TransportServers = null;
 
 		/** Replicas is the number of NIC replicas. */
 		long? Replicas = null;
+
+		/** Secrets is the number of Secret resources managed by the Ingress Controller. */
+		long? Secrets = null;
+
+		/** Services is the number of services referenced by NGINX Ingress Controller in the cluster */
+		long? Services = null;
+
+		/** Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller. */
+		long? Ingresses = null;
+
+		/** IngressClasses is the number of Ingress Classes. */
+		long? IngressClasses = null;
+
+		/** AccessControlPolicies is the number of AccessControl policies managed by NGINX Ingress Controller */
+		long? AccessControlPolicies = null;
+
+		/** RateLimitPolicies is the number of RateLimit policies managed by NGINX Ingress Controller */
+		long? RateLimitPolicies = null;
+
+		/** JWTAuthPolicies is the number of JWTAuth policies managed by NGINX Ingress Controller */
+		long? JWTAuthPolicies = null;
+
+		/** BasicAuthPolicies is the number of BasicAuth policies managed by NGINX Ingress Controller */
+		long? BasicAuthPolicies = null;
+
+		/** IngressMTLSPolicies is the number of IngressMTLS policies managed by NGINX Ingress Controller */
+		long? IngressMTLSPolicies = null;
+
+		/** EgressMTLSPolicies is the number of EgressMTLS policies managed by NGINX Ingress Controller */
+		long? EgressMTLSPolicies = null;
+
+		/** OIDCPolicies is the number of OIDC policies managed by NGINX Ingress Controller */
+		long? OIDCPolicies = null;
+
+		/** WAFPolicies is the number of WAF policies managed by NGINX Ingress Controller */
+		long? WAFPolicies = null;
+
+		/** GlobalConfiguration indicates if a GlobalConfiguration resource is used. */
+		boolean? GlobalConfiguration = null;
 
 	}
 }

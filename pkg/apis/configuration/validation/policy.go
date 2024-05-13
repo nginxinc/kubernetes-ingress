@@ -78,7 +78,7 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 		}
 		if !enableAppProtect {
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"),
-				"App Protect must be enabled via cli argument -enable-appprotect to use WAF policy"))
+				"App Protect must be enabled via cli argument -enable-app-protect to use WAF policy"))
 		}
 
 		allErrs = append(allErrs, validateWAF(spec.WAF, fieldPath.Child("waf"))...)

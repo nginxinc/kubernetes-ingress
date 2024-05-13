@@ -7,11 +7,14 @@ import (
 	"runtime"
 	"time"
 
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -45,23 +48,29 @@ type Collector struct {
 
 // CollectorConfig contains configuration options for a Collector
 type CollectorConfig struct {
-	// K8sClientReader is a kubernetes client.
-	K8sClientReader kubernetes.Interface
-
-	// CustomK8sClientReader is a kubernetes client for our CRDs.
-	// Note: May not need this client.
-	CustomK8sClientReader k8s_nginx.Interface
-
 	// Period to collect telemetry
 	Period time.Duration
 
-	Configurator *configs.Configurator
+	// K8sClientReader is a kubernetes client.
+	K8sClientReader kubernetes.Interface
 
 	// Version represents NIC version.
 	Version string
 
+	// GlobalConfiguration represents the use of a GlobalConfiguration resource.
+	GlobalConfiguration bool
+
+	// Configurator is a struct for configuring NGINX.
+	Configurator *configs.Configurator
+
+	// SecretStore for access to secrets managed by NIC.
+	SecretStore secrets.SecretStore
+
 	// PodNSName represents NIC Pod's NamespacedName.
 	PodNSName types.NamespacedName
+
+	// Policies gets all policies
+	Policies func() []*conf_v1.Policy
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -106,10 +115,23 @@ func (c *Collector) Collect(ctx context.Context) {
 			ClusterNodeCount:    int64(report.ClusterNodeCount),
 		},
 		NICResourceCounts{
-			VirtualServers:      int64(report.VirtualServers),
-			VirtualServerRoutes: int64(report.VirtualServerRoutes),
-			TransportServers:    int64(report.TransportServers),
-			Replicas:            int64(report.NICReplicaCount),
+			VirtualServers:        int64(report.VirtualServers),
+			VirtualServerRoutes:   int64(report.VirtualServerRoutes),
+			TransportServers:      int64(report.TransportServers),
+			Replicas:              int64(report.NICReplicaCount),
+			Secrets:               int64(report.Secrets),
+			Services:              int64(report.ServiceCount),
+			Ingresses:             int64(report.IngressCount),
+			IngressClasses:        int64(report.IngressClassCount),
+			AccessControlPolicies: int64(report.AccessControlCount),
+			RateLimitPolicies:     int64(report.RateLimitCount),
+			JWTAuthPolicies:       int64(report.JWTAuthCount),
+			BasicAuthPolicies:     int64(report.BasicAuthCount),
+			IngressMTLSPolicies:   int64(report.IngressMTLSCount),
+			EgressMTLSPolicies:    int64(report.EgressMTLSCount),
+			OIDCPolicies:          int64(report.OIDCCount),
+			WAFPolicies:           int64(report.WAFCount),
+			GlobalConfiguration:   report.GlobalConfiguration,
 		},
 	}
 
@@ -135,7 +157,20 @@ type Report struct {
 	NICReplicaCount     int
 	VirtualServers      int
 	VirtualServerRoutes int
+	ServiceCount        int
 	TransportServers    int
+	Secrets             int
+	IngressCount        int
+	IngressClassCount   int
+	AccessControlCount  int
+	RateLimitCount      int
+	JWTAuthCount        int
+	BasicAuthCount      int
+	IngressMTLSCount    int
+	EgressMTLSCount     int
+	OIDCCount           int
+	WAFCount            int
+	GlobalConfiguration bool
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -143,10 +178,12 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	vsCount := 0
 	vsrCount := 0
 	tsCount := 0
+	serviceCount := 0
 
 	if c.Config.Configurator != nil {
 		vsCount, vsrCount = c.Config.Configurator.GetVirtualServerCounts()
 		tsCount = c.Config.Configurator.GetTransportServerCounts()
+		serviceCount = c.Config.Configurator.GetServiceCount()
 	}
 
 	clusterID, err := c.ClusterID(ctx)
@@ -179,6 +216,27 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
 	}
 
+	secretCount, err := c.Secrets()
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
+	}
+	ingressCount := c.IngressCount()
+	ingressClassCount, err := c.IngressClassCount(ctx)
+	if err != nil {
+		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
+	}
+
+	policies := c.PolicyCount()
+
+	accessControlCount := policies["AccessControl"]
+	rateLimitCount := policies["RateLimit"]
+	jwtAuthCount := policies["JWTAuth"]
+	basicAuthCount := policies["BasicAuth"]
+	ingressMTLSCount := policies["IngressMTLS"]
+	egressMTLSCount := policies["EgressMTLS"]
+	oidcCount := policies["OIDC"]
+	wafCount := policies["WAF"]
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -191,6 +249,19 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		NICReplicaCount:     replicas,
 		VirtualServers:      vsCount,
 		VirtualServerRoutes: vsrCount,
+		ServiceCount:        serviceCount,
 		TransportServers:    tsCount,
+		Secrets:             secretCount,
+		IngressCount:        ingressCount,
+		IngressClassCount:   ingressClassCount,
+		AccessControlCount:  accessControlCount,
+		RateLimitCount:      rateLimitCount,
+		JWTAuthCount:        jwtAuthCount,
+		BasicAuthCount:      basicAuthCount,
+		IngressMTLSCount:    ingressMTLSCount,
+		EgressMTLSCount:     egressMTLSCount,
+		OIDCCount:           oidcCount,
+		WAFCount:            wafCount,
+		GlobalConfiguration: c.Config.GlobalConfiguration,
 	}, err
 }

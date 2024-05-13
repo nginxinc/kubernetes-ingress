@@ -1,70 +1,55 @@
 ---
-title: Security
-description: "NGINX Ingress Controller security recommendations."
-weight: 1500
-doctypes: [""]
+docs: DOCS-597
+doctypes:
+- ''
+title: Security recommendations
 toc: true
-docs: "DOCS-597"
+weight: 1500
 ---
 
+NGINX Ingress Controller follows Kubernetes best practices: this page outlines configuration specific to NGINX Ingress Controller you may require, including links to examples in the [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/tree/release-3.5).
 
-The security of the Ingress Controller is paramount to the success of our Users, however, the Ingress Controller is deployed by a User in their environment, and as such, the User takes responsibility
-for securing a deployment of the Ingress Controller.
-We strongly recommend every User read and understand the following security concerns.
+For general guidance, we recommend the official Kubernetes documentation for [Securing a Cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/). 
 
-## Kubernetes
+## Kubernetes recommendations
 
-We recommend the Kubernetes [guide to securing a cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/).
-In addition, the following relating more specifically to Ingress Controller.
+### RBAC and Service Accounts
 
-### RBAC and Service Account
+Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users. 
 
-The Ingress Controller is deployed within a Kubernetes environment, this environment must be secured.
-Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users.
-The Ingress Controller requires a service account which is configured using RBAC.
-We strongly recommend using the [RBAC configuration](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.3/deployments/rbac/rbac.yaml) provided in our standard deployment configuration. It is configured with the least amount of privilege required for the Ingress Controller to work.
+NGINX Ingress Controller requires RBAC to configure a [ServiceUser](https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts), and provides least privilege access in its standard deployment configurations:
 
-We strongly recommend inspecting the RBAC configuration for [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.3/deployments/rbac/rbac.yaml)
-or for [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.4.3/charts/nginx-ingress/templates/rbac.yaml) to understand what access the Ingress Controller service account has and to which resources. For example, by default the service account has access to all Secret resources in the cluster.
+- [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.1/deployments/rbac/rbac.yaml)
+- [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.1/deployments/rbac/rbac.yaml)
 
-### Certificates and Privacy Keys
+By default, the ServiceAccount has access to all Secret resources in the cluster.
 
-Secrets are required by the Ingress Controller for some configurations.
-[Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) are stored by Kubernetes unencrypted by default.
-We strongly recommend configuring Kubernetes to store these Secrets encrypted at rest.
-Kubernetes has [documentation](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) on how to configure this.
+### Secrets
 
-## Ingress Controller
+[Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) are required by NGINX Ingress Controller for certificates and privacy keys, which Kubernetes stores unencrypted by default. We recommend following the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) to store these Secrets using at-rest encryption.
 
-### Recommended Secure Defaults
 
-We recommend the following for the most secure configuration:
-
-- If Prometheus metrics are [enabled](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-prometheus-metrics),
-   we recommend [configuring HTTPS](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-prometheus-tls-secret) for Prometheus.
-
-### Snippets
-
-Snippets allow you to insert raw NGINX config into different contexts of NGINX configuration and are supported for [Ingress](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/), [VirtualServer/VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#using-snippets), and [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource/#using-snippets) resources. Additionally, the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource#snippets-and-custom-templates) resource configures snippets globally.
-
-Snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument. Note that for the ConfigMap resource, snippets are always enabled.
+## NGINX Ingress Controller recommendations
 
 ### Configure root filesystem as read-only
->
-> **Note**: This feature is available for both the NGINX and NGINX Plus editions. NGINX AppProtect WAF and NGINX AppProtect DoS are not yet supported by this feature.
 
-The F5 Nginx Ingress Controller (NIC) has various protections against attacks, such as running the service as non-root to avoid changes to files. An additional industry best practice is having root filesystems set as read-only so that the attack surface is further reduced by limiting changes to binaries and libraries.
+{{< caution >}}
+ This feature is not compatible with [NGINX App Protect WAF](https://docs.nginx.com/nginx-app-protect-waf/) or [NGINX App Protect DoS](https://docs.nginx.com/nginx-app-protect-dos/).
+{{< /caution >}}
 
-Currently, we do not set read-only root filesystem as default. Instead, this is an opt-in feature available on the [helm-chart](/nginx-ingress-controller/installation/installation-with-helm/#configuration) via `controller.readOnlyRootFilesystem`.
-When using manifests instead of Helm, uncomment the following sections of the deployment:
+NGINX Ingress Controller is designed to be resilient against attacks in various ways, such as running the service as non-root to avoid changes to files. We recommend setting filesystems to read-only so that the attack surface is further reduced by limiting changes to binaries and libraries.
 
-- `readOnlyRootFilesystem: true`,
-- The entire `volumeMounts` section,
-- The entire `initContainers` section,
-- For `initContainers:image:`, use exact same image used for regular NIC installation.
-Refer to the below code-block for guidance:
+This is not enabled by default, but can be enabled with **Helm** using the [**controller.readOnlyRootFilesystem**]({{< relref "installation/installing-nic/installation-with-helm.md#configuration" >}}) argument.
 
-```
+For **Manifests**, uncomment the following sections of the deployment:
+
+- `readOnlyRootFilesystem: true`
+- The entire **volumeMounts** section
+- The entire **initContainers** section
+
+The block below shows the code you will look for:
+
+```yaml
 #      volumes:
 #      - name: nginx-etc
 #        emptyDir: {}
@@ -90,23 +75,25 @@ Refer to the below code-block for guidance:
 #          name: nginx-lib
 #        - mountPath: /var/log/nginx
 #          name: nginx-log
-.
-.
-.
-#      initContainers:
-#      - image: <repository>:<tag>
-#        imagePullPolicy: IfNotPresent
-#        name: init-nginx-ingress
-#        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']
-#        securityContext:
-#          allowPrivilegeEscalation: false
-#          readOnlyRootFilesystem: true
-#          runAsUser: 101 #nginx
-#          runAsNonRoot: true
-#          capabilities:
-#            drop:
-#            - ALL
-#        volumeMounts:
-#        - mountPath: /mnt/etc
-#          name: nginx-etc
 ```
+
+### Prometheus
+
+If Prometheus metrics are [enabled]({{< relref "/logging-and-monitoring/prometheus.md" >}}), we recommend [using HTTPS]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-prometheus-tls-secret" >}}).
+
+### Snippets
+
+Snippets allow raw NGINX configuration to be inserted into resources. They are intended for advanced NGINX users and could create vulnerabilities in a cluster if misused.
+
+Snippets are disabled by default. To use snippets, set the [**enable-snippets**]({{< relref"configuration/global-configuration/command-line-arguments.md#cmdoption-enable-snippets" >}}) command-line argument.
+
+{{< caution >}}
+ Snippets are **always** enabled for ConfigMap.
+{{< /caution >}}
+
+For more information, read the following: 
+
+- [Advanced Configuration using Snippets]({{< relref "/configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) 
+- [Using Snippets with VirtualServer/VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md#using-snippets" >}})
+- [Using Snippets with TransportServer]({{< relref "/configuration/transportserver-resource.md#using-snippets" >}})
+- [ConfigMap Snippets and Custom Templates]({{< relref "configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}})

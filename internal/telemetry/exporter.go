@@ -22,7 +22,10 @@ type StdoutExporter struct {
 
 // Export takes context and trace data and writes to the endpoint.
 func (e *StdoutExporter) Export(_ context.Context, data tel.Exportable) error {
-	fmt.Fprintf(e.Endpoint, "%+v", data)
+	_, err := fmt.Fprintf(e.Endpoint, "%+v", data)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -66,9 +69,34 @@ type NICResourceCounts struct {
 	VirtualServers int64
 	// VirtualServerRoutes is the number of VirtualServerRoute resources managed by the Ingress Controller.
 	VirtualServerRoutes int64
-	// TransportServers is the number of TransportServer resources  by the Ingress Controller.
+	// TransportServers is the number of TransportServer resources managed by the Ingress Controller.
 	TransportServers int64
-
 	// Replicas is the number of NIC replicas.
 	Replicas int64
+	// Secrets is the number of Secret resources managed by the Ingress Controller.
+	Secrets int64
+	// Services is the number of services referenced by NGINX Ingress Controller in the cluster
+	Services int64
+	// Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller.
+	Ingresses int64
+	// IngressClasses is the number of Ingress Classes.
+	IngressClasses int64
+	// AccessControlPolicies is the number of AccessControl policies managed by NGINX Ingress Controller
+	AccessControlPolicies int64
+	// RateLimitPolicies is the number of RateLimit policies managed by NGINX Ingress Controller
+	RateLimitPolicies int64
+	// JWTAuthPolicies is the number of JWTAuth policies managed by NGINX Ingress Controller
+	JWTAuthPolicies int64
+	// BasicAuthPolicies is the number of BasicAuth policies managed by NGINX Ingress Controller
+	BasicAuthPolicies int64
+	// IngressMTLSPolicies is the number of IngressMTLS policies managed by NGINX Ingress Controller
+	IngressMTLSPolicies int64
+	// EgressMTLSPolicies is the number of EgressMTLS policies managed by NGINX Ingress Controller
+	EgressMTLSPolicies int64
+	// OIDCPolicies is the number of OIDC policies managed by NGINX Ingress Controller
+	OIDCPolicies int64
+	// WAFPolicies is the number of WAF policies managed by NGINX Ingress Controller
+	WAFPolicies int64
+	// GlobalConfiguration indicates if a GlobalConfiguration resource is used.
+	GlobalConfiguration bool
 }
