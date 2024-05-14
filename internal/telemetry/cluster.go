@@ -136,6 +136,15 @@ func (c *Collector) IngressCount() int {
 	return total
 }
 
+// IngressAnnotations returns a list of all the unique annotations found in Ingresses.
+func (c *Collector) IngressAnnotations() []string {
+	if c.Config.Configurator == nil {
+		return nil
+	}
+	annotations := c.Config.Configurator.GetIngressAnnotations()
+	return annotations
+}
+
 // IngressClassCount returns number of Ingress Classes.
 func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 	ic, err := c.Config.K8sClientReader.NetworkingV1().IngressClasses().List(ctx, metaV1.ListOptions{})
