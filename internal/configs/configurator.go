@@ -1555,8 +1555,8 @@ func (cnf *Configurator) GetIngressAnnotations() []string {
 	}
 
 	annotationSet := make(map[string]bool)
-	annotationSet = cnf.getMinionIngressAnnotation(annotationSet)
-	annotationSet = cnf.getStandardIngressAnnotation(annotationSet)
+	annotationSet = cnf.getMinionIngressAnnotations(annotationSet)
+	annotationSet = cnf.getStandardIngressAnnotations(annotationSet)
 
 	var annotations []string
 	for key := range annotationSet {
@@ -1566,8 +1566,8 @@ func (cnf *Configurator) GetIngressAnnotations() []string {
 	return annotations
 }
 
-// getStandardIngressAnnotation returns a map of allowedAnnotations detected in Standard or Master Ingresses
-func (cnf *Configurator) getStandardIngressAnnotation(annotationSet map[string]bool) map[string]bool {
+// getStandardIngressAnnotations returns a map of allowedAnnotations detected in Standard or Master Ingresses
+func (cnf *Configurator) getStandardIngressAnnotations(annotationSet map[string]bool) map[string]bool {
 	for _, ing := range cnf.ingresses {
 		if ing != nil && ing.Ingress != nil && ing.Ingress.Annotations != nil {
 			for key := range ing.Ingress.Annotations {
@@ -1582,8 +1582,8 @@ func (cnf *Configurator) getStandardIngressAnnotation(annotationSet map[string]b
 	return annotationSet
 }
 
-// getMinionIngressAnnotation returns a map of allowedAnnotations detected in Minion Ingresses
-func (cnf *Configurator) getMinionIngressAnnotation(annotationSet map[string]bool) map[string]bool {
+// getMinionIngressAnnotations returns a map of allowedAnnotations detected in Minion Ingresses
+func (cnf *Configurator) getMinionIngressAnnotations(annotationSet map[string]bool) map[string]bool {
 	for _, ing := range cnf.mergeableIngresses {
 		for _, minionIng := range ing.Minions {
 			if minionIng != nil && minionIng.Ingress.Annotations != nil {
