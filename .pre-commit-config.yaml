@@ -13,7 +13,6 @@ repos:
         exclude: ^(charts/nginx-ingress/templates)
       - id: check-ast
       - id: check-added-large-files
-        exclude: _definitions.json
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
       - id: check-executables-have-shebangs
