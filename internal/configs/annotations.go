@@ -98,6 +98,14 @@ var validPathRegex = map[string]bool{
 	"exact":            true,
 }
 
+// List of Ingress Annotation Keys used by the Ingress Controller
+var allowedAnnotationKeys = []string{
+	"nginx.org",
+	"nginx.com",
+	"f5.com",
+	"ingress.kubernetes.io/ssl-redirect",
+}
+
 func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, hasAppProtectDos bool, enableInternalRoutes bool) ConfigParams {
 	cfgParams := *baseCfgParams
 
