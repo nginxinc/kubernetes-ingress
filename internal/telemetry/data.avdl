@@ -84,5 +84,8 @@ It is the UID of the `kube-system` Namespace. */
 		/** GlobalConfiguration indicates if a GlobalConfiguration resource is used. */
 		boolean? GlobalConfiguration = null;
 
+		/** IngressAnnotations is the list of annotations resources managed by NGINX Ingress Controller */
+		union {null, array<string>} IngressAnnotations = null;
+
 	}
 }

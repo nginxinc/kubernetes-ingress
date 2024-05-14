@@ -37,6 +37,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
 - **Ingresses** The number of Ingress resources managed by the NGINX Ingress Controller.
 - **IngressClasses** Number of Ingress Classes in the cluster.
+- **IngressAnnotations** List of Ingress annotations managed by NGINX Ingress Controller
 - **AccessControlPolicies** Number of AccessControl policies.
 - **RateLimitPolicies** Number of RateLimit policies.
 - **JWTAuthPolicies** Number of JWTAuth policies.
