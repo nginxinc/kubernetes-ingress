@@ -453,7 +453,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	errors := make([]error, 0)
 	if requestRateLimit, exists := annotations["nginx.org/limit-req-rate"]; exists {
 		if rate, err := ParseRequestRate(requestRateLimit); err != nil {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-rate: got %s: %w", context.GetNamespace(), context.GetName(), requestRateLimit, err))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-rate: got %s: %w", context.GetNamespace(), context.GetName(), requestRateLimit, err))
 		} else {
 			cfgParams.LimitReqRate = rate
 		}
@@ -463,7 +463,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	}
 	if requestRateZoneSize, exists := annotations["nginx.org/limit-req-zone-size"]; exists {
 		if size, err := ParseSize(requestRateZoneSize); err != nil {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-zone-size: got %s: %w", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-zone-size: got %s: %w", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
 		} else {
 			cfgParams.LimitReqZoneSize = size
 		}
@@ -498,7 +498,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	}
 	if requestRateLogLevel, exists := annotations["nginx.org/limit-req-log-level"]; exists {
 		if !slices.Contains([]string{"info", "notice", "warn", "error"}, requestRateLogLevel) {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-log-level: got %s", context.GetNamespace(), context.GetName(), requestRateLogLevel))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-log-level: got %s", context.GetNamespace(), context.GetName(), requestRateLogLevel))
 		} else {
 			cfgParams.LimitReqLogLevel = requestRateLogLevel
 		}
