@@ -30,6 +30,7 @@ func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
 	attrs = append(attrs, attribute.Int64("OIDCPolicies", d.OIDCPolicies))
 	attrs = append(attrs, attribute.Int64("WAFPolicies", d.WAFPolicies))
 	attrs = append(attrs, attribute.Bool("GlobalConfiguration", d.GlobalConfiguration))
+	attrs = append(attrs, attribute.StringSlice("IngressAnnotations", d.IngressAnnotations))
 
 	return attrs
 }
