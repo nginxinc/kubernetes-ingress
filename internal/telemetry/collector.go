@@ -132,6 +132,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			OIDCPolicies:          int64(report.OIDCCount),
 			WAFPolicies:           int64(report.WAFCount),
 			GlobalConfiguration:   report.GlobalConfiguration,
+			IngressAnnotations:    report.IngressAnnotations,
 		},
 	}
 
@@ -171,6 +172,7 @@ type Report struct {
 	OIDCCount           int
 	WAFCount            int
 	GlobalConfiguration bool
+	IngressAnnotations  []string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -237,6 +239,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	oidcCount := policies["OIDC"]
 	wafCount := policies["WAF"]
 
+	ingressAnnotations := c.IngressAnnotations()
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -263,5 +267,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		OIDCCount:           oidcCount,
 		WAFCount:            wafCount,
 		GlobalConfiguration: c.Config.GlobalConfiguration,
+		IngressAnnotations:  ingressAnnotations,
 	}, err
 }
