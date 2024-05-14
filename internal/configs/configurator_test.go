@@ -1426,6 +1426,147 @@ func TestStreamUpstreamsForName_ReturnsStreamUpstreamsNamesOnValidServiceName(t 
 	}
 }
 
+func TestGetIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+
+	ingress := &IngressEx{
+		Ingress: &networking.Ingress{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "test-ingress",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"appprotect.f5.com/app-protect-enable": "False",
+					"nginx.org/proxy-set-header":           "X-Forwarded-ABC",
+					"ingress.kubernetes.io/ssl-redirect":   "True",
+				},
+			},
+		},
+	}
+
+	_, err := tcnf.AddOrUpdateIngress(ingress)
+	if err != nil {
+		t.Fatalf("AddOrUpdateIngress returned error: %v", err)
+	}
+
+	annotationList := tcnf.GetIngressAnnotations()
+
+	expectedAnnotations := []string{
+		"appprotect.f5.com/app-protect-enable",
+		"nginx.org/proxy-set-header",
+		"ingress.kubernetes.io/ssl-redirect",
+	}
+
+	if len(annotationList) != len(expectedAnnotations) {
+		t.Errorf("got %d annotations, want %d", len(annotationList), len(expectedAnnotations))
+	}
+
+	foundAnnotations := make(map[string]bool)
+	for _, annotation := range annotationList {
+		foundAnnotations[annotation] = true
+	}
+
+	for _, expected := range expectedAnnotations {
+		if !foundAnnotations[expected] {
+			t.Errorf("expected annotation %q not found", expected)
+		}
+	}
+}
+
+func TestGetInvalidIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+
+	ingress := &IngressEx{
+		Ingress: &networking.Ingress{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "test-ingress",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"kubectl.kubernetes.io/last-applied-configuration": "s",
+					"alb.ingress.kubernetes.io/group.order":            "0",
+					"alb.ingress.kubernetes.io/ip-address-type":        "ipv4",
+					"alb.ingress.kubernetes.io/scheme":                 "internal",
+				},
+			},
+		},
+	}
+
+	_, err := tcnf.AddOrUpdateIngress(ingress)
+	if err != nil {
+		t.Fatalf("AddOrUpdateIngress returned error: %v", err)
+	}
+
+	expectedAnnotations := []string{
+		"alb.ingress.kubernetes.io/scheme",
+		"alb.ingress.kubernetes.io/group.order",
+		"alb.ingress.kubernetes.io/ip-address-type",
+	}
+
+	annotationList := tcnf.GetIngressAnnotations()
+
+	foundAnnotations := make(map[string]bool)
+	for _, annotation := range annotationList {
+		foundAnnotations[annotation] = true
+	}
+
+	for _, expected := range expectedAnnotations {
+		if foundAnnotations[expected] {
+			t.Errorf("expected annotation %q not found", expected)
+		}
+	}
+}
+
+func TestGetMixedIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+
+	ingress := &IngressEx{
+		Ingress: &networking.Ingress{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "test-ingress",
+				Namespace: "default",
+				Annotations: map[string]string{
+					"kubectl.kubernetes.io/last-applied-configuration": "s",
+					"alb.ingress.kubernetes.io/group.order":            "0",
+					"alb.ingress.kubernetes.io/ip-address-type":        "ipv4",
+					"alb.ingress.kubernetes.io/scheme":                 "internal",
+					"appprotect.f5.com/app-protect-enable":             "False",
+					"nginx.org/proxy-set-header":                       "X-Forwarded-ABC",
+					"ingress.kubernetes.io/ssl-redirect":               "True",
+				},
+			},
+		},
+	}
+
+	_, err := tcnf.AddOrUpdateIngress(ingress)
+	if err != nil {
+		t.Fatalf("AddOrUpdateIngress returned error: %v", err)
+	}
+
+	expectedAnnotations := []string{
+		"ingress.kubernetes.io/ssl-redirect",
+		"nginx.org/proxy-set-header",
+		"appprotect.f5.com/app-protect-enable",
+	}
+
+	annotationList := tcnf.GetIngressAnnotations()
+
+	foundAnnotations := make(map[string]bool)
+	for _, annotation := range annotationList {
+		foundAnnotations[annotation] = true
+	}
+
+	for _, expected := range expectedAnnotations {
+		if !foundAnnotations[expected] {
+			t.Errorf("expected annotation %q not found", expected)
+		}
+	}
+}
+
 var (
 	invalidVirtualServerEx = &VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{},
