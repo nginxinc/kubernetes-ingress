@@ -23,7 +23,7 @@ This single YAML file creates CRDs for the following resources:
 - [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}})
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.1/deploy/crds.yaml
 ```
 
 {{%/tab%}}
