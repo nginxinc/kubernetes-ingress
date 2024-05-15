@@ -690,8 +690,8 @@ func TestCollectAppProtectVersion(t *testing.T) {
 		},
 		{
 			name:              "No AppProtect Installed",
-			appProtectVersion: "0",
-			wantVersion:       "0",
+			appProtectVersion: "",
+			wantVersion:       "",
 		},
 	}
 
@@ -734,13 +734,13 @@ func TestCollectInvalidAppProtectVersion(t *testing.T) {
 	}{
 		{
 			name:              "AppProtect Not Installed",
-			appProtectVersion: "0",
+			appProtectVersion: "",
 			wantVersion:       "4.8.1",
 		},
 		{
 			name:              "Cant Find AppProtect 4.9",
 			appProtectVersion: "4.9",
-			wantVersion:       "0",
+			wantVersion:       "",
 		},
 		{
 			name:              "Found Different AppProtect Version",

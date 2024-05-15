@@ -194,9 +194,6 @@ func (c *Collector) PolicyCount() map[string]int {
 
 // AppProtectVersion returns the AppProtect Version
 func (c *Collector) AppProtectVersion() string {
-	if c.Config.AppProtectVersion == "" {
-		return ""
-	}
 	return c.Config.AppProtectVersion
 }
 
