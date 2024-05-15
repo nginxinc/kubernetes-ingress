@@ -41,6 +41,9 @@ http {
     map_hash_max_size {{.MapHashMaxSize}};
     map_hash_bucket_size {{.MapHashBucketSize}};
 
+    app_protect_enforcer_address 127.0.0.1:50000;
+
+
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}
     {{$value}}{{end}}
