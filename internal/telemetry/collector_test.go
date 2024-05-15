@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -154,8 +155,8 @@ func TestCollectNodeCountInClusterWithThreeNodes(t *testing.T) {
 	}
 
 	td := telemetry.Data{
-		telData,
-		nicResourceCounts,
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
 	}
 
 	want := fmt.Sprintf("%+v", &td)
@@ -250,91 +251,141 @@ func TestCollectClusterVersion(t *testing.T) {
 	}
 }
 
-func TestCollectMultiplePolicies(t *testing.T) {
+func TestCollectPolicyCount(t *testing.T) {
 	t.Parallel()
 
-	fn := func() []*conf_v1.Policy {
-		return []*conf_v1.Policy{&policy1, &policy2, &policy3}
+	testCases := []struct {
+		name     string
+		policies func() []*conf_v1.Policy
+		want     int
+	}{
+		{
+			name: "SinglePolicy",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{egressMTLSPolicy}
+			},
+			want: 1,
+		},
+		{
+			name: "MultiplePolicies",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{rateLimitPolicy, wafPolicy, oidcPolicy}
+			},
+			want: 3,
+		},
+		{
+			name: "MultipleSamePolicies",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{rateLimitPolicy, rateLimitPolicy}
+			},
+			want: 2,
+		},
+		{
+			name: "SingleInvalidPolicy",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{rateLimitPolicyInvalid}
+			},
+			want: 0,
+		},
+		{
+			name: "MultiplePoliciesOneValidOneInvalid",
+			policies: func() []*conf_v1.Policy {
+				return []*conf_v1.Policy{rateLimitPolicy, rateLimitPolicyInvalid}
+			},
+			want: 1,
+		},
+		{
+			name:     "NoPolicies",
+			policies: func() []*conf_v1.Policy { return []*conf_v1.Policy{} },
+			want:     0,
+		},
+		{
+			name:     "NilPolicies",
+			policies: nil,
+			want:     0,
+		},
+		{
+			name:     "NilPolicyValue",
+			policies: func() []*conf_v1.Policy { return nil },
+			want:     0,
+		},
 	}
 
-	cfg := telemetry.CollectorConfig{
-		Policies: fn,
-	}
-	collector, err := telemetry.NewCollector(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	got := collector.PolicyCount()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var got int
+			cfg := telemetry.CollectorConfig{
+				Policies: tc.policies,
+			}
+			collector, err := telemetry.NewCollector(cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	want := 3
+			for _, polCount := range collector.PolicyCount() {
+				got += polCount
+			}
 
-	if want != got {
-		t.Errorf("want %d, got %d", want, got)
+			if tc.want != got {
+				t.Errorf("want %d policies, got %d", tc.want, got)
+			}
+		})
 	}
 }
 
-func TestCollectSinglePolicy(t *testing.T) {
+func TestCollectPoliciesReport(t *testing.T) {
 	t.Parallel()
 
-	fn := func() []*conf_v1.Policy {
-		return []*conf_v1.Policy{&policy1}
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+	cfg := telemetry.CollectorConfig{
+		Configurator:    newConfigurator(t),
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+		Policies: func() []*conf_v1.Policy {
+			return []*conf_v1.Policy{
+				egressMTLSPolicy,
+				egressMTLSPolicy,
+				rateLimitPolicyInvalid,
+				wafPolicy,
+				wafPolicy,
+				oidcPolicy,
+			}
+		},
 	}
 
-	cfg := telemetry.CollectorConfig{
-		Policies: fn,
-	}
-	collector, err := telemetry.NewCollector(cfg)
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
 	if err != nil {
 		t.Fatal(err)
 	}
-	got := collector.PolicyCount()
+	c.Collect(context.Background())
 
-	want := 1
-
-	if want != got {
-		t.Errorf("want %d, got %d", want, got)
-	}
-}
-
-func TestCollectNoPolicies(t *testing.T) {
-	t.Parallel()
-
-	fn := func() []*conf_v1.Policy {
-		return []*conf_v1.Policy{}
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
 	}
 
-	cfg := telemetry.CollectorConfig{
-		Policies: fn,
+	nicResourceCounts := telemetry.NICResourceCounts{
+		RateLimitPolicies:  0,
+		WAFPolicies:        2,
+		OIDCPolicies:       1,
+		EgressMTLSPolicies: 2,
 	}
-	collector, err := telemetry.NewCollector(cfg)
-	if err != nil {
-		t.Fatal(err)
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
 	}
-	got := collector.PolicyCount()
 
-	want := 0
-
-	if want != got {
-		t.Errorf("want %d, got %d", want, got)
-	}
-}
-
-func TestCollectPolicyWithNilFunction(t *testing.T) {
-	t.Parallel()
-
-	cfg := telemetry.CollectorConfig{
-		Policies: nil,
-	}
-	collector, err := telemetry.NewCollector(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	got := collector.PolicyCount()
-
-	want := 0
-
-	if want != got {
-		t.Errorf("want %d, got %d", want, got)
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
 
@@ -373,14 +424,194 @@ func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 	}
 
 	td := telemetry.Data{
-		telData,
-		nicResourceCounts,
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
 	}
 
 	want := fmt.Sprintf("%+v", &td)
 	got := buf.String()
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestMergeableIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	masterAnnotations := map[string]string{
+		"nginx.org/mergeable-ingress-type": "master",
+	}
+	coffeeAnnotations := map[string]string{
+		"nginx.org/mergeable-ingress-type":     "minion",
+		"nginx.org/proxy-set-header":           "X-Forwarded-ABC",
+		"appprotect.f5.com/app-protect-enable": "False",
+	}
+	teaAnnotations := map[string]string{
+		"nginx.org/mergeable-ingress-type": "minion",
+		"nginx.org/proxy-set-header":       "X-Forwarded-Tea: Chai",
+		"nginx.com/health-checks":          "False",
+	}
+
+	configurator := newConfiguratorWithMergeableIngressCustomAnnotations(t, masterAnnotations, coffeeAnnotations, teaAnnotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	expectedAnnotations := []string{
+		"nginx.org/mergeable-ingress-type",
+		"nginx.org/proxy-set-header",
+		"nginx.com/health-checks",
+		"appprotect.f5.com/app-protect-enable",
+	}
+
+	got := buf.String()
+	for _, expectedAnnotation := range expectedAnnotations {
+		if !strings.Contains(got, expectedAnnotation) {
+			t.Errorf("expected %v in %v", expectedAnnotation, got)
+		}
+	}
+}
+
+func TestInvalidMergeableIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	masterAnnotations := map[string]string{
+		"nginx.org/ingress-type":                           "master",
+		"kubectl.kubernetes.io/last-applied-configuration": "s",
+	}
+	coffeeAnnotations := map[string]string{
+		"nginx.org/mergeable-ingress-type": "minion",
+	}
+	teaAnnotations := map[string]string{
+		"nginx.org/mergeable-type":                   "minion",
+		"nginx.org/proxy-set":                        "X-$-ABC",
+		"nginx.ingress.kubernetes.io/rewrite-target": "/",
+	}
+
+	configurator := newConfiguratorWithMergeableIngressCustomAnnotations(t, masterAnnotations, coffeeAnnotations, teaAnnotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	expectedAnnotations := []string{
+		"kubectl.kubernetes.io/last-applied-configuration",
+		"nginx.org/proxy-set-header",
+		"nginx.ingress.kubernetes.io/rewrite-target",
+	}
+
+	got := buf.String()
+	for _, expectedAnnotation := range expectedAnnotations {
+		if strings.Contains(got, expectedAnnotation) {
+			t.Errorf("expected %v in %v", expectedAnnotation, got)
+		}
+	}
+}
+
+func TestStandardIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	annotations := map[string]string{
+		"appprotect.f5.com/app-protect-enable": "False",
+		"nginx.org/proxy-set-header":           "X-Forwarded-ABC",
+		"ingress.kubernetes.io/ssl-redirect":   "True",
+		"nginx.com/slow-start":                 "0s",
+	}
+
+	configurator := newConfiguratorWithIngressWithCustomAnnotations(t, annotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	expectedAnnotations := []string{
+		"appprotect.f5.com/app-protect-enable",
+		"nginx.org/proxy-set-header",
+		"nginx.com/slow-start",
+		"ingress.kubernetes.io/ssl-redirect",
+	}
+
+	got := buf.String()
+	for _, expectedAnnotation := range expectedAnnotations {
+		if !strings.Contains(got, expectedAnnotation) {
+			t.Errorf("expected %v in %v", expectedAnnotation, got)
+		}
+	}
+}
+
+func TestInvalidStandardIngressAnnotations(t *testing.T) {
+	t.Parallel()
+
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	annotations := map[string]string{
+		"alb.ingress.kubernetes.io/group.order":      "0",
+		"alb.ingress.kubernetes.io/ip-address-type":  "ipv4",
+		"alb.ingress.kubernetes.io/scheme":           "internal",
+		"nginx.ingress.kubernetes.io/rewrite-target": "/",
+	}
+
+	configurator := newConfiguratorWithIngressWithCustomAnnotations(t, annotations)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	expectedAnnotations := []string{
+		"alb.ingress.kubernetes.io/scheme",
+		"alb.ingress.kubernetes.io/group.order",
+		"alb.ingress.kubernetes.io/ip-address-type",
+		"nginx.ingress.kubernetes.io/rewrite-target",
+	}
+
+	got := buf.String()
+	for _, expectedAnnotation := range expectedAnnotations {
+		if strings.Contains(got, expectedAnnotation) {
+			t.Errorf("expected %v in %v", expectedAnnotation, got)
+		}
 	}
 }
 
@@ -423,8 +654,8 @@ func TestIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
 	}
 
 	td := telemetry.Data{
-		telData,
-		nicResourceCounts,
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
 	}
 
 	want := fmt.Sprintf("%+v", &td)
@@ -1342,9 +1573,6 @@ func createCafeIngressEx() configs.IngressEx {
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      "cafe-ingress",
 			Namespace: "default",
-			Annotations: map[string]string{
-				"kubernetes.io/ingress.class": "nginx",
-			},
 		},
 		Spec: networkingV1.IngressSpec{
 			TLS: []networkingV1.IngressTLS{
@@ -1563,6 +1791,221 @@ func createMergeableCafeIngress() *configs.MergeableIngresses {
 	return mergeableIngresses
 }
 
+func createMergeableIngressWithCustomAnnotations(masterAnnotations, coffeeAnnotations, teaAnnotations map[string]string) *configs.MergeableIngresses {
+	master := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:        "cafe-ingress-master",
+			Namespace:   "default",
+			Annotations: masterAnnotations,
+		},
+		Spec: networkingV1.IngressSpec{
+			TLS: []networkingV1.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{ // HTTP must not be nil for Master
+							Paths: []networkingV1.HTTPIngressPath{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	coffeeMinion := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:        "cafe-ingress-coffee-minion",
+			Namespace:   "default",
+			Annotations: coffeeAnnotations,
+		},
+		Spec: networkingV1.IngressSpec{
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/coffee",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	teaMinion := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:        "cafe-ingress-tea-minion",
+			Namespace:   "default",
+			Annotations: teaAnnotations,
+		},
+		Spec: networkingV1.IngressSpec{
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/tea",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	mergeableIngresses := &configs.MergeableIngresses{
+		Master: &configs.IngressEx{
+			Ingress: &master,
+			Endpoints: map[string][]string{
+				"coffee-svc80": {"10.0.0.1:80"},
+				"tea-svc80":    {"10.0.0.2:80"},
+			},
+			ValidHosts: map[string]bool{
+				"cafe.example.com": true,
+			},
+			SecretRefs: map[string]*secrets.SecretReference{
+				"cafe-secret": {
+					Secret: &coreV1.Secret{
+						Type: coreV1.SecretTypeTLS,
+					},
+					Path:  "/etc/nginx/secrets/default-cafe-secret",
+					Error: nil,
+				},
+			},
+		},
+		Minions: []*configs.IngressEx{
+			{
+				Ingress: &coffeeMinion,
+				Endpoints: map[string][]string{
+					"coffee-svc80": {"10.0.0.1:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/coffee": true,
+				},
+				SecretRefs: map[string]*secrets.SecretReference{},
+			},
+			{
+				Ingress: &teaMinion,
+				Endpoints: map[string][]string{
+					"tea-svc80": {"10.0.0.2:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/tea": true,
+				},
+				SecretRefs: map[string]*secrets.SecretReference{},
+			},
+		},
+	}
+
+	return mergeableIngresses
+}
+
+func createCafeIngressExWithCustomAnnotations(annotations map[string]string) configs.IngressEx {
+	cafeIngress := networkingV1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:        "cafe-ingress",
+			Namespace:   "default",
+			Annotations: annotations,
+		},
+		Spec: networkingV1.IngressSpec{
+			TLS: []networkingV1.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			Rules: []networkingV1.IngressRule{
+				{
+					Host: "cafe.example.com",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "/coffee",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+								{
+									Path: "/tea",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networkingV1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	cafeIngressEx := configs.IngressEx{
+		Ingress: &cafeIngress,
+		Endpoints: map[string][]string{
+			"coffee-svc80": {"10.0.0.1:80"},
+			"tea-svc80":    {"10.0.0.2:80"},
+		},
+		ExternalNameSvcs: map[string]bool{},
+		ValidHosts: map[string]bool{
+			"cafe.example.com": true,
+		},
+		SecretRefs: map[string]*secrets.SecretReference{
+			"cafe-secret": {
+				Secret: &coreV1.Secret{
+					Type: coreV1.SecretTypeTLS,
+				},
+				Path: "/etc/nginx/secrets/default-cafe-secret",
+			},
+		},
+	}
+	return cafeIngressEx
+}
+
 func getResourceKey(namespace, name string) string {
 	return fmt.Sprintf("%s_%s", namespace, name)
 }
@@ -1573,6 +2016,30 @@ func newConfiguratorWithIngress(t *testing.T) *configs.Configurator {
 	ingressEx := createCafeIngressEx()
 	c := newConfigurator(t)
 	_, err := c.AddOrUpdateIngress(&ingressEx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+func newConfiguratorWithIngressWithCustomAnnotations(t *testing.T, annotations map[string]string) *configs.Configurator {
+	t.Helper()
+
+	ingressEx := createCafeIngressExWithCustomAnnotations(annotations)
+	c := newConfigurator(t)
+	_, err := c.AddOrUpdateIngress(&ingressEx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+func newConfiguratorWithMergeableIngressCustomAnnotations(t *testing.T, masterAnnotations, coffeeAnnotations, teaAnnotations map[string]string) *configs.Configurator {
+	t.Helper()
+
+	ingressEx := createMergeableIngressWithCustomAnnotations(masterAnnotations, coffeeAnnotations, teaAnnotations)
+	c := newConfigurator(t)
+	_, err := c.AddOrUpdateMergeableIngress(ingressEx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1669,31 +2136,7 @@ var telemetryNICData = tel.Data{
 
 // Policies used for testing for PolicyCount method
 var (
-	policy1 = conf_v1.Policy{
-		TypeMeta: metaV1.TypeMeta{
-			Kind:       "Policy",
-			APIVersion: "k8s.nginx.org/v1",
-		},
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      "rate-limit-policy1",
-			Namespace: "default",
-		},
-		Spec:   conf_v1.PolicySpec{},
-		Status: conf_v1.PolicyStatus{},
-	}
-	policy2 = conf_v1.Policy{
-		TypeMeta: metaV1.TypeMeta{
-			Kind:       "Policy",
-			APIVersion: "k8s.nginx.org/v1",
-		},
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      "rate-limit-policy2",
-			Namespace: "default",
-		},
-		Spec:   conf_v1.PolicySpec{},
-		Status: conf_v1.PolicyStatus{},
-	}
-	policy3 = conf_v1.Policy{
+	rateLimitPolicy = &conf_v1.Policy{
 		TypeMeta: metaV1.TypeMeta{
 			Kind:       "Policy",
 			APIVersion: "k8s.nginx.org/v1",
@@ -1702,7 +2145,67 @@ var (
 			Name:      "rate-limit-policy3",
 			Namespace: "default",
 		},
+		Spec: conf_v1.PolicySpec{
+			RateLimit: &conf_v1.RateLimit{},
+		},
+		Status: conf_v1.PolicyStatus{},
+	}
+
+	rateLimitPolicyInvalid = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "INVALID-rate-limit-policy",
+			Namespace: "default",
+		},
 		Spec:   conf_v1.PolicySpec{},
+		Status: conf_v1.PolicyStatus{},
+	}
+
+	egressMTLSPolicy = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			EgressMTLS: &conf_v1.EgressMTLS{},
+		},
+		Status: conf_v1.PolicyStatus{},
+	}
+
+	oidcPolicy = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			OIDC: &conf_v1.OIDC{},
+		},
+		Status: conf_v1.PolicyStatus{},
+	}
+
+	wafPolicy = &conf_v1.Policy{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Policy",
+			APIVersion: "k8s.nginx.org/v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "rate-limit-policy3",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			WAF: &conf_v1.WAF{},
+		},
 		Status: conf_v1.PolicyStatus{},
 	}
 )
