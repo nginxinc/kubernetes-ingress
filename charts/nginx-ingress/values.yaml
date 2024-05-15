@@ -501,6 +501,10 @@ rbac:
   ## Configures RBAC.
   create: true
 
+  clusterrole:
+    ## Create ClusterRole
+    create: true
+
 prometheus:
   ## Expose NGINX or NGINX Plus metrics in the Prometheus format.
   create: true
