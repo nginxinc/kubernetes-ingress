@@ -192,6 +192,11 @@ func (c *Collector) PolicyCount() map[string]int {
 	return policyCounters
 }
 
+// AppProtectVersion returns the AppProtect Version
+func (c *Collector) AppProtectVersion() string {
+	return c.Config.AppProtectVersion
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.

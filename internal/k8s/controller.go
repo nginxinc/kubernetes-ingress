@@ -185,6 +185,7 @@ type NewLoadBalancerControllerInput struct {
 	DefaultServerSecret          string
 	AppProtectEnabled            bool
 	AppProtectDosEnabled         bool
+	AppProtectVersion            string
 	IsNginxPlus                  bool
 	IngressClass                 string
 	ExternalServiceName          string
@@ -364,6 +365,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			Period:              24 * time.Hour,
 			K8sClientReader:     input.KubeClient,
 			Version:             input.NICVersion,
+			AppProtectVersion:   input.AppProtectVersion,
 			GlobalConfiguration: lbc.watchGlobalConfiguration,
 			Configurator:        lbc.configurator,
 			SecretStore:         lbc.secretStore,

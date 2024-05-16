@@ -47,6 +47,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **OIDCPolicies** Number of OIDC policies.
 - **WAFPolicies** Number of WAF policies.
 - **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.
+- **AppProtectVersion** The AppProtect version
 
 ## Opt out
 

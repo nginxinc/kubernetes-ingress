@@ -71,6 +71,9 @@ type CollectorConfig struct {
 
 	// Policies gets all policies
 	Policies func() []*conf_v1.Policy
+
+	// AppProtectVersion represents the version of App Protect.
+	AppProtectVersion string
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -133,6 +136,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			WAFPolicies:           int64(report.WAFCount),
 			GlobalConfiguration:   report.GlobalConfiguration,
 			IngressAnnotations:    report.IngressAnnotations,
+			AppProtectVersion:     report.AppProtectVersion,
 		},
 	}
 
@@ -173,6 +177,7 @@ type Report struct {
 	WAFCount            int
 	GlobalConfiguration bool
 	IngressAnnotations  []string
+	AppProtectVersion   string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -241,6 +246,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	ingressAnnotations := c.IngressAnnotations()
 
+	appProtectVersion := c.AppProtectVersion()
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -268,5 +275,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		WAFCount:            wafCount,
 		GlobalConfiguration: c.Config.GlobalConfiguration,
 		IngressAnnotations:  ingressAnnotations,
+		AppProtectVersion:   appProtectVersion,
 	}, err
 }
