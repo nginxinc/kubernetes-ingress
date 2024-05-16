@@ -234,52 +234,19 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	}
 
 	policies := c.PolicyCount()
-	if len(policies) == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: Policies: %v", policies)
-	}
 
 	accessControlCount := policies["AccessControl"]
-	if accessControlCount == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: Access Control Policies: %v", policies["AccessControl"])
-	}
 	rateLimitCount := policies["RateLimit"]
-	if rateLimitCount == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: Rate Limit Policies: %v", policies["RateLimit"])
-	}
 	jwtAuthCount := policies["JWTAuth"]
-	if jwtAuthCount == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: JWTAuth Policies: %v", policies["JWTAuth"])
-	}
 	basicAuthCount := policies["BasicAuth"]
-	if basicAuthCount == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: BasicAuth Policies: %v", policies["BasicAuth"])
-	}
 	ingressMTLSCount := policies["IngressMTLS"]
-	if ingressMTLSCount == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: IngressMTLS Policies: %v", policies["IngressMTLS"])
-	}
 	egressMTLSCount := policies["EgressMTLS"]
-	if egressMTLSCount == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: EgressMTLS Policies: %v", policies["EgressMTLS"])
-	}
 	oidcCount := policies["OIDC"]
-	if oidcCount == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: OIDC Policies: %v", policies["OIDC"])
-	}
 	wafCount := policies["WAF"]
-	if wafCount == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: WAF Policies: %v", policies["WAF"])
-	}
 
 	ingressAnnotations := c.IngressAnnotations()
-	if len(ingressAnnotations) == 0 {
-		glog.V(3).Infof("Unable to collect telemetry data: IngressAnnotations: %p", ingressAnnotations)
-	}
 
 	appProtectVersion := c.AppProtectVersion()
-	if appProtectVersion == "" {
-		glog.V(3).Infof("Unable to collect telemetry data: AppProtectVersion: %s", appProtectVersion)
-	}
 
 	return Report{
 		Name:                "NIC",
