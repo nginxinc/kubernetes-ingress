@@ -12,7 +12,7 @@ on:
         default: 'force-image-sha-updates'
       excludes:
         description: Comma separated list of strings to exclude images from the update
-        required: true
+        required: false
         type: string
         default: ''
       dry_run:
@@ -68,5 +68,5 @@ jobs:
             chore
             dependency
           body: |
-            This automated PR pinned container image SHAs to latest.
+            This automated PR updates pinned container image SHAs to latest.
         if: ${{ !inputs.dry_run && steps.update_images.outputs.change_detected == 'true' }}
