@@ -1,0 +1,63 @@
+name: "Update pinned container SHAs"
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        required: true
+        type: string
+        default: 'main'
+      excludes:
+        description: Comma separated list of strings to exclude images from the update
+        required: true
+        type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  update-docker-sha:
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
+        with:
+          ref: ${{ inputs.source_branch }}
+
+      - name: Update images
+        id: update_images
+        run: |
+          ./hack/update-docker.sh ./build/Dockerfile --excludes ${{ github.event.inputs.excludes }}
+          ./hack/update-docker.sh ./test/Dockerfile --excludes ${{ github.event.inputs.excludes }}
+          changes=$(git diff --name-only HEAD^)
+          if [ -z "$changes" ]; then
+            echo "change_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "change_detected=false" >> $GITHUB_OUTPUT
+          fi
+          echo $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # v6.0.5
+        with:
+          token: ${{ secrets.NGINX_PAT }}
+          commit-message: Update docker images ${{ github.run_id }}
+          title: Docker image update ${{ github.run_id }}
+          branch: chore/image-update-${{ inputs.source_branch }}-${{ github.run_id }}
+          author: nginx-bot <integrations@nginx.com>
+          labels: |
+            chore
+            dependency
+          body: |
+            This automated PR pinned container image SHAs to latest.
+        if: ${{ !inputs.dry_run && steps.update_images.change_detected == 'true' }}
