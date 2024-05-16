@@ -40,8 +40,8 @@ jobs:
       - name: Update images
         id: update_images
         run: |
-          .github/scripts/update-docker.sh ./build/Dockerfile --excludes ${{ github.event.inputs.excludes }}
-          .github/scripts/update-docker.sh ./test/Dockerfile --excludes ${{ github.event.inputs.excludes }}
+          .github/scripts/docker-updater.sh ./build/Dockerfile --excludes ${{ github.event.inputs.excludes }}
+          .github/scripts/docker-updater.sh ./test/Dockerfile --excludes ${{ github.event.inputs.excludes }}
           changes=$(git diff --name-only HEAD^)
           if [ -z "$changes" ]; then
             echo "change_detected=true" >> $GITHUB_OUTPUT
