@@ -101,4 +101,6 @@ type NICResourceCounts struct {
 	GlobalConfiguration bool
 	// IngressAnnotations is the list of annotations resources managed by NGINX Ingress Controller
 	IngressAnnotations []string
+	// AppProtectVersion represents the version of AppProtect.
+	AppProtectVersion string
 }

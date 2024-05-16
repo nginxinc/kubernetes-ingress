@@ -665,6 +665,119 @@ func TestIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
 	}
 }
 
+func TestCollectAppProtectVersion(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name              string
+		appProtectVersion string
+		wantVersion       string
+	}{
+		{
+			name:              "AppProtect 4.8",
+			appProtectVersion: "4.8.1",
+			wantVersion:       "4.8.1",
+		},
+		{
+			name:              "AppProtect 4.9",
+			appProtectVersion: "4.9",
+			wantVersion:       "4.9",
+		},
+		{
+			name:              "AppProtect 5.1",
+			appProtectVersion: "5.1",
+			wantVersion:       "5.1",
+		},
+		{
+			name:              "No AppProtect Installed",
+			appProtectVersion: "",
+			wantVersion:       "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:      configurator,
+				K8sClientReader:   newTestClientset(node1, kubeNS),
+				Version:           telemetryNICData.ProjectVersion,
+				AppProtectVersion: tc.appProtectVersion,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			ver := c.AppProtectVersion()
+
+			if tc.wantVersion != ver {
+				t.Errorf("want: %s, got: %s", tc.wantVersion, ver)
+			}
+		})
+	}
+}
+
+func TestCollectInvalidAppProtectVersion(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name              string
+		appProtectVersion string
+		wantVersion       string
+	}{
+		{
+			name:              "AppProtect Not Installed",
+			appProtectVersion: "",
+			wantVersion:       "4.8.1",
+		},
+		{
+			name:              "Cant Find AppProtect 4.9",
+			appProtectVersion: "4.9",
+			wantVersion:       "",
+		},
+		{
+			name:              "Found Different AppProtect Version",
+			appProtectVersion: "5.1",
+			wantVersion:       "4.9",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:      configurator,
+				K8sClientReader:   newTestClientset(node1, kubeNS),
+				Version:           telemetryNICData.ProjectVersion,
+				AppProtectVersion: tc.appProtectVersion,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			ver := c.AppProtectVersion()
+
+			if tc.wantVersion == ver {
+				t.Errorf("want: %s, got: %s", tc.wantVersion, ver)
+			}
+		})
+	}
+}
+
 func TestCountVirtualServers(t *testing.T) {
 	t.Parallel()
 
