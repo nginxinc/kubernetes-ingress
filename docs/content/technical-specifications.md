@@ -24,7 +24,7 @@ We explicitly test NGINX Ingress Controller on a range of Kubernetes platforms f
 {{< bootstrap-table "table table-bordered table-striped table-responsive" >}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| 3.5.1 | 1.29 - 1.23 | 1.2.1 | 2.2.0 | 1.25.4 / R31 P1 |
+| 3.5.1 | 1.29 - 1.23 | 1.2.1 | 2.2.1 | 1.25.4 / R31 P1 |
 | 3.4.3 | 1.29 - 1.23 | 1.1.3 | 2.1.2 | 1.25.4 / R31 P1 |
 | 3.3.2 | 1.28 - 1.22 | 1.0.2 | 2.0.2 | 1.25.3 / R30 |
 | 3.2.1 | 1.27 - 1.22 | 0.18.1 | 1.5.1 | 1.25.2 / R30 |
@@ -39,9 +39,6 @@ We explicitly test NGINX Ingress Controller on a range of Kubernetes platforms f
 | 1.11.3 | 1.20 - 1.16 | 0.9.0 | 0.2.0 | 1.21.0 / R23 P1 |
 | 1.10.1 | 1.19 - 1.16 | 0.8.0 | 0.1.0 | 1.19.8 / R23 |
 | 1.9.1 | 1.18 - 1.16 | 0.7.1 | 0.0.7 | 1.19.3 / R22 |
-| 1.8.1 |  | 0.6.0 | 0.0.6 | 1.19.2 / R22 |
-| 1.7.2 |  | 0.5.1 | 0.0.4 | 1.19.0 / R22 |
-| 1.6.3 |  | 0.4.3 | -- | 1.17.9 / R21 |
 {{% /bootstrap-table %}}
 
 ## Supported Docker Images
