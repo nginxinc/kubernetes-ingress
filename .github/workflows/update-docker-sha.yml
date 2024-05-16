@@ -9,7 +9,7 @@ on:
       source_branch:
         required: true
         type: string
-        default: 'main'
+        default: 'force-image-sha-updates'
       excludes:
         description: Comma separated list of strings to exclude images from the update
         required: true
