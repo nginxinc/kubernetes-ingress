@@ -1,15 +1,12 @@
 name: "Update pinned container SHAs"
 
 on:
-  push:
-    branches:
-      - "force-image-sha-updates"
   workflow_dispatch:
     inputs:
       source_branch:
         required: true
         type: string
-        default: 'force-image-sha-updates'
+        default: 'main'
       excludes:
         description: Comma separated list of strings to exclude images from the update
         required: false
@@ -40,7 +37,6 @@ jobs:
       - name: Update images
         id: update_images
         run: |
-          echo "Running against ${{ inputs.source_branch }}"
           docker_md5=$(find . -type f \( -wholename "build/Dockerfile" -o -wholename "tests/Dockerfile" \) -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }')
           echo "docker_md5=${docker_md5:0:8}" >> $GITHUB_OUTPUT
           ARGS=""
