@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tcp
+  template:
+    metadata:
+      labels:
+        app: tcp
+    spec:
+      containers:
+        - name: tcp-service
+          image: ghcr.io/nginxinc/kic-test-tcp-server:0.2.1
+          ports:
+            - containerPort: 3333
+              name: tcp-server
+              protocol: TCP
