@@ -190,56 +190,86 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	clusterID, err := c.ClusterID(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: ClusterID: %v", err)
 	}
 
 	nodes, err := c.NodeCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Nodes: %v", err)
 	}
 
 	version, err := c.ClusterVersion()
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: K8s Version: %v", err)
 	}
 
 	platform, err := c.Platform(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Platform: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Platform: %v", err)
 	}
 
 	replicas, err := c.ReplicaCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Replicas: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Replicas: %v", err)
 	}
 
 	installationID, err := c.InstallationID(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: InstallationID: %v", err)
 	}
 
 	secretCount, err := c.Secrets()
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Secrets: %v", err)
 	}
 	ingressCount := c.IngressCount()
 	ingressClassCount, err := c.IngressClassCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
 	}
 
 	policies := c.PolicyCount()
+	if len(policies) == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: Policies: %v", policies)
+	}
 
 	accessControlCount := policies["AccessControl"]
+	if accessControlCount == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: Access Control Policies: %v", policies["AccessControl"])
+	}
 	rateLimitCount := policies["RateLimit"]
+	if rateLimitCount == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: Rate Limit Policies: %v", policies["RateLimit"])
+	}
 	jwtAuthCount := policies["JWTAuth"]
+	if jwtAuthCount == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: JWTAuth Policies: %v", policies["JWTAuth"])
+	}
 	basicAuthCount := policies["BasicAuth"]
+	if basicAuthCount == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: BasicAuth Policies: %v", policies["BasicAuth"])
+	}
 	ingressMTLSCount := policies["IngressMTLS"]
+	if ingressMTLSCount == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: IngressMTLS Policies: %v", policies["IngressMTLS"])
+	}
 	egressMTLSCount := policies["EgressMTLS"]
+	if egressMTLSCount == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: EgressMTLS Policies: %v", policies["EgressMTLS"])
+	}
 	oidcCount := policies["OIDC"]
+	if oidcCount == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: OIDC Policies: %v", policies["OIDC"])
+	}
 	wafCount := policies["WAF"]
+	if wafCount == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: WAF Policies: %v", policies["WAF"])
+	}
 
 	ingressAnnotations := c.IngressAnnotations()
+	if len(ingressAnnotations) == 0 {
+		glog.V(3).Infof("Unable to collect telemetry data: IngressAnnotations: %p", ingressAnnotations)
+	}
 
 	return Report{
 		Name:                "NIC",
