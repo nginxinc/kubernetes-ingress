@@ -115,7 +115,7 @@ kubectl apply -f nginx-configuration.yaml
 {{</tabs>}}
 
 ## Deploying VirtualServer with custom listeners
-Deploy the [custom listeners](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/custom-resources/custom-listeners) resources from the repository examples. It includes all required resources, including VirtualServer.
+Deploy the [custom listeners](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/custom-listeners) resources from the repository examples. It includes all required resources, including VirtualServer.
 
 Below is a snippet of the VirtualServer resource that will be deployed:
 

@@ -98,6 +98,14 @@ var validPathRegex = map[string]bool{
 	"exact":            true,
 }
 
+// List of Ingress Annotation Keys used by the Ingress Controller
+var allowedAnnotationKeys = []string{
+	"nginx.org",
+	"nginx.com",
+	"f5.com",
+	"ingress.kubernetes.io/ssl-redirect",
+}
+
 func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, hasAppProtectDos bool, enableInternalRoutes bool) ConfigParams {
 	cfgParams := *baseCfgParams
 
@@ -445,7 +453,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	errors := make([]error, 0)
 	if requestRateLimit, exists := annotations["nginx.org/limit-req-rate"]; exists {
 		if rate, err := ParseRequestRate(requestRateLimit); err != nil {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-rate: got %s: %w", context.GetNamespace(), context.GetName(), requestRateLimit, err))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-rate: got %s: %w", context.GetNamespace(), context.GetName(), requestRateLimit, err))
 		} else {
 			cfgParams.LimitReqRate = rate
 		}
@@ -455,7 +463,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	}
 	if requestRateZoneSize, exists := annotations["nginx.org/limit-req-zone-size"]; exists {
 		if size, err := ParseSize(requestRateZoneSize); err != nil {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-zone-size: got %s: %w", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-zone-size: got %s: %w", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
 		} else {
 			cfgParams.LimitReqZoneSize = size
 		}
@@ -490,7 +498,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	}
 	if requestRateLogLevel, exists := annotations["nginx.org/limit-req-log-level"]; exists {
 		if !slices.Contains([]string{"info", "notice", "warn", "error"}, requestRateLogLevel) {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-log-level: got %s", context.GetNamespace(), context.GetName(), requestRateLogLevel))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-log-level: got %s", context.GetNamespace(), context.GetName(), requestRateLogLevel))
 		} else {
 			cfgParams.LimitReqLogLevel = requestRateLogLevel
 		}
