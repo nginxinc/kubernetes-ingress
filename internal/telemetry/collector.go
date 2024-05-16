@@ -277,6 +277,9 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	}
 
 	appProtectVersion := c.AppProtectVersion()
+	if appProtectVersion == "" {
+		glog.V(3).Infof("Unable to collect telemetry data: AppProtectVersion: %s", appProtectVersion)
+	}
 
 	return Report{
 		Name:                "NIC",
