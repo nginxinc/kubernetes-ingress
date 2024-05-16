@@ -1,6 +1,9 @@
 name: "Update pinned container SHAs"
 
 on:
+  push:
+    branches:
+      - "force-image-sha-updates"
   workflow_dispatch:
     inputs:
       source_branch:
@@ -37,8 +40,8 @@ jobs:
       - name: Update images
         id: update_images
         run: |
-          ./hack/update-docker.sh ./build/Dockerfile --excludes ${{ github.event.inputs.excludes }}
-          ./hack/update-docker.sh ./test/Dockerfile --excludes ${{ github.event.inputs.excludes }}
+          .github/scripts/update-docker.sh ./build/Dockerfile --excludes ${{ github.event.inputs.excludes }}
+          .github/scripts/update-docker.sh ./test/Dockerfile --excludes ${{ github.event.inputs.excludes }}
           changes=$(git diff --name-only HEAD^)
           if [ -z "$changes" ]; then
             echo "change_detected=true" >> $GITHUB_OUTPUT
