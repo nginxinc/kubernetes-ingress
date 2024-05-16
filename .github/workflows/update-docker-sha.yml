@@ -40,10 +40,16 @@ jobs:
       - name: Update images
         id: update_images
         run: |
-          .github/scripts/docker-updater.sh ./build/Dockerfile --excludes ${{ github.event.inputs.excludes }}
-          .github/scripts/docker-updater.sh ./test/Dockerfile --excludes ${{ github.event.inputs.excludes }}
-          changes=$(git diff --name-only HEAD^)
-          if [ -z "$changes" ]; then
+          docker_md5=$(find . -type f \( -wholename "build/Dockerfile" -o -wholename "tests/Dockerfile" \) -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }')
+          echo "docker_md5=${docker_md5:0:8}" >> $GITHUB_OUTPUT
+          ARGS=""
+          if [ -n ${{ github.event.inputs.excludes }} ]; then
+            ARGS="--exclude ${{ github.event.inputs.excludes }}"
+          fi
+          .github/scripts/docker-updater.sh ./build/Dockerfile $ARGS
+          .github/scripts/docker-updater.sh ./tests/Dockerfile $ARGS
+          files=$(git diff --name-only)
+          if [[ $files == *"Dockerfile"* ]]; then
             echo "change_detected=true" >> $GITHUB_OUTPUT
           else
             echo "change_detected=false" >> $GITHUB_OUTPUT
@@ -54,13 +60,13 @@ jobs:
         uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # v6.0.5
         with:
           token: ${{ secrets.NGINX_PAT }}
-          commit-message: Update docker images ${{ github.run_id }}
-          title: Docker image update ${{ github.run_id }}
-          branch: chore/image-update-${{ inputs.source_branch }}-${{ github.run_id }}
+          commit-message: Update docker images ${{ steps.update_images.outputs.docker_md5 }}
+          title: Docker image update ${{ steps.update_images.outputs.docker_md5 }}
+          branch: chore/image-update-${{ inputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
           author: nginx-bot <integrations@nginx.com>
           labels: |
             chore
             dependency
           body: |
             This automated PR pinned container image SHAs to latest.
-        if: ${{ !inputs.dry_run && steps.update_images.change_detected == 'true' }}
+        if: ${{ !inputs.dry_run && steps.update_images.outputs.change_detected == 'true' }}
