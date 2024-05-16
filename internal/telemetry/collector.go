@@ -195,42 +195,42 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	clusterID, err := c.ClusterID(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: ClusterID: %v", err)
 	}
 
 	nodes, err := c.NodeCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Nodes: %v", err)
 	}
 
 	version, err := c.ClusterVersion()
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: K8s Version: %v", err)
 	}
 
 	platform, err := c.Platform(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Platform: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Platform: %v", err)
 	}
 
 	replicas, err := c.ReplicaCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Replicas: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Replicas: %v", err)
 	}
 
 	installationID, err := c.InstallationID(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: InstallationID: %v", err)
 	}
 
 	secretCount, err := c.Secrets()
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Secrets: %v", err)
 	}
 	ingressCount := c.IngressCount()
 	ingressClassCount, err := c.IngressClassCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
 	}
 
 	policies := c.PolicyCount()
