@@ -51,7 +51,7 @@ const (
 	versionLabel           = "app.kubernetes.io/version"
 	appProtectVersionLabel = "appprotect.f5.com/version"
 	agentVersionLabel      = "app.nginx.org/agent-version"
-	appProtectVersionPath  = "/opt/app_protect/VERSION"
+	appProtectVersionPath  = "/opt/app_protect/RELEASE"
 )
 
 func main() {
@@ -184,6 +184,7 @@ func main() {
 		DefaultServerSecret:          *defaultServerSecret,
 		AppProtectEnabled:            *appProtect,
 		AppProtectDosEnabled:         *appProtectDos,
+		AppProtectVersion:            appProtectVersion,
 		IsNginxPlus:                  *nginxPlus,
 		IngressClass:                 *ingressClass,
 		ExternalServiceName:          *externalService,
