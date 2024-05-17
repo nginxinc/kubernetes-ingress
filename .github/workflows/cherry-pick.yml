@@ -1,3 +1,4 @@
+name: "Cherry-pick dependencies to release branch"
 on:
     pull_request:
       branches:
