@@ -2,7 +2,7 @@
 # this is here so we can grab the latest version of kind and have dependabot keep it up to date
 FROM kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e
 
-FROM python:3.12@sha256:3733015cdd1bd7d9a0b9fe21a925b608de82131aa4f3d397e465a1fcb545d36f
+FROM python:3.12@sha256:3966b81808d864099f802080d897cef36c01550472ab3955fdd716d1c665acd6
 
 RUN apt-get update \
 	&& apt-get install -y curl git \
