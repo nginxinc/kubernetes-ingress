@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.6
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=R31
-ARG NGINX_PLUS_PREVIEW_VERSION=R32
+ARG NGINX_PLUS_VERSION=R32
+ARG PACKAGE_REPO=pkgs.nginx.com
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PREBUILT_BASE_IMG=nginx/nginx-ingress:${DOWNLOAD_TAG}
@@ -59,6 +59,7 @@ FROM scratch as nginx-files
 ARG IC_VERSION
 ARG BUILD_OS
 ARG NGINX_PLUS_VERSION
+ARG PACKAGE_REPO
 
 # the following links can be replaced with local files if needed, i.e. ADD --chown=101:0 <local_file> <container_file>
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/90pkgs-nginx 90pkgs-nginx
@@ -77,20 +78,11 @@ ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/m
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-dos-debian-11.repo nap-dos-11.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/agent-debian-11.repo debian-agent-11.sources
 
-# Repos for `pkgs-test`.
-# Debian 11 & 12
-ADD --link --chown=101:0 https://raw.githubusercontent.com/shaun-nx/k8s-common/nginx-r32-test-repo/files/pkgs-test/debian/plus-debian-11.repo debian-plus-11-test.sources
-ADD --link --chown=101:0 https://raw.githubusercontent.com/shaun-nx/k8s-common/nginx-r32-test-repo/files/pkgs-test/debian/plus-debian-12.repo debian-plus-12-test.sources
-
-# Alpine
-
-# UBI
-
-RUN --mount=from=busybox:musl,src=/bin/,dst=/bin/ printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt;" >> 90pkgs-nginx \
-	&& printf "%s\n" "user_agent=k8s-ic-$IC_VERSION${BUILD_OS##ubi*plus}-dnf" | tee -a nginx-plus-*.repo \
-#    && sed -i -e "s;%VERSION%;${NGINX_PLUS_PREVIEW_VERSION};g" *-test.sources \
-	&& sed -i -e "s;%VERSION%;${NGINX_PLUS_VERSION};g" *.sources \
-	&& sed -i -e "y/0/1/" -e "1,8s;/centos;/${NGINX_PLUS_VERSION}/centos;" *.repo \
+RUN --mount=from=busybox:musl,src=/bin/,dst=/bin/ printf "%s\n" "Acquire::https::${PACKAGE_REPO}::User-Agent k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt;" >> 90pkgs-nginx \
+    && printf "%s\n" "user_agent=k8s-ic-$IC_VERSION${BUILD_OS##ubi*plus}-dnf" | tee -a nginx-plus-*.repo \
+	&& sed -i -e "s;%VERSION%;${NGINX_PLUS_VERSION};g" -e "s;pkgs.nginx.com;${PACKAGE_REPO};g" -e "s;pkgs.nginx.com/app-protect-security-updates;${PACKAGE_REPO}/app-protect-security-updates;g" *.sources \
+	&& sed -i -e "s;pkgs.nginx.com;${PACKAGE_REPO};g" 90pkgs-nginx \
+	&& sed -i -e "y/0/1/" -e "1,8s;/centos;/${NGINX_PLUS_VERSION}/centos;" -e "s;pkgs.nginx.com;${PACKAGE_REPO};g" -e "s;pkgs.nginx.com/app-protect-security-updates;${PACKAGE_REPO}/app-protect-security-updates;g" *.repo \
 	&& echo HTTP_USER_AGENT="k8s-ic-$IC_VERSION${BUILD_OS##alpine-plus}-apk" > user_agent
 
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/nginx-agent.repo nginx-agent.repo
@@ -197,7 +189,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
 	--mount=type=bind,from=nginx-files,src=app-protect-security-updates.key,target=/tmp/app-protect-security-updates.key \
 	--mount=type=bind,from=nginx-files,src=90pkgs-nginx,target=/etc/apt/apt.conf.d/90pkgs-nginx \
-	--mount=type=bind,from=nginx-files,src=debian-plus-11-test.sources,target=/etc/apt/sources.list.d/nginx-plus.sources \
+	--mount=type=bind,from=nginx-files,src=debian-plus-11.sources,target=/etc/apt/sources.list.d/nginx-plus.sources \
 	--mount=type=bind,from=nginx-files,src=nap-waf-11.sources,target=/tmp/app-protect.sources \
 	--mount=type=bind,from=nginx-files,src=nap-dos-11.sources,target=/tmp/app-protect-dos.sources \
 	--mount=type=bind,from=nginx-files,src=debian-agent-11.sources,target=/etc/apt/sources.list.d/nginx-agent.sources \
