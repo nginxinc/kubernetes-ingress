@@ -103,4 +103,6 @@ type NICResourceCounts struct {
 	IngressAnnotations []string
 	// AppProtectVersion represents the version of AppProtect.
 	AppProtectVersion string
+	// IsPlus represents whether NGINX is Plus or OSS
+	IsPlus bool
 }

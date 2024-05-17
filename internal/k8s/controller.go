@@ -374,6 +374,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 				Name:      os.Getenv("POD_NAME"),
 			},
 			Policies: lbc.getAllPolicies,
+			IsPlus:   lbc.isNginxPlus,
 		}
 		collector, err := telemetry.NewCollector(
 			collectorConfig,

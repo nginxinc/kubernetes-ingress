@@ -197,6 +197,11 @@ func (c *Collector) AppProtectVersion() string {
 	return c.Config.AppProtectVersion
 }
 
+// IsPlusEnabled returns true or false depending on if NGINX is Plus or OSS
+func (c *Collector) IsPlusEnabled() bool {
+	return c.Config.IsPlus
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.
