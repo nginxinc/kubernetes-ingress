@@ -128,7 +128,7 @@ RUN --mount=type=bind,from=alpine-fips-3.19,target=/tmp/fips/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAF and FIPS #############################################
-FROM alpine:3.17@sha256:6e94b5cda2d6fd57d85abf81e81dabaea97a5885f919da676cc19d3551da4061 as alpine-plus-nap-fips
+FROM alpine:3.17@sha256:53cf9478b76f4c8fae126acbdfb79bed6e69e628faff572ebe4a029d3d247d98 as alpine-plus-nap-fips
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
@@ -154,7 +154,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:12-slim@sha256:155280b00ee0133250f7159b567a07d7cd03b1645714c3a7458b2287b0ca83cb AS debian-plus
+FROM debian:12-slim@sha256:804194b909ef23fb995d9412c9378fb3505fe2427b70f3cc425339e48a828fca AS debian-plus
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -177,7 +177,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for Debian with NGINX Plus and App Protect WAF/DoS #############################################
-FROM debian:11-slim@sha256:715354035496a48b9c4c8f146a6f751de70449913773038776eb1f3d01c93989 as debian-plus-nap
+FROM debian:11-slim@sha256:0e75382930ceb533e2f438071307708e79dc86d9b8e433cc6dd1a96872f2651d as debian-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
