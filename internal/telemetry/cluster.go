@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -200,6 +201,11 @@ func (c *Collector) AppProtectVersion() string {
 // IsPlusEnabled returns true or false depending on if NGINX is Plus or OSS
 func (c *Collector) IsPlusEnabled() bool {
 	return c.Config.IsPlus
+}
+
+// InstallationFlags returns the list of all flags
+func (c *Collector) InstallationFlags() []string {
+	return os.Args[1:]
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID
