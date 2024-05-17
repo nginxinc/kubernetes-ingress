@@ -389,6 +389,104 @@ func TestCollectPoliciesReport(t *testing.T) {
 	}
 }
 
+func TestCollectIsPlus(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name   string
+		isPlus bool
+		want   bool
+	}{
+		{
+			name:   "Plus enabled",
+			isPlus: true,
+			want:   true,
+		},
+		{
+			name:   "Plus disabled",
+			isPlus: false,
+			want:   false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:    configurator,
+				K8sClientReader: newTestClientset(node1, kubeNS),
+				Version:         telemetryNICData.ProjectVersion,
+				IsPlus:          tc.isPlus,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			ver := c.IsPlusEnabled()
+
+			if tc.want != ver {
+				t.Errorf("want: %t, got: %t", tc.want, ver)
+			}
+		})
+	}
+}
+
+func TestCollectInvalidIsPlus(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name   string
+		isPlus bool
+		want   bool
+	}{
+		{
+			name:   "Plus disabled but want enabled",
+			isPlus: false,
+			want:   true,
+		},
+		{
+			name:   "Plus disabled but want enabled",
+			isPlus: false,
+			want:   true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:    configurator,
+				K8sClientReader: newTestClientset(node1, kubeNS),
+				Version:         telemetryNICData.ProjectVersion,
+				IsPlus:          tc.isPlus,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			ver := c.IsPlusEnabled()
+
+			if tc.want == ver {
+				t.Errorf("want: %t, got: %t", tc.want, ver)
+			}
+		})
+	}
+}
+
 func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 	t.Parallel()
 

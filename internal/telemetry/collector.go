@@ -74,6 +74,9 @@ type CollectorConfig struct {
 
 	// AppProtectVersion represents the version of App Protect.
 	AppProtectVersion string
+
+	// IsPlus represents whether NGINX is Plus or OSS
+	IsPlus bool
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -137,6 +140,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			GlobalConfiguration:   report.GlobalConfiguration,
 			IngressAnnotations:    report.IngressAnnotations,
 			AppProtectVersion:     report.AppProtectVersion,
+			IsPlus:                report.IsPlus,
 		},
 	}
 
@@ -178,6 +182,7 @@ type Report struct {
 	GlobalConfiguration bool
 	IngressAnnotations  []string
 	AppProtectVersion   string
+	IsPlus              bool
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -248,6 +253,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	appProtectVersion := c.AppProtectVersion()
 
+	isPlus := c.IsPlusEnabled()
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -276,5 +283,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		GlobalConfiguration: c.Config.GlobalConfiguration,
 		IngressAnnotations:  ingressAnnotations,
 		AppProtectVersion:   appProtectVersion,
+		IsPlus:              isPlus,
 	}, err
 }
