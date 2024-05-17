@@ -91,3 +91,10 @@ image-load: ## Load the image into the Kind K8S cluster
 test-lint: ## Run Python linting tools
 	isort .
 	black .
+
+
+.PHONY: upgrade-resources
+upgrade-resources:
+## Create and delete resources for upgrade tests e.g. `make upgrade-resources PYTEST_ARGS="create OR delete"`
+	pip install -r ../tests/requirements.txt --no-deps
+	pytest -v -s -m $(PYTEST_ARGS)
