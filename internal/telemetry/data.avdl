@@ -90,5 +90,8 @@ It is the UID of the `kube-system` Namespace. */
 		/** AppProtectVersion represents the version of AppProtect. */
 		string? AppProtectVersion = null;
 
+		/** IsPlus represents whether NGINX is Plus or OSS */
+		boolean? IsPlus = null;
+
 	}
 }
