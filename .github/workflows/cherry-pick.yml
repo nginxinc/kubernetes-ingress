@@ -10,6 +10,9 @@ permissions:
 
 jobs:
   cherry_pick_to_release:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-22.04
     name: Cherry pick into release-3.5
     if: ${{ contains(github.event.pull_request.labels.*.name, 'dependencies') && github.event.pull_request.merged == true }}
