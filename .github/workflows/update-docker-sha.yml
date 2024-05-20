@@ -62,8 +62,8 @@ jobs:
           branch: chore/image-update-${{ inputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
           author: nginx-bot <integrations@nginx.com>
           labels: |
-            chore
-            dependency
+            dependencies
+            docker
           body: |
             This automated PR updates pinned container image SHAs to latest.
         if: ${{ !inputs.dry_run && steps.update_images.outputs.change_detected == 'true' }}
