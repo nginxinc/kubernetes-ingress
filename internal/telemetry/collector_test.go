@@ -876,6 +876,168 @@ func TestCollectInvalidAppProtectVersion(t *testing.T) {
 	}
 }
 
+func TestCollectInstallationFlags(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		setFlags  []string
+		wantFlags []string
+	}{
+		{
+			name: "first flag",
+			setFlags: []string{
+				"nginx-plus=true",
+			},
+			wantFlags: []string{
+				"nginx-plus=true",
+			},
+		},
+		{
+			name: "second flag",
+			setFlags: []string{
+				"-v=3",
+			},
+			wantFlags: []string{
+				"-v=3",
+			},
+		},
+		{
+			name: "multiple flags",
+			setFlags: []string{
+				"nginx-plus=true",
+				"^\\QTestCollectInstallationFlags\\E$",
+			},
+			wantFlags: []string{
+				"nginx-plus=true",
+				"^\\QTestCollectInstallationFlags\\E$",
+			},
+		},
+		{
+			name:      "no flags",
+			setFlags:  []string{},
+			wantFlags: []string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfigurator(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:      configurator,
+				K8sClientReader:   newTestClientset(node1, kubeNS),
+				Version:           telemetryNICData.ProjectVersion,
+				InstallationFlags: tc.setFlags,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			flags := c.InstallationFlags()
+
+			for _, wantFlag := range tc.wantFlags {
+				found := false
+				for _, flag := range flags {
+					if flag == wantFlag {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("expected flag %s not found in %v", wantFlag, flags)
+				}
+			}
+		})
+	}
+}
+
+func TestCollectInvalidInstallationFlags(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		setFlags  []string
+		wantFlags []string
+	}{
+		{
+			name: "wrong flag",
+			setFlags: []string{
+				"-test.v",
+			},
+			wantFlags: []string{
+				"-nginx-plus7",
+			},
+		},
+		{
+			name: "wrong flag 2",
+			setFlags: []string{
+				"-test.v",
+			},
+			wantFlags: []string{
+				"-test",
+			},
+		},
+		{
+			name: "multiple wrong flags",
+			wantFlags: []string{
+				"-test.v123",
+				"^\\CollectionFlags\\$",
+			},
+		},
+		{
+			name: "nil flags",
+			setFlags: []string{
+				"-test.v",
+			},
+			wantFlags: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:      configurator,
+				K8sClientReader:   newTestClientset(node1, kubeNS),
+				Version:           telemetryNICData.ProjectVersion,
+				InstallationFlags: tc.setFlags,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			flags := c.InstallationFlags()
+
+			for _, wantFlag := range tc.wantFlags {
+				found := false
+				for _, flag := range flags {
+					if flag == wantFlag {
+						found = true
+						break
+					}
+				}
+				if found {
+					t.Errorf("expected flag %s not found in %v", wantFlag, flags)
+				}
+			}
+		})
+	}
+}
+
 func TestCountVirtualServers(t *testing.T) {
 	t.Parallel()
 

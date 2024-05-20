@@ -3,8 +3,8 @@ package telemetry
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
-	"os"
 	"strings"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -203,16 +203,19 @@ func (c *Collector) IsPlusEnabled() bool {
 	return c.Config.IsPlus
 }
 
-// InstallationFlags returns the list of all flags
+// InstallationFlags returns the list of all set flags
 func (c *Collector) InstallationFlags() []string {
-	flags := os.Args[1:]
-	// tests that compare the report currently break with this addition,
-	// this is temp fix until tests are refactored
-	for _, flag := range flags {
-		if flag == "-test.paniconexit0" {
-			return []string{}
+	flags := c.Config.InstallationFlags
+	flag.Visit(func(f *flag.Flag) {
+		switch {
+		case strings.Contains(f.Name, "test."):
+			flags = []string{""}
+		case f.Value.String() == "":
+			flags = append(flags, f.Name)
+		default:
+			flags = append(flags, fmt.Sprintf("%s=%s", f.Name, f.Value.String()))
 		}
-	}
+	})
 	return flags
 }
 

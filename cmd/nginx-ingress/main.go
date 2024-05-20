@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -217,6 +218,7 @@ func main() {
 		TelemetryReportingEndpoint:   telemetryEndpoint,
 		NICVersion:                   version,
 		DynamicWeightChangesReload:   *enableDynamicWeightChangesReload,
+		InstallationFlags:            flag.Args(),
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

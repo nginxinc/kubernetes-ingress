@@ -77,6 +77,9 @@ type CollectorConfig struct {
 
 	// IsPlus represents whether NGINX is Plus or OSS
 	IsPlus bool
+
+	// InstallationFlags represents the list of set flags managed by NIC
+	InstallationFlags []string
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
