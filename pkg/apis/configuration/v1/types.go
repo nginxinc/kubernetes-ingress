@@ -577,6 +577,7 @@ type PolicySpec struct {
 	EgressMTLS    *EgressMTLS    `json:"egressMTLS"`
 	OIDC          *OIDC          `json:"oidc"`
 	WAF           *WAF           `json:"waf"`
+	APIKey        *APIKey        `json:"apiKey"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -674,4 +675,25 @@ type SecurityLog struct {
 	ApLogConf   string `json:"apLogConf"`
 	ApLogBundle string `json:"apLogBundle"`
 	LogDest     string `json:"logDest"`
+}
+
+type APIKey struct {
+	SuppliedIn  SuppliedIn  `json:"suppliedIn"`
+	RejectCodes RejectCodes `json:"rejectCodes,omitempty"`
+	Clients     []Client    `json:"clients"`
+}
+
+type SuppliedIn struct {
+	Header []string `json:"header"`
+	Query  []string `json:"query"`
+}
+
+type RejectCodes struct {
+	NotSupplied int `json:"notSupplied"`
+	NoMatch     int `json:"noMatch"`
+}
+
+type Client struct {
+	ID     string `json:"id"`
+	Secret string `json:"secret"`
 }

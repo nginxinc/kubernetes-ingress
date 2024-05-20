@@ -84,6 +84,7 @@ type Server struct {
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
+	APIKey                    *APIKey
 	WAF                       *WAF
 	Dos                       *Dos
 	PoliciesErrorReturn       *Return
@@ -135,6 +136,19 @@ type OIDC struct {
 	ZoneSyncLeeway    int
 	AuthExtraArgs     string
 	AccessTokenEnable bool
+}
+
+type APIKey struct {
+	Header                []string
+	Query                 []string
+	RejectCodeNotSupplied int
+	RejectCodeNoMatch     int
+	Clients               []Client
+}
+
+type Client struct {
+	ClientID     string
+	EncryptedKey string
 }
 
 // WAF defines WAF configuration.
@@ -197,6 +211,7 @@ type Location struct {
 	BasicAuth                *BasicAuth
 	EgressMTLS               *EgressMTLS
 	OIDC                     bool
+	APIKey                   *APIKey
 	WAF                      *WAF
 	Dos                      *Dos
 	PoliciesErrorReturn      *Return

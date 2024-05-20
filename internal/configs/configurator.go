@@ -830,6 +830,12 @@ func (cnf *Configurator) addOrUpdateHtpasswdSecret(secret *api_v1.Secret) string
 	return cnf.nginxManager.CreateSecret(name, data, nginx.HtpasswdSecretFileMode)
 }
 
+func (cnf *Configurator) addOrUpdateAPIKeySecret(secret *api_v1.Secret) string {
+	name := objectMetaToFileName(&secret.ObjectMeta)
+	data := secret.Data[HtpasswdFileKey]
+	return cnf.nginxManager.CreateSecret(name, data, nginx.HtpasswdSecretFileMode)
+}
+
 // AddOrUpdateResources adds or updates configuration for resources.
 func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloadIfUnchanged bool) (Warnings, error) {
 	allWarnings := newWarnings()
@@ -1989,6 +1995,10 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 		return cnf.addOrUpdateHtpasswdSecret(secret)
 	case secrets.SecretTypeOIDC:
 		// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
+		return ""
+		// how to update multiple secrets
+	case api_v1.SecretTypeOpaque:
+		glog.Infof(secret.Name)
 		return ""
 	default:
 		return cnf.addOrUpdateTLSSecret(secret)

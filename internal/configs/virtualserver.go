@@ -1,6 +1,9 @@
 package configs
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"os"
@@ -825,6 +828,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			JWKSAuthEnabled:           policiesCfg.JWKSAuthEnabled,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
+			APIKey:                    policiesCfg.APIKey,
 			OIDC:                      vsc.oidcPolCfg.oidc,
 			WAF:                       policiesCfg.WAF,
 			Dos:                       dosCfg,
@@ -858,6 +862,7 @@ type policiesCfg struct {
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
+	APIKey          *version2.APIKey
 	WAF             *version2.WAF
 	ErrorReturn     *version2.Return
 	BundleValidator bundleValidator
@@ -1288,6 +1293,66 @@ func (p *policiesCfg) addOIDCConfig(
 	return res
 }
 
+func (p *policiesCfg) addAPIKeyConfig(
+	apiKey *conf_v1.APIKey,
+	polKey string,
+	polNamespace string,
+	secretRefs map[string]*secrets.SecretReference,
+) *validationResults {
+	res := newValidationResults()
+	var clients []version2.Client
+	if p.APIKey != nil {
+		res.addWarningf(
+			"Multiple apiKey policies in the same context is not valid. APIKey policy %s will be ignored",
+			polKey,
+		)
+		res.isError = true
+		return res
+	} else {
+		for _, client := range apiKey.Clients {
+
+			secretKey := fmt.Sprintf("%v/%v", polNamespace, client.Secret)
+			secretRef := secretRefs[secretKey]
+
+			var secretType api_v1.SecretType
+			if secretRef.Secret != nil {
+				secretType = secretRef.Secret.Type
+			}
+			if secretType != "" && secretType != api_v1.SecretTypeOpaque {
+				res.addWarningf("API Key policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, api_v1.SecretTypeOpaque)
+				res.isError = true
+				return res
+			} else if secretRef.Error != nil {
+				res.addWarningf("API Key %s references an invalid secret %s: %v", polKey, secretKey, secretRef.Error)
+				res.isError = true
+				return res
+			}
+			clientSecret := secretRef.Secret.Data["key"] // TODO: use const ClientSecretKey
+
+			h := sha256.New()
+			h.Write([]byte(clientSecret))
+			sha256Hash := hex.EncodeToString(h.Sum(nil))
+			base64Str := base64.URLEncoding.EncodeToString(h.Sum(nil))
+
+			glog.Infof("clientSecret %s", clientSecret)
+			glog.Infof("sha %s", sha256Hash)
+			glog.Infof("base64Str %s", base64Str)
+			clients = append(clients, version2.Client{ClientID: client.ID, EncryptedKey: sha256Hash}) //
+		}
+
+	}
+
+	p.APIKey = &version2.APIKey{
+		Header:                apiKey.SuppliedIn.Header,
+		Query:                 apiKey.SuppliedIn.Query,
+		RejectCodeNotSupplied: apiKey.RejectCodes.NotSupplied,
+		RejectCodeNoMatch:     apiKey.RejectCodes.NoMatch,
+		Clients:               clients,
+	}
+	return res
+
+}
+
 func (p *policiesCfg) addWAFConfig(
 	waf *conf_v1.WAF,
 	polKey string,
@@ -1418,6 +1483,8 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				res = config.addEgressMTLSConfig(pol.Spec.EgressMTLS, key, polNamespace, policyOpts.secretRefs)
 			case pol.Spec.OIDC != nil:
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
+			case pol.Spec.APIKey != nil:
+				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs)
 			case pol.Spec.WAF != nil:
 				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			default:
@@ -1501,6 +1568,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.EgressMTLS = cfg.EgressMTLS
 	location.OIDC = cfg.OIDC
 	location.WAF = cfg.WAF
+	location.APIKey = cfg.APIKey
 	location.PoliciesErrorReturn = cfg.ErrorReturn
 }
 

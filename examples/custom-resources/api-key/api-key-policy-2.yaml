@@ -1,0 +1,17 @@
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  name: api-key-policy-2
+spec:
+  apiKey:
+    suppliedIn:
+      header:
+      - "X-header-name"
+      query:
+      - "queryName"
+    rejectCodes: # optional
+      notSupplied: 408
+      noMatch: 410
+    clients:
+    - id: client2
+      secret: api-key-client-secret-2

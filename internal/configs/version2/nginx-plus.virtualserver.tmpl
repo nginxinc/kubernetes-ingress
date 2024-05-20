@@ -245,6 +245,22 @@ server {
     proxy_ssl_name {{ .SSLName }};
     {{- end }}
 
+    {{- with $s.APIKey}}
+        # API KEY POLICY
+        # not supplied: {{ .RejectCodeNotSupplied }}
+        # no match: {{ .RejectCodeNoMatch }}
+    {{- range $header := .Header}}
+        # header: {{ $header }}
+    {{- end -}}
+    {{- range $query := .Query }}
+        # query: {{ $query }}
+    {{- end -}}
+    {{- range $client := .Clients }}
+        # client: {{ $client.ClientID }}
+        # secret: {{ $client.EncryptedKey }}
+    {{- end }}
+    {{- end }}
+
     {{- with $s.WAF }}
     app_protect_enable {{ .Enable }};
         {{ if .ApPolicy }}
@@ -442,6 +458,23 @@ server {
             {{- if $s.OIDC.AccessTokenEnable }}
         {{ $proxyOrGRPC }}_set_header Authorization "Bearer $access_token";
             {{- end }}
+        {{- end }}
+
+
+        {{- with $l.APIKey}}
+            # API KEY POLICY
+            # not supplied: {{ .RejectCodeNotSupplied }}
+            # no match: {{ .RejectCodeNoMatch }}
+        {{- range $header := .Header}}
+            # header: {{ $header }}
+        {{- end -}}
+        {{- range $query := .Query }}
+            # query: {{ $query }}
+        {{- end -}}
+        {{- range $client := .Clients }}
+            # client: {{ $client.ClientID }}
+            # secret: {{ $client.EncryptedKey }}
+        {{- end }}
         {{- end }}
 
         {{- with $l.WAF }}

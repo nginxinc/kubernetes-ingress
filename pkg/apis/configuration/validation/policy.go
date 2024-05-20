@@ -72,6 +72,11 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 		fieldCount++
 	}
 
+	if spec.APIKey != nil {
+		allErrs = append(allErrs, validateAPIKey(spec.APIKey, fieldPath.Child("apiKey"))...)
+		fieldCount++
+	}
+
 	if spec.WAF != nil {
 		if !isPlus {
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"), "WAF is only supported in NGINX Plus"))
@@ -275,6 +280,14 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateURL(oidc.JWKSURI, fieldPath.Child("jwksURI"))...)
 	allErrs = append(allErrs, validateSecretName(oidc.ClientSecret, fieldPath.Child("clientSecret"))...)
 	return append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
+}
+
+func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
+
+	allErrs := field.ErrorList{}
+
+	return allErrs
+
 }
 
 func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {

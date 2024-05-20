@@ -3168,6 +3168,10 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	if err != nil {
 		glog.Warningf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
+	err = lbc.addAPIKeySecretRefs(virtualServerEx.SecretRefs, policies)
+	if err != nil {
+		glog.Warningf("Error getting APIKey secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+	}
 
 	err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, policies)
 	if err != nil {
@@ -3569,6 +3573,26 @@ func (lbc *LoadBalancerController) addOIDCSecretRefs(secretRefs map[string]*secr
 
 		if secretRef.Error != nil {
 			return secretRef.Error
+		}
+	}
+	return nil
+}
+
+func (lbc *LoadBalancerController) addAPIKeySecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
+	for _, pol := range policies {
+		if pol.Spec.APIKey == nil {
+			continue
+		}
+
+		for _, client := range pol.Spec.APIKey.Clients {
+			secretKey := fmt.Sprintf("%v/%v", pol.Namespace, client.Secret)
+			secretRef := lbc.secretStore.GetSecret(secretKey)
+
+			secretRefs[secretKey] = secretRef
+
+			if secretRef.Error != nil {
+				return secretRef.Error
+			}
 		}
 	}
 	return nil

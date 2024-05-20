@@ -269,6 +269,36 @@ spec:
                       type: string
                     type: array
                 type: object
+              apiKey:
+                properties:
+                  clients:
+                    items:
+                      properties:
+                        id:
+                          type: string
+                        secret:
+                          type: string
+                      type: object
+                    type: array
+                  rejectCodes:
+                    properties:
+                      noMatch:
+                        type: integer
+                      notSupplied:
+                        type: integer
+                    type: object
+                  suppliedIn:
+                    properties:
+                      header:
+                        items:
+                          type: string
+                        type: array
+                      query:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
               basicAuth:
                 description: |-
                   BasicAuth holds HTTP Basic authentication configuration

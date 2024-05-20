@@ -131,7 +131,8 @@ func IsSupportedSecretType(secretType api_v1.SecretType) bool {
 		secretType == SecretTypeCA ||
 		secretType == SecretTypeJWK ||
 		secretType == SecretTypeOIDC ||
-		secretType == SecretTypeHtpasswd
+		secretType == SecretTypeHtpasswd ||
+		secretType == api_v1.SecretTypeOpaque
 }
 
 // ValidateSecret validates the secret. If it is valid, the function returns nil.
@@ -147,6 +148,8 @@ func ValidateSecret(secret *api_v1.Secret) error {
 		return ValidateOIDCSecret(secret)
 	case SecretTypeHtpasswd:
 		return ValidateHtpasswdSecret(secret)
+	case api_v1.SecretTypeOpaque:
+		return nil
 	}
 
 	return fmt.Errorf("Secret is of the unsupported type %v", secret.Type)
