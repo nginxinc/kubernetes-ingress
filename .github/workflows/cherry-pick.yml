@@ -5,6 +5,9 @@ on:
       - main
     types: ["closed"]
 
+permissions:
+  contents: read
+
 jobs:
   cherry_pick_to_release:
     runs-on: ubuntu-latest
