@@ -8,14 +8,14 @@ ARG NGINX_AGENT=false
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM opentracing/nginx-opentracing:nginx-1.25.4@sha256:435e34daea58cbd4d552c9ba5c6e78b084276fc747f092f4e31d7ed39274b2d7 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.25.4@sha256:aa7bdee95afeec4edfacddf3a025a73e283b01628c1ba04597843a2a22855323 as opentracing-lib
 FROM opentracing/nginx-opentracing:nginx-1.25.4-alpine@sha256:ad42445a721582fa78885e7bcd38c5215db8ddc866b5ed4daeb05e50b7bc7bd4 as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 as alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.1.2-alpine3.19@sha256:67595f52053f328fd731bf493d8dc72c1fd956e5f1a2f9a579cc78c5f5f50daa as alpine-fips-3.19
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.25.4-alpine@sha256:02d8d94023878cedf3e3acc55372932a9ba1478b6e2f3357786d916c2af743ba AS alpine
+FROM nginx:1.25.4-alpine@sha256:31bad00311cb5eeb8a6648beadcf67277a175da89989f14727420a80e2e76742 AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -27,7 +27,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.25.4@sha256:6db391d1c0cfb30588ba0bf72ea999404f2764febf0f1f196acd5867ac7efa7e AS debian
+FROM nginx:1.25.4@sha256:9ff236ed47fe39cf1f0acf349d0e5137f8b8a6fd0b46e5117a401010e56222e1 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -40,7 +40,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for UBI #############################################
-FROM nginxcontrib/nginx:1.25.4-ubi@sha256:e5a56115996ebe12fe7678645a4a33fd8ce345c38e778b1f5b058b14267a50de AS ubi
+FROM nginxcontrib/nginx:1.25.4-ubi@sha256:5e6680d2b0f4d984ba2b06466c50a9b8d57b251af205811246bfc64a0cef3821 AS ubi
 ARG IC_VERSION
 
 LABEL name="NGINX Ingress Controller" \
@@ -118,7 +118,7 @@ RUN --mount=type=bind,from=alpine-fips-3.19,target=/tmp/fips/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAF and FIPS #############################################
-FROM alpine:3.17@sha256:6e94b5cda2d6fd57d85abf81e81dabaea97a5885f919da676cc19d3551da4061 as alpine-plus-nap-fips
+FROM alpine:3.17@sha256:53cf9478b76f4c8fae126acbdfb79bed6e69e628faff572ebe4a029d3d247d98 as alpine-plus-nap-fips
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
@@ -144,7 +144,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:12-slim@sha256:ccb33c3ac5b02588fc1d9e4fc09b952e433d0c54d8618d0ee1afadf1f3cf2455 AS debian-plus
+FROM debian:12-slim@sha256:804194b909ef23fb995d9412c9378fb3505fe2427b70f3cc425339e48a828fca AS debian-plus
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -168,7 +168,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for Debian with NGINX Plus and App Protect WAF/DoS #############################################
-FROM debian:11-slim@sha256:a165446a88794db4fec31e35e9441433f9552ae048fb1ed26df352d2b537cb96 as debian-plus-nap
+FROM debian:11-slim@sha256:0e75382930ceb533e2f438071307708e79dc86d9b8e433cc6dd1a96872f2651d as debian-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -224,7 +224,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
-FROM redhat/ubi9-minimal@sha256:582e18f13291d7c686ec4e6e92d20b24c62ae0fc72767c46f30a69b1a6198055 AS ubi-plus
+FROM redhat/ubi9-minimal@sha256:2636170dc55a0931d013014a72ae26c0c2521d4b61a28354b3e2e5369fa335a3 AS ubi-plus
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -243,7 +243,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF #############################################
-FROM redhat/ubi9@sha256:1fafb0905264413501df60d90a92ca32df8a2011cbfb4876ddff5ceb20c8f165 as ubi-9-plus-nap
+FROM redhat/ubi9@sha256:ed84f34cd929ea6b0c247b6daef54dd79602804a32480a052951021caf429494 as ubi-9-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -287,7 +287,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf clean all
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF & DoS #############################################
-FROM redhat/ubi8@sha256:edc34f89cf9c818c2fb28b8ea1780f384db563ce4293dc0ab8e73ec01791e5af as ubi-8-plus-nap
+FROM redhat/ubi8@sha256:83068ea81dd02717b8e39b55cdeb2c1b2c9a3db260f01381b991755d44b15073 as ubi-8-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -403,7 +403,7 @@ LABEL org.opencontainers.image.version="${IC_VERSION}" \
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.22-alpine@sha256:0466223b8544fb7d4ff04748acc4d75a608234bf4e79563bff208d2060c0dd79 AS builder
+FROM golang:1.22-alpine@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 AS builder
 ARG IC_VERSION
 ARG TARGETARCH
 
@@ -416,7 +416,7 @@ RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --m
 
 
 ############################################# Download delve #############################################
-FROM golang:1.22-alpine@sha256:0466223b8544fb7d4ff04748acc4d75a608234bf4e79563bff208d2060c0dd79 AS debug-builder
+FROM golang:1.22-alpine@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 AS debug-builder
 ARG IC_VERSION
 ARG TARGETARCH
 
