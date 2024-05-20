@@ -5,9 +5,15 @@ on:
       - main
     types: ["closed"]
 
+permissions:
+  contents: read
+
 jobs:
   cherry_pick_to_release:
-    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-22.04
     name: Cherry pick into release-3.5
     if: ${{ contains(github.event.pull_request.labels.*.name, 'dependencies') && github.event.pull_request.merged == true }}
     steps:
