@@ -380,6 +380,7 @@ RUN --mount=type=bind,target=/tmp mkdir -p /var/lib/nginx /etc/nginx/secrets /et
 	&& [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
 	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
 	&& if [ -z "${BUILD_OS##*plus*}" ]; then mkdir -p /etc/nginx/state_files/; fi \
+	&& mkdir -p /etc/nginx/njs/ && cp -a /tmp/internal/configs/njs/* /etc/nginx/njs/ \
 	&& chown -R 101:0 /etc/nginx /var/cache/nginx /var/lib/nginx /var/log/nginx /*.tmpl \
 	&& chmod -R g=u /etc/nginx /var/cache/nginx /var/lib/nginx /var/log/nginx /*.tmpl \
 	&& rm -f /etc/nginx/conf.d/*

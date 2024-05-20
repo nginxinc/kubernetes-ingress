@@ -6284,7 +6284,9 @@ func TestGeneratePolicies(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
 
 	for _, test := range tests {
-		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOpts)
+		result, maps := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOpts)
+		//TODO test maps
+		println(maps) // temporary print to use the variable
 		result.BundleValidator = nil
 		if diff := cmp.Diff(test.expected, result); diff != "" {
 			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
@@ -6377,10 +6379,12 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
-			got := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOptions{apResources: &appProtectResourcesForVS{}})
-			got.BundleValidator = nil
-			if !cmp.Equal(tc.want, got) {
-				t.Error(cmp.Diff(tc.want, got))
+			res, maps := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOptions{apResources: &appProtectResourcesForVS{}})
+			//TODO test maps
+			println(maps) // temporary print to use the variable
+			res.BundleValidator = nil
+			if !cmp.Equal(tc.want, res) {
+				t.Error(cmp.Diff(tc.want, res))
 			}
 		})
 	}
@@ -7722,7 +7726,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			vsc.oidcPolCfg = test.oidcPolCfg
 		}
 
-		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, test.policyOpts)
+		result, maps := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, test.policyOpts)
+		//TODO test maps
+		println(maps) // Temporty print to use the variable
 		result.BundleValidator = nil
 		if diff := cmp.Diff(test.expected, result); diff != "" {
 			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)

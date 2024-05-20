@@ -1,4 +1,5 @@
 {{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version2.VirtualServerConfig*/ -}}
+js_import /etc/nginx/njs/apikey_auth.js; # TODO: only import if its needed
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
     {{- if ne $u.UpstreamZoneSize "0" }}zone {{ $u.Name }} {{ $u.UpstreamZoneSize }};{{ end }}
@@ -143,9 +144,39 @@ server {
         {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
     {{- end }}
 
+    # TODO: Do this conditionally
+    location = /_validate_apikey_njs {
+            internal;
+            js_content apikey_auth.validate;
+    }
+
     {{- with $s.BasicAuth }}
     auth_basic {{ printf "%q" .Realm }};
     auth_basic_user_file {{ .Secret }};
+    {{- end }}
+
+    {{- with $s.APIKey}}
+    # API KEY POLICY
+    # not supplied: {{ .RejectCodeNotSupplied }}
+    # no match: {{ .RejectCodeNoMatch }}
+
+    set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
+    js_set $hash_fn_server apikey_auth.hash;
+    js_var $apikey_auth_token $hash_fn_server;
+
+    set $apikey_auth_local_map  $apikey_auth_client_name_api_key_policy; #TODO: dont hardcode variable
+
+    auth_request /_validate_apikey_njs;
+    {{- range $header := .Header}}
+        # header: {{ $header }}
+    {{- end -}}
+    {{- range $query := .Query }}
+        # query: {{ $query }}
+    {{- end -}}
+    {{- range $client := .Clients }}
+        # client: {{ $client.ClientID }}
+        # secret: {{ $client.EncryptedKey }}
+    {{- end }}
     {{- end }}
 
     {{- with $s.EgressMTLS }}
@@ -253,6 +284,30 @@ server {
         {{- with $l.BasicAuth }}
         auth_basic {{ printf "%q" .Realm }};
         auth_basic_user_file {{ .Secret }};
+        {{- end }}
+
+        {{- with $l.APIKey}}
+        # API KEY POLICY
+        # not supplied: {{ .RejectCodeNotSupplied }}
+        # no match: {{ .RejectCodeNoMatch }}
+
+        set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
+        js_set $hash_fn_location apikey_auth.hash;
+        js_var $apikey_auth_token $hash_fn_location;
+
+        set $apikey_auth_local_map  $apikey_auth_client_name_api_key_policy_2; #TODO: dont hardcode variable
+
+        auth_request /_validate_apikey_njs;
+        {{- range $header := .Header}}
+            # header: {{ $header }}
+        {{- end -}}
+        {{- range $query := .Query }}
+            # query: {{ $query }}
+        {{- end -}}
+        {{- range $client := .Clients }}
+            # client: {{ $client.ClientID }}
+            # secret: {{ $client.EncryptedKey }}
+        {{- end }}
         {{- end }}
 
         {{ $proxyOrGRPC := "proxy" }}{{ if $l.GRPCPass }}{{ $proxyOrGRPC = "grpc" }}{{ end }}

@@ -393,6 +393,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	dosResources map[string]*appProtectDosResource,
 ) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
+	var maps []version2.Map
 
 	useCustomListeners := false
 
@@ -415,8 +416,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		vsNamespace:    vsEx.VirtualServer.Namespace,
 		vsName:         vsEx.VirtualServer.Name,
 	}
-	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
+	policiesCfg, mapsFromPolicies := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
 
+	maps = append(maps, mapsFromPolicies...)
 	if policiesCfg.JWKSAuthEnabled {
 		jwtAuthKey := policiesCfg.JWTAuth.Key
 		policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
@@ -510,7 +512,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	var internalRedirectLocations []version2.InternalRedirectLocation
 	var returnLocations []version2.ReturnLocation
 	var splitClients []version2.SplitClient
-	var maps []version2.Map
 	var errorPageLocations []version2.ErrorPageLocation
 	var keyValZones []version2.KeyValZone
 	var keyVals []version2.KeyVal
@@ -566,7 +567,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			vsNamespace:    vsEx.VirtualServer.Namespace,
 			vsName:         vsEx.VirtualServer.Name,
 		}
-		routePoliciesCfg := vsc.generatePolicies(ownerDetails, r.Policies, vsEx.Policies, routeContext, policyOpts)
+		routePoliciesCfg, mapsFromPolicies := vsc.generatePolicies(ownerDetails, r.Policies, vsEx.Policies, routeContext, policyOpts)
+		maps = append(maps, mapsFromPolicies...)
+
 		if policiesCfg.OIDC {
 			routePoliciesCfg.OIDC = policiesCfg.OIDC
 		}
@@ -696,7 +699,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				policyRefs = r.Policies
 				context = subRouteContext
 			}
-			routePoliciesCfg := vsc.generatePolicies(ownerDetails, policyRefs, vsEx.Policies, context, policyOpts)
+			routePoliciesCfg, mapsFromPolicies := vsc.generatePolicies(ownerDetails, policyRefs, vsEx.Policies, context, policyOpts)
+			maps = append(maps, mapsFromPolicies...)
 			if policiesCfg.OIDC {
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
@@ -1298,7 +1302,7 @@ func (p *policiesCfg) addAPIKeyConfig(
 	polKey string,
 	polNamespace string,
 	secretRefs map[string]*secrets.SecretReference,
-) *validationResults {
+) (*validationResults, *version2.Map) {
 	res := newValidationResults()
 	var clients []version2.Client
 	if p.APIKey != nil {
@@ -1307,7 +1311,7 @@ func (p *policiesCfg) addAPIKeyConfig(
 			polKey,
 		)
 		res.isError = true
-		return res
+		return res, nil
 	} else {
 		for _, client := range apiKey.Clients {
 
@@ -1321,11 +1325,11 @@ func (p *policiesCfg) addAPIKeyConfig(
 			if secretType != "" && secretType != api_v1.SecretTypeOpaque {
 				res.addWarningf("API Key policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, api_v1.SecretTypeOpaque)
 				res.isError = true
-				return res
+				return res, nil
 			} else if secretRef.Error != nil {
 				res.addWarningf("API Key %s references an invalid secret %s: %v", polKey, secretKey, secretRef.Error)
 				res.isError = true
-				return res
+				return res, nil
 			}
 			clientSecret := secretRef.Secret.Data["key"] // TODO: use const ClientSecretKey
 
@@ -1342,6 +1346,25 @@ func (p *policiesCfg) addAPIKeyConfig(
 
 	}
 
+	default_parameter := version2.Parameter{
+		Value:  "default",
+		Result: "\"\"",
+	}
+
+	params := []version2.Parameter{default_parameter}
+	for _, client := range clients {
+		params = append(params, version2.Parameter{
+			Value:  fmt.Sprintf("\"%s\"", client.EncryptedKey),
+			Result: fmt.Sprintf("\"%s\"", client.ClientID),
+		})
+	}
+
+	shaToClient := &version2.Map{
+		Source:     "$apikey_auth_token",
+		Variable:   strings.Replace(fmt.Sprintf("$apikey_auth_client_name_%s", strings.Split(polKey, "/")[1]), "-", "_", -1),
+		Parameters: params,
+	}
+
 	p.APIKey = &version2.APIKey{
 		Header:                apiKey.SuppliedIn.Header,
 		Query:                 apiKey.SuppliedIn.Query,
@@ -1349,7 +1372,7 @@ func (p *policiesCfg) addAPIKeyConfig(
 		RejectCodeNoMatch:     apiKey.RejectCodes.NoMatch,
 		Clients:               clients,
 	}
-	return res
+	return res, shaToClient
 
 }
 
@@ -1441,8 +1464,9 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 	policies map[string]*conf_v1.Policy,
 	context string,
 	policyOpts policyOptions,
-) policiesCfg {
+) (policiesCfg, []version2.Map) {
 	config := newPoliciesConfig(vsc.bundleValidator)
+	maps := []version2.Map{}
 
 	for _, p := range policyRefs {
 		polNamespace := p.Namespace
@@ -1484,27 +1508,34 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 			case pol.Spec.OIDC != nil:
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
 			case pol.Spec.APIKey != nil:
-				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs)
+				res, shaToClientMap := config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs)
+				if res != nil && !res.isError && shaToClientMap != nil {
+					maps = append(maps, *shaToClientMap)
+				}
+
 			case pol.Spec.WAF != nil:
 				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			default:
 				res = newValidationResults()
 			}
-			vsc.addWarnings(ownerDetails.owner, res.warnings)
-			if res.isError {
+			if res != nil && len(res.warnings) > 0 {
+				vsc.addWarnings(ownerDetails.owner, res.warnings)
+			}
+
+			if res != nil && res.isError {
 				return policiesCfg{
 					ErrorReturn: &version2.Return{Code: 500},
-				}
+				}, maps
 			}
 		} else {
 			vsc.addWarningf(ownerDetails.owner, "Policy %s is missing or invalid", key)
 			return policiesCfg{
 				ErrorReturn: &version2.Return{Code: 500},
-			}
+			}, maps
 		}
 	}
 
-	return *config
+	return *config, maps
 }
 
 func generateLimitReq(zoneName string, rateLimitPol *conf_v1.RateLimit) version2.LimitReq {
