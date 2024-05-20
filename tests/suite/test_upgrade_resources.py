@@ -23,9 +23,13 @@ vs = f"{TEST_DATA}/upgrade-test-resources/virtual-server.yaml"
 ts = f"{TEST_DATA}/upgrade-test-resources/transport-server.yaml"
 secret = f"{TEST_DATA}/upgrade-test-resources/secret.yaml"
 
-# Below test class only deployes resources for upgrade testing, IC deployment should be done manually via helm.
+"""
+Test class below only deployes resources for upgrade testing, NIC deployment should be done manually via helm.
+Run `make upgrade-resources PYTEST_ARGS="create OR delete"` to create OR delete resources.
+"""
 
 
+@pytest.mark.upgrade
 class TestUpgrade:
     @pytest.mark.create
     def test_create(self, request, kube_apis):
