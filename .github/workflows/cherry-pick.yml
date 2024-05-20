@@ -18,11 +18,11 @@ jobs:
     if: ${{ contains(github.event.pull_request.labels.*.name, 'dependencies') && github.event.pull_request.merged == true }}
     steps:
       - name: Checkout
-        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c1
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
         with:
           fetch-depth: 0
       - name: Cherry pick into release-3.5
-        uses: carloscastrojumo/github-cherry-pick-action@v1.0.1
+        uses: carloscastrojumo/github-cherry-pick-action@v1.0.10
         with:
           branch: release-3.5
           author: nginx-bot <integrations@nginx.com>
