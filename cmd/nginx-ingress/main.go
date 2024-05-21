@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -60,6 +59,7 @@ func main() {
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	parseFlags()
+	parsedFlags := os.Args[1:]
 
 	config, kubeClient := createConfigAndKubeClient()
 
@@ -218,7 +218,7 @@ func main() {
 		TelemetryReportingEndpoint:   telemetryEndpoint,
 		NICVersion:                   version,
 		DynamicWeightChangesReload:   *enableDynamicWeightChangesReload,
-		InstallationFlags:            flag.Args(),
+		InstallationFlags:            parsedFlags,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

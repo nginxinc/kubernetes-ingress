@@ -3,7 +3,6 @@ package telemetry
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"strings"
 
@@ -205,18 +204,7 @@ func (c *Collector) IsPlusEnabled() bool {
 
 // InstallationFlags returns the list of all set flags
 func (c *Collector) InstallationFlags() []string {
-	flags := c.Config.InstallationFlags
-	flag.Visit(func(f *flag.Flag) {
-		switch {
-		case strings.Contains(f.Name, "test."):
-			flags = []string{""}
-		case f.Value.String() == "":
-			flags = append(flags, f.Name)
-		default:
-			flags = append(flags, fmt.Sprintf("%s=%s", f.Name, f.Value.String()))
-		}
-	})
-	return flags
+	return c.Config.InstallationFlags
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

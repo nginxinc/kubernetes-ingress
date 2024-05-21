@@ -906,11 +906,11 @@ func TestCollectInstallationFlags(t *testing.T) {
 			name: "multiple flags",
 			setFlags: []string{
 				"nginx-plus=true",
-				"^\\QTestCollectInstallationFlags\\E$",
+				"-v=3",
 			},
 			wantFlags: []string{
 				"nginx-plus=true",
-				"^\\QTestCollectInstallationFlags\\E$",
+				"-v=3",
 			},
 		},
 		{
@@ -940,99 +940,34 @@ func TestCollectInstallationFlags(t *testing.T) {
 			}
 			c.Collect(context.Background())
 
-			flags := c.InstallationFlags()
-
-			for _, wantFlag := range tc.wantFlags {
-				found := false
-				for _, flag := range flags {
-					if flag == wantFlag {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("expected flag %s not found in %v", wantFlag, flags)
-				}
-			}
-		})
-	}
-}
-
-func TestCollectInvalidInstallationFlags(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		name      string
-		setFlags  []string
-		wantFlags []string
-	}{
-		{
-			name: "wrong flag",
-			setFlags: []string{
-				"-test.v",
-			},
-			wantFlags: []string{
-				"-nginx-plus7",
-			},
-		},
-		{
-			name: "wrong flag 2",
-			setFlags: []string{
-				"-test.v",
-			},
-			wantFlags: []string{
-				"-test",
-			},
-		},
-		{
-			name: "multiple wrong flags",
-			wantFlags: []string{
-				"-test.v123",
-				"^\\CollectionFlags\\$",
-			},
-		},
-		{
-			name: "nil flags",
-			setFlags: []string{
-				"-test.v",
-			},
-			wantFlags: nil,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			buf := &bytes.Buffer{}
-			exp := &telemetry.StdoutExporter{Endpoint: buf}
-
-			configurator := newConfiguratorWithIngress(t)
-
-			cfg := telemetry.CollectorConfig{
-				Configurator:      configurator,
-				K8sClientReader:   newTestClientset(node1, kubeNS),
-				Version:           telemetryNICData.ProjectVersion,
-				InstallationFlags: tc.setFlags,
+			telData := tel.Data{
+				ProjectName:         telemetryNICData.ProjectName,
+				ProjectVersion:      telemetryNICData.ProjectVersion,
+				ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+				ClusterNodeCount:    1,
+				ClusterID:           telemetryNICData.ClusterID,
+				ClusterVersion:      telemetryNICData.ClusterVersion,
+				ClusterPlatform:     "other",
 			}
 
-			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
-			if err != nil {
-				t.Fatal(err)
+			nicResourceCounts := telemetry.NICResourceCounts{
+				VirtualServers:      0,
+				VirtualServerRoutes: 0,
+				TransportServers:    0,
+				Ingresses:           0,
+				InstallationFlags:   tc.wantFlags,
 			}
-			c.Collect(context.Background())
 
-			flags := c.InstallationFlags()
+			td := telemetry.Data{
+				Data:              telData,
+				NICResourceCounts: nicResourceCounts,
+			}
 
-			for _, wantFlag := range tc.wantFlags {
-				found := false
-				for _, flag := range flags {
-					if flag == wantFlag {
-						found = true
-						break
-					}
-				}
-				if found {
-					t.Errorf("expected flag %s not found in %v", wantFlag, flags)
-				}
+			want := fmt.Sprintf("%+v", &td)
+
+			got := buf.String()
+			if !cmp.Equal(want, got) {
+				t.Error(cmp.Diff(got, want))
 			}
 		})
 	}
