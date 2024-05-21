@@ -619,8 +619,8 @@ jobs:
       - name: Upload Test Results
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: ${{ steps.smoke-tests.outputs.test-results-name }}
-          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
+          name: ${{ steps.smoke-tests.outputs.test-results-name }}-${{ matrix.k8s }}
+          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}-${{ matrix.k8s }}.html
         if: always()
 
   smoke-results:

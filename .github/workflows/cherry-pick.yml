@@ -14,19 +14,26 @@ jobs:
       contents: write
       pull-requests: write
     runs-on: ubuntu-22.04
-    name: Cherry pick into release-3.5
+    name: Cherry pick into release branch
     if: ${{ contains(github.event.pull_request.labels.*.name, 'dependencies') && github.event.pull_request.merged == true }}
     steps:
       - name: Checkout
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           fetch-depth: 0
-      - name: Cherry pick into release-3.5
-        uses: carloscastrojumo/github-cherry-pick-action@v1.0.10
+
+      - name: Set release branch variable
+        id: branch
+        run: |
+          branch=$(git branch -a | egrep '^\s+remotes/origin/release' | awk '{print $1}' | sort -u | tail -n 1)
+          release_branch=$(basename ${branch})
+          echo "branch=${release_branch}" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Cherry pick into ${{ steps.branch.outputs.branch }}
+        uses: carloscastrojumo/github-cherry-pick-action@503773289f4a459069c832dc628826685b75b4b3 # v1.0.10
         with:
-          branch: release-3.5
+          branch: ${{ steps.branch.outputs.branch }}
           author: nginx-bot <integrations@nginx.com>
           labels: |
             dependencies
-          reviewers: |
-            kic
