@@ -4,7 +4,7 @@ doctypes:
 - ''
 title: Configuration
 toc: true
-weight: 1900
+weight: 200
 ---
 
 This document explains how to use F5 NGINX Ingress Controller to configure NGINX App Protect WAF.
@@ -149,7 +149,7 @@ You can define NGINX App Protect WAF [User-Defined Signatures](/nginx-app-protec
 
  > **Note**: The field `revisionDatetime` is not currently supported.
 
-> **Note**: `APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Refer to [NGINX Fails to Start or Reload]({{< relref "troubleshooting/troubleshooting-app-protect-waf.md#nginx-fails-to-start-or-reload" >}}) for more information.
+> **Note**: `APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Refer to [NGINX Fails to Start or Reload]({{< relref "installation/integrations/app-protect-waf/troubleshooting-app-protect-waf.md#nginx-fails-to-start-or-reload" >}}) for more information.
 
 To add the [User Defined Signatures](https://docs.nginx.com/nginx-app-protect-waf/configuration-guide/configuration/#user-defined-signatures) to a VirtualServer or Ingress resource:
 

@@ -2,9 +2,9 @@
 docs: DOCS-1456
 doctypes:
 - ''
-title: Troubleshooting with NGINX App Protect DoS
+title: Troubleshooting NGINX App Protect DoS
 toc: true
-weight: 600
+weight: 400
 ---
 
 This document describes how to troubleshoot problems when using NGINX Ingress Controller and the App Protect DoS module.
