@@ -27,7 +27,6 @@ spec:
   name: "my-dos"
   apDosMonitor:
     uri: "webapp.example.com"
-
 ```
 
 {{% table %}}
@@ -95,8 +94,8 @@ The Ingress Controller validates the fields of a dos protected resource. If a re
 
 You can use `kubectl` to check if the Ingress Controller successfully applied a dos protected resource configuration. For our example `dos-protected` dos protected resource, we can run:
 
-```
-$ kubectl describe dosprotectedresource dos-protected
+```shell
+kubectl describe dosprotectedresource dos-protected
 . . .
 Events:
   Type    Reason          Age                From                      Message
@@ -108,8 +107,8 @@ Note how the events section includes a Normal event with the AddedOrUpdated reas
 
 If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a dos protected resource `dos-protected` with an invalid URI `bad` in the `dosSecurityLog/dosLogDest` field, you will get:
 
-```
-$ kubectl describe policy webapp-policy
+```shell
+kubectl describe policy webapp-policy
 . . .
 Events:
   Type     Reason    Age   From                      Message

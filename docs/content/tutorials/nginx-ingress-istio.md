@@ -30,26 +30,25 @@ It is crucial to make sure you install Istio **BEFORE** installing NGINX Ingress
 
 You can install Istio by your preferred method (helm, operator, etc.). In this case, I ran the following command to install Istio into my cluster:
 
-```console
+```shell
 istioctl install --set profile=minimal
 ```
 
 We need to ensure that Istio injects sidecar proxies into our namespace for testing. To do so, we need to tell Istio what namespaces to inject sidecars into. We can do that with the following command:
 
-```console
-
+```shell
 kubectl label ns <namespace_specified> istio-injection=enabled
 ```
 
 Before proceeding, and before installing NGINX Ingress Controller you need to tell Istio that it will be injecting sidecars with the NGINX Ingress controller pods as they are deployed.
 
-```console
+```shell
 kubectl label namespace nginx-ingress istio-injection=enabled
 ```
 
 Using `kubectl`, we can see that the namespace for our demo (nginx-ingress) now has `istio-injection=enabled` specified:
 
-```console
+```shell
 kubectl get namespaces -A --show-labels
 
 
@@ -116,7 +115,7 @@ spec:
 
 We can now see that after configuring Istio, an Istio sidecar proxy has been installed into the same pod as NGINX Ingress Controller. Now, there are two containers in the same pod for NGINX Ingress Controller: the NGINX Ingress controller container and the Istio sidecar proxy container.
 
-```console
+```shell
 kubectl get pods -A
 
 NAMESPACE       NAME                                      READY   STATUS    RESTARTS   AGE
@@ -190,7 +189,7 @@ NGINX Ingress `upstreams` will be populated with the `Service/cluster IP`. In th
 
 Now we can test our NGINX Ingress with Istio setup with a simple curl request to our application.
 
-```console
+```shell
 curl -kI https://cafe.example.com/coffee
 
 HTTP/1.1 200 OK

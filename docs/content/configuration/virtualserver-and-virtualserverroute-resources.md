@@ -936,7 +936,7 @@ You can use the usual `kubectl` commands to work with VirtualServer and VirtualS
 
 For example, the following command creates a VirtualServer resource defined in `cafe-virtual-server.yaml` with the name `cafe`:
 
-```console
+```shell
 kubectl apply -f cafe-virtual-server.yaml
 
 virtualserver.k8s.nginx.org "cafe" created
@@ -944,7 +944,7 @@ virtualserver.k8s.nginx.org "cafe" created
 
 You can get the resource by running:
 
-```console
+```shell
 kubectl get virtualserver cafe
 
 NAME   STATE   HOST                   IP            PORTS      AGE
@@ -1024,7 +1024,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
 - Example of `kubectl` validation:
 
-    ```console
+    ```shell
     kubectl apply -f cafe-virtual-server.yaml
 
       error: error validating "cafe-virtual-server.yaml": error validating data: ValidationError(VirtualServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.VirtualServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
@@ -1032,7 +1032,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
 - Example of Kubernetes API server validation:
 
-    ```console
+    ```shell
     kubectl apply -f cafe-virtual-server.yaml --validate=false
 
       The VirtualServer "cafe" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
@@ -1047,7 +1047,7 @@ The Ingress Controller validates the fields of the VirtualServer and VirtualServ
 
 You can check if the Ingress Controller successfully applied the configuration for a VirtualServer. For our example `cafe` VirtualServer, we can run:
 
-```console
+```shell
 kubectl describe vs cafe
 
 . . .
@@ -1061,7 +1061,7 @@ Note how the events section includes a Normal event with the AddedOrUpdated reas
 
 If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a VirtualServer `cafe` with two upstream with the same name `tea`, you will get:
 
-```console
+```shell
 kubectl describe vs cafe
 
 . . .
@@ -1075,7 +1075,7 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 Additionally, this information is also available in the `status` field of the VirtualServer resource. Note the Status section of the VirtualServer:
 
-```console
+```shell
 kubectl describe vs cafe
 
 . . .

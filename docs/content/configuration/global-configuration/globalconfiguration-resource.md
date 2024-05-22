@@ -77,15 +77,15 @@ You can use the usual `kubectl` commands to work with a GlobalConfiguration reso
 
 For example, the following command creates a GlobalConfiguration resource defined in `global-configuration.yaml` with the name `nginx-configuration`:
 
-```
-$ kubectl apply -f global-configuration.yaml
+```shell
+kubectl apply -f global-configuration.yaml
 globalconfiguration.k8s.nginx.org/nginx-configuration created
 ```
 
 Assuming the namespace of the resource is `nginx-ingress`, you can get the resource by running:
 
-```
-$ kubectl get globalconfiguration nginx-configuration -n nginx-ingress
+```shell
+kubectl get globalconfiguration nginx-configuration -n nginx-ingress
 NAME                  AGE
 nginx-configuration   13s
 ```
@@ -128,8 +128,8 @@ The Ingress Controller validates the fields of a GlobalConfiguration resource. I
 
 You can check if the Ingress Controller successfully applied the configuration for a GlobalConfiguration. For our  `nginx-configuration` GlobalConfiguration, we can run:
 
-```
-$ kubectl describe gc nginx-configuration -n nginx-ingress
+```shell
+kubectl describe gc nginx-configuration -n nginx-ingress
 . . .
 Events:
   Type     Reason    Age   From                      Message
@@ -141,8 +141,8 @@ Note how the events section includes a Normal event with the Updated reason that
 
 If you create a GlobalConfiguration `nginx-configuration` with two or more listeners that have the same protocol UDP and port 53, you will get:
 
-```
-$ kubectl describe gc nginx-configuration -n nginx-ingress
+```shell
+kubectl describe gc nginx-configuration -n nginx-ingress
 . . .
 Events:
   Type     Reason    Age   From                      Message

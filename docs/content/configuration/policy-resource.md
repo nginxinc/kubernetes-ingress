@@ -501,7 +501,7 @@ You can use the usual `kubectl` commands to work with Policy resources, just as 
 
 For example, the following command creates a Policy resource defined in `access-control-policy-allow.yaml` with the name `webapp-policy`:
 
-```console
+```shell
 kubectl apply -f access-control-policy-allow.yaml
 
 policy.k8s.nginx.org/webapp-policy configured
@@ -509,7 +509,7 @@ policy.k8s.nginx.org/webapp-policy configured
 
 You can get the resource by running:
 
-```console
+```shell
 kubectl get policy webapp-policy
 
 NAME            AGE
@@ -669,7 +669,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
 - Example of `kubectl` validation:
 
-    ```console
+    ```shell
     kubectl apply -f access-control-policy-allow.yaml
 
     error: error validating "access-control-policy-allow.yaml": error validating data: ValidationError(Policy.spec.accessControl.allow): invalid type for org.nginx.k8s.v1.Policy.spec.accessControl.allow: got "string", expected "array"; if you choose to ignore these errors, turn validation off with --validate=false
@@ -677,7 +677,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
 - Example of Kubernetes API server validation:
 
-    ```console
+    ```shell
     kubectl apply -f access-control-policy-allow.yaml --validate=false
 
     The Policy "webapp-policy" is invalid: spec.accessControl.allow: Invalid value: "string": spec.accessControl.allow in body must be of type array: "string"
@@ -691,7 +691,7 @@ NGINX Ingress Controller validates the fields of a Policy resource. If a resourc
 
 You can use `kubectl` to check whether or not NGINX Ingress Controller successfully applied a Policy configuration. For our example `webapp-policy` Policy, we can run:
 
-```console
+```shell
 kubectl describe pol webapp-policy
 
 . . .
@@ -705,7 +705,7 @@ Note how the events section includes a Normal event with the AddedOrUpdated reas
 
 If you create an invalid resource, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create a Policy `webapp-policy` with an invalid IP `10.0.0.` in the `allow` field, you will get:
 
-```console
+```shell
 kubectl describe policy webapp-policy
 
 . . .
@@ -719,7 +719,7 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 Additionally, this information is also available in the `status` field of the Policy resource. Note the Status section of the Policy:
 
-```console
+```shell
 kubectl describe pol webapp-policy
 
 . . .
