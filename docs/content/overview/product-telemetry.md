@@ -46,10 +46,10 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **EgressMTLSPolicies** Number of EgressMTLS policies.
 - **OIDCPolicies** Number of OIDC policies.
 - **WAFPolicies** Number of WAF policies.
-- **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.
-- **AppProtectVersion** The AppProtect version
+- **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.[
+- **AppProtectVersion** The AppProtect version]()
 - **IsPlus** Represents whether NGINX is Plus or OSS
-- **InstallationFlags* List of flags managed by NGINX Ingress Controller 
+- **InstallationFlags** List of command line arguments configured for NGINX Ingress Controller
 
 ## Opt out
 
