@@ -49,6 +49,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.
 - **AppProtectVersion** The AppProtect version
 - **IsPlus** Represents whether NGINX is Plus or OSS
+- **InstallationFlags** List of command line arguments configured for NGINX Ingress Controller
 
 ## Opt out
 

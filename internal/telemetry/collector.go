@@ -77,6 +77,9 @@ type CollectorConfig struct {
 
 	// IsPlus represents whether NGINX is Plus or OSS
 	IsPlus bool
+
+	// InstallationFlags represents the list of set flags managed by NIC
+	InstallationFlags []string
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -141,6 +144,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			IngressAnnotations:    report.IngressAnnotations,
 			AppProtectVersion:     report.AppProtectVersion,
 			IsPlus:                report.IsPlus,
+			InstallationFlags:     report.InstallationFlags,
 		},
 	}
 
@@ -183,6 +187,7 @@ type Report struct {
 	IngressAnnotations  []string
 	AppProtectVersion   string
 	IsPlus              bool
+	InstallationFlags   []string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -255,6 +260,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	isPlus := c.IsPlusEnabled()
 
+	installationFlags := c.InstallationFlags()
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -284,5 +291,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		IngressAnnotations:  ingressAnnotations,
 		AppProtectVersion:   appProtectVersion,
 		IsPlus:              isPlus,
+		InstallationFlags:   installationFlags,
 	}, err
 }

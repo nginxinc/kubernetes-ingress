@@ -218,6 +218,7 @@ type NewLoadBalancerControllerInput struct {
 	TelemetryReportingEndpoint   string
 	NICVersion                   string
 	DynamicWeightChangesReload   bool
+	InstallationFlags            []string
 }
 
 // NewLoadBalancerController creates a controller
@@ -366,6 +367,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			K8sClientReader:     input.KubeClient,
 			Version:             input.NICVersion,
 			AppProtectVersion:   input.AppProtectVersion,
+			InstallationFlags:   input.InstallationFlags,
 			GlobalConfiguration: lbc.watchGlobalConfiguration,
 			Configurator:        lbc.configurator,
 			SecretStore:         lbc.secretStore,
