@@ -1,6 +1,5 @@
 {{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version2.VirtualServerConfig*/ -}}
 
-js_import /etc/nginx/njs/apikey_auth.js; # TODO: only import if its needed
 
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {

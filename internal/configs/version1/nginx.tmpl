@@ -1,4 +1,5 @@
 {{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.MainConfig*/ -}}
+
 worker_processes  {{.WorkerProcesses}};
 {{- if .WorkerRlimitNofile}}
 worker_rlimit_nofile {{.WorkerRlimitNofile}};{{end}}
@@ -31,6 +32,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size {{.MapHashMaxSize}};
     map_hash_bucket_size {{.MapHashBucketSize}};
+
+
+    js_import /etc/nginx/njs/apikey_auth.js; # TODO: only import if its needed
 
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}
