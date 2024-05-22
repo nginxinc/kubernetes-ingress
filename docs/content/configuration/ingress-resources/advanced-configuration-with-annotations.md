@@ -57,7 +57,7 @@ NGINX Ingress Controller validates the annotations of Ingress resources. If an I
 
 You can check if the Ingress Controller successfully applied the configuration for an Ingress. For our example `cafe-ingress-with-annotations` Ingress, we can run:
 
-```console
+```shell
 kubectl describe ing cafe-ingress-with-annotations
 
 . . .
@@ -71,7 +71,7 @@ Note how the events section includes a Normal event with the AddedOrUpdated reas
 
 If you create an invalid Ingress, the Ingress Controller will reject it and emit a Rejected event. For example, if you create an Ingress `cafe-ingress-with-annotations`, with an annotation `nginx.org/redirect-to-https` set to `yes please` instead of `true`, you will get:
 
-```console
+```shell
 kubectl describe ing cafe-ingress-with-annotations
 
 . . .

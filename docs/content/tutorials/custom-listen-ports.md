@@ -141,7 +141,7 @@ If you view the `NGINX` configuration .conf file using `nginx -T`, you should se
 
 Here is an example output of the `NGINX` configuration that has been generated:
 
-```console
+```shell
 kubectl exec -it -n nginx-ingress nginx-ingress-54bffd78d9-v7bns -- nginx -T
 ```
 

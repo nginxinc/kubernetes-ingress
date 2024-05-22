@@ -38,7 +38,7 @@ kubectl apply -f crds/
 
 Alternatively, CRDs can be upgraded without pulling the chart by running:
 
-```console
+```shell
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.1/deploy/crds.yaml
 ```
 

@@ -104,7 +104,7 @@ If a snippet includes an invalid NGINX configuration, the Ingress Controller wil
 
 An example of an error from the logs:
 
-```
+```shell
 [emerg] 31#31: unknown directive "badd_header" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54
 Event(v1.ObjectReference{Kind:"Ingress", Namespace:"default", Name:"cafe-ingress-with-snippets", UID:"f9656dc9-63a6-41dd-a499-525b0e0309bb", APIVersion:"extensions/v1beta1", ResourceVersion:"2322030", FieldPath:""}): type: 'Warning' reason: 'AddedOrUpdatedWithError' Configuration for default/cafe-ingress-with-snippets was added or updated, but not applied: Error reloading NGINX for default/cafe-ingress-with-snippets: nginx reload failed: Command /usr/sbin/nginx -s reload stdout: ""
 stderr: "nginx: [emerg] unknown directive \"badd_header\" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54\n"
@@ -113,7 +113,7 @@ finished with error: exit status 1
 
 An example of an event with an error (you can view events associated with the Ingress by running `kubectl describe -n nginx-ingress ingress nginx-ingress`):
 
-```
+```shell
 Events:
 Type     Reason                   Age                From                      Message
 ----     ------                   ----               ----                      -------
