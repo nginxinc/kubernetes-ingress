@@ -47,7 +47,7 @@ Usage Reporting needs a user account to send usage data to NGINX Instance Manage
 
 1. Create the Kubernetes namespace `nginx-cluster-connector` for Usage Reporting:
 
-    ```console
+    ```shell
     kubectl create namespace nginx-cluster-connector
     ```
 
@@ -57,7 +57,7 @@ To make the credential available to Usage Reporting, we need to create a Kuberne
 
 2. The username and password created in the previous section are required to connect the NGINX Management Suite API. Both the username and password are stored in the Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`. To obtain the base64 representation of a string, use the following command:
 
-    ```console
+    ```shell
     echo -n 'foo' | base64
     # Zm9v
     echo -n 'bar' | base64
@@ -84,7 +84,7 @@ To make the credential available to Usage Reporting, we need to create a Kuberne
 
 4. Deploy the Kubernetes secret created in step 5 to the Kubernetes cluster:
 
-    ```console
+    ```shell
     kubectl apply -f nms-basic-auth.yaml
     ```
 
@@ -104,7 +104,7 @@ For more information, read the [Command-line Arguments](#command-line-arguments)
 
 6. To deploy Usage Reporting, run the following command to deploy it to your Kubernetes cluster:
 
-   ```console
+   ```shell
    kubectl apply -f cluster-connector.yaml
    ```
 
@@ -201,7 +201,7 @@ curl --user "foo:bar" https://nms.example.com/api/platform/v1/k8s-usage/d290f1ee
 
 To remove Usage Reporting from your Kubernetes cluster, run the following command:
 
-```console
+```shell
 kubectl delete -f cluster-connector.yaml
 ```
 

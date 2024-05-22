@@ -112,7 +112,7 @@ data:
 
 If you are using `helm`, you can adjust these two settings:
 
-```
+```none
 controller.nginxDebug = true or false
 controller.loglevel = 1 to 3 value
 ```
