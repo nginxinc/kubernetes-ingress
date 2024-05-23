@@ -2,18 +2,18 @@
 docs: DOCS-1456
 doctypes:
 - ''
-title: Troubleshooting with NGINX App Protect DoS
+title: Troubleshooting NGINX App Protect DoS
 toc: true
-weight: 600
+weight: 400
 ---
 
 This document describes how to troubleshoot problems when using NGINX Ingress Controller and the App Protect DoS module.
 
-To troubleshoot other parts of NGINX Ingress Controller, check the [troubleshooting]({{< relref "troubleshooting/troubleshoot-common" >}}) section of the documentation.
+To troubleshoot other parts of NGINX Ingress Controller, check the [troubleshooting]({{< relref "troubleshooting/troubleshoot-common.md" >}}) section of the documentation.
 
-## Potential Problems
+## Potential problems
 
-The table below categorizes some potential problems with NGINX Ingress Controller when the App Protect DoS module is enabled. It suggests how to troubleshoot those problems, using one or more methods from the next section.
+The table below outlines potential problems with NGINX Ingress Controller when the App Protect DoS module is enabled. It suggests how to troubleshoot those problems with methods explained in the next section.
 
 {{% table %}}
 |Problem area | Symptom | Troubleshooting method | Common cause |
@@ -22,7 +22,7 @@ The table below categorizes some potential problems with NGINX Ingress Controlle
 |DosProtectedResource, APDosLogConf, APDosPolicy or Ingress Resource. | The configuration is not applied. | Check the events of the DosProtectedResource, APDosLogConf, APDosPolicy and Ingress Resource, check the Ingress Controller logs. | DosProtectedResource, APDosLogConf or APDosPolicy is invalid. |
 {{% /table %}}
 
-## Troubleshooting Methods
+## Troubleshooting ethods
 
 ### Checking NGINX Ingress Controller and App Protect DoS logs
 
