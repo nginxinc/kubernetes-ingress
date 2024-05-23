@@ -33,7 +33,7 @@ App Protect logs are part of NGINX Ingress Controller logs when the module is en
 
 For App Protect specific logs, look for messages starting with `APP_PROTECT`, for example:
 
-```
+```shell
 2020/07/10 11:13:20 [notice] 17#17: APP_PROTECT { "event": "configuration_load_success", "software_version": "2.52.1", "completed_successfully":true,"attack_signatures_package":{"revision_datetime":"2020-06-18T10:11:32Z","version":"2020.06.18"}}
 ```
 

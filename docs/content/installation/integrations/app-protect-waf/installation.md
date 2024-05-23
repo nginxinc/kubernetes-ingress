@@ -27,7 +27,7 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 
 1. Clone the NGINX Ingress Controller repository:
 
-    ```console
+    ```shell
     git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.1
     cd kubernetes-ingress
     ```
