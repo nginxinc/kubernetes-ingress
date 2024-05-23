@@ -1,6 +1,9 @@
 ---
-title: "Troubleshooting Policy Resources"
-description: "This page describes how to troubleshoot NGINX Ingress Controller Policy Resources."
+docs: DOCS-1457
+doctypes:
+- ''
+title: Troubleshooting Policy resources
+toc: true
 weight: 200
 doctypes: [""]
 toc: true
@@ -13,7 +16,8 @@ After you create or update a Policy resource, you can use `kubectl describe` to 
 
 ```shell
 kubectl describe pol webapp-policy
-
+```
+```shell
 Events:
   Type    Reason          Age   From                      Message
   ----    ------          ----  ----                      -------
@@ -24,7 +28,7 @@ The events section has a *Normal* event with the *AddedOrUpdated reason*, indica
 
 However, the fact that a policy was accepted doesn’t guarantee that the NGINX configuration was successfully applied.
 
-To verify the configuration applied, check the events of the [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver) that reference the policy.
+To verify the configuration applied, check the events of the [VirtualServer and VirtualServerRoute resources]({{< relref "troubleshooting/troubleshoot-virtualserver.md" >}}) that reference the policy.
 
 ## ConfigMap Resources
 

@@ -31,7 +31,7 @@ spec:
       timeout: 5
   ```
 
-2. Enable App Protect DoS on an Ingress by adding an annotation on the Ingress. Set the value of the annotation to the qualified identifier(`namespace/name`) of a DosProtectedResource:
+2. Enable App Protect DoS for an Ingress resource by adding an annotation to the Ingress. Set the value of the annotation to the qualified identifier(`namespace/name`) of a DosProtectedResource:
 
   ```yaml
    apiVersion: networking.k8s.io/v1
@@ -42,7 +42,7 @@ spec:
          appprotectdos.f5.com/app-protect-dos-resource: "default/dos-protected"
   ```
 
-3. Enable App Protect DoS on a VirtualServer by setting the `dos` field value to the qualified identifier(`namespace/name`) of a DosProtectedResource:
+3. Enable App Protect DoS on a VirtualServer resource by setting the `dos` field value to the qualified identifier(`namespace/name`) of a DosProtectedResource:
 
   ```yaml
 apiVersion: k8s.nginx.org/v1
@@ -75,10 +75,10 @@ For example, say you want to use DoS Policy as shown below:
    bad_actors: "on",
    automation_tools_detection: "on",
    tls_fingerprint: "on",
-}
+   }
   ```
 
-You would create an `APDosPolicy` resource with the policy defined in the `spec`, as shown below:
+Create an `APDosPolicy` resource with the policy defined in the `spec`, as shown below:
 
   ```yaml
    apiVersion: appprotectdos.f5.com/v1beta1
