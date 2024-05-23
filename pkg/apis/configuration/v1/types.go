@@ -606,6 +606,7 @@ type RateLimit struct {
 	DryRun     *bool  `json:"dryRun"`
 	LogLevel   string `json:"logLevel"`
 	RejectCode *int   `json:"rejectCode"`
+	Scale      bool   `json:"scale"`
 }
 
 // JWTAuth holds JWT authentication configuration.

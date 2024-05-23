@@ -5913,6 +5913,47 @@ func TestGeneratePolicies(t *testing.T) {
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
+					Name:      "rateLimitScale-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/rateLimitScale-policy": {
+					Spec: conf_v1.PolicySpec{
+						RateLimit: &conf_v1.RateLimit{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							LogLevel: "notice",
+							Scale:    true,
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				LimitReqZones: []version2.LimitReqZone{
+					{
+						Key:      "test",
+						ZoneSize: "10M",
+						Rate:     "5r/s",
+						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+					},
+				},
+				LimitReqOptions: version2.LimitReqOptions{
+					LogLevel:   "notice",
+					RejectCode: 503,
+				},
+				LimitReqs: []version2.LimitReq{
+					{
+						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+					},
+				},
+			},
+			msg: "rate limit reference with scale",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
 					Name:      "jwt-policy",
 					Namespace: "default",
 				},
@@ -6282,6 +6323,8 @@ func TestGeneratePolicies(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+	// required to test the scaling of the ratelimit
+	vsc.IngressControllerReplicas = 2
 
 	for _, test := range tests {
 		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOpts)

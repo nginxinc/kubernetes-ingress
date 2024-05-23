@@ -1244,6 +1244,70 @@ func TestGenerateNginxCfgForMergeableIngressesForLimitReq(t *testing.T) {
 	}
 }
 
+func TestGenerateNginxCfgForLimitReqWithScaling(t *testing.T) {
+	t.Parallel()
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-rate"] = "200r/s"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-key"] = "${request_uri}"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-burst"] = "100"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-no-delay"] = "true"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-delay"] = "80"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-reject-code"] = "503"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-dry-run"] = "true"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-log-level"] = "info"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-zone-size"] = "11m"
+	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-scale"] = "true"
+
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expectedZones := []version1.LimitReqZone{
+		{
+			Name: "default/cafe-ingress",
+			Key:  "${request_uri}",
+			Size: "11m",
+			Rate: "50r/s",
+		},
+	}
+
+	expectedReqs := &version1.LimitReq{
+		Zone:       "default/cafe-ingress",
+		Burst:      100,
+		Delay:      80,
+		NoDelay:    true,
+		DryRun:     true,
+		LogLevel:   "info",
+		RejectCode: 503,
+	}
+
+	result, warnings := generateNginxCfg(NginxCfgParams{
+		ingEx:                     &cafeIngressEx,
+		baseCfgParams:             configParams,
+		staticParams:              &StaticConfigParams{},
+		isPlus:                    isPlus,
+		ingressControllerReplicas: 4,
+	})
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+
+	for _, server := range result.Servers {
+		for _, location := range server.Locations {
+			if !reflect.DeepEqual(location.LimitReq, expectedReqs) {
+				t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+			}
+		}
+	}
+
+	if !reflect.DeepEqual(result.LimitReqZones, expectedZones) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.LimitReqZones, expectedZones)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
+	}
+}
+
 func createMergeableCafeIngress() *MergeableIngresses {
 	master := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -2376,6 +2440,62 @@ func TestGetBackendPortAsString(t *testing.T) {
 		result := GetBackendPortAsString(test.port)
 		if result != test.expected {
 			t.Errorf("GetBackendPortAsString(%+v) returned %q but expected %q", test.port, result, test.expected)
+		}
+	}
+}
+
+func TestScaleRatelimit(t *testing.T) {
+	tests := []struct {
+		input    string
+		pods     int
+		expected string
+	}{
+		{
+			input:    "10r/s",
+			pods:     0,
+			expected: "10r/s",
+		},
+		{
+			input:    "10r/s",
+			pods:     1,
+			expected: "10r/s",
+		},
+		{
+			input:    "10r/s",
+			pods:     2,
+			expected: "5r/s",
+		},
+		{
+			input:    "10r/s",
+			pods:     3,
+			expected: "3r/s",
+		},
+		{
+			input:    "10r/s",
+			pods:     10,
+			expected: "1r/s",
+		},
+		{
+			input:    "10r/s",
+			pods:     20,
+			expected: "30r/m",
+		},
+		{
+			input:    "10r/m",
+			pods:     0,
+			expected: "10r/m",
+		},
+		{
+			input:    "10r/m",
+			pods:     1,
+			expected: "10r/m",
+		},
+	}
+
+	for _, testcase := range tests {
+		scaled := scaleRatelimit(testcase.input, testcase.pods)
+		if scaled != testcase.expected {
+			t.Errorf("scaleRatelimit(%s,%d) returned %s but expected %s", testcase.input, testcase.pods, scaled, testcase.expected)
 		}
 	}
 }
