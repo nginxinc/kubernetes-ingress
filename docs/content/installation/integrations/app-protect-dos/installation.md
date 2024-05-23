@@ -2,7 +2,7 @@
 docs: DOCS-583
 doctypes:
 - ''
-title: Building NGINX Ingress Controller with NGINX App Protect DoS
+title: Build NGINX Ingress Controller with NGINX App Protect DoS
 toc: true
 weight: 100
 ---

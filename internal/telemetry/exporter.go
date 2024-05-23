@@ -105,4 +105,6 @@ type NICResourceCounts struct {
 	AppProtectVersion string
 	// IsPlus represents whether NGINX is Plus or OSS
 	IsPlus bool
+	// InstallationFlags is the list of command line arguments configured for NGINX Ingress Controller
+	InstallationFlags []string
 }
