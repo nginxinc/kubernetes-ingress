@@ -5,36 +5,38 @@ doctypes:
 draft: false
 tags:
 - docs
-title: Troubleshooting Common Issues
+title: Troubleshooting common issues
 toc: true
 weight: 100
 ---
 
-This page describes how to troubleshoot common problems with NGINX Ingress Controller.
+This page describes how to troubleshoot common issues with NGINX Ingress Controller. Instruction for specific resources is available in the [Troubleshooting]({{< relref "troubleshooting/" >}}) section.
 
-## Common Problems
-
-The table below shows common problems with NGINX Ingress Controller you may encounter and how to address them. The following section explains how to gather additional information, and there is instruction available on fixing specific issues within the troubleshooting section of documentation.
+## Common issues
 
 {{% table %}}
 | Problem Area | Symptom | Troubleshooting Method | Common Cause |
 |-----|-----|-----|-----|
 | Startup | NGINX Ingress Controller fails to start. | Check the logs. | Misconfigured RBAC, a missing default server TLS Secret.|
-| Ingress Resource and Annotations | The configuration is not applied | Check the events of the Ingress resource, check the logs, check the generated config. | Invalid values of annotations. |
-| VirtualServer and VirtualServerRoute Resources | The configuration is not applied. | Check the events of the VirtualServer and VirtualServerRoutes, check the logs, check the generated config. | VirtualServer or VirtualServerRoute is invalid. |
-| Policy Resource | The configuration is not applied. | Check the events of the Policy resource as well as the events of the VirtualServers that reference that policy, check the logs, check the generated config. | Policy is invalid. |
-| ConfigMap Keys | The configuration is not applied. | Check the events of the ConfigMap, check the logs, check the generated config.  | Invalid values of ConfigMap keys. |
+| Ingress resource and annotations | The configuration is not applied | Check the events of the Ingress resource, check the logs, check the generated config. | Invalid values of annotations. |
+| VirtualServer and VirtualServerRoute resources | The configuration is not applied. | Check the events of the VirtualServer and VirtualServerRoutes, check the logs, check the generated config. | VirtualServer or VirtualServerRoute is invalid. |
+| Policy resource | The configuration is not applied. | Check the events of the Policy resource as well as the events of the VirtualServers that reference that policy, check the logs, check the generated config. | Policy is invalid. |
+| ConfigMap keys | The configuration is not applied. | Check the events of the ConfigMap, check the logs, check the generated config.  | Invalid values of ConfigMap keys. |
 | NGINX | NGINX responds with unexpected responses. | Check the logs, check the generated config, check the live activity dashboard (NGINX Plus only), run NGINX in the debug mode. | Unhealthy backend pods, a misconfigured backend service. |
 {{% /table %}}
 
+---
+
 ## Troubleshooting Methods
 
-The commands in the next sections make the following assumptions:
+This section explains how to gather additional information for troubleshooting.
+
+The commands examples make the following assumptions:
 
 - That NGINX Ingress Controller is deployed in the namespace `nginx-ingress`.
 - `<nginx-ingress-pod>` is the name of one of the NGINX Ingress Controller pods.
 
-### Checking NGINX Ingress Controller Logs
+### Check NGINX Ingress Controller logs
 
 To check NGINX Ingress Controller logs, which include both information from NGINX Ingress Controller and NGINX's access and error logs, run the following command:
 
@@ -42,7 +44,7 @@ To check NGINX Ingress Controller logs, which include both information from NGIN
 kubectl logs <nginx-ingress-pod> -n nginx-ingress
 ```
 
-### Checking the Generated Config
+### Check the generated configuration files
 
 For each Ingress/VirtualServer resource, NGINX Ingress Controller generates a corresponding NGINX configuration file in the `/etc/nginx/conf.d folder`.
 
@@ -64,26 +66,26 @@ kubectl exec <nginx-ingress-pod> -n nginx-ingress -- nginx -T
 
 However, this command will fail if any of the configuration files is not valid.
 
-### Checking the Live Activity Monitoring Dashboard
+### Check the Live Activity Monitoring Dashboard
 
-The live activity monitoring dashboard shows the real-time information about NGINX Plus and the applications it is load balancing, which is helpful for troubleshooting. To access the dashboard, follow the steps from [here](/nginx-ingress-controller/logging-and-monitoring/status-page).
+The live activity monitoring dashboard shows the real-time information about NGINX Plus and the applications it is load balancing, which is helpful for troubleshooting. To access the dashboard, read the [Status Page]({{< relref "logging-and-monitoring/status-page.md" >}}) topic.
 
-### Enabling debugging for NGINX Ingress Controller
+### Enable debugging for NGINX Ingress Controller
 
 For additional NGINX Ingress Controller debugging, you can enable debug settings to get more verbose logging.
 
 Increasing the debug log levels for NGINX Ingress Controller will also apply to NGINX itself.
 
-There are two settings that need to be set to enable more verbose logging for NGINX Ingress Controller:
+There are two places to configure more verbose logging for NGINX Ingress Controller:
 
-1. Command Line Arguments
-2. Configmap Settings
+1. Command line arguments
+2. Configmap settings
 
-**Command Line Arguments**
+**Command line arguments**
 
 When using `manifest` for deployment, use the command line argument `-nginx-debug` in your deployment or daemonset.
 
-If you want to increase the verbosity of the NGINX Ingress Controller process, you can also add the `-v` parameter.
+You can add the `-v` parameter to increase the verbosity of the NGINX Ingress Controller process.
 
 Here is a small snippet of setting these command line arguments in the `args` section of a deployment:
 
@@ -95,8 +97,8 @@ args:
   - -v=3
 ```
 
-**ConfigMap Settings**
-You can configure `error-log-level` in the NGINX Ingress Controller `configMap`:
+**ConfigMap settings**  
+You can configure `error-log-level` in NGINX Ingress Controller `configMap`:
 
 ```yaml
 kind: ConfigMap
@@ -127,7 +129,7 @@ For example, if using a `values.yaml` file:
   logLevel: 3
 ```
 
-This is a more complete `values.yaml` file when using `helm`:
+This is a more complete example `values.yaml` file:
 
 ```yaml
 controller:
@@ -157,9 +159,9 @@ controller:
   ingressClass: nginx
 ```
 
-By enabling the `nginx-debug` CLI argument and changing the `error-log-level` to `debug`, you can capture more output to use for debugging.
+Enable the `nginx-debug` CLI argument and change the `error-log-level` to `debug` to capture more output for debugging.
 
-**NOTE**: It is recommended to only enable `nginx-debug` CLI and the `error-log-level` for debugging purposes.
+{{< note >}} It is recommended to only enable `nginx-debug` CLI and the `error-log-level` when debugging. {{< /note >}}
 
 #### Example debug NGINX Ingress Controller Output
 
