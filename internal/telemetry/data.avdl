@@ -54,13 +54,13 @@ It is the UID of the `kube-system` Namespace. */
 		/** RegularIngressCount is the number of Regular Ingress resources managed by the NGINX Ingress Controller. */
 		long? RegularIngressCount = null;
 
-		/** MinionIngressCount is the number of Regular Ingress resources managed by the NGINX Ingress Controller. */
+        /** MasterIngressCount is the number of Regular Ingress resources managed by the NGINX Ingress Controller. */
 		long? MasterIngressCount = null;
 
-		/** IngressClasses is the number of Ingress Classes. */
+		/** MinionIngressCount is the number of Regular Ingress resources managed by the NGINX Ingress Controller. */
 		long? MinionIngressCount = null;
 
-		/** MasterIngressCount is the number of Regular Ingress resources managed by the NGINX Ingress Controller. */
+		/** IngressClasses is the number of Ingress Classes. */
 		long? IngressClasses = null;
 
 		/** AccessControlPolicies is the number of AccessControl policies managed by NGINX Ingress Controller */
