@@ -5,7 +5,7 @@ VERSION = $(VER)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
 # Variables that can be overridden
-PLUS_REPO                     ?= "pkgs.nginx.com" ## The package repo to install nginx-plus from
+PLUS_REPO                     ?= "pkgs-test.nginx.com" ## The package repo to install nginx-plus from
 PREFIX                        ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
 TAG                           ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
 TARGET                        ?= local ## The target of the build. Possible values: local, container and download

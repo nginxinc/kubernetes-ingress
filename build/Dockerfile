@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.6
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=R32
-ARG PACKAGE_REPO=pkgs.nginx.com
+ARG PACKAGE_REPO=pkgs-test.nginx.com
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PREBUILT_BASE_IMG=nginx/nginx-ingress:${DOWNLOAD_TAG}
