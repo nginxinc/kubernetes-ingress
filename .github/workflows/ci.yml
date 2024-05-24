@@ -118,6 +118,11 @@ jobs:
           ./.github/scripts/variables.sh build_tag >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
+          echo "---------------------"
+          echo ${{secrets.NGINX_CRT}} > /tmp/nginx.crt
+          openssl x509 -in /tmp/nginx.crt -text -noout
+          echo "---------------------"
+          
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
