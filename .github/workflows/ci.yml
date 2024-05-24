@@ -123,6 +123,9 @@ jobs:
           echo "file made"
           openssl x509 -in /tmp/nginx.crt -text -noout
           echo "---------------------"
+          echo "doing curl"
+          curl --key ~/nginx-repo.key --cert ~/nginx-repo.crt https://pkgs-test.nginx.com/app-protect/
+          echo "---------------------"
 
 
       - name: Fetch Cached Binary Artifacts
