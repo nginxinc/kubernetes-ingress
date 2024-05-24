@@ -13,4 +13,3 @@ spec:
       notSupplied: 408
       noMatch: 410
     clientSecret: api-key-client-secret-2
-
