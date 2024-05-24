@@ -1302,6 +1302,7 @@ func (p *policiesCfg) addAPIKeyConfig(
 	polKey string,
 	polNamespace string,
 	secretRefs map[string]*secrets.SecretReference,
+	context string,
 ) (*validationResults, *version2.Map) {
 	res := newValidationResults()
 	var clients []version2.Client
@@ -1360,9 +1361,12 @@ func (p *policiesCfg) addAPIKeyConfig(
 		})
 	}
 
+	sourceName := "$apikey_auth_token_" + context
+	mapName := fmt.Sprintf("$apikey_auth_client_name_%s", strings.Split(strings.Replace(polKey, "-", "_", -1), "/")[1])
+
 	shaToClient := &version2.Map{
-		Source:     "$apikey_auth_token",
-		Variable:   strings.Replace(fmt.Sprintf("$apikey_auth_client_name_%s", strings.Split(polKey, "/")[1]), "-", "_", -1),
+		Source:     sourceName,
+		Variable:   mapName,
 		Parameters: params,
 	}
 
@@ -1372,6 +1376,7 @@ func (p *policiesCfg) addAPIKeyConfig(
 		RejectCodeNotSupplied: apiKey.RejectCodes.NotSupplied,
 		RejectCodeNoMatch:     apiKey.RejectCodes.NoMatch,
 		Clients:               clients,
+		MapName:               mapName,
 	}
 	return res, shaToClient
 
@@ -1509,7 +1514,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 			case pol.Spec.OIDC != nil:
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
 			case pol.Spec.APIKey != nil:
-				res, shaToClientMap := config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs)
+				res, shaToClientMap := config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs, context)
 				// TODO: refactor
 				if res != nil && len(res.warnings) > 0 {
 					vsc.addWarnings(ownerDetails.owner, res.warnings)

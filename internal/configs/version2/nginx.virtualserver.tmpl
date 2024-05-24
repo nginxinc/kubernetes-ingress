@@ -161,9 +161,9 @@ server {
 
     set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
     js_set $hash_fn_server apikey_auth.hash;
-    js_var $apikey_auth_token $hash_fn_server;
+    js_var $apikey_auth_token_spec $hash_fn_server;
 
-    set $apikey_auth_local_map  $apikey_auth_client_name_api_key_policy; #TODO: dont hardcode variable
+    set $apikey_auth_local_map  {{ .MapName }};
 
     auth_request /_validate_apikey_njs;
     {{- range $header := .Header}}
@@ -290,11 +290,11 @@ server {
         # not supplied: {{ .RejectCodeNotSupplied }}
         # no match: {{ .RejectCodeNoMatch }}
 
-        set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
+        set $header_query_value {{ makeHeaderQueryValue $l.APIKey | printf }};
         js_set $hash_fn_location apikey_auth.hash;
-        js_var $apikey_auth_token $hash_fn_location;
+        js_var $apikey_auth_token_route $hash_fn_location;
 
-        set $apikey_auth_local_map  $apikey_auth_client_name_api_key_policy_2; #TODO: dont hardcode variable
+        set $apikey_auth_local_map  {{ .MapName }};
 
         auth_request /_validate_apikey_njs;
         {{- range $header := .Header}}

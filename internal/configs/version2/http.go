@@ -144,6 +144,7 @@ type APIKey struct {
 	RejectCodeNotSupplied int
 	RejectCodeNoMatch     int
 	Clients               []Client
+	MapName               string
 }
 
 type Client struct {
