@@ -43,7 +43,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.57.2
+    rev: v1.58.2
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
@@ -59,12 +59,12 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 24.4.0
+    rev: 24.4.2
     hooks:
       - id: black
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.2
+    rev: 0.28.4
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"

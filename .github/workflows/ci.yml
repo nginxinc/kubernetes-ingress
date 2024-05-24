@@ -52,7 +52,7 @@ jobs:
       forked_workflow: ${{ steps.vars.outputs.forked_workflow }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           fetch-depth: 0
 
@@ -70,7 +70,7 @@ jobs:
         shell: bash --noprofile --norc -o pipefail {0}
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: go.mod
 
@@ -103,7 +103,7 @@ jobs:
           source .github/data/version.txt
           echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
           echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
-          echo "forked_workflow=${{ (github.event.pull_request.head.repo.full_name != github.github.event.pull_request.base.repo.full_name) || github.repository != 'nginxinc/kubernetes-ingress' }}" >> $GITHUB_OUTPUT
+          echo "forked_workflow=${{ (github.event.pull_request && github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name) || github.repository != 'nginxinc/kubernetes-ingress' }}" >> $GITHUB_OUTPUT
           publish=false
           if ${{ github.event_name == 'workflow_dispatch' && inputs.publish-image }}; then
             publish=true
@@ -145,9 +145,9 @@ jobs:
     needs: checks
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Setup Golang Environment
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: go.mod
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -155,7 +155,7 @@ jobs:
         run: make cover
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@84508663e988701840491b86de86b666e8a86bed # v4.3.0
+        uses: codecov/codecov-action@125fc84a9a348dbcf27191600683ec096ec9021c # v4.4.1
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }} # required
@@ -171,7 +171,7 @@ jobs:
       contents: write # for lucacome/draft-release
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           fetch-depth: 0
 
@@ -208,18 +208,18 @@ jobs:
       issues: write # for goreleaser/goreleaser-action to close milestone
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           fetch-depth: 0
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: go.mod
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@ab5d7b5f48981941c4c5d6bf33aeb98fe3bae38c # v0.15.10
+        uses: anchore/sbom-action/download-syft@e8d2a6937ecead383dfe75190d104edd1f9c5751 # v0.16.0
         if: github.ref_type == 'tag'
 
       - name: Install Cosign
@@ -227,7 +227,7 @@ jobs:
         if: github.ref_type == 'tag'
 
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8 # v5.0.0
+        uses: goreleaser/goreleaser-action@5742e2a039330cbb23ebf35f046f814d4c6ff811 # v5.1.0
         with:
           version: latest
           args: ${{ github.ref_type == 'tag' && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --clean
@@ -246,7 +246,7 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
           AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
           AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
-          GORELEASER_CURRENT_TAG: ${{ needs.checks.outputs.ic_version }}
+          GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
@@ -279,7 +279,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
 
       - name: Fetch Cached Artifacts
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
@@ -298,7 +298,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -418,7 +418,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
 
       - id: set-matrix
         run: |
@@ -433,7 +433,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -481,7 +481,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
 
       - name: Set image variables
         id: image_details
@@ -501,7 +501,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -557,7 +557,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && steps.base_exists.outputs.exists != 0 }}
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
@@ -583,7 +583,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'true' || steps.check-image.outcome == 'failure' }}
 
       - name: Build ${{ matrix.images.image }} Container
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           file: build/Dockerfile
           context: "."
@@ -619,8 +619,8 @@ jobs:
       - name: Upload Test Results
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: ${{ steps.smoke-tests.outputs.test-results-name }}
-          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
+          name: ${{ steps.smoke-tests.outputs.test-results-name }}-${{ matrix.k8s }}
+          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}-${{ matrix.k8s }}.html
         if: always()
 
   smoke-results:
@@ -767,7 +767,7 @@ jobs:
       packages: write # for helm to push to GHCR
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           path: kic
 
@@ -791,7 +791,7 @@ jobs:
           if [ ${{ github.ref_type }} != "tag" ]; then
             helm_versions="--app-version edge --version 0.0.0-edge"
           else
-            helm_versions="--app-version ${{ steps.checks.outputs.ic_version }} --version ${{ steps.checks.outputs.chart_version }}"
+            helm_versions="--app-version ${{ needs.checks.outputs.ic_version }} --version ${{ needs.checks.outputs.chart_version }}"
           fi
           output=$(helm package ${helm_versions} kic/charts/nginx-ingress)
           echo "path=$(basename -- $(echo $output | cut -d: -f2))" >> $GITHUB_OUTPUT
@@ -802,7 +802,7 @@ jobs:
           helm push ${{ steps.package.outputs.path }} oci://registry-1.docker.io/nginxcharts
 
       - name: Checkout Repository
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           repository: nginxinc/helm-charts
           fetch-depth: 1

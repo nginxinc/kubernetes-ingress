@@ -56,7 +56,7 @@ If a user creates both resources in the cluster, a host collision will occur. As
 
 In our example, if `cafe-virtual-server` was created first, it will win the host `cafe.example.com` and the Ingress Controller will reject `cafe-ingress`. This will be reflected in the events and in the resource's status field:
 
-```console
+```shell
 kubectl describe vs cafe-virtual-server
 
 . . .
@@ -86,7 +86,7 @@ Similarly, if `cafe-ingress` was created first, it will win `cafe.example.com` a
 
 It is possible to merge configuration for multiple Ingress resources for the same host. One common use case for this approach is distributing resources across multiple namespaces. See the [Cross-namespace Configuration](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/) doc for more information.
 
-It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.0/examples/custom-resources/cross-namespace-configuration) on GitHub.
+It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/cross-namespace-configuration) on GitHub.
 
 It is *not* possible to merge configuration for multiple TransportServer resources.
 
@@ -130,7 +130,7 @@ If a user creates both resources in the cluster, a listener collision will occur
 
 In our example, if `tcp-1` was created first, it will win the listener `dns-tcp` and the Ingress Controller will reject `tcp-2`. This will be reflected in the events and in the resource's status field:
 
-```console
+```shell
 kubectl describe ts tcp-2
 
 . . .

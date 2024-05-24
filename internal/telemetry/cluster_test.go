@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	appsV1 "k8s.io/api/apps/v1"
 	apiCoreV1 "k8s.io/api/core/v1"
-	networkingV1 "k8s.io/api/networking/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -434,6 +435,27 @@ func TestInstallationIDFailsOnMissingDaemonSet(t *testing.T) {
 	_, err := c.InstallationID(context.Background())
 	if err == nil {
 		t.Fatal("want error on missing daemonset got nil")
+	}
+}
+
+func TestGetInstallationFlags(t *testing.T) {
+	t.Parallel()
+
+	c, err := telemetry.NewCollector(
+		telemetry.CollectorConfig{
+			InstallationFlags: []string{
+				"-nginx-plus=true",
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := c.InstallationFlags()
+	want := []string{"-nginx-plus=true"}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
 
@@ -913,28 +935,5 @@ var (
 		},
 		Type: apiCoreV1.SecretTypeTLS,
 		Data: map[string][]byte{},
-	}
-)
-
-// IngressClass for testing.
-var (
-	ingressClassList = &networkingV1.IngressClassList{
-		TypeMeta: metaV1.TypeMeta{
-			Kind:       "List",
-			APIVersion: "v1",
-		},
-		ListMeta: metaV1.ListMeta{},
-		Items: []networkingV1.IngressClass{
-			{
-				TypeMeta: metaV1.TypeMeta{
-					Kind:       "IngressClass",
-					APIVersion: "networking.k8s.io/v1",
-				},
-				ObjectMeta: metaV1.ObjectMeta{},
-				Spec: networkingV1.IngressClassSpec{
-					Controller: "nginx.org/ingress-controller",
-				},
-			},
-		},
 	}
 )

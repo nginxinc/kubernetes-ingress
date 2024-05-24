@@ -136,6 +136,15 @@ func (c *Collector) IngressCount() int {
 	return total
 }
 
+// IngressAnnotations returns a list of all the unique annotations found in Ingresses.
+func (c *Collector) IngressAnnotations() []string {
+	if c.Config.Configurator == nil {
+		return nil
+	}
+	annotations := c.Config.Configurator.GetIngressAnnotations()
+	return annotations
+}
+
 // IngressClassCount returns number of Ingress Classes.
 func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 	ic, err := c.Config.K8sClientReader.NetworkingV1().IngressClasses().List(ctx, metaV1.ListOptions{})
@@ -145,12 +154,57 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 	return len(ic.Items), nil
 }
 
-// PolicyCount returns number of Policies watched by NIC.
-func (c *Collector) PolicyCount() int {
+// PolicyCount returns the count in each Policy
+func (c *Collector) PolicyCount() map[string]int {
+	policyCounters := make(map[string]int)
+
 	if c.Config.Policies == nil {
-		return 0
+		return policyCounters
 	}
-	return len(c.Config.Policies())
+
+	policies := c.Config.Policies()
+	if policies == nil {
+		return policyCounters
+	}
+
+	for _, policy := range policies {
+		spec := policy.Spec
+
+		switch {
+		case spec.AccessControl != nil:
+			policyCounters["AccessControl"]++
+		case spec.RateLimit != nil:
+			policyCounters["RateLimit"]++
+		case spec.JWTAuth != nil:
+			policyCounters["JWTAuth"]++
+		case spec.BasicAuth != nil:
+			policyCounters["BasicAuth"]++
+		case spec.IngressMTLS != nil:
+			policyCounters["IngressMTLS"]++
+		case spec.EgressMTLS != nil:
+			policyCounters["EgressMTLS"]++
+		case spec.OIDC != nil:
+			policyCounters["OIDC"]++
+		case spec.WAF != nil:
+			policyCounters["WAF"]++
+		}
+	}
+	return policyCounters
+}
+
+// AppProtectVersion returns the AppProtect Version
+func (c *Collector) AppProtectVersion() string {
+	return c.Config.AppProtectVersion
+}
+
+// IsPlusEnabled returns true or false depending on if NGINX is Plus or OSS
+func (c *Collector) IsPlusEnabled() bool {
+	return c.Config.IsPlus
+}
+
+// InstallationFlags returns the list of all set flags
+func (c *Collector) InstallationFlags() []string {
+	return c.Config.InstallationFlags
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

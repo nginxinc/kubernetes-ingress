@@ -17,8 +17,8 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	K8sV1alpha1() k8sv1alpha1.K8sV1alpha1Interface
 	K8sV1() k8sv1.K8sV1Interface
+	K8sV1alpha1() k8sv1alpha1.K8sV1alpha1Interface
 	AppprotectdosV1beta1() appprotectdosv1beta1.AppprotectdosV1beta1Interface
 	ExternaldnsV1() externaldnsv1.ExternaldnsV1Interface
 }
@@ -26,20 +26,20 @@ type Interface interface {
 // Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	k8sV1alpha1          *k8sv1alpha1.K8sV1alpha1Client
 	k8sV1                *k8sv1.K8sV1Client
+	k8sV1alpha1          *k8sv1alpha1.K8sV1alpha1Client
 	appprotectdosV1beta1 *appprotectdosv1beta1.AppprotectdosV1beta1Client
 	externaldnsV1        *externaldnsv1.ExternaldnsV1Client
-}
-
-// K8sV1alpha1 retrieves the K8sV1alpha1Client
-func (c *Clientset) K8sV1alpha1() k8sv1alpha1.K8sV1alpha1Interface {
-	return c.k8sV1alpha1
 }
 
 // K8sV1 retrieves the K8sV1Client
 func (c *Clientset) K8sV1() k8sv1.K8sV1Interface {
 	return c.k8sV1
+}
+
+// K8sV1alpha1 retrieves the K8sV1alpha1Client
+func (c *Clientset) K8sV1alpha1() k8sv1alpha1.K8sV1alpha1Interface {
+	return c.k8sV1alpha1
 }
 
 // AppprotectdosV1beta1 retrieves the AppprotectdosV1beta1Client
@@ -96,11 +96,11 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 
 	var cs Clientset
 	var err error
-	cs.k8sV1alpha1, err = k8sv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	cs.k8sV1, err = k8sv1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
-	cs.k8sV1, err = k8sv1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	cs.k8sV1alpha1, err = k8sv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -133,8 +133,8 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.k8sV1alpha1 = k8sv1alpha1.New(c)
 	cs.k8sV1 = k8sv1.New(c)
+	cs.k8sV1alpha1 = k8sv1alpha1.New(c)
 	cs.appprotectdosV1beta1 = appprotectdosv1beta1.New(c)
 	cs.externaldnsV1 = externaldnsv1.New(c)
 

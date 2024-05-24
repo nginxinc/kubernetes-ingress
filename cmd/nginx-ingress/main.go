@@ -51,7 +51,7 @@ const (
 	versionLabel           = "app.kubernetes.io/version"
 	appProtectVersionLabel = "appprotect.f5.com/version"
 	agentVersionLabel      = "app.nginx.org/agent-version"
-	appProtectVersionPath  = "/opt/app_protect/VERSION"
+	appProtectVersionPath  = "/opt/app_protect/RELEASE"
 )
 
 func main() {
@@ -59,6 +59,7 @@ func main() {
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	parseFlags()
+	parsedFlags := os.Args[1:]
 
 	config, kubeClient := createConfigAndKubeClient()
 
@@ -184,6 +185,7 @@ func main() {
 		DefaultServerSecret:          *defaultServerSecret,
 		AppProtectEnabled:            *appProtect,
 		AppProtectDosEnabled:         *appProtectDos,
+		AppProtectVersion:            appProtectVersion,
 		IsNginxPlus:                  *nginxPlus,
 		IngressClass:                 *ingressClass,
 		ExternalServiceName:          *externalService,
@@ -216,6 +218,7 @@ func main() {
 		TelemetryReportingEndpoint:   telemetryEndpoint,
 		NICVersion:                   version,
 		DynamicWeightChangesReload:   *enableDynamicWeightChangesReload,
+		InstallationFlags:            parsedFlags,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
