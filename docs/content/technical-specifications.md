@@ -99,8 +99,8 @@ We also provide NGINX Plus images through the Google Cloud Marketplace. Please s
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | GCP Marketplace Link | Architectures |
 | ---| ---| --- | --- | --- |
-|Debian-based image | ``debian:11-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus) | amd64 |
-|Debian-based image with NGINX App Protect DoS | ``debian:11-slim`` | NGINX App Protect DoS<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect DoS](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus-dos) | amd64 |
+|Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus) | amd64 |
+|Debian-based image with NGINX App Protect WAF | ``debian:11-slim`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect WAF](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus-nap) | amd64 |
 {{% /bootstrap-table %}}
 
 ### Custom Images
