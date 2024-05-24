@@ -250,7 +250,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF #############################################
-FROM redhat/ubi9@sha256:ed84f34cd929ea6b0c247b6daef54dd79602804a32480a052951021caf429494 as ubi-9-plus-nap
+FROM ubi-plus as ubi-9-plus-nap
 ARG NAP_MODULES
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -265,32 +265,22 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	cp /tmp/app-protect-9.repo /etc/yum.repos.d/app-protect-9.repo; \
 	fi \
-	## the code below is duplicated from the ubi-plus image because NAP WAF doesn't support UBI minimal versions
-	&& dnf --nodocs install -y shadow-utils ca-certificates \
-	&& groupadd --system --gid 101 nginx \
-	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
-	&& rpm --import /tmp/nginx_signing.key \
-	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then dnf --nodocs install -y nginx-agent; fi \
-	## end of duplicated code
-	## fix for CVEs
-	&& dnf upgrade -y curl dbus libcap libssh libxml2 sqlite-libs dnf-plugin-subscription-manager dmidecode subscription-manager-rhsm-certificates glibc subscription-manager \
-	&& sed -i 's/\(def in_container():\)/\1\n    return False/g' /usr/lib64/python*/*-packages/rhsm/config.py \
+	# the code below is duplicated from the ubi-plus image because NAP WAF doesn't support UBI minimal versions
+	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
+	&& microdnf --nodocs install -y ca-certificates subscription-manager \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then microdnf --nodocs install -y nginx-agent; fi \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
-	&& dnf config-manager --set-enabled codeready-builder-for-rhel-9-x86_64-rpms \
-	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
 	&& rpm --import /tmp/app-protect-security-updates.key \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	dnf --nodocs install -y app-protect-31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
+	microdnf --enablerepo=codeready-builder-for-rhel-9-x86_64-rpms --nodocs install -y \
+	app-protect-31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
-	# fix for CVEs
-	&& dnf upgrade -y curl ncurses \
-	&& subscription-manager unregister \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	rm -f /etc/yum.repos.d/app-protect-9.repo; \
 	fi \
-	&& dnf clean all
+	&& subscription-manager unregister \
+	&& microdnf clean all
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF & DoS #############################################
 FROM redhat/ubi8@sha256:83068ea81dd02717b8e39b55cdeb2c1b2c9a3db260f01381b991755d44b15073 as ubi-8-plus-nap
