@@ -120,6 +120,7 @@ jobs:
           cat $GITHUB_OUTPUT
           echo "---------------------"
           echo ${{secrets.NGINX_CRT}} > /tmp/nginx.crt
+          echo "file made"
           openssl x509 -in /tmp/nginx.crt -text -noout
           echo "---------------------"
 
