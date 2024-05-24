@@ -57,6 +57,13 @@
       "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
     },
     {
+      "label": "VS upstream rollout",
+      "image": "debian",
+      "type": "oss",
+      "marker": "upstream_rollout",
+      "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    },
+    {
       "label": "TS",
       "image": "ubi",
       "type": "oss",
