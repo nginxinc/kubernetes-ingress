@@ -104,6 +104,15 @@ We also provide NGINX Plus images through the Google Cloud Marketplace. Please s
 |Debian-based image with NGINX App Protect WAF | ``debian:11-slim`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect WAF](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus-nap) | amd64 |
 {{% /bootstrap-table %}}
 
+#### **Microsoft Azure Marketplace**
+We also provide NGINX Plus image through the Microsoft Azure Marketplace.
+
+{{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
+|<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | Azure Marketplace Link | Architectures |
+| ---| ---| --- | --- | --- |
+|Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/nginxinc.nginx_ingress_premium) | amd64 |
+{{% /bootstrap-table %}}
+
 ### Custom Images
 
 You can customize an existing Dockerfile or use it as a reference to create a new one, which is necessary for the following cases:
