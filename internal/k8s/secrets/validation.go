@@ -109,6 +109,13 @@ func ValidateOIDCSecret(secret *api_v1.Secret) error {
 	return nil
 }
 
+func ValidateAPIKeySecret(secret *api_v1.Secret) error {
+	if secret.Type != api_v1.SecretTypeOpaque {
+		return fmt.Errorf("APIKey secret must be of the type %v", SecretTypeOIDC)
+	}
+	return nil
+}
+
 // ValidateHtpasswdSecret validates the secret. If it is valid, the function returns nil.
 func ValidateHtpasswdSecret(secret *api_v1.Secret) error {
 	if secret.Type != SecretTypeHtpasswd {
@@ -149,7 +156,7 @@ func ValidateSecret(secret *api_v1.Secret) error {
 	case SecretTypeHtpasswd:
 		return ValidateHtpasswdSecret(secret)
 	case api_v1.SecretTypeOpaque:
-		return nil
+		return ValidateAPIKeySecret(secret)
 	}
 
 	return fmt.Errorf("Secret is of the unsupported type %v", secret.Type)

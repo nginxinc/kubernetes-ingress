@@ -1307,43 +1307,44 @@ func (p *policiesCfg) addAPIKeyConfig(
 	var clients []version2.Client
 	if p.APIKey != nil {
 		res.addWarningf(
-			"Multiple apiKey policies in the same context is not valid. APIKey policy %s will be ignored",
+			"Multiple APIKey policies in the same context is not valid. APIKey policy %s will be ignored",
 			polKey,
 		)
 		res.isError = true
 		return res, nil
-	} else {
-		for _, client := range apiKey.Clients {
+	}
 
-			secretKey := fmt.Sprintf("%v/%v", polNamespace, client.Secret)
-			secretRef := secretRefs[secretKey]
+	//if apiKey.ClientSecret != "" {
+	secretKey := fmt.Sprintf("%v/%v", polNamespace, apiKey.ClientSecret)
+	glog.Infof("secretKey: %v", secretKey)
+	secretRef := secretRefs[secretKey]
+	glog.Infof("secretRefs: %v", secretRefs)
+	var secretType api_v1.SecretType
+	glog.Infof("secret: %v", secretRef)
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
+	if secretType != "" && secretType != api_v1.SecretTypeOpaque {
+		res.addWarningf("API Key policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, api_v1.SecretTypeOpaque)
+		res.isError = true
+		return res, nil
+	} else if secretRef.Error != nil {
+		res.addWarningf("API Key %s references an invalid secret %s: %v", polKey, secretKey, secretRef.Error)
+		res.isError = true
+		return res, nil
+	}
 
-			var secretType api_v1.SecretType
-			if secretRef.Secret != nil {
-				secretType = secretRef.Secret.Type
-			}
-			if secretType != "" && secretType != api_v1.SecretTypeOpaque {
-				res.addWarningf("API Key policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, api_v1.SecretTypeOpaque)
-				res.isError = true
-				return res, nil
-			} else if secretRef.Error != nil {
-				res.addWarningf("API Key %s references an invalid secret %s: %v", polKey, secretKey, secretRef.Error)
-				res.isError = true
-				return res, nil
-			}
-			clientSecret := secretRef.Secret.Data["key"] // TODO: use const ClientSecretKey
+	for clientID, clientSecret := range secretRef.Secret.Data {
 
-			h := sha256.New()
-			h.Write([]byte(clientSecret))
-			sha256Hash := hex.EncodeToString(h.Sum(nil))
-			base64Str := base64.URLEncoding.EncodeToString(h.Sum(nil))
+		h := sha256.New()
+		h.Write([]byte(clientSecret))
+		sha256Hash := hex.EncodeToString(h.Sum(nil))
+		base64Str := base64.URLEncoding.EncodeToString(h.Sum(nil))
 
-			glog.Infof("clientSecret %s", clientSecret)
-			glog.Infof("sha %s", sha256Hash)
-			glog.Infof("base64Str %s", base64Str)
-			clients = append(clients, version2.Client{ClientID: client.ID, EncryptedKey: sha256Hash}) //
-		}
-
+		glog.Infof("clientSecret %s", clientSecret)
+		glog.Infof("sha %s", sha256Hash)
+		glog.Infof("base64Str %s", base64Str)
+		clients = append(clients, version2.Client{ClientID: clientID, EncryptedKey: sha256Hash}) //
 	}
 
 	default_parameter := version2.Parameter{
@@ -1509,6 +1510,16 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
 			case pol.Spec.APIKey != nil:
 				res, shaToClientMap := config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs)
+				// TODO: refactor
+				if res != nil && len(res.warnings) > 0 {
+					vsc.addWarnings(ownerDetails.owner, res.warnings)
+				}
+
+				if res != nil && res.isError {
+					return policiesCfg{
+						ErrorReturn: &version2.Return{Code: 500},
+					}, maps
+				}
 				if res != nil && !res.isError && shaToClientMap != nil {
 					maps = append(maps, *shaToClientMap)
 				}

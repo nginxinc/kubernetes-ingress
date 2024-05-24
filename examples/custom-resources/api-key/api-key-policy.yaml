@@ -14,8 +14,4 @@ spec:
     rejectCodes: # optional
       notSupplied: 401
       noMatch: 403
-    clients:
-    - id: client1
-      secret: api-key-client-secret-1
-    - id: client2
-      secret: api-key-client-secret-2
+    clientSecret: api-key-client-secret-1

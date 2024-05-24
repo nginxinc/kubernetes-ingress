@@ -678,9 +678,9 @@ type SecurityLog struct {
 }
 
 type APIKey struct {
-	SuppliedIn  SuppliedIn  `json:"suppliedIn"`
-	RejectCodes RejectCodes `json:"rejectCodes,omitempty"`
-	Clients     []Client    `json:"clients"`
+	SuppliedIn   SuppliedIn  `json:"suppliedIn"`
+	RejectCodes  RejectCodes `json:"rejectCodes,omitempty"`
+	ClientSecret string      `json:"clientSecret"`
 }
 
 type SuppliedIn struct {
