@@ -60,7 +60,7 @@ To pull an image, follow these steps. Replace `<version-tag>` with the specific 
    docker pull private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:<version-tag>
    ```
 
-- For NGINX Plus Ingress Controller with NGINX App Protect WAF and DoS, run:
+- For NGINX Plus Ingress Controller with NGINX App Protect WAF and NGINX App Protect DoS, run:
 
    ```shell
    docker pull private-registry.nginx.com/nginx-ic-nap-dos/nginx-plus-ingress:<version-tag>
