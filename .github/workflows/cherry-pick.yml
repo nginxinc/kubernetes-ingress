@@ -39,3 +39,4 @@ jobs:
           author: nginx-bot <integrations@nginx.com>
           labels: |
             dependencies
+          title: "[cherry-pick] {old_title}"
