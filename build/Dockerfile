@@ -87,6 +87,7 @@ ADD --link --chown=101:0 https://cs.nginx.com/static/files/nginx-agent.repo ngin
 ADD --link --chown=101:0 --chmod=0755 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/patch-os.sh patch-os.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/common.sh common.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/nap-waf.sh nap-waf.sh
+ADD --link --chown=101:0 --chmod=0755 build/scripts/nap-dos.sh nap-dos.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/agent.sh agent.sh
 
 
