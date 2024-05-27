@@ -101,4 +101,10 @@ type NICResourceCounts struct {
 	GlobalConfiguration bool
 	// IngressAnnotations is the list of annotations resources managed by NGINX Ingress Controller
 	IngressAnnotations []string
+	// AppProtectVersion represents the version of AppProtect.
+	AppProtectVersion string
+	// IsPlus represents whether NGINX is Plus or OSS
+	IsPlus bool
+	// InstallationFlags is the list of command line arguments configured for NGINX Ingress Controller
+	InstallationFlags []string
 }

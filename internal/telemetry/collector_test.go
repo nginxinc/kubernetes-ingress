@@ -389,6 +389,104 @@ func TestCollectPoliciesReport(t *testing.T) {
 	}
 }
 
+func TestCollectIsPlus(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name   string
+		isPlus bool
+		want   bool
+	}{
+		{
+			name:   "Plus enabled",
+			isPlus: true,
+			want:   true,
+		},
+		{
+			name:   "Plus disabled",
+			isPlus: false,
+			want:   false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:    configurator,
+				K8sClientReader: newTestClientset(node1, kubeNS),
+				Version:         telemetryNICData.ProjectVersion,
+				IsPlus:          tc.isPlus,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			ver := c.IsPlusEnabled()
+
+			if tc.want != ver {
+				t.Errorf("want: %t, got: %t", tc.want, ver)
+			}
+		})
+	}
+}
+
+func TestCollectInvalidIsPlus(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name   string
+		isPlus bool
+		want   bool
+	}{
+		{
+			name:   "Plus disabled but want enabled",
+			isPlus: false,
+			want:   true,
+		},
+		{
+			name:   "Plus disabled but want enabled",
+			isPlus: false,
+			want:   true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:    configurator,
+				K8sClientReader: newTestClientset(node1, kubeNS),
+				Version:         telemetryNICData.ProjectVersion,
+				IsPlus:          tc.isPlus,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			ver := c.IsPlusEnabled()
+
+			if tc.want == ver {
+				t.Errorf("want: %t, got: %t", tc.want, ver)
+			}
+		})
+	}
+}
+
 func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 	t.Parallel()
 
@@ -662,6 +760,216 @@ func TestIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
 	got := buf.String()
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestCollectAppProtectVersion(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name              string
+		appProtectVersion string
+		wantVersion       string
+	}{
+		{
+			name:              "AppProtect 4.8",
+			appProtectVersion: "4.8.1",
+			wantVersion:       "4.8.1",
+		},
+		{
+			name:              "AppProtect 4.9",
+			appProtectVersion: "4.9",
+			wantVersion:       "4.9",
+		},
+		{
+			name:              "AppProtect 5.1",
+			appProtectVersion: "5.1",
+			wantVersion:       "5.1",
+		},
+		{
+			name:              "No AppProtect Installed",
+			appProtectVersion: "",
+			wantVersion:       "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:      configurator,
+				K8sClientReader:   newTestClientset(node1, kubeNS),
+				Version:           telemetryNICData.ProjectVersion,
+				AppProtectVersion: tc.appProtectVersion,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			ver := c.AppProtectVersion()
+
+			if tc.wantVersion != ver {
+				t.Errorf("want: %s, got: %s", tc.wantVersion, ver)
+			}
+		})
+	}
+}
+
+func TestCollectInvalidAppProtectVersion(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name              string
+		appProtectVersion string
+		wantVersion       string
+	}{
+		{
+			name:              "AppProtect Not Installed",
+			appProtectVersion: "",
+			wantVersion:       "4.8.1",
+		},
+		{
+			name:              "Cant Find AppProtect 4.9",
+			appProtectVersion: "4.9",
+			wantVersion:       "",
+		},
+		{
+			name:              "Found Different AppProtect Version",
+			appProtectVersion: "5.1",
+			wantVersion:       "4.9",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:      configurator,
+				K8sClientReader:   newTestClientset(node1, kubeNS),
+				Version:           telemetryNICData.ProjectVersion,
+				AppProtectVersion: tc.appProtectVersion,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			ver := c.AppProtectVersion()
+
+			if tc.wantVersion == ver {
+				t.Errorf("want: %s, got: %s", tc.wantVersion, ver)
+			}
+		})
+	}
+}
+
+func TestCollectInstallationFlags(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		setFlags  []string
+		wantFlags []string
+	}{
+		{
+			name: "first flag",
+			setFlags: []string{
+				"nginx-plus=true",
+			},
+			wantFlags: []string{
+				"nginx-plus=true",
+			},
+		},
+		{
+			name: "second flag",
+			setFlags: []string{
+				"-v=3",
+			},
+			wantFlags: []string{
+				"-v=3",
+			},
+		},
+		{
+			name: "multiple flags",
+			setFlags: []string{
+				"nginx-plus=true",
+				"-v=3",
+			},
+			wantFlags: []string{
+				"nginx-plus=true",
+				"-v=3",
+			},
+		},
+		{
+			name:      "no flags",
+			setFlags:  []string{},
+			wantFlags: []string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfigurator(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:      configurator,
+				K8sClientReader:   newTestClientset(node1, kubeNS),
+				Version:           telemetryNICData.ProjectVersion,
+				InstallationFlags: tc.setFlags,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			telData := tel.Data{
+				ProjectName:         telemetryNICData.ProjectName,
+				ProjectVersion:      telemetryNICData.ProjectVersion,
+				ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+				ClusterNodeCount:    1,
+				ClusterID:           telemetryNICData.ClusterID,
+				ClusterVersion:      telemetryNICData.ClusterVersion,
+				ClusterPlatform:     "other",
+			}
+
+			nicResourceCounts := telemetry.NICResourceCounts{
+				VirtualServers:      0,
+				VirtualServerRoutes: 0,
+				TransportServers:    0,
+				Ingresses:           0,
+				InstallationFlags:   tc.wantFlags,
+			}
+
+			td := telemetry.Data{
+				Data:              telData,
+				NICResourceCounts: nicResourceCounts,
+			}
+
+			want := fmt.Sprintf("%+v", &td)
+
+			got := buf.String()
+			if !cmp.Equal(want, got) {
+				t.Error(cmp.Diff(got, want))
+			}
+		})
 	}
 }
 

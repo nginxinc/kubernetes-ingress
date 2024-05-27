@@ -192,6 +192,21 @@ func (c *Collector) PolicyCount() map[string]int {
 	return policyCounters
 }
 
+// AppProtectVersion returns the AppProtect Version
+func (c *Collector) AppProtectVersion() string {
+	return c.Config.AppProtectVersion
+}
+
+// IsPlusEnabled returns true or false depending on if NGINX is Plus or OSS
+func (c *Collector) IsPlusEnabled() bool {
+	return c.Config.IsPlus
+}
+
+// InstallationFlags returns the list of all set flags
+func (c *Collector) InstallationFlags() []string {
+	return c.Config.InstallationFlags
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.

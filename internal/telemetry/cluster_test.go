@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 	appsV1 "k8s.io/api/apps/v1"
 	apiCoreV1 "k8s.io/api/core/v1"
@@ -433,6 +435,27 @@ func TestInstallationIDFailsOnMissingDaemonSet(t *testing.T) {
 	_, err := c.InstallationID(context.Background())
 	if err == nil {
 		t.Fatal("want error on missing daemonset got nil")
+	}
+}
+
+func TestGetInstallationFlags(t *testing.T) {
+	t.Parallel()
+
+	c, err := telemetry.NewCollector(
+		telemetry.CollectorConfig{
+			InstallationFlags: []string{
+				"-nginx-plus=true",
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := c.InstallationFlags()
+	want := []string{"-nginx-plus=true"}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
 

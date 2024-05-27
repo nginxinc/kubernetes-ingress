@@ -101,6 +101,25 @@ def is_dnsendpoint_present(custom_objects: CustomObjectsApi, name, namespace) ->
     return True
 
 
+def create_resource_from_manifest(custom_objects: CustomObjectsApi, body, namespace, plural) -> None:
+    """
+    Create a Resource based on manifest.
+
+    :param custom_objects: CustomObjectsApi
+    :param body: manifest body
+    :param namespace: namespace where the resource will be created
+    :param plural: the plural of the resource
+    """
+    try:
+        print("Create a Custom Resource: " + body["kind"])
+        group, version = body["apiVersion"].split("/")
+        custom_objects.create_namespaced_custom_object(group, version, namespace, plural, body)
+        print(f"Custom resource {body['kind']} created with name '{body['metadata']['name']}'")
+    except ApiException as ex:
+        logging.exception(f"Exception: {ex} occurred while creating {body['kind']}: {body['metadata']['name']}")
+        raise ex
+
+
 def read_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
     """
     Get CRD information (kubectl describe output)

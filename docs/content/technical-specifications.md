@@ -24,7 +24,7 @@ We explicitly test NGINX Ingress Controller on a range of Kubernetes platforms f
 {{< bootstrap-table "table table-bordered table-striped table-responsive" >}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| 3.5.1 | 1.29 - 1.23 | 1.2.1 | 2.2.0 | 1.25.4 / R31 P1 |
+| 3.5.1 | 1.29 - 1.23 | 1.2.1 | 2.2.1 | 1.25.4 / R31 P1 |
 | 3.4.3 | 1.29 - 1.23 | 1.1.3 | 2.1.2 | 1.25.4 / R31 P1 |
 | 3.3.2 | 1.28 - 1.22 | 1.0.2 | 2.0.2 | 1.25.3 / R30 |
 | 3.2.1 | 1.27 - 1.22 | 0.18.1 | 1.5.1 | 1.25.2 / R30 |
@@ -39,9 +39,6 @@ We explicitly test NGINX Ingress Controller on a range of Kubernetes platforms f
 | 1.11.3 | 1.20 - 1.16 | 0.9.0 | 0.2.0 | 1.21.0 / R23 P1 |
 | 1.10.1 | 1.19 - 1.16 | 0.8.0 | 0.1.0 | 1.19.8 / R23 |
 | 1.9.1 | 1.18 - 1.16 | 0.7.1 | 0.0.7 | 1.19.3 / R22 |
-| 1.8.1 |  | 0.6.0 | 0.0.6 | 1.19.2 / R22 |
-| 1.7.2 |  | 0.5.1 | 0.0.4 | 1.19.0 / R22 |
-| 1.6.3 |  | 0.4.3 | -- | 1.17.9 / R21 |
 {{% /bootstrap-table %}}
 
 ## Supported Docker Images
@@ -103,8 +100,17 @@ We also provide NGINX Plus images through the Google Cloud Marketplace. Please s
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | GCP Marketplace Link | Architectures |
 | ---| ---| --- | --- | --- |
-|Debian-based image | ``debian:11-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus) | amd64 |
-|Debian-based image with NGINX App Protect DoS | ``debian:11-slim`` | NGINX App Protect DoS<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect DoS](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus-dos) | amd64 |
+|Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus) | amd64 |
+|Debian-based image with NGINX App Protect WAF | ``debian:11-slim`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect WAF](https://console.cloud.google.com/marketplace/product/f5-7626-networks-public/nginx-ingress-plus-nap) | amd64 |
+{{% /bootstrap-table %}}
+
+#### **Microsoft Azure Marketplace**
+We also provide NGINX Plus image through the Microsoft Azure Marketplace.
+
+{{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
+|<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | Azure Marketplace Link | Architectures |
+| ---| ---| --- | --- | --- |
+|Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/nginxinc.nginx_ingress_premium) | amd64 |
 {{% /bootstrap-table %}}
 
 ### Custom Images

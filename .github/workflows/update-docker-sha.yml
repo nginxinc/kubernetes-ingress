@@ -1,0 +1,69 @@
+name: "Update pinned container SHAs"
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        required: true
+        type: string
+        default: 'main'
+      excludes:
+        description: Comma separated list of strings to exclude images from the update
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  update-docker-sha:
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        with:
+          ref: ${{ inputs.source_branch }}
+
+      - name: Update images
+        id: update_images
+        run: |
+          docker_md5=$(find . -type f \( -wholename "build/Dockerfile" -o -wholename "tests/Dockerfile" \) -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }')
+          echo "docker_md5=${docker_md5:0:8}" >> $GITHUB_OUTPUT
+          ARGS=""
+          if [ -n ${{ github.event.inputs.excludes }} ]; then
+            ARGS="--exclude ${{ github.event.inputs.excludes }}"
+          fi
+          .github/scripts/docker-updater.sh ./build/Dockerfile $ARGS
+          .github/scripts/docker-updater.sh ./tests/Dockerfile $ARGS
+          files=$(git diff --name-only)
+          if [[ $files == *"Dockerfile"* ]]; then
+            echo "change_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "change_detected=false" >> $GITHUB_OUTPUT
+          fi
+          echo $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # v6.0.5
+        with:
+          token: ${{ secrets.NGINX_PAT }}
+          commit-message: Update docker images ${{ steps.update_images.outputs.docker_md5 }}
+          title: Docker image update ${{ steps.update_images.outputs.docker_md5 }}
+          branch: chore/image-update-${{ inputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
+          author: nginx-bot <integrations@nginx.com>
+          labels: |
+            dependencies
+            docker
+          body: |
+            This automated PR updates pinned container image SHAs to latest.
+        if: ${{ !inputs.dry_run && steps.update_images.outputs.change_detected == 'true' }}

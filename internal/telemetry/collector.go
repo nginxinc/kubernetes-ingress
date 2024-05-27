@@ -71,6 +71,15 @@ type CollectorConfig struct {
 
 	// Policies gets all policies
 	Policies func() []*conf_v1.Policy
+
+	// AppProtectVersion represents the version of App Protect.
+	AppProtectVersion string
+
+	// IsPlus represents whether NGINX is Plus or OSS
+	IsPlus bool
+
+	// InstallationFlags represents the list of set flags managed by NIC
+	InstallationFlags []string
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -133,6 +142,9 @@ func (c *Collector) Collect(ctx context.Context) {
 			WAFPolicies:           int64(report.WAFCount),
 			GlobalConfiguration:   report.GlobalConfiguration,
 			IngressAnnotations:    report.IngressAnnotations,
+			AppProtectVersion:     report.AppProtectVersion,
+			IsPlus:                report.IsPlus,
+			InstallationFlags:     report.InstallationFlags,
 		},
 	}
 
@@ -173,6 +185,9 @@ type Report struct {
 	WAFCount            int
 	GlobalConfiguration bool
 	IngressAnnotations  []string
+	AppProtectVersion   string
+	IsPlus              bool
+	InstallationFlags   []string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -190,42 +205,42 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	clusterID, err := c.ClusterID(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: ClusterID: %v", err)
 	}
 
 	nodes, err := c.NodeCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Nodes: %v", err)
 	}
 
 	version, err := c.ClusterVersion()
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: K8s Version: %v", err)
 	}
 
 	platform, err := c.Platform(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Platform: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Platform: %v", err)
 	}
 
 	replicas, err := c.ReplicaCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Replicas: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Replicas: %v", err)
 	}
 
 	installationID, err := c.InstallationID(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: InstallationID: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: InstallationID: %v", err)
 	}
 
 	secretCount, err := c.Secrets()
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Secrets: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Secrets: %v", err)
 	}
 	ingressCount := c.IngressCount()
 	ingressClassCount, err := c.IngressClassCount(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: Ingress Classes: %v", err)
+		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
 	}
 
 	policies := c.PolicyCount()
@@ -240,6 +255,12 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	wafCount := policies["WAF"]
 
 	ingressAnnotations := c.IngressAnnotations()
+
+	appProtectVersion := c.AppProtectVersion()
+
+	isPlus := c.IsPlusEnabled()
+
+	installationFlags := c.InstallationFlags()
 
 	return Report{
 		Name:                "NIC",
@@ -268,5 +289,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		WAFCount:            wafCount,
 		GlobalConfiguration: c.Config.GlobalConfiguration,
 		IngressAnnotations:  ingressAnnotations,
+		AppProtectVersion:   appProtectVersion,
+		IsPlus:              isPlus,
+		InstallationFlags:   installationFlags,
 	}, err
 }
