@@ -75,8 +75,12 @@ type NICResourceCounts struct {
 	Replicas int64
 	// Secrets is the number of Secret resources managed by the Ingress Controller.
 	Secrets int64
-	// Services is the number of services referenced by NGINX Ingress Controller in the cluster
-	Services int64
+	// ClusterIPServices is the number of ClusterIP services referenced by NGINX Ingress Controller in the cluster
+	ClusterIPServices int64
+	// NodePortServices is the number of NodePort services referenced by NGINX Ingress Controller in the cluster
+	NodePortServices int64
+	// ExternalNameServices is the number of ExternalName services referenced by NGINX Ingress Controller in the cluster
+	ExternalNameServices int64
 	// Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller.
 	Ingresses int64
 	// IngressClasses is the number of Ingress Classes.

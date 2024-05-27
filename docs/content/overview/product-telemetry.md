@@ -34,7 +34,9 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **TransportServers** The number of TransportServer resources managed by NGINX Ingress Controller.
 - **Replicas** Number of Deployment replicas, or Daemonset instances.
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
-- **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
+- **ClusterIPServices** Number of ClusterIP Services managed by NGINX Ingress Controller.
+- **NodePortServices** Number of NodePort Services managed by NGINX Ingress Controller.
+- **ExternalNameServices** Number of ExternalName Services managed by NGINX Ingress Controller.
 - **Ingresses** The number of Ingress resources managed by the NGINX Ingress Controller.
 - **IngressClasses** Number of Ingress Classes in the cluster.
 - **IngressAnnotations** List of Ingress annotations managed by NGINX Ingress Controller
