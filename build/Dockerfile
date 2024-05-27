@@ -540,10 +540,12 @@ LABEL org.nginx.kic.image.build.version="goreleaser"
 
 COPY --link --chown=101:0 --from=goreleaser-setcap /nginx-ingress /
 # root is required for `setcap` invocation
+USER 0
 RUN --mount=type=bind,target=/tmp [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
 	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
 	&& chown -R 101:0 /*.tmpl \
 	&& chmod -R g=u /*.tmpl
+USER 101
 
 
 ############################################# Builder style stage to avoid duplicate layers for ingress and ingress with setcap #############################################
@@ -573,10 +575,12 @@ ARG NAP_MODULES_AWS
 LABEL org.nginx.kic.image.build.version="aws"
 
 COPY --link --chown=101:0 --from=aws-setcap /nginx-ingress /
+USER 0
 RUN --mount=type=bind,target=/tmp [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
 	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
 	&& chown -R 101:0 /*.tmpl \
 	&& chmod -R g=u /*.tmpl
+USER 101
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
