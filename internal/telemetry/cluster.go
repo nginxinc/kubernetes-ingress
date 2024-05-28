@@ -211,14 +211,13 @@ func (c *Collector) InstallationFlags() []string {
 func (c *Collector) ServiceCounts() (map[string]int, error) {
 	serviceCounts := make(map[string]int)
 
-	serviceList, err := c.Config.K8sClientReader.CoreV1().Services("").List(context.Background(), metaV1.ListOptions{})
+	services, err := c.Config.K8sClientReader.CoreV1().Services("").List(context.Background(), metaV1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	for _, service := range serviceList.Items {
-		serviceType := service.Spec.Type
-		serviceCounts[string(serviceType)]++
+	for _, service := range services.Items {
+		serviceCounts[string(service.Spec.Type)]++
 	}
 
 	return serviceCounts, nil
