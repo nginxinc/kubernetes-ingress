@@ -156,6 +156,10 @@ server {
             js_content apikey_auth.validate_route;
     }
 
+
+    # TODO: do this conditionally (if there is an apikey policy in a location)
+    js_set $hashed_variable_route apikey_auth.hash_route;
+
     {{- with $s.BasicAuth }}
     auth_basic {{ printf "%q" .Realm }};
     auth_basic_user_file {{ .Secret }};
@@ -297,7 +301,6 @@ server {
         # no match: {{ .RejectCodeNoMatch }}
 
         set $header_query_value_route {{ makeHeaderQueryValue $l.APIKey | printf }};
-        js_set $hashed_variable_route apikey_auth.hash_route;
         js_var $apikey_auth_token_route $hashed_variable_route;
 
         set $apikey_auth_local_map_route {{ .MapName }};
