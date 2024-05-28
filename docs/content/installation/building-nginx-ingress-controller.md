@@ -164,7 +164,6 @@ A few other useful targets:
 | _push_                              | Pushes the built image to the Docker registry. Configures with `PREFIX` and `TAG`.  |
 | _all_                               | Runs `test`, `lint`, `verify-codegen`, `update-crds`, and `debian-image`. Stops and reports an error if any of these targets fail.  |
 | _test_                              | Runs unit tests.  |
-| _certificate-and-key_               | NGINX Ingress Controller requires a certificate and key for the default HTTP/HTTPS server. You have several options: <ul><li>Reference them in a TLS Secret in a command-line argument to NGINX Ingress Controller.</li><li>Add them to the image in in a file in PEM format as `/etc/nginx/secrets/default`.</li><li>Generate a self-signed certificate and key with this target.</li></ul>Note, you must include the `ADD` instruction in your Dockerfile to copy the cert and key to the image. |
 {{</bootstrap-table>}}
 
 ### Makefile variables you can customize {#makefile-variables}

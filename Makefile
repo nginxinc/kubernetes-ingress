@@ -92,10 +92,6 @@ telemetry-schema: ## Generate the telemetry Schema
 	go generate internal/telemetry/exporter.go
 	gofumpt -w internal/telemetry/*_generated.go
 
-.PHONY: certificate-and-key
-certificate-and-key: ## Create default cert and key
-	./build/generate_default_cert_and_key.sh
-
 .PHONY: build
 build: ## Build Ingress Controller binary
 	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
