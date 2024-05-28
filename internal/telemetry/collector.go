@@ -264,7 +264,10 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	installationFlags := c.InstallationFlags()
 
-	serviceCounts, _ := c.ServiceCounts()
+	serviceCounts, err := c.ServiceCounts()
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: Service Counts: %v", err)
+	}
 	clusterIPServices := serviceCounts["ClusterIP"]
 	nodePortServices := serviceCounts["NodePort"]
 	externalNameServices := serviceCounts["ExternalName"]
