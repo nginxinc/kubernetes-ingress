@@ -79,6 +79,8 @@ type NICResourceCounts struct {
 	ClusterIPServices int64
 	// NodePortServices is the number of NodePort services managed by NGINX Ingress Controller.
 	NodePortServices int64
+	// LoadBalancerServices is the number of LoadBalancer services managed by NGINX Ingress Controller.
+	LoadBalancerServices int64
 	// ExternalNameServices is the number of ExternalName services managed by NGINX Ingress Controller.
 	ExternalNameServices int64
 	// Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller.

@@ -36,6 +36,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
 - **ClusterIPServices** Number of ClusterIP Services managed by NGINX Ingress Controller.
 - **NodePortServices** Number of NodePort Services managed by NGINX Ingress Controller.
+- **LoadBalancerServices** Number of LoadBalancer Services managed by NGINX Ingress Controller.
 - **ExternalNameServices** Number of ExternalName Services managed by NGINX Ingress Controller.
 - **Ingresses** The number of Ingress resources managed by the NGINX Ingress Controller.
 - **IngressClasses** Number of Ingress Classes in the cluster.

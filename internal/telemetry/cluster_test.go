@@ -497,12 +497,13 @@ func TestGetServices(t *testing.T) {
 		{
 			name: "MultipleServices",
 			config: telemetry.CollectorConfig{
-				K8sClientReader: newTestClientset(defaultNS, kubeNS, externalNameService, externalNameService2, nodePortService, nodePortService2, clusterIPService2, clusterIPService),
+				K8sClientReader: newTestClientset(defaultNS, kubeNS, externalNameService, externalNameService2, nodePortService, nodePortService2, clusterIPService2, clusterIPService, loadBalancerService),
 			},
 			want: map[string]int{
 				"ClusterIP":    2,
 				"ExternalName": 2,
 				"NodePort":     2,
+				"LoadBalancer": 1,
 			},
 		},
 		{
@@ -1106,6 +1107,20 @@ var (
 		},
 		Spec: apiCoreV1.ServiceSpec{
 			Type: "ExternalName",
+		},
+		Status: apiCoreV1.ServiceStatus{},
+	}
+	loadBalancerService = &apiCoreV1.Service{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "default-svc",
+			Namespace: "default",
+		},
+		Spec: apiCoreV1.ServiceSpec{
+			Type: "LoadBalancer",
 		},
 		Status: apiCoreV1.ServiceStatus{},
 	}

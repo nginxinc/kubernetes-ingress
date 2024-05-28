@@ -1434,13 +1434,14 @@ func TestCollectGetServices(t *testing.T) {
 			name: "MultipleServices",
 			config: telemetry.CollectorConfig{
 				Configurator:    newConfigurator(t),
-				K8sClientReader: newTestClientset(defaultNS, kubeNS, externalNameService, externalNameService2, nodePortService, nodePortService2, clusterIPService2, clusterIPService),
+				K8sClientReader: newTestClientset(defaultNS, kubeNS, externalNameService, externalNameService2, nodePortService, nodePortService2, clusterIPService2, clusterIPService, loadBalancerService),
 				Version:         telemetryNICData.ProjectVersion,
 			},
 			want: map[string]int{
 				"ClusterIP":    2,
 				"ExternalName": 2,
 				"NodePort":     2,
+				"LoadBalancer": 1,
 			},
 		},
 		{
@@ -1474,11 +1475,13 @@ func TestCollectGetServices(t *testing.T) {
 			}
 			clusterIPServices := tc.want["ClusterIP"]
 			nodePortServices := tc.want["NodePort"]
+			loadBalancerServices := tc.want["LoadBalancer"]
 			externalNameServices := tc.want["ExternalName"]
 
 			nicResourceCounts := telemetry.NICResourceCounts{
 				ClusterIPServices:    int64(clusterIPServices),
 				NodePortServices:     int64(nodePortServices),
+				LoadBalancerServices: int64(loadBalancerServices),
 				ExternalNameServices: int64(externalNameServices),
 			}
 
@@ -1530,13 +1533,14 @@ func TestCollectGetInvalidServices(t *testing.T) {
 			name: "WantManyServices",
 			config: telemetry.CollectorConfig{
 				Configurator:    newConfigurator(t),
-				K8sClientReader: newTestClientset(defaultNS, kubeNS, nodePortService2, clusterIPService2, clusterIPService),
+				K8sClientReader: newTestClientset(defaultNS, kubeNS, nodePortService2, clusterIPService2, clusterIPService, loadBalancerService),
 				Version:         telemetryNICData.ProjectVersion,
 			},
 			want: map[string]int{
 				"ClusterIP":    2,
 				"ExternalName": 2,
 				"NodePort":     2,
+				"LoadBalancer": 2,
 			},
 		},
 	}

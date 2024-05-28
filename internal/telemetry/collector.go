@@ -131,6 +131,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			Secrets:               int64(report.Secrets),
 			ClusterIPServices:     int64(report.ClusterIPServices),
 			NodePortServices:      int64(report.NodePortServices),
+			LoadBalancerServices:  int64(report.LoadBalancerServices),
 			ExternalNameServices:  int64(report.ExternalNameServices),
 			Ingresses:             int64(report.IngressCount),
 			IngressClasses:        int64(report.IngressClassCount),
@@ -174,6 +175,7 @@ type Report struct {
 	VirtualServerRoutes  int
 	ClusterIPServices    int
 	NodePortServices     int
+	LoadBalancerServices int
 	ExternalNameServices int
 	TransportServers     int
 	Secrets              int
@@ -270,6 +272,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	}
 	clusterIPServices := serviceCounts["ClusterIP"]
 	nodePortServices := serviceCounts["NodePort"]
+	loadBalancerServices := serviceCounts["LoadBalancer"]
 	externalNameServices := serviceCounts["ExternalName"]
 
 	return Report{
@@ -286,6 +289,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		VirtualServerRoutes:  vsrCount,
 		ClusterIPServices:    clusterIPServices,
 		NodePortServices:     nodePortServices,
+		LoadBalancerServices: loadBalancerServices,
 		ExternalNameServices: externalNameServices,
 		TransportServers:     tsCount,
 		Secrets:              secretCount,
