@@ -518,7 +518,7 @@ func TestIngressCountReportsNoDeployedIngresses(t *testing.T) {
 		VirtualServers:      0,
 		VirtualServerRoutes: 0,
 		TransportServers:    0,
-		Ingresses:           0,
+		RegularIngressCount: 0,
 	}
 
 	td := telemetry.Data{
@@ -747,8 +747,59 @@ func TestIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
 		VirtualServers:      0,
 		VirtualServerRoutes: 0,
 		TransportServers:    0,
-		Ingresses:           1,
+		RegularIngressCount: 1,
 		Services:            2,
+	}
+
+	td := telemetry.Data{
+		Data:              telData,
+		NICResourceCounts: nicResourceCounts,
+	}
+
+	want := fmt.Sprintf("%+v", &td)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestMasterMinionIngressCountReportsNumberOfDeployedIngresses(t *testing.T) {
+	t.Parallel()
+	buf := &bytes.Buffer{}
+	exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+	configurator := newConfiguratorWithMergeableIngress(t)
+
+	cfg := telemetry.CollectorConfig{
+		Configurator:    configurator,
+		K8sClientReader: newTestClientset(node1, kubeNS),
+		Version:         telemetryNICData.ProjectVersion,
+	}
+
+	c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Collect(context.Background())
+
+	telData := tel.Data{
+		ProjectName:         telemetryNICData.ProjectName,
+		ProjectVersion:      telemetryNICData.ProjectVersion,
+		ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+		ClusterNodeCount:    1,
+		ClusterID:           telemetryNICData.ClusterID,
+		ClusterVersion:      telemetryNICData.ClusterVersion,
+		ClusterPlatform:     "other",
+	}
+
+	nicResourceCounts := telemetry.NICResourceCounts{
+		VirtualServers:      0,
+		VirtualServerRoutes: 0,
+		TransportServers:    0,
+		MasterIngressCount:  1,
+		MinionIngressCount:  2,
+		Services:            2,
+		IngressAnnotations:  []string{"nginx.org/mergeable-ingress-type"},
 	}
 
 	td := telemetry.Data{
@@ -951,11 +1002,7 @@ func TestCollectInstallationFlags(t *testing.T) {
 			}
 
 			nicResourceCounts := telemetry.NICResourceCounts{
-				VirtualServers:      0,
-				VirtualServerRoutes: 0,
-				TransportServers:    0,
-				Ingresses:           0,
-				InstallationFlags:   tc.wantFlags,
+				InstallationFlags: tc.wantFlags,
 			}
 
 			td := telemetry.Data{
@@ -2336,6 +2383,18 @@ func newConfiguratorWithIngressWithCustomAnnotations(t *testing.T, annotations m
 	ingressEx := createCafeIngressExWithCustomAnnotations(annotations)
 	c := newConfigurator(t)
 	_, err := c.AddOrUpdateIngress(&ingressEx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+func newConfiguratorWithMergeableIngress(t *testing.T) *configs.Configurator {
+	t.Helper()
+
+	ingressEx := createMergeableCafeIngress()
+	c := newConfigurator(t)
+	_, err := c.AddOrUpdateMergeableIngress(ingressEx)
 	if err != nil {
 		t.Fatal(err)
 	}

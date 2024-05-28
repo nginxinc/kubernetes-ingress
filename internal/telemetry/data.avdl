@@ -51,8 +51,14 @@ It is the UID of the `kube-system` Namespace. */
 		/** Services is the number of services referenced by NGINX Ingress Controller in the cluster */
 		long? Services = null;
 
-		/** Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller. */
-		long? Ingresses = null;
+		/** RegularIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller. */
+		long? RegularIngressCount = null;
+
+		/** MasterIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller. */
+		long? MasterIngressCount = null;
+
+		/** MinionIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller. */
+		long? MinionIngressCount = null;
 
 		/** IngressClasses is the number of Ingress Classes. */
 		long? IngressClasses = null;
