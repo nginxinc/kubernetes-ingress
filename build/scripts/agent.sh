@@ -1,4 +1,7 @@
 #!/bin/sh
+
+set -e
+
 NAP_VERSION=$(cat /opt/app_protect/VERSION)
 
 mkdir -p /etc/ssl/nms /opt/nms-nap-compiler

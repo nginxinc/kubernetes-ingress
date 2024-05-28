@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -o
+set -e
 
 PLUS=""
 if [ -z "${BUILD_OS##*plus*}" ]; then
