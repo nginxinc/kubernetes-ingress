@@ -2,6 +2,6 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: nginx-config
-  namespace: default
+  namespace: nginx-ingress
 data:
   resolver-addresses: "kube-dns.kube-system.svc.cluster.local"
