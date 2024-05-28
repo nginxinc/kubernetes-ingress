@@ -226,9 +226,16 @@ server {
 
 
     # TODO: Do this conditionally
-    location = /_validate_apikey_njs {
+    location = /_validate_apikey_njs_spec {
             internal;
-            js_content apikey_auth.validate;
+            js_content apikey_auth.validate_spec;
+    }
+
+
+    # TODO: Do this conditionally
+    location = /_validate_apikey_njs_route {
+            internal;
+            js_content apikey_auth.validate_route;
     }
 
     {{- with $s.BasicAuth }}
@@ -259,13 +266,11 @@ server {
     # not supplied: {{ .RejectCodeNotSupplied }}
     # no match: {{ .RejectCodeNoMatch }}
 
-    set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
-    js_set $hash_fn_server apikey_auth.hash;
-    js_var $apikey_auth_token_spec $hash_fn_server;
-
-    set $apikey_auth_local_map  {{ .MapName }};
-
-    auth_request /_validate_apikey_njs;
+    set $header_query_value_spec {{ makeHeaderQueryValue $s.APIKey | printf }};
+    js_set $hashed_variable_spec apikey_auth.hash_spec;
+    js_var $apikey_auth_token_spec $hashed_variable_spec;
+    set $apikey_auth_local_map_spec {{ .MapName }};
+    auth_request /_validate_apikey_njs_spec;
     {{- range $header := .Header}}
         # header: {{ $header }}
     {{- end -}}
@@ -483,13 +488,13 @@ server {
         # not supplied: {{ .RejectCodeNotSupplied }}
         # no match: {{ .RejectCodeNoMatch }}
 
-        set $header_query_value {{ makeHeaderQueryValue $l.APIKey | printf }};
-        js_set $hash_fn_location apikey_auth.hash;
-        js_var $apikey_auth_token_route $hash_fn_location;
+        set $header_query_value_route {{ makeHeaderQueryValue $l.APIKey | printf }};
+        js_set $hashed_variable_route apikey_auth.hash_route;
+        js_var $apikey_auth_token_route $hashed_variable_route;
 
-        set $apikey_auth_local_map {{ .MapName }};
+        set $apikey_auth_local_map_route {{ .MapName }};
 
-        auth_request /_validate_apikey_njs;
+        auth_request /_validate_apikey_njs_route;
         {{- range $header := .Header}}
             # header: {{ $header }}
         {{- end -}}
