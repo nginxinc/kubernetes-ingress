@@ -83,8 +83,12 @@ type NICResourceCounts struct {
 	LoadBalancerServices int64
 	// ExternalNameServices is the number of ExternalName services managed by NGINX Ingress Controller.
 	ExternalNameServices int64
-	// Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller.
-	Ingresses int64
+	// RegularIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	RegularIngressCount int64
+	// MasterIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	MasterIngressCount int64
+	// MinionIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	MinionIngressCount int64
 	// IngressClasses is the number of Ingress Classes.
 	IngressClasses int64
 	// AccessControlPolicies is the number of AccessControl policies managed by NGINX Ingress Controller

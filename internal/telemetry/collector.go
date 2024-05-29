@@ -133,7 +133,9 @@ func (c *Collector) Collect(ctx context.Context) {
 			NodePortServices:      int64(report.NodePortServices),
 			LoadBalancerServices:  int64(report.LoadBalancerServices),
 			ExternalNameServices:  int64(report.ExternalNameServices),
-			Ingresses:             int64(report.IngressCount),
+			RegularIngressCount:   int64(report.RegularIngressCount),
+			MasterIngressCount:    int64(report.MasterIngressCount),
+			MinionIngressCount:    int64(report.MinionIngressCount),
 			IngressClasses:        int64(report.IngressClassCount),
 			AccessControlPolicies: int64(report.AccessControlCount),
 			RateLimitPolicies:     int64(report.RateLimitCount),
@@ -179,21 +181,23 @@ type Report struct {
 	ExternalNameServices int
 	TransportServers     int
 	Secrets              int
-	IngressCount         int
-	IngressClassCount    int
-	AccessControlCount   int
-	RateLimitCount       int
-	JWTAuthCount         int
-	BasicAuthCount       int
-	IngressMTLSCount     int
-	EgressMTLSCount      int
-	OIDCCount            int
-	WAFCount             int
-	GlobalConfiguration  bool
-	IngressAnnotations   []string
-	AppProtectVersion    string
-	IsPlus               bool
-	InstallationFlags    []string
+	RegularIngressCount int
+	MasterIngressCount  int
+	MinionIngressCount  int
+	IngressClassCount   int
+	AccessControlCount  int
+	RateLimitCount      int
+	JWTAuthCount        int
+	BasicAuthCount      int
+	IngressMTLSCount    int
+	EgressMTLSCount     int
+	OIDCCount           int
+	WAFCount            int
+	GlobalConfiguration bool
+	IngressAnnotations  []string
+	AppProtectVersion   string
+	IsPlus              bool
+	InstallationFlags   []string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -241,7 +245,10 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	if err != nil {
 		glog.V(3).Infof("Unable to collect telemetry data: Secrets: %v", err)
 	}
-	ingressCount := c.IngressCount()
+
+	regularIngressCount := c.RegularIngressCount()
+	masterIngressCount := c.MasterIngressCount()
+	minionIngressCount := c.MinionIngressCount()
 	ingressClassCount, err := c.IngressClassCount(ctx)
 	if err != nil {
 		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
@@ -276,7 +283,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	externalNameServices := serviceCounts["ExternalName"]
 
 	return Report{
-		Name:                 "NIC",
+    Name:                 "NIC",
 		Version:              c.Config.Version,
 		Architecture:         runtime.GOARCH,
 		ClusterID:            clusterID,
@@ -293,20 +300,22 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		ExternalNameServices: externalNameServices,
 		TransportServers:     tsCount,
 		Secrets:              secretCount,
-		IngressCount:         ingressCount,
-		IngressClassCount:    ingressClassCount,
-		AccessControlCount:   accessControlCount,
-		RateLimitCount:       rateLimitCount,
-		JWTAuthCount:         jwtAuthCount,
-		BasicAuthCount:       basicAuthCount,
-		IngressMTLSCount:     ingressMTLSCount,
-		EgressMTLSCount:      egressMTLSCount,
-		OIDCCount:            oidcCount,
-		WAFCount:             wafCount,
-		GlobalConfiguration:  c.Config.GlobalConfiguration,
-		IngressAnnotations:   ingressAnnotations,
-		AppProtectVersion:    appProtectVersion,
-		IsPlus:               isPlus,
-		InstallationFlags:    installationFlags,
+		RegularIngressCount: regularIngressCount,
+		MasterIngressCount:  masterIngressCount,
+		MinionIngressCount:  minionIngressCount,
+		IngressClassCount:   ingressClassCount,
+		AccessControlCount:  accessControlCount,
+		RateLimitCount:      rateLimitCount,
+		JWTAuthCount:        jwtAuthCount,
+		BasicAuthCount:      basicAuthCount,
+		IngressMTLSCount:    ingressMTLSCount,
+		EgressMTLSCount:     egressMTLSCount,
+		OIDCCount:           oidcCount,
+		WAFCount:            wafCount,
+		GlobalConfiguration: c.Config.GlobalConfiguration,
+		IngressAnnotations:  ingressAnnotations,
+		AppProtectVersion:   appProtectVersion,
+		IsPlus:              isPlus,
+		InstallationFlags:   installationFlags,
 	}, err
 }
