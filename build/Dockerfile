@@ -60,24 +60,49 @@ ARG BUILD_OS
 ARG NGINX_PLUS_VERSION
 
 # the following links can be replaced with local files if needed, i.e. ADD --chown=101:0 <local_file> <container_file>
-ADD --link --chown=101:0 https://cs.nginx.com/static/files/90pkgs-nginx 90pkgs-nginx
+#ADD --link --chown=101:0 https://cs.nginx.com/static/files/90pkgs-nginx 90pkgs-nginx
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/cc2dfc721ccfc428799c0c2a4fa0d7edb86b97eb/files/90pkgs-test-nginx 90pkgs-nginx
 ADD --link --chown=101:0 https://cs.nginx.com/static/keys/nginx_signing.key nginx_signing.key
 ADD --link --chown=101:0 https://cs.nginx.com/static/keys/nginx_signing.rsa.pub nginx_signing.rsa.pub
 ADD --link --chown=101:0 https://cs.nginx.com/static/keys/app-protect-security-updates.key app-protect-security-updates.key
 ADD --link --chown=101:0 https://cs.nginx.com/static/keys/app-protect-security-updates.rsa.pub app-protect-security-updates.rsa.pub
-ADD --link --chown=101:0 https://cs.nginx.com/static/files/nginx-plus-8.repo nginx-plus-8.repo
+
+
+# ########
+# TEST repo files for NGINX R32 for UBI
+# ADD --link --chown=101:0 https://cs.nginx.com/static/files/nginx-plus-8.repo nginx-plus-8.repo
+# ADD --link --chown=101:0 https://cs.nginx.com/static/files/plus-9.repo nginx-plus-9.repo
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/2905e3d30db80ef85f90cd91b24f9b03c29d67fe/files/nginx-plus-8.repo nginx-plus-8.repo
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/plus-9.repo nginx-plus-9.repo
-ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-8.repo app-protect-8.repo
-ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-9.repo app-protect-9.repo
+# ########
+
+
+# ########
+# TEST repo files for NGINX R32 for AppProtect UBI
+# ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-8.repo app-protect-8.repo
+# ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-9.repo app-protect-9.repo
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/ea1dd5854dfd7244e2f98409e7407fc40daf8875/files/nap-waf-v5-ubi-8.repo app-protect-8.repo
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/ea1dd5854dfd7244e2f98409e7407fc40daf8875/files/nap-waf-v5-ubi-9.repo app-protect-9.repo
+# ########
+
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-dos-8.repo app-protect-dos-8.repo
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-11.repo debian-plus-11.sources
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-12.repo debian-plus-12.sources
+
+# ########
+# TEST repo files for NGINX R32
+#ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-11.repo debian-plus-11.sources
+#ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-12.repo debian-plus-12.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/46f7d30eb2ed5ea6f51333935f0eba5c03197a09/files/plus-debian-11.repo debian-plus-11.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/46f7d30eb2ed5ea6f51333935f0eba5c03197a09/files/plus-debian-12.repo debian-plus-12.sources
+# ########
+
+# ########
 # TEST repo files for WAF v5 packages for Debian 11 and 12
 # https://raw.githubusercontent.com/shaun-nx/k8s-common/waf-v5-debian-repo/files/plus-nap-waf-v5-debian-11.repo
 # https://raw.githubusercontent.com/shaun-nx/k8s-common/waf-v5-debian-repo/files/plus-nap-waf-v5-debian-12.repo
-ADD --link --chown=101:0 https://raw.githubusercontent.com/shaun-nx/k8s-common/8c1482f84a80268b70c68987871626e0537e6e94/files/plus-nap-waf-v5-debian-11.repo plus-nap-waf-v5-debian-11.sources
-ADD --link --chown=101:0 https://raw.githubusercontent.com/shaun-nx/k8s-common/waf-v5-debian-repo/files/plus-nap-waf-v5-debian-12.repo plus-nap-waf-v5-debian-12.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/2785f52299a16f6ac62be97cc148600ffb596cb6/files/plus-nap-waf-v5-debian-11.repo plus-nap-waf-v5-debian-11.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/2785f52299a16f6ac62be97cc148600ffb596cb6/files/plus-nap-waf-v5-debian-12.repo plus-nap-waf-v5-debian-12.sources
 # ########
+
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-debian-11.repo nap-waf-11.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-dos-debian-11.repo nap-dos-11.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/agent-debian-11.repo debian-agent-11.sources
@@ -143,10 +168,19 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	--mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	--mount=type=bind,from=nginx-files,src=app-protect-security-updates.rsa.pub,target=/etc/apk/keys/app-protect-security-updates.rsa.pub \
 	--mount=type=bind,from=nginx-files,src=nginx_signing.rsa.pub,target=/etc/apk/keys/nginx_signing.rsa.pub \
-	printf "%s\n" "https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	&& printf "%s\n" "https://pkgs.nginx.com/app-protect/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	&& printf "%s\n" "https://pkgs.nginx.com/app-protect-security-updates/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	&& printf "%s\n" "https://pkgs.nginx.com/nginx-agent/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	printf "%s\n" "https://pkgs-test.nginx.com/plus/R32/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	# Commented out to avoid installing v4.
+#	&& printf "%s\n" "https://pkgs.nginx.com/app-protect/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+    # Package URI for App Protect V5 packages.
+	# The R32 package for app-protect-x-plus does not exists, yet it depends on R32...
+	# Hard coded `R31` for testing.
+	# 40.14 The following packages have unmet dependencies:
+	# 40.18  nginx-plus-module-appprotect : Depends: nginx-plus-r32 but it is not installable
+	&& printf "%s\n" "https://pkgs-test.nginx.com/app-protect-x-plus/R31/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	# Don't need security updates for v5.
+	# This can be removed if we have different build stages for v5.d
+	# && printf "%s\n" "https://pkgs.nginx.com/app-protect-security-updates/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+    && if [ -z "${NGINX_AGENT##true}" ]; then printf "%s\n" "https://pkgs.nginx.com/nginx-agent/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories; fi \
 	&& apk add --no-cache libcap-utils libcurl nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing nginx-plus-module-fips-check \
 	&& if [ -z "${NGINX_AGENT##true}" ]; then apk add --no-cache nginx-agent; fi \
 	&& mkdir -p /usr/ssl \
@@ -155,7 +189,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/ \
-	&& apk add --no-cache app-protect=~31.4.815 app-protect-attack-signatures app-protect-threat-campaigns \
+	&& apk add --no-cache app-protect-module-plus \
 	&& sed -i -e '/nginx.com/d' /etc/apk/repositories
 
 
@@ -311,7 +345,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
 	--mount=type=bind,from=nginx-files,src=nginx-plus-8.repo,target=/etc/yum.repos.d/nginx-plus.repo,rw \
 	--mount=type=bind,from=nginx-files,src=nginx-agent.repo,target=/etc/yum.repos.d/nginx-agent.repo,rw \
-	--mount=type=bind,from=nginx-files,src=app-protect-security-updates.key,target=/tmp/app-protect-security-updates.key \
+	# --mount=type=bind,from=nginx-files,src=app-protect-security-updates.key,target=/tmp/app-protect-security-updates.key \
 	--mount=type=bind,from=nginx-files,src=app-protect-8.repo,target=/tmp/app-protect-8.repo \
 	--mount=type=bind,from=nginx-files,src=app-protect-dos-8.repo,target=/tmp/app-protect-dos-8.repo \
 	source /tmp/rhel_license \
@@ -335,9 +369,10 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& subscription-manager attach \
 	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
-	&& rpm --import /tmp/app-protect-security-updates.key \
+	# Security Update packages not needed in v5 arcitecture.
+	# && rpm --import /tmp/app-protect-security-updates.key \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	dnf --nodocs install -y app-protect-31+4.815* app-protect-attack-signatures app-protect-threat-campaigns; \
+	dnf --nodocs install -y app-protect-module-plus; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	dnf --nodocs install -y app-protect-dos; \
