@@ -797,7 +797,6 @@ func TestMasterMinionIngressCountReportsNumberOfDeployedIngresses(t *testing.T) 
 		TransportServers:    0,
 		MasterIngressCount:  1,
 		MinionIngressCount:  2,
-		Services:            2,
 		IngressAnnotations:  []string{"nginx.org/mergeable-ingress-type"},
 	}
 

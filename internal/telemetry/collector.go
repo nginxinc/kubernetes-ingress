@@ -181,23 +181,23 @@ type Report struct {
 	ExternalNameServices int
 	TransportServers     int
 	Secrets              int
-	RegularIngressCount int
-	MasterIngressCount  int
-	MinionIngressCount  int
-	IngressClassCount   int
-	AccessControlCount  int
-	RateLimitCount      int
-	JWTAuthCount        int
-	BasicAuthCount      int
-	IngressMTLSCount    int
-	EgressMTLSCount     int
-	OIDCCount           int
-	WAFCount            int
-	GlobalConfiguration bool
-	IngressAnnotations  []string
-	AppProtectVersion   string
-	IsPlus              bool
-	InstallationFlags   []string
+	RegularIngressCount  int
+	MasterIngressCount   int
+	MinionIngressCount   int
+	IngressClassCount    int
+	AccessControlCount   int
+	RateLimitCount       int
+	JWTAuthCount         int
+	BasicAuthCount       int
+	IngressMTLSCount     int
+	EgressMTLSCount      int
+	OIDCCount            int
+	WAFCount             int
+	GlobalConfiguration  bool
+	IngressAnnotations   []string
+	AppProtectVersion    string
+	IsPlus               bool
+	InstallationFlags    []string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -283,7 +283,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	externalNameServices := serviceCounts["ExternalName"]
 
 	return Report{
-    Name:                 "NIC",
+		Name:                 "NIC",
 		Version:              c.Config.Version,
 		Architecture:         runtime.GOARCH,
 		ClusterID:            clusterID,
@@ -300,22 +300,22 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		ExternalNameServices: externalNameServices,
 		TransportServers:     tsCount,
 		Secrets:              secretCount,
-		RegularIngressCount: regularIngressCount,
-		MasterIngressCount:  masterIngressCount,
-		MinionIngressCount:  minionIngressCount,
-		IngressClassCount:   ingressClassCount,
-		AccessControlCount:  accessControlCount,
-		RateLimitCount:      rateLimitCount,
-		JWTAuthCount:        jwtAuthCount,
-		BasicAuthCount:      basicAuthCount,
-		IngressMTLSCount:    ingressMTLSCount,
-		EgressMTLSCount:     egressMTLSCount,
-		OIDCCount:           oidcCount,
-		WAFCount:            wafCount,
-		GlobalConfiguration: c.Config.GlobalConfiguration,
-		IngressAnnotations:  ingressAnnotations,
-		AppProtectVersion:   appProtectVersion,
-		IsPlus:              isPlus,
-		InstallationFlags:   installationFlags,
+		RegularIngressCount:  regularIngressCount,
+		MasterIngressCount:   masterIngressCount,
+		MinionIngressCount:   minionIngressCount,
+		IngressClassCount:    ingressClassCount,
+		AccessControlCount:   accessControlCount,
+		RateLimitCount:       rateLimitCount,
+		JWTAuthCount:         jwtAuthCount,
+		BasicAuthCount:       basicAuthCount,
+		IngressMTLSCount:     ingressMTLSCount,
+		EgressMTLSCount:      egressMTLSCount,
+		OIDCCount:            oidcCount,
+		WAFCount:             wafCount,
+		GlobalConfiguration:  c.Config.GlobalConfiguration,
+		IngressAnnotations:   ingressAnnotations,
+		AppProtectVersion:    appProtectVersion,
+		IsPlus:               isPlus,
+		InstallationFlags:    installationFlags,
 	}, err
 }
