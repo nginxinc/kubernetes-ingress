@@ -43,7 +43,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.58.2
+    rev: v1.59.0
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
