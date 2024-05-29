@@ -34,7 +34,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -156,7 +156,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -293,7 +294,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -1666,7 +1668,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -1803,7 +1806,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -1940,7 +1944,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2077,7 +2082,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2214,7 +2220,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2369,7 +2376,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2506,7 +2514,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2644,7 +2653,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2781,7 +2791,8 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2935,7 +2946,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -3056,7 +3067,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -3177,7 +3188,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -3298,7 +3309,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -3419,7 +3430,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -3559,7 +3570,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -3680,7 +3691,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -3802,7 +3813,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -3923,7 +3934,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
-    access_log  /dev/stdout  main;
+    access_log ;
 
     sendfile        on;
     #tcp_nopush     on;
