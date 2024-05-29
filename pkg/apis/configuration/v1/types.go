@@ -689,8 +689,8 @@ type SuppliedIn struct {
 }
 
 type RejectCodes struct {
-	NotSupplied int `json:"notSupplied"`
-	NoMatch     int `json:"noMatch"`
+	NotSupplied *int `json:"notSupplied"`
+	NoMatch     *int `json:"noMatch"`
 }
 
 type Client struct {

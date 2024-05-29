@@ -34,6 +34,9 @@ const SecretTypeOIDC api_v1.SecretType = "nginx.org/oidc" //nolint:gosec // G101
 // SecretTypeHtpasswd contains an htpasswd file for use in HTTP Basic authorization.. #nosec G101
 const SecretTypeHtpasswd api_v1.SecretType = "nginx.org/htpasswd" // #nosec G101
 
+// SecretTypeAPIKey contains a list of client ID and key for API key authorization.. #nosec G101
+const SecretTypeAPIKey api_v1.SecretType = "nginx.org/apikey" // #nosec G101
+
 // ValidateTLSSecret validates the secret. If it is valid, the function returns nil.
 func ValidateTLSSecret(secret *api_v1.Secret) error {
 	if secret.Type != api_v1.SecretTypeTLS {
@@ -110,9 +113,13 @@ func ValidateOIDCSecret(secret *api_v1.Secret) error {
 }
 
 func ValidateAPIKeySecret(secret *api_v1.Secret) error {
-	if secret.Type != api_v1.SecretTypeOpaque {
-		return fmt.Errorf("APIKey secret must be of the type %v", SecretTypeOIDC)
+	if secret.Type != SecretTypeAPIKey {
+		return fmt.Errorf("APIKey secret must be of the type %v", SecretTypeAPIKey)
 	}
+	//clientSecret, exists := secret.Data[ClientSecretKey]
+	//if !exists {
+	//	return fmt.Errorf("OIDC secret must have the data field %v", ClientSecretKey)
+	//}
 	return nil
 }
 
@@ -139,7 +146,8 @@ func IsSupportedSecretType(secretType api_v1.SecretType) bool {
 		secretType == SecretTypeJWK ||
 		secretType == SecretTypeOIDC ||
 		secretType == SecretTypeHtpasswd ||
-		secretType == api_v1.SecretTypeOpaque
+		secretType == SecretTypeAPIKey
+	//secretType == api_v1.SecretTypeOpaque
 }
 
 // ValidateSecret validates the secret. If it is valid, the function returns nil.
@@ -155,7 +163,7 @@ func ValidateSecret(secret *api_v1.Secret) error {
 		return ValidateOIDCSecret(secret)
 	case SecretTypeHtpasswd:
 		return ValidateHtpasswdSecret(secret)
-	case api_v1.SecretTypeOpaque:
+	case SecretTypeAPIKey:
 		return ValidateAPIKeySecret(secret)
 	}
 

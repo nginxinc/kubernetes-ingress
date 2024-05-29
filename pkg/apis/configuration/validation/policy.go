@@ -283,6 +283,7 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 }
 
 func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
+	//if api
 	if apiKey.ClientSecret == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("clientSecret"), "")}
 	}

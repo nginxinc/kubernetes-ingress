@@ -424,6 +424,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
 		policiesCfg.JWTAuthList[jwtAuthKey] = policiesCfg.JWTAuth
 	}
+	//
+	//if policiesCfg.APIKey {
+	//	apiKey := policiesCfg.APIKey.MapName
+	//}
 
 	dosCfg := generateDosCfg(dosResources[""])
 
@@ -867,6 +871,7 @@ type policiesCfg struct {
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
 	APIKey          *version2.APIKey
+	APIKeyList      map[string]*version2.APIKey
 	WAF             *version2.WAF
 	ErrorReturn     *version2.Return
 	BundleValidator bundleValidator
@@ -1325,8 +1330,8 @@ func (p *policiesCfg) addAPIKeyConfig(
 	if secretRef.Secret != nil {
 		secretType = secretRef.Secret.Type
 	}
-	if secretType != "" && secretType != api_v1.SecretTypeOpaque {
-		res.addWarningf("API Key policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, api_v1.SecretTypeOpaque)
+	if secretType != "" && secretType != secrets.SecretTypeAPIKey {
+		res.addWarningf("API Key policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, secrets.SecretTypeAPIKey)
 		res.isError = true
 		return res, nil
 	} else if secretRef.Error != nil {
@@ -1373,8 +1378,8 @@ func (p *policiesCfg) addAPIKeyConfig(
 	p.APIKey = &version2.APIKey{
 		Header:                apiKey.SuppliedIn.Header,
 		Query:                 apiKey.SuppliedIn.Query,
-		RejectCodeNotSupplied: apiKey.RejectCodes.NotSupplied,
-		RejectCodeNoMatch:     apiKey.RejectCodes.NoMatch,
+		RejectCodeNotSupplied: generateIntFromPointer(apiKey.RejectCodes.NotSupplied, 401),
+		RejectCodeNoMatch:     generateIntFromPointer(apiKey.RejectCodes.NoMatch, 403),
 		Clients:               clients,
 		MapName:               mapName,
 	}

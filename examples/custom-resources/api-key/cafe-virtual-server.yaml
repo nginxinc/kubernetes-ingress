@@ -8,19 +8,8 @@ spec:
     secret: cafe-secret
   policies:
   - name: api-key-policy
-  upstreams:
-  - name: tea
-    service: tea-svc
-    port: 80
-  - name: coffee
-    service: coffee-svc
-    port: 80
   routes:
   - path: /tea
-    action:
-      pass: tea
+    route: default/tea
   - path: /coffee
-    action:
-      pass: coffee
-    policies:
-      - name: api-key-policy-2
+    route: default/coffee
