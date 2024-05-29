@@ -130,7 +130,9 @@ func (c *Collector) Collect(ctx context.Context) {
 			Replicas:              int64(report.NICReplicaCount),
 			Secrets:               int64(report.Secrets),
 			Services:              int64(report.ServiceCount),
-			Ingresses:             int64(report.IngressCount),
+			RegularIngressCount:   int64(report.RegularIngressCount),
+			MasterIngressCount:    int64(report.MasterIngressCount),
+			MinionIngressCount:    int64(report.MinionIngressCount),
 			IngressClasses:        int64(report.IngressClassCount),
 			AccessControlPolicies: int64(report.AccessControlCount),
 			RateLimitPolicies:     int64(report.RateLimitCount),
@@ -173,7 +175,9 @@ type Report struct {
 	ServiceCount        int
 	TransportServers    int
 	Secrets             int
-	IngressCount        int
+	RegularIngressCount int
+	MasterIngressCount  int
+	MinionIngressCount  int
 	IngressClassCount   int
 	AccessControlCount  int
 	RateLimitCount      int
@@ -237,7 +241,10 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	if err != nil {
 		glog.V(3).Infof("Unable to collect telemetry data: Secrets: %v", err)
 	}
-	ingressCount := c.IngressCount()
+
+	regularIngressCount := c.RegularIngressCount()
+	masterIngressCount := c.MasterIngressCount()
+	minionIngressCount := c.MinionIngressCount()
 	ingressClassCount, err := c.IngressClassCount(ctx)
 	if err != nil {
 		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
@@ -277,7 +284,9 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		ServiceCount:        serviceCount,
 		TransportServers:    tsCount,
 		Secrets:             secretCount,
-		IngressCount:        ingressCount,
+		RegularIngressCount: regularIngressCount,
+		MasterIngressCount:  masterIngressCount,
+		MinionIngressCount:  minionIngressCount,
 		IngressClassCount:   ingressClassCount,
 		AccessControlCount:  accessControlCount,
 		RateLimitCount:      rateLimitCount,

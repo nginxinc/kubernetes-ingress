@@ -6,15 +6,15 @@ on:
       source_branch:
         required: true
         type: string
-        default: 'main'
+        default: "main"
       ic_version:
         required: true
         type: string
-        default: '0.0.0'
+        default: "0.0.0"
       helm_chart_version:
         required: true
         type: string
-        default: '0.0.0'
+        default: "0.0.0"
 
 defaults:
   run:
@@ -36,13 +36,13 @@ jobs:
 
       - name: Replace Versions
         run: |
-          yq -i e '.version = env(CHART_VERSION) | .appVersion = env(IC_VERSION)' kubernetes-ingress/charts/nginx-ingress/Chart.yaml
-          cat kubernetes-ingress/charts/nginx-ingress/Chart.yaml
-          cat > kubernetes-ingress/.github/data/version.txt << EOF
+          yq -i e '.version = env(CHART_VERSION) | .appVersion = env(IC_VERSION)' charts/nginx-ingress/Chart.yaml
+          cat charts/nginx-ingress/Chart.yaml
+          cat > .github/data/version.txt << EOF
           IC_VERSION=${IC_VERSION}
           HELM_CHART_VERSION=${CHART_VERSION}
           EOF
-          cat kubernetes-ingress/.github/data/version.txt
+          cat .github/data/version.txt
         env:
           IC_VERSION: ${{ inputs.ic_version }}
           CHART_VERSION: ${{ inputs.helm_chart_version }}
