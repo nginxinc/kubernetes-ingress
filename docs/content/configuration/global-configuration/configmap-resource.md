@@ -113,6 +113,8 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
 |*error-log-level* | Sets the global [error log level](https://nginx.org/en/docs/ngx_core_module.html#error_log) for NGINX. | *notice* |  |
+|*access-log* | Sets the directive [access log](https://nginx.org/en/docs/http/ngx_http_log_module.html#access_log). A syslog destination is the only valid value. The value will be set to its default in-case user tries to configure it with location other than a syslog.
+| ``/dev/stdout main`` | ``syslog:server=localhost:514`` |
 |*access-log-off* | Disables the [access log](https://nginx.org/en/docs/http/ngx_http_log_module.html#access_log). | *False* |  |
 |*default-server-access-log-off* | Disables the [access log](https://nginx.org/en/docs/http/ngx_http_log_module.html#access_log) for the default server. If access log is disabled globally (*access-log-off: "True"*), then the default server access log is always disabled. | *False* |  |
 |*log-format* | Sets the custom [log format](https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format) for HTTP and HTTPS traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by *\n*). In that case, the Ingress Controller will replace every *\n* character with a space character. All *'* characters must be escaped. | See the [template file](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/internal/configs/version1/nginx.tmpl) for the access log. | [Custom Log Format](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/shared-examples/custom-log-format). |
