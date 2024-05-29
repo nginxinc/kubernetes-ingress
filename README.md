@@ -31,12 +31,15 @@ We value community input and would love to see you at our next community call. A
 
 | **Community Call Dates** | Notes                        |
 | ------------------------ | ---------------------------- |
-| **2024-05-07**           | On Tuesday, just this once   |
-| **2024-05-20**           |                              |
-| **2024-06-03**           |                              |
+| **2024-06-04**           | On Tuesday, just this once   |
 | **2024-06-17**           |                              |
-| **2024-06-31**           |                              |
-
+| **2024-07-01**           |                              |
+| **2024-07-15**           |                              |
+| **2024-07-29**           |                              |
+| **2024-08-12**           |                              |
+| **2024-08-26**           |                              |
+| **2024-09-09**           |                              |
+| **2024-09-23**           |                              |
 ---
 
 NGINX Ingress Controller works with both NGINX and NGINX Plus and supports the standard Ingress features - content-based
