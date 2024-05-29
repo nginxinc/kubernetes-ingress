@@ -61,8 +61,7 @@ ARG BUILD_OS
 ARG NGINX_PLUS_VERSION
 
 # the following links can be replaced with local files if needed, i.e. ADD --chown=101:0 <local_file> <container_file>
-#ADD --link --chown=101:0 https://cs.nginx.com/static/files/90pkgs-nginx 90pkgs-nginx
-ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/cc2dfc721ccfc428799c0c2a4fa0d7edb86b97eb/files/90pkgs-test-nginx 90pkgs-nginx
+ADD --link --chown=101:0 https://cs.nginx.com/static/files/90pkgs-nginx 90pkgs-nginx
 ADD --link --chown=101:0 https://cs.nginx.com/static/keys/nginx_signing.key nginx_signing.key
 ADD --link --chown=101:0 https://cs.nginx.com/static/keys/nginx_signing.rsa.pub nginx_signing.rsa.pub
 ADD --link --chown=101:0 https://cs.nginx.com/static/keys/app-protect-security-updates.key app-protect-security-updates.key
