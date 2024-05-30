@@ -33,13 +33,21 @@ runs:
         path: ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }}
         key: skopeo-${{ inputs.version }}
 
-    - name: Install Skopeo
-      id: result
+    - name: Build Skopeo
+      id: build
       run: |
           sudo apt-get -y update
           sudo apt install libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config go-md2man
           sudo mkdir -p ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }}
           sudo git clone --depth 1 -b ${{ inputs.version }} https://${{ inputs.repo }} ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }}
+          pushd ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }} && sudo make
+          popd
+      shell: bash
+      if: ${{ ! steps.binary-cache.outputs.cache-hit }}
+
+    - name: Install Skopeo
+      id: result
+      run: |
           pushd ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }} && sudo make install
           popd
           skopeo --version
