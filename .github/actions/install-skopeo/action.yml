@@ -4,7 +4,7 @@ description: Install Skopeo from source on ubuntu runner
 inputs:
   version:
     description: The Skopeo version to install
-    default: v1.14.2
+    default: v1.14.3
     required: false
   repo:
     description: The Skopeo repository
