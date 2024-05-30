@@ -68,7 +68,7 @@ jobs:
 
       - name: Copy Plus image tag
         run: |
-          skopeo copy docker://gcr.io/cloud-marketplace-tools/metering/ubbagent:latest docker://gcr.io/f5-7626-networks-public/nginxinc/paul:latest
+          skopeo copy docker://gcr.io/f5-7626-networks-public/nginxinc/nginx-plus-ingress:3.3.1 docker://gcr.io/f5-7626-networks-public/nginxinc/paul:latest
 
   # release-plus-to-gcr-marketplace-registry:
   #   name: Push Plus images to the GCR Marketplace Registry
