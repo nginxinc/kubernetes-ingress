@@ -20,35 +20,14 @@ runs:
   using: composite
   steps:
 
-    - name: Setup GoPath
-      id: path
-      run: |
-          echo "gopath=$GOPATH" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Fetch Cached Binary Artifacts
-      id: binary-cache
-      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-      with:
-        path: ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }}
-        key: skopeo-${{ inputs.version }}
-
-    - name: Build Skopeo
-      id: build
-      run: |
-          sudo apt-get -y update
-          sudo apt install libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config go-md2man
-          sudo mkdir -p ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }}
-          sudo git clone --depth 1 -b ${{ inputs.version }} https://${{ inputs.repo }} ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }}
-          pushd ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }} && sudo make
-          popd
-      shell: bash
-      if: ${{ ! steps.binary-cache.outputs.cache-hit }}
-
     - name: Install Skopeo
       id: result
       run: |
-          pushd ${{ steps.path.outputs.gopath }}/src/${{ inputs.repo }} && sudo make install
+          sudo apt-get -y update
+          sudo apt install libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config go-md2man
+          sudo mkdir -p $GOPATH/src/${{ inputs.repo }}
+          sudo git clone --depth 1 -b ${{ inputs.version }} https://${{ inputs.repo }} $GOPATH/src/${{ inputs.repo }}
+          pushd $GOPATH/src/${{ inputs.repo }} && sudo make install
           popd
           skopeo --version
           echo "result=$?" >> $GITHUB_OUTPUT

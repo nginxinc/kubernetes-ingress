@@ -56,12 +56,27 @@ jobs:
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
 
+      - name: Get Id Token
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        id: idtoken
+        with:
+          script: |
+            let id_token = await core.getIDToken()
+            core.setOutput('id_token', id_token)
+
+      - name: Login to NGINX Registry
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: docker-mgmt.nginx.com
+          username: ${{ steps.idtoken.outputs.id_token }}
+          password: ${{ github.actor }}
+
       - name: Install latest skopeo
         uses: ./.github/actions/install-skopeo
 
       - name: Copy Plus image tag
         run: |
-          skopeo --override-os linux --override-arch amd64 copy --dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://nginx:1.26.0 docker://gcr.io/f5-7626-networks-public/nginxinc/paul:latest
+          skopeo --override-os linux --override-arch amd64 copy --dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }} docker://docker-mgmt.nginx.com/nginx-ic/nginx-plus-ingress:3.5.1 docker://gcr.io/f5-7626-networks-public/nginxinc/paul:latest
 
   # release-plus-to-gcr-marketplace-registry:
   #   name: Push Plus images to the GCR Marketplace Registry
