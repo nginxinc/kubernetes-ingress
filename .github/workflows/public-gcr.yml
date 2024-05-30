@@ -40,7 +40,7 @@ jobs:
 
   copy-gcr-marketplace-tag:
     name: Copy tag in GCR Public registry
-    runs-on: ubuntu-22.04
+    runs-on: 'kic-plus'
     permissions:
       contents: read
       id-token: write
