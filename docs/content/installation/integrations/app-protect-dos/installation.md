@@ -1,6 +1,9 @@
 ---
-title: Building NGINX Ingress Controller with NGINX App Protect DoS
-description: "This document explains how to build an image for NGINX Ingress Controller with the NGINX App Protect DoS from source code."
+docs: DOCS-583
+doctypes:
+- ''
+title: Build NGINX Ingress Controller with NGINX App Protect DoS
+toc: true
 weight: 100
 doctypes: [""]
 toc: true
