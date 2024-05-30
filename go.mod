@@ -14,7 +14,7 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/kr/pretty v0.3.1
 	github.com/nginxinc/nginx-plus-go-client v1.2.0
-	github.com/nginxinc/nginx-prometheus-exporter v1.1.0
+	github.com/nginxinc/nginx-prometheus-exporter v1.1.2
 	github.com/nginxinc/nginx-service-mesh v1.7.0
 	github.com/nginxinc/telemetry-exporter v0.0.0-20240429155028-5a630a5eb82a
 	github.com/prometheus/client_golang v1.18.0
@@ -91,7 +91,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_model v0.5.0 // indirect
+	github.com/prometheus/client_model v0.6.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/spf13/cobra v1.8.0 // indirect
