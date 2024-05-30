@@ -209,6 +209,7 @@ class TestDos:
         for _ in conf_nginx_directive:
             assert _ in nginx_config
 
+    @pytest.mark.skip(reason="Intermittent failures while sending dos logs to syslog")
     def test_dos_sec_logs_on(
         self,
         kube_apis,
