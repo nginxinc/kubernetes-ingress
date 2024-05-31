@@ -8,17 +8,18 @@ docs: "DOCS-616"
 ---
 ## 3.5.2
 
-30 May 2024
+31 May 2024
 
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
+### <i class="fa-solid fa-triangle-exclamation"></i> Important
 
-### <i class="fa-solid fa-rocket"></i> Features
-
-### <i class="fa-solid fa-bug-slash"></i> Fixes
-
-### <i class="fa-solid fa-box"></i> Helm Chart
+- Bundles compiled on NAP WAF versions <= v4.8.x are not compatible with NAP WAF versions >= 4.9.x, this release of NIC includes NAP WAF v4.10 so recompilation of policy bundles is required.
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+
+- [5654](https://github.com/nginxinc/kubernetes-ingress/pull/5654) NGINX 1.27.0 and NGINX Plus R32
+- [5590](https://github.com/nginxinc/kubernetes-ingress/pull/5590), [5631](https://github.com/nginxinc/kubernetes-ingress/pull/5631), [5638](https://github.com/nginxinc/kubernetes-ingress/pull/5638), [5662](https://github.com/nginxinc/kubernetes-ingress/pull/5662), [5623](https://github.com/nginxinc/kubernetes-ingress/pull/5623) Go updates
+- [5579](https://github.com/nginxinc/kubernetes-ingress/pull/5579), [5642](https://github.com/nginxinc/kubernetes-ingress/pull/5642), [5573](https://github.com/nginxinc/kubernetes-ingress/pull/5573), [5630](https://github.com/nginxinc/kubernetes-ingress/pull/5630), [5665](https://github.com/nginxinc/kubernetes-ingress/pull/5665), [5673](https://github.com/nginxinc/kubernetes-ingress/pull/5673) Container base image updates
+
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
@@ -28,7 +29,7 @@ docs: "DOCS-616"
 [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 - For NGINX Plus, use the 3.5.2 images from the F5 Container registry,
 the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
-the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), the [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/nginxinc.nginx_ingress_premium),
 or build your own image using the 3.5.2 source code
 - For Helm, use version 1.2.2 of the chart.
 
@@ -36,7 +37,7 @@ or build your own image using the 3.5.2 source code
 
 We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
 its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
-versions: 1.23-1.30.
+versions: 1.25-1.30.
 
 ## 3.5.1
 

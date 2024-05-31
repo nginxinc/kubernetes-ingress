@@ -23,13 +23,13 @@ We explicitly test NGINX Ingress Controller on a range of Kubernetes platforms f
 {{< bootstrap-table "table table-bordered table-striped table-responsive" >}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| 3.5.2 | 1.30 - 1.23 | 1.2.2 | 2.2.1 | 1.27.0 / R32 |
+| 3.5.2 | 1.30 - 1.23 | 1.2.2 | 2.2.2 | 1.27.0 / R32 |
 | 3.4.3 | 1.29 - 1.23 | 1.1.3 | 2.1.2 | 1.25.4 / R31 P1 |
 | 3.3.2 | 1.28 - 1.22 | 1.0.2 | 2.0.2 | 1.25.3 / R30 |
 | 3.2.1 | 1.27 - 1.22 | 0.18.1 | 1.5.1 | 1.25.2 / R30 |
 | 3.1.1 | 1.26 - 1.22 | 0.17.1 | 1.4.2 | 1.23.4 / R29 |
 | 3.0.2 | 1.26 - 1.21 | 0.16.2 | 1.3.1 | 1.23.3 / R28 |
-| 2.4.2 | 1.25 - 1.19 | 0.15.2 | 1.2.2 | 1.23.2 / R28 |
+| 2.4.2 | 1.25 - 1.19 | 0.15.2 | 1.2.1 | 1.23.2 / R28 |
 | 2.3.1 | 1.24 - 1.19 | 0.14.1 | 1.1.0 | 1.23.1 / R27 |
 | 2.2.2 | 1.23 - 1.19 | 0.13.2 | 1.0.0 | 1.21.6 / R26 |
 | 2.1.2 | 1.23 - 1.19 | 0.12.1 | 0.5.1 | 1.21.6 / R26 |
@@ -46,14 +46,14 @@ We provide the following Docker images, which include NGINX or NGINX Plus bundle
 
 ### Images with NGINX
 
-_All images include NGINX 1.25.4._
+_All images include NGINX 1.27.0._
 
 {{< bootstrap-table "table table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | DockerHub image | Architectures |
 | ---| --- | --- | --- | --- |
-|Alpine-based image | ``nginx:1.25.4-alpine``,<br>based on on ``alpine:3.18`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:3.5.2-alpine`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
-|Debian-based image | ``nginx:1.25.4``,<br>based on on ``debian:12-slim`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:3.5.2`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
-|Ubi-based image | ``nginxcontrib/nginx:1.25.4-ubi``,<br>based on on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.5.2-ubi`` | arm64<br>amd64<br>ppc64le<br>s390x |
+|Alpine-based image | ``nginx:1.27.0-alpine``,<br>based on on ``alpine:3.19`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:3.5.2-alpine`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
+|Debian-based image | ``nginx:1.27.0``,<br>based on on ``debian:12-slim`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:3.5.2`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
+|Ubi-based image | ``nginxcontrib/nginx:1.27.0-ubi``,<br>based on on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.5.2-ubi`` | arm64<br>amd64<br>ppc64le<br>s390x |
 {{% /bootstrap-table %}}
 
 ### Images with NGINX Plus

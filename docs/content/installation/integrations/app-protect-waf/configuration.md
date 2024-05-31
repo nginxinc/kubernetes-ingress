@@ -6,7 +6,7 @@ weight: 200
 
 This document explains how to use F5 NGINX Ingress Controller to configure NGINX App Protect WAF.
 
-{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/app-protect-waf).{{< /note >}}
+{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/app-protect-waf).{{< /note >}}
 
 
 ## Global Configuration
