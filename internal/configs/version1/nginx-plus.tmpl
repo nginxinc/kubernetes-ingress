@@ -40,6 +40,7 @@ http {
     map_hash_bucket_size {{.MapHashBucketSize}};
 
     js_import /etc/nginx/njs/apikey_auth.js; # TODO: only import if its needed
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}

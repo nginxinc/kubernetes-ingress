@@ -147,7 +147,7 @@ func IsSupportedSecretType(secretType api_v1.SecretType) bool {
 		secretType == SecretTypeOIDC ||
 		secretType == SecretTypeHtpasswd ||
 		secretType == SecretTypeAPIKey
-	//secretType == api_v1.SecretTypeOpaque
+	// secretType == api_v1.SecretTypeOpaque
 }
 
 // ValidateSecret validates the secret. If it is valid, the function returns nil.

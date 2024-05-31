@@ -283,7 +283,7 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 }
 
 func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
-	//if api
+	// if api
 	if apiKey.ClientSecret == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("clientSecret"), "")}
 	}
@@ -292,7 +292,6 @@ func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateSecretName(apiKey.ClientSecret, fieldPath.Child("clientSecret"))...)
 
 	return allErrs
-
 }
 
 func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {

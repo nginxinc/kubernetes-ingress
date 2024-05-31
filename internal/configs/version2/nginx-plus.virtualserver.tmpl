@@ -224,22 +224,11 @@ server {
     }
     {{- end }}
 
-
     # TODO: Do this conditionally
-    location = /_validate_apikey_njs_spec {
+    location = /_validate_apikey_njs {
             internal;
-            js_content apikey_auth.validate_spec;
+            js_content apikey_auth.validate;
     }
-
-
-    # TODO: Do this conditionally
-    location = /_validate_apikey_njs_route {
-            internal;
-            js_content apikey_auth.validate_route;
-    }
-
-    # TODO: do this conditionally (if there is an apikey policy in a location)
-    js_set $hashed_variable_route apikey_auth.hash_route;
 
     {{- with $s.BasicAuth }}
     auth_basic {{ printf "%q" .Realm }};
@@ -269,11 +258,10 @@ server {
     # not supplied: {{ .RejectCodeNotSupplied }}
     # no match: {{ .RejectCodeNoMatch }}
 
-    set $header_query_value_spec {{ makeHeaderQueryValue $s.APIKey | printf }};
-    js_set $hashed_variable_spec apikey_auth.hash_spec;
-    js_var $apikey_auth_token_spec $hashed_variable_spec;
-    set $apikey_auth_local_map_spec {{ .MapName }};
-    auth_request /_validate_apikey_njs_spec;
+    js_var $apikey_auth_local_map "{{ .MapName}}";
+    js_var $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
+    js_var $apikey_auth_token $apikey_auth_hash;
+    auth_request /_validate_apikey_njs;
     {{- range $header := .Header}}
         # header: {{ $header }}
     {{- end -}}
@@ -491,12 +479,11 @@ server {
         # not supplied: {{ .RejectCodeNotSupplied }}
         # no match: {{ .RejectCodeNoMatch }}
 
-        set $header_query_value_route {{ makeHeaderQueryValue $l.APIKey | printf }};
-        js_var $apikey_auth_token_route $hashed_variable_route;
+        set $apikey_auth_local_map  "{{ .MapName }}";
+        set $header_query_value {{ makeHeaderQueryValue $l.APIKey | printf }};
+        set $apikey_auth_token $apikey_auth_hash;
+        auth_request /_validate_apikey_njs;
 
-        set $apikey_auth_local_map_route {{ .MapName }};
-
-        auth_request /_validate_apikey_njs_route;
         {{- range $header := .Header}}
             # header: {{ $header }}
         {{- end -}}

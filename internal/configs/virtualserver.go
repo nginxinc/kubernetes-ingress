@@ -1320,7 +1320,7 @@ func (p *policiesCfg) addAPIKeyConfig(
 		return res, nil
 	}
 
-	//if apiKey.ClientSecret != "" {
+	// if apiKey.ClientSecret != "" {
 	secretKey := fmt.Sprintf("%v/%v", polNamespace, apiKey.ClientSecret)
 	glog.Infof("secretKey: %v", secretKey)
 	secretRef := secretRefs[secretKey]
@@ -1366,12 +1366,12 @@ func (p *policiesCfg) addAPIKeyConfig(
 		})
 	}
 
-	sourceName := "$apikey_auth_token_" + context
-	mapName := fmt.Sprintf("$apikey_auth_client_name_%s", strings.Split(strings.Replace(polKey, "-", "_", -1), "/")[1])
+	sourceName := "$apikey_auth_token"
+	mapName := fmt.Sprintf("apikey_auth_client_name_%s", strings.Split(strings.Replace(polKey, "-", "_", -1), "/")[1])
 
 	shaToClient := &version2.Map{
 		Source:     sourceName,
-		Variable:   mapName,
+		Variable:   fmt.Sprintf("$%s", mapName),
 		Parameters: params,
 	}
 
@@ -1384,7 +1384,6 @@ func (p *policiesCfg) addAPIKeyConfig(
 		MapName:               mapName,
 	}
 	return res, shaToClient
-
 }
 
 func (p *policiesCfg) addWAFConfig(
