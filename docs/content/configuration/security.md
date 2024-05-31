@@ -17,10 +17,13 @@ For general guidance, we recommend the official Kubernetes documentation for [Se
 
 Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users. 
 
-NGINX Ingress Controller requires RBAC to configure a [ServiceUser](https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts), and provides least privilege access in its standard deployment configurations:
+The Ingress Controller is deployed within a Kubernetes environment, this environment must be secured.
+Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users.
+The Ingress Controller requires a service account which is configured using RBAC.
+We strongly recommend using the [RBAC configuration](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/deployments/rbac/rbac.yaml) provided in our standard deployment configuration. It is configured with the least amount of privilege required for the Ingress Controller to work.
 
-- [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.1/deployments/rbac/rbac.yaml)
-- [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.1/deployments/rbac/rbac.yaml)
+We strongly recommend inspecting the RBAC configuration for [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/deployments/rbac/rbac.yaml)
+or for [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/charts/nginx-ingress/templates/clusterrole.yaml) to understand what access the Ingress Controller service account has and to which resources. For example, by default the service account has access to all Secret resources in the cluster.
 
 By default, the ServiceAccount has access to all Secret resources in the cluster.
 
