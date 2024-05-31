@@ -38,7 +38,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for UBI #############################################
-FROM nginxcontrib/nginx:1.25.5-ubi@sha256:eba387bfd305dfd6887d2156e1603a6e06dff61f4b17d79582fb5c81e0815986 AS ubi
+FROM nginxcontrib/nginx:1.27.0-ubi@sha256:83547543eb91a897fceed9668da7dd459d1602864a11257174cbcc9c9d3ae5ec AS ubi
 ARG IC_VERSION
 
 LABEL name="NGINX Ingress Controller" \
