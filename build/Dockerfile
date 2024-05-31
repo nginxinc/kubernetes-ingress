@@ -11,7 +11,8 @@ ARG NGINX_AGENT=false
 FROM opentracing/nginx-opentracing:nginx-1.25.4@sha256:aa7bdee95afeec4edfacddf3a025a73e283b01628c1ba04597843a2a22855323 as opentracing-lib
 FROM opentracing/nginx-opentracing:nginx-1.25.4-alpine@sha256:ad42445a721582fa78885e7bcd38c5215db8ddc866b5ed4daeb05e50b7bc7bd4 as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 as alpine-fips-3.17
-FROM ghcr.io/nginxinc/alpine-fips:0.1.2-alpine3.19@sha256:67595f52053f328fd731bf493d8dc72c1fd956e5f1a2f9a579cc78c5f5f50daa as alpine-fips-3.19
+FROM ghcr.io/nginxinc/alpine-fips:0.2.0-alpine3.19@sha256:1744ae3a8e795daf771f3f7df33b83160981545abb1f1597338e2769d06aa1cc as alpine-fips-3.19
+FROM golang:1.22-alpine@sha256:7e788330fa9ae95c68784153b7fd5d5076c79af47651e992a3cdeceeb5dd1df0 as golang-builder
 
 
 ############################################# Base image for Alpine #############################################
