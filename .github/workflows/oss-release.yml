@@ -266,6 +266,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write
     if: ${{ inputs.github_public_registry }}
     steps:
       - name: Checkout Repository
