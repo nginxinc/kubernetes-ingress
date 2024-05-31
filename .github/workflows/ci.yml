@@ -561,6 +561,7 @@ jobs:
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+          fail-on-cache-miss: true
 
       - name: Check if test image exists
         id: check-image
