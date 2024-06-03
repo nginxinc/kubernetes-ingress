@@ -2,7 +2,6 @@ on:
   pull_request:
     branches:
       - main
-      - release-*
     types:
       - closed
 
@@ -90,6 +89,7 @@ jobs:
           fi
 
   build-docker:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
     name: Build Docker OSS
     needs: [checks]
     strategy:
@@ -109,7 +109,7 @@ jobs:
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       forked-workflow: false
       docs-only: false
-      tag: ${{ needs.checks.outputs.stable_tag }}
+      tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
     permissions:
       contents: read
@@ -120,6 +120,7 @@ jobs:
     secrets: inherit
 
   build-docker-plus:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
     name: Build Docker Plus
     needs: [checks]
     strategy:
@@ -141,7 +142,7 @@ jobs:
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       forked-workflow: false
       docs-only: false
-      tag: ${{ needs.checks.outputs.stable_tag }}
+      tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
     permissions:
       contents: read
@@ -150,6 +151,7 @@ jobs:
     secrets: inherit
 
   build-docker-nap:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
     name: Build Docker NAP
     needs: [checks]
     strategy:
@@ -198,12 +200,26 @@ jobs:
       nap_modules: ${{ matrix.nap_modules }}
       forked-workflow: false
       docs-only: false
-      tag: ${{ needs.checks.outputs.stable_tag }}
+      tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
     permissions:
       contents: read
       security-events: write
       id-token: write
+    secrets: inherit
+
+  tag-stable:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Tag build image as stable
+    needs: [checks, build-docker, build-docker-plus, build-docker-nap]
+    permissions:
+      contents: read # To checkout repository
+      id-token: write # To sign into Google Container Registry
+    uses: ./.github/workflows/retag-images.yml
+    with:
+      source_tag: ${{ needs.checks.outputs.build_tag }}
+      target_tag: ${{ needs.checks.outputs.stable_tag }}
+      dry_run: false
     secrets: inherit
 
   tag-edge:
@@ -235,6 +251,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write
     secrets: inherit
 
   release-plus:
