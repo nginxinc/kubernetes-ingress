@@ -35,7 +35,9 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **Replicas** Number of Deployment replicas, or Daemonset instances.
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
 - **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
-- **Ingresses** The number of Ingress resources managed by the NGINX Ingress Controller.
+- **RegularIngressCount** The number of Regular Ingress resources managed by NGINX Ingress Controller.
+- **MasterIngressCount** The number of Master Ingress resources managed by NGINX Ingress Controller.
+- **MinionIngressCount** The number of Minion Ingress resources managed by NGINX Ingress Controller.
 - **IngressClasses** Number of Ingress Classes in the cluster.
 - **IngressAnnotations** List of Ingress annotations managed by NGINX Ingress Controller
 - **AccessControlPolicies** Number of AccessControl policies.
@@ -49,6 +51,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.
 - **AppProtectVersion** The AppProtect version
 - **IsPlus** Represents whether NGINX is Plus or OSS
+- **InstallationFlags** List of command line arguments configured for NGINX Ingress Controller
 
 ## Opt out
 

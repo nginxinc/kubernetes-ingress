@@ -77,8 +77,12 @@ type NICResourceCounts struct {
 	Secrets int64
 	// Services is the number of services referenced by NGINX Ingress Controller in the cluster
 	Services int64
-	// Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller.
-	Ingresses int64
+	// RegularIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	RegularIngressCount int64
+	// MasterIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	MasterIngressCount int64
+	// MinionIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	MinionIngressCount int64
 	// IngressClasses is the number of Ingress Classes.
 	IngressClasses int64
 	// AccessControlPolicies is the number of AccessControl policies managed by NGINX Ingress Controller
@@ -105,4 +109,6 @@ type NICResourceCounts struct {
 	AppProtectVersion string
 	// IsPlus represents whether NGINX is Plus or OSS
 	IsPlus bool
+	// InstallationFlags is the list of command line arguments configured for NGINX Ingress Controller
+	InstallationFlags []string
 }

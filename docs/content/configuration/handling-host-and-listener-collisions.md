@@ -56,7 +56,7 @@ If a user creates both resources in the cluster, a host collision will occur. As
 
 In our example, if `cafe-virtual-server` was created first, it will win the host `cafe.example.com` and the Ingress Controller will reject `cafe-ingress`. This will be reflected in the events and in the resource's status field:
 
-```console
+```shell
 kubectl describe vs cafe-virtual-server
 
 . . .
@@ -130,7 +130,7 @@ If a user creates both resources in the cluster, a listener collision will occur
 
 In our example, if `tcp-1` was created first, it will win the listener `dns-tcp` and the Ingress Controller will reject `tcp-2`. This will be reflected in the events and in the resource's status field:
 
-```console
+```shell
 kubectl describe ts tcp-2
 
 . . .

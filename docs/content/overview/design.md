@@ -277,7 +277,7 @@ NGINX reloads take roughly 200ms. The factors affecting reload time are configur
 
 Most of the time, if `nginx -s reload` executes, the reload will also succeed. In the rare case a reload fails, the NGINX master process will print the an error message. This is an example:
 
-```
+```shell
 2022/07/09 00:56:42 [emerg] 1353#1353: limit_req "one" uses the "$remote_addr" key while previously it used the "$binary_remote_addr" key
 ```
 

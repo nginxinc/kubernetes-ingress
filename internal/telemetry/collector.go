@@ -77,6 +77,9 @@ type CollectorConfig struct {
 
 	// IsPlus represents whether NGINX is Plus or OSS
 	IsPlus bool
+
+	// InstallationFlags represents the list of set flags managed by NIC
+	InstallationFlags []string
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -127,7 +130,9 @@ func (c *Collector) Collect(ctx context.Context) {
 			Replicas:              int64(report.NICReplicaCount),
 			Secrets:               int64(report.Secrets),
 			Services:              int64(report.ServiceCount),
-			Ingresses:             int64(report.IngressCount),
+			RegularIngressCount:   int64(report.RegularIngressCount),
+			MasterIngressCount:    int64(report.MasterIngressCount),
+			MinionIngressCount:    int64(report.MinionIngressCount),
 			IngressClasses:        int64(report.IngressClassCount),
 			AccessControlPolicies: int64(report.AccessControlCount),
 			RateLimitPolicies:     int64(report.RateLimitCount),
@@ -141,6 +146,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			IngressAnnotations:    report.IngressAnnotations,
 			AppProtectVersion:     report.AppProtectVersion,
 			IsPlus:                report.IsPlus,
+			InstallationFlags:     report.InstallationFlags,
 		},
 	}
 
@@ -169,7 +175,9 @@ type Report struct {
 	ServiceCount        int
 	TransportServers    int
 	Secrets             int
-	IngressCount        int
+	RegularIngressCount int
+	MasterIngressCount  int
+	MinionIngressCount  int
 	IngressClassCount   int
 	AccessControlCount  int
 	RateLimitCount      int
@@ -183,6 +191,7 @@ type Report struct {
 	IngressAnnotations  []string
 	AppProtectVersion   string
 	IsPlus              bool
+	InstallationFlags   []string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -232,7 +241,10 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	if err != nil {
 		glog.V(3).Infof("Unable to collect telemetry data: Secrets: %v", err)
 	}
-	ingressCount := c.IngressCount()
+
+	regularIngressCount := c.RegularIngressCount()
+	masterIngressCount := c.MasterIngressCount()
+	minionIngressCount := c.MinionIngressCount()
 	ingressClassCount, err := c.IngressClassCount(ctx)
 	if err != nil {
 		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
@@ -255,6 +267,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	isPlus := c.IsPlusEnabled()
 
+	installationFlags := c.InstallationFlags()
+
 	return Report{
 		Name:                "NIC",
 		Version:             c.Config.Version,
@@ -270,7 +284,9 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		ServiceCount:        serviceCount,
 		TransportServers:    tsCount,
 		Secrets:             secretCount,
-		IngressCount:        ingressCount,
+		RegularIngressCount: regularIngressCount,
+		MasterIngressCount:  masterIngressCount,
+		MinionIngressCount:  minionIngressCount,
 		IngressClassCount:   ingressClassCount,
 		AccessControlCount:  accessControlCount,
 		RateLimitCount:      rateLimitCount,
@@ -284,5 +300,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		IngressAnnotations:  ingressAnnotations,
 		AppProtectVersion:   appProtectVersion,
 		IsPlus:              isPlus,
+		InstallationFlags:   installationFlags,
 	}, err
 }
