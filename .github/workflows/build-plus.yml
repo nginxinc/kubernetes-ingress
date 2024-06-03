@@ -82,7 +82,7 @@ jobs:
         if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
 
       - name: Login to GCR
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -96,7 +96,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
         if: ${{ inputs.publish-aws-market-place }}
       - name: Login to ECR
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
         if: ${{ inputs.publish-aws-market-place }}
@@ -111,7 +111,7 @@ jobs:
         if: ${{ inputs.publish-nginx-reqistry }}
 
       - name: Login to NGINX Registry
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: docker-mgmt.nginx.com
           username: ${{ steps.idtoken.outputs.id_token }}
@@ -264,7 +264,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@9fdb3e49720b44c48891d036bb502feb25684276 # v3.25.6
+        uses: github/codeql-action/upload-sarif@f079b8493333aace61c81488f8bd40919487bd9f # v3.25.7
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
