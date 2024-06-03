@@ -166,7 +166,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           platforms: ${{ inputs.platforms }}
-          load: ${{ github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release-') }}
+          load: false
           push: ${{ ! inputs.forked-workflow }}
           pull: true
           no-cache: ${{ ! inputs.forked-workflow }}
