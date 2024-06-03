@@ -285,3 +285,19 @@ jobs:
       contents: write # for pushing to Helm Charts repository
       packages: write # for helm to push to GHCR
     secrets: inherit
+
+  certify-openshift-images:
+    name: Certify OpenShift UBI images
+    runs-on: ubuntu-22.04
+    needs: [release-oss]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - name: Certify UBI OSS images in quay
+        uses: ./.github/actions/certify-openshift-image
+        continue-on-error: true
+        with:
+          image: quay.io/nginx/nginx-ingress:edge-ubi
+          project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
+          pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
