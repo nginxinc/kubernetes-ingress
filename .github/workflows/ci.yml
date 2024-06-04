@@ -768,8 +768,8 @@ jobs:
     uses: ./.github/workflows/publish-helm.yml
     with:
       branch: ${{ github.ref_name }}
-      ic_version: ${{ github.ref_type == 'tag' && needs.checks.outputs.ic_version || '0.0.0-edge' }}
-      chart_version: ${{ github.ref_type == 'tag' && needs.checks.outputs.chart_version || 'edge' }}
+      ic_version: ${{ github.ref_type == 'tag' && needs.checks.outputs.ic_version || 'edge' }}
+      chart_version: ${{ github.ref_type == 'tag' && needs.checks.outputs.chart_version || '0.0.0-edge' }}
       nginx_helm_repo: ${{ github.ref_type == 'tag' }}
     secrets: inherit
 
