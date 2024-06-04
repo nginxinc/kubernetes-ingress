@@ -40,6 +40,7 @@ jobs:
     outputs:
       stable_tag: ${{ steps.vars.outputs.stable_tag }}
       short_tag: ${{ steps.vars.outputs.short_tag }}
+      go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
@@ -53,6 +54,7 @@ jobs:
           ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
           tag=${{ inputs.nic_version }}
           echo "short_tag=${tag%.*}" >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   tag:
@@ -261,3 +263,35 @@ jobs:
             This container requires Kubernetes and can be deployed to EKS.
             Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/v${{ inputs.nic_version }}/deployments
             Use this image instead of building your own.
+
+  azure-upload:
+    name: Upload packages to Azure
+    runs-on: ubuntu-22.04
+    needs: [variables]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          ref: ${{ inputs.release_branch }}
+
+      - name: Fetch Cached Package Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          key: nginx-ingress-${{ needs.variables.outputs.go_code_md5 }}
+          path: dist
+          fail-on-cache-miss: true
+
+      - name: Azure Login
+        uses: azure/login@8c334a195cbb38e46038007b304988d888bf676a # v2.0.0
+        with:
+          creds: ${{ secrets.AZURE_STORAGE_KEY }}
+
+      - name: Azure Upload Release Packages
+        uses: azure/CLI@965c8d7571d2231a54e321ddd07f7b10317f34d9 # v2.0.0
+        with:
+          inlineScript: |
+            for i in ./dist*; do
+              echo "Uploading ${i} to kubernetes-ingress/v${{ inputs.nic_version }}/${i##*/}"
+              az storage blob upload --auth-mode=login -f "$i" -c ${{ secrets.AZURE_BUCKET_NAME }} \
+              --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} --overwrite -n kubernetes-ingress/v${{ inputs.nic_version }}/${i##*/}
+            done
