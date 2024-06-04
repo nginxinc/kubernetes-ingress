@@ -27,8 +27,8 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 
 1. Clone the NGINX Ingress Controller repository:
 
-    ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.1
+    ```console
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.2
     cd kubernetes-ingress
     ```
 
@@ -138,7 +138,7 @@ This single YAML file creates CRDs for the following resources:
 - `APUserSig`
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.1/deploy/crds-nap-waf.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/deploy/crds-nap-waf.yaml
 ```
 
 {{%/tab%}}
@@ -216,7 +216,7 @@ To enable the NGINX App Protect DoS Module:
 
 {{< include "installation/manifests/verify-pods-are-running.md" >}}
 
-For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/app-protect-waf").
+For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/app-protect-waf" >}}).
 
 ---
 
