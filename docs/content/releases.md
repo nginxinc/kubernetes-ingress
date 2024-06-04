@@ -13,11 +13,11 @@ weight: 2100
 
 ### <i class="fa-solid fa-triangle-exclamation"></i> Important
 
-- Bundles compiled on NAP WAF versions <= v4.8.x are not compatible with NAP WAF versions >= 4.9.x, this release of NIC includes NAP WAF v4.10 so recompilation of policy bundles is required.
+- Bundles compiled on NAP WAF versions <= v4.8.x are not compatible with NAP WAF versions >= 4.9.x, this release of NIC includes NAP WAF v4.10 so recompilation of policy bundles is required. JSON based [WAF Policies](https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/#waf-policies) aren't affected with this change.
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
 
-- [5654](https://github.com/nginxinc/kubernetes-ingress/pull/5654) NGINX 1.27.0 and NGINX Plus R32
+- [5654](https://github.com/nginxinc/kubernetes-ingress/pull/5654) NGINX 1.27.0 and [NGINX Plus R32](https://www.f5.com/company/blog/nginx/nginx-plus-r32-released)
 - [5590](https://github.com/nginxinc/kubernetes-ingress/pull/5590), [5631](https://github.com/nginxinc/kubernetes-ingress/pull/5631), [5638](https://github.com/nginxinc/kubernetes-ingress/pull/5638), [5662](https://github.com/nginxinc/kubernetes-ingress/pull/5662), [5623](https://github.com/nginxinc/kubernetes-ingress/pull/5623) Go updates
 - [5579](https://github.com/nginxinc/kubernetes-ingress/pull/5579), [5642](https://github.com/nginxinc/kubernetes-ingress/pull/5642), [5573](https://github.com/nginxinc/kubernetes-ingress/pull/5573), [5630](https://github.com/nginxinc/kubernetes-ingress/pull/5630), [5665](https://github.com/nginxinc/kubernetes-ingress/pull/5665), [5673](https://github.com/nginxinc/kubernetes-ingress/pull/5673) Container base image updates
 
