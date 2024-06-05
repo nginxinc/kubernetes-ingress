@@ -141,6 +141,36 @@ spec:
 {{- if .Values.controller.extraContainers }}
       {{ toYaml .Values.controller.extraContainers | nindent 6 }}
 {{- end }}
+
+{{- if .Values.controller.appprotect.v5}}
+      - name: waf-enforcer
+        image: private-registry.nginx.com/nap/waf-enforcer:5.2.0
+        imagePullPolicy: Always
+        env:
+          - name: ENFORCER_PORT
+            value: "50000"
+        volumeMounts:
+          - name: app-protect-bd-config
+            mountPath: /opt/app_protect/bd_config
+      - name: waf-config-mgr
+        image: private-registry.nginx.com/nap/waf-config-mgr:5.2.0
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsUser: 101 #nginx
+          runAsNonRoot: true
+          capabilities:
+            drop:
+              - all
+        volumeMounts:
+          - name: app-protect-bd-config
+            mountPath: /opt/app_protect/bd_config
+          - name: app-protect-config
+            mountPath: /opt/app_protect/config
+          - name: app-protect-bundles
+            mountPath: /etc/app_protect/bundles
+{{- end}}
+
 {{- if or ( eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" ) .Values.controller.initContainers }}
       initContainers:
 {{- end }}

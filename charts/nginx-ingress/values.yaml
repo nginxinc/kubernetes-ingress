@@ -21,6 +21,8 @@ controller:
   appprotect:
     ## Enable the App Protect WAF module in the Ingress Controller.
     enable: false
+    ## Enables App Protect WAF v5.
+    v5: true
     ## Sets log level for App Protect WAF. Allowed values: fatal, error, warn, info, debug, trace
     # logLevel: fatal
 

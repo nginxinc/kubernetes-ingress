@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -80,8 +81,14 @@ func main() {
 	nginxVersion := getNginxVersionInfo(nginxManager)
 
 	var appProtectVersion string
+	var appProtectV5 bool
 	if *appProtect {
 		appProtectVersion = getAppProtectVersionInfo()
+
+		r := regexp.MustCompile("^5.*")
+		if r.MatchString(appProtectVersion) {
+			appProtectV5 = true
+		}
 	}
 
 	var agentVersion string
@@ -119,6 +126,7 @@ func main() {
 		EnableSnippets:                 *enableSnippets,
 		NginxServiceMesh:               *spireAgentAddress != "",
 		MainAppProtectLoadModule:       *appProtect,
+		MainAppProtectV5LoadModule:     appProtectV5,
 		MainAppProtectDosLoadModule:    *appProtectDos,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
 		EnableOIDC:                     *enableOIDC,
@@ -137,7 +145,7 @@ func main() {
 		nginxManager.CreateTLSPassthroughHostsConfig(emptyFile)
 	}
 
-	process := startChildProcesses(nginxManager)
+	process := startChildProcesses(nginxManager, appProtectV5)
 
 	plusClient := createPlusClient(*nginxPlus, useFakeNginxManager, nginxManager)
 
@@ -456,10 +464,11 @@ type childProcesses struct {
 
 // newChildProcesses starts the several child processes based on flags set.
 // AppProtect. AppProtectDos, Agent.
-func startChildProcesses(nginxManager nginx.Manager) childProcesses {
+func startChildProcesses(nginxManager nginx.Manager, appProtectV5 bool) childProcesses {
 	var aPPluginDone chan error
 
-	if *appProtect {
+	// Do not start AppProtect Plugins when using v5.
+	if *appProtect && !appProtectV5 {
 		aPPluginDone = make(chan error, 1)
 		nginxManager.AppProtectPluginStart(aPPluginDone, *appProtectLogLevel)
 	}

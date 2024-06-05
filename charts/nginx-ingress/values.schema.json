@@ -119,6 +119,15 @@
                 true
               ]
             },
+            "v5": {
+              "type": "boolean",
+              "default": false,
+              "title": "Enables App Protect WAF v5.",
+              "examples": [
+                false,
+                true
+              ]
+            },
             "logLevel": {
               "type": "string",
               "default": "",

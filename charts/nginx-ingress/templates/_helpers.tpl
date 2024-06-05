@@ -312,6 +312,13 @@ List of volumes for controller.
 - name: nginx-log
   emptyDir: {}
 {{- end }}
+{{- if .Values.controller.appprotect.v5 }}
+- name: app-protect-bd-config
+  emptyDir: {}
+- name: app-protect-config
+  emptyDir: {}
+- name: app-protect-bundles
+{{- end }}
 {{- if .Values.controller.volumes }}
 {{ toYaml .Values.controller.volumes }}
 {{- end }}
@@ -360,6 +367,16 @@ volumeMounts:
   name: nginx-lib
 - mountPath: /var/log/nginx
   name: nginx-log
+{{- if .Values.controller.appprotect.v5 }}
+- name: app-protect-bd-config
+  mountPath: /opt/app_protect/bd_config
+- name: app-protect-config
+  mountPath: /opt/app_protect/config
+  # Normally, only the waf-config-mgr should access this dir.
+  # This is here for testing.
+- name: app-protect-bundles
+  mountPath: /etc/app_protect/bundles
+{{- end }}
 {{- end }}
 {{- if .Values.controller.volumeMounts }}
 {{ toYaml .Values.controller.volumeMounts }}
