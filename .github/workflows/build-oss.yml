@@ -138,7 +138,7 @@ jobs:
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
-        if: ${{ inputs.forked-workflow || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
+        if: ${{ ! inputs.docs-only || inputs.forked-workflow || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
 
       - name: Debug values
         run: |
