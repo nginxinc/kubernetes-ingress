@@ -677,23 +677,14 @@ type SecurityLog struct {
 	LogDest     string `json:"logDest"`
 }
 
+// APIKey defines an API Key policy.
 type APIKey struct {
-	SuppliedIn   SuppliedIn  `json:"suppliedIn"`
-	RejectCodes  RejectCodes `json:"rejectCodes,omitempty"`
-	ClientSecret string      `json:"clientSecret"`
+	SuppliedIn   SuppliedIn `json:"suppliedIn"`
+	ClientSecret string     `json:"clientSecret"`
 }
 
+// SuppliedIn defines the locations API Key should be supplied in.
 type SuppliedIn struct {
 	Header []string `json:"header"`
 	Query  []string `json:"query"`
-}
-
-type RejectCodes struct {
-	NotSupplied *int `json:"notSupplied"`
-	NoMatch     *int `json:"noMatch"`
-}
-
-type Client struct {
-	ID     string `json:"id"`
-	Secret string `json:"secret"`
 }

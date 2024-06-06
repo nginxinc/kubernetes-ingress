@@ -270,17 +270,13 @@ spec:
                     type: array
                 type: object
               apiKey:
+                description: APIKey defines an API Key policy.
                 properties:
                   clientSecret:
                     type: string
-                  rejectCodes:
-                    properties:
-                      noMatch:
-                        type: integer
-                      notSupplied:
-                        type: integer
-                    type: object
                   suppliedIn:
+                    description: SuppliedIn defines the locations API Key should be
+                      supplied in.
                     properties:
                       header:
                         items:

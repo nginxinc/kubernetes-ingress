@@ -112,6 +112,7 @@ func ValidateOIDCSecret(secret *api_v1.Secret) error {
 	return nil
 }
 
+// ValidateAPIKeySecret validates the secret. If it is valid, the function returns nil.
 func ValidateAPIKeySecret(secret *api_v1.Secret) error {
 	if secret.Type != SecretTypeAPIKey {
 		return fmt.Errorf("APIKey secret must be of the type %v", SecretTypeAPIKey)

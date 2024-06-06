@@ -138,6 +138,7 @@ type OIDC struct {
 	AccessTokenEnable bool
 }
 
+// APIKey holds API key configuration.
 type APIKey struct {
 	Header  []string
 	Query   []string

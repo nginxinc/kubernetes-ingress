@@ -425,7 +425,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 
 	if policiesCfg.APIKeyEnabled {
 		apiMapName := policiesCfg.APIKey.MapName
-		policiesCfg.APIKeyClientMap = make(map[string][]APIKeyClient)
+		policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
 		policiesCfg.APIKeyClientMap[apiMapName] = policiesCfg.APIKeyClients
 	}
 
@@ -591,7 +591,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			policiesCfg.APIKeyEnabled = routePoliciesCfg.APIKeyEnabled
 			apiMapName := routePoliciesCfg.APIKey.MapName
 			if policiesCfg.APIKeyClientMap == nil {
-				policiesCfg.APIKeyClientMap = make(map[string][]APIKeyClient)
+				policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
 			}
 			if _, exists := policiesCfg.APIKeyClientMap[apiMapName]; !exists {
 				policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
@@ -731,7 +731,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				policiesCfg.APIKeyEnabled = routePoliciesCfg.APIKeyEnabled
 				apiMapName := routePoliciesCfg.APIKey.MapName
 				if policiesCfg.APIKeyClientMap == nil {
-					policiesCfg.APIKeyClientMap = make(map[string][]APIKeyClient)
+					policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
 				}
 				if _, exists := policiesCfg.APIKeyClientMap[apiMapName]; !exists {
 					policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
@@ -894,8 +894,8 @@ type policiesCfg struct {
 	OIDC            bool
 	APIKeyEnabled   bool
 	APIKey          *version2.APIKey
-	APIKeyClients   []APIKeyClient
-	APIKeyClientMap map[string][]APIKeyClient
+	APIKeyClients   []apiKeyClient
+	APIKeyClientMap map[string][]apiKeyClient
 	WAF             *version2.WAF
 	ErrorReturn     *version2.Return
 	BundleValidator bundleValidator
@@ -910,7 +910,7 @@ type internalBundleValidator struct {
 	bundlePath string
 }
 
-type APIKeyClient struct {
+type apiKeyClient struct {
 	ClientID  string
 	HashedKey string
 }
@@ -1336,7 +1336,6 @@ func (p *policiesCfg) addAPIKeyConfig(
 	polKey string,
 	polNamespace string,
 	secretRefs map[string]*secrets.SecretReference,
-	context string,
 ) *validationResults {
 	res := newValidationResults()
 	if p.APIKey != nil {
@@ -1379,24 +1378,24 @@ func (p *policiesCfg) addAPIKeyConfig(
 	return res
 }
 
-func generateAPIKeyClients(secretData map[string][]byte) []APIKeyClient {
-	var clients []APIKeyClient
+func generateAPIKeyClients(secretData map[string][]byte) []apiKeyClient {
+	var clients []apiKeyClient
 	for clientID, apiKey := range secretData {
 
 		h := sha256.New()
-		h.Write([]byte(apiKey))
+		h.Write(apiKey)
 		sha256Hash := hex.EncodeToString(h.Sum(nil))
 		base64Str := base64.URLEncoding.EncodeToString(h.Sum(nil))
 
 		glog.Infof("apiKey %s", apiKey)
 		glog.Infof("sha %s", sha256Hash)
 		glog.Infof("base64Str %s", base64Str)
-		clients = append(clients, APIKeyClient{ClientID: clientID, HashedKey: sha256Hash}) //
+		clients = append(clients, apiKeyClient{ClientID: clientID, HashedKey: sha256Hash}) //
 	}
 	return clients
 }
 
-func generateAPIKeyClientMap(mapName string, apiKeyClients []APIKeyClient) *version2.Map {
+func generateAPIKeyClientMap(mapName string, apiKeyClients []apiKeyClient) *version2.Map {
 	glog.Infof("mapName: %v, apiKeyClients: %v", mapName, apiKeyClients)
 
 	defaultParam := version2.Parameter{
@@ -1552,7 +1551,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 			case pol.Spec.OIDC != nil:
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
 			case pol.Spec.APIKey != nil:
-				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs, context)
+				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs)
 			case pol.Spec.WAF != nil:
 				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			default:
