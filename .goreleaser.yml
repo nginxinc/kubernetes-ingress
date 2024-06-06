@@ -94,7 +94,7 @@ builds:
       - aws
 
 changelog:
-  skip: true
+  disable: true
 
 archives:
   - id: archives
