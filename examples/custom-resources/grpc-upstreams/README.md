@@ -5,8 +5,7 @@ grpc** field to an upstream. The protocol defaults to http if left unset.
 
 ## Prerequisites
 
-1. HTTP/2 must be enabled. See `http2` ConfigMap key in the
-  [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)
+1. HTTP/2 must be enabled using the `http2` [ConfigMap key](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners).
 
 2. Configure TLS termination for VirtualServer and VirtualServerRoute resources.
 
