@@ -8,7 +8,7 @@ grpc** field to an upstream. The protocol defaults to http if left unset.
 1. HTTP/2 must be enabled. See `http2` ConfigMap key in the
   [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)
 
-2. VirtualServer and VirtualServerRoute resources for gRPC applications must include TLS termination.
+2. Configure TLS termination for VirtualServer and VirtualServerRoute resources.
 
 3. `grpcurl` utility must be installed
 
