@@ -20,7 +20,7 @@ grpc** field to an upstream. The protocol defaults to http if left unset.
     IC_IP=XXX.YYY.ZZZ.III
     ```
 
-6. Save the HTTPS port of the Ingress Controller into a shell variable:
+6. Save the HTTPS port of NGINX Ingress Controller into a shell variable:
 
     ```shell
     IC_HTTPS_PORT=<port number>
