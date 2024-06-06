@@ -1991,9 +1991,7 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 		// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
 		return ""
 	case secrets.SecretTypeAPIKey:
-		glog.Infof("adding apikey secret: %s", secret.Name)
-		// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
-
+		// APIKey ClientSecret is not required on the filesystem, it is written directly to the config file.
 		return ""
 	default:
 		return cnf.addOrUpdateTLSSecret(secret)

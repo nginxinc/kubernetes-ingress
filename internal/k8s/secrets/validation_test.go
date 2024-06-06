@@ -65,6 +65,71 @@ func TestValidateJWKSecretFails(t *testing.T) {
 	}
 }
 
+func TestValidateValidateAPIKeySecret(t *testing.T) {
+	t.Parallel()
+	secret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "api-key-secret",
+			Namespace: "default",
+		},
+		Type: SecretTypeAPIKey,
+		Data: map[string][]byte{
+			"client1": []byte("cGFzc3dvcmQ="),
+			"client2": []byte("N2ViNDMwOGItY2Q1Yi00NDEzLWI0NTUtYjMyZmQ4OTg2MmZk"),
+		},
+	}
+
+	err := ValidateAPIKeySecret(secret)
+	if err != nil {
+		t.Errorf("ValidateAPIKeySecret() returned error %v", err)
+	}
+}
+
+func TestValidateValidateAPIKeyFails(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		secret *v1.Secret
+		msg    string
+	}{
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-secret",
+					Namespace: "default",
+				},
+				Type: "some-type",
+				Data: map[string][]byte{
+					"client": nil,
+				},
+			},
+			msg: "Incorrect type for API Key secret",
+		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeAPIKey,
+				Data: map[string][]byte{
+					"client1": []byte("cGFzc3dvcmQ="),
+					"client2": []byte("N2ViNDMwOGItY2Q1Yi00NDEzLWI0NTUtYjMyZmQ4OTg2MmZk"),
+					"client3": []byte("N2ViNDMwOGItY2Q1Yi00NDEzLWI0NTUtYjMyZmQ4OTg2MmZk"),
+				},
+			},
+			msg: "repeated API Keys for API Key secret",
+		},
+	}
+
+	for _, test := range tests {
+		err := ValidateAPIKeySecret(test.secret)
+		t.Logf("ValidateAPIKeySecret() returned error %v", err)
+		if err == nil {
+			t.Errorf("ValidateAPIKeySecret() returned no error for the case of %s", test.msg)
+		}
+	}
+}
+
 func TestValidateHtpasswdSecret(t *testing.T) {
 	t.Parallel()
 	secret := &v1.Secret{

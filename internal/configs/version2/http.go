@@ -139,17 +139,9 @@ type OIDC struct {
 }
 
 type APIKey struct {
-	Header                []string
-	Query                 []string
-	RejectCodeNotSupplied int
-	RejectCodeNoMatch     int
-	Clients               []Client
-	MapName               string
-}
-
-type Client struct {
-	ClientID     string
-	EncryptedKey string
+	Header  []string
+	Query   []string
+	MapName string
 }
 
 // WAF defines WAF configuration.

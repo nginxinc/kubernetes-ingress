@@ -24,3 +24,9 @@ spec:
       pass: coffee
     policies:
       - name: api-key-policy-2
+  - path: /coffee2
+    action:
+      pass: coffee
+    policies:
+    - name: api-key-policy
+

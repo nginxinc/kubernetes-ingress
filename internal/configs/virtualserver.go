@@ -416,18 +416,18 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		vsNamespace:    vsEx.VirtualServer.Namespace,
 		vsName:         vsEx.VirtualServer.Name,
 	}
-	policiesCfg, mapsFromPolicies := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
-
-	maps = append(maps, mapsFromPolicies...)
+	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
 	if policiesCfg.JWKSAuthEnabled {
 		jwtAuthKey := policiesCfg.JWTAuth.Key
 		policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
 		policiesCfg.JWTAuthList[jwtAuthKey] = policiesCfg.JWTAuth
 	}
-	//
-	//if policiesCfg.APIKey {
-	//	apiKey := policiesCfg.APIKey.MapName
-	//}
+
+	if policiesCfg.APIKeyEnabled {
+		apiMapName := policiesCfg.APIKey.MapName
+		policiesCfg.APIKeyClientMap = make(map[string][]APIKeyClient)
+		policiesCfg.APIKeyClientMap[apiMapName] = policiesCfg.APIKeyClients
+	}
 
 	dosCfg := generateDosCfg(dosResources[""])
 
@@ -571,9 +571,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			vsNamespace:    vsEx.VirtualServer.Namespace,
 			vsName:         vsEx.VirtualServer.Name,
 		}
-		routePoliciesCfg, mapsFromPolicies := vsc.generatePolicies(ownerDetails, r.Policies, vsEx.Policies, routeContext, policyOpts)
-		maps = append(maps, mapsFromPolicies...)
-
+		routePoliciesCfg := vsc.generatePolicies(ownerDetails, r.Policies, vsEx.Policies, routeContext, policyOpts)
 		if policiesCfg.OIDC {
 			routePoliciesCfg.OIDC = policiesCfg.OIDC
 		}
@@ -587,6 +585,16 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			jwtAuthKey := routePoliciesCfg.JWTAuth.Key
 			if _, exists := policiesCfg.JWTAuthList[jwtAuthKey]; !exists {
 				policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
+			}
+		}
+		if routePoliciesCfg.APIKeyEnabled {
+			policiesCfg.APIKeyEnabled = routePoliciesCfg.APIKeyEnabled
+			apiMapName := routePoliciesCfg.APIKey.MapName
+			if policiesCfg.APIKeyClientMap == nil {
+				policiesCfg.APIKeyClientMap = make(map[string][]APIKeyClient)
+			}
+			if _, exists := policiesCfg.APIKeyClientMap[apiMapName]; !exists {
+				policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
 			}
 		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
@@ -703,8 +711,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				policyRefs = r.Policies
 				context = subRouteContext
 			}
-			routePoliciesCfg, mapsFromPolicies := vsc.generatePolicies(ownerDetails, policyRefs, vsEx.Policies, context, policyOpts)
-			maps = append(maps, mapsFromPolicies...)
+			routePoliciesCfg := vsc.generatePolicies(ownerDetails, policyRefs, vsEx.Policies, context, policyOpts)
 			if policiesCfg.OIDC {
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
@@ -720,6 +727,17 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 					policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
 				}
 			}
+			if routePoliciesCfg.APIKeyEnabled {
+				policiesCfg.APIKeyEnabled = routePoliciesCfg.APIKeyEnabled
+				apiMapName := routePoliciesCfg.APIKey.MapName
+				if policiesCfg.APIKeyClientMap == nil {
+					policiesCfg.APIKeyClientMap = make(map[string][]APIKeyClient)
+				}
+				if _, exists := policiesCfg.APIKeyClientMap[apiMapName]; !exists {
+					policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
+				}
+			}
+
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 			dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -785,6 +803,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				}
 			}
 		}
+	}
+
+	for mapName, apiKeyClients := range policiesCfg.APIKeyClientMap {
+		maps = append(maps, *generateAPIKeyClientMap(mapName, apiKeyClients))
 	}
 
 	httpSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.HTTPSnippets, []string{})
@@ -870,8 +892,10 @@ type policiesCfg struct {
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
+	APIKeyEnabled   bool
 	APIKey          *version2.APIKey
-	APIKeyList      map[string]*version2.APIKey
+	APIKeyClients   []APIKeyClient
+	APIKeyClientMap map[string][]APIKeyClient
 	WAF             *version2.WAF
 	ErrorReturn     *version2.Return
 	BundleValidator bundleValidator
@@ -884,6 +908,11 @@ type bundleValidator interface {
 
 type internalBundleValidator struct {
 	bundlePath string
+}
+
+type APIKeyClient struct {
+	ClientID  string
+	HashedKey string
 }
 
 func (i internalBundleValidator) validate(bundle string) (string, error) {
@@ -1308,19 +1337,17 @@ func (p *policiesCfg) addAPIKeyConfig(
 	polNamespace string,
 	secretRefs map[string]*secrets.SecretReference,
 	context string,
-) (*validationResults, *version2.Map) {
+) *validationResults {
 	res := newValidationResults()
-	var clients []version2.Client
 	if p.APIKey != nil {
 		res.addWarningf(
 			"Multiple APIKey policies in the same context is not valid. APIKey policy %s will be ignored",
 			polKey,
 		)
 		res.isError = true
-		return res, nil
+		return res
 	}
 
-	// if apiKey.ClientSecret != "" {
 	secretKey := fmt.Sprintf("%v/%v", polNamespace, apiKey.ClientSecret)
 	glog.Infof("secretKey: %v", secretKey)
 	secretRef := secretRefs[secretKey]
@@ -1333,57 +1360,65 @@ func (p *policiesCfg) addAPIKeyConfig(
 	if secretType != "" && secretType != secrets.SecretTypeAPIKey {
 		res.addWarningf("API Key policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, secrets.SecretTypeAPIKey)
 		res.isError = true
-		return res, nil
+		return res
 	} else if secretRef.Error != nil {
 		res.addWarningf("API Key %s references an invalid secret %s: %v", polKey, secretKey, secretRef.Error)
 		res.isError = true
-		return res, nil
+		return res
 	}
 
-	for clientID, clientSecret := range secretRef.Secret.Data {
+	p.APIKeyClients = generateAPIKeyClients(secretRef.Secret.Data)
+
+	mapName := fmt.Sprintf("apikey_auth_client_name_%s", strings.Split(strings.Replace(polKey, "-", "_", -1), "/")[1])
+	p.APIKey = &version2.APIKey{
+		Header:  apiKey.SuppliedIn.Header,
+		Query:   apiKey.SuppliedIn.Query,
+		MapName: mapName,
+	}
+	p.APIKeyEnabled = true
+	return res
+}
+
+func generateAPIKeyClients(secretData map[string][]byte) []APIKeyClient {
+	var clients []APIKeyClient
+	for clientID, apiKey := range secretData {
 
 		h := sha256.New()
-		h.Write([]byte(clientSecret))
+		h.Write([]byte(apiKey))
 		sha256Hash := hex.EncodeToString(h.Sum(nil))
 		base64Str := base64.URLEncoding.EncodeToString(h.Sum(nil))
 
-		glog.Infof("clientSecret %s", clientSecret)
+		glog.Infof("apiKey %s", apiKey)
 		glog.Infof("sha %s", sha256Hash)
 		glog.Infof("base64Str %s", base64Str)
-		clients = append(clients, version2.Client{ClientID: clientID, EncryptedKey: sha256Hash}) //
+		clients = append(clients, APIKeyClient{ClientID: clientID, HashedKey: sha256Hash}) //
 	}
+	return clients
+}
 
-	default_parameter := version2.Parameter{
+func generateAPIKeyClientMap(mapName string, apiKeyClients []APIKeyClient) *version2.Map {
+	glog.Infof("mapName: %v, apiKeyClients: %v", mapName, apiKeyClients)
+
+	defaultParam := version2.Parameter{
 		Value:  "default",
 		Result: "\"\"",
 	}
 
-	params := []version2.Parameter{default_parameter}
-	for _, client := range clients {
+	params := []version2.Parameter{defaultParam}
+	for _, client := range apiKeyClients {
 		params = append(params, version2.Parameter{
-			Value:  fmt.Sprintf("\"%s\"", client.EncryptedKey),
+			Value:  fmt.Sprintf("\"%s\"", client.HashedKey),
 			Result: fmt.Sprintf("\"%s\"", client.ClientID),
 		})
 	}
 
 	sourceName := "$apikey_auth_token"
-	mapName := fmt.Sprintf("apikey_auth_client_name_%s", strings.Split(strings.Replace(polKey, "-", "_", -1), "/")[1])
 
-	shaToClient := &version2.Map{
+	return &version2.Map{
 		Source:     sourceName,
 		Variable:   fmt.Sprintf("$%s", mapName),
 		Parameters: params,
 	}
-
-	p.APIKey = &version2.APIKey{
-		Header:                apiKey.SuppliedIn.Header,
-		Query:                 apiKey.SuppliedIn.Query,
-		RejectCodeNotSupplied: generateIntFromPointer(apiKey.RejectCodes.NotSupplied, 401),
-		RejectCodeNoMatch:     generateIntFromPointer(apiKey.RejectCodes.NoMatch, 403),
-		Clients:               clients,
-		MapName:               mapName,
-	}
-	return res, shaToClient
 }
 
 func (p *policiesCfg) addWAFConfig(
@@ -1474,9 +1509,8 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 	policies map[string]*conf_v1.Policy,
 	context string,
 	policyOpts policyOptions,
-) (policiesCfg, []version2.Map) {
+) policiesCfg {
 	config := newPoliciesConfig(vsc.bundleValidator)
-	maps := []version2.Map{}
 
 	for _, p := range policyRefs {
 		polNamespace := p.Namespace
@@ -1518,44 +1552,27 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 			case pol.Spec.OIDC != nil:
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
 			case pol.Spec.APIKey != nil:
-				res, shaToClientMap := config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs, context)
-				// TODO: refactor
-				if res != nil && len(res.warnings) > 0 {
-					vsc.addWarnings(ownerDetails.owner, res.warnings)
-				}
-
-				if res != nil && res.isError {
-					return policiesCfg{
-						ErrorReturn: &version2.Return{Code: 500},
-					}, maps
-				}
-				if res != nil && !res.isError && shaToClientMap != nil {
-					maps = append(maps, *shaToClientMap)
-				}
-
+				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs, context)
 			case pol.Spec.WAF != nil:
 				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			default:
 				res = newValidationResults()
 			}
-			if res != nil && len(res.warnings) > 0 {
-				vsc.addWarnings(ownerDetails.owner, res.warnings)
-			}
-
-			if res != nil && res.isError {
+			vsc.addWarnings(ownerDetails.owner, res.warnings)
+			if res.isError {
 				return policiesCfg{
 					ErrorReturn: &version2.Return{Code: 500},
-				}, maps
+				}
 			}
 		} else {
 			vsc.addWarningf(ownerDetails.owner, "Policy %s is missing or invalid", key)
 			return policiesCfg{
 				ErrorReturn: &version2.Return{Code: 500},
-			}, maps
+			}
 		}
 	}
 
-	return *config, maps
+	return *config
 }
 
 func generateLimitReq(zoneName string, rateLimitPol *conf_v1.RateLimit) version2.LimitReq {

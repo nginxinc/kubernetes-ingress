@@ -283,11 +283,31 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 }
 
 func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
-	// if api
-	if apiKey.ClientSecret == "" {
-		return field.ErrorList{field.Required(fieldPath.Child("clientSecret"), "")}
-	}
 	allErrs := field.ErrorList{}
+	if apiKey.SuppliedIn.Query == nil && apiKey.SuppliedIn.Header == nil {
+		msg := "at least one query or header name must be provided"
+		allErrs = append(allErrs, field.Required(fieldPath.Child("SuppliedIn"), msg))
+	}
+
+	if apiKey.SuppliedIn.Header != nil {
+		for _, header := range apiKey.SuppliedIn.Header {
+			for _, msg := range validation.IsHTTPHeaderName(header) {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("suppliedIn.header"), header, msg))
+			}
+		}
+	}
+
+	if apiKey.SuppliedIn.Query != nil {
+		for _, query := range apiKey.SuppliedIn.Query {
+			if err := ValidateEscapedString(query); err != nil {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("suppliedIn.query"), query, err.Error()))
+			}
+		}
+	}
+
+	if apiKey.ClientSecret == "" {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("clientSecret"), ""))
+	}
 
 	allErrs = append(allErrs, validateSecretName(apiKey.ClientSecret, fieldPath.Child("clientSecret"))...)
 

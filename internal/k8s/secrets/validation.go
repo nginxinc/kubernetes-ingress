@@ -116,10 +116,15 @@ func ValidateAPIKeySecret(secret *api_v1.Secret) error {
 	if secret.Type != SecretTypeAPIKey {
 		return fmt.Errorf("APIKey secret must be of the type %v", SecretTypeAPIKey)
 	}
-	//clientSecret, exists := secret.Data[ClientSecretKey]
-	//if !exists {
-	//	return fmt.Errorf("OIDC secret must have the data field %v", ClientSecretKey)
-	//}
+
+	uniqueKeys := make(map[string]bool)
+	for _, key := range secret.Data {
+		if uniqueKeys[string(key)] {
+			return fmt.Errorf("API Keys cannot be repeated")
+		}
+		uniqueKeys[string(key)] = true
+	}
+
 	return nil
 }
 
@@ -147,7 +152,6 @@ func IsSupportedSecretType(secretType api_v1.SecretType) bool {
 		secretType == SecretTypeOIDC ||
 		secretType == SecretTypeHtpasswd ||
 		secretType == SecretTypeAPIKey
-	// secretType == api_v1.SecretTypeOpaque
 }
 
 // ValidateSecret validates the secret. If it is valid, the function returns nil.
