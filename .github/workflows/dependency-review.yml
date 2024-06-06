@@ -27,3 +27,5 @@ jobs:
         uses: actions/dependency-review-action@0c155c5e8556a497adf53f2c18edabf945ed8e70 # v4.3.2
         with:
           config-file: "nginxinc/k8s-common/dependency-review-config.yml@main"
+          base-ref: ${{ github.event.pull_request.base.sha || github.event.repository.default_branch }}
+          head-ref: ${{ github.event.pull_request.base.sha || github.ref }}

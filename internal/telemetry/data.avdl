@@ -48,8 +48,17 @@ It is the UID of the `kube-system` Namespace. */
 		/** Secrets is the number of Secret resources managed by the Ingress Controller. */
 		long? Secrets = null;
 
-		/** Services is the number of services referenced by NGINX Ingress Controller in the cluster */
-		long? Services = null;
+		/** ClusterIPServices is the number of ClusterIP services managed by NGINX Ingress Controller. */
+		long? ClusterIPServices = null;
+
+		/** NodePortServices is the number of NodePort services managed by NGINX Ingress Controller. */
+		long? NodePortServices = null;
+
+		/** LoadBalancerServices is the number of LoadBalancer services managed by NGINX Ingress Controller. */
+		long? LoadBalancerServices = null;
+
+		/** ExternalNameServices is the number of ExternalName services managed by NGINX Ingress Controller. */
+		long? ExternalNameServices = null;
 
 		/** RegularIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller. */
 		long? RegularIngressCount = null;
