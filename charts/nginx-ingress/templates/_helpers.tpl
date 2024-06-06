@@ -368,6 +368,7 @@ volumeMounts:
   name: nginx-lib
 - mountPath: /var/log/nginx
   name: nginx-log
+{{- end }}
 {{- if .Values.controller.appprotect.v5 }}
 - name: app-protect-bd-config
   mountPath: /opt/app_protect/bd_config
@@ -377,7 +378,6 @@ volumeMounts:
   # This is here for testing.
 - name: app-protect-bundles
   mountPath: /etc/app_protect/bundles
-{{- end }}
 {{- end }}
 {{- if .Values.controller.volumeMounts }}
 {{ toYaml .Values.controller.volumeMounts }}
