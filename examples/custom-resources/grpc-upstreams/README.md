@@ -9,7 +9,7 @@ grpc** field to an upstream. The protocol defaults to http if left unset.
 
 2. Configure TLS termination for VirtualServer and VirtualServerRoute resources.
 
-3. `grpcurl` utility must be installed
+3. A working [`grpcurl`](https://github.com/fullstorydev/grpcurl) installation.
 
 4. [Install NGINX Ingress Controller using Manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
 
