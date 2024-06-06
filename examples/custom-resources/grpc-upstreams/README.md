@@ -55,7 +55,7 @@ kubectl apply -f greeter-app.yaml
 
 ## Step 4 - Test the Configuration
 
-Access the application using `grpcurl`. We'll use `-insecure` option to turn off certificate verification of our self-signed certificate.
+Access the application using `grpcurl`. Use the `-insecure` flag to turn off certificate verification for the self-signed certificate.
 
 ```shell
 grpcurl -insecure -proto helloworld.proto -authority greeter.example.com $IC_IP:$IC_HTTPS_PORT helloworld.Greeter/SayHello
