@@ -29,4 +29,3 @@ spec:
       pass: coffee
     policies:
     - name: api-key-policy
-
