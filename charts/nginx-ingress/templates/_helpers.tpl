@@ -318,6 +318,7 @@ List of volumes for controller.
 - name: app-protect-config
   emptyDir: {}
 - name: app-protect-bundles
+  emptyDir: {}
 {{- end }}
 {{- if .Values.controller.volumes }}
 {{ toYaml .Values.controller.volumes }}

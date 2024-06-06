@@ -187,7 +187,7 @@ ubi-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI wit
 
 .PHONY: ubi-image-nap-v5-plus
 ubi-image-nap-v5-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and NGINX App Protect WAFv5)
-	$(DOCKER_CMD) $(PLUS_ARGS) q--secret id=rhel_license,src=rhel_license \
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license \
 	--build-arg BUILD_OS=ubi-9-plus-nap-v5 \
 	--build-arg NAP_MODULES=waf \
 	--build-arg NGINX_AGENT=$(NGINX_AGENT) \
