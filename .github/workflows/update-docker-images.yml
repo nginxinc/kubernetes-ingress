@@ -270,6 +270,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write
     secrets: inherit
 
   release-plus-nginx-gcr:
