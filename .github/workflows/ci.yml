@@ -739,6 +739,22 @@ jobs:
             target: goreleaser
             platforms: "linux/amd64"
             nap_modules: waf
+          - image: alpine-plus-nap-v5-fips
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: debian-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-9-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
