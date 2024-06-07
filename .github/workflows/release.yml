@@ -77,10 +77,10 @@ jobs:
             git tag -a ${tag} -m "Version ${tag#v*}"
             echo "Pushing to tag ${tag} to branch ${branch}"
             if ! ${{ inputs.dry_run }}; then
-                git push origin "${tag}"
+              git push origin "${tag}"
             else
-                echo "DRY RUN not making any changes"
-                git push --dry-run origin "${tag}"
+              echo "DRY RUN not making any changes"
+              git push --dry-run origin "${tag}"
             fi
           else
             echo "Warning: Tag ${tag} already exists.  Not making any changes"
