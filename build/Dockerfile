@@ -198,7 +198,31 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& if [ -z "${NGINX_AGENT##true}" ]; then \
 	agent.sh \
 	; fi
-	
+
+
+############################################# Base image for Debian with NGINX Plus and App Protect WAFv5/DoS #############################################
+FROM debian-plus as debian-plus-nap-v5
+ARG NAP_MODULES
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=bind,from=nginx-files,src=90pkgs-nginx,target=/etc/apt/apt.conf.d/90pkgs-nginx \
+	--mount=type=bind,from=nginx-files,src=nap-waf-v5-12.sources,target=/tmp/app-protect.sources \
+	--mount=type=bind,from=nginx-files,src=debian-agent-11.sources,target=/etc/apt/sources.list.d/nginx-agent.sources \
+	if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
+	fi \
+	&& apt-get update \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus; \
+	rm -f /etc/apt/sources.list.d/app-protect.sources; \
+	nap-waf.sh; \
+	&& apt-get purge --auto-remove -y gpg \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then \
+	agent.sh; \
+	fi
+
 
 ############################################# Base image for Debian with NGINX Plus #############################################
 FROM debian:12-slim@sha256:804194b909ef23fb995d9412c9378fb3505fe2427b70f3cc425339e48a828fca AS debian-plus
@@ -437,6 +461,51 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	rm -f /etc/yum.repos.d/app-protect-dos-8.repo \
 	&& nap-dos.sh; \
+	fi \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then \
+	agent.sh; \
+	fi \
+	&& dnf clean all
+
+
+############################################# Base image for UBI with NGINX Plus and App Protect WAFv5  #############################################
+FROM redhat/ubi8@sha256:f4292f415f60632a0ff9c0646c4fa859d8b2e1e88a16faa90c6decd1951aea88 as ubi-8-plus-nap-v5
+ARG NAP_MODULES
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
+	--mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
+	--mount=type=bind,from=nginx-files,src=nginx-plus-8.repo,target=/etc/yum.repos.d/nginx-plus.repo,rw \
+	--mount=type=bind,from=nginx-files,src=nginx-agent.repo,target=/etc/yum.repos.d/nginx-agent.repo,rw \
+	--mount=type=bind,from=nginx-files,src=app-protect-v5-8.repo,target=/tmp/app-protect-8.repo \
+	--mount=type=bind,from=nginx-files,src=app-protect-dos-8.repo,target=/tmp/app-protect-dos-8.repo \
+	source /tmp/rhel_license \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect-8.repo /etc/yum.repos.d/app-protect-8.repo; \
+	fi \
+	## the code below is duplicated from the ubi-plus image because NAP DOS doesn't support UBI 9 and minimal versions
+	&& groupadd --system --gid 101 nginx \
+	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
+	&& rpm --import /tmp/nginx_signing.key \
+	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then dnf --nodocs install -y nginx-agent; fi \
+	## end of duplicated code
+	&& sed -i 's/\(def in_container():\)/\1\n    return False/g' /usr/lib64/python*/*-packages/rhsm/config.py \
+	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
+	&& subscription-manager attach \
+	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
+	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	dnf --nodocs install -y app-protect-module-plus; \
+	fi \
+	&& subscription-manager unregister \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	rm -f /etc/yum.repos.d/app-protect-8.repo \
+	&& nap-waf.sh; \
+	fi \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then \
+	agent.sh; \
 	fi \
 	&& dnf clean all
 
