@@ -1,5 +1,5 @@
 ---
-docs: DOCS-578
+docs: DOCS-000
 doctypes:
 - ''
 title: Configuration
