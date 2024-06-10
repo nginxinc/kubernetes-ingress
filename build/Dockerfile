@@ -243,12 +243,12 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& rm -rf /var/lib/apt/lists/* \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	nap-waf.sh \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then \
+	agent.sh \
+	; fi \
 	; fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	nap-dos.sh \
-	; fi \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then \
-	agent.sh \
 	; fi
 
 # Uncomment the lines below if you want to install a custom CA certificate
