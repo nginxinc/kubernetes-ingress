@@ -38,6 +38,10 @@ controller:
 
     ## Configuration for App Protect WAF v5 Enforcer
     enforcer:
+      # Host that the App Protect WAF v5 Enforcer runs on.
+      # This will normally be "127.0.0.1" as the Enforcer container
+      # will run in the same pod as the Ingress Controller container.
+      host: "127.0.0.1"
       # Port that the App Protect WAF v5 Enforcer runs on.
       port: 50000
       image:

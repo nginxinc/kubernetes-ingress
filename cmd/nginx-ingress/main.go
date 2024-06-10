@@ -128,6 +128,7 @@ func main() {
 		MainAppProtectLoadModule:       *appProtect,
 		MainAppProtectV5LoadModule:     appProtectV5,
 		MainAppProtectDosLoadModule:    *appProtectDos,
+		MainAppProtectV5EnforcerAddr:   *appProtectEnforcerAddress,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
 		EnableOIDC:                     *enableOIDC,
 		SSLRejectHandshake:             sslRejectHandshake,

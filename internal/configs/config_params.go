@@ -147,6 +147,7 @@ type StaticConfigParams struct {
 	MainAppProtectLoadModule       bool
 	MainAppProtectV5LoadModule     bool
 	MainAppProtectDosLoadModule    bool
+	MainAppProtectV5EnforcerAddr   string
 	InternalRouteServerName        string
 	EnableLatencyMetrics           bool
 	EnableOIDC                     bool

@@ -215,6 +215,9 @@ Build the args for the service binary.
 {{- if and .Values.controller.appprotect.enable .Values.controller.appprotect.logLevel }}
 - -app-protect-log-level={{ .Values.controller.appprotect.logLevel }}
 {{ end }}
+{{- if and .Values.controller.appprotect.enable .Values.controller.appprotect.v5 }}
+- -app-protect-enforcer-address="{{ .Values.controller.appprotect.enforcer.host | default "127.0.0.1" }}:{{ .Values.controller.appprotect.enforcer.port | default 50000 }}"
+{{- end }}
 - -enable-app-protect-dos={{ .Values.controller.appprotectdos.enable }}
 {{- if .Values.controller.appprotectdos.enable }}
 - -app-protect-dos-debug={{ .Values.controller.appprotectdos.debug }}
@@ -386,10 +389,6 @@ volumeMounts:
   mountPath: /opt/app_protect/bd_config
 - name: app-protect-config
   mountPath: /opt/app_protect/config
-  # Normally, only the waf-config-mgr should access this dir.
-  # This is here for testing.
-- name: app-protect-bundles
-  mountPath: /etc/app_protect/bundles
 {{- end }}
 {{- if .Values.controller.volumeMounts }}
 {{ toYaml .Values.controller.volumeMounts }}
