@@ -11,7 +11,7 @@ This document describes how to troubleshoot problems when using NGINX Ingress Co
 
 For general troubleshooting of NGINX Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting/troubleshoot-common" >}}) documentation.
 
-{{< see-also >}} You can find more troubleshooting tips in the NGINX App Protect WAF [troubleshooting guide](/nginx-app-protect/v4/troubleshooting/) {{< /see-also >}}.
+{{< see-also >}} You can find more troubleshooting tips in the NGINX App Protect WAF [troubleshooting guide](/nginx-app-protect/v5/troubleshooting/) {{< /see-also >}}.
 
 ## Potential problems
 
@@ -20,9 +20,10 @@ The table below categorizes some potential problems with the Ingress Controller 
 {{% table %}}
 |Problem area | Symptom | Troubleshooting method | Common cause |
 | ---| ---| ---| --- |
-|Start. | The Ingress Controller fails to start. | Check the logs. | Misconfigured APLogConf or APPolicy. |
-|APLogConf, APPolicy or Ingress Resource. | The configuration is not applied. | Check the events of the APLogConf, APPolicy and Ingress Resource, check the logs, replace the policy. | APLogConf or APPolicy is invalid. |
-|NGINX. | The Ingress Controller NGINX verification timeouts while starting for the first time or while reloading after a change. | Check the logs for ``Unable to fetch version: X`` message. Check the Availability of APPolicy External References. | Too many Ingress Resources with App Protect enabled. Check the `NGINX fails to start/reload section <#nginx-fails-to-start-or-reload>`_ of the Known Issues. |
+|Start. | The Ingress Controller fails to start. | Check the logs. | Misconfigured policy bundle. |
+|Start | The configuration is not applied. | Check if a policy bundle is compiled using version of the compiler running in NGINX Ingress Controller. | Policy bundle is invalid. |
+|Start | The configuration is not applied. | Check if bundle is uploded to a volume. | Policy bundle is invalid. |
+|APLogConf, Policy or Ingress Resource. | The configuration is not applied. | Check the events of the APLogConf, Policy and Ingress Resource, check the logs, replace the policy bundle. | Policy bundle is invalid. |
 {{% /table %}}
 
 ## Troubleshooting Methods

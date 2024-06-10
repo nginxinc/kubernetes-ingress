@@ -4,7 +4,7 @@ doctypes:
 - ''
 title: OpenTracing
 toc: true
-weight: 400
+weight: 500
 ---
 
 Learn how to use OpenTracing with NGINX Ingress Controller.
