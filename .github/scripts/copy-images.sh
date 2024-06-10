@@ -237,29 +237,6 @@ if $PUBLISH_WAF_DOS; then
             done
         fi
     done
-    for postfix in "${NAP_WAFV5_DOS_TAG_POSTFIX_LIST[@]}"; do
-        image=${SOURCE_REGISTRY}/${SOURCE_NAP_WAFV5_DOS_IMAGE_PREFIX}:${SOURCE_TAG}${postfix}
-        echo "Processing image ${image}"
-        new_tag=${TARGET_REGISTRY}/${TARGET_NAP_WAFV5_DOS_IMAGE_PREFIX}:${TARGET_TAG}${postfix}
-        if $IS_IMMUTABLE && skopeo --override-os linux --override-arch amd64 inspect docker://${new_tag} > /dev/null 2>&1; then
-            echo "  ECR is immutable & tag ${new_tag} already exists, skipping."
-        else
-            echo "  Pushing image NAP WAFV5/DOS ${new_tag}..."
-            if ! $DRY_RUN; then
-                skopeo copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${new_tag}
-            fi
-            for tag in "${ADDITIONAL_TAGS[@]}"; do
-                if [ -z "${tag}" ]; then
-                    continue
-                fi
-                additional_tag=${TARGET_REGISTRY}/${TARGET_NAP_WAFV5_DOS_IMAGE_PREFIX}:${tag}${postfix}
-                echo "  Pushing image NAP WAFV5/DOS ${additional_tag}..."
-                if ! $DRY_RUN; then
-                    skopeo copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
-                fi
-            done
-        fi
-    done
 else
     echo "Skipping Publish Plus WAF/DOS flow"
 fi
