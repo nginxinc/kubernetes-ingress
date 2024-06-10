@@ -152,10 +152,27 @@ Expand wildcard TLS name.
 Expand image name.
 */}}
 {{- define "nginx-ingress.image" -}}
-{{- if .Values.controller.image.digest -}}
-{{- printf "%s@%s" .Values.controller.image.repository .Values.controller.image.digest -}}
+{{ include "nginx-ingress.image-digest-or-tag" (dict "image" .Values.controller.image "default" .Chart.AppVersion ) }}
+{{- end -}}
+
+{{- define "nap-enforcer.image" -}}
+{{ include "nginx-ingress.image-digest-or-tag" (dict "image" .Values.controller.appprotect.enforcer.image "default" .Chart.AppVersion ) }}
+{{- end -}}
+
+{{- define "nap-config-manager.image" -}}
+{{ include "nginx-ingress.image-digest-or-tag" (dict "image" .Values.controller.appprotect.configManager.image "default" .Chart.AppVersion ) }}
+{{- end -}}
+
+{{/*
+Accepts an image struct like .Values.controller.image along with a default value to use
+if the digest or tag is not set. Can be called like:
+include "nginx-ingress.image-digest-or-tag" (dict "image" .Values.controller.image "default" .Chart.AppVersion
+*/}}
+{{- define "nginx-ingress.image-digest-or-tag" -}}
+{{- if .image.digest -}}
+{{- printf "%s@%s" .image.repository .image.digest -}}
 {{- else -}}
-{{- printf "%s:%s" .Values.controller.image.repository (include "nginx-ingress.tag" .) -}}
+{{- printf "%s:%s" .image.repository (default .default .image.tag) -}}
 {{- end -}}
 {{- end -}}
 
@@ -313,12 +330,7 @@ List of volumes for controller.
   emptyDir: {}
 {{- end }}
 {{- if .Values.controller.appprotect.v5 }}
-- name: app-protect-bd-config
-  emptyDir: {}
-- name: app-protect-config
-  emptyDir: {}
-- name: app-protect-bundles
-  emptyDir: {}
+{{- toYaml .Values.controller.appprotect.volumes }}
 {{- end }}
 {{- if .Values.controller.volumes }}
 {{ toYaml .Values.controller.volumes }}
@@ -399,24 +411,25 @@ volumeMounts:
 {{- define "nginx-ingress.appprotect.v5" -}}
 {{- if .Values.controller.appprotect.v5}}
 - name: waf-enforcer
-  image: private-registry.nginx.com/nap/waf-enforcer:5.2.0
-  imagePullPolicy: Always
+  image: {{ include "nap-enforcer.image" . }}
+  imagePullPolicy: "{{ .Values.controller.appprotect.enforcer.image.pullPolicy }}"
+{{- if .Values.controller.appprotect.enforcer.securityContext }}
+  securityContext:
+{{ toYaml .Values.controller.appprotect.enforcer.securityContext | nindent 6 }}
+{{- end }}
   env:
     - name: ENFORCER_PORT
-      value: "50000"
+      value: "{{ .Values.controller.appprotect.enforcer.port | default 50000 }}"
   volumeMounts:
     - name: app-protect-bd-config
       mountPath: /opt/app_protect/bd_config
 - name: waf-config-mgr
-  image: private-registry.nginx.com/nap/waf-config-mgr:5.2.0
-  imagePullPolicy: Always
+  image: {{ include "nap-config-manager.image" . }}
+  imagePullPolicy: "{{ .Values.controller.appprotect.configManager.image.pullPolicy }}"
+{{- if .Values.controller.appprotect.configManager.securityContext }}
   securityContext:
-    allowPrivilegeEscalation: false
-    runAsUser: 101 #nginx
-    runAsNonRoot: true
-    capabilities:
-      drop:
-        - all
+{{ toYaml .Values.controller.appprotect.configManager.securityContext | nindent 6 }}
+{{- end }}
   volumeMounts:
     - name: app-protect-bd-config
       mountPath: /opt/app_protect/bd_config
