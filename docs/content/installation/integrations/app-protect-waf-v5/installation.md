@@ -28,13 +28,13 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 1. Pull the WAF Config Manager image:
 
     ```shell
-    docker pull private-registry.nginx.com/nap/waf-config-mgr:5.2.0
+    docker pull private-registry.nginx.com/nap/waf-config-mgr:<image-tag>
     ```
 
 1. Pull the WAF Enforcer Docker image    
 
     ```shell
-    docker pull private-registry.nginx.com/nap/waf-enforcer:5.2.0
+    docker pull private-registry.nginx.com/nap/waf-enforcer:<image-tag>
     ```
 
 1. Clone the NGINX Ingress Controller repository:
@@ -68,10 +68,10 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
     make <makefile target> PREFIX=<my-docker-registry>/nginx-plus-ingress TARGET=download
     ```
 
-    For example, to build a Debian-based image with NGINX Plus and NGINX App Protect DoS, run:
+    For example, to build a Debian-based image with NGINX Plus and NGINX App Protect WAF v5, run:
 
     ```shell
-    make debian-image-dos-plus PREFIX=<my-docker-registry>/nginx-plus-ingress TARGET=download
+    make debian-image-nap-v5-plus PREFIX=<my-docker-registry>/nginx-plus-ingress TARGET=download
     ```
 
      **What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_]({{< relref "installation/building-nginx-ingress-controller.md#makefile-details" >}}). This version number is used for tracking and deployment purposes.
@@ -80,7 +80,7 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
 
 ### Makefile targets {#makefile-targets}
 
-Create Docker image for Ingress Controller (Alpine with NGINX Plus, NGINX App Protect WAFv5 and FIPS)
+Create Docker image for Ingress Controller (Alpine with NGINX Plus, NGINX App Protect WAF v5 and FIPS)
 
 {{<bootstrap-table "table table-striped table-bordered">}}
 | Makefile Target           | Description                                                       | Compatible Systems  |
