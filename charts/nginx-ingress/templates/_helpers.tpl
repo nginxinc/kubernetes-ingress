@@ -389,6 +389,10 @@ volumeMounts:
   mountPath: /opt/app_protect/bd_config
 - name: app-protect-config
   mountPath: /opt/app_protect/config
+  # app-protect-bundles is mounted so that Ingress Controller
+  # can verify that referenced bundles are present
+- name: app-protect-bundles
+  mountPath: /etc/app_protect/bundles
 {{- end }}
 {{- if .Values.controller.volumeMounts }}
 {{ toYaml .Values.controller.volumeMounts }}
