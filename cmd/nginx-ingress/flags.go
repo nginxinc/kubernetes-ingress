@@ -67,7 +67,7 @@ var (
 	appProtectDosMaxWorkers = flag.Int("app-protect-dos-max-workers", 0, "Max number of nginx processes to support. Requires -nginx-plus and -enable-app-protect-dos.")
 	appProtectDosMemory     = flag.Int("app-protect-dos-memory", 0, "RAM memory size to consume in MB. Requires -nginx-plus and -enable-app-protect-dos.")
 
-	appProtectEnforcerAddress = flag.String("app-protect-enforcer-addr", appProtectEnforcerAddrDefault,
+	appProtectEnforcerAddress = flag.String("app-protect-enforcer-address", appProtectEnforcerAddrDefault,
 		`Sets address for App Protect v5 Enforcer. Requires -nginx-plus and -enable-app-protect.`)
 
 	agent              = flag.Bool("agent", false, "Enable NGINX Agent")
