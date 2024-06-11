@@ -140,7 +140,7 @@ docker push <my-docker-registry>/waf-enforcer:<your-tag>
 
 {{< include "installation/deploy-controller.md" >}}
 
-{{< note >}} If you're using NGINX Ingress Controller with the AppProtect WAF module and policy bundles, you will need to modify the Deployment or DaemonSet file to include volumes and volume mounts.
+{{< note >}} NGINX Ingress Controller with the AppProtect WAF v5 module works only with policy bundles. You need to modify the Deployment or DaemonSet file to include volumes, volume mounts and two WAF 5 docker images: `waf-config-mgr` and `waf-enforcer`.
 
 NGINX Ingress Controller **requires** the volume mount path to be `/etc/app_protect/bundles`. {{< /note >}}
 
@@ -161,9 +161,50 @@ Add volume mounts to the `containers` section:
 ...
 volumeMounts:
 - name: <volume_mount_name>
-    mountPath: /etc/nginx/waf/bundles
+    mountPath: /etc/app_protect/bundles
 ...
 ```
+
+
+Add `waf-config-mgr` image to the `containers` section:
+
+```yaml
+...
+- name: waf-config-mgr
+  image: private-registry.nginx.com/nap/waf-config-mgr:<version-tag>
+  imagePullPolicy: IfNotPresent
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - all
+  volumeMounts:
+    - name: app-protect-bd-config
+      mountPath: /opt/app_protect/bd_config
+    - name: app-protect-config
+      mountPath: /opt/app_protect/config
+    - name: app-protect-bundles
+      mountPath: /etc/app_protect/bundles
+...
+```
+
+
+Add `waf-enforcer` image to the `containers` section:
+
+```yaml
+...
+- name: waf-enforcer
+  image: private-registry.nginx.com/nap/waf-enforcer:<version-tag>
+  imagePullPolicy: IfNotPresent
+  env:
+    - name: ENFORCER_PORT
+      value: "50000"
+  volumeMounts:
+    - name: app-protect-bd-config
+      mountPath: /opt/app_protect/bd_config
+...
+```
+
 
 ### Using a Deployment
 
