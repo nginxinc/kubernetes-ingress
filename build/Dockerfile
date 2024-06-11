@@ -201,30 +201,6 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	; fi
 
 
-############################################# Base image for Debian with NGINX Plus and App Protect WAFv5/DoS #############################################
-FROM debian-plus as debian-plus-nap-v5
-ARG NAP_MODULES
-
-RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
-	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-	--mount=type=bind,from=nginx-files,src=90pkgs-nginx,target=/etc/apt/apt.conf.d/90pkgs-nginx \
-	--mount=type=bind,from=nginx-files,src=nap-waf-v5-12.sources,target=/tmp/app-protect.sources \
-	--mount=type=bind,from=nginx-files,src=debian-agent-11.sources,target=/etc/apt/sources.list.d/nginx-agent.sources \
-	if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	cp /tmp/app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
-	fi \
-	&& apt-get update \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
-	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus; \
-	rm -f /etc/apt/sources.list.d/app-protect.sources; \
-	nap-waf.sh; \
-	&& apt-get purge --auto-remove -y gpg \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then \
-	agent.sh; \
-	fi
-
-
 ############################################# Base image for Debian with NGINX Plus #############################################
 FROM debian:12-slim@sha256:804194b909ef23fb995d9412c9378fb3505fe2427b70f3cc425339e48a828fca AS debian-plus
 
@@ -309,6 +285,29 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	nap-dos.sh \
 	; fi
+
+############################################# Base image for Debian with NGINX Plus and App Protect WAFv5/DoS #############################################
+FROM debian-plus as debian-plus-nap-v5
+ARG NAP_MODULES
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=bind,from=nginx-files,src=90pkgs-nginx,target=/etc/apt/apt.conf.d/90pkgs-nginx \
+	--mount=type=bind,from=nginx-files,src=nap-waf-v5-12.sources,target=/tmp/app-protect.sources \
+	--mount=type=bind,from=nginx-files,src=debian-agent-11.sources,target=/etc/apt/sources.list.d/nginx-agent.sources \
+	if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
+	fi \
+	&& apt-get update \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus; \
+	rm -f /etc/apt/sources.list.d/app-protect.sources; \
+	nap-waf.sh; \
+	&& apt-get purge --auto-remove -y gpg \
+	&& if [ -z "${NGINX_AGENT##true}" ]; then \
+	agent.sh; \
+	fi
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
