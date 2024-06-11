@@ -22,7 +22,7 @@ The table below categorizes some potential problems with the Ingress Controller 
 | ---| ---| ---| --- |
 |Start. | The Ingress Controller fails to start. | Check the logs. | Misconfigured policy bundle. |
 |Start | The configuration is not applied. | Check if a policy bundle is compiled using version of the compiler running in NGINX Ingress Controller. | Policy bundle is invalid. |
-|Start | The configuration is not applied. | Check if bundle is uploded to a volume. | Policy bundle is invalid. |
+|Start | The configuration is not applied. | Check if bundle is present in a volume. | Policy bundle is not present in the mounted volume. |
 |APLogConf, Policy or Ingress Resource. | The configuration is not applied. | Check the events of the APLogConf, Policy and Ingress Resource, check the logs, replace the policy bundle. | Policy bundle is invalid. |
 {{% /table %}}
 
