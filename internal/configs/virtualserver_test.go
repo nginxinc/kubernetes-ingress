@@ -5653,6 +5653,263 @@ func TestGenerateVirtualServerConfigJWKSPolicy(t *testing.T) {
 	}
 }
 
+func TestGenerateVirtualServerConfigAPIKeyPolicy(t *testing.T) {
+	t.Parallel()
+
+	virtualServerEx := VirtualServerEx{
+		SecretRefs: map[string]*secrets.SecretReference{
+			"default/api-key-secret-spec": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"clientSpec": []byte("password"),
+					},
+				},
+			},
+			"default/api-key-secret-route": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"clientRoute": []byte("password2"),
+					},
+				},
+			},
+		},
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Policies: []conf_v1.PolicyReference{
+					{
+						Name: "api-key-policy-spec",
+					},
+				},
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+					{
+						Path: "/coffee",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						Policies: []conf_v1.PolicyReference{
+							{
+								Name: "api-key-policy-route",
+							},
+						},
+					},
+				},
+			},
+		},
+		Policies: map[string]*conf_v1.Policy{
+			"default/api-key-policy-spec": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-policy-spec",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					APIKey: &conf_v1.APIKey{
+						SuppliedIn: &conf_v1.SuppliedIn{
+							Header: []string{"X-API-Key"},
+							Query:  []string{"apikey"},
+						},
+						ClientSecret: "api-key-secret-spec",
+					},
+				},
+			},
+			"default/api-key-policy-route": {
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-policy-route",
+					Namespace: "default",
+				},
+				Spec: conf_v1.PolicySpec{
+					APIKey: &conf_v1.APIKey{
+						SuppliedIn: &conf_v1.SuppliedIn{
+							Query: []string{"api-key"},
+						},
+						ClientSecret: "api-key-secret-route",
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.30:80",
+			},
+		},
+	}
+
+	expected := version2.VirtualServerConfig{
+		Maps: []version2.Map{
+			{
+				Source:   "$apikey_auth_token",
+				Variable: "$apikey_auth_client_name_default_cafe_api_key_policy_spec",
+				Parameters: []version2.Parameter{
+					{
+						Value:  "default",
+						Result: `""`,
+					},
+					{
+						Value:  `"5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"`,
+						Result: `"clientSpec"`,
+					},
+				},
+			},
+			{
+				Source:   "$apikey_auth_token",
+				Variable: "$apikey_auth_client_name_default_cafe_api_key_policy_route",
+				Parameters: []version2.Parameter{
+					{
+						Value:  "default",
+						Result: `""`,
+					},
+					{
+						Value:  `"6cf615d5bcaac778352a8f1f3360d23f02f34ec182e259897fd6ce485d7870d4"`,
+						Result: `"clientRoute"`,
+					},
+				},
+			},
+		},
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			JWTAuthList:     nil,
+			JWTAuth:         nil,
+			JWKSAuthEnabled: false,
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			RealIPHeader:    "X-Real-IP",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			VSNamespace:     "default",
+			VSName:          "cafe",
+			APIKeyEnabled:   true,
+			APIKey: &version2.APIKey{
+				Header:  []string{"X-API-Key"},
+				Query:   []string{"apikey"},
+				MapName: "apikey_auth_client_name_default_cafe_api_key_policy_spec",
+			},
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/coffee",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "coffee-svc",
+					APIKey: &version2.APIKey{
+						MapName: "apikey_auth_client_name_default_cafe_api_key_policy_route",
+						Query:   []string{"api-key"},
+					},
+				},
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{TLSPassthrough: true},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
 func TestGeneratePolicies(t *testing.T) {
 	t.Parallel()
 	ownerDetails := policyOwnerDetails{
@@ -5717,6 +5974,22 @@ func TestGeneratePolicies(t *testing.T) {
 					Type: secrets.SecretTypeOIDC,
 					Data: map[string][]byte{
 						"client-secret": []byte("super_secret_123"),
+					},
+				},
+			},
+			"default/api-key-secret": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"client1": []byte("password"),
+					},
+				},
+			},
+			"default/api-key-secret-2": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeAPIKey,
+					Data: map[string][]byte{
+						"client2": []byte("password2"),
 					},
 				},
 			},
@@ -6249,6 +6522,88 @@ func TestGeneratePolicies(t *testing.T) {
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
+					Name:      "api-key-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/api-key-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				APIKey: &version2.APIKey{
+					Header:  []string{"X-API-Key"},
+					Query:   []string{"api-key"},
+					MapName: "apikey_auth_client_name_default_test_api_key_policy",
+				},
+				APIKeyEnabled:   true,
+				APIKeyClientMap: nil,
+				APIKeyClients: []apiKeyClient{
+					{
+						ClientID:  "client1",
+						HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+					},
+				},
+			},
+			msg: "api key reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "api-key-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/api-key-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				APIKey: &version2.APIKey{
+					Header:  []string{"X-API-Key"},
+					Query:   []string{"api-key"},
+					MapName: "apikey_auth_client_name_default_test_api_key_policy",
+				},
+				APIKeyEnabled:   true,
+				APIKeyClientMap: nil,
+				APIKeyClients: []apiKeyClient{
+					{
+						ClientID:  "client1",
+						HashedKey: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+					},
+				},
+			},
+			msg: "api key same secrets for different policies",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
 					Name:      "waf-policy",
 					Namespace: "default",
 				},
@@ -6283,17 +6638,18 @@ func TestGeneratePolicies(t *testing.T) {
 
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
 
-	for _, test := range tests {
-		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOpts)
-		// TODO test maps
-		// println(maps) // temporary print to use the variable
-		result.BundleValidator = nil
-		if diff := cmp.Diff(test.expected, result); diff != "" {
-			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
-		}
-		if len(vsc.warnings) > 0 {
-			t.Errorf("generatePolicies() returned unexpected warnings %v for the case of %s", vsc.warnings, test.msg)
-		}
+	for _, tc := range tests {
+		t.Run(tc.msg, func(t *testing.T) {
+			result := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOpts)
+			result.BundleValidator = nil
+
+			if !cmp.Equal(tc.expected, result) {
+				t.Errorf(cmp.Diff(tc.expected, result))
+			}
+			if len(vsc.warnings) > 0 {
+				t.Errorf("generatePolicies() returned unexpected warnings %v for the case of %s", vsc.warnings, tc.msg)
+			}
+		})
 	}
 }
 
@@ -6380,8 +6736,6 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
 			res := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOptions{apResources: &appProtectResourcesForVS{}})
-			// TODO test maps
-			// println(maps) // temporary print to use the variable
 			res.BundleValidator = nil
 			if !cmp.Equal(tc.want, res) {
 				t.Error(cmp.Diff(tc.want, res))
@@ -7655,6 +8009,76 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			msg: "multi oidc",
 		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "api-key-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "api-key-policy-2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/api-key-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+				"default/api-key-policy-2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "api-key-policy-2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						APIKey: &conf_v1.APIKey{
+							SuppliedIn: &conf_v1.SuppliedIn{
+								Header: []string{"X-API-Key"},
+								Query:  []string{"api-key"},
+							},
+							ClientSecret: "api-key-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/api-key-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeAPIKey,
+							Data: map[string][]byte{
+								"client1": []byte("password"),
+							},
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Multiple API Key policies in the same context is not valid. API Key policy default/api-key-policy-2 will be ignored`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "multi api key",
+		},
+		// TODO:wrong secret type
+		// TODO: secret invalid
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{

@@ -859,6 +859,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			APIKey:                    policiesCfg.APIKey,
+			APIKeyEnabled:             policiesCfg.APIKeyEnabled,
 			OIDC:                      vsc.oidcPolCfg.oidc,
 			WAF:                       policiesCfg.WAF,
 			Dos:                       dosCfg,
@@ -1335,12 +1336,14 @@ func (p *policiesCfg) addAPIKeyConfig(
 	apiKey *conf_v1.APIKey,
 	polKey string,
 	polNamespace string,
+	vsNamespace string,
+	vsName string,
 	secretRefs map[string]*secrets.SecretReference,
 ) *validationResults {
 	res := newValidationResults()
 	if p.APIKey != nil {
 		res.addWarningf(
-			"Multiple APIKey policies in the same context is not valid. APIKey policy %s will be ignored",
+			"Multiple API Key policies in the same context is not valid. API Key policy %s will be ignored",
 			polKey,
 		)
 		res.isError = true
@@ -1368,7 +1371,15 @@ func (p *policiesCfg) addAPIKeyConfig(
 
 	p.APIKeyClients = generateAPIKeyClients(secretRef.Secret.Data)
 
-	mapName := fmt.Sprintf("apikey_auth_client_name_%s", strings.Split(strings.Replace(polKey, "-", "_", -1), "/")[1])
+	mapName := fmt.Sprintf(
+		"apikey_auth_client_name_%s_%s_%s",
+		// vsNamespace,
+		// vsName,
+		strings.Replace(vsNamespace, "-", "_", -1), // TODO:refactor
+		strings.Replace(vsName, "-", "_", -1),
+		// strings.Split(polKey, "/")[1],
+		strings.Split(strings.Replace(polKey, "-", "_", -1), "/")[1],
+	)
 	p.APIKey = &version2.APIKey{
 		Header:  apiKey.SuppliedIn.Header,
 		Query:   apiKey.SuppliedIn.Query,
@@ -1551,7 +1562,8 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 			case pol.Spec.OIDC != nil:
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
 			case pol.Spec.APIKey != nil:
-				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, policyOpts.secretRefs)
+				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, ownerDetails.vsNamespace,
+					ownerDetails.vsName, policyOpts.secretRefs)
 			case pol.Spec.WAF != nil:
 				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			default:

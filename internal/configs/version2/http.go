@@ -85,6 +85,7 @@ type Server struct {
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
 	APIKey                    *APIKey
+	APIKeyEnabled             bool
 	WAF                       *WAF
 	Dos                       *Dos
 	PoliciesErrorReturn       *Return

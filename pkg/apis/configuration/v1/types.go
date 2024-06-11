@@ -679,8 +679,8 @@ type SecurityLog struct {
 
 // APIKey defines an API Key policy.
 type APIKey struct {
-	SuppliedIn   SuppliedIn `json:"suppliedIn"`
-	ClientSecret string     `json:"clientSecret"`
+	SuppliedIn   *SuppliedIn `json:"suppliedIn"`
+	ClientSecret string      `json:"clientSecret"`
 }
 
 // SuppliedIn defines the locations API Key should be supplied in.
