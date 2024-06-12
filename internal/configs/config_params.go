@@ -157,6 +157,7 @@ type StaticConfigParams struct {
 	StaticSSLPath                  string
 	DynamicWeightChangesReload     bool
 	NginxVersion                   nginx.Version
+	AppProtectBundlePath           string
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.

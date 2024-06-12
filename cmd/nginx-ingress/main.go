@@ -48,11 +48,13 @@ var (
 )
 
 const (
-	nginxVersionLabel      = "app.nginx.org/version"
-	versionLabel           = "app.kubernetes.io/version"
-	appProtectVersionLabel = "appprotect.f5.com/version"
-	agentVersionLabel      = "app.nginx.org/agent-version"
-	appProtectVersionPath  = "/opt/app_protect/RELEASE"
+	nginxVersionLabel        = "app.nginx.org/version"
+	versionLabel             = "app.kubernetes.io/version"
+	appProtectVersionLabel   = "appprotect.f5.com/version"
+	agentVersionLabel        = "app.nginx.org/agent-version"
+	appProtectVersionPath    = "/opt/app_protect/RELEASE"
+	appProtectBundleFolder   = "/etc/nginx/waf/bundles/"
+	appProtectv5BundleFolder = "/etc/app_protect/bundles/"
 )
 
 func main() {
@@ -82,12 +84,14 @@ func main() {
 
 	var appProtectVersion string
 	var appProtectV5 bool
+	appProtectBundlePath := appProtectBundleFolder
 	if *appProtect {
 		appProtectVersion = getAppProtectVersionInfo()
 
 		r := regexp.MustCompile("^5.*")
 		if r.MatchString(appProtectVersion) {
 			appProtectV5 = true
+			appProtectBundlePath = appProtectv5BundleFolder
 		}
 	}
 
@@ -137,6 +141,7 @@ func main() {
 		DynamicWeightChangesReload:     *enableDynamicWeightChangesReload,
 		StaticSSLPath:                  nginxManager.GetSecretsDir(),
 		NginxVersion:                   nginxVersion,
+		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
 	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)

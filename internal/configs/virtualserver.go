@@ -315,7 +315,7 @@ func newVirtualServerConfigurator(
 	bundleValidator bundleValidator,
 ) *virtualServerConfigurator {
 	if bundleValidator == nil {
-		bundleValidator = newInternalBundleValidator(appProtectBundleFolder)
+		bundleValidator = newInternalBundleValidator(staticParams.AppProtectBundlePath)
 	}
 	return &virtualServerConfigurator{
 		cfgParams:                  cfgParams,
@@ -1325,7 +1325,6 @@ func (p *policiesCfg) addWAFConfig(
 	}
 
 	if waf.ApBundle != "" {
-		p.WAF.ApBundle = appProtectBundleFolder + waf.ApBundle
 		bundlePath, err := p.BundleValidator.validate(waf.ApBundle)
 		if err != nil {
 			res.addWarningf("WAF policy %s references an invalid or non-existing App Protect bundle %s", polKey, bundlePath)
