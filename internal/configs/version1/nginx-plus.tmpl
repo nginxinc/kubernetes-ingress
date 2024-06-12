@@ -86,7 +86,7 @@ http {
     {{- end}}
 
     {{- if .AppProtectV5LoadModule}}
-    app_protect_enforcer_address {{ .MainAppProtectV5EnforcerAddr }};
+    app_protect_enforcer_address {{ .AppProtectV5EnforcerAddr }};
     {{- end}}
 
     {{- if .AccessLogOff}}
