@@ -152,10 +152,27 @@ Expand wildcard TLS name.
 Expand image name.
 */}}
 {{- define "nginx-ingress.image" -}}
-{{- if .Values.controller.image.digest -}}
-{{- printf "%s@%s" .Values.controller.image.repository .Values.controller.image.digest -}}
+{{ include "nginx-ingress.image-digest-or-tag" (dict "image" .Values.controller.image "default" .Chart.AppVersion ) }}
+{{- end -}}
+
+{{- define "nap-enforcer.image" -}}
+{{ include "nginx-ingress.image-digest-or-tag" (dict "image" .Values.controller.appprotect.enforcer.image "default" .Chart.AppVersion ) }}
+{{- end -}}
+
+{{- define "nap-config-manager.image" -}}
+{{ include "nginx-ingress.image-digest-or-tag" (dict "image" .Values.controller.appprotect.configManager.image "default" .Chart.AppVersion ) }}
+{{- end -}}
+
+{{/*
+Accepts an image struct like .Values.controller.image along with a default value to use
+if the digest or tag is not set. Can be called like:
+include "nginx-ingress.image-digest-or-tag" (dict "image" .Values.controller.image "default" .Chart.AppVersion
+*/}}
+{{- define "nginx-ingress.image-digest-or-tag" -}}
+{{- if .image.digest -}}
+{{- printf "%s@%s" .image.repository .image.digest -}}
 {{- else -}}
-{{- printf "%s:%s" .Values.controller.image.repository (include "nginx-ingress.tag" .) -}}
+{{- printf "%s:%s" .image.repository (default .default .image.tag) -}}
 {{- end -}}
 {{- end -}}
 
@@ -198,6 +215,9 @@ Build the args for the service binary.
 {{- if and .Values.controller.appprotect.enable .Values.controller.appprotect.logLevel }}
 - -app-protect-log-level={{ .Values.controller.appprotect.logLevel }}
 {{ end }}
+{{- if and .Values.controller.appprotect.enable .Values.controller.appprotect.v5 }}
+- -app-protect-enforcer-address="{{ .Values.controller.appprotect.enforcer.host | default "127.0.0.1" }}:{{ .Values.controller.appprotect.enforcer.port | default 50000 }}"
+{{- end }}
 - -enable-app-protect-dos={{ .Values.controller.appprotectdos.enable }}
 {{- if .Values.controller.appprotectdos.enable }}
 - -app-protect-dos-debug={{ .Values.controller.appprotectdos.debug }}
@@ -312,6 +332,9 @@ List of volumes for controller.
 - name: nginx-log
   emptyDir: {}
 {{- end }}
+{{- if .Values.controller.appprotect.v5 }}
+{{- toYaml .Values.controller.appprotect.volumes }}
+{{- end }}
 {{- if .Values.controller.volumes }}
 {{ toYaml .Values.controller.volumes }}
 {{- end }}
@@ -361,6 +384,16 @@ volumeMounts:
 - mountPath: /var/log/nginx
   name: nginx-log
 {{- end }}
+{{- if .Values.controller.appprotect.v5 }}
+- name: app-protect-bd-config
+  mountPath: /opt/app_protect/bd_config
+- name: app-protect-config
+  mountPath: /opt/app_protect/config
+  # app-protect-bundles is mounted so that Ingress Controller
+  # can verify that referenced bundles are present
+- name: app-protect-bundles
+  mountPath: /etc/app_protect/bundles
+{{- end }}
 {{- if .Values.controller.volumeMounts }}
 {{ toYaml .Values.controller.volumeMounts }}
 {{- end }}
@@ -376,6 +409,38 @@ volumeMounts:
   readOnly: true
 {{- end }}
 {{- end -}}
+{{- end -}}
+
+{{- define "nginx-ingress.appprotect.v5" -}}
+{{- if .Values.controller.appprotect.v5}}
+- name: waf-enforcer
+  image: {{ include "nap-enforcer.image" . }}
+  imagePullPolicy: "{{ .Values.controller.appprotect.enforcer.image.pullPolicy }}"
+{{- if .Values.controller.appprotect.enforcer.securityContext }}
+  securityContext:
+{{ toYaml .Values.controller.appprotect.enforcer.securityContext | nindent 6 }}
+{{- end }}
+  env:
+    - name: ENFORCER_PORT
+      value: "{{ .Values.controller.appprotect.enforcer.port | default 50000 }}"
+  volumeMounts:
+    - name: app-protect-bd-config
+      mountPath: /opt/app_protect/bd_config
+- name: waf-config-mgr
+  image: {{ include "nap-config-manager.image" . }}
+  imagePullPolicy: "{{ .Values.controller.appprotect.configManager.image.pullPolicy }}"
+{{- if .Values.controller.appprotect.configManager.securityContext }}
+  securityContext:
+{{ toYaml .Values.controller.appprotect.configManager.securityContext | nindent 6 }}
+{{- end }}
+  volumeMounts:
+    - name: app-protect-bd-config
+      mountPath: /opt/app_protect/bd_config
+    - name: app-protect-config
+      mountPath: /opt/app_protect/config
+    - name: app-protect-bundles
+      mountPath: /etc/app_protect/bundles
+{{- end}}
 {{- end -}}
 
 {{- define "nginx-ingress.agentConfiguration" -}}

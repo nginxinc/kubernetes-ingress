@@ -2705,7 +2705,7 @@ var (
 				VerifyDepth:  2,
 			},
 			WAF: &WAF{
-				ApBundle:            "/etc/nginx/waf/bundles/NginxDefaultPolicy.tgz",
+				ApBundle:            "/fake/bundle/path/NginxDefaultPolicy.tgz",
 				ApSecurityLogEnable: true,
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},

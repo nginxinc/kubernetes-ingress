@@ -107,7 +107,7 @@ jobs:
           cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
           cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: common
-          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}
           platforms: ${{ inputs.platforms }}
           pull: true
           push: true
@@ -187,6 +187,7 @@ jobs:
             IC_VERSION=${{ steps.meta.outputs.version }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
             ${{ (contains(inputs.target, 'aws') && inputs.nap_modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ contains(inputs.image, 'v5') && 'WAF_VERSION=v5' || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
