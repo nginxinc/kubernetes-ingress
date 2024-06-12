@@ -61,11 +61,11 @@ To pull an image, follow these steps. Replace `<version-tag>` with the specific 
    ```
 
    ```shell
-   docker pull private-registry.nginx.com/nap/waf-config-mgr:<version-tag>
+   docker pull private-registry.nginx.com/nap/waf-config-mgr:<waf-version-tag>
    ```
 
    ```shell
-   docker pull private-registry.nginx.com/nap/waf-enforcer:<version-tag>
+   docker pull private-registry.nginx.com/nap/waf-enforcer:<waf-version-tag>
    ```
 
 
@@ -151,13 +151,13 @@ After pulling the image, tag it and upload it to your private registry.
       ```
 
       ```shell
-      docker tag private-registry.nginx.com/nap/waf-config-mgr:<version-tag> <my-docker-registry>/nap/waf-config-mgr:<version-tag>
-      docker push <my-docker-registry>/nap/waf-config-mgr:<version-tag>
+      docker tag private-registry.nginx.com/nap/waf-config-mgr:<waf-version-tag> <my-docker-registry>/nap/waf-config-mgr:<waf-version-tag>
+      docker push <my-docker-registry>/nap/waf-config-mgr:<waf-version-tag>
       ```
 
       ```shell
-      docker tag private-registry.nginx.com/nap/waf-enforcer:<version-tag> <my-docker-registry>/nap/waf-enforcer:<version-tag>
-      docker push <my-docker-registry>/nap/waf-enforcer:<version-tag>
+      docker tag private-registry.nginx.com/nap/waf-enforcer:<waf-version-tag> <my-docker-registry>/nap/waf-enforcer:<waf-version-tag>
+      docker push <my-docker-registry>/nap/waf-enforcer:<waf-version-tag>
       ```
 
    - For NGINX Controller with NGINX App Protect DoS, run:

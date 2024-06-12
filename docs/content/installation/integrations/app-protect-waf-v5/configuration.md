@@ -24,58 +24,6 @@ NGINX App Protect WAF can be enabled and configured for custom resources (Virtua
 - For Ingress resources, apply the [`app-protect` annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) to each desired resource.
 
 
-## NGINX App Protect WAF Policies {#waf-policies}
-
-NGINX App Protect WAF Policies can be created for VirtualServer, VirtualServerRoute, or Ingress resources by creating a policy bundle.
-
-To add an [NGINX App Protect WAF policy bundle](/nginx-app-protect-waf/v5/declarative-policy/policy/) to an Ingress resource:
-
-1. Create an `Policy` resource manifest.
-1. Add the policy to the `spec` field in the `APPolicy` resource.
-
-A resource specification and its Policy JSON **must** match. The fields must be identical in name and nesting level. If the resources are defined with YAML, the policy must also be represented in YAML.
-
-As an example, this is a [DataGuard policy](/nginx-app-protect-waf/v4/declarative-policy/policy/#policy/data-guard):
-
-```json
-{
-    "policy": {
-        "name": "dataguard_blocking",
-        "template": { "name": "POLICY_TEMPLATE_NGINX_BASE" },
-        "applicationLanguage": "utf-8",
-        "enforcementMode": "blocking",
-        "blocking-settings": {
-            "violations": [
-                {
-                    "name": "VIOL_DATA_GUARD",
-                    "alarm": true,
-                    "block": true
-                }
-            ]
-        },
-        "data-guard": {
-            "enabled": true,
-            "maskData": true,
-            "creditCardNumbers": true,
-            "usSocialSecurityNumbers": true,
-            "enforcementMode": "ignore-urls-in-list",
-            "enforcementUrls": []
-        }
-    }
-}
-  ```
-
-```yaml
-```
-
-
-## NGINX App Protect WAF Logs {#waf-logs}
-
-todo
-
-## NGINX App Protect WAF User Defined Signatures
-
-todo
 
 ## NGINX App Protect WAF Bundles {#waf-bundles}
 
@@ -116,6 +64,15 @@ spec:
       apLogBundle: "<log_bundle_name>.tgz"
       logDest: "syslog:server=syslog-svc.default:514"
 ```
+
+## NGINX App Protect WAF Logs {#waf-logs}
+
+todo
+
+## NGINX App Protect WAF User Defined Signatures
+
+todo
+
 
 ## OpenAPI Specification in NGINX Ingress Controller
 
