@@ -179,7 +179,7 @@
                   "default": "127.0.0.1",
                   "title": "Port which the App Protect WAF v5 Enforcer process runs on",
                   "examples": [
-                    127.0.0.1
+                    "127.0.0.1"
                   ]
                 },
                 "port": {
