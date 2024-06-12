@@ -2,14 +2,16 @@
 docs: DOCS-595
 doctypes:
 - ''
-title: Custom Annotations
+title: Custom annotations
 toc: true
-weight: 1900
+weight: 300
 ---
+
+This topic explains how you can use custom annotations with F5 NGINX Ingress Controller.
 
 Custom annotations enable you to quickly extend the Ingress resource to support many advanced features of NGINX, such as rate limiting, caching, etc.
 
-## What are Custom Annotations
+## Overview
 
 NGINX Ingress Controller supports a number of annotations for the Ingress resource that fine tune NGINX configuration (for example, connection timeouts) or enable additional features (for example, JWT validation). The complete list of annotations is available [here](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations).
 

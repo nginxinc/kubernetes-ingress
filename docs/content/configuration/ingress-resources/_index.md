@@ -1,7 +1,7 @@
 ---
-title: Ingress Resources
+title: Ingress resources
 description:
-weight: 1500
+weight: 200
 menu:
   docs:
     parent: NGINX Ingress Controller

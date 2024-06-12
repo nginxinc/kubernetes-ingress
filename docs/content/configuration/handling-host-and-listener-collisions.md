@@ -2,7 +2,7 @@
 docs: DOCS-590
 doctypes:
 - ''
-title: Handling Host and Listener Collisions
+title: Host and Listener collisions
 toc: true
 weight: 1700
 ---
