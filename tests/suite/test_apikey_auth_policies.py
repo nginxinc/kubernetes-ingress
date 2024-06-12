@@ -11,6 +11,7 @@ from suite.utils.resources_utils import (
     get_apikey_auth_secrets_from_yaml,
     get_apikey_policy_details_from_yaml,
     wait_before_test,
+    wait_until_all_pods_are_ready,
 )
 from suite.utils.vs_vsr_resources_utils import create_v_s_route_from_yaml, delete_and_create_vs_from_yaml
 
@@ -100,6 +101,7 @@ class TestAPIKeyAuthPolicies:
 
         host = apikey_policy_details.vs_host
 
+        wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
         wait_before_test()
 
         # /no-auth path
@@ -330,6 +332,7 @@ class TestAPIKeyAuthPoliciesVSR:
         create_v_s_route_from_yaml(kube_apis.custom_objects, vsr_2_src, virtual_server_setup.namespace)
 
         host = virtual_server_setup.vs_host
+        wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
         wait_before_test(5)
 
         # /no-auth path
