@@ -209,7 +209,6 @@ class TestDos:
         for _ in conf_nginx_directive:
             assert _ in nginx_config
 
-    @pytest.mark.skip(reason="Intermittent failures while sending dos logs to syslog")
     def test_dos_sec_logs_on(
         self,
         kube_apis,
@@ -239,6 +238,7 @@ class TestDos:
         get_ingress_nginx_template_conf(kube_apis.v1, test_namespace, "dos-ingress", pod_name, "nginx-ingress")
 
         print("----------------------- Send request ----------------------")
+        wait_before_test(5)
         response = requests.get(dos_setup.req_url, headers={"host": "dos.example.com"}, verify=False)
         print(response.text)
         wait_before_test(10)
@@ -250,7 +250,7 @@ class TestDos:
 
         print(log_contents)
         retry = 0
-        while 'product="app-protect-dos"' not in log_contents and retry < 10:
+        while 'product="app-protect-dos"' not in log_contents and retry < 20:
             wait_before_test()
             retry += 1
 
