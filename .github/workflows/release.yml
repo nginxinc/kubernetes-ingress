@@ -278,9 +278,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [variables]
     permissions:
-      contents: write # for goreleaser/goreleaser-action to manage releases
-      id-token: write # for goreleaser/goreleaser-action to sign artifacts
-      issues: write # for goreleaser/goreleaser-action to close milestone
+      contents: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
