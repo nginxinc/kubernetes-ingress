@@ -53,7 +53,7 @@ const (
 	appProtectVersionLabel   = "appprotect.f5.com/version"
 	agentVersionLabel        = "app.nginx.org/agent-version"
 	appProtectVersionPath    = "/opt/app_protect/RELEASE"
-	appProtectBundleFolder   = "/etc/nginx/waf/bundles/"
+	appProtectv4BundleFolder = "/etc/nginx/waf/bundles/"
 	appProtectv5BundleFolder = "/etc/app_protect/bundles/"
 )
 
@@ -84,7 +84,7 @@ func main() {
 
 	var appProtectVersion string
 	var appProtectV5 bool
-	appProtectBundlePath := appProtectBundleFolder
+	appProtectBundlePath := appProtectv4BundleFolder
 	if *appProtect {
 		appProtectVersion = getAppProtectVersionInfo()
 

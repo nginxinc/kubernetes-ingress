@@ -56,7 +56,7 @@ controller:
 
         ## The pull policy for the App Protect WAF v5 Enforcer image.
         pullPolicy: IfNotPresent
-      # securityContext: {}
+      securityContext: {}
 
     ## Configuration for App Protect WAF v5 Configuration Manager
     configManager:
@@ -229,7 +229,8 @@ controller:
       type: RuntimeDefault
 
   ## The security context for the Ingress Controller containers.
-  securityContext: {} # Remove curly brackets before adding values
+  securityContext:
+    {} # Remove curly brackets before adding values
     # allowPrivilegeEscalation: true
     # readOnlyRootFilesystem: true
     # runAsUser: 101 #nginx
