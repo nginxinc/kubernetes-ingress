@@ -123,8 +123,8 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
-            name=docker-mgmt.nginx.com/nginx-ic${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ inputs.publish-nginx-reqistry && ! contains(inputs.target, 'aws') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
+            name=docker-mgmt.nginx.com/nginx-ic${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ inputs.publish-nginx-reqistry && ! contains(inputs.target, 'aws') }}
             name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ inputs.publish-aws-market-place && contains(inputs.target, 'aws') }}
           flavor: |
             suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}},onlatest=true
@@ -205,6 +205,7 @@ jobs:
             PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
             IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ contains(inputs.image, 'v5') && 'WAF_VERSION=v5' || '' }}
             ${{ (contains(inputs.target, 'aws') && inputs.nap_modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
