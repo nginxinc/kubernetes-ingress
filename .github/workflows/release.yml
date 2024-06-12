@@ -354,3 +354,80 @@ jobs:
                 echo "skipped, dry_run."
               fi
             done
+
+  github-release:
+    name: Publish release to GitHub
+    runs-on: ubuntu-22.04
+    needs: [variables, binaries]
+    permissions:
+      contents: write # to modify the release
+      issues: write # to close milestone
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          ref: ${{ inputs.release_branch }}
+
+      - name: Fetch Cached Tarball Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          key: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5 }}
+          path: ${{ github.workspace }}/tarballs
+          fail-on-cache-miss: true
+
+      - name: Upload Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # clobber overwrites existing assets of the same name
+        run: |
+          if ! ${{ inputs.dry_run }}
+            gh release upload --clobber v${{ inputs.nic_version }} \
+              $(find ./tarballs -type f)
+          else
+            echo "Skipping adding binaries to Github Release, DRY_RUN"
+          fi
+
+      - name: Close Release Milestone
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          milestone_number=$(gh api \
+            -H "Accept: application/vnd.github.v3+json" \
+            /repos/${{ github.repository_owner }}/${{ github.repository }}/milestones \
+            | jq --arg version ${{ inputs.nic_version }} -r \
+            '.[] | select(.title == $version) | .number')
+          if ! ${{ inputs.dry_run }}
+            gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
+              /repos/${{ github.repository_owner }}/${{ github.repository }}/milestones/${milestone_number} \
+          else
+            echo "Skipping closing Github Release milestone, DRY_RUN"
+          fi
+
+      - name: Get Github release id
+        id: release-id
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_id=$(gh api \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository_owner }}/${{ github.repository }}/releases \
+            | jq --arg version ${{ inputs.nic_version }} -r \
+            '.[] | select(.name == $version) | .id')
+          echo "release_id=${release_id}" >> $GITHUB_OUTPUT
+
+      - name: Publish Github Release
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const {RELEASE_ID} = process.env
+            const release = (await github.rest.repos.updateRelease({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              release_id: `${RELEASE_ID}`,
+              draft: false,
+            }))
+            console.log(`Release published: ${release.data.html_url}`)
+        env:
+          RELEASE_ID: ${{ steps.release-id.outputs.release_id }}
+        if: ${{ ! inputs.dry_run }}
