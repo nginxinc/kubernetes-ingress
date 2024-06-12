@@ -28,19 +28,25 @@ TARGET_OSS_IMAGE_PREFIX=${TARGET_OSS_IMAGE_PREFIX:-"nginx-ic/nginx-ingress"}
 
 SOURCE_PLUS_IMAGE_PREFIX=${SOURCE_PLUS_IMAGE_PREFIX:-"nginx-ic/nginx-plus-ingress"}
 SOURCE_NAP_WAF_IMAGE_PREFIX=${SOURCE_NAP_WAF_IMAGE_PREFIX:-"nginx-ic-nap/nginx-plus-ingress"}
+SOURCE_NAP_WAFV5_IMAGE_PREFIX=${SOURCE_NAP_WAFV5_IMAGE_PREFIX:-"nginx-ic-nap-v5/nginx-plus-ingress"}
 SOURCE_NAP_DOS_IMAGE_PREFIX=${SOURCE_NAP_DOS_IMAGE_PREFIX:-"nginx-ic-dos/nginx-plus-ingress"}
 SOURCE_NAP_WAF_DOS_IMAGE_PREFIX=${SOURCE_NAP_WAF_DOS_IMAGE_PREFIX:-"nginx-ic-dos-nap/nginx-plus-ingress"}
+SOURCE_NAP_WAFV5_DOS_IMAGE_PREFIX=${SOURCE_NAP_WAFV5_DOS_IMAGE_PREFIX:-"nginx-ic-dos-nap-v5/nginx-plus-ingress"}
 
 TARGET_PLUS_IMAGE_PREFIX=${TARGET_PLUS_IMAGE_PREFIX:-"nginx-ic/nginx-plus-ingress"}
 TARGET_NAP_WAF_IMAGE_PREFIX=${TARGET_NAP_WAF_IMAGE_PREFIX:-"nginx-ic-nap/nginx-plus-ingress"}
+TARGET_NAP_WAFV5_IMAGE_PREFIX=${TARGET_NAP_WAFV5_IMAGE_PREFIX:-"nginx-ic-nap/nginx-plus-ingress"}
 TARGET_NAP_DOS_IMAGE_PREFIX=${TARGET_NAP_DOS_IMAGE_PREFIX:-"nginx-ic-dos/nginx-plus-ingress"}
 TARGET_NAP_WAF_DOS_IMAGE_PREFIX=${TARGET_NAP_WAF_DOS_IMAGE_PREFIX:-"nginx-ic-dos-nap/nginx-plus-ingress"}
+TARGET_NAP_WAFV5_DOS_IMAGE_PREFIX=${TARGET_NAP_WAFV5_DOS_IMAGE_PREFIX:-"nginx-ic-dos-nap-v5/nginx-plus-ingress"}
 
 declare -a OSS_TAG_POSTFIX_LIST=("" "-ubi" "-alpine")
 declare -a PLUS_TAG_POSTFIX_LIST=("" "-ubi" "-alpine" "-alpine-fips")
 declare -a NAP_WAF_TAG_POSTFIX_LIST=("" "-ubi" "-alpine-fips")
+declare -a NAP_WAFV5_TAG_POSTFIX_LIST=()
 declare -a NAP_DOS_TAG_POSTFIX_LIST=("" "-ubi")
 declare -a NAP_WAF_DOS_TAG_POSTFIX_LIST=("" "-ubi")
+declare -a NAP_WAFV5_DOS_TAG_POSTFIX_LIST=()
 declare -a ADDITIONAL_TAGS=("latest" "${ADDITIONAL_TAG}")
 
 CONFIG_PATH=${CONFIG_PATH:-~/.nic-release/config}
@@ -146,6 +152,29 @@ if $PUBLISH_WAF; then
                 fi
                 additional_tag=${TARGET_REGISTRY}/${TARGET_NAP_WAF_IMAGE_PREFIX}:${tag}${postfix}
                 echo "  Pushing image NAP WAF ${additional_tag}..."
+                if ! $DRY_RUN; then
+                    skopeo copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
+                fi
+            done
+        fi
+    done
+    for postfix in "${NAP_WAFV5_TAG_POSTFIX_LIST[@]}"; do
+        image=${SOURCE_REGISTRY}/${SOURCE_NAP_WAFV5_IMAGE_PREFIX}:${SOURCE_TAG}${postfix}
+        echo "Processing image ${image}"
+        new_tag=${TARGET_REGISTRY}/${TARGET_NAP_WAFV5_IMAGE_PREFIX}:${TARGET_TAG}${postfix}
+        if $IS_IMMUTABLE && skopeo --override-os linux --override-arch amd64 inspect docker://${new_tag} > /dev/null 2>&1; then
+            echo "  ECR is immutable & tag ${new_tag} already exists, skipping."
+        else
+            echo "  Pushing image NAP WAFV5 ${new_tag}..."
+            if ! $DRY_RUN; then
+                skopeo copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${new_tag}
+            fi
+            for tag in "${ADDITIONAL_TAGS[@]}"; do
+                if [ -z "${tag}" ]; then
+                    continue
+                fi
+                additional_tag=${TARGET_REGISTRY}/${TARGET_NAP_WAFV5_IMAGE_PREFIX}:${tag}${postfix}
+                echo "  Pushing image NAP WAFV5 ${additional_tag}..."
                 if ! $DRY_RUN; then
                     skopeo copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
                 fi
