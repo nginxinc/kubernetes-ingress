@@ -16,8 +16,10 @@ import (
 )
 
 const (
-	dynamicSSLReloadParam     = "ssl-dynamic-reload"
-	dynamicWeightChangesParam = "weight-changes-dynamic-reload"
+	dynamicSSLReloadParam         = "ssl-dynamic-reload"
+	dynamicWeightChangesParam     = "weight-changes-dynamic-reload"
+	appProtectLogLevelDefault     = "fatal"
+	appProtectEnforcerAddrDefault = "127.0.0.1:50000"
 )
 
 var (
@@ -64,6 +66,9 @@ var (
 	appProtectDosMaxDaemons = flag.Int("app-protect-dos-max-daemons", 0, "Max number of ADMD instances. Requires -nginx-plus and -enable-app-protect-dos.")
 	appProtectDosMaxWorkers = flag.Int("app-protect-dos-max-workers", 0, "Max number of nginx processes to support. Requires -nginx-plus and -enable-app-protect-dos.")
 	appProtectDosMemory     = flag.Int("app-protect-dos-memory", 0, "RAM memory size to consume in MB. Requires -nginx-plus and -enable-app-protect-dos.")
+
+	appProtectEnforcerAddress = flag.String("app-protect-enforcer-address", appProtectEnforcerAddrDefault,
+		`Sets address for App Protect v5 Enforcer. Requires -nginx-plus and -enable-app-protect.`)
 
 	agent              = flag.Bool("agent", false, "Enable NGINX Agent")
 	agentInstanceGroup = flag.String("agent-instance-group", "nginx-ingress-controller", "Grouping used to associate NGINX Ingress Controller instances")
@@ -439,8 +444,6 @@ func validatePort(port int) error {
 	}
 	return nil
 }
-
-const appProtectLogLevelDefault = "fatal"
 
 // validateAppProtectLogLevel makes sure a given logLevel is one of the allowed values
 func validateAppProtectLogLevel(logLevel string) error {

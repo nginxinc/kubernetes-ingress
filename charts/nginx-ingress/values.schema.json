@@ -119,6 +119,15 @@
                 true
               ]
             },
+            "v5": {
+              "type": "boolean",
+              "default": false,
+              "title": "Enables App Protect WAF v5.",
+              "examples": [
+                false,
+                true
+              ]
+            },
             "logLevel": {
               "type": "string",
               "default": "",
@@ -139,6 +148,201 @@
                 "debug",
                 "trace"
               ]
+            },
+            "volumes": {
+              "type": "array",
+              "default": [
+                {
+                  "name": "app-protect-bd-config",
+                  "emptyDir": {}
+                },
+                {
+                  "name": "app-protect-config",
+                  "emptyDir": {}
+                },
+                {
+                  "name": "app-protect-bundles",
+                  "emptyDir": {}
+                }
+              ],
+              "title": "Volumes for App Protect WAF v5",
+              "items": {
+                "type": "object",
+                "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.Volume"
+              }
+            },
+            "enforcer": {
+              "type": "object",
+              "properties": {
+                "host": {
+                  "type": "string",
+                  "default": "127.0.0.1",
+                  "title": "Port which the App Protect WAF v5 Enforcer process runs on",
+                  "examples": [
+                    "127.0.0.1"
+                  ]
+                },
+                "port": {
+                  "type": "integer",
+                  "default": 50000,
+                  "title": "Port which the App Protect WAF v5 Enforcer process runs on",
+                  "examples": [
+                    50000
+                  ]
+                },
+                "image": {
+                  "type": "object",
+                  "default": {},
+                  "title": "The image Schema",
+                  "required": [
+                    "repository"
+                  ],
+                  "properties": {
+                    "repository": {
+                      "type": "string",
+                      "default": "private-registry.nginx.com/nap/waf-enforcer",
+                      "title": "The repository of the App Protect WAF v5 Enforcer image",
+                      "examples": [
+                        "private-registry.nginx.com/nap/waf-enforcer"
+                      ]
+                    },
+                    "tag": {
+                      "type": "string",
+                      "default": "5.2.0",
+                      "title": "The tag of the  App Protect WAF v5 Enforcer image",
+                      "examples": [
+                        "5.2.0"
+                      ]
+                    },
+                    "digest": {
+                      "type": "string",
+                      "default": "",
+                      "title": "The digest of the  App Protect WAF v5 Enforcer image",
+                      "examples": [
+                        "sha256:2710c264e8eaeb663cee63db37b75a1ac1709f63a130fb091c843a6c3a4dc572"
+                      ]
+                    },
+                    "pullPolicy": {
+                      "type": "string",
+                      "default": "IfNotPresent",
+                      "title": "The pullPolicy for the  App Protect WAF v5 Enforcer image",
+                      "allOf": [
+                        {
+                          "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.Container/properties/imagePullPolicy"
+                        },
+                        {
+                          "enum": [
+                            "Always",
+                            "IfNotPresent",
+                            "Never"
+                          ]
+                        }
+                      ],
+                      "examples": [
+                        "Always",
+                        "IfNotPresent",
+                        "Never"
+                      ]
+                    }
+                  },
+                  "examples": [
+                    {
+                      "repository": "private-registry.nginx.com/nap/waf-enforcer",
+                      "tag": "5.2.0",
+                      "pullPolicy": "IfNotPresent"
+                    }
+                  ]
+                },
+                "securityContext": {
+                  "type": "object",
+                  "default": {},
+                  "title": "The securityContext Schema",
+                  "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.SecurityContext"
+                }
+              }
+            },
+            "configManager": {
+              "type": "object",
+              "properties": {
+                "image": {
+                  "type": "object",
+                  "default": {},
+                  "title": "The image Schema",
+                  "required": [
+                    "repository"
+                  ],
+                  "properties": {
+                    "repository": {
+                      "type": "string",
+                      "default": "private-registry.nginx.com/nap/waf-config-mgr",
+                      "title": "The repository of the App Protect WAF v5 Config Manager image",
+                      "examples": [
+                        "private-registry.nginx.com/nap/waf-config-mgr"
+                      ]
+                    },
+                    "tag": {
+                      "type": "string",
+                      "default": "5.2.0",
+                      "title": "The tag of the  App Protect WAF v5 Config Manager image",
+                      "examples": [
+                        "5.2.0"
+                      ]
+                    },
+                    "digest": {
+                      "type": "string",
+                      "default": "",
+                      "title": "The digest of the  App Protect WAF v5 Config Manager image",
+                      "examples": [
+                        "sha256:2710c264e8eaeb663cee63db37b75a1ac1709f63a130fb091c843a6c3a4dc572"
+                      ]
+                    },
+                    "pullPolicy": {
+                      "type": "string",
+                      "default": "IfNotPresent",
+                      "title": "The pullPolicy for the  App Protect WAF v5 Config Manager image",
+                      "allOf": [
+                        {
+                          "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.Container/properties/imagePullPolicy"
+                        },
+                        {
+                          "enum": [
+                            "Always",
+                            "IfNotPresent",
+                            "Never"
+                          ]
+                        }
+                      ],
+                      "examples": [
+                        "Always",
+                        "IfNotPresent",
+                        "Never"
+                      ]
+                    }
+                  },
+                  "examples": [
+                    {
+                      "repository": "private-registry.nginx.com/nap/waf-config-mgr",
+                      "tag": "5.2.0",
+                      "pullPolicy": "IfNotPresent"
+                    }
+                  ]
+                },
+                "securityContext": {
+                  "type": "object",
+                  "default": {
+                    "allowPrivilegeEscalation": false,
+                    "runAsUser": 101,
+                    "runAsNonRoot": true,
+                    "capabilities": {
+                      "drop": [
+                        "all"
+                      ]
+                    }
+                  },
+                  "title": "The securityContext Schema",
+                  "$ref": "https://raw.githubusercontent.com/nginxinc/kubernetes-json-schema/master/v1.29.0/_definitions.json#/definitions/io.k8s.api.core.v1.SecurityContext"
+                }
+              }
             }
           },
           "examples": [
