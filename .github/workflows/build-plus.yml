@@ -82,7 +82,7 @@ jobs:
         if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
 
       - name: Login to GCR
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -96,7 +96,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
         if: ${{ inputs.publish-aws-market-place }}
       - name: Login to ECR
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
         if: ${{ inputs.publish-aws-market-place }}
@@ -111,7 +111,7 @@ jobs:
         if: ${{ inputs.publish-nginx-reqistry }}
 
       - name: Login to NGINX Registry
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: docker-mgmt.nginx.com
           username: ${{ steps.idtoken.outputs.id_token }}
@@ -161,7 +161,7 @@ jobs:
         if: ${{ ! inputs.forked-workflow }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           file: build/Dockerfile
           context: "."
@@ -183,7 +183,7 @@ jobs:
         if: ${{ ! inputs.forked-workflow && steps.base_exists.outputs.exists != 0 }}
 
       - name: Build Plus Docker image
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           file: build/Dockerfile
           context: "."
@@ -254,7 +254,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@b2933f565dbc598b29947660e66259e3c7bc8561 # 0.20.0
+        uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # 0.22.0
         continue-on-error: true
         with:
           image-ref: ${{ steps.trivy-tag.outputs.tag }}
@@ -264,7 +264,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@9fdb3e49720b44c48891d036bb502feb25684276 # v3.25.6
+        uses: github/codeql-action/upload-sarif@2e230e8fe0ad3a14a340ad0815ddb96d599d2aff # v3.25.8
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"

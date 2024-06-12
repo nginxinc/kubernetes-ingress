@@ -90,6 +90,7 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/limit-req-dry-run":        true,
 	"nginx.org/limit-req-log-level":      true,
 	"nginx.org/limit-req-reject-code":    true,
+	"nginx.org/limit-req-scale":          true,
 }
 
 var validPathRegex = map[string]bool{
@@ -508,6 +509,13 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 			errors = append(errors, err)
 		} else {
 			cfgParams.LimitReqRejectCode = requestRateRejectCode
+		}
+	}
+	if requestRateScale, exists, err := GetMapKeyAsBool(annotations, "nginx.org/limit-req-scale", context); exists {
+		if err != nil {
+			errors = append(errors, err)
+		} else {
+			cfgParams.LimitReqScale = requestRateScale
 		}
 	}
 	return errors

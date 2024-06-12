@@ -125,6 +125,7 @@ type ConfigParams struct {
 	LimitReqDryRun     bool
 	LimitReqLogLevel   string
 	LimitReqRejectCode int
+	LimitReqScale      bool
 }
 
 // StaticConfigParams holds immutable NGINX configuration parameters that affect the main NGINX config.

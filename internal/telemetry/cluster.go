@@ -123,17 +123,22 @@ func (c *Collector) Secrets() (int, error) {
 	return len(c.Config.SecretStore.GetSecretReferenceMap()), nil
 }
 
-// IngressCount returns number of Ingresses in the namespaces watched by NIC.
-func (c *Collector) IngressCount() int {
-	if c.Config.Configurator == nil {
-		return 0
-	}
-	ic := c.Config.Configurator.GetIngressCounts()
-	total := 0
-	for _, v := range ic {
-		total += v
-	}
-	return total
+// RegularIngressCount returns number of Minion Ingresses in the namespaces watched by NIC.
+func (c *Collector) RegularIngressCount() int {
+	ingressCount := c.Config.Configurator.GetIngressCounts()
+	return ingressCount["regular"]
+}
+
+// MasterIngressCount returns number of Minion Ingresses in the namespaces watched by NIC.
+func (c *Collector) MasterIngressCount() int {
+	ingressCount := c.Config.Configurator.GetIngressCounts()
+	return ingressCount["master"]
+}
+
+// MinionIngressCount returns number of Minion Ingresses in the namespaces watched by NIC.
+func (c *Collector) MinionIngressCount() int {
+	ingressCount := c.Config.Configurator.GetIngressCounts()
+	return ingressCount["minion"]
 }
 
 // IngressAnnotations returns a list of all the unique annotations found in Ingresses.
@@ -205,6 +210,22 @@ func (c *Collector) IsPlusEnabled() bool {
 // InstallationFlags returns the list of all set flags
 func (c *Collector) InstallationFlags() []string {
 	return c.Config.InstallationFlags
+}
+
+// ServiceCounts returns a map of service names and their counts in the Kubernetes cluster.
+func (c *Collector) ServiceCounts() (map[string]int, error) {
+	serviceCounts := make(map[string]int)
+
+	services, err := c.Config.K8sClientReader.CoreV1().Services("").List(context.Background(), metaV1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, service := range services.Items {
+		serviceCounts[string(service.Spec.Type)]++
+	}
+
+	return serviceCounts, nil
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

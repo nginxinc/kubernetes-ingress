@@ -71,7 +71,7 @@ jobs:
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -89,7 +89,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           file: build/Dockerfile
           context: "."
@@ -137,7 +137,7 @@ jobs:
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -155,7 +155,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           file: build/Dockerfile
           context: "."
@@ -212,7 +212,7 @@ jobs:
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -237,7 +237,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           file: build/Dockerfile
           context: "."
