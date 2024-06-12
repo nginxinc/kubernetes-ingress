@@ -126,7 +126,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 ############################################# Base image for Alpine with NGINX Plus and FIPS #############################################
 FROM alpine-plus as alpine-plus-fips
 
-RUN --mount=type=bind,from=alpine-fips-3.19,target=/tmp/fips/ \
+RUN --mount=type=bind,from=alpine-fips-3.20,target=/tmp/fips/ \
 	mkdir -p /usr/ssl \
 	&& cp -av /tmp/fips/usr/lib/ossl-modules/fips.so /usr/lib/ossl-modules/fips.so \
 	&& cp -av /tmp/fips/usr/ssl/fipsmodule.cnf /usr/ssl/fipsmodule.cnf \
