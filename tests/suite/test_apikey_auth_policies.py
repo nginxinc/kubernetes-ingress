@@ -93,6 +93,11 @@ class TestAPIKeyAuthPolicies:
             virtual_server_setup.vs_host,
         )
 
+        result = kube_apis.custom_objects.get_namespaced_custom_object(
+            "k8s.nginx.org", "v1", test_namespace, "policies", "api-key-policy"
+        )
+        print(result)
+
         apikey_policy_2_details = self.setup_single_policy(
             kube_apis,
             virtual_server_setup.namespace,
