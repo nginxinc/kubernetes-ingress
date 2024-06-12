@@ -19,7 +19,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -39,7 +39,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -86,7 +86,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -98,7 +98,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -107,7 +107,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -136,7 +136,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -156,7 +156,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -225,7 +225,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -236,7 +236,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -268,7 +268,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -288,7 +288,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -357,7 +357,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -368,7 +368,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -421,9 +421,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -461,9 +461,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -484,9 +484,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -515,16 +515,16 @@ server {
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     auth_jwt_key_file /etc/nginx/secrets/key.jwk;
     auth_jwt "closed site" token=$cookie_auth_token;
     error_page 401 @login_url-default-cafe-ingress;
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -533,12 +533,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location /tea {
         set $service "";
         status_zone "";
@@ -554,7 +554,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -564,9 +564,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -595,16 +595,16 @@ server {
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     auth_jwt_key_file /etc/nginx/secrets/key.jwk;
     auth_jwt "closed site" token=$cookie_auth_token;
     error_page 401 @login_url-default-cafe-ingress;
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -613,12 +613,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location /tea {
         set $service "";
         status_zone "";
@@ -634,7 +634,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -644,9 +644,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -676,12 +676,12 @@ server {
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -690,12 +690,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location /tea {
         set $service "";
         status_zone "";
@@ -709,7 +709,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -719,9 +719,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
     location @grpcerror400 { default_type application/grpc; return 400 "\n"; }
     location @grpcerror401 { default_type application/grpc; return 401 "\n"; }
     location @grpcerror403 { default_type application/grpc; return 403 "\n"; }
@@ -763,16 +763,16 @@ server {
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     auth_jwt_key_file /etc/nginx/secrets/key.jwk;
     auth_jwt "closed site" token=$cookie_auth_token;
     error_page 401 @login_url-default-cafe-ingress;
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -781,12 +781,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location ~* "^/tea/[A-Z0-9]{3}" {
         set $service "";
         status_zone "";
@@ -802,7 +802,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -812,9 +812,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -843,16 +843,16 @@ server {
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     auth_jwt_key_file /etc/nginx/secrets/key.jwk;
     auth_jwt "closed site" token=$cookie_auth_token;
     error_page 401 @login_url-default-cafe-ingress;
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -861,12 +861,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location ~ "^/tea/[A-Z0-9]{3}" {
         set $service "";
         status_zone "";
@@ -882,7 +882,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -892,9 +892,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -923,16 +923,16 @@ server {
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     auth_jwt_key_file /etc/nginx/secrets/key.jwk;
     auth_jwt "closed site" token=$cookie_auth_token;
     error_page 401 @login_url-default-cafe-ingress;
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -941,12 +941,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location /tea {
         set $service "";
         status_zone "";
@@ -962,7 +962,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -972,9 +972,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -1003,16 +1003,16 @@ server {
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     auth_jwt_key_file /etc/nginx/secrets/key.jwk;
     auth_jwt "closed site" token=$cookie_auth_token;
     error_page 401 @login_url-default-cafe-ingress;
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -1021,12 +1021,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location = "/tea" {
         set $service "";
         status_zone "";
@@ -1042,7 +1042,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -1052,9 +1052,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -1081,16 +1081,16 @@ server {
     set $resource_name "myingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     auth_jwt_key_file /etc/nginx/secrets/key.jwk;
     auth_jwt "closed site" token=$cookie_auth_token;
     error_page 401 @login_url-default-cafe-ingress;
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -1099,12 +1099,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location /tea {
         set $service "";
         status_zone "";
@@ -1116,7 +1116,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -1126,14 +1126,14 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
         limit_req zone=default/myingress burst=100 delay=50;
         limit_req_dry_run on;
         limit_req_log_level info;
         limit_req_status 429;
-
+        
     }
-
+    
     location /coffee {
         set $service "";
         status_zone "";
@@ -1145,7 +1145,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -1155,14 +1155,14 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
         limit_req zone=default/myingress burst=100 delay=50;
         limit_req_dry_run on;
         limit_req_log_level info;
         limit_req_status 429;
-
+        
     }
-
+    
 }
 
 ---
@@ -1191,16 +1191,16 @@ server {
     set $resource_name "myingress";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     auth_jwt_key_file /etc/nginx/secrets/key.jwk;
     auth_jwt "closed site" token=$cookie_auth_token;
     error_page 401 @login_url-default-cafe-ingress;
-
+    
     location @hc-test {
         proxy_set_header Test-Header "test-header-value";
         proxy_connect_timeout 0s;
@@ -1209,12 +1209,12 @@ server {
         proxy_pass ://test;
         health_check uri= interval=1s fails=1 passes=1;
     }
-
+    
     location @login_url-default-cafe-ingress {
         internal;
         return 302 https://test.example.com/login;
     }
-
+    
     location /tea {
         set $service "";
         status_zone "";
@@ -1229,7 +1229,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -1239,14 +1239,14 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
         limit_req zone=default/tea-minion burst=100 delay=10;
         limit_req_dry_run on;
         limit_req_log_level info;
         limit_req_status 429;
-
+        
     }
-
+    
     location /coffee {
         set $service "";
         status_zone "";
@@ -1261,7 +1261,7 @@ server {
         proxy_read_timeout 10s;
         proxy_send_timeout 10s;
         client_max_body_size 2m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -1271,14 +1271,14 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
         limit_req zone=default/coffee-minion burst=200 nodelay;
-
+        
         limit_req_log_level error;
         limit_req_status 503;
-
+        
     }
-
+    
 }
 
 ---
@@ -1326,9 +1326,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -1377,9 +1377,9 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
     }
-
+    
     location @grpcerror400 { default_type application/grpc; return 400 "\n"; }
     location @grpcerror401 { default_type application/grpc; return 401 "\n"; }
     location @grpcerror403 { default_type application/grpc; return 403 "\n"; }
@@ -1430,9 +1430,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -1453,9 +1453,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -1497,14 +1497,14 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
         limit_req zone=default/myingress burst=100 delay=50;
         limit_req_dry_run on;
         limit_req_log_level info;
         limit_req_status 429;
-
+        
     }
-
+    
     location /coffee {
         set $service "";
         proxy_http_version 1.1;
@@ -1521,14 +1521,14 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
         limit_req zone=default/myingress burst=100 delay=50;
         limit_req_dry_run on;
         limit_req_log_level info;
         limit_req_status 429;
-
+        
     }
-
+    
 }
 
 ---
@@ -1575,14 +1575,14 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
         limit_req zone=default/tea-minion burst=100 delay=10;
         limit_req_dry_run on;
         limit_req_log_level info;
         limit_req_status 429;
-
+        
     }
-
+    
     location /coffee {
         set $service "";
         # location for minion default/coffee-minion
@@ -1602,14 +1602,14 @@ server {
         proxy_buffering off;
         proxy_pass http://test;
 
-
+        
         limit_req zone=default/coffee-minion burst=200 nodelay;
-
+        
         limit_req_log_level error;
         limit_req_status 503;
-
+        
     }
-
+    
 }
 
 ---
@@ -1636,7 +1636,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -1656,7 +1656,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -1725,7 +1725,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -1736,7 +1736,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -1768,7 +1768,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -1788,7 +1788,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -1857,7 +1857,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -1868,7 +1868,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -1900,7 +1900,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -1920,7 +1920,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -1989,7 +1989,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -2000,7 +2000,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2032,7 +2032,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -2052,7 +2052,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -2121,7 +2121,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -2132,7 +2132,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2164,7 +2164,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -2184,7 +2184,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -2254,7 +2254,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -2265,7 +2265,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;
         include /etc/nginx/tls-passthrough-hosts.conf;
@@ -2275,14 +2275,14 @@ stream {
         listen 8443;
         listen [::]:8443;
 
-
+        
 
         ssl_preread on;
 
         proxy_protocol on;
         proxy_pass $dest_internal_passthrough;
     }
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2314,7 +2314,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -2334,7 +2334,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -2403,7 +2403,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -2414,7 +2414,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2446,7 +2446,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -2466,7 +2466,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -2536,7 +2536,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -2547,7 +2547,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2579,7 +2579,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -2599,7 +2599,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -2668,7 +2668,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -2679,7 +2679,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2711,7 +2711,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -2731,7 +2731,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -2801,7 +2801,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -2812,7 +2812,7 @@ stream {
     resolver_timeout 15s;
 
     map_hash_max_size ;
-
+    
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;
         include /etc/nginx/tls-passthrough-hosts.conf;
@@ -2822,14 +2822,14 @@ stream {
         listen 443;
         listen [::]:443;
 
-
+        
 
         ssl_preread on;
 
         proxy_protocol on;
         proxy_pass $dest_internal_passthrough;
     }
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2859,7 +2859,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -2879,7 +2879,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -2926,7 +2926,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -2938,7 +2938,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -2947,7 +2947,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -2974,7 +2974,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -2994,7 +2994,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -3041,7 +3041,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -3053,7 +3053,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -3062,7 +3062,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -3089,7 +3089,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -3109,7 +3109,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -3156,7 +3156,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -3168,7 +3168,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -3177,7 +3177,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -3204,7 +3204,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -3224,7 +3224,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -3271,7 +3271,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -3283,7 +3283,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -3292,7 +3292,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -3319,7 +3319,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -3339,7 +3339,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -3387,7 +3387,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -3399,7 +3399,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -3408,7 +3408,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;
         include /etc/nginx/tls-passthrough-hosts.conf;
@@ -3419,14 +3419,14 @@ stream {
         listen [::]:8443;
 
 
-
+        
 
         ssl_preread on;
 
         proxy_protocol on;
         proxy_pass $dest_internal_passthrough;
     }
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -3453,7 +3453,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -3473,7 +3473,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -3520,7 +3520,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -3532,7 +3532,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -3541,7 +3541,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -3568,7 +3568,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -3588,7 +3588,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -3636,7 +3636,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -3648,7 +3648,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -3657,7 +3657,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -3684,7 +3684,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -3704,7 +3704,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -3751,7 +3751,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -3763,7 +3763,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -3772,7 +3772,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -3799,7 +3799,7 @@ http {
     map_hash_max_size ;
     map_hash_bucket_size ;
 
-    log_format  main escape=default
+    log_format  main escape=default 
                      '$remote_addr'
                      ' $remote_user'
                      ;
@@ -3819,7 +3819,7 @@ http {
     #gzip  on;
 
     server_names_hash_max_size 512;
-
+    
 
     variables_hash_bucket_size 256;
     variables_hash_max_size 1024;
@@ -3867,7 +3867,7 @@ http {
         listen unix:/var/lib/nginx/nginx-502-server.sock;
         access_log off;
 
-
+        
 
         return 502;
     }
@@ -3879,7 +3879,7 @@ http {
 }
 
 stream {
-    log_format  stream-main escape=none
+    log_format  stream-main escape=none 
                             '$remote_addr'
                             ' $remote_user'
                             ;
@@ -3888,7 +3888,7 @@ stream {
     # comment
 
     map_hash_max_size ;
-
+    
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;
         include /etc/nginx/tls-passthrough-hosts.conf;
@@ -3899,14 +3899,14 @@ stream {
         listen [::]:443;
 
 
-
+        
 
         ssl_preread on;
 
         proxy_protocol on;
         proxy_pass $dest_internal_passthrough;
     }
-
+    
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
@@ -3947,9 +3947,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -3971,9 +3971,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4015,9 +4015,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -4041,9 +4041,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4081,9 +4081,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -4104,72 +4104,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
-}
-
----
-
-[TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithAnnotationForProxySetHeadersAnnotation - 2]
-# configuration for default/cafe-ingress-master
-
-
-server {
-
-    server_tokens ;
-
-    server_name cafe.example.com;
-
-    set $resource_type "ingress";
-    set $resource_name "cafe-ingress-master";
-    set $resource_namespace "default";
-    location  {
-        set $service "";
-        # location for minion default/cafe-ingress-coffee-minion
-        set $resource_name "cafe-ingress-coffee-minion";
-        set $resource_namespace "default";
-        proxy_http_version 1.1;
-        proxy_connect_timeout ;
-        proxy_read_timeout ;
-        proxy_send_timeout ;
-        client_max_body_size ;
-        proxy_set_header X-Forwarded-CDE $http_x_forwarded_cde;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Port $server_port;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_buffering off;
-        proxy_pass http://;
-
-
-    }
-
-    location  {
-        set $service "";
-        # location for minion default/cafe-ingress-tea-minion
-        set $resource_name "cafe-ingress-tea-minion";
-        set $resource_namespace "default";
-        proxy_http_version 1.1;
-        proxy_connect_timeout ;
-        proxy_read_timeout ;
-        proxy_send_timeout ;
-        client_max_body_size ;
-        proxy_set_header X-Forwarded-CDE $http_x_forwarded_cde;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Port $server_port;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_buffering off;
-        proxy_pass http://;
-
-
-    }
-
+    
 }
 
 ---
@@ -4207,9 +4144,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -4230,9 +4167,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4270,9 +4207,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -4293,9 +4230,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4333,9 +4270,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -4356,9 +4293,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4394,12 +4331,12 @@ server {
     set $resource_name "cafe-ingress-master";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location /coffee {
         set $service "coffee-svc";
         status_zone "coffee-svc";
@@ -4412,7 +4349,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4422,9 +4359,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80;
 
-
+        
     }
-
+    
     location /tea {
         set $service "tea-svc";
         status_zone "tea-svc";
@@ -4437,7 +4374,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4447,9 +4384,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4485,12 +4422,12 @@ server {
     set $resource_name "cafe-ingress-master";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location /coffee {
         set $service "coffee-svc";
         status_zone "coffee-svc";
@@ -4503,7 +4440,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4513,9 +4450,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80;
 
-
+        
     }
-
+    
     location /tea {
         set $service "tea-svc";
         status_zone "tea-svc";
@@ -4528,7 +4465,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4538,9 +4475,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4576,12 +4513,12 @@ server {
     set $resource_name "cafe-ingress-master";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location /coffee {
         set $service "coffee-svc";
         status_zone "coffee-svc";
@@ -4594,7 +4531,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4604,9 +4541,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80;
 
-
+        
     }
-
+    
     location /tea {
         set $service "tea-svc";
         status_zone "tea-svc";
@@ -4619,7 +4556,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4629,9 +4566,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4667,12 +4604,12 @@ server {
     set $resource_name "cafe-ingress-master";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location ~* "^/coffee" {
         set $service "coffee-svc";
         status_zone "coffee-svc";
@@ -4685,7 +4622,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4695,9 +4632,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80;
 
-
+        
     }
-
+    
     location ~* "^/tea" {
         set $service "tea-svc";
         status_zone "tea-svc";
@@ -4710,7 +4647,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4720,9 +4657,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4758,12 +4695,12 @@ server {
     set $resource_name "cafe-ingress-master";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location ~* "^/coffee" {
         set $service "coffee-svc";
         status_zone "coffee-svc";
@@ -4776,7 +4713,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4786,9 +4723,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80;
 
-
+        
     }
-
+    
     location ~ "^/tea" {
         set $service "tea-svc";
         status_zone "tea-svc";
@@ -4801,7 +4738,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -4811,9 +4748,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4851,9 +4788,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
     location  {
         set $service "";
         # location for minion default/cafe-ingress-tea-minion
@@ -4874,9 +4811,9 @@ server {
         proxy_buffering off;
         proxy_pass http://;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -4912,12 +4849,12 @@ server {
     set $resource_name "cafe-ingress-master";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location /coffee {
         set $service "coffee-svc";
         status_zone "coffee-svc";
@@ -4930,7 +4867,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header X-Forwarded-ABC "coffee";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -4941,9 +4878,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80;
 
-
+        
     }
-
+    
     location /tea {
         set $service "tea-svc";
         status_zone "tea-svc";
@@ -4956,7 +4893,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header X-Forwarded-ABC "tea";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -4967,9 +4904,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -5005,12 +4942,12 @@ server {
     set $resource_name "cafe-ingress-master";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location ~* "^/coffee" {
         set $service "coffee-svc";
         status_zone "coffee-svc";
@@ -5023,7 +4960,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -5033,9 +4970,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80;
 
-
+        
     }
-
+    
     location /tea {
         set $service "tea-svc";
         status_zone "tea-svc";
@@ -5048,7 +4985,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -5058,9 +4995,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80;
 
-
+        
     }
-
+    
 }
 
 ---
@@ -5096,12 +5033,12 @@ server {
     set $resource_name "cafe-ingress-master";
     set $resource_namespace "default";
 
-
+    
     if ($scheme = http) {
         return 301 https://$host:443$request_uri;
     }
 
-
+    
     location /coffee {
         set $service "coffee-svc";
         status_zone "coffee-svc";
@@ -5114,7 +5051,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -5124,9 +5061,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80;
 
-
+        
     }
-
+    
     location ~ "^/tea" {
         set $service "tea-svc";
         status_zone "tea-svc";
@@ -5139,7 +5076,7 @@ server {
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
         client_max_body_size 1m;
-
+        
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -5149,9 +5086,9 @@ server {
         proxy_buffering on;
         proxy_pass http://default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80;
 
-
+        
     }
-
+    
 }
 
 ---

@@ -9,13 +9,13 @@ upstream udp-upstream {
 
 
 match match_udp-upstream {
-
+    
     send "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
+    
 
-
-
+    
     expect ~* "200 OK";
-
+    
 }
 server {
 
@@ -25,11 +25,11 @@ server {
 
     proxy_pass udp-upstream;
 
-
+    
     health_check interval=5s  port=8080
         passes=1 jitter=0 fails=1 udp match=match_udp-upstream;
     health_check_timeout 5s;
-
+    
 
     proxy_timeout 10s;
     proxy_connect_timeout 10s;
@@ -49,13 +49,13 @@ upstream udp-upstream {
 
 
 match match_udp-upstream {
-
+    
     send "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
+    
 
-
-
+    
     expect ~* "200 OK";
-
+    
 }
 server {
 
@@ -65,11 +65,11 @@ server {
 
     proxy_pass udp-upstream;
 
-
+    
     health_check interval=5s  port=8080
         passes=1 jitter=0 fails=1 udp match=match_udp-upstream;
     health_check_timeout 5s;
-
+    
 
     proxy_timeout 10s;
     proxy_connect_timeout 10s;
@@ -98,14 +98,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -161,19 +161,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -182,7 +182,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -193,48 +193,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -247,10 +247,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -293,7 +293,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -322,7 +322,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -348,7 +348,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -389,7 +389,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -415,7 +415,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -441,13 +441,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -504,8 +504,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -517,7 +517,7 @@ upstream vs_default_cafe_tea {
     server 10.0.0.20:80 max_fails=0 fail_timeout= max_conns=0;
     keepalive 16;
 
-
+    
 }
 
 upstream vs_default_cafe_coffee {
@@ -525,7 +525,7 @@ upstream vs_default_cafe_coffee {
     server 10.0.0.30:80 max_fails=0 fail_timeout= max_conns=0;
     keepalive 16;
 
-
+    
 }
 
 proxy_cache_path /var/cache/nginx/jwks_uri_cafe levels=1 keys_zone=jwks_uri_cafe:1m max_size=10m;
@@ -546,7 +546,7 @@ server {
     real_ip_header X-Real-IP;
     real_ip_recursive on;
     auth_jwt "Spec Realm API" token=$http_token;
-
+    
     auth_jwt_key_cache 1h;
     auth_jwt_key_request /_jwks_uri_server_default/jwt-policy;
     location = /_jwks_uri_server_default/jwt-policy {
@@ -571,18 +571,18 @@ server {
     }
     # server snippet
 
+    
 
-
-
+    
     location /tea {
         set $service "tea-svc";
         status_zone "tea-svc";
         auth_jwt "Route Realm API" token=$http_token;
-
+        
         auth_jwt_key_cache 1h;
         auth_jwt_key_request /_jwks_uri_server_default/jwt-policy-route;
 
-
+        
         set $default_connection_header "";
         proxy_connect_timeout ;
         proxy_read_timeout ;
@@ -609,11 +609,11 @@ server {
         set $service "coffee-svc";
         status_zone "coffee-svc";
         auth_jwt "Route Realm API" token=$http_token;
-
+        
         auth_jwt_key_cache 1h;
         auth_jwt_key_request /_jwks_uri_server_default/jwt-policy-route;
 
-
+        
         set $default_connection_header "";
         proxy_connect_timeout ;
         proxy_read_timeout ;
@@ -647,7 +647,7 @@ upstream vs_default_cafe_tea {
     server 10.0.0.20:80 max_fails=0 fail_timeout= max_conns=0;
     keepalive 16;
 
-
+    
 }
 
 upstream vs_default_cafe_coffee {
@@ -655,7 +655,7 @@ upstream vs_default_cafe_coffee {
     server 10.0.0.30:80 max_fails=0 fail_timeout= max_conns=0;
     keepalive 16;
 
-
+    
 }
 
 proxy_cache_path /var/cache/nginx/jwks_uri_cafe levels=1 keys_zone=jwks_uri_cafe:1m max_size=10m;
@@ -676,7 +676,7 @@ server {
     real_ip_header X-Real-IP;
     real_ip_recursive on;
     auth_jwt "Spec Realm API";
-
+    
     auth_jwt_key_cache 1h;
     auth_jwt_key_request /_jwks_uri_server_default/jwt-policy;
     location = /_jwks_uri_server_default/jwt-policy {
@@ -701,18 +701,18 @@ server {
     }
     # server snippet
 
+    
 
-
-
+    
     location /tea {
         set $service "tea-svc";
         status_zone "tea-svc";
         auth_jwt "Route Realm API";
-
+        
         auth_jwt_key_cache 1h;
         auth_jwt_key_request /_jwks_uri_server_default/jwt-policy-route;
 
-
+        
         set $default_connection_header "";
         proxy_connect_timeout ;
         proxy_read_timeout ;
@@ -739,11 +739,11 @@ server {
         set $service "coffee-svc";
         status_zone "coffee-svc";
         auth_jwt "Route Realm API";
-
+        
         auth_jwt_key_cache 1h;
         auth_jwt_key_request /_jwks_uri_server_default/jwt-policy-route;
 
-
+        
         set $default_connection_header "";
         proxy_connect_timeout ;
         proxy_read_timeout ;
@@ -842,36 +842,36 @@ server {
         rewrite ^ @match last;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         internal;
@@ -883,10 +883,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -928,7 +928,7 @@ server {
     location @loc0 {
         set $service "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -956,7 +956,7 @@ server {
     location @loc1 {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -981,7 +981,7 @@ server {
     location @loc2 {
         set $service "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -1021,7 +1021,7 @@ server {
     location @match_loc_0 {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -1046,7 +1046,7 @@ server {
     location @match_loc_default {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -1071,14 +1071,14 @@ server {
     location /return {
         set $service "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
-
+        
+    
 }
 
 ---
@@ -1156,36 +1156,36 @@ server {
         rewrite ^ @match last;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         internal;
@@ -1197,10 +1197,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -1242,7 +1242,7 @@ server {
     location @loc0 {
         set $service "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -1270,7 +1270,7 @@ server {
     location @loc1 {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -1295,7 +1295,7 @@ server {
     location @loc2 {
         set $service "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -1335,7 +1335,7 @@ server {
     location @match_loc_0 {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -1360,7 +1360,7 @@ server {
     location @match_loc_default {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -1385,13 +1385,13 @@ server {
     location /return {
         set $service "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -1448,8 +1448,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -1471,14 +1471,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -1533,19 +1533,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -1554,7 +1554,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -1565,48 +1565,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -1619,10 +1619,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -1665,7 +1665,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -1694,7 +1694,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -1720,7 +1720,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -1761,7 +1761,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -1787,7 +1787,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -1813,14 +1813,14 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
-
+        
+    
 }
 
 ---
@@ -1842,14 +1842,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -1905,19 +1905,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -1926,7 +1926,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -1937,48 +1937,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -1991,10 +1991,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -2037,7 +2037,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -2066,7 +2066,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -2092,7 +2092,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -2133,7 +2133,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -2159,7 +2159,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -2185,13 +2185,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -2248,8 +2248,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -2271,14 +2271,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -2334,19 +2334,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -2355,7 +2355,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -2366,48 +2366,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -2420,10 +2420,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -2466,7 +2466,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -2495,7 +2495,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -2521,7 +2521,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -2562,7 +2562,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -2588,7 +2588,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -2614,13 +2614,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -2677,8 +2677,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -2700,14 +2700,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -2735,7 +2735,7 @@ server {
     set $resource_type "virtualserver";
     set $resource_name "";
     set $resource_namespace "";
-
+    
     http2 on;
     ssl_certificate cafe-secret.pem;
     ssl_certificate_key cafe-secret.pem;
@@ -2761,19 +2761,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -2782,7 +2782,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -2793,48 +2793,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -2847,10 +2847,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -2893,7 +2893,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -2922,7 +2922,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -2948,7 +2948,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -2989,7 +2989,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -3015,7 +3015,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -3041,13 +3041,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -3104,8 +3104,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -3127,14 +3127,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -3153,7 +3153,7 @@ map $http_x_version $match_0_0 {
 limit_req_zone $url zone=pol_rl_test_test_test:10m rate=10r/s;
 
 server {
-
+    
 
     server_name example.com;
     status_zone example.com;
@@ -3188,19 +3188,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -3209,7 +3209,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -3220,48 +3220,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -3274,10 +3274,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -3320,7 +3320,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -3349,7 +3349,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -3375,7 +3375,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -3416,7 +3416,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -3442,7 +3442,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -3468,13 +3468,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -3531,8 +3531,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -3554,14 +3554,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -3617,19 +3617,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -3638,7 +3638,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -3649,48 +3649,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -3703,10 +3703,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -3749,7 +3749,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -3778,7 +3778,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -3804,7 +3804,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -3845,7 +3845,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -3871,7 +3871,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -3897,13 +3897,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -3960,8 +3960,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -3983,14 +3983,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -4046,19 +4046,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -4067,7 +4067,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -4078,48 +4078,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -4132,10 +4132,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -4178,7 +4178,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -4207,7 +4207,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -4233,7 +4233,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -4274,7 +4274,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -4300,7 +4300,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -4326,13 +4326,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -4389,8 +4389,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -4412,14 +4412,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -4475,19 +4475,19 @@ server {gunzip on;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -4496,7 +4496,7 @@ server {gunzip on;
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -4507,48 +4507,48 @@ server {gunzip on;
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -4561,10 +4561,10 @@ server {gunzip on;
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -4607,7 +4607,7 @@ server {gunzip on;
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -4636,7 +4636,7 @@ server {gunzip on;
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -4662,7 +4662,7 @@ server {gunzip on;
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -4703,7 +4703,7 @@ server {gunzip on;
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -4729,7 +4729,7 @@ server {gunzip on;
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -4755,13 +4755,13 @@ server {gunzip on;
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -4818,8 +4818,8 @@ server {gunzip on;
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -4841,14 +4841,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -4904,19 +4904,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -4925,7 +4925,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -4936,48 +4936,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -4990,10 +4990,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -5036,7 +5036,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -5065,7 +5065,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -5091,7 +5091,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -5132,7 +5132,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -5158,7 +5158,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -5184,13 +5184,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -5247,8 +5247,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -5291,13 +5291,13 @@ upstream udp-upstream {
 
 
 match match_udp-upstream {
-
+    
     send "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
+    
 
-
-
+    
     expect ~* "200 OK";
-
+    
 }
 server {
     listen 1234 ssl udp;
@@ -5311,11 +5311,11 @@ server {
 
     proxy_pass udp-upstream;
 
-
+    
     health_check interval=5s  port=8080
         passes=1 jitter=0 fails=1 udp match=match_udp-upstream;
     health_check_timeout 5s;
-
+    
 
     proxy_timeout 10s;
     proxy_connect_timeout 10s;
@@ -5399,36 +5399,36 @@ server {
         rewrite ^ @match last;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         internal;
@@ -5440,10 +5440,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -5485,7 +5485,7 @@ server {
     location @loc0 {
         set $service "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -5513,7 +5513,7 @@ server {
     location @loc1 {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -5538,7 +5538,7 @@ server {
     location @loc2 {
         set $service "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -5578,7 +5578,7 @@ server {
     location @match_loc_0 {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -5603,7 +5603,7 @@ server {
     location @match_loc_default {
         set $service "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -5628,13 +5628,13 @@ server {
     location /return {
         set $service "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -5691,8 +5691,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
@@ -5714,14 +5714,14 @@ upstream coffee-v1 {
     zone coffee-v1 256k;
     server 10.0.0.31:8001 max_fails=8 fail_timeout=15s max_conns=2;
 
-
+    
 }
 
 upstream coffee-v2 {
     zone coffee-v2 256k;
     server 10.0.0.32:8001 max_fails=12 fail_timeout=20s max_conns=4;
 
-
+    
 }
 
 split_clients $request_id $split_0 {
@@ -5777,19 +5777,19 @@ server {
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
     app_protect_enable ;
-
+        
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+        
 
+        
 
-
-
-
+        
     app_protect_security_log_enable on;
-
+        
     app_protect_security_log /etc/nginx/waf/nac-logconfs/default-logconf;
-
-
-
+        
+        
+    
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -5798,7 +5798,7 @@ server {
         rewrite ^ @match last;
     }
     location @hc-coffee {
-
+        
         proxy_connect_timeout ;
         proxy_read_timeout ;
         proxy_send_timeout ;
@@ -5809,48 +5809,48 @@ server {
              keepalive_time=;
     }
     location @hc-tea {
-
+        
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
         health_check port=50 interval=5s jitter=0s
             fails=1 passes=1
-
+            
              type=grpc grpc_status=12
              grpc_service=tea-servicev2 keepalive_time=;
     }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
-
+        
         default_type "application/json";
-
-
+        
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
-
+    
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1 {
-
-
+        
+        
         add_header Set-Cookie "cookie1=test" always;
-
+        
         add_header Set-Cookie "cookie2=test; Secure" always;
-
+        
         # status code is ignored here, using 0
         return 0 "Hello World";
     }
+    
 
-
-
+    
     location @return_0 {
         default_type "text/html";
-
+        
         # status code is ignored here, using 0
         return 0 "Hello!";
     }
+    
 
-
-
+    
     location / {
         set $service "";
         status_zone "";
@@ -5863,10 +5863,10 @@ server {
         limit_req zone=loc_pol_rl_test_test_test
             ;
 
-
+        
         proxy_ssl_certificate egress-mtls-secret.pem;
         proxy_ssl_certificate_key egress-mtls-secret.pem;
-
+            
         proxy_ssl_trusted_certificate trusted-cert.pem;
         proxy_ssl_verify on;
         proxy_ssl_verify_depth 1;
@@ -5909,7 +5909,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 500 =200 "@error_page_1";
         error_page 500  "@error_page_2";
         proxy_intercept_errors on;
@@ -5938,7 +5938,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -5964,7 +5964,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 400 = @grpc_internal;
         error_page 401 = @grpc_unauthenticated;
         error_page 403 = @grpc_permission_denied;
@@ -6005,7 +6005,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -6031,7 +6031,7 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         set $default_connection_header close;
         proxy_connect_timeout 30s;
         proxy_read_timeout 31s;
@@ -6057,13 +6057,13 @@ server {
         set $service "";
         status_zone "";
 
-
+        
         error_page 418 =200 "@return_0";
         proxy_intercept_errors on;
         proxy_pass http://unix:/var/lib/nginx/nginx-418-server.sock;
         set $default_connection_header close;
     }
-
+        
     location @grpc_deadline_exceeded {
         default_type application/grpc;
         add_header content-type application/grpc;
@@ -6120,8 +6120,8 @@ server {
         return 204;
     }
 
-
-
+        
+    
 }
 
 ---
