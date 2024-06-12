@@ -35,6 +35,7 @@ vsr_2_src = f"{TEST_DATA}/apikey-auth-policy/spec/vsr/backend2-vsr.yaml"
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
 
 
+@pytest.mark.jim
 @pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
@@ -85,11 +86,19 @@ class TestAPIKeyAuthPolicies:
 
     def test_apikey_auth_policy_vs(self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace):
         apikey_policy_details = self.setup_single_policy(
-            kube_apis, test_namespace, apikey_auth_secret_1, apikey_auth_pol_valid, virtual_server_setup.vs_host
+            kube_apis,
+            virtual_server_setup.namespace,
+            apikey_auth_secret_1,
+            apikey_auth_pol_valid,
+            virtual_server_setup.vs_host,
         )
 
         apikey_policy_2_details = self.setup_single_policy(
-            kube_apis, test_namespace, apikey_auth_secret_2, apikey_auth_pol_valid_2, virtual_server_setup.vs_host
+            kube_apis,
+            virtual_server_setup.namespace,
+            apikey_auth_secret_2,
+            apikey_auth_pol_valid_2,
+            virtual_server_setup.vs_host,
         )
 
         delete_and_create_vs_from_yaml(
@@ -315,11 +324,19 @@ class TestAPIKeyAuthPoliciesVSR:
         self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace
     ):
         apikey_policy_details_server = self.setup_single_policy(
-            kube_apis, test_namespace, apikey_auth_secret_server, apikey_auth_pol_server, virtual_server_setup.vs_host
+            kube_apis,
+            virtual_server_setup.namespace,
+            apikey_auth_secret_server,
+            apikey_auth_pol_server,
+            virtual_server_setup.vs_host,
         )
 
         apikey_policy_details_route = self.setup_single_policy(
-            kube_apis, test_namespace, apikey_auth_secret_route, apikey_auth_pol_route, virtual_server_setup.vs_host
+            kube_apis,
+            virtual_server_setup.namespace,
+            apikey_auth_secret_route,
+            apikey_auth_pol_route,
+            virtual_server_setup.vs_host,
         )
 
         delete_and_create_vs_from_yaml(
