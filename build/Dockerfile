@@ -409,7 +409,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& rm -f /etc/yum.repos.d/app-protect-9.repo \
 	&& nap-waf.sh \
 	&& rm -f /etc/yum.repos.d/app-protect-9.repo; \
-	; fi \
+	fi \
 	&& subscription-manager unregister \
 	&& microdnf remove -y shadow-utils subscription-manager \
 	&& microdnf clean all && rm -rf /var/cache/dnf \
