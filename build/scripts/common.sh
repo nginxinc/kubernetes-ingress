@@ -7,9 +7,11 @@ if [ -z "${BUILD_OS##*plus*}" ]; then
     mkdir -p /etc/nginx/oidc/
     cp -a /tmp/internal/configs/oidc/* /etc/nginx/oidc/
     mkdir -p /etc/nginx/state_files/
+
     PLUS=-plus
 fi
 
+mkdir -p /etc/nginx/njs/ && cp -a /tmp/internal/configs/njs/* /etc/nginx/njs/
 mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d
 setcap 'cap_net_bind_service=+eip' /usr/sbin/nginx 'cap_net_bind_service=+eip' /usr/sbin/nginx-debug
 setcap -v 'cap_net_bind_service=+eip' /usr/sbin/nginx 'cap_net_bind_service=+eip' /usr/sbin/nginx-debug

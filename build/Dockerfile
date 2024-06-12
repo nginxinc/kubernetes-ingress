@@ -381,37 +381,6 @@ ARG IC_VERSION
 ARG TARGETPLATFORM
 ARG NAP_MODULES=none
 
-# copy oidc files on plus build
-RUN --mount=type=bind,target=/tmp [ -n "${BUILD_OS##*plus*}" ] && exit 0; mkdir -p /etc/nginx/oidc/ && cp -a /tmp/internal/configs/oidc/* /etc/nginx/oidc/
-
-# run only on nap waf build
-RUN --mount=type=bind,target=/tmp [ -n "${NAP_MODULES##*waf*}" ] && exit 0; mkdir -p /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
-	&& chown -R 101:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ \
-	&& chmod -R g=u /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ \
-	&& touch /etc/nginx/waf/nac-usersigs/index.conf \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then mkdir -p /etc/ssl/nms /opt/nms-nap-compiler \
-	&& chown -R 101:0 /etc/ssl/nms /opt/nms-nap-compiler \
-	&& chmod -R g=u /etc/ssl/nms /opt/nms-nap-compiler \
-	&& NAP_VERSION=$(cat /opt/app_protect/VERSION) && ln -s /opt/app_protect "/opt/nms-nap-compiler/app_protect-${NAP_VERSION}"; fi
-
-# run only on nap dos build
-RUN [ -n "${NAP_MODULES##*dos*}" ] && exit 0; mkdir -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm \
-	&& chmod 777 /shared/cores /var/log/adm /var/run/adm /etc/app_protect_dos
-
-RUN --mount=type=bind,target=/tmp mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
-	&& setcap 'cap_net_bind_service=+eip' /usr/sbin/nginx 'cap_net_bind_service=+eip' /usr/sbin/nginx-debug \
-	&& setcap -v 'cap_net_bind_service=+eip' /usr/sbin/nginx 'cap_net_bind_service=+eip' /usr/sbin/nginx-debug \
-	&& [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
-	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
-	&& if [ -z "${BUILD_OS##*plus*}" ]; then mkdir -p /etc/nginx/state_files/; fi \
-	&& mkdir -p /etc/nginx/njs/ && cp -a /tmp/internal/configs/njs/* /etc/nginx/njs/ \
-	&& chown -R 101:0 /etc/nginx /var/cache/nginx /var/lib/nginx /var/log/nginx /*.tmpl \
-	&& chmod -R g=u /etc/nginx /var/cache/nginx /var/lib/nginx /var/log/nginx /*.tmpl \
-	&& rm -f /etc/nginx/conf.d/*
-
-# Patch OS
-RUN --mount=type=bind,from=nginx-files,src=patch-os.sh,target=/usr/local/bin/patch-os.sh \
-	patch-os.sh
 RUN --mount=type=bind,target=/tmp \
 	--mount=type=bind,from=nginx-files,src=common.sh,target=/usr/local/bin/common.sh \
 	--mount=type=bind,from=nginx-files,src=patch-os.sh,target=/usr/local/bin/patch-os.sh \
