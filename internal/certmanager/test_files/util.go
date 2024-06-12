@@ -19,12 +19,7 @@ package test
 
 import (
 	"math/rand"
-	"time"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 type StringGenerator func(n int) string
 

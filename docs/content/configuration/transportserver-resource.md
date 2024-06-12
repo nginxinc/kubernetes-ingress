@@ -278,7 +278,7 @@ You can use the usual `kubectl` commands to work with TransportServer resources,
 
 For example, the following command creates a TransportServer resource defined in `transport-server-passthrough.yaml` with the name `secure-app`:
 
-```console
+```shell
 kubectl apply -f transport-server-passthrough.yaml
 
 transportserver.k8s.nginx.org/secure-app created
@@ -286,7 +286,7 @@ transportserver.k8s.nginx.org/secure-app created
 
 You can get the resource by running:
 
-```console
+```shell
 kubectl get transportserver secure-app
 
 NAME         AGE
@@ -363,7 +363,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
 - Example of `kubectl` validation:
 
-    ```console
+    ```shell
     kubectl apply -f transport-server-passthrough.yaml
 
       error: error validating "transport-server-passthrough.yaml": error validating data: ValidationError(TransportServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.TransportServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
@@ -371,7 +371,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
 - Example of Kubernetes API server validation:
 
-    ```console
+    ```shell
     kubectl apply -f transport-server-passthrough.yaml --validate=false
 
       The TransportServer "secure-app" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
@@ -386,7 +386,7 @@ The Ingress Controller validates the fields of a TransportServer resource. If a 
 
 You can check if the Ingress Controller successfully applied the configuration for a TransportServer. For our example `secure-app` TransportServer, we can run:
 
-```console
+```shell
 kubectl describe ts secure-app
 
 . . .
@@ -400,7 +400,7 @@ Note how the events section includes a Normal event with the AddedOrUpdated reas
 
 If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a TransportServer `secure-app` with a pass action that references a non-existing upstream, you will get  :
 
-```console
+```shell
 kubectl describe ts secure-app
 
 . . .

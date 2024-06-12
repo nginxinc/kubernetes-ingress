@@ -876,6 +876,103 @@ func TestCollectInvalidAppProtectVersion(t *testing.T) {
 	}
 }
 
+func TestCollectInstallationFlags(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		setFlags  []string
+		wantFlags []string
+	}{
+		{
+			name: "first flag",
+			setFlags: []string{
+				"nginx-plus=true",
+			},
+			wantFlags: []string{
+				"nginx-plus=true",
+			},
+		},
+		{
+			name: "second flag",
+			setFlags: []string{
+				"-v=3",
+			},
+			wantFlags: []string{
+				"-v=3",
+			},
+		},
+		{
+			name: "multiple flags",
+			setFlags: []string{
+				"nginx-plus=true",
+				"-v=3",
+			},
+			wantFlags: []string{
+				"nginx-plus=true",
+				"-v=3",
+			},
+		},
+		{
+			name:      "no flags",
+			setFlags:  []string{},
+			wantFlags: []string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfigurator(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:      configurator,
+				K8sClientReader:   newTestClientset(node1, kubeNS),
+				Version:           telemetryNICData.ProjectVersion,
+				InstallationFlags: tc.setFlags,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			telData := tel.Data{
+				ProjectName:         telemetryNICData.ProjectName,
+				ProjectVersion:      telemetryNICData.ProjectVersion,
+				ProjectArchitecture: telemetryNICData.ProjectArchitecture,
+				ClusterNodeCount:    1,
+				ClusterID:           telemetryNICData.ClusterID,
+				ClusterVersion:      telemetryNICData.ClusterVersion,
+				ClusterPlatform:     "other",
+			}
+
+			nicResourceCounts := telemetry.NICResourceCounts{
+				VirtualServers:      0,
+				VirtualServerRoutes: 0,
+				TransportServers:    0,
+				Ingresses:           0,
+				InstallationFlags:   tc.wantFlags,
+			}
+
+			td := telemetry.Data{
+				Data:              telData,
+				NICResourceCounts: nicResourceCounts,
+			}
+
+			want := fmt.Sprintf("%+v", &td)
+
+			got := buf.String()
+			if !cmp.Equal(want, got) {
+				t.Error(cmp.Diff(got, want))
+			}
+		})
+	}
+}
+
 func TestCountVirtualServers(t *testing.T) {
 	t.Parallel()
 

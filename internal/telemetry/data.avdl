@@ -93,5 +93,8 @@ It is the UID of the `kube-system` Namespace. */
 		/** IsPlus represents whether NGINX is Plus or OSS */
 		boolean? IsPlus = null;
 
+		/** InstallationFlags is the list of command line arguments configured for NGINX Ingress Controller */
+		union {null, array<string>} InstallationFlags = null;
+
 	}
 }

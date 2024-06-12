@@ -33,6 +33,7 @@ func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
 	attrs = append(attrs, attribute.StringSlice("IngressAnnotations", d.IngressAnnotations))
 	attrs = append(attrs, attribute.String("AppProtectVersion", d.AppProtectVersion))
 	attrs = append(attrs, attribute.Bool("IsPlus", d.IsPlus))
+	attrs = append(attrs, attribute.StringSlice("InstallationFlags", d.InstallationFlags))
 
 	return attrs
 }

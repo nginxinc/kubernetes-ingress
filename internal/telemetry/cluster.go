@@ -202,6 +202,11 @@ func (c *Collector) IsPlusEnabled() bool {
 	return c.Config.IsPlus
 }
 
+// InstallationFlags returns the list of all set flags
+func (c *Collector) InstallationFlags() []string {
+	return c.Config.InstallationFlags
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.
