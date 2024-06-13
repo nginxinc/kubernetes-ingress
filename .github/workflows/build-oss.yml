@@ -45,7 +45,7 @@ jobs:
       image_digest: ${{ steps.build-push.outputs.digest }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: ${{ inputs.tag != '' && format('refs/tags/v{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
@@ -233,7 +233,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@530d4feaa9c62aaab2d250371e2061eb7a172363 # v3.25.9
+        uses: github/codeql-action/upload-sarif@23acc5c183826b7a8a97bce3cecc52db901f8251 # v3.25.10
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
