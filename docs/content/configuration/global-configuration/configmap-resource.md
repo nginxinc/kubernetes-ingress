@@ -7,7 +7,7 @@ toc: true
 weight: 300
 ---
 
-When using F5 NGINX Ingress Controller, you can customize or fine tune NGINX behaviour using ConfigMap resources. Examples include setting the number of worker processes or customizing the access log format.
+When using F5 NGINX Ingress Controller, you can customize or fine tune NGINX behavior using ConfigMap resources. Examples include setting the number of worker processes or customizing the access log format.
 
 ## Using ConfigMap
 
