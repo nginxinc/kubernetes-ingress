@@ -12,9 +12,6 @@ on:
       image_digest:
         required: true
         type: string
-      slack_webhook_url:
-        required: true
-        type: string
 
 defaults:
   run:
@@ -82,4 +79,4 @@ jobs:
               }]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook_url }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

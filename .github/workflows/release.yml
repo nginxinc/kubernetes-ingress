@@ -489,15 +489,15 @@ jobs:
         with:
           ref: ${{ inputs.release_branch }}
 
-      - name: Get Image manifest digest
-        id: digest
-        run: |
-          digest=$(docker buildx imagetools inspect ${{ matrix.image }} --format '{{ json . }}' | jq -r .manifest.digest)
+  #     - name: Get Image manifest digest
+  #       id: digest
+  #       run: |
+  #         digest=$(docker buildx imagetools inspect ${{ matrix.image }} --format '{{ json . }}' | jq -r .manifest.digest)
 
-      - name: Get Image tag
-        id: tag
-        run: |
-          tag=$(echo ${{ matrix.image }} | cut -d ':' -f 2)
+  #     - name: Get Image tag
+  #       id: tag
+  #       run: |
+  #         tag=$(echo ${{ matrix.image }} | cut -d ':' -f 2)
 
       - name: Get variables for Slack
         id: slack

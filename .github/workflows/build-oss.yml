@@ -254,8 +254,8 @@ jobs:
       tag: ${{ inputs.tag }}
       version: ${{ needs.build.outputs.version }}
       image_digest: ${{ needs.build.outputs.image_digest }}
-      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
     permissions:
       contents: read
       actions: read
+    secrets: inherit
     if: ${{ inputs.tag != '' }}
