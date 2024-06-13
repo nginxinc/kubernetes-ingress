@@ -394,7 +394,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	dosResources map[string]*appProtectDosResource,
 ) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
-	var maps []version2.Map
 
 	useCustomListeners := false
 
@@ -418,6 +417,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		vsName:         vsEx.VirtualServer.Name,
 	}
 	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
+
 	if policiesCfg.JWKSAuthEnabled {
 		jwtAuthKey := policiesCfg.JWTAuth.Key
 		policiesCfg.JWTAuthList = make(map[string]*version2.JWTAuth)
@@ -517,6 +517,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	var internalRedirectLocations []version2.InternalRedirectLocation
 	var returnLocations []version2.ReturnLocation
 	var splitClients []version2.SplitClient
+	var maps []version2.Map
 	var errorPageLocations []version2.ErrorPageLocation
 	var keyValZones []version2.KeyValZone
 	var keyVals []version2.KeyVal

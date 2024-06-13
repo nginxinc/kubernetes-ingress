@@ -119,6 +119,20 @@ func TestValidateValidateAPIKeyFails(t *testing.T) {
 			},
 			msg: "repeated API Keys for API Key secret",
 		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeAPIKey,
+				Data: map[string][]byte{
+					"client1": []byte(""),
+					"client2": []byte(""),
+				},
+			},
+			msg: "repeated empty API Keys for API Key secret",
+		},
 	}
 
 	for _, test := range tests {
@@ -515,6 +529,19 @@ func TestValidateSecret(t *testing.T) {
 			},
 			msg: "Valid OIDC secret",
 		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key",
+					Namespace: "default",
+				},
+				Type: SecretTypeAPIKey,
+				Data: map[string][]byte{
+					"client1": []byte("cGFzc3dvcmQ="),
+				},
+			},
+			msg: "Valid API Key secret",
+		},
 	}
 
 	for _, test := range tests {
@@ -574,6 +601,20 @@ func TestValidateSecretFails(t *testing.T) {
 			},
 			msg: "Missing htpasswd for Htpasswd secret",
 		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "api-key",
+					Namespace: "default",
+				},
+				Type: SecretTypeAPIKey,
+				Data: map[string][]byte{
+					"client1": []byte("cGFzc3dvcmQ="),
+					"client2": []byte("cGFzc3dvcmQ="),
+				},
+			},
+			msg: "duplicated API Keys in API Key secret",
+		},
 	}
 
 	for _, test := range tests {
@@ -608,6 +649,10 @@ func TestHasCorrectSecretType(t *testing.T) {
 		},
 		{
 			secretType: SecretTypeHtpasswd,
+			expected:   true,
+		},
+		{
+			secretType: SecretTypeAPIKey,
 			expected:   true,
 		},
 		{
