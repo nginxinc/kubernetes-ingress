@@ -35,7 +35,6 @@ vsr_2_src = f"{TEST_DATA}/apikey-auth-policy/spec/vsr/backend2-vsr.yaml"
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
 
 
-@pytest.mark.jim
 @pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
@@ -270,55 +269,6 @@ class TestAPIKeyAuthPolicies:
         assert len(backend2_correct_query_with_correct_password_resps) > 0
         for response in backend2_correct_query_with_correct_password_resps:
             assert response.status_code == 200
-
-
-@pytest.mark.policies
-@pytest.mark.parametrize(
-    "crd_ingress_controller, virtual_server_setup",
-    [
-        (
-            {
-                "type": "complete",
-                "extra_args": [
-                    f"-enable-custom-resources",
-                    f"-enable-leader-election=false",
-                    f"-enable-snippets",
-                ],
-            },
-            {
-                "example": "virtual-server",
-                "app_type": "simple",
-            },
-        )
-    ],
-    indirect=True,
-)
-class TestAPIKeyAuthPoliciesVSR:
-    def setup_single_policy(
-        self, kube_apis, test_namespace: str, secret_src: str, policy_src: str, vs_host: str
-    ) -> namedtuple:
-        APIKey_policy_details = namedtuple(
-            "APIKey_policy_details", ["headers", "queries", "policy_name", "secret_name", "vs_host", "apikeys"]
-        )
-        print(f"Create apikey auth secret")
-        secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, secret_src)
-        apikeys = get_apikey_auth_secrets_from_yaml(secret_src)
-        details = get_apikey_policy_details_from_yaml(policy_src)
-
-        print(f"Create apikey auth policy")
-        policy_name = create_policy_from_yaml(kube_apis.custom_objects, policy_src, test_namespace)
-        wait_before_test()
-
-        headers = details["headers"]
-        queries = details["queries"]
-        return APIKey_policy_details(
-            headers=headers,
-            queries=queries,
-            policy_name=policy_name,
-            secret_name=secret_name,
-            vs_host=vs_host,
-            apikeys=apikeys,
-        )
 
     def test_apikey_auth_policy_vs_and_vsr(
         self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace
