@@ -446,38 +446,37 @@ jobs:
           RELEASE_ID: ${{ steps.release-id.outputs.release_id }}
         if: ${{ ! inputs.dry_run }}
 
-  release-image-notification:
-    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
-    name: Notify Slack channels about image release
-    runs-on: ubuntu-22.04
-    needs: [variables, binaries, release-oss, release-plus]
-    permissions:
-      contents: read
-      actions: read
-    strategy:
-      fail-fast: false
-      matrix:
-        image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-ubi", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          ref: ${{ inputs.release_branch }}
+  # release-image-notification:
+  #   if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
+  #   name: Notify Slack channels about image release
+  #   runs-on: ubuntu-22.04
+  #   needs: [variables, binaries, release-oss, release-plus]
+  #   permissions:
+  #     contents: read
+  #     actions: read
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-ubi", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+  #       with:
+  #         ref: ${{ inputs.release_branch }}
 
-      - name: Get Image manifest digest
-        id: digest
-        run: |
-          digest=$(docker buildx imagetools inspect ${{ matrix.image }} --format '{{ json . }}' | jq -r .manifest.digest)
+  #     - name: Get Image manifest digest
+  #       id: digest
+  #       run: |
+  #         digest=$(docker buildx imagetools inspect ${{ matrix.image }} --format '{{ json . }}' | jq -r .manifest.digest)
 
-      - name: Get Image tag
-        id: tag
-        run: |
-          tag=$(echo ${{ matrix.image }} | cut -d ':' -f 2)
+  #     - name: Get Image tag
+  #       id: tag
+  #       run: |
+  #         tag=$(echo ${{ matrix.image }} | cut -d ':' -f 2)
 
-      - name: Notify Slack of Dockerhub image release
-        uses: ./.github/workflows/updates-notification.yml
-        with:
-          tag: ${{ steps.tag.outputs.tag }}
-          version: ${{ inputs.nic_version }}
-          image_digest: ${{ steps.digest.outputs.digest }}
-          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+  #     - name: Notify Slack of Dockerhub image release
+  #       uses: ./.github/workflows/updates-notification.yml
+  #       with:
+  #         tag: ${{ steps.tag.outputs.tag }}
+  #         version: ${{ inputs.nic_version }}
+  #         image_digest: ${{ steps.digest.outputs.digest }}
