@@ -2,40 +2,48 @@
 docs: DOCS-589
 doctypes:
 - ''
-title: Reporting Resources Status
+title: Reporting resource status
 toc: true
-weight: 1900
+weight: 600
 ---
 
-## Ingress Resources
+This page describes how to view the status of resources managed by F5 NGINX Ingress Controller.
 
-An Ingress resource can have a status that includes the address (an IP address or a DNS name), through which the hosts of that Ingress resource are publicly accessible.
+## Ingress resources
+
+An Ingress resource status includes the address (an IP address or a DNS name), through which the hosts of that Ingress resource are publicly accessible.
+
 You can see the address in the output of the `kubectl get ingress` command, in the ADDRESS column, as shown below:
 
 ```shell
-$ kubectl get ingresses
+kubectl get ingresses
+```
+```text
 NAME           HOSTS              ADDRESS           PORTS     AGE
 cafe-ingress   cafe.example.com   12.13.23.123      80, 443   2m
 ```
 
-The Ingress Controller must be configured to report an Ingress status:
+NGINX Ingress Controller must be configured to report an Ingress status:
 
 1. Use the command-line flag `-report-ingress-status`.
-2. Define a source for an external address. This can be either of:
+1. Define a source for an external address. This can be either of:
     1. A user defined address, specified in the `external-status-address` ConfigMap key.
-    2. A Service of the type LoadBalancer configured with an external IP or address and specified by the `-external-service` command-line flag.
+    1. A Service of the type LoadBalancer configured with an external IP or address and specified by the `-external-service` command-line flag.
 
-See the docs about [ConfigMap keys](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) and [Command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments).
+View the [ConfigMap keys](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) and [Command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) topics for more information.
 
-Notes: NGINX Ingress Controller does not clear the status of Ingress resources when it is being shut down.
+{{< note >}} NGINX Ingress Controller does not clear the status of Ingress resources when it is being shut down. {{< /note >}}
 
-## VirtualServer and VirtualServerRoute Resources
+## VirtualServer and VirtualServerRoute resources
 
 A VirtualServer or VirtualServerRoute resource includes the status field with information about the state of the resource and the IP address, through which the hosts of that resource are publicly accessible.
+
 You can see the status in the output of the `kubectl get virtualservers` or `kubectl get virtualserverroutes` commands as shown below:
 
 ```shell
 kubectl get virtualservers
+```
+```text
   NAME   STATE   HOST                   IP            PORTS      AGE
   cafe   Valid   cafe.example.com       12.13.23.123  [80,443]   34s
 ```
@@ -44,17 +52,21 @@ To see an external hostname address associated with a VirtualServer resource, us
 
 ```shell
 kubectl get virtualservers -o wide
+```
+```text
   NAME   STATE   HOST               IP    EXTERNALHOSTNAME                                                         PORTS      AGE
   cafe   Valid   cafe.example.com         ae430f41a1a0042908655abcdefghijkl-12345678.eu-west-2.elb.amazonaws.com   [80,443]   106s
 ```
 
-> Note: If there are multiple addresses, only the first one is shown.
+{{< note >}} If there are multiple addresses, only the first one is shown. {{< /note >}}
 
 In order to see additional addresses or extra information about the `Status` of the resource, use the following command:
 
 ```shell
 kubectl describe virtualserver <NAME>
-. . .
+```
+```text
+...
 Status:
   External Endpoints:
     Ip:        12.13.23.123
@@ -64,54 +76,57 @@ Status:
   State:    Valid
 ```
 
-### Status Specification
+### Status specification
 
 The following fields are reported in both VirtualServer and VirtualServerRoute status:
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type |
 | ---| ---| --- |
-|``State`` | Current state of the resource. Can be ``Valid``, ``Warning`` an ``Invalid``. For more information, refer to the ``message`` field. | ``string`` |
-|``Reason`` | The reason of the last update. | ``string`` |
-|``Message`` | Additional information about the state. | ``string`` |
-|``ExternalEndpoints`` | A list of external endpoints for which the hosts of the resource are publicly accessible. | [[]externalEndpoint](#externalendpoint) |
-{{% /table %}}
+|*State* | Current state of the resource. Can be ``Valid``, ``Warning`` an ``Invalid``. For more information, refer to the ``message`` field. | *string* |
+|*Reason* | The reason of the last update. | *string* |
+|*Message* | Additional information about the state. | *string* |
+|*ExternalEndpoints* | A list of external endpoints for which the hosts of the resource are publicly accessible. | *[externalEndpoint](#externalendpoint)* |
+{{</bootstrap-table>}}
 
-The following field is reported in the VirtualServerRoute status only:
+The *ReferencedBy* field is reported for the VirtualServerRoute status only:
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type |
 | ---| ---| --- |
-|``ReferencedBy`` | The VirtualServer that references this VirtualServerRoute. Format is ``namespace/name`` | ``string`` |
-{{% /table %}}
+| *ReferencedBy* | The VirtualServer that references this VirtualServerRoute. Format as ``namespace/name`` | *string* |
+{{</bootstrap-table>}}
 
-### ExternalEndpoint
+### externalEndpoint
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type |
 | ---| ---| --- |
 |``IP`` | The external IP address. | ``string`` |
 |``Hostname`` | The external LoadBalancer Hostname address. | ``string`` |
 |``Ports`` | A list of external ports. | ``string`` |
-{{% /table %}}
+{{</bootstrap-table>}}
 
-The Ingress Controller must be configured to report a VirtualServer or VirtualServerRoute status:
+NGINX Ingress Controller must be configured to report a VirtualServer or VirtualServerRoute status:
 
-1. If you want the Ingress Controller to report the `externalEndpoints`, define a source for an external address (Note: the rest of the fields will be reported without the external address configured). This can be either of:
+1. If you want NGINX Ingress Controller to report the `externalEndpoints`, define a source for an external address (The rest of the fields will be reported without the external address configured). This can be:
     1. A user defined address, specified in the `external-status-address` ConfigMap key.
-    2. A Service of the type LoadBalancer configured with an external IP or address and specified by the `-external-service` command-line flag.
+    1. A Service of the type LoadBalancer configured with an external IP or address and specified by the `-external-service` command-line flag.
 
-See the docs about [ConfigMap keys](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) and [Command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments).
+View the [ConfigMap keys](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) and [Command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) topics for more information.
 
-Notes: The Ingress Controller does not clear the status of VirtualServer and VirtualServerRoute resources when it is being shut down.
+{{< note >}} NGINX Ingress Controller does not clear the status of VirtualServer and VirtualServerRoute resources when it is being shut down. {{< /note >}}
 
-## Policy Resources
+## Policy resources
 
 A Policy resource includes the status field with information about the state of the resource.
+
 You can see the status in the output of the `kubectl get policy` command as shown below:
 
 ```shell
 kubectl get policy
+```
+```text
   NAME              STATE   AGE
   webapp-policy     Valid   30s
 ```
@@ -120,55 +135,61 @@ In order to see additional addresses or extra information about the `Status` of 
 
 ```shell
 kubectl describe policy <NAME>
-. . .
+```
+```text
+...
 Status:
   Message:  Configuration for default/webapp-policy was added or updated
   Reason:   AddedOrUpdated
   State:    Valid
 ```
 
-### Status Specification
+### Status specification
 
 The following fields are reported in Policy status:
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type |
 | ---| ---| --- |
 |``State`` | Current state of the resource. Can be ``Valid`` or ``Invalid``. For more information, refer to the ``message`` field. | ``string`` |
 |``Reason`` | The reason of the last update. | ``string`` |
 |``Message`` | Additional information about the state. | ``string`` |
-{{% /table %}}
+{{</bootstrap-table>}}
 
-## TransportServer Resources
+## TransportServer resources
 
 A TransportServer resource includes the status field with information about the state of the resource.
+
 You can see the status in the output of the `kubectl get transportserver` command as shown below:
 
 ```shell
 kubectl get transportserver
+```
+```text
   NAME      STATE   REASON           AGE
   dns-tcp   Valid   AddedOrUpdated   47m
 ```
 
-In order to see additional addresses or extra information about the `Status` of the resource, use the following command:
+To see additional addresses or extra information about the `Status` of the resource, use the following command:
 
 ```shell
 kubectl describe transportserver <NAME>
-. . .
+```
+```text
 Status:
   Message:  Configuration for default/dns-tcp was added or updated
   Reason:   AddedOrUpdated
   State:    Valid
 ```
 
-### Status Specification
+### Status specification
 
 The following fields are reported in TransportServer status:
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type |
 | ---| ---| --- |
-|``State`` | Current state of the resource. Can be ``Valid``, ``Warning`` or ``Invalid``. For more information, refer to the ``message`` field. | ``string`` |
-|``Reason`` | The reason of the last update. | ``string`` |
-|``Message`` | Additional information about the state. | ``string`` |
-{{% /table %}}
+| *State* | Current state of the resource. Can be ``Valid``, ``Warning`` or ``Invalid``. For more information, refer to the ``message`` field. | *string* |
+| *Reason* | The reason of the last update. | *string* |
+| *Message* | Additional information about the state. | *string* |
+{{</bootstrap-table>}}

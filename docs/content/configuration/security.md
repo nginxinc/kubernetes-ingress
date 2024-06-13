@@ -4,10 +4,10 @@ doctypes:
 - ''
 title: Security recommendations
 toc: true
-weight: 1500
+weight: 300
 ---
 
-NGINX Ingress Controller follows Kubernetes best practices: this page outlines configuration specific to NGINX Ingress Controller you may require, including links to examples in the [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/tree/release-3.5).
+F5 NGINX Ingress Controller follows Kubernetes best practices: this page outlines configuration specific to NGINX Ingress Controller you may require, including links to examples in the [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples).
 
 For general guidance, we recommend the official Kubernetes documentation for [Securing a Cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/). 
 
@@ -17,13 +17,10 @@ For general guidance, we recommend the official Kubernetes documentation for [Se
 
 Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users. 
 
-The Ingress Controller is deployed within a Kubernetes environment, this environment must be secured.
-Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users.
-The Ingress Controller requires a service account which is configured using RBAC.
-We strongly recommend using the [RBAC configuration](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/deployments/rbac/rbac.yaml) provided in our standard deployment configuration. It is configured with the least amount of privilege required for the Ingress Controller to work.
+NGINX Ingress Controller requires RBAC to configure a [ServiceUser](https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts), and provides least privilege access in its standard deployment configurations:
 
-We strongly recommend inspecting the RBAC configuration for [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/deployments/rbac/rbac.yaml)
-or for [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/charts/nginx-ingress/templates/clusterrole.yaml) to understand what access the Ingress Controller service account has and to which resources. For example, by default the service account has access to all Secret resources in the cluster.
+- [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/deployments/rbac/rbac.yaml)
+- [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/deployments/rbac/rbac.yaml)
 
 By default, the ServiceAccount has access to all Secret resources in the cluster.
 
@@ -96,7 +93,7 @@ Snippets are disabled by default. To use snippets, set the [**enable-snippets**]
 
 For more information, read the following: 
 
-- [Advanced Configuration using Snippets]({{< relref "/configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) 
+- [Advanced configuration using Snippets]({{< relref "/configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) 
 - [Using Snippets with VirtualServer/VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md#using-snippets" >}})
 - [Using Snippets with TransportServer]({{< relref "/configuration/transportserver-resource.md#using-snippets" >}})
-- [ConfigMap Snippets and Custom Templates]({{< relref "configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}})
+- [ConfigMap snippets and custom templates]({{< relref "configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}})

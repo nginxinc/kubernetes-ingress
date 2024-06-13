@@ -68,7 +68,7 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
 
 ### Makefile targets {#makefile-targets}
 
-{{<bootstrap-table "table table-striped table-bordered">}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 | Makefile Target           | Description                                                       | Compatible Systems  |
 |---------------------------|-------------------------------------------------------------------|---------------------|
 | **debian-image-nap-plus** | Builds a Debian-based image with NGINX Plus and the [NGINX App Protect WAF](/nginx-app-protect-waf/) module. | Debian  |
@@ -80,13 +80,6 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
 <br>
 
 {{<see-also>}} For the complete list of _Makefile_ targets and customizable variables, see the [Building NGINX Ingress Controller]({{< relref "installation/building-nginx-ingress-controller.md#makefile-details" >}}) guide. {{</see-also>}}
-
-If you intend to use [external references](/nginx-app-protect-waf/v4/configuration/#external-references) in NGINX App Protect WAF policies, you may want to provide a custom CA certificate to authenticate with the hosting server.
-
-To do so, place the `*.crt` file in the build folder and uncomment the lines following this comment:
-`#Uncomment the lines below if you want to install a custom CA certificate`
-
-{{<warning>}} External references are deprecated in NGINX Ingress Controller and will not be supported in future releases. {{</warning>}}
 
 ---
 
