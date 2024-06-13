@@ -2,9 +2,9 @@
 docs: DOCS-584
 doctypes:
 - ''
-title: Configuration Examples
+title: Configuration examples
 toc: true
-weight: 2000
+weight: 400
 ---
 
 Our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress) includes a number of configuration examples:
