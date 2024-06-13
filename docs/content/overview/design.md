@@ -2,7 +2,7 @@
 docs: DOCS-609
 doctypes:
 - reference
-title: How NGINX Ingress Controller is Designed
+title: The design of NGINX Ingress Controller
 toc: true
 weight: 200
 ---
