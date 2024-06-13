@@ -162,13 +162,14 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 // PolicyCount returns the count in each Policy
 func (c *Collector) PolicyCount() map[string]int {
 	policyCounters := make(map[string]int)
-
+	if !c.Config.CustomResourcesEnabled {
+		return policyCounters
+	}
 	if c.Config.Policies == nil {
 		return policyCounters
 	}
-
 	policies := c.Config.Policies()
-	if policies == nil {
+	if len(policies) == 0 {
 		return policyCounters
 	}
 
