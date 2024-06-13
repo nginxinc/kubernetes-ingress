@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"testing"
 	"text/template"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestContainsSubstring(t *testing.T) {
@@ -299,6 +301,42 @@ func TestReplaceAll(t *testing.T) {
 		}
 		if buf.String() != tc.expected {
 			t.Errorf("Template generated wrong config, got %v but expected %v.", buf.String(), tc.expected)
+		}
+	}
+}
+
+func TestMakeHeaderQueryValue(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		apiKey   APIKey
+		expected string
+	}{
+		{
+			apiKey: APIKey{
+				Header: []string{"foo", "bar"},
+			},
+			expected: `"${http_foo}${http_bar}"`,
+		},
+		{
+			apiKey: APIKey{
+				Header: []string{"foo", "bar"},
+				Query:  []string{"baz", "qux"},
+			},
+			expected: `"${http_foo}${http_bar}${arg_baz}${arg_qux}"`,
+		},
+		{
+			apiKey: APIKey{
+				Query: []string{"baz", "qux"},
+			},
+			expected: `"${arg_baz}${arg_qux}"`,
+		},
+	}
+
+	for _, tc := range testCases {
+		got := makeHeaderQueryValue(tc.apiKey)
+		if !cmp.Equal(tc.expected, got) {
+			t.Error(cmp.Diff(tc.expected, got))
 		}
 	}
 }

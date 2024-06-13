@@ -8546,7 +8546,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 								"client2": []byte("password"),
 							},
 						},
-						Error: errors.New("secret is invalid"), // TODO: find correct error
+						Error: errors.New("secret is invalid"),
 					},
 				},
 			},
