@@ -7,6 +7,10 @@ on:
         description: "Version to release"
         required: true
         type: string
+      source_tag:
+        description: "Source tag to release"
+        required: false
+        type: string
       chart_version:
         description: "Helm Chart version to release"
         required: false
@@ -23,6 +27,11 @@ on:
         description: "Dry Run?"
         type: boolean
         default: false
+      skip_step:
+        description: "Comma separated list of jobs to skip"
+        # publish-helm-chart,operator,aws-marketplace,azure-marketplace,gcp-marketplace,github-release,release-image-notification
+        type: string
+        required: false
 
 defaults:
   run:
@@ -38,7 +47,7 @@ jobs:
     permissions:
       contents: read
     outputs:
-      stable_tag: ${{ steps.vars.outputs.stable_tag }}
+      source_tag: ${{ steps.vars.outputs.stable_tag }}
       short_tag: ${{ steps.vars.outputs.short_tag }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       binary_cache_sign_hit: ${{ steps.binary-cache-sign.outputs.cache-hit }}
@@ -52,7 +61,11 @@ jobs:
       - name: Output Variables
         id: vars
         run: |
-          ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
+          if ${{ inputs.source_tag }}; then
+            echo "stable_tag=${{ inputs.source_tag }}" >> $GITHUB_OUTPUT
+          else
+            ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
+          fi
           tag=${{ inputs.nic_version }}
           echo "short_tag=${tag%.*}" >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
@@ -102,12 +115,12 @@ jobs:
     needs: [variables]
     uses: ./.github/workflows/oss-release.yml
     with:
-      gcr_release_registry: false
+      gcr_release_registry: true
       ecr_public_registry: true
       dockerhub_public_registry: true
       quay_public_registry: true
       github_public_registry: true
-      source_tag: ${{ needs.variables.outputs.stable_tag }}
+      source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ inputs.nic_version }}
       short_target_tag: ${{ needs.variables.outputs.short_tag }}
       dry_run: ${{ inputs.dry_run }}
@@ -122,12 +135,12 @@ jobs:
     needs: [variables]
     uses: ./.github/workflows/plus-release.yml
     with:
-      nginx_registry: true
       gcr_release_registry: true
+      nginx_registry: true
       gcr_mktpl_registry: true
       ecr_mktpl_registry: true
       az_mktpl_registry: true
-      source_tag: ${{ needs.variables.outputs.stable_tag }}
+      source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ inputs.nic_version }}
       short_target_tag: ${{ needs.variables.outputs.short_tag }}
       dry_run: ${{ inputs.dry_run }}
@@ -137,7 +150,7 @@ jobs:
     secrets: inherit
 
   publish-helm-chart:
-    if: ${{ ! inputs.dry_run }}
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'publish-helm-chart') }}
     name: Publish Helm Chart
     uses: ./.github/workflows/publish-helm.yml
     with:
@@ -170,7 +183,7 @@ jobs:
           pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
 
   operator:
-    if: ${{ ! inputs.dry_run }}
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'operator') && !contains(inputs.skip_step, 'publish-helm-chart') }}
     name: Trigger PR for Operator
     runs-on: ubuntu-22.04
     needs: [publish-helm-chart]
@@ -191,7 +204,7 @@ jobs:
             })
 
   gcp-marketplace:
-    if: ${{ ! inputs.dry_run }}
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'gcp-marketplace') }}
     name: Trigger PR for GCP Marketplace
     runs-on: ubuntu-22.04
     needs: [publish-helm-chart]
@@ -212,7 +225,7 @@ jobs:
             })
 
   azure-marketplace:
-    if: ${{ ! inputs.dry_run }}
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'azure-marketplace') }}
     name: Trigger CNAB Build for Azure Marketplace
     runs-on: ubuntu-22.04
     needs: [publish-helm-chart]
@@ -235,7 +248,7 @@ jobs:
             })
 
   aws-marketplace:
-    if: ${{ ! inputs.dry_run }}
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'aws-marketplace') }}
     name: Publish to AWS Marketplace
     runs-on: ubuntu-22.04
     needs: [release-plus]
@@ -356,9 +369,10 @@ jobs:
             done
 
   github-release:
+    if: ${{ ! contains(inputs.skip_step, 'github-release') }}
     name: Publish release to GitHub
     runs-on: ubuntu-22.04
-    needs: [variables, binaries]
+    needs: [variables, binaries, release-oss, release-plus]
     permissions:
       contents: write # to modify the release
       issues: write # to close milestone
@@ -431,3 +445,39 @@ jobs:
         env:
           RELEASE_ID: ${{ steps.release-id.outputs.release_id }}
         if: ${{ ! inputs.dry_run }}
+
+  release-image-notification:
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
+    name: Notify Slack channels about image release
+    runs-on: ubuntu-22.04
+    needs: [variables, binaries, release-oss, release-plus]
+    permissions:
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-ubi", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          ref: ${{ inputs.release_branch }}
+
+      - name: Get Image manifest digest
+        id: digest
+        run: |
+          digest=$(docker buildx imagetools inspect ${{ matrix.image }} --format '{{ json . }}' | jq -r .manifest.digest)
+
+      - name: Get Image tag
+        id: tag
+        run: |
+          tag=$(echo ${{ matrix.image }} | cut -d ':' -f 2)
+
+      - name: Notify Slack of Dockerhub image release
+        uses: ./.github/workflows/updates-notification.yml
+        with:
+          tag: ${{ steps.tag.outputs.tag }}
+          version: ${{ inputs.nic_version }}
+          image_digest: ${{ steps.digest.outputs.digest }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
