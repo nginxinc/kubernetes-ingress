@@ -1,14 +1,13 @@
 ---
-description: The example in this document shows a basic Ingress resource definition.
 docs: DOCS-593
 doctypes:
 - ''
-title: Basic Configuration
+title: Basic configuration
 toc: true
-weight: 1600
+weight: 100
 ---
 
-This document shows a basic Ingress resource definition which load balances requests for two services as part of a single application.
+This document shows a basic Ingress resource definition for F5 NGINX Ingress Controller. It load balances requests for two services as part of a single application.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -43,20 +42,21 @@ spec:
 Here is a breakdown of what this Ingress resource definition means:
 
 - The `metadata.name` field defines the name of the resource `cafe‑ingress`.
-- In the `spec.tls` field we set up SSL/TLS termination:
-  - In the `secretName`, we reference a secret resource by its name, `cafe‑secret`. The secret must belong to the same namespace as the Ingress, it must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that hold the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the hosts to which the secret is applied.
-  - In the `hosts` field, we apply the certificate and key to our `cafe.example.com` host.
-- In the `spec.rules` field, we define a host with domain name `cafe.example.com`.
-- In the `paths` field, we define two path‑based rules:
+- The `spec.tls` field sets up SSL/TLS termination:
+  - The `hosts` field applies the certificate and key to the `cafe.example.com` host.
+  - The `secretName` references a secret resource by its name, `cafe‑secret`. The secret must belong to the same namespace as the Ingress, of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that hold the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the hosts to which the secret is applied.
+- The `spec.rules` field defines a host with the domain name `cafe.example.com`.
+- The `paths` field defines two path‑based rules:
   - The rule with the path `/tea` instructs NGINX to distribute the requests with the `/tea` URI among the pods of the *tea* service, which is deployed with the name `tea‑svc` in the cluster.
   - The rule with the path `/coffee` instructs NGINX to distribute the requests with the `/coffee` URI among the pods of the *coffee* service, which is deployed with the name `coffee‑svc` in the cluster.
   - Both rules instruct NGINX to distribute the requests to `port 80` of the corresponding service (the `servicePort` field).
 
-> For complete instructions on deploying the Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/complete-example) in our GitHub repository.
+To learn more about the Ingress resource, view [the official Kubernetes documentation for Ingress resources](https://kubernetes.io/docs/concepts/services-networking/ingress/).
 
-> To learn more about the Ingress resource, see the [Ingress resource documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/) in the Kubernetes docs.
+{{< note >}} For complete instructions on deploying Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/complete-example) in the GitHub repository. {{< /note >}}
 
-## New Features Available in Kubernetes 1.18 and Above
+
+## New features available in Kubernetes 1.18
 
 Starting from Kubernetes 1.18, you can use the following new features:
 
@@ -103,19 +103,23 @@ Starting from Kubernetes 1.18, you can use the following new features:
     . . .
   ```
 
-  When using this filed you need to create the `IngressClass` resource with the corresponding `name`. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](/nginx-ingress-controller/installation/installation-with-manifests/#2-create-common-resources) section.
+  When using this field you need to create the `IngressClass` resource with the corresponding `name`. View the [Create common resources]({{< relref "installation/installing-nic/installation-with-manifests.md#create-common-resources" >}}) section of the Installation with Manifests topic for more information.
 
 ## Restrictions
 
 NGINX Ingress Controller imposes the following restrictions on Ingress resources:
 
 - When defining an Ingress resource, the `host` field is required.
-- The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions).
+- The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion]({{< relref "configuration/ingress-resources/cross-namespace-configuration.md" >}}). View the [Host and Listener collisions]({{< relref "configuration/host-and-listener-collisions.md" >}}) topic for more information.
 - The `path` field in `spec.rules[].http.paths[]` is required for `Exact` and `Prefix` `pathTypes`.
 - The ImplementationSpecific `pathType` is treated as equivalent to `Prefix` `pathType`, with the exception that when this `pathType` is configured, the `path` field in `spec.rules[].http.paths[]` is not mandatory. `path` defaults to `/` if not set but the `pathType` is set to ImplementationSpecific.
 
-## Advanced Configuration
+## Advanced configuration
 
-The Ingress resource only allows you to use basic NGINX features -- host and path-based routing and TLS termination. Advanced features like rewriting the request URI or inserting additional response headers are available through annotations. See the [Advanced Configuration with Annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations) doc.
+NGINX Ingress Controller generates NGINX configuration by executing a template file that contains the configuration options. These options are set with the Ingress resource and NGINX Ingress Controller's ConfigMap. The Ingress resource only allows you to use basic NGINX features: host and path-based routing and TLS termination. 
 
-The Ingress Controller generates NGINX configuration by executing a template file that contains configuration options. These options are set via the Ingress resource and the Ingress Controller's ConfigMap. Advanced NGINX users who require more control over the generated NGINX configurations can use snippets to insert raw NGINX config. See [Advanced Configuration with Snippets](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets) for more information. Additionally, it is possible to customize the template. See [Custom Templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates/) for instructions.
+Advanced features like rewriting the request URI or inserting additional response headers are available through annotations. View the [Advanced configuration with Annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md" >}}) topic for more information.
+
+Advanced NGINX users who require more control over the generated NGINX configurations can use snippets to insert raw NGINX config. View the [Advanced configuration with Snippets]({{< relref "configuration/ingress-resources/advanced-configuration-with-snippets" >}}) topic for more information. 
+
+Additionally, it is possible to customize the template, described in the [Custom templates]({{< relref "/configuration/global-configuration/custom-templates.md" >}}) topic.
