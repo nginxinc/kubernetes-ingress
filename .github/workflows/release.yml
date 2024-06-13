@@ -233,7 +233,13 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [publish-helm-chart]
     steps:
-      - name:
+      - name: Check CNAB version is set
+        run: |
+          if [ -z "${{ inputs.cnab_version }}" ]; then
+            echo "CNAB version needs to be set to trigger a CNAB build"
+            exit 1
+          fi
+      - name: Trigger Build CNAB build
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ secrets.NGINX_PAT }}
