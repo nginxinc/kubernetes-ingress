@@ -7041,7 +7041,7 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 			want: policiesCfg{
 				WAF: &version2.WAF{
 					Enable:   "on",
-					ApBundle: "/etc/nginx/waf/bundles/testWAFPolicyBundle.tgz",
+					ApBundle: "/fake/bundle/path/testWAFPolicyBundle.tgz",
 				},
 			},
 		},
@@ -7073,9 +7073,9 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 			want: policiesCfg{
 				WAF: &version2.WAF{
 					Enable:              "on",
-					ApBundle:            "/etc/nginx/waf/bundles/testWAFPolicyBundle.tgz",
+					ApBundle:            "/fake/bundle/path/testWAFPolicyBundle.tgz",
 					ApSecurityLogEnable: true,
-					ApLogConf:           []string{"/etc/nginx/waf/bundles/secops_dashboard.tgz syslog:server=localhost:514"},
+					ApLogConf:           []string{"/fake/bundle/path/secops_dashboard.tgz syslog:server=localhost:514"},
 				},
 			},
 		},
@@ -15534,7 +15534,7 @@ var (
 type fakeBundleValidator struct{}
 
 func (*fakeBundleValidator) validate(bundle string) (string, error) {
-	bundle = fmt.Sprintf("/etc/nginx/waf/bundles/%s", bundle)
+	bundle = fmt.Sprintf("/fake/bundle/path/%s", bundle)
 	if strings.Contains(bundle, "invalid") {
 		return bundle, fmt.Errorf("invalid bundle %s", bundle)
 	}

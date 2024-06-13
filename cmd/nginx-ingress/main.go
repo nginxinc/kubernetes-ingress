@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -47,11 +48,13 @@ var (
 )
 
 const (
-	nginxVersionLabel      = "app.nginx.org/version"
-	versionLabel           = "app.kubernetes.io/version"
-	appProtectVersionLabel = "appprotect.f5.com/version"
-	agentVersionLabel      = "app.nginx.org/agent-version"
-	appProtectVersionPath  = "/opt/app_protect/RELEASE"
+	nginxVersionLabel        = "app.nginx.org/version"
+	versionLabel             = "app.kubernetes.io/version"
+	appProtectVersionLabel   = "appprotect.f5.com/version"
+	agentVersionLabel        = "app.nginx.org/agent-version"
+	appProtectVersionPath    = "/opt/app_protect/RELEASE"
+	appProtectv4BundleFolder = "/etc/nginx/waf/bundles/"
+	appProtectv5BundleFolder = "/etc/app_protect/bundles/"
 )
 
 func main() {
@@ -80,8 +83,16 @@ func main() {
 	nginxVersion := getNginxVersionInfo(nginxManager)
 
 	var appProtectVersion string
+	var appProtectV5 bool
+	appProtectBundlePath := appProtectv4BundleFolder
 	if *appProtect {
 		appProtectVersion = getAppProtectVersionInfo()
+
+		r := regexp.MustCompile("^5.*")
+		if r.MatchString(appProtectVersion) {
+			appProtectV5 = true
+			appProtectBundlePath = appProtectv5BundleFolder
+		}
 	}
 
 	var agentVersion string
@@ -119,7 +130,9 @@ func main() {
 		EnableSnippets:                 *enableSnippets,
 		NginxServiceMesh:               *spireAgentAddress != "",
 		MainAppProtectLoadModule:       *appProtect,
+		MainAppProtectV5LoadModule:     appProtectV5,
 		MainAppProtectDosLoadModule:    *appProtectDos,
+		MainAppProtectV5EnforcerAddr:   *appProtectEnforcerAddress,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
 		EnableOIDC:                     *enableOIDC,
 		SSLRejectHandshake:             sslRejectHandshake,
@@ -128,6 +141,7 @@ func main() {
 		DynamicWeightChangesReload:     *enableDynamicWeightChangesReload,
 		StaticSSLPath:                  nginxManager.GetSecretsDir(),
 		NginxVersion:                   nginxVersion,
+		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
 	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
@@ -137,7 +151,7 @@ func main() {
 		nginxManager.CreateTLSPassthroughHostsConfig(emptyFile)
 	}
 
-	process := startChildProcesses(nginxManager)
+	process := startChildProcesses(nginxManager, appProtectV5)
 
 	plusClient := createPlusClient(*nginxPlus, useFakeNginxManager, nginxManager)
 
@@ -456,10 +470,11 @@ type childProcesses struct {
 
 // newChildProcesses starts the several child processes based on flags set.
 // AppProtect. AppProtectDos, Agent.
-func startChildProcesses(nginxManager nginx.Manager) childProcesses {
+func startChildProcesses(nginxManager nginx.Manager, appProtectV5 bool) childProcesses {
 	var aPPluginDone chan error
 
-	if *appProtect {
+	// Do not start AppProtect Plugins when using v5.
+	if *appProtect && !appProtectV5 {
 		aPPluginDone = make(chan error, 1)
 		nginxManager.AppProtectPluginStart(aPPluginDone, *appProtectLogLevel)
 	}

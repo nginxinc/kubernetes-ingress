@@ -62,6 +62,8 @@ runs:
         --name test-runner-${{ github.run_id }} \
         --network=kind \
         -v ${{ github.workspace }}/tests:/workspace/tests \
+        -v ${{ github.workspace }}/deployments:/workspace/deployments \
+        -v ${{ github.workspace }}/config:/workspace/config \
         -v ~/.kube/kind/config:/root/.kube/config ${{ inputs.test-image }} \
         --context=kind-${{ github.run_id }} \
         --image=${{ inputs.image-name }}:${{ inputs.tag }} \

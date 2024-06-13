@@ -90,6 +90,8 @@ spec:
         args:
           - -nginx-plus
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+          - -report-ingress-status
+          - -external-service=nginx-ingress
          #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
          #- -include-year
          #- -enable-cert-manager
@@ -97,8 +99,6 @@ spec:
          #- -enable-app-protect
          #- -enable-app-protect-dos
          #- -v=3 # Enables extensive logging. Useful for troubleshooting.
-         #- -report-ingress-status
-         #- -external-service=nginx-ingress
          #- -enable-prometheus-metrics
          #- -enable-service-insight
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
