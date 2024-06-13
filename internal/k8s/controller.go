@@ -944,15 +944,18 @@ func (lbc *LoadBalancerController) updateNumberOfIngressControllerReplicas(contr
 		}
 
 		// handle virtualservers
-		resources = lbc.findVirtualServersUsingRatelimitScaling()
-		resourceExes = lbc.createExtendedResources(resources)
-		for _, vserver := range resourceExes.VirtualServerExes {
-			found = true
-			_, err := lbc.configurator.AddOrUpdateVirtualServer(vserver)
-			if err != nil {
-				glog.Errorf("Error updating ratelimit for VirtualServer %s/%s: %s", vserver.VirtualServer.Namespace, vserver.VirtualServer.Name, err)
+		if lbc.areCustomResourcesEnabled {
+			resources = lbc.findVirtualServersUsingRatelimitScaling()
+			resourceExes = lbc.createExtendedResources(resources)
+			for _, vserver := range resourceExes.VirtualServerExes {
+				found = true
+				_, err := lbc.configurator.AddOrUpdateVirtualServer(vserver)
+				if err != nil {
+					glog.Errorf("Error updating ratelimit for VirtualServer %s/%s: %s", vserver.VirtualServer.Namespace, vserver.VirtualServer.Name, err)
+				}
 			}
 		}
+
 	}
 	return found
 }
