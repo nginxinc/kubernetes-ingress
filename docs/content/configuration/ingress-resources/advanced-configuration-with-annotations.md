@@ -3,16 +3,23 @@ docs: DOCS-591
 doctypes:
 - ''
 title: Advanced configuration with Annotations
+title: Advanced configuration with Annotations
 toc: true
+weight: 200
 weight: 200
 ---
 
 This topic explains how to enable advanced features in F5 NGINX Ingress Controller with Annotations.
 
 The Ingress resource can use basic NGINX features such as host or path-based routing and TLS termination. Advanced features like rewriting the request URI or inserting additional response headers can be enabled with Annotations. 
+This topic explains how to enable advanced features in F5 NGINX Ingress Controller with Annotations.
+
+The Ingress resource can use basic NGINX features such as host or path-based routing and TLS termination. Advanced features like rewriting the request URI or inserting additional response headers can be enabled with Annotations. 
 
 Outside of advanced features, Annotations are necessary for customizing NGINX behavior such as setting the value of connection timeouts.
+Outside of advanced features, Annotations are necessary for customizing NGINX behavior such as setting the value of connection timeouts.
 
+Customization is also available through the [ConfigMap]({{< relref "/configuration/global-configuration/configmap-resource.md" >}}) resources: Annotations take priority.
 Customization is also available through the [ConfigMap]({{< relref "/configuration/global-configuration/configmap-resource.md" >}}) resources: Annotations take priority.
 
 ## Using Annotations
@@ -56,11 +63,16 @@ spec:
 ## Validation
 
 NGINX Ingress Controller validates the annotations of Ingress resources. If an Ingress is invalid, NGINX Ingress Controller will reject it: the Ingress will continue to exist in the cluster, but NGINX Ingress Controller will ignore it.
+NGINX Ingress Controller validates the annotations of Ingress resources. If an Ingress is invalid, NGINX Ingress Controller will reject it: the Ingress will continue to exist in the cluster, but NGINX Ingress Controller will ignore it.
 
+You can check if NGINX Ingress Controller successfully applied the configuration for an Ingress resource. For the example `cafe-ingress-with-annotations` Ingress, you can run:
 You can check if NGINX Ingress Controller successfully applied the configuration for an Ingress resource. For the example `cafe-ingress-with-annotations` Ingress, you can run:
 
 ```shell
 kubectl describe ing cafe-ingress-with-annotations
+```
+```text
+...
 ```
 ```text
 ...
@@ -71,11 +83,15 @@ Events:
 ```
 
 The events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
+The events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
 
+If you create an invalid Ingress, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create an Ingress `cafe-ingress-with-annotations`, with an annotation `nginx.org/redirect-to-https` set to `yes please` instead of `true`, you will get:
 If you create an invalid Ingress, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create an Ingress `cafe-ingress-with-annotations`, with an annotation `nginx.org/redirect-to-https` set to `yes please` instead of `true`, you will get:
 
 ```shell
 kubectl describe ing cafe-ingress-with-annotations
+```
+```text
 ```
 ```text
 Events:
@@ -87,7 +103,9 @@ Events:
 Note how the events section includes a Warning event with the Rejected reason.
 
 {{< note >}} If you make an existing Ingress invalid, NGINX Ingress Controller will reject it and remove the corresponding configuration from NGINX. {{< /note >}}
+{{< note >}} If you make an existing Ingress invalid, NGINX Ingress Controller will reject it and remove the corresponding configuration from NGINX. {{< /note >}}
 
+The `nginx.com/jwt-token` Ingress annotation has limited validation.
 The `nginx.com/jwt-token` Ingress annotation has limited validation.
 
 ## Summary of Annotations
@@ -95,9 +113,12 @@ The `nginx.com/jwt-token` Ingress annotation has limited validation.
 The table below summarizes the available annotations.
 
 {{< note >}} Annotations that start with `nginx.com` are only supported with NGINX Plus. {{< /note >}}
+{{< note >}} Annotations that start with `nginx.com` are only supported with NGINX Plus. {{< /note >}}
 
 ### General customization
+### General customization
 
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
@@ -116,6 +137,7 @@ The table below summarizes the available annotations.
 ### Request URI/Header Manipulation
 
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
 | *nginx.org/proxy-hide-headers* | *proxy-hide-headers* | Sets the value of one or more  [proxy_hide_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header) directives. Example: ``"nginx.org/proxy-hide-headers": "header-a,header-b"* | N/A |  |
@@ -125,6 +147,7 @@ The table below summarizes the available annotations.
 
 ### Auth and SSL/TLS
 
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
@@ -145,14 +168,20 @@ The table below summarizes the available annotations.
 ### Listeners
 
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
 | *nginx.org/listen-ports* | N/A | Configures HTTP ports that NGINX will listen on. | *[80]* |  |
 | *nginx.org/listen-ports-ssl* | N/A | Configures HTTPS ports that NGINX will listen on. | *[443]* |  |
 {{</bootstrap-table>}}
+| *nginx.org/listen-ports* | N/A | Configures HTTP ports that NGINX will listen on. | *[80]* |  |
+| *nginx.org/listen-ports-ssl* | N/A | Configures HTTPS ports that NGINX will listen on. | *[443]* |  |
+{{</bootstrap-table>}}
 
 ### Backend services (Upstreams)
+### Backend services (Upstreams)
 
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
@@ -176,6 +205,7 @@ The table below summarizes the available annotations.
 ### Rate limiting
 
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
 | *nginx.org/limit-req-rate* | N/A | Enables request-rate-limiting for this ingress by creating a [limit_req_zone](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) and matching [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) for each location. All servers/locations of one ingress share the same zone. Must have unit r/s or r/m. | N/A | 200r/s |
@@ -189,20 +219,39 @@ The table below summarizes the available annotations.
 | *nginx.org/limit-req-reject-code* | N/A | Sets the status code to return in response to rejected requests. Must fall into the range 400..599. | 429 | 503 |
 | *nginx.org/limit-req-scale* | N/A | Enables a constant rate-limit by dividing the configured rate by the number of nginx-ingress pods currently serving traffic. This adjustment ensures that the rate-limit remains consistent, even as the number of nginx-pods fluctuates due to autoscaling. Note: This will not work properly if requests from a client are not evenly distributed accross all ingress pods (sticky sessions, long lived TCP-Connections with many requests etc.). In such cases using NGINX+'s zone-sync feature instead would give better results. | false | true |
 {{</bootstrap-table>}}
+| *nginx.org/limit-req-rate* | N/A | Enables request-rate-limiting for this ingress by creating a [limit_req_zone](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) and matching [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) for each location. All servers/locations of one ingress share the same zone. Must have unit r/s or r/m. | N/A | 200r/s |
+| *nginx.org/limit-req-key* | N/A | The key to which the rate limit is applied. Can contain text, variables, or a combination of them. Variables must be surrounded by ${}. | ${binary_remote_addr} | ${binary_remote_addr} |
+| *nginx.org/limit-req-zone-size* | N/A | Configures the size of the created [limit_req_zone](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone). | 10m | 20m |
+| *nginx.org/limit-req-delay* | N/A | Configures the delay-parameter of the [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) directive. | 0 | 100 |
+| *nginx.org/limit-req-no-delay* | N/A | Configures the nodelay-parameter of the [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) directive. | false | true |
+| *nginx.org/limit-req-burst* | N/A | Configures the burst-parameter of the [limit_req](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) directive. | N/A | 100 |
+| *nginx.org/limit-req-dry-run* | N/A | Enables the dry run mode. In this mode, the rate limit is not actually applied, but the number of excessive requests is accounted as usual in the shared memory zone. | false | true |
+| *nginx.org/limit-req-log-level* | N/A | Sets the desired logging level for cases when the server refuses to process requests due to rate exceeding, or delays request processing. Allowed values are info, notice, warn or error. | error | info |
+| *nginx.org/limit-req-reject-code* | N/A | Sets the status code to return in response to rejected requests. Must fall into the range 400..599. | 429 | 503 |
+| *nginx.org/limit-req-scale* | N/A | Enables a constant rate-limit by dividing the configured rate by the number of nginx-ingress pods currently serving traffic. This adjustment ensures that the rate-limit remains consistent, even as the number of nginx-pods fluctuates due to autoscaling. Note: This will not work properly if requests from a client are not evenly distributed accross all ingress pods (sticky sessions, long lived TCP-Connections with many requests etc.). In such cases using NGINX+'s zone-sync feature instead would give better results. | false | true |
+{{</bootstrap-table>}}
 
 ### Snippets and custom templates
+### Snippets and custom templates
 
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
 | *nginx.org/location-snippets* | *location-snippets* | Sets a custom snippet in location context. | N/A |  |
 | *nginx.org/server-snippets* | *server-snippets* | Sets a custom snippet in server context. | N/A |  |
 {{</bootstrap-table>}}
+| *nginx.org/location-snippets* | *location-snippets* | Sets a custom snippet in location context. | N/A |  |
+| *nginx.org/server-snippets* | *server-snippets* | Sets a custom snippet in server context. | N/A |  |
+{{</bootstrap-table>}}
 
+### App Protect WAF {#app-protect}
 ### App Protect WAF {#app-protect}
 
 {{< note >}} The App Protect annotations only work if the App Protect WAF module is [installed]({{< relref "installation/integrations/app-protect-waf/installation.md" >}}). {{< /note >}}
+{{< note >}} The App Protect annotations only work if the App Protect WAF module is [installed]({{< relref "installation/integrations/app-protect-waf/installation.md" >}}). {{< /note >}}
 
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
@@ -216,7 +265,9 @@ The table below summarizes the available annotations.
 ### App Protect DoS
 
 {{< note >}} The App Protect DoS annotations only work if the App Protect DoS module is [installed]({{< relref "installation/integrations/app-protect-dos/installation.md" >}}). {{< /note >}}
+{{< note >}} The App Protect DoS annotations only work if the App Protect DoS module is [installed]({{< relref "installation/integrations/app-protect-dos/installation.md" >}}). {{< /note >}}
 
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |

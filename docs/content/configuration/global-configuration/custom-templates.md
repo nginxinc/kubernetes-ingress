@@ -3,7 +3,9 @@ docs: DOCS-587
 doctypes:
 - ''
 title: Custom templates
+title: Custom templates
 toc: true
+weight: 500
 weight: 500
 ---
 

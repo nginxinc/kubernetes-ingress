@@ -5,6 +5,7 @@ doctypes:
 title: Security recommendations
 toc: true
 weight: 300
+weight: 300
 ---
 
 F5 NGINX Ingress Controller follows Kubernetes best practices: this page outlines configuration specific to NGINX Ingress Controller you may require, including links to examples in the [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples).
@@ -17,6 +18,7 @@ For general guidance, we recommend the official Kubernetes documentation for [Se
 
 Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to control the resources and operations available to different types of users. 
 
+NGINX Ingress Controller requires RBAC to configure a [ServiceUser](https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts), and provides least privilege access in its standard deployment configurations:
 NGINX Ingress Controller requires RBAC to configure a [ServiceUser](https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts), and provides least privilege access in its standard deployment configurations:
 
 - [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/deployments/rbac/rbac.yaml)
@@ -94,6 +96,8 @@ Snippets are disabled by default. To use snippets, set the [**enable-snippets**]
 For more information, read the following: 
 
 - [Advanced configuration using Snippets]({{< relref "/configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) 
+- [Advanced configuration using Snippets]({{< relref "/configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) 
 - [Using Snippets with VirtualServer/VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md#using-snippets" >}})
 - [Using Snippets with TransportServer]({{< relref "/configuration/transportserver-resource.md#using-snippets" >}})
+- [ConfigMap snippets and custom templates]({{< relref "configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}})
 - [ConfigMap snippets and custom templates]({{< relref "configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}})
