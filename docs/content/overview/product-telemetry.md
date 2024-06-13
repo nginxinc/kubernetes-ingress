@@ -6,7 +6,7 @@ weight: 500
 
 Learn why, what and how F5 NGINX Ingress Controller collects telemetry.
 
---
+---
 
 ## Overview
 
