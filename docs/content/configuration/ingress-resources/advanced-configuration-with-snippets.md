@@ -2,16 +2,34 @@
 docs: DOCS-592
 doctypes:
 - ''
-title: Advanced Configuration with Snippets
+title: Advanced configuration with Snippets
 toc: true
-weight: 1800
+weight: 400
 ---
 
-Snippets allow you to insert raw NGINX config into different contexts of the NGINX configurations that NGINX Ingress Controller generates. Snippets are intended for advanced NGINX users who need more control over the generated NGINX configuration, and can be used in cases where Annotations and ConfigMap entries would not apply. 
+Snippets allow you to insert raw NGINX config into different contexts of the NGINX configurations that F5 NGINX Ingress Controller generates. 
 
-Snippets are also available through the [ConfigMap]({{< relref "/configuration/global-configuration/configmap-resource.md" >}})
+Snippets are intended for advanced NGINX users who need more control over the generated NGINX configuration, and can be used in cases where Annotations and ConfigMap entries would not apply. 
 
-## Using Snippets
+
+
+## Disadvantages of snippets
+
+Snippets are configured [using Annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#snippets-and-custom-templates" >}}), but are disabled by default due to their complexity. They are also available through the [ConfigMap]({{< relref "/configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}}) resource.
+
+To use snippets, set the [`enable-snippets`]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-enable-snippets" >}}) command-line argument.
+
+Snippets have the following disadvantages:
+
+- *Complexity*. Snippets require you to:
+  - Understand NGINX configuration primitives and implement a correct NGINX configuration.
+  - Understand how NGINX Ingress Controller generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
+- *Decreased robustness*. An incorrect snippet can invalidate NGINX configuration, causing reload failures. Until the snippet is fixed, it will prevent any new configuration updates, including updates for the other Ingress resources.
+- *Security implications*. Snippets give access to NGINX configuration primitives, which are not validated by NGINX Ingress Controller. For example, a snippet can configure NGINX to serve the TLS certificates and keys used for TLS termination for Ingress resources.
+
+{{< note >}} If the NGINX configuration includes an invalid snippet, NGINX will continue to operate with the last valid configuration. {{< /note >}} 
+
+## Using snippets
 
 The example below shows how to use snippets to customize the NGINX configuration template using annotations.
 
@@ -48,7 +66,9 @@ spec:
               number: 80
 ```
 
-Generated NGINX configuration:
+These snippets generate the following NGINX configuration:
+
+{{< note >}} The example is shortened for conciseness. {{< /note >}} 
 
 ```nginx
 server {
@@ -79,32 +99,13 @@ server {
 }
 ```
 
-**Note**: The generated configs are truncated for the clarity of the example.
-
-## Summary of Snippets
-
-See the [snippets annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#snippets-and-custom-templates) documentation for more information.
-However, because of the disadvantages described below, snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
-
-## Disadvantages of Using Snippets
-
-Snippets have the following disadvantages:
-
-- *Complexity*. To use snippets, you will need to:
-  - Understand NGINX configuration primitives and implement a correct NGINX configuration.
-  - Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
-- *Decreased robustness*. An incorrect snippet makes the NGINX config invalid, which causes reload failures. This will prevent any new configuration updates, including updates for the other Ingress resources, until the snippet is fixed.
-- *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller. For example, a snippet can configure NGINX to serve the TLS certificates and keys used for TLS termination for Ingress resources.
-
-> **Note**: If the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
-
 ## Troubleshooting
 
-If a snippet includes an invalid NGINX configuration, the Ingress Controller will fail to reload NGINX. The error will be reported in the Ingress Controller logs and an event with the error will be associated with the Ingress resource:
+If a snippet includes an invalid NGINX configuration, NGINX Ingress Controller will fail to reload NGINX. The error will be reported in NGINX Ingress Controller logs and an event with the error will be associated with the Ingress resource:
 
 An example of an error from the logs:
 
-```shell
+```text
 [emerg] 31#31: unknown directive "badd_header" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54
 Event(v1.ObjectReference{Kind:"Ingress", Namespace:"default", Name:"cafe-ingress-with-snippets", UID:"f9656dc9-63a6-41dd-a499-525b0e0309bb", APIVersion:"extensions/v1beta1", ResourceVersion:"2322030", FieldPath:""}): type: 'Warning' reason: 'AddedOrUpdatedWithError' Configuration for default/cafe-ingress-with-snippets was added or updated, but not applied: Error reloading NGINX for default/cafe-ingress-with-snippets: nginx reload failed: Command /usr/sbin/nginx -s reload stdout: ""
 stderr: "nginx: [emerg] unknown directive \"badd_header\" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54\n"
@@ -113,7 +114,7 @@ finished with error: exit status 1
 
 An example of an event with an error (you can view events associated with the Ingress by running `kubectl describe -n nginx-ingress ingress nginx-ingress`):
 
-```shell
+```text
 Events:
 Type     Reason                   Age                From                      Message
 ----     ------                   ----               ----                      -------

@@ -2,19 +2,21 @@
 docs: DOCS-598
 doctypes:
 - ''
-title: TransportServer Resource
+title: TransportServer resources
 toc: true
-weight: 1900
+weight: 700
 ---
+
+This document is reference material for the TransportServer resource used by F5 NGINX Ingress Controller. 
 
 The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/custom-resources) folder in our GitHub repo.
+The GitHub repository has [examples of the resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/custom-resources) for specific use cases.
 
 ## Prerequisites
 
-- For TCP and UDP, the TransportServer resource must be used in conjunction with the [GlobalConfiguration resource](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource), which must be created separately.
-- For TLS Passthrough, make sure to enable the [`-enable-tls-passthrough`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-tls-passthrough) command-line argument of the Ingress Controller.
+- For TCP and UDP, the TransportServer resource must be used in conjunction with the [GlobalConfiguration resource]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}), which must be created separately.
+- For TLS Passthrough, make sure to enable the [`-enable-tls-passthrough`]({{< relref "configuration/global-configuration/command-line-arguments#cmdoption-enable-tls-passthrough.md" >}}) command-line argument of NGINX Ingress Controller.
 
 ## TransportServer Specification
 
@@ -83,7 +85,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
       pass: secure-app
   ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``listener`` | The listener on NGINX that will accept incoming connections/datagrams. | [listener](#listener) | Yes |
@@ -95,13 +97,13 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 |``ingressClassName`` | Specifies which Ingress Controller must handle the TransportServer resource. | ``string`` | No |
 |``streamSnippets`` | Sets a custom snippet in the ``stream`` context. | ``string`` | No |
 |``serverSnippets`` | Sets a custom snippet in the ``server`` context. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 \* -- Required for TLS Passthrough load balancing.
 
 ### Listener
 
-The listener field references a listener that NGINX will use to accept incoming traffic for the TransportServer. For TCP and UDP, the listener must be defined in the [GlobalConfiguration resource](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource). When referencing a listener, both the name and the protocol must match. For TLS Passthrough, use the built-in listener with the name `tls-passthrough` and the protocol `TLS_PASSTHROUGH`.
+The listener field references a listener that NGINX will use to accept incoming traffic for the TransportServer. For TCP and UDP, the listener must be defined in the [GlobalConfiguration resource]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}). When referencing a listener, both the name and the protocol must match. For TLS Passthrough, use the built-in listener with the name `tls-passthrough` and the protocol `TLS_PASSTHROUGH`.
 
 An example:
 
@@ -111,26 +113,26 @@ listener:
   protocol: UDP
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the listener. | ``string`` | Yes |
 |``protocol`` | The protocol of the listener. | ``string`` | Yes |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### TLS
 
-The tls field defines TLS configuration for a TransportServer. Please note the current implementation supports TLS termination on multiple ports, where each application owns a dedicated port - the Ingress Controller terminates TLS connections on each port, where each application uses its own cert/key, and routes connections to appropriate application (service) based on that incoming port (any TLS connection regardless of the SNI on a port will be routed to the application that corresponds to that port). An example configuration is shown below:
+The tls field defines TLS configuration for a TransportServer. Please note the current implementation supports TLS termination on multiple ports, where each application owns a dedicated port - NGINX Ingress Controller terminates TLS connections on each port, where each application uses its own cert/key, and routes connections to appropriate application (service) based on that incoming port (any TLS connection regardless of the SNI on a port will be routed to the application that corresponds to that port). An example configuration is shown below:
 
 ```yaml
 secret: cafe-secret
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``secret`` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the TransportServer. The secret must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Upstream
 
@@ -146,7 +148,7 @@ failTimeout: 30s
 loadBalancingMethod: least_conn
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes |
@@ -159,7 +161,7 @@ loadBalancingMethod: least_conn
 |``loadBalancingMethod`` | The method used to load balance the upstream servers. By default, connections are distributed between the servers using a weighted round-robin balancing method. See the [upstream](http://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#upstream) section for available methods and their details. | ``string`` | No |
 |``backup`` | The name of the backup service of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname). This will be used when the primary servers are unavailable. Note: The parameter cannot be used along with the ``random`` , ``hash`` or ``ip_hash`` load balancing methods. | ``string`` | No |
 |``backupPort`` | The port of the backup service. The backup port is required if the backup service name is provided. The port must fall into the range ``1..65535``. | ``uint16`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Upstream.Healthcheck
 
@@ -179,9 +181,9 @@ healthCheck:
   port: 8080
 ```
 
-Note: This feature is supported only in NGINX Plus.
+{{< note >}} This feature is only supported with NGINX Plus. {{< /note >}}
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables a health check for an upstream server. The default is ``false``. | ``boolean`` | No |
@@ -192,7 +194,7 @@ Note: This feature is supported only in NGINX Plus.
 |``passes`` | The number of consecutive passed health checks of a particular upstream server after which the server will be considered healthy. The default is ``1``. | ``integer`` | No |
 |``port`` | The port used for health check requests. By default, the [server port is used](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#health_check_port). Note: in contrast with the port of the upstream, this port is not a service port, but a port of a pod. | ``integer`` | No |
 |``match`` | Controls the data to send and the response to expect for the healthcheck. | [match](#upstreamhealthcheckmatch) | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Upstream.Healthcheck.Match
 
@@ -208,12 +210,12 @@ Both `send` and `expect` fields can contain hexadecimal literals with the prefix
 
 See the [match](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#match) directive for details.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``send`` | A string to send to an upstream server. | ``string`` | No |
-|``expect`` | A literal string or a regular expression that the data obtained from the server should match. The regular expression is specified with the preceding ``~*`` modifier (for case-insensitive matching), or the ``~`` modifier (for case-sensitive matching). The Ingress Controller validates a regular expression using the RE2 syntax. | ``string`` | No |
-{{% /table %}}
+|``expect`` | A literal string or a regular expression that the data obtained from the server should match. The regular expression is specified with the preceding ``~*`` modifier (for case-insensitive matching), or the ``~`` modifier (for case-sensitive matching). NGINX Ingress Controller validates a regular expression using the RE2 syntax. | ``string`` | No |
+{{</bootstrap-table>}}
 
 ### UpstreamParameters
 
@@ -229,7 +231,7 @@ upstreamParameters:
   nextUpstreamTries: 1
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``udpRequests`` | The number of datagrams, after receiving which, the next datagram from the same client starts a new session. See the [proxy_requests](https://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_requests) directive. The default is ``0``. | ``int`` | No |
@@ -238,7 +240,7 @@ upstreamParameters:
 |``nextUpstream`` | If a connection to the proxied server cannot be established, determines whether a client connection will be passed to the next server. See the [proxy_next_upstream](http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream) directive. The default is ``true``. | bool | No |
 |``nextUpstreamTries`` | The number of tries for passing a connection to the next server. See the [proxy_next_upstream_tries](http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream_tries) directive. The default is ``0``. | ``int`` | No |
 |``nextUpstreamTimeout`` | The time allowed to pass a connection to the next server. See the [proxy_next_upstream_timeout](http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream_timeout) directive. The default us ``0``. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### SessionParameters
 
@@ -249,11 +251,11 @@ sessionParameters:
   timeout: 50s
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``timeout`` | The timeout between two successive read or write operations on client or proxied server connections. See [proxy_timeout](http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_timeout) directive. The default is ``10m``. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Action
 
@@ -266,11 +268,11 @@ action:
   pass: dns-app
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``pass`` | Passes connections/datagrams to an upstream. The upstream with that name must be defined in the resource. | ``string`` | Yes |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ## Using TransportServer
 
@@ -280,7 +282,8 @@ For example, the following command creates a TransportServer resource defined in
 
 ```shell
 kubectl apply -f transport-server-passthrough.yaml
-
+```
+```text
 transportserver.k8s.nginx.org/secure-app created
 ```
 
@@ -288,7 +291,8 @@ You can get the resource by running:
 
 ```shell
 kubectl get transportserver secure-app
-
+```
+```text
 NAME         AGE
 secure-app   46sm
 ```
@@ -332,28 +336,16 @@ spec:
     port: 80
 ```
 
-Snippets are intended to be used by advanced NGINX users who need more control over the generated NGINX configuration.
+{{< note >}} To configure snippets in the `stream` context, use `stream-snippets` ConfigMap key. {{< /note >}} 
 
-However, because of the disadvantages described below, snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
-
-Disadvantages of using snippets:
-
-- *Complexity*. To use snippets, you will need to:
-  - Understand NGINX configuration primitives and implement a correct NGINX configuration.
-  - Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
-- *Decreased robustness*. An incorrect snippet makes the NGINX config invalid which will lead to a failed reload. This will prevent any new configuration updates, including updates for the other TransportServer resource until the snippet is fixed.
-- *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller.
-
-> Note: during a period when the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
-
-> Note: to configure snippets in the `stream` context, use `stream-snippets` ConfigMap key.
+For additional information, view the [Advanced configuration with Snippets]({{< relref "configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) topic.
 
 ### Validation
 
 Two types of validation are available for the TransportServer resource:
 
 - *Structural validation* by the `kubectl` and Kubernetes API server.
-- *Comprehensive validation* by the Ingress Controller.
+- *Comprehensive validation* by NGINX Ingress Controller.
 
 #### Structural Validation
 
@@ -365,31 +357,34 @@ If you try to create (or update) a resource that violates the structural schema 
 
     ```shell
     kubectl apply -f transport-server-passthrough.yaml
-
-      error: error validating "transport-server-passthrough.yaml": error validating data: ValidationError(TransportServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.TransportServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
+    ```
+    ```text
+    error: error validating "transport-server-passthrough.yaml": error validating data: ValidationError(TransportServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.TransportServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
 - Example of Kubernetes API server validation:
 
     ```shell
     kubectl apply -f transport-server-passthrough.yaml --validate=false
-
-      The TransportServer "secure-app" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
-      spec.upstreams.port in body must be of type integer: "string"
+    ```
+    ```text
+    The TransportServer "secure-app" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
+    spec.upstreams.port in body must be of type integer: "string"
     ```
 
-If a resource is not rejected (it doesn't violate the structural schema), the Ingress Controller will validate it further.
+If a resource is not rejected (it doesn't violate the structural schema), NGINX Ingress Controller will validate it further.
 
 #### Comprehensive Validation
 
-The Ingress Controller validates the fields of a TransportServer resource. If a resource is invalid, the Ingress Controller will reject it: the resource will continue to exist in the cluster, but the Ingress Controller will ignore it.
+NGINX Ingress Controller validates the fields of a TransportServer resource. If a resource is invalid, NGINX Ingress Controller will reject it: the resource will continue to exist in the cluster, but NGINX Ingress Controller will ignore it.
 
-You can check if the Ingress Controller successfully applied the configuration for a TransportServer. For our example `secure-app` TransportServer, we can run:
+You can check if NGINX Ingress Controller successfully applied the configuration for a TransportServer. For our example `secure-app` TransportServer, we can run:
 
 ```shell
 kubectl describe ts secure-app
-
-. . .
+```
+```text
+...
 Events:
   Type    Reason          Age   From                      Message
   ----    ------          ----  ----                      -------
@@ -398,12 +393,13 @@ Events:
 
 Note how the events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
 
-If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a TransportServer `secure-app` with a pass action that references a non-existing upstream, you will get  :
+If you create an invalid resource, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create a TransportServer `secure-app` with a pass action that references a non-existing upstream, you will get  :
 
 ```shell
 kubectl describe ts secure-app
-
-. . .
+```
+```text
+...
 Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
@@ -412,8 +408,8 @@ Events:
 
 Note how the events section includes a Warning event with the Rejected reason.
 
-**Note**: If you make an existing resource invalid, the Ingress Controller will reject it and remove the corresponding configuration from NGINX.
+**Note**: If you make an existing resource invalid, NGINX Ingress Controller will reject it and remove the corresponding configuration from NGINX.
 
 ## Customization via ConfigMap
 
-The [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) keys (except for `stream-snippets`, `stream-log-format`, `resolver-addresses`, `resolver-ipv6`, `resolver-valid` and `resolver-timeout`) do not affect TransportServer resources.
+The [ConfigMap]({{< relref "configuration/global-configuration/configmap-resource.md" >}}) keys (except for `stream-snippets`, `stream-log-format`, `resolver-addresses`, `resolver-ipv6`, `resolver-valid` and `resolver-timeout`) do not affect TransportServer resources.
