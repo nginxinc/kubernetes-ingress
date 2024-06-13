@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import pytest
 import requests
+from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import (
@@ -97,6 +98,16 @@ class TestAPIKeyAuthPolicies:
             "k8s.nginx.org", "v1", test_namespace, "policies", "api-key-policy"
         )
         print(result)
+
+        print("Policies CRD")
+        api_instance = kube_apis.api_extensions_v1
+        name = "policies.k8s.nginx.org"
+        try:
+            api_response = api_instance.read_custom_resource_definition(name)
+            print(api_response)
+        except ApiException as e:
+            print("Exception when calling ApiextensionsV1Api->read_custom_resource_definition: %s\n" % e)
+            print("namespaced custom object")
 
         apikey_policy_2_details = self.setup_single_policy(
             kube_apis,
