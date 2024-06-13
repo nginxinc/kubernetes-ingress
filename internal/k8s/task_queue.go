@@ -85,9 +85,6 @@ func (tq *taskQueue) RequeueAfter(t task, err error, after time.Duration) {
 
 // Worker processes work in the queue through sync.
 func (tq *taskQueue) worker() {
-	if tq == nil {
-		return
-	}
 	for {
 		t, quit := tq.queue.Get()
 		if quit {
