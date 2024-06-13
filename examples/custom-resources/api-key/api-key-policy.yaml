@@ -7,8 +7,6 @@ spec:
     suppliedIn:
       header:
       - "X-header-name"
-      - "apikey"
-      - "some-other-header"
       query:
       - "queryName"
-    clientSecret: api-key-client-secret-1
+    clientSecret: api-key-client-secret
