@@ -53,7 +53,7 @@ Here is a breakdown of what this Ingress resource definition means:
 
 To learn more about the Ingress resource, view [the official Kubernetes documentation for Ingress resources](https://kubernetes.io/docs/concepts/services-networking/ingress/).
 
-{{< note >}} For complete instructions on deploying Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/complete-example) inthe GitHub repository. {{< /note >}}
+{{< note >}} For complete instructions on deploying Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/complete-example) in the GitHub repository. {{< /note >}}
 
 
 ## New features available in Kubernetes 1.18
@@ -110,7 +110,7 @@ Starting from Kubernetes 1.18, you can use the following new features:
 NGINX Ingress Controller imposes the following restrictions on Ingress resources:
 
 - When defining an Ingress resource, the `host` field is required.
-- The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion]({{< relref "configuration/ingress-resources/cross-namespace-configuration.md" >}}). See also [Handling Host and Listener Collisions]({{< relref "configuration/handling-host-and-listener-collisions.md" >}}).
+- The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion]({{< relref "configuration/ingress-resources/cross-namespace-configuration.md" >}}). View the [Host and Listener collisions]({{< relref "configuration/host-and-listener-collisions.md" >}}) topic for more information.
 - The `path` field in `spec.rules[].http.paths[]` is required for `Exact` and `Prefix` `pathTypes`.
 - The ImplementationSpecific `pathType` is treated as equivalent to `Prefix` `pathType`, with the exception that when this `pathType` is configured, the `path` field in `spec.rules[].http.paths[]` is not mandatory. `path` defaults to `/` if not set but the `pathType` is set to ImplementationSpecific.
 
