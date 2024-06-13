@@ -2,18 +2,22 @@
 docs: DOCS-599
 doctypes:
 - ''
-title: VirtualServer and VirtualServerRoute Resources
+title: VirtualServer and VirtualServerRoute resources
 toc: true
 weight: 1600
 ---
+
+This document is reference material for the VirtualServer and VirtualServerRoute resources used by F5 NGINX Ingress Controller. 
 
 VirtualServer and VirtualServerRoute resources are load balancing configurations recommended as an alternative to the Ingress resource.
 
 They enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/custom-resources) folder in our GitHub repo.
+The GitHub repository has [examples of the resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/custom-resources) for specific use cases.
 
-## VirtualServer Specification
+---
+
+## VirtualServer specification
 
 The VirtualServer resource defines load balancing configuration for a domain name, such as `example.com`. Below is an example of such configuration:
 
@@ -52,7 +56,7 @@ spec:
       pass: tea
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
@@ -68,7 +72,7 @@ spec:
 |``internalRoute`` | Specifies if the VirtualServer resource is an internal route or not. | ``boolean`` | No |
 |``http-snippets`` | Sets a custom snippet in the http context. | ``string`` | No |
 |``server-snippets`` | Sets a custom snippet in server context. Overrides the ``server-snippets`` ConfigMap key. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServer.TLS
 
@@ -80,13 +84,13 @@ redirect:
   enable: true
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``secret`` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer. If the secret is not specified but [wildcard TLS secret](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-wildcard-tls-secret) is configured, NGINX will use the wildcard secret for TLS termination. | ``string`` | No |
 |``redirect`` | The redirect configuration of the TLS for a VirtualServer. | [tls.redirect](#virtualservertlsredirect) | No | ### VirtualServer.TLS.Redirect |
 |``cert-manager`` | The cert-manager configuration of the TLS for a VirtualServer. | [tls.cert-manager](#virtualservertlscertmanager) | No | ### VirtualServer.TLS.CertManager |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServer.TLS.Redirect
 
@@ -98,13 +102,13 @@ code: 301
 basedOn: scheme
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables a TLS redirect for a VirtualServer. The default is ``False``. | ``boolean`` | No |
 |``code`` | The status code of a redirect. The allowed values are: ``301`` , ``302`` , ``307`` , ``308``.  The default is ``301``. | ``int`` | No |
 |``basedOn`` | The attribute of a request that NGINX will evaluate to send a redirect. The allowed values are ``scheme`` (the scheme of the request) or ``x-forwarded-proto`` (the ``X-Forwarded-Proto`` header of the request). The default is ``scheme``. | ``string`` | No | ### VirtualServer.Policy |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServer.TLS.CertManager
 
@@ -115,7 +119,7 @@ cert-manager:
   cluster-issuer: "my-issuer-name"
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``issuer`` |  the name of an Issuer. An Issuer is a cert-manager resource which describes the certificate authority capable of signing certificates. The Issuer must be in the same namespace as the VirtualServer resource. Please note that one of `issuer` and `cluster-issuer` are required, but they are mutually exclusive - one and only one must be defined. | ``string`` | No |
@@ -127,7 +131,7 @@ cert-manager:
 |``renew-before`` |  this annotation allows you to configure spec.renewBefore field for the Certificate to be generated. Must be specified using a [Go time.Duration](https://pkg.go.dev/time#ParseDuration) string format, which does not allow the d (days) suffix. You must specify these values using s, m, and h suffixes instead. | ``string`` | No |
 |``usages`` |  This field allows you to configure spec.usages field for the Certificate to be generated. Pass a string with comma-separated values i.e. ``key agreement,digital signature, server auth``. An exhaustive list of supported key usages can be found in the [the cert-manager api documentation](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.KeyUsage). | ``string`` | No |
 |``issue-temp-cert`` | When ``true``, ask cert-manager for a [temporary self-signed certificate](https://cert-manager.io/docs/usage/certificate/#temporary-certificates-while-issuing) pending the issuance of the Certificate. This allows HTTPS-only servers to use ACME HTTP01 challenges when the TLS secret does not exist yet. | ``boolean`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServer.Listener
 The listener field defines a custom HTTP and/or HTTPS listener.
@@ -138,12 +142,12 @@ http: http-8083
 https: https-8443
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``http`` |  The name of am HTTP listener defined in a [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/) resource. | ``string`` | No |
 |``https`` |  The name of an HTTPS listener defined in a [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/) resource. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServer.ExternalDNS
 
@@ -153,7 +157,7 @@ The externalDNS field configures controlling DNS records dynamically for Virtual
 enable: true
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables ExternalDNS integration for a VirtualServer resource. The default is ``false``. | ``string`` | No |
@@ -161,7 +165,7 @@ enable: true
 |``providerSpecific`` | Configure provider specific properties which holds the name and value of a configuration which is specific to individual DNS providers. | [[]ProviderSpecific](#virtualserverexternaldnsproviderspecific) | No |
 |``recordTTL`` | TTL for the DNS record. This defaults to 0 if not defined. See [the ExternalDNS TTL documentation for provider-specific defaults](https://kubernetes-sigs.github.io/external-dns/v0.12.0/ttl/#providers) | ``int64`` | No |
 |``recordType`` | The record Type that should be created, e.g. "A", "AAAA", "CNAME". This is automatically computed based on the external endpoints if not defined. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServer.ExternalDNS.ProviderSpecific
 
@@ -174,12 +178,12 @@ The providerSpecific field of the externalDNS block allows the specification of 
   value: my-value2
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the key value pair. | ``string`` | Yes |
 |``value`` | The value of the key value pair. | ``string`` | Yes |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServer.Policy
 
@@ -189,12 +193,12 @@ The policy field references a [Policy resource](/nginx-ingress-controller/config
 name: access-control
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of a policy. If the policy doesn't exist or invalid, NGINX will respond with an error response with the `500` status code. | ``string`` | Yes |
 |``namespace`` | The namespace of a policy. If not specified, the namespace of the VirtualServer resource is used. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServer.Route
 
@@ -206,7 +210,7 @@ The route defines rules for matching client requests to actions like passing a r
     pass: tea
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``path`` | The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix ( ``/`` , ``/path`` ), an exact match ( ``=/exact/match`` ), a case insensitive regular expression ( ``~*^/Bar.*\.jpg`` ) or a case sensitive regular expression ( ``~^/foo.*\.jpg`` ). In the case of a prefix (must start with ``/`` ) or an exact match (must start with ``=`` ), the path must not include any whitespace characters, ``{`` , ``}`` or ``;``. In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all routes of the VirtualServer. Check the [location](https://nginx.org/en/docs/http/ngx_http_core_module.html#location) directive for more information. | ``string`` | Yes |
@@ -218,11 +222,11 @@ The route defines rules for matching client requests to actions like passing a r
 |``route`` | The name of a VirtualServerRoute resource that defines this route. If the VirtualServerRoute belongs to a different namespace than the VirtualServer, you need to include the namespace. For example, ``tea-namespace/tea``. | ``string`` | No |
 |``errorPages`` | The custom responses for error codes. NGINX will use those responses instead of returning the error responses from the upstream servers or the default responses generated by NGINX. A custom response can be a redirect or a canned response. For example, a redirect to another URL if an upstream server responded with a 404 status code. | [[]errorPage](#errorpage) | No |
 |``location-snippets`` | Sets a custom snippet in the location context. Overrides the ``location-snippets`` ConfigMap key. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 \* -- a route must include exactly one of the following: `action`, `splits`, or `route`.
 
-## VirtualServerRoute Specification
+## VirtualServerRoute specification
 
 The VirtualServerRoute resource defines a route for a VirtualServer. It can consist of one or multiple subroutes. The VirtualServerRoute is an alternative to [Mergeable Ingress types](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration).
 
@@ -278,14 +282,14 @@ spec:
 
 Note that each subroute must have a `path` that starts with the same prefix (here `/coffee`), which is defined in the route of the VirtualServer. Additionally, the `host` in the VirtualServerRoute must be the same as the `host` of the VirtualServer.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes. Must be the same as the ``host`` of the VirtualServer that references this resource. | ``string`` | Yes |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
 |``subroutes`` | A list of subroutes. | [[]subroute](#virtualserverroutesubroute) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServerRoute resource. Must be the same as the ``ingressClassName`` of the VirtualServer that references this resource. | ``string``_ | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### VirtualServerRoute.Subroute
 
@@ -297,7 +301,7 @@ action:
   pass: coffee
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``path`` | The path of the subroute. NGINX will match it against the URI of a request. Possible values are: a prefix ( ``/`` , ``/path`` ), an exact match ( ``=/exact/match`` ), a case insensitive regular expression ( ``~*^/Bar.*\.jpg`` ) or a case sensitive regular expression ( ``~^/foo.*\.jpg`` ). In the case of a prefix, the path must start with the same path as the path of the route of the VirtualServer that references this resource. In the case of an exact or regex match, the path must be the same as the path of the route of the VirtualServer that references this resource. A matching path of the route of the VirtualServer but in different type is not accepted, e.g. a regex path (`~/match`) cannot be used with a prefix path in VirtualServer (`/match`) In the case of a prefix or an exact match, the path must not include any whitespace characters, ``{`` , ``}`` or ``;``.  In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all subroutes of the VirtualServerRoute. | ``string`` | Yes |
@@ -308,11 +312,11 @@ action:
 |``matches`` | The matching rules for advanced content-based routing. Requires the default ``action`` or ``splits``.  Unmatched requests will be handled by the default ``action`` or ``splits``. | [matches](#match) | No |
 |``errorPages`` | The custom responses for error codes. NGINX will use those responses instead of returning the error responses from the upstream servers or the default responses generated by NGINX. A custom response can be a redirect or a canned response. For example, a redirect to another URL if an upstream server responded with a 404 status code. | [[]errorPage](#errorpage) | No |
 |``location-snippets`` | Sets a custom snippet in the location context. Overrides the ``location-snippets`` of the VirtualServer (if set) or the ``location-snippets`` ConfigMap key. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 \* -- a subroute must include exactly one of the following: `action` or `splits`.
 
-## Common Parts of the VirtualServer and VirtualServerRoute
+## Common VirtualServer and VirtualServerRoute specifications
 
 ### Upstream
 
@@ -342,12 +346,12 @@ tls:
 
 **Note**: The WebSocket protocol is supported without any additional configuration.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes |
 |``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/externalname-services#prerequisites) ). | ``string`` | Yes |
-|``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, the Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No |
+|``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, NGINX Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No |
 |``use-cluster-ip`` | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as NGINX Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP. | ``boolean`` | No |
 |``port`` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``. | ``uint16`` | Yes |
 |``lb-method`` | The load [balancing method](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method). To use the round-robin method, specify ``round_robin``. The default is specified in the ``lb-method`` ConfigMap key. | ``string`` | No |
@@ -373,7 +377,7 @@ tls:
 |``type`` |The type of the upstream. Supported values are ``http`` and ``grpc``. The default is ``http``. For gRPC, it is necessary to enable HTTP/2 in the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners) and configure TLS termination in the VirtualServer. | ``string`` | No |
 |``backup`` | The name of the backup service of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname). This will be used when the primary servers are unavailable. Note: The parameter cannot be used along with the ``random`` , ``hash`` or ``ip_hash`` load balancing methods. | ``string`` | No |
 |``backupPort`` | The port of the backup service. The backup port is required if the backup service name is provided. The port must fall into the range ``1..65535``. | ``uint16`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Upstream.Buffers
 
@@ -386,20 +390,20 @@ size: 8K
 
 See the [proxy_buffers](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers) directive for additional information.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``number`` | Configures the number of buffers. The default is set in the ``proxy-buffers`` ConfigMap key. | ``int`` | Yes |
 |``size`` | Configures the size of a buffer. The default is set in the ``proxy-buffers`` ConfigMap key. | ``string`` | Yes |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Upstream.TLS
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables HTTPS for requests to upstream servers. The default is ``False`` , meaning that HTTP will be used. Note: by default, NGINX will not verify the upstream server certificate. To enable the verification, configure an [EgressMTLS Policy](/nginx-ingress-controller/configuration/policy-resource/#egressmtls). | ``boolean`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Upstream.Queue
 
@@ -414,12 +418,12 @@ See [`queue`](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#queue
 
 Note: This feature is supported only in NGINX Plus.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``size`` | The size of the queue. | ``int`` | Yes |
 |``timeout`` | The timeout of the queue. A request cannot be queued for a period longer than the timeout. The default is ``60s``. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Upstream.Healthcheck
 
@@ -454,7 +458,7 @@ healthCheck:
 
 Note: This feature is supported only in NGINX Plus.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables a health check for an upstream server. The default is ``false``. | ``boolean`` | No |
@@ -475,7 +479,7 @@ Note: This feature is supported only in NGINX Plus.
 |``mandatory`` | Require every newly added server to pass all configured health checks before NGINX Plus sends traffic to it. If this is not specified, or is set to false, the server will be initially considered healthy. When combined with [slow-start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start), it gives a new server more time to connect to databases and “warm up” before being asked to handle their full share of traffic. | ``bool`` | No |
 |``persistent`` | Set the initial “up” state for a server after reload if the server was considered healthy before reload. Enabling persistent requires that the mandatory parameter is also set to `true`. | ``bool`` | No |
 |``keepalive-time`` | Enables [keepalive](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive) connections for health checks and specifies the time during which requests can be processed through one keepalive connection. The default is ``60s``. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Upstream.SessionCookie
 
@@ -502,7 +506,7 @@ See the [`sticky`](https://nginx.org/en/docs/http/ngx_http_upstream_module.html?
 
 Note: This feature is supported only in NGINX Plus.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables session persistence with a session cookie for an upstream server. The default is ``false``. | ``boolean`` | No |
@@ -513,7 +517,7 @@ Note: This feature is supported only in NGINX Plus.
 |``httpOnly`` | Adds the ``HttpOnly`` attribute to the cookie. | ``boolean`` | No |
 |``secure`` | Adds the ``Secure`` attribute to the cookie. | ``boolean`` | No |
 |``samesite`` | Adds the ``SameSite`` attribute to the cookie. The allowed values are: ``strict``, ``lax``, ``none`` | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Header
 
@@ -524,12 +528,12 @@ name: Host
 value: example.com
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the header. | ``string`` | Yes |
 |``value`` | The value of the header. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Action
 
@@ -543,14 +547,14 @@ In the example below, client requests are passed to an upstream `coffee`:
   pass: coffee
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``pass`` | Passes requests to an upstream. The upstream with that name must be defined in the resource. | ``string`` | No |
 |``redirect`` | Redirects requests to a provided URL. | [action.redirect](#actionredirect) | No |
 |``return`` | Returns a preconfigured response. | [action.return](#actionreturn) | No |
 |``proxy`` | Passes requests to an upstream with the ability to modify the request/response (for example, rewrite the URI or modify the headers). | [action.proxy](#actionproxy) | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 \* -- an action must include exactly one of the following: `pass`, `redirect`, `return` or `proxy`.
 
@@ -566,12 +570,12 @@ redirect:
   code: 301
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``url`` | The URL to redirect the request to. Supported NGINX variables: ``$scheme`` , ``$http_x_forwarded_proto`` , ``$request_uri`` , ``$host``. Variables must be enclosed in curly braces. For example: ``${host}${request_uri}``. | ``string`` | Yes |
 |``code`` | The status code of a redirect. The allowed values are: ``301`` , ``302`` , ``307`` , ``308``. The default is ``301``. | ``int`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Action.Return
 
@@ -589,14 +593,14 @@ return:
     value: espresso
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``code`` | The status code of the response. The allowed values are: ``2XX``, ``4XX`` or ``5XX``. The default is ``200``. | ``int`` | No |
 |``type`` | The MIME type of the response. The default is ``text/plain``. | ``string`` | No |
 |``body`` | The body of the response. Supports NGINX variables*. Variables must be enclosed in curly brackets. For example: ``Request is ${request_uri}\n``. | ``string`` | Yes |
 |``headers`` | The custom headers of the response. | [[]Action.Return.Header](#actionreturnheader) | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 \* -- Supported NGINX variables: `$request_uri`, `$request_method`, `$request_body`, `$scheme`, `$http_`, `$args`, `$arg_`, `$cookie_`, `$host`, `$request_time`, `$request_length`, `$nginx_version`, `$pid`, `$connection`, `$remote_addr`, `$remote_port`, `$time_iso8601`, `$time_local`, `$server_addr`, `$server_port`, `$server_name`, `$server_protocol`, `$connections_active`, `$connections_reading`, `$connections_writing` and `$connections_waiting`.
 
@@ -609,12 +613,12 @@ name: x-coffee
 value: espresso
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the header. | ``string`` | Yes |
 |``value`` | The value of the header. | ``string`` | Yes |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Action.Proxy
 
@@ -649,25 +653,25 @@ proxy:
   rewritePath: /
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``upstream`` | The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource. | ``string`` | Yes |
 |``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#actionproxyrequestheaders) | No |
 |``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#actionproxyresponseheaders) | No |
 |``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/custom-resources/rewrites) example. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Action.Proxy.RequestHeaders
 
 The RequestHeaders field modifies the headers of the request to the proxied upstream server.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``pass`` | Passes the original request headers to the proxied upstream server. See the [proxy_pass_request_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_request_headers) directive for more information. Default is true. | ``bool`` | No |
 |``set`` | Allows redefining or appending fields to present request headers passed to the proxied upstream servers. See the [proxy_set_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) directive for more information. | [[]header](#actionproxyrequestheaderssetheader) | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Action.Proxy.RequestHeaders.Set.Header
 
@@ -678,19 +682,19 @@ name: My-Header
 value: My-Value
 ```
 
-It is possible to override the default value of the `Host` header, which the Ingress Controller sets to [`$host`](https://nginx.org/en/docs/http/ngx_http_core_module.html#var_host):
+It is possible to override the default value of the `Host` header, which NGINX Ingress Controller sets to [`$host`](https://nginx.org/en/docs/http/ngx_http_core_module.html#var_host):
 
 ```yaml
 name: Host
 value: example.com
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the header. | ``string`` | Yes |
 |``value`` | The value of the header. Supports NGINX variables*. Variables must be enclosed in curly brackets. For example: ``${scheme}``. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 \* -- Supported NGINX variables: `$request_uri`, `$request_method`, `$request_body`, `$scheme`, `$http_`, `$args`, `$arg_`, `$cookie_`, `$host`, `$request_time`, `$request_length`, `$nginx_version`, `$pid`, `$connection`, `$remote_addr`, `$remote_port`, `$time_iso8601`, `$time_local`, `$server_addr`, `$server_port`, `$server_name`, `$server_protocol`, `$connections_active`, `$connections_reading`, `$connections_writing`, `$connections_waiting`, `$ssl_cipher`, `$ssl_ciphers`, `$ssl_client_cert`, `$ssl_client_escaped_cert`, `$ssl_client_fingerprint`, `$ssl_client_i_dn`, `$ssl_client_i_dn_legacy`, `$ssl_client_raw_cert`, `$ssl_client_s_dn`, `$ssl_client_s_dn_legacy`, `$ssl_client_serial`, `$ssl_client_v_end`, `$ssl_client_v_remain`, `$ssl_client_v_start`, `$ssl_client_verify`, `$ssl_curves`, `$ssl_early_data`, `$ssl_protocol`, `$ssl_server_name`, `$ssl_session_id`, `$ssl_session_reused`, `$jwt_claim_` (NGINX Plus only) and `$jwt_header_` (NGINX Plus only).
 
@@ -698,14 +702,14 @@ value: example.com
 
 The ResponseHeaders field modifies the headers of the response to the client.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``hide`` | The headers that will not be passed* in the response to the client from a proxied upstream server. See the [proxy_hide_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header) directive for more information. | ``[]string`` | No |
 |``pass`` | Allows passing the hidden header fields* to the client from a proxied upstream server. See the [proxy_pass_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header) directive for more information. | ``[]string`` | No |
 |``ignore`` | Disables processing of certain headers** to the client from a proxied upstream server. See the [proxy_ignore_headers](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_ignore_headers) directive for more information. | ``[]string`` | No |
 |``add`` | Adds headers to the response to the client. | [[]addHeader](#addheader) | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 \* -- Default hidden headers are: `Date`, `Server`, `X-Pad` and `X-Accel-...`.
 
@@ -721,17 +725,17 @@ value: My-Value
 always: true
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the header. | ``string`` | Yes |
 |``value`` | The value of the header. Supports NGINX variables*. Variables must be enclosed in curly brackets. For example: ``${scheme}``. | ``string`` | No |
 |``always`` | If set to true, add the header regardless of the response status code**. Default is false. See the [add_header](http://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header) directive for more information. | ``bool`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 \* -- Supported NGINX variables: `$request_uri`, `$request_method`, `$request_body`, `$scheme`, `$http_`, `$args`, `$arg_`, `$cookie_`, `$host`, `$request_time`, `$request_length`, `$nginx_version`, `$pid`, `$connection`, `$remote_addr`, `$remote_port`, `$time_iso8601`, `$time_local`, `$server_addr`, `$server_port`, `$server_name`, `$server_protocol`, `$connections_active`, `$connections_reading`, `$connections_writing`, `$connections_waiting`, `$ssl_cipher`, `$ssl_ciphers`, `$ssl_client_cert`, `$ssl_client_escaped_cert`, `$ssl_client_fingerprint`, `$ssl_client_i_dn`, `$ssl_client_i_dn_legacy`, `$ssl_client_raw_cert`, `$ssl_client_s_dn`, `$ssl_client_s_dn_legacy`, `$ssl_client_serial`, `$ssl_client_v_end`, `$ssl_client_v_remain`, `$ssl_client_v_start`, `$ssl_client_verify`, `$ssl_curves`, `$ssl_early_data`, `$ssl_protocol`, `$ssl_server_name`, `$ssl_session_id`, `$ssl_session_reused`, `$jwt_claim_` (NGINX Plus only) and `$jwt_header_` (NGINX Plus only).
 
-\*\* -- If `always` is false, the response header is added only if the response status code is any of `200`, `201`, `204`, `206`, `301`, `302`, `303`, `304`, `307` or `308`.
+{{< note >}} If `always` is false, the response header is added only if the response status code is any of `200`, `201`, `204`, `206`, `301`, `302`, `303`, `304`, `307` or `308`. {{< /note >}} 
 
 ### Split
 
@@ -749,12 +753,12 @@ splits:
     pass: coffee-v2
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``weight`` | The weight of an action. Must fall into the range ``0..100``. The sum of the weights of all splits must be equal to ``100``. | ``int`` | Yes |
 |``action`` | The action to perform for a request. | [action](#action) | Yes |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### Match
 
@@ -800,21 +804,21 @@ action:
   pass: coffee
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``conditions`` | A list of conditions. Must include at least 1 condition. | [[]condition](#condition) | Yes |
 |``action`` | The action to perform for a request. | [action](#action) | No |
 |``splits`` | The splits configuration for traffic splitting. Must include at least 2 splits. | [[]split](#split) | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
-\* -- a match must include exactly one of the following: `action` or `splits`.
+{{< note >}} A match must include exactly one of the following: `action` or `splits`. {{< /note >}} 
 
 ### Condition
 
 The condition defines a condition in a match.
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``header`` | The name of a header. Must consist of alphanumeric characters or ``-``. | ``string`` | No |
@@ -822,9 +826,9 @@ The condition defines a condition in a match.
 |``argument`` | The name of an argument. Must consist of alphanumeric characters or ``_``. | ``string`` | No |
 |``variable`` | The name of an NGINX variable. Must start with ``$``. See the list of the supported variables below the table. | ``string`` | No |
 |``value`` | The value to match the condition against. How to define a value is shown below the table. | ``string`` | Yes |
-{{% /table %}}
+{{</bootstrap-table>}}
 
-\* -- a condition must include exactly one of the following: `header`, `cookie`, `argument` or `variable`.
+{{< note >}}  a condition must include exactly one of the following: `header`, `cookie`, `argument` or `variable`. {{< /note >}} 
 
 Supported NGINX variables: `$args`, `$http2`, `$https`, `$remote_addr`, `$remote_port`, `$query_string`, `$request`, `$request_body`, `$request_uri`, `$request_method`, `$scheme`. Find the documentation for each variable [here](https://nginx.org/en/docs/varindex.html).
 
@@ -838,7 +842,7 @@ The value supports two kinds of matching:
   - `!~^yes` -- negation of the previous regular expression that succeeds for strings like `YES`, `Yes123`, `noyes`. (The negation mechanism is not part of the PCRE syntax).
   - `~*no$` -- a case-insensitive regular expression that matches any string that ends with `no`. For example: `no`, `123no`, `123NO`.
 
-**Note**: a value must not include any unescaped double quotes (`"`) and must not end with an unescaped backslash (`\`). For example, the following are invalid values: `some"value`, `somevalue\`.
+{{< note >}} A value must not include any unescaped double quotes (`"`) and must not end with an unescaped backslash (`\`). For example, the following are invalid values: `some"value`, `somevalue\`. {{< /note >}} 
 
 ### ErrorPage
 
@@ -857,15 +861,15 @@ errorPages:
     body: "Original resource not found, but success!"
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``codes`` | A list of error status codes. | ``[]int`` | Yes |
 |``redirect`` | The redirect action for the given status codes. | [errorPage.Redirect](#errorpageredirect) | No |
 |``return`` | The canned response action for the given status codes. | [errorPage.Return](#errorpagereturn) | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
-\* -- an errorPage must include exactly one of the following: `return` or `redirect`.
+{{< note >}} An errorPage must include exactly one of the following: `return` or `redirect`. {{< /note >}}
 
 ### ErrorPage.Redirect
 
@@ -880,12 +884,12 @@ redirect:
   url: ${scheme}://cafe.example.com/error.html
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``code`` | The status code of a redirect. The allowed values are: ``301`` , ``302`` , ``307`` , ``308``.  The default is ``301``. | ``int`` | No |
 |``url`` | The URL to redirect the request to. Supported NGINX variables: ``$scheme`` and ``$http_x_forwarded_proto``. Variables must be enclosed in curly braces. For example: ``${scheme}``. | ``string`` | Yes |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### ErrorPage.Return
 
@@ -905,14 +909,14 @@ return:
     value: ${upstream_status}
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``code`` | The status code of the response. The default is the status code of the original response. | ``int`` | No |
 |``type`` | The MIME type of the response. The default is ``text/html``. | ``string`` | No |
 |``body`` | The body of the response. Supported NGINX variable: ``$upstream_status`` . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | Yes |
 |``headers`` | The custom headers of the response. | [[]errorPage.Return.Header](#errorpagereturnheader) | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ### ErrorPage.Return.Header
 
@@ -923,12 +927,12 @@ name: x-debug-original-statuses
 value: ${upstream_status}
 ```
 
-{{% table %}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the header. | ``string`` | Yes |
 |``value`` | The value of the header. Supported NGINX variable: ``$upstream_status`` . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | No |
-{{% /table %}}
+{{</bootstrap-table>}}
 
 ## Using VirtualServer and VirtualServerRoute
 
@@ -938,7 +942,8 @@ For example, the following command creates a VirtualServer resource defined in `
 
 ```shell
 kubectl apply -f cafe-virtual-server.yaml
-
+```
+```text
 virtualserver.k8s.nginx.org "cafe" created
 ```
 
@@ -946,14 +951,15 @@ You can get the resource by running:
 
 ```shell
 kubectl get virtualserver cafe
-
+```
+```text
 NAME   STATE   HOST                   IP            PORTS      AGE
 cafe   Valid   cafe.example.com       12.13.23.123  [80,443]   3m
 ```
 
-In the kubectl get and similar commands, you can also use the short name `vs` instead of `virtualserver`.
+In `kubectl get` and similar commands, you can use the short name `vs` instead of `virtualserver`.
 
-Working with VirtualServerRoute resources is analogous. In the kubectl commands, use `virtualserverroute` or the short name `vsr`.
+Similarly, for VirtualServerRoute you can use `virtualserverroute` or the short name `vsr`.
 
 ### Using Snippets
 
@@ -993,28 +999,14 @@ spec:
       pass: coffee
 ```
 
-Snippets are intended to be used by advanced NGINX users who need more control over the generated NGINX configuration.
-
-However, because of the disadvantages described below, snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
-
-Disadvantages of using snippets:
-
-- *Complexity*. To use snippets, you will need to:
-  - Understand NGINX configuration primitives and implement a correct NGINX configuration.
-  - Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
-- *Decreased robustness*. An incorrect snippet makes the NGINX config invalid which will lead to a failed reload. This will prevent any new configuration updates, including updates for the other VirtualServer and VirtualServerRoute resources until the snippet is fixed.
-- *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller. For example, a snippet can configure NGINX to serve the TLS certificates and keys used for TLS termination for Ingress and VirtualServer resources.
-
-To help catch errors when using snippets, the Ingress Controller reports config reload errors in the logs as well as in the events and status field of VirtualServer and VirtualServerRoute resources. Additionally, a number of Prometheus metrics show the stats about failed reloads – `controller_nginx_last_reload_status` and `controller_nginx_reload_errors_total`.
-
-> Note that during a period when the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
+For additional information, view the [Advanced configuration with Snippets]({{< relref "configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) topic.
 
 ### Validation
 
 Two types of validation are available for VirtualServer and VirtualServerRoute resources:
 
 - *Structural validation* by the `kubectl` and Kubernetes API server.
-- *Comprehensive validation* by the Ingress Controller.
+- *Comprehensive validation* by NGINX Ingress Controller.
 
 #### Structural Validation
 
@@ -1026,31 +1018,34 @@ If you try to create (or update) a resource that violates the structural schema 
 
     ```shell
     kubectl apply -f cafe-virtual-server.yaml
-
-      error: error validating "cafe-virtual-server.yaml": error validating data: ValidationError(VirtualServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.VirtualServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
+    ```
+    ```text
+    error: error validating "cafe-virtual-server.yaml": error validating data: ValidationError(VirtualServer.spec.upstreams[0].port): invalid type for org.nginx.k8s.v1.VirtualServer.spec.upstreams.port: got "string", expected "integer"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
 - Example of Kubernetes API server validation:
 
     ```shell
     kubectl apply -f cafe-virtual-server.yaml --validate=false
-
-      The VirtualServer "cafe" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
-      spec.upstreams.port in body must be of type integer: "string"
+    ```
+    ```text
+    The VirtualServer "cafe" is invalid: []: Invalid value: map[string]interface {}{ ... }: validation failure list:
+    spec.upstreams.port in body must be of type integer: "string"
     ```
 
-If a resource is not rejected (it doesn't violate the structural schema), the Ingress Controller will validate it further.
+If a resource is not rejected (it doesn't violate the structural schema), NGINX Ingress Controller will validate it further.
 
 #### Comprehensive Validation
 
-The Ingress Controller validates the fields of the VirtualServer and VirtualServerRoute resources. If a resource is invalid, the Ingress Controller will reject it: the resource will continue to exist in the cluster, but the Ingress Controller will ignore it.
+NGINX Ingress Controller validates the fields of the VirtualServer and VirtualServerRoute resources. If a resource is invalid, NGINX Ingress Controller will reject it: the resource will continue to exist in the cluster, but NGINX Ingress Controller will ignore it.
 
-You can check if the Ingress Controller successfully applied the configuration for a VirtualServer. For our example `cafe` VirtualServer, we can run:
+You can check if NGINX Ingress Controller successfully applied the configuration for a VirtualServer. For our example `cafe` VirtualServer, we can run:
 
 ```shell
 kubectl describe vs cafe
-
-. . .
+```
+```text
+...
 Events:
   Type    Reason          Age   From                      Message
   ----    ------          ----  ----                      -------
@@ -1059,12 +1054,13 @@ Events:
 
 Note how the events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
 
-If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a VirtualServer `cafe` with two upstream with the same name `tea`, you will get:
+If you create an invalid resource, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create a VirtualServer `cafe` with two upstream with the same name `tea`, you will get:
 
 ```shell
 kubectl describe vs cafe
-
-. . .
+```
+```text
+...
 Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
@@ -1077,8 +1073,9 @@ Additionally, this information is also available in the `status` field of the Vi
 
 ```shell
 kubectl describe vs cafe
-
-. . .
+```
+```text
+...
 Status:
   External Endpoints:
     Ip:        12.13.23.123
@@ -1088,11 +1085,11 @@ Status:
   State:    Invalid
 ```
 
-The Ingress Controller validates VirtualServerRoute resources in a similar way.
+NGINX Ingress Controller validates VirtualServerRoute resources in a similar way.
 
-**Note**: If you make an existing resource invalid, the Ingress Controller will reject it and remove the corresponding configuration from NGINX.
+**Note**: If you make an existing resource invalid, NGINX Ingress Controller will reject it and remove the corresponding configuration from NGINX.
 
-## Customization via ConfigMap
+## Customization using ConfigMap
 
 You can customize the NGINX configuration for VirtualServer and VirtualServerRoutes resources using the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource). Most of the ConfigMap keys are supported, with the following exceptions:
 
