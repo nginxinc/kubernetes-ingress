@@ -6,6 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG PREBUILT_BASE_IMG=nginx/nginx-ingress:${DOWNLOAD_TAG}
 ARG NGINX_AGENT=false
 ARG IMAGE_NAME=nginx/nginx-ingress
+ARG WAF_VERSION=v4
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
@@ -13,7 +14,7 @@ FROM ghcr.io/nginxinc/k8s-common:nginx-opentracing-1.27.0@sha256:d9f6f930b7bfcc0
 FROM ghcr.io/nginxinc/k8s-common:nginx-opentracing-1.27.0-alpine@sha256:5dc5c76384a775316c541995b145d4cef86d529934951319fd127f4d4fdb9ef7 as alpine-opentracing-lib
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 as alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.0-alpine3.19@sha256:1744ae3a8e795daf771f3f7df33b83160981545abb1f1597338e2769d06aa1cc as alpine-fips-3.19
-FROM redhat/ubi9-minimal@sha256:0d6b09f233745d2fcf892cebcf1c18bbfed497f116bc8357e9db4b724d76c5a9 AS ubi-minimal
+FROM redhat/ubi9-minimal@sha256:2636170dc55a0931d013014a72ae26c0c2521d4b61a28354b3e2e5369fa335a3 AS ubi-minimal
 FROM golang:1.22-alpine@sha256:9bdd5692d39acc3f8d0ea6f81327f87ac6b473dd29a2b6006df362bff48dd1f8 as golang-builder
 
 
@@ -71,17 +72,21 @@ ADD --link --chown=101:0 https://cs.nginx.com/static/files/nginx-plus-8.repo ngi
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/plus-9.repo nginx-plus-9.repo
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-8.repo app-protect-8.repo
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-9.repo app-protect-9.repo
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-v5-ubi-8.repo app-protect-v5-8.repo
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-v5-ubi-9.repo app-protect-v5-9.repo
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/app-protect-dos-8.repo app-protect-dos-8.repo
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-11.repo debian-plus-11.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/plus-debian-12.repo debian-plus-12.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-debian-11.repo nap-waf-11.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-dos-debian-11.repo nap-dos-11.sources
+ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/nap-waf-v5-debian-12.repo nap-waf-v5-12.sources
 ADD --link --chown=101:0 https://raw.githubusercontent.com/nginxinc/k8s-common/main/files/agent-debian-11.repo debian-agent-11.sources
 
 RUN --mount=from=busybox:musl,src=/bin/,dst=/bin/ printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt;" >> 90pkgs-nginx \
 	&& printf "%s\n" "user_agent=k8s-ic-$IC_VERSION${BUILD_OS##ubi*plus}-dnf" | tee -a nginx-plus-*.repo \
 	&& sed -i -e "s;%VERSION%;${NGINX_PLUS_VERSION};g" *.sources \
-	&& sed -i -e "y/0/1/" -e "1,8s;/centos;/${NGINX_PLUS_VERSION}/centos;" *.repo \
+	&& sed -i -e "y/0/1/" app-protect-v5-*.repo \
+	&& sed -i -e "y/0/1/" -e "1,8s;/centos;/${NGINX_PLUS_VERSION}/centos;" nginx-plus-*.repo app-protect-?.repo app-protect-dos-8.repo \
 	&& echo HTTP_USER_AGENT="k8s-ic-$IC_VERSION${BUILD_OS##alpine-plus}-apk" > user_agent
 
 ADD --link --chown=101:0 https://cs.nginx.com/static/files/nginx-agent.repo nginx-agent.repo
@@ -105,6 +110,7 @@ RUN --mount=type=bind,from=nginx-files,src=patch-os.sh,target=/usr/local/bin/pat
 	if [ -f /etc/apk/repositories ]; then sed -i -e '/nginx.com/d' /etc/apk/repositories; fi \
 	&& patch-os.sh
 USER 101
+
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
 FROM alpine:3.19@sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b as alpine-plus
@@ -136,6 +142,7 @@ RUN --mount=type=bind,from=alpine-fips-3.19,target=/tmp/fips/ \
 ############################################# Base image for Alpine with NGINX Plus, App Protect WAF and FIPS #############################################
 FROM alpine:3.17@sha256:53cf9478b76f4c8fae126acbdfb79bed6e69e628faff572ebe4a029d3d247d98 as alpine-plus-nap-fips
 ARG NGINX_PLUS_VERSION
+ARG NGINX_AGENT
 
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	--mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
@@ -150,7 +157,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& printf "%s\n" "https://pkgs.nginx.com/app-protect-security-updates/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
 	&& printf "%s\n" "https://pkgs.nginx.com/nginx-agent/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
 	&& apk add --no-cache libcap-utils libcurl nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing nginx-plus-module-fips-check \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then apk add --no-cache nginx-agent; fi \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then apk add --no-cache nginx-agent; fi \
 	&& mkdir -p /usr/ssl \
 	&& cp -av /tmp/fips/usr/lib/ossl-modules/fips.so /usr/lib/ossl-modules/fips.so \
 	&& cp -av /tmp/fips/usr/ssl/fipsmodule.cnf /usr/ssl/fipsmodule.cnf \
@@ -160,10 +167,40 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& apk add --no-cache app-protect app-protect-attack-signatures app-protect-threat-campaigns \
 	&& sed -i -e '/nginx.com/d' /etc/apk/repositories \
 	&& nap-waf.sh \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then \
 	agent.sh \
 	; fi
 
+
+############################################# Base image for Alpine with NGINX Plus, App Protect WAFv5 and FIPS #############################################
+FROM alpine:3.17@sha256:53cf9478b76f4c8fae126acbdfb79bed6e69e628faff572ebe4a029d3d247d98 as alpine-plus-nap-v5-fips
+ARG NGINX_PLUS_VERSION
+ARG NGINX_AGENT
+
+RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
+	--mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
+	--mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
+	--mount=type=bind,from=nginx-files,src=nginx_signing.rsa.pub,target=/etc/apk/keys/nginx_signing.rsa.pub \
+	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
+	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
+	printf "%s\n" "https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	&& printf "%s\n" "https://pkgs.nginx.com/app-protect-x-plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	&& printf "%s\n" "https://pkgs.nginx.com/nginx-agent/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	&& apk add --no-cache libcap-utils libcurl nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing nginx-plus-module-fips-check \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then apk add --no-cache nginx-agent; fi \
+	&& mkdir -p /usr/ssl \
+	&& cp -av /tmp/fips/usr/lib/ossl-modules/fips.so /usr/lib/ossl-modules/fips.so \
+	&& cp -av /tmp/fips/usr/ssl/fipsmodule.cnf /usr/ssl/fipsmodule.cnf \
+	&& cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf \
+	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& ldconfig /usr/local/lib/ \
+	&& apk add --no-cache app-protect-module-plus \
+	&& sed -i -e '/nginx.com/d' /etc/apk/repositories \
+	&& nap-waf.sh \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then \
+	agent.sh \
+	; fi
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
@@ -192,6 +229,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for Debian with NGINX Plus and App Protect WAF/DoS #############################################
 FROM debian:11-slim@sha256:0e75382930ceb533e2f438071307708e79dc86d9b8e433cc6dd1a96872f2651d as debian-plus-nap
 ARG NAP_MODULES
+ARG NGINX_AGENT
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -222,7 +260,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing nginx-plus-module-fips-check libcap2-bin libcurl4 \
 	## end of duplicated code
-	&& if [ -z "${NGINX_AGENT##true}" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	apt-get install --no-install-recommends --no-install-suggests -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
@@ -243,7 +281,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& rm -rf /var/lib/apt/lists/* \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	nap-waf.sh \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then \
 	agent.sh \
 	; fi \
 	; fi \
@@ -251,9 +289,32 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	nap-dos.sh \
 	; fi
 
-# Uncomment the lines below if you want to install a custom CA certificate
-# COPY build/*.crt /usr/local/share/ca-certificates/
-# RUN update-ca-certificates
+############################################# Base image for Debian with NGINX Plus and App Protect WAFv5/DoS #############################################
+FROM debian-plus as debian-plus-nap-v5
+ARG NAP_MODULES
+ARG NGINX_AGENT
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=bind,from=nginx-files,src=90pkgs-nginx,target=/etc/apt/apt.conf.d/90pkgs-nginx \
+	--mount=type=bind,from=nginx-files,src=nap-waf-v5-12.sources,target=/tmp/app-protect.sources \
+	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
+	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
+	--mount=type=bind,from=nginx-files,src=debian-agent-11.sources,target=/etc/apt/sources.list.d/nginx-agent.sources \
+	if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
+	fi \
+	&& apt-get update \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus; \
+	rm -f /etc/apt/sources.list.d/app-protect.sources; \
+	nap-waf.sh; \
+	fi \
+	&& apt-get purge --auto-remove -y gpg \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then \
+	agent.sh; \
+	fi
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
@@ -277,6 +338,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF #############################################
 FROM ubi-minimal as ubi-9-plus-nap
 ARG NAP_MODULES
+ARG NGINX_AGENT
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -295,7 +357,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& rpm --import /tmp/nginx_signing.key \
 	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then microdnf --nodocs install -y nginx-agent; fi \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then microdnf --nodocs install -y nginx-agent; fi \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
 	&& rpm --import /tmp/app-protect-security-updates.key \
@@ -309,13 +371,57 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& subscription-manager unregister \
 	&& microdnf remove -y shadow-utils subscription-manager \
 	&& microdnf clean all && rm -rf /var/cache/dnf \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then \
 	agent.sh \
 	; fi
+
+
+############################################# Base image for UBI with NGINX Plus and App Protect WAFv5 #############################################
+FROM ubi-minimal as ubi-9-plus-nap-v5
+ARG NAP_MODULES
+ARG NGINX_AGENT
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
+	--mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
+	--mount=type=bind,from=nginx-files,src=nginx-plus-9.repo,target=/etc/yum.repos.d/nginx-plus.repo,rw \
+	--mount=type=bind,from=nginx-files,src=nginx-agent.repo,target=/etc/yum.repos.d/nginx-agent.repo,rw \
+	--mount=type=bind,from=nginx-files,src=app-protect-v5-9.repo,target=/tmp/app-protect-9.repo \
+	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
+	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
+	source /tmp/rhel_license \
+	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
+	&& microdnf --nodocs install -y shadow-utils ca-certificates subscription-manager \
+	&& groupadd --system --gid 101 nginx \
+	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
+	&& rpm --import /tmp/nginx_signing.key \
+	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then microdnf --nodocs install -y nginx-agent; fi \
+	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
+	&& subscription-manager attach \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect-9.repo /etc/yum.repos.d/app-protect-9.repo; \
+	fi \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect-9.repo /etc/yum.repos.d/app-protect-9.repo \
+	&& microdnf --enablerepo=codeready-builder-for-rhel-9-x86_64-rpms --nodocs install -y app-protect-module-plus \
+	&& rm -f /etc/yum.repos.d/app-protect-9.repo \
+	&& nap-waf.sh \
+	&& rm -f /etc/yum.repos.d/app-protect-9.repo; \
+	fi \
+	&& subscription-manager unregister \
+	&& microdnf remove -y shadow-utils subscription-manager \
+	&& microdnf clean all && rm -rf /var/cache/dnf \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then \
+	agent.sh; \
+	fi
+
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF & DoS #############################################
 FROM redhat/ubi8@sha256:143123d85045df426c5bbafc6863659880ebe276eb02c77ee868b88d08dbd05d as ubi-8-plus-nap
 ARG NAP_MODULES
+ARG NGINX_AGENT
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -328,6 +434,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=app-protect-dos-8.repo,target=/tmp/app-protect-dos-8.repo \
 	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
 	--mount=type=bind,from=nginx-files,src=nap-dos.sh,target=/usr/local/bin/nap-dos.sh \
+	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
 	source /tmp/rhel_license \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	cp /tmp/app-protect-8.repo /etc/yum.repos.d/app-protect-8.repo; \
@@ -340,7 +447,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& rpm --import /tmp/nginx_signing.key \
 	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
-	&& if [ -z "${NGINX_AGENT##true}" ]; then dnf --nodocs install -y nginx-agent; fi \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then dnf --nodocs install -y nginx-agent; fi \
 	## end of duplicated code
 	## fix for CVEs
 	&& sed -i 's/\(def in_container():\)/\1\n    return False/g' /usr/lib64/python*/*-packages/rhsm/config.py \
@@ -366,11 +473,55 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	rm -f /etc/yum.repos.d/app-protect-dos-8.repo \
 	&& nap-dos.sh; \
 	fi \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then \
+	agent.sh; \
+	fi \
 	&& dnf clean all
 
-# Uncomment the lines below if you want to install a custom CA certificate
-# COPY build/*.crt /etc/pki/ca-trust/source/anchors/
-# RUN update-ca-trust extract
+
+############################################# Base image for UBI with NGINX Plus and App Protect WAFv5  #############################################
+FROM redhat/ubi8@sha256:f4292f415f60632a0ff9c0646c4fa859d8b2e1e88a16faa90c6decd1951aea88 as ubi-8-plus-nap-v5
+ARG NAP_MODULES
+ARG NGINX_AGENT
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
+	--mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
+	--mount=type=bind,from=nginx-files,src=nginx-plus-8.repo,target=/etc/yum.repos.d/nginx-plus.repo,rw \
+	--mount=type=bind,from=nginx-files,src=nginx-agent.repo,target=/etc/yum.repos.d/nginx-agent.repo,rw \
+	--mount=type=bind,from=nginx-files,src=app-protect-v5-8.repo,target=/tmp/app-protect-8.repo \
+	--mount=type=bind,from=nginx-files,src=app-protect-dos-8.repo,target=/tmp/app-protect-dos-8.repo \
+	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
+	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
+	source /tmp/rhel_license \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	cp /tmp/app-protect-8.repo /etc/yum.repos.d/app-protect-8.repo; \
+	fi \
+	## the code below is duplicated from the ubi-plus image because NAP DOS doesn't support UBI 9 and minimal versions
+	&& groupadd --system --gid 101 nginx \
+	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
+	&& rpm --import /tmp/nginx_signing.key \
+	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then dnf --nodocs install -y nginx-agent; fi \
+	## end of duplicated code
+	&& sed -i 's/\(def in_container():\)/\1\n    return False/g' /usr/lib64/python*/*-packages/rhsm/config.py \
+	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
+	&& subscription-manager attach \
+	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
+	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	dnf --nodocs install -y app-protect-module-plus; \
+	fi \
+	&& subscription-manager unregister \
+	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
+	rm -f /etc/yum.repos.d/app-protect-8.repo \
+	&& nap-waf.sh; \
+	fi \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then \
+	agent.sh; \
+	fi \
+	&& dnf clean all
 
 
 ############################################# Create common files, permissions and setcap #############################################
@@ -386,10 +537,6 @@ RUN --mount=type=bind,target=/tmp \
 	--mount=type=bind,from=nginx-files,src=patch-os.sh,target=/usr/local/bin/patch-os.sh \
 	patch-os.sh \
 	&& common.sh
-
-# Uncomment the line below if you would like to add the default.pem to the image
-# and use it as a certificate and key for the default server
-# ADD default.pem /etc/nginx/secrets/default
 
 EXPOSE 80 443
 
@@ -419,6 +566,7 @@ RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --m
 	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION}" \
 	-o /nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress \
 	&& setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+
 
 ############################################# Download delve #############################################
 FROM golang-builder AS debug-builder
@@ -559,6 +707,7 @@ ARG NAP_MODULES_AWS
 COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
 USER 0
 RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
 FROM common AS aws
