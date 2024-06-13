@@ -3476,17 +3476,21 @@ func createPolicyMap(policies []*conf_v1.Policy) map[string]*conf_v1.Policy {
 func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 	var policies []*conf_v1.Policy
 
-	for _, nsi := range lbc.namespacedInformers {
-		for _, obj := range nsi.policyLister.List() {
-			pol := obj.(*conf_v1.Policy)
+	for ns, nsi := range lbc.namespacedInformers {
+		if nsi == nil {
+			glog.V(3).Infof("Skipping nil namespacedInformer for namespace %s", ns)
+		} else {
+			for _, obj := range nsi.policyLister.List() {
+				pol := obj.(*conf_v1.Policy)
 
-			err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
-			if err != nil {
-				glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
-				continue
+				err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
+				if err != nil {
+					glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
+					continue
+				}
+
+				policies = append(policies, pol)
 			}
-
-			policies = append(policies, pol)
 		}
 	}
 
