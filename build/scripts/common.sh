@@ -7,7 +7,6 @@ if [ -z "${BUILD_OS##*plus*}" ]; then
     mkdir -p /etc/nginx/oidc/
     cp -a /tmp/internal/configs/oidc/* /etc/nginx/oidc/
     mkdir -p /etc/nginx/state_files/
-
     PLUS=-plus
 fi
 

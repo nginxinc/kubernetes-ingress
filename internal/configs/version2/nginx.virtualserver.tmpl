@@ -143,7 +143,6 @@ server {
         {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
     {{- end }}
 
-    # TODO: Do this conditionally
     {{- if $s.APIKeyEnabled}}
     location = /_validate_apikey_njs {
         internal;

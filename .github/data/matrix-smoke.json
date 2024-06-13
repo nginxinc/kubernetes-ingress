@@ -22,13 +22,6 @@
       "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
     },
     {
-      "label": "jim",
-      "image": "alpine",
-      "type": "oss",
-      "marker": "jim",
-      "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
-    },
-    {
       "label": "policies 1/2",
       "image": "alpine",
       "type": "oss",
