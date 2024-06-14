@@ -15,6 +15,8 @@ on:
       dry_run:
         type: boolean
         default: false
+  schedule:
+    - cron: "0 1 * * 1-5" # 01:00 UTC Mon-Fri
 
 defaults:
   run:
@@ -24,15 +26,32 @@ permissions:
   contents: read
 
 jobs:
+  vars:
+    permissions:
+      contents: read
+    runs-on: ubuntu-22.04
+    outputs:
+      source_branch: ${{ steps.vars.outputs.source_branch }}
+    steps:
+      - name: Set vars
+        id: vars
+        run: |
+          source_branch=main
+          if ${{ inputs.source_branch }}; then
+            source_branch=${{ inputs.source_branch }}
+          fi
+          echo "source_branch=${source_branch}" >> $GITHUB_OUTPUT
+
   update-docker-sha:
     permissions:
       contents: write
     runs-on: ubuntu-22.04
+    needs: [vars]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
-          ref: ${{ inputs.source_branch }}
+          ref: ${{ needs.vars.outputs.source_branch }}
 
       - name: Update images
         id: update_images
@@ -59,7 +78,7 @@ jobs:
           token: ${{ secrets.NGINX_PAT }}
           commit-message: Update docker images ${{ steps.update_images.outputs.docker_md5 }}
           title: Docker image update ${{ steps.update_images.outputs.docker_md5 }}
-          branch: chore/image-update-${{ inputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
+          branch: chore/image-update-${{ needs.vars.outputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
           author: nginx-bot <integrations@nginx.com>
           labels: |
             dependencies
