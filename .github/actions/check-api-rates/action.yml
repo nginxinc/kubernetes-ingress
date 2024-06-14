@@ -1,0 +1,27 @@
+name: Check Github Rate Limit API
+description: Check Github Rate Limit API
+
+inputs:
+  token:
+    description: The GITHUB_TOKEN or PAT used to access the API
+    required: true
+
+outputs:
+  results:
+    description: The API output in json format
+    value: ${{ steps.api_result.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Call the API
+      id: api_result
+      run: |
+        result=$(gh api \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        /rate_limit)
+        echo "result=${result}" >> $GITHUB_OUTPUT
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}

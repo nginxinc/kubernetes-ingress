@@ -1,0 +1,19 @@
+name: "Check Rate Limits"
+on:
+  workflow_dispatch:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  check-rate-limits:
+    permissions:
+      contents: read
+    runs-on: ubuntu-22.04
+    name: Check Rate Limit API
+    steps:
+      - name: Checkout
+        uses: ./.github/actions/check-api-rates
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
