@@ -16,12 +16,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
 
-      - name: Check Rates
-        id: api_results
-        uses: ./.github/actions/check-api-rates
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Dump results
         run: |
-          echo ${{ steps.api_results.outputs.result }}
+          gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /rate_limit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
