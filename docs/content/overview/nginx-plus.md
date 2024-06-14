@@ -10,6 +10,8 @@ This document explains how F5 NGINX Plus can extend the functionality of F5 NGIN
 
 NGINX Ingress Controller works with [NGINX](https://nginx.org/) as well as [NGINX Plus](https://www.nginx.com/products/nginx/), a commercial closed source version of NGINX which has additional features and support from NGINX Inc. NGINX Ingress Controller can leverage functionality from NGINX Plus to extend its base capabilities.
 
+---
+
 ## Additional features
 
 - _Real-time metrics_: Metrics for NGINX Plus and application performance are available through the API or the [NGINX Status Page]({{< relref "logging-and-monitoring/status-page">}}). These metrics can also be exported to [Prometheus]({{< relref "logging-and-monitoring/prometheus">}}).
@@ -23,6 +25,8 @@ For a comprehensive guide of NGINX Plus features available with Ingress resource
 {{< note >}} NGINX Plus features are configured for Ingress resources using Annotations that start with `nginx.com`. {{< /note >}}
 
 For a comprehensive guide of NGINX Plus features available with custom resources, see the [Policy]({{< relref "configuration/policy-resource" >}}), [VirtualServer]({{< relref "configuration/virtualserver-and-virtualserverroute-resources" >}}) and [TransportServer]({{< relref "configuration/transportserver-resource" >}}) documentation.
+
+---
 
 ## Dynamic reconfiguration
 
