@@ -1,0 +1,482 @@
+name: Release NIC
+
+on:
+  workflow_dispatch:
+    inputs:
+      nic_version:
+        description: "Version to release"
+        required: true
+        type: string
+      source_tag:
+        description: "Source tag to release"
+        required: false
+        type: string
+      chart_version:
+        description: "Helm Chart version to release"
+        required: false
+        type: string
+      cnab_version:
+        description: "CNAB version for Azure Marketplace"
+        required: false
+        type: string
+      release_branch:
+        description: "Branch to release from"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry Run?"
+        type: boolean
+        default: false
+      skip_step:
+        description: "Comma separated list of jobs to skip"
+        # publish-helm-chart,operator,aws-marketplace,azure-marketplace,gcp-marketplace,github-release,release-image-notification
+        type: string
+        required: false
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  variables:
+    name: Set Variables
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    outputs:
+      source_tag: ${{ steps.vars.outputs.stable_tag }}
+      short_tag: ${{ steps.vars.outputs.short_tag }}
+      go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
+      binary_cache_sign_hit: ${{ steps.binary-cache-sign.outputs.cache-hit }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_branch }}
+
+      - name: Output Variables
+        id: vars
+        run: |
+          if ${{ inputs.source_tag }}; then
+            echo "stable_tag=${{ inputs.source_tag }}" >> $GITHUB_OUTPUT
+          else
+            ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
+          fi
+          tag=${{ inputs.nic_version }}
+          echo "short_tag=${tag%.*}" >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Fetch Cached Signed Binary Artifacts
+        id: binary-cache-sign
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/tarballs
+          key: nginx-ingress-release-${{ steps.vars.outputs.go_code_md5 }}
+          lookup-only: true
+
+  tag:
+    name: Create Tag on release branch in NIC repo
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout NIC repo
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        with:
+          ref: ${{ inputs.release_branch }}
+
+      - name: Create new release Tag
+        run: |
+          branch="${{ inputs.release_branch }}"
+          tag="v${{ inputs.nic_version }}"
+          if git rev-parse --verify refs/tags/${tag}; then
+            echo "Adding tag ${tag}."
+            git tag -a ${tag} -m "Version ${tag#v*}"
+            echo "Pushing to tag ${tag} to branch ${branch}"
+            if ! ${{ inputs.dry_run }}; then
+              git push origin "${tag}"
+            else
+              echo "DRY RUN not making any changes"
+              git push --dry-run origin "${tag}"
+            fi
+          else
+            echo "Warning: Tag ${tag} already exists.  Not making any changes"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.NGINX_PAT }}
+
+  release-oss:
+    name: Release Docker OSS
+    needs: [variables]
+    uses: ./.github/workflows/oss-release.yml
+    with:
+      gcr_release_registry: true
+      ecr_public_registry: true
+      dockerhub_public_registry: true
+      quay_public_registry: true
+      github_public_registry: true
+      source_tag: ${{ needs.variables.outputs.source_tag }}
+      target_tag: ${{ inputs.nic_version }}
+      short_target_tag: ${{ needs.variables.outputs.short_tag }}
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    secrets: inherit
+
+  release-plus:
+    name: Release Docker Plus
+    needs: [variables]
+    uses: ./.github/workflows/plus-release.yml
+    with:
+      gcr_release_registry: true
+      nginx_registry: true
+      gcr_mktpl_registry: true
+      ecr_mktpl_registry: true
+      az_mktpl_registry: true
+      source_tag: ${{ needs.variables.outputs.source_tag }}
+      target_tag: ${{ inputs.nic_version }}
+      short_target_tag: ${{ needs.variables.outputs.short_tag }}
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  publish-helm-chart:
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'publish-helm-chart') }}
+    name: Publish Helm Chart
+    uses: ./.github/workflows/publish-helm.yml
+    with:
+      branch: ${{ inputs.release_branch }}
+      ic_version: ${{ inputs.nic_version }}
+      chart_version: ${{ inputs.chart_version }}
+      nginx_helm_repo: true
+    permissions:
+      contents: write # for pushing to Helm Charts repository
+      packages: write # for helm to push to GHCR
+    secrets: inherit
+
+  certify-openshift-images:
+    if: ${{ ! inputs.dry_run }}
+    name: Certify OpenShift UBI images
+    runs-on: ubuntu-22.04
+    needs: [release-oss]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        with:
+          ref: ${{ inputs.release_branch }}
+
+      - name: Certify UBI OSS images in quay
+        uses: ./.github/actions/certify-openshift-image
+        continue-on-error: true
+        with:
+          image: quay.io/nginx/nginx-ingress:${{ inputs.nic_version }}-ubi
+          project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
+          pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
+
+  operator:
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'operator') && !contains(inputs.skip_step, 'publish-helm-chart') }}
+    name: Trigger PR for Operator
+    runs-on: ubuntu-22.04
+    needs: [publish-helm-chart]
+    steps:
+      - name:
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.NGINX_PAT }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'nginx-ingress-helm-operator',
+              workflow_id: 'sync-chart.yml',
+              ref: 'main',
+              inputs: {
+                chart_version: '${{ inputs.chart_version }}'
+              },
+            })
+
+  gcp-marketplace:
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'gcp-marketplace') }}
+    name: Trigger PR for GCP Marketplace
+    runs-on: ubuntu-22.04
+    needs: [publish-helm-chart]
+    steps:
+      - name:
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.NGINX_PAT }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'kubernetes-ingress-gcp',
+              workflow_id: 'sync-chart.yml',
+              ref: 'main',
+              inputs: {
+                chart_version: '${{ inputs.chart_version }}'
+              },
+            })
+
+  azure-marketplace:
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'azure-marketplace') }}
+    name: Trigger CNAB Build for Azure Marketplace
+    runs-on: ubuntu-22.04
+    needs: [publish-helm-chart]
+    steps:
+      - name:
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.NGINX_PAT }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'kubernetes-ingress-azure',
+              workflow_id: 'build-cnab.yml',
+              ref: 'main',
+              inputs: {
+                chart_version: '${{ inputs.chart_version }}'
+                ic_version: '${{ inputs.nic_version }}'
+                cnab_version: '${{ inputs.cnab_version }}'
+              },
+            })
+
+  aws-marketplace:
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'aws-marketplace') }}
+    name: Publish to AWS Marketplace
+    runs-on: ubuntu-22.04
+    needs: [release-plus]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: 709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress:${{ inputs.nic_version }}-mktpl
+            product_id: AWS_PRODUCT_ID
+          - image: 709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress-nap:${{ inputs.nic_version }}-mktpl
+            product_id: AWS_NAP_WAF_PRODUCT_ID
+          - image: 709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress-dos:${{ inputs.nic_version }}-mktpl
+            product_id: AWS_NAP_DOS_PRODUCT_ID
+          - image: 709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress-dos-nap:${{ inputs.nic_version }}-mktpl
+            product_id: AWS_NAP_WAF_DOS_PRODUCT_ID
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        with:
+          ref: ${{ inputs.release_branch }}
+
+      - name: Publish to AWS Marketplace
+        uses: nginxinc/aws-marketplace-publish@be512a7ae9666098bc4429a1afa27a11be6a3995 # v1.0.3
+        continue-on-error: true
+        with:
+          version: ${{ inputs.nic_version }}
+          product-id: ${{ secrets[matrix.product_id] }}
+          registry: ${{ matrix.image }}
+          release-notes: https://github.com/nginxinc/kubernetes-ingress/releases/tag/v${{ inputs.nic_version }}
+          description: |
+            Best-in-class traffic management solution for services in Amazon EKS.
+            This is the official implementation of NGINX Ingress Controller (based on NGINX Plus) from NGINX.
+          usage-instructions: |
+            This container requires Kubernetes and can be deployed to EKS.
+            Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/v${{ inputs.nic_version }}/deployments
+            Use this image instead of building your own.
+
+  binaries:
+    name: Process Binaries
+    runs-on: ubuntu-22.04
+    needs: [variables]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - name: Fetch Binary Artifacts from Cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ needs.variables.outputs.go_code_md5 }}
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
+
+      - name: Download Syft
+        id: syft
+        uses: anchore/sbom-action/download-syft@e8d2a6937ecead383dfe75190d104edd1f9c5751 # v0.16.0
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3.5.0
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
+
+      - name: Create Tarballs
+        run: |
+          ./.github/scripts/create-release-tarballs.sh dist ${{ inputs.nic_version }}
+        env:
+          SYFT_BIN: ${{ steps.syft.outputs.cmd }}
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
+
+      - name: Store Tarball Artifacts in Cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/tarballs
+          key: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5 }}
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
+
+  azure-upload:
+    name: Upload packages to Azure
+    runs-on: ubuntu-22.04
+    needs: [variables, binaries]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          ref: ${{ inputs.release_branch }}
+
+      - name: Fetch Cached Tarball Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          key: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5 }}
+          path: ${{ github.workspace }}/tarballs
+          fail-on-cache-miss: true
+
+      - name: Azure login
+        uses: azure/login@6c251865b4e6290e7b78be643ea2d005bc51f69a # v2.1.1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Azure Upload Release Packages
+        uses: azure/CLI@965c8d7571d2231a54e321ddd07f7b10317f34d9 # v2.0.0
+        with:
+          inlineScript: |
+            for i in $(find tarballs -type f); do
+              echo -n "Uploading ${i} to kubernetes-ingress/v${{ inputs.nic_version }}/${i##*/} ... "
+              if ${{ ! inputs.dry_run}}; then
+                az storage blob upload --auth-mode=login -f "$i" -c ${{ secrets.AZURE_BUCKET_NAME }} \
+                  --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} --overwrite -n kubernetes-ingress/v${{ inputs.nic_version }}/${i##*/}
+                echo "done"
+              else
+                echo "skipped, dry_run."
+              fi
+            done
+
+  github-release:
+    if: ${{ ! contains(inputs.skip_step, 'github-release') }}
+    name: Publish release to GitHub
+    runs-on: ubuntu-22.04
+    needs: [variables, binaries, release-oss, release-plus]
+    permissions:
+      contents: write # to modify the release
+      issues: write # to close milestone
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          ref: ${{ inputs.release_branch }}
+
+      - name: Fetch Cached Tarball Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          key: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5 }}
+          path: ${{ github.workspace }}/tarballs
+          fail-on-cache-miss: true
+
+      - name: Upload Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # clobber overwrites existing assets of the same name
+        run: |
+          if ! ${{ inputs.dry_run }}
+            gh release upload --clobber v${{ inputs.nic_version }} \
+              $(find ./tarballs -type f)
+          else
+            echo "Skipping adding binaries to Github Release, DRY_RUN"
+          fi
+
+      - name: Close Release Milestone
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          milestone_number=$(gh api \
+            -H "Accept: application/vnd.github.v3+json" \
+            /repos/${{ github.repository_owner }}/${{ github.repository }}/milestones \
+            | jq --arg version ${{ inputs.nic_version }} -r \
+            '.[] | select(.title == $version) | .number')
+          if ! ${{ inputs.dry_run }}
+            gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
+              /repos/${{ github.repository_owner }}/${{ github.repository }}/milestones/${milestone_number} \
+          else
+            echo "Skipping closing Github Release milestone, DRY_RUN"
+          fi
+
+      - name: Get Github release id
+        id: release-id
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_id=$(gh api \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository_owner }}/${{ github.repository }}/releases \
+            | jq --arg version ${{ inputs.nic_version }} -r \
+            '.[] | select(.name == $version) | .id')
+          echo "release_id=${release_id}" >> $GITHUB_OUTPUT
+
+      - name: Publish Github Release
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const {RELEASE_ID} = process.env
+            const release = (await github.rest.repos.updateRelease({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              release_id: `${RELEASE_ID}`,
+              draft: false,
+            }))
+            console.log(`Release published: ${release.data.html_url}`)
+        env:
+          RELEASE_ID: ${{ steps.release-id.outputs.release_id }}
+        if: ${{ ! inputs.dry_run }}
+
+  # release-image-notification:
+  #   if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
+  #   name: Notify Slack channels about image release
+  #   runs-on: ubuntu-22.04
+  #   needs: [variables, binaries, release-oss, release-plus]
+  #   permissions:
+  #     contents: read
+  #     actions: read
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-ubi", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+  #       with:
+  #         ref: ${{ inputs.release_branch }}
+
+  #     - name: Get Image manifest digest
+  #       id: digest
+  #       run: |
+  #         digest=$(docker buildx imagetools inspect ${{ matrix.image }} --format '{{ json . }}' | jq -r .manifest.digest)
+
+  #     - name: Get Image tag
+  #       id: tag
+  #       run: |
+  #         tag=$(echo ${{ matrix.image }} | cut -d ':' -f 2)
+
+  #     - name: Notify Slack of Dockerhub image release
+  #       uses: ./.github/workflows/updates-notification.yml
+  #       with:
+  #         tag: ${{ steps.tag.outputs.tag }}
+  #         version: ${{ inputs.nic_version }}
+  #         image_digest: ${{ steps.digest.outputs.digest }}
