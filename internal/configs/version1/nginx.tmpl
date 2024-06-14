@@ -11,6 +11,9 @@ daemon off;
 error_log  stderr {{.ErrorLogLevel}};
 pid        /var/lib/nginx/nginx.pid;
 
+{{- if .NJSLoadModule}}
+load_module modules/ngx_http_js_module.so;
+{{- end}}
 {{- if .OpenTracingLoadModule}}
 load_module modules/ngx_http_opentracing_module.so;
 {{- end}}
@@ -19,8 +22,6 @@ load_module modules/ngx_http_opentracing_module.so;
 {{range $value := .MainSnippets}}
 {{$value}}{{end}}
 {{- end}}
-
-load_module modules/ngx_http_js_module.so;
 
 events {
     worker_connections  {{.WorkerConnections}};
@@ -32,9 +33,10 @@ http {
     map_hash_max_size {{.MapHashMaxSize}};
     map_hash_bucket_size {{.MapHashBucketSize}};
 
-
+    {{ if .NJSLoadModule }}
     js_import /etc/nginx/njs/apikey_auth.js;
     js_set $apikey_auth_hash apikey_auth.hash;
+    {{- end}}
 
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}

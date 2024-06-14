@@ -151,6 +151,7 @@ type StaticConfigParams struct {
 	InternalRouteServerName        string
 	EnableLatencyMetrics           bool
 	EnableOIDC                     bool
+	NJSLoadModule                  bool
 	SSLRejectHandshake             bool
 	EnableCertManager              bool
 	DynamicSSLReload               bool

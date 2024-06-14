@@ -273,7 +273,6 @@ server {
         set $header_query_value {{ makeHeaderQueryValue $l.APIKey | printf }};
         set $apikey_auth_token $apikey_auth_hash;
         auth_request /_validate_apikey_njs;
-
         {{- else }}
         {{- with $s.APIKey }}
         set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};

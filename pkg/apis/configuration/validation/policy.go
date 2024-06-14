@@ -15,12 +15,12 @@ import (
 )
 
 // ValidatePolicy validates a Policy.
-func ValidatePolicy(policy *v1.Policy, isPlus, enableOIDC, enableAppProtect bool) error {
-	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enableOIDC, enableAppProtect)
+func ValidatePolicy(policy *v1.Policy, isPlus, enableNJS, enableOIDC, enableAppProtect bool) error {
+	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enableNJS, enableOIDC, enableAppProtect)
 	return allErrs.ToAggregate()
 }
 
-func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enableOIDC, enableAppProtect bool) field.ErrorList {
+func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enableNJS, enableOIDC, enableAppProtect bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -64,6 +64,9 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("oidc"),
 				"OIDC must be enabled via cli argument -enable-oidc to use OIDC policy"))
 		}
+		if !enableNJS {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("oidc"), "NJS must be enabled via cli argument -enable-njs to use OIDC policy"))
+		}
 		if !isPlus {
 			return append(allErrs, field.Forbidden(fieldPath.Child("oidc"), "OIDC is only supported in NGINX Plus"))
 		}
@@ -73,6 +76,9 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 	}
 
 	if spec.APIKey != nil {
+		if !enableNJS {
+			return append(allErrs, field.Forbidden(fieldPath.Child("apikey"), "NJS must be enabled via cli argument -enable-njs to use API Key policy"))
+		}
 		allErrs = append(allErrs, validateAPIKey(spec.APIKey, fieldPath.Child("apiKey"))...)
 		fieldCount++
 	}

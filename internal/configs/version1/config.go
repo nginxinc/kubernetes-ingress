@@ -260,6 +260,7 @@ type MainConfig struct {
 	InternalRouteServer                bool
 	InternalRouteServerName            string
 	LatencyMetrics                     bool
+	NJSLoadModule                      bool
 	OIDC                               bool
 	DynamicSSLReloadEnabled            bool
 	StaticSSLPath                      string

@@ -101,7 +101,7 @@ func TestValidatePolicy_JWTIsNotValidOn(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := ValidatePolicy(tc.policy, true, false, false)
+			err := ValidatePolicy(tc.policy, true, false, false, false)
 			if err == nil {
 				t.Errorf("got no errors on invalid JWTAuth policy spec input")
 			}
@@ -170,7 +170,7 @@ func TestValidatePolicy_IsValidOnJWTPolicy(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := ValidatePolicy(tc.policy, true, false, false)
+			err := ValidatePolicy(tc.policy, true, false, false, false)
 			if err != nil {
 				t.Errorf("want no errors, got %+v\n", err)
 			}
@@ -239,7 +239,7 @@ func TestValidatePolicy_RequiresKeyCacheValueForJWTPolicy(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := ValidatePolicy(tc.policy, true, false, false)
+			err := ValidatePolicy(tc.policy, true, false, false, false)
 			if err != nil {
 				t.Errorf("got error on valid JWT policy: %+v\n", err)
 			}
@@ -253,6 +253,7 @@ func TestValidatePolicy_PassesOnValidInput(t *testing.T) {
 	tests := []struct {
 		policy           *v1.Policy
 		isPlus           bool
+		enableNJS        bool
 		enableOIDC       bool
 		enableAppProtect bool
 		msg              string
@@ -266,6 +267,7 @@ func TestValidatePolicy_PassesOnValidInput(t *testing.T) {
 				},
 			},
 			isPlus:           false,
+			enableNJS:        false,
 			enableOIDC:       false,
 			enableAppProtect: false,
 		},
@@ -279,6 +281,7 @@ func TestValidatePolicy_PassesOnValidInput(t *testing.T) {
 				},
 			},
 			isPlus:           true,
+			enableNJS:        true,
 			enableOIDC:       false,
 			enableAppProtect: false,
 			msg:              "use jwt(plus only) policy",
@@ -299,9 +302,29 @@ func TestValidatePolicy_PassesOnValidInput(t *testing.T) {
 					},
 				},
 			},
-			isPlus:     true,
-			enableOIDC: true,
-			msg:        "use OIDC (plus only)",
+			isPlus:           true,
+			enableNJS:        true,
+			enableOIDC:       true,
+			enableAppProtect: false,
+			msg:              "use OIDC (plus only)",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					APIKey: &v1.APIKey{
+						SuppliedIn: &v1.SuppliedIn{
+							Header: []string{"X-API-Key"},
+							Query:  []string{"api_key"},
+						},
+						ClientSecret: "random-secret",
+					},
+				},
+			},
+			isPlus:           false,
+			enableNJS:        true,
+			enableOIDC:       false,
+			enableAppProtect: false,
+			msg:              "use API(enable NJS) policy",
 		},
 		{
 			policy: &v1.Policy{
@@ -312,16 +335,19 @@ func TestValidatePolicy_PassesOnValidInput(t *testing.T) {
 				},
 			},
 			isPlus:           true,
+			enableNJS:        true,
 			enableOIDC:       false,
 			enableAppProtect: true,
 			msg:              "use WAF(plus only) policy",
 		},
 	}
 	for _, test := range tests {
-		err := ValidatePolicy(test.policy, test.isPlus, test.enableOIDC, test.enableAppProtect)
-		if err != nil {
-			t.Errorf("ValidatePolicy() returned error %v for valid input for the case of %v", err, test.msg)
-		}
+		t.Run(test.msg, func(t *testing.T) {
+			err := ValidatePolicy(test.policy, test.isPlus, test.enableNJS, test.enableOIDC, test.enableAppProtect)
+			if err != nil {
+				t.Errorf("ValidatePolicy() returned error %v for valid input for the case of %v", err, test.msg)
+			}
+		})
 	}
 }
 
@@ -330,6 +356,7 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 	tests := []struct {
 		policy           *v1.Policy
 		isPlus           bool
+		enableNJS        bool
 		enableOIDC       bool
 		enableAppProtect bool
 		msg              string
@@ -339,6 +366,7 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 				Spec: v1.PolicySpec{},
 			},
 			isPlus:           false,
+			enableNJS:        false,
 			enableOIDC:       false,
 			enableAppProtect: false,
 			msg:              "empty policy spec",
@@ -357,6 +385,7 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 				},
 			},
 			isPlus:           true,
+			enableNJS:        true,
 			enableOIDC:       false,
 			enableAppProtect: false,
 			msg:              "multiple policies in spec",
@@ -371,6 +400,7 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 				},
 			},
 			isPlus:           false,
+			enableNJS:        true,
 			enableOIDC:       false,
 			enableAppProtect: false,
 			msg:              "jwt(plus only) policy on OSS",
@@ -384,6 +414,7 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 				},
 			},
 			isPlus:           false,
+			enableNJS:        true,
 			enableOIDC:       false,
 			enableAppProtect: false,
 			msg:              "WAF(plus only) policy on OSS",
@@ -403,8 +434,28 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 				},
 			},
 			isPlus:     true,
+			enableNJS:  true,
 			enableOIDC: false,
-			msg:        "OIDC policy with enable OIDC flag disabled",
+			msg:        "OIDC policy with OIDC disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					OIDC: &v1.OIDC{
+						AuthEndpoint:      "https://foo.bar/auth",
+						TokenEndpoint:     "https://foo.bar/token",
+						JWKSURI:           "https://foo.bar/certs",
+						ClientID:          "random-string",
+						ClientSecret:      "random-secret",
+						Scope:             "openid",
+						AccessTokenEnable: true,
+					},
+				},
+			},
+			isPlus:     true,
+			enableNJS:  false,
+			enableOIDC: true,
+			msg:        "OIDC policy with NJS disabled",
 		},
 		{
 			policy: &v1.Policy{
@@ -421,21 +472,26 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 				},
 			},
 			isPlus:     false,
+			enableNJS:  true,
 			enableOIDC: true,
 			msg:        "OIDC policy in OSS",
 		},
 		{
 			policy: &v1.Policy{
 				Spec: v1.PolicySpec{
-					WAF: &v1.WAF{
-						Enable: true,
+					APIKey: &v1.APIKey{
+						SuppliedIn: &v1.SuppliedIn{
+							Header: []string{"X-API-Key"},
+							Query:  []string{"api_key"},
+						},
+						ClientSecret: "random-secret",
 					},
 				},
 			},
-			isPlus:           true,
-			enableOIDC:       false,
-			enableAppProtect: false,
-			msg:              "WAF policy with AP disabled",
+			isPlus:     false,
+			enableNJS:  false,
+			enableOIDC: false,
+			msg:        "use API policy with NJS disabled",
 		},
 		{
 			policy: &v1.Policy{
@@ -453,6 +509,7 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 				},
 			},
 			isPlus:     true,
+			enableNJS:  true,
 			enableOIDC: true,
 			msg:        "OIDC policy with invalid ZoneSyncLeeway",
 		},
@@ -471,15 +528,32 @@ func TestValidatePolicy_FailsOnInvalidInput(t *testing.T) {
 				},
 			},
 			isPlus:     true,
+			enableNJS:  true,
 			enableOIDC: true,
 			msg:        "OIDC policy with invalid AuthExtraArgs",
 		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					WAF: &v1.WAF{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:           true,
+			enableNJS:        false,
+			enableOIDC:       false,
+			enableAppProtect: false,
+			msg:              "WAF policy with AP disabled",
+		},
 	}
 	for _, test := range tests {
-		err := ValidatePolicy(test.policy, test.isPlus, test.enableOIDC, test.enableAppProtect)
-		if err == nil {
-			t.Errorf("ValidatePolicy() returned no error for invalid input")
-		}
+		t.Run(test.msg, func(t *testing.T) {
+			err := ValidatePolicy(test.policy, test.isPlus, test.enableNJS, test.enableOIDC, test.enableAppProtect)
+			if err == nil {
+				t.Errorf("ValidatePolicy() returned no error for invalid input")
+			}
+		})
 	}
 }
 

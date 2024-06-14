@@ -164,6 +164,9 @@ var (
 	enableCustomResources = flag.Bool("enable-custom-resources", true,
 		"Enable custom resources")
 
+	enableNJS = flag.Bool("enable-njs", true,
+		"Load NJS modules.")
+
 	enableOIDC = flag.Bool("enable-oidc", false,
 		"Enable OIDC Policies.")
 

@@ -457,7 +457,6 @@ server {
             {{- end }}
         {{- end }}
 
-
         {{- with $l.APIKey}}
         set $apikey_auth_local_map  "{{ .MapName }}";
         set $header_query_value {{ makeHeaderQueryValue $l.APIKey | printf }};
@@ -467,7 +466,6 @@ server {
         {{- with $s.APIKey }}
         set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
         {{- end }}
-
         {{- end }}
 
         {{- with $l.WAF }}

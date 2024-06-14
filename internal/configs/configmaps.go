@@ -581,6 +581,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		InternalRouteServerName:            staticCfgParams.InternalRouteServerName,
 		LatencyMetrics:                     staticCfgParams.EnableLatencyMetrics,
 		OIDC:                               staticCfgParams.EnableOIDC,
+		NJSLoadModule:                      staticCfgParams.NJSLoadModule,
 		DynamicSSLReloadEnabled:            staticCfgParams.DynamicSSLReload,
 		StaticSSLPath:                      staticCfgParams.StaticSSLPath,
 		NginxVersion:                       staticCfgParams.NginxVersion,
