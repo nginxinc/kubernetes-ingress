@@ -283,6 +283,7 @@ type virtualServerConfigurator struct {
 	StaticSSLPath              string
 	DynamicWeightChangesReload bool
 	bundleValidator            bundleValidator
+	IngressControllerReplicas  int
 }
 
 type oidcPolicyCfg struct {
@@ -314,7 +315,7 @@ func newVirtualServerConfigurator(
 	bundleValidator bundleValidator,
 ) *virtualServerConfigurator {
 	if bundleValidator == nil {
-		bundleValidator = newInternalBundleValidator(appProtectBundleFolder)
+		bundleValidator = newInternalBundleValidator(staticParams.AppProtectBundlePath)
 	}
 	return &virtualServerConfigurator{
 		cfgParams:                  cfgParams,
@@ -935,11 +936,12 @@ func (p *policiesCfg) addRateLimitConfig(
 	polName string,
 	vsNamespace string,
 	vsName string,
+	podReplicas int,
 ) *validationResults {
 	res := newValidationResults()
 	rlZoneName := fmt.Sprintf("pol_rl_%v_%v_%v_%v", polNamespace, polName, vsNamespace, vsName)
 	p.LimitReqs = append(p.LimitReqs, generateLimitReq(rlZoneName, rateLimit))
-	p.LimitReqZones = append(p.LimitReqZones, generateLimitReqZone(rlZoneName, rateLimit))
+	p.LimitReqZones = append(p.LimitReqZones, generateLimitReqZone(rlZoneName, rateLimit, podReplicas))
 	if len(p.LimitReqs) == 1 {
 		p.LimitReqOptions = generateLimitReqOptions(rateLimit)
 	} else {
@@ -1323,7 +1325,6 @@ func (p *policiesCfg) addWAFConfig(
 	}
 
 	if waf.ApBundle != "" {
-		p.WAF.ApBundle = appProtectBundleFolder + waf.ApBundle
 		bundlePath, err := p.BundleValidator.validate(waf.ApBundle)
 		if err != nil {
 			res.addWarningf("WAF policy %s references an invalid or non-existing App Protect bundle %s", polKey, bundlePath)
@@ -1400,6 +1401,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 					p.Name,
 					ownerDetails.vsNamespace,
 					ownerDetails.vsName,
+					vsc.IngressControllerReplicas,
 				)
 			case pol.Spec.JWTAuth != nil:
 				res = config.addJWTAuthConfig(pol.Spec.JWTAuth, key, polNamespace, policyOpts.secretRefs)
@@ -1460,12 +1462,16 @@ func generateLimitReq(zoneName string, rateLimitPol *conf_v1.RateLimit) version2
 	return limitReq
 }
 
-func generateLimitReqZone(zoneName string, rateLimitPol *conf_v1.RateLimit) version2.LimitReqZone {
+func generateLimitReqZone(zoneName string, rateLimitPol *conf_v1.RateLimit, podReplicas int) version2.LimitReqZone {
+	rate := rateLimitPol.Rate
+	if rateLimitPol.Scale {
+		rate = scaleRatelimit(rateLimitPol.Rate, podReplicas)
+	}
 	return version2.LimitReqZone{
 		ZoneName: zoneName,
 		Key:      rateLimitPol.Key,
 		ZoneSize: rateLimitPol.ZoneSize,
-		Rate:     rateLimitPol.Rate,
+		Rate:     rate,
 	}
 }
 
@@ -2086,6 +2092,15 @@ func generateLocationForReturn(path string, locationSnippets []string, actionRet
 		code = 200
 	}
 
+	var headers []version2.Header
+
+	for _, h := range actionReturn.Headers {
+		headers = append(headers, version2.Header{
+			Name:  h.Name,
+			Value: h.Value,
+		})
+	}
+
 	retLocName := fmt.Sprintf("@return_%d", retLocIndex)
 
 	return version2.Location{
@@ -2107,6 +2122,7 @@ func generateLocationForReturn(path string, locationSnippets []string, actionRet
 			Return: version2.Return{
 				Text: actionReturn.Body,
 			},
+			Headers: headers,
 		}
 }
 

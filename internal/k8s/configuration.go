@@ -917,6 +917,11 @@ func (c *Configuration) FindResourcesForAppProtectDosProtected(namespace string,
 	return c.findResourcesForResourceReference(namespace, name, c.appDosProtectedChecker)
 }
 
+// FindIngressesWithRatelimitScaling finds ingresses that use rate limit scaling
+func (c *Configuration) FindIngressesWithRatelimitScaling(svcNamespace string) []Resource {
+	return c.findResourcesForResourceReference(svcNamespace, "", &ratelimitScalingAnnotationChecker{})
+}
+
 func (c *Configuration) findResourcesForResourceReference(namespace string, name string, checker resourceReferenceChecker) []Resource {
 	c.lock.RLock()
 	defer c.lock.RUnlock()

@@ -129,6 +129,7 @@ var helperFunctions = template.FuncMap{
 	"hasSuffix":         strings.HasSuffix,
 	"toLower":           strings.ToLower,
 	"toUpper":           strings.ToUpper,
+	"replaceAll":        strings.ReplaceAll,
 	"makeHTTPListener":  makeHTTPListener,
 	"makeHTTPSListener": makeHTTPSListener,
 	"makeSecretPath":    commonhelpers.MakeSecretPath,

@@ -1,0 +1,42 @@
+name: "Cherry-pick dependencies to release branch"
+on:
+  pull_request:
+    branches:
+      - main
+    types: ["closed"]
+
+permissions:
+  contents: read
+
+jobs:
+  cherry_pick_to_release:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-22.04
+    name: Cherry pick into release branch
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'dependencies') && github.event.pull_request.merged == true }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.NGINX_PAT }}
+
+      - name: Set release branch variable
+        id: branch
+        run: |
+          branch=$(git branch -a | egrep '^\s+remotes/origin/release' | awk '{print $1}' | sort -u | tail -n 1)
+          release_branch=$(basename ${branch})
+          echo "branch=${release_branch}" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Cherry pick into ${{ steps.branch.outputs.branch }}
+        uses: carloscastrojumo/github-cherry-pick-action@503773289f4a459069c832dc628826685b75b4b3 # v1.0.10
+        with:
+          branch: ${{ steps.branch.outputs.branch }}
+          token: ${{ secrets.NGINX_PAT }}
+          author: nginx-bot <integrations@nginx.com>
+          labels: |
+            dependencies
+          title: "[cherry-pick] {old_title}"

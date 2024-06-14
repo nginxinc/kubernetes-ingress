@@ -4979,6 +4979,38 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 					},
 				},
 			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "header-returns",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "example.com",
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/header/return",
+							Action: &conf_v1.Action{
+								Return: &conf_v1.ActionReturn{
+									Headers: []conf_v1.Header{{Name: "return-header", Value: "value 1"}},
+									Body:    "hello 10",
+								},
+							},
+						},
+						{
+							Path: "/header/return-multiple",
+							Action: &conf_v1.Action{
+								Return: &conf_v1.ActionReturn{
+									Headers: []conf_v1.Header{
+										{Name: "return-header", Value: "value 1"},
+										{Name: "return-header-2", Value: "value 2"},
+									},
+									Body: "hello 11",
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -5179,6 +5211,27 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 						Text: "hello 9",
 					},
 				},
+				{
+					Name:        "@return_10",
+					DefaultType: "text/plain",
+					Return: version2.Return{
+						Code: 0,
+						Text: "hello 10",
+					},
+					Headers: []version2.Header{{Name: "return-header", Value: "value 1"}},
+				},
+				{
+					Name:        "@return_11",
+					DefaultType: "text/plain",
+					Return: version2.Return{
+						Code: 0,
+						Text: "hello 11",
+					},
+					Headers: []version2.Header{
+						{Name: "return-header", Value: "value 1"},
+						{Name: "return-header-2", Value: "value 2"},
+					},
+				},
 			},
 			Locations: []version2.Location{
 				{
@@ -5295,6 +5348,30 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 					ErrorPages: []version2.ErrorPage{
 						{
 							Name:         "@return_9",
+							Codes:        "418",
+							ResponseCode: 200,
+						},
+					},
+					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+				},
+				{
+					Path:                 "/header/return",
+					ProxyInterceptErrors: true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@return_10",
+							Codes:        "418",
+							ResponseCode: 200,
+						},
+					},
+					InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+				},
+				{
+					Path:                 "/header/return-multiple",
+					ProxyInterceptErrors: true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@return_11",
 							Codes:        "418",
 							ResponseCode: 200,
 						},
@@ -5836,6 +5913,47 @@ func TestGeneratePolicies(t *testing.T) {
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
+					Name:      "rateLimitScale-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/rateLimitScale-policy": {
+					Spec: conf_v1.PolicySpec{
+						RateLimit: &conf_v1.RateLimit{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							LogLevel: "notice",
+							Scale:    true,
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				LimitReqZones: []version2.LimitReqZone{
+					{
+						Key:      "test",
+						ZoneSize: "10M",
+						Rate:     "5r/s",
+						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+					},
+				},
+				LimitReqOptions: version2.LimitReqOptions{
+					LogLevel:   "notice",
+					RejectCode: 503,
+				},
+				LimitReqs: []version2.LimitReq{
+					{
+						ZoneName: "pol_rl_default_rateLimitScale-policy_default_test",
+					},
+				},
+			},
+			msg: "rate limit reference with scale",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
 					Name:      "jwt-policy",
 					Namespace: "default",
 				},
@@ -6205,6 +6323,8 @@ func TestGeneratePolicies(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+	// required to test the scaling of the ratelimit
+	vsc.IngressControllerReplicas = 2
 
 	for _, test := range tests {
 		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOpts)
@@ -6258,7 +6378,7 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 			want: policiesCfg{
 				WAF: &version2.WAF{
 					Enable:   "on",
-					ApBundle: "/etc/nginx/waf/bundles/testWAFPolicyBundle.tgz",
+					ApBundle: "/fake/bundle/path/testWAFPolicyBundle.tgz",
 				},
 			},
 		},
@@ -6290,9 +6410,9 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 			want: policiesCfg{
 				WAF: &version2.WAF{
 					Enable:              "on",
-					ApBundle:            "/etc/nginx/waf/bundles/testWAFPolicyBundle.tgz",
+					ApBundle:            "/fake/bundle/path/testWAFPolicyBundle.tgz",
 					ApSecurityLogEnable: true,
-					ApLogConf:           []string{"/etc/nginx/waf/bundles/secops_dashboard.tgz syslog:server=localhost:514"},
+					ApLogConf:           []string{"/fake/bundle/path/secops_dashboard.tgz syslog:server=localhost:514"},
 				},
 			},
 		},
@@ -9023,11 +9143,11 @@ func TestGenerateSplits(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -11048,11 +11168,11 @@ func TestGenerateMatchesConfig(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -11465,11 +11585,11 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"ok\"}`,
-				},
-				Headers: []conf_v1.Header{
-					{
-						Name:  "Set-Cookie",
-						Value: "cookie1=value",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Set-Cookie",
+							Value: "cookie1=value",
+						},
 					},
 				},
 			},
@@ -12866,9 +12986,9 @@ func TestGenerateErrorPages(t *testing.T) {
 					Codes: []int{404, 405, 500, 502},
 					Return: &conf_v1.ErrorPageReturn{
 						ActionReturn: conf_v1.ActionReturn{
-							Code: 200,
+							Code:    200,
+							Headers: nil,
 						},
-						Headers: nil,
 					},
 					Redirect: nil,
 				},
@@ -12947,11 +13067,11 @@ func TestGenerateErrorPageLocations(t *testing.T) {
 							Code: 200,
 							Type: "application/json",
 							Body: "Hello World",
-						},
-						Headers: []conf_v1.Header{
-							{
-								Name:  "HeaderName",
-								Value: "HeaderValue",
+							Headers: []conf_v1.Header{
+								{
+									Name:  "HeaderName",
+									Value: "HeaderValue",
+								},
 							},
 						},
 					},
@@ -14543,7 +14663,7 @@ var (
 type fakeBundleValidator struct{}
 
 func (*fakeBundleValidator) validate(bundle string) (string, error) {
-	bundle = fmt.Sprintf("/etc/nginx/waf/bundles/%s", bundle)
+	bundle = fmt.Sprintf("/fake/bundle/path/%s", bundle)
 	if strings.Contains(bundle, "invalid") {
 		return bundle, fmt.Errorf("invalid bundle %s", bundle)
 	}

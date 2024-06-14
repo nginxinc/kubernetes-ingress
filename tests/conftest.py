@@ -120,6 +120,12 @@ def pytest_addoption(parser) -> None:
         default=os.environ.get("AZURE_AD_AUTOMATION"),
         help="Azure active directory secret for JWKs",
     )
+    parser.addoption(
+        "--num",
+        action="store",
+        default="1",
+        help="Number of resources to deploy for upgrade tests",
+    )
 
 
 # import fixtures into pytest global namespace

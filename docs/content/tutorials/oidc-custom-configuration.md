@@ -27,12 +27,12 @@ Run the below command to generate a ConfigMap with the contents of the `oidc.con
 **NOTE** The ConfigMap must be deployed in the same `namespace` as the F5 NGINX Ingress Controller.
 
 ```console
-kubectl create configmap oidc-config-map --from-literal=oidc.conf="$(curl -k https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/internal/configs/oidc/oidc.conf)"
+kubectl create configmap oidc-config-map --from-literal=oidc.conf="$(curl -k https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/internal/configs/oidc/oidc.conf)"
 ```
 
 Use the `kubectl describe` command to confirm the contents of the ConfigMap are correct.
 
-```console
+```shell
 kubectl describe configmap oidc-config-map
 ```
 
@@ -65,7 +65,7 @@ Once the contents of the `oidc.conf` file has been added to the ConfigMap, you a
 This example demonstrates adding a comment to the top of the file. The comment will be shown at the top of the `oidc.conf` file.
 This comment will be `# >> Custom Comment for my OIDC file <<`
 
-```console
+```shell
 kubectl edit configmap oidc-config-map
 ```
 
@@ -144,7 +144,7 @@ Once the `Volume` and `VolumeMount` has been added the manifest file, apply the 
 
 Confirm the `oidc.conf` file has been updated:
 
-```console
+```shell
 kubectl exec -it -n <ic-namespace> <ingess-controller-pod> -- cat /etc/nginx/oidc/oidc.conf
 ```
 
@@ -159,13 +159,13 @@ The `VolumeMount`must be added the `spec.template.spec.containers` section.
 
 For Deployments:
 
-```console
+```shell
 kubectl edit deployments <name-of-deployment> -n <ic-namespace>
 ```
 
 For Daemonsets:
 
-```console
+```shell
 kubectl edit daemonset <name-of-daemonset> -n <ic-namespace>
 ```
 
@@ -202,6 +202,6 @@ Once the Deployment/Daemonset has been edited, save the file and exit.
 
 Confirm the `oidc.conf` file has been updated:
 
-```console
+```shell
 kubectl exec -it -n <ic-namespace> <ingess-controller-pod> -- cat /etc/nginx/oidc/oidc.conf
 ```

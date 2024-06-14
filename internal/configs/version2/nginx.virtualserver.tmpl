@@ -192,6 +192,9 @@ server {
     {{ range $l := $s.ReturnLocations }}
     location {{ $l.Name }} {
         default_type "{{ $l.DefaultType }}";
+        {{ range $h := $l.Headers }}
+        add_header {{ $h.Name }} "{{ $h.Value }}" always;
+        {{ end }}
         # status code is ignored here, using 0
         return 0 "{{ $l.Return.Text }}";
     }

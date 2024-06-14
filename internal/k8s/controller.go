@@ -185,6 +185,7 @@ type NewLoadBalancerControllerInput struct {
 	DefaultServerSecret          string
 	AppProtectEnabled            bool
 	AppProtectDosEnabled         bool
+	AppProtectVersion            string
 	IsNginxPlus                  bool
 	IngressClass                 string
 	ExternalServiceName          string
@@ -217,6 +218,7 @@ type NewLoadBalancerControllerInput struct {
 	TelemetryReportingEndpoint   string
 	NICVersion                   string
 	DynamicWeightChangesReload   bool
+	InstallationFlags            []string
 }
 
 // NewLoadBalancerController creates a controller
@@ -364,6 +366,8 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			Period:              24 * time.Hour,
 			K8sClientReader:     input.KubeClient,
 			Version:             input.NICVersion,
+			AppProtectVersion:   input.AppProtectVersion,
+			InstallationFlags:   input.InstallationFlags,
 			GlobalConfiguration: lbc.watchGlobalConfiguration,
 			Configurator:        lbc.configurator,
 			SecretStore:         lbc.secretStore,
@@ -372,6 +376,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 				Name:      os.Getenv("POD_NAME"),
 			},
 			Policies: lbc.getAllPolicies,
+			IsPlus:   lbc.isNginxPlus,
 		}
 		collector, err := telemetry.NewCollector(
 			collectorConfig,
@@ -848,6 +853,11 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 	svcName := endpointSlice.Labels["kubernetes.io/service-name"]
 	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, svcName)
 
+	// check if this is the endpointslice for the controller's own service
+	if lbc.statusUpdater.namespace == endpointSlice.Namespace && lbc.statusUpdater.externalServiceName == svcName {
+		return lbc.updateNumberOfIngressControllerReplicas(*endpointSlice)
+	}
+
 	resourceExes := lbc.createExtendedResources(svcResource)
 
 	if len(resourceExes.IngressExes) > 0 {
@@ -905,6 +915,63 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 	return resourcesFound
 }
 
+// finds the number of currently active endpoints for the service pointing at the ingresscontroller and updates all configs that depend on that number
+func (lbc *LoadBalancerController) updateNumberOfIngressControllerReplicas(controllerEndpointSlice discovery_v1.EndpointSlice) bool {
+	previous := lbc.configurator.GetIngressControllerReplicas()
+	current := countReadyEndpoints(controllerEndpointSlice)
+	found := false
+
+	if current != previous {
+		// number of active endpoints changed. Update configuration of all ingresses that depend on it
+		lbc.configurator.SetIngressControllerReplicas(len(controllerEndpointSlice.Endpoints))
+
+		// handle ingresses
+		resources := lbc.configuration.FindIngressesWithRatelimitScaling(controllerEndpointSlice.Namespace)
+		resourceExes := lbc.createExtendedResources(resources)
+		for _, ingress := range resourceExes.IngressExes {
+			found = true
+			_, err := lbc.configurator.AddOrUpdateIngress(ingress)
+			if err != nil {
+				glog.Errorf("Error updating ratelimit for Ingress %s/%s: %s", ingress.Ingress.Namespace, ingress.Ingress.Name, err)
+			}
+		}
+		for _, ingress := range resourceExes.MergeableIngresses {
+			found = true
+			_, err := lbc.configurator.AddOrUpdateMergeableIngress(ingress)
+			if err != nil {
+				glog.Errorf("Error updating ratelimit for Ingress %s/%s: %s", ingress.Master.Ingress.Namespace, ingress.Master.Ingress.Name, err)
+			}
+		}
+
+		// handle virtualservers
+		if lbc.areCustomResourcesEnabled {
+			resources = lbc.findVirtualServersUsingRatelimitScaling()
+			resourceExes = lbc.createExtendedResources(resources)
+			for _, vserver := range resourceExes.VirtualServerExes {
+				found = true
+				_, err := lbc.configurator.AddOrUpdateVirtualServer(vserver)
+				if err != nil {
+					glog.Errorf("Error updating ratelimit for VirtualServer %s/%s: %s", vserver.VirtualServer.Namespace, vserver.VirtualServer.Name, err)
+				}
+			}
+		}
+
+	}
+	return found
+}
+
+func (lbc *LoadBalancerController) findVirtualServersUsingRatelimitScaling() []Resource {
+	policies := lbc.getAllPolicies()
+	resources := make([]Resource, 0, len(policies))
+	for _, policy := range policies {
+		if policy.Spec.RateLimit != nil && policy.Spec.RateLimit.Scale {
+			newresources := lbc.configuration.FindResourcesForPolicy(policy.Namespace, policy.Name)
+			resources = append(resources, newresources...)
+		}
+	}
+	return resources
+}
+
 func (lbc *LoadBalancerController) virtualServerRequiresEndpointsUpdate(vsEx *configs.VirtualServerEx, serviceName string) bool {
 	for _, upstream := range vsEx.VirtualServer.Spec.Upstreams {
 		if upstream.Service == serviceName && !upstream.UseClusterIP {
@@ -960,6 +1027,17 @@ func (lbc *LoadBalancerController) mergeableIngressRequiresEndpointsUpdate(merge
 	}
 
 	return lbc.ingressRequiresEndpointsUpdate(masterIngress, serviceName)
+}
+
+// countReadyEndpoints returns the number of ready endpoints in this endpointslice
+func countReadyEndpoints(slice discovery_v1.EndpointSlice) int {
+	count := 0
+	for _, endpoint := range slice.Endpoints {
+		if endpoint.Conditions.Ready != nil && *endpoint.Conditions.Ready {
+			count = count + 1
+		}
+	}
+	return count
 }
 
 func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) configs.ExtendedResources {

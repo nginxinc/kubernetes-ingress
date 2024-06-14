@@ -2,16 +2,16 @@
 docs: DOCS-596
 doctypes:
 - ''
-title: Policy Resource
+title: Policy resources
 toc: true
-weight: 1800
+weight: 600
 ---
 
 The Policy resource allows you to configure features like access control and rate-limiting, which you can add to your [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/).
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -124,6 +124,7 @@ rateLimit:
 |``dryRun`` | Enables the dry run mode. In this mode, the rate limit is not actually applied, but the number of excessive requests is accounted as usual in the shared memory zone. | ``bool`` | No |
 |``logLevel`` | Sets the desired logging level for cases when the server refuses to process requests due to rate exceeding, or delays request processing. Allowed values are ``info``, ``notice``, ``warn`` or ``error``. Default is ``error``. | ``string`` | No |
 |``rejectCode`` | Sets the status code to return in response to rejected requests. Must fall into the range ``400..599``. Default is ``503``. | ``int`` | No |
+|``scale`` | Enables a constant rate-limit by dividing the configured rate by the number of nginx-ingress pods currently serving traffic. This adjustment ensures that the rate-limit remains consistent, even as the number of nginx-pods fluctuates due to autoscaling. Note: This will not work properly if requests from a client are not evenly distributed accross all ingress pods (sticky sessions, long lived TCP-Connections with many requests etc.). In such cases using NGINX+'s zone-sync feature instead would give better results. | ``bool`` | No |
 {{% /table %}}
 
 > For each policy referenced in a VirtualServer and/or its VirtualServerRoutes, NGINX Ingress Controller will generate a single rate limiting zone defined by the [`limit_req_zone`](http://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) directive. If two VirtualServer resources reference the same policy, NGINX Ingress Controller will generate two different rate limiting zones, one zone per VirtualServer.
@@ -458,7 +459,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 #### Prerequisites
 
 In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
-You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.0/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 
@@ -501,7 +502,7 @@ You can use the usual `kubectl` commands to work with Policy resources, just as 
 
 For example, the following command creates a Policy resource defined in `access-control-policy-allow.yaml` with the name `webapp-policy`:
 
-```console
+```shell
 kubectl apply -f access-control-policy-allow.yaml
 
 policy.k8s.nginx.org/webapp-policy configured
@@ -509,7 +510,7 @@ policy.k8s.nginx.org/webapp-policy configured
 
 You can get the resource by running:
 
-```console
+```shell
 kubectl get policy webapp-policy
 
 NAME            AGE
@@ -669,7 +670,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
 - Example of `kubectl` validation:
 
-    ```console
+    ```shell
     kubectl apply -f access-control-policy-allow.yaml
 
     error: error validating "access-control-policy-allow.yaml": error validating data: ValidationError(Policy.spec.accessControl.allow): invalid type for org.nginx.k8s.v1.Policy.spec.accessControl.allow: got "string", expected "array"; if you choose to ignore these errors, turn validation off with --validate=false
@@ -677,7 +678,7 @@ If you try to create (or update) a resource that violates the structural schema 
 
 - Example of Kubernetes API server validation:
 
-    ```console
+    ```shell
     kubectl apply -f access-control-policy-allow.yaml --validate=false
 
     The Policy "webapp-policy" is invalid: spec.accessControl.allow: Invalid value: "string": spec.accessControl.allow in body must be of type array: "string"
@@ -691,7 +692,7 @@ NGINX Ingress Controller validates the fields of a Policy resource. If a resourc
 
 You can use `kubectl` to check whether or not NGINX Ingress Controller successfully applied a Policy configuration. For our example `webapp-policy` Policy, we can run:
 
-```console
+```shell
 kubectl describe pol webapp-policy
 
 . . .
@@ -705,7 +706,7 @@ Note how the events section includes a Normal event with the AddedOrUpdated reas
 
 If you create an invalid resource, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create a Policy `webapp-policy` with an invalid IP `10.0.0.` in the `allow` field, you will get:
 
-```console
+```shell
 kubectl describe policy webapp-policy
 
 . . .
@@ -719,7 +720,7 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 Additionally, this information is also available in the `status` field of the Policy resource. Note the Status section of the Policy:
 
-```console
+```shell
 kubectl describe pol webapp-policy
 
 . . .

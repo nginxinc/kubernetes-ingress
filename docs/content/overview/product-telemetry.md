@@ -34,11 +34,27 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **TransportServers** The number of TransportServer resources managed by NGINX Ingress Controller.
 - **Replicas** Number of Deployment replicas, or Daemonset instances.
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
-- **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
-- **Ingresses** The number of Ingress resources managed by the NGINX Ingress Controller.
+- **ClusterIPServices** Number of ClusterIP Services managed by NGINX Ingress Controller.
+- **NodePortServices** Number of NodePort Services managed by NGINX Ingress Controller.
+- **LoadBalancerServices** Number of LoadBalancer Services managed by NGINX Ingress Controller.
+- **ExternalNameServices** Number of ExternalName Services managed by NGINX Ingress Controller.
+- **RegularIngressCount** The number of Regular Ingress resources managed by NGINX Ingress Controller.
+- **MasterIngressCount** The number of Master Ingress resources managed by NGINX Ingress Controller.
+- **MinionIngressCount** The number of Minion Ingress resources managed by NGINX Ingress Controller.
 - **IngressClasses** Number of Ingress Classes in the cluster.
-- **Policies** Number of policy resources managed by NGINX Ingress Controller
+- **IngressAnnotations** List of Ingress annotations managed by NGINX Ingress Controller
+- **AccessControlPolicies** Number of AccessControl policies.
+- **RateLimitPolicies** Number of RateLimit policies.
+- **JWTAuthPolicies** Number of JWTAuth policies.
+- **BasicAuthPolicies** Number of BasicAuth policies.
+- **IngressMTLSPolicies** Number of IngressMTLS policies.
+- **EgressMTLSPolicies** Number of EgressMTLS policies.
+- **OIDCPolicies** Number of OIDC policies.
+- **WAFPolicies** Number of WAF policies.
 - **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.
+- **AppProtectVersion** The AppProtect version
+- **IsPlus** Represents whether NGINX is Plus or OSS
+- **InstallationFlags** List of command line arguments configured for NGINX Ingress Controller
 
 ## Opt out
 

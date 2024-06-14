@@ -78,10 +78,10 @@ func ValidateCASecret(secret *api_v1.Secret) error {
 
 	block, _ := pem.Decode(secret.Data[CAKey])
 	if block == nil {
-		return fmt.Errorf("The data field %s must hold a valid CERTIFICATE PEM block", CAKey)
+		return fmt.Errorf("the data field %s must hold a valid CERTIFICATE PEM block", CAKey)
 	}
 	if block.Type != "CERTIFICATE" {
-		return fmt.Errorf("The data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", CAKey, block.Type)
+		return fmt.Errorf("the data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", CAKey, block.Type)
 	}
 
 	_, err := x509.ParseCertificate(block.Bytes)
@@ -112,11 +112,11 @@ func ValidateOIDCSecret(secret *api_v1.Secret) error {
 // ValidateHtpasswdSecret validates the secret. If it is valid, the function returns nil.
 func ValidateHtpasswdSecret(secret *api_v1.Secret) error {
 	if secret.Type != SecretTypeHtpasswd {
-		return fmt.Errorf("Htpasswd secret must be of the type %v", SecretTypeHtpasswd)
+		return fmt.Errorf("htpasswd secret must be of the type %v", SecretTypeHtpasswd)
 	}
 
 	if _, exists := secret.Data[HtpasswdFileKey]; !exists {
-		return fmt.Errorf("Htpasswd secret must have the data field %v", HtpasswdFileKey)
+		return fmt.Errorf("htpasswd secret must have the data field %v", HtpasswdFileKey)
 	}
 
 	// we don't validate the contents of secret.Data[HtpasswdFileKey], because invalid contents will not make NGINX
@@ -149,7 +149,7 @@ func ValidateSecret(secret *api_v1.Secret) error {
 		return ValidateHtpasswdSecret(secret)
 	}
 
-	return fmt.Errorf("Secret is of the unsupported type %v", secret.Type)
+	return fmt.Errorf("secret is of the unsupported type %v", secret.Type)
 }
 
 var clientSecretValueFmtRegexp = regexp.MustCompile(`^([^"$\\\s]|\\[^$])*$`)

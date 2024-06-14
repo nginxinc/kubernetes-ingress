@@ -212,6 +212,7 @@ type ReturnLocation struct {
 	Name        string
 	DefaultType string
 	Return      Return
+	Headers     []Header
 }
 
 // SplitClient defines a split_clients.

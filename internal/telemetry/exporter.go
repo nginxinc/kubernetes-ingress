@@ -75,14 +75,46 @@ type NICResourceCounts struct {
 	Replicas int64
 	// Secrets is the number of Secret resources managed by the Ingress Controller.
 	Secrets int64
-	// Services is the number of services referenced by NGINX Ingress Controller in the cluster
-	Services int64
-	// Ingresses is the number of Ingress resources managed by the NGINX Ingress Controller.
-	Ingresses int64
+	// ClusterIPServices is the number of ClusterIP services managed by NGINX Ingress Controller.
+	ClusterIPServices int64
+	// NodePortServices is the number of NodePort services managed by NGINX Ingress Controller.
+	NodePortServices int64
+	// LoadBalancerServices is the number of LoadBalancer services managed by NGINX Ingress Controller.
+	LoadBalancerServices int64
+	// ExternalNameServices is the number of ExternalName services managed by NGINX Ingress Controller.
+	ExternalNameServices int64
+	// RegularIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	RegularIngressCount int64
+	// MasterIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	MasterIngressCount int64
+	// MinionIngressCount is the number of Regular Ingress resources managed by NGINX Ingress Controller.
+	MinionIngressCount int64
 	// IngressClasses is the number of Ingress Classes.
 	IngressClasses int64
-	// Policies is the number of policy resources managed by NGINX Ingress Controller
-	Policies int64
+	// AccessControlPolicies is the number of AccessControl policies managed by NGINX Ingress Controller
+	AccessControlPolicies int64
+	// RateLimitPolicies is the number of RateLimit policies managed by NGINX Ingress Controller
+	RateLimitPolicies int64
+	// JWTAuthPolicies is the number of JWTAuth policies managed by NGINX Ingress Controller
+	JWTAuthPolicies int64
+	// BasicAuthPolicies is the number of BasicAuth policies managed by NGINX Ingress Controller
+	BasicAuthPolicies int64
+	// IngressMTLSPolicies is the number of IngressMTLS policies managed by NGINX Ingress Controller
+	IngressMTLSPolicies int64
+	// EgressMTLSPolicies is the number of EgressMTLS policies managed by NGINX Ingress Controller
+	EgressMTLSPolicies int64
+	// OIDCPolicies is the number of OIDC policies managed by NGINX Ingress Controller
+	OIDCPolicies int64
+	// WAFPolicies is the number of WAF policies managed by NGINX Ingress Controller
+	WAFPolicies int64
 	// GlobalConfiguration indicates if a GlobalConfiguration resource is used.
 	GlobalConfiguration bool
+	// IngressAnnotations is the list of annotations resources managed by NGINX Ingress Controller
+	IngressAnnotations []string
+	// AppProtectVersion represents the version of AppProtect.
+	AppProtectVersion string
+	// IsPlus represents whether NGINX is Plus or OSS
+	IsPlus bool
+	// InstallationFlags is the list of command line arguments configured for NGINX Ingress Controller
+	InstallationFlags []string
 }

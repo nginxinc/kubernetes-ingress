@@ -123,17 +123,31 @@ func (c *Collector) Secrets() (int, error) {
 	return len(c.Config.SecretStore.GetSecretReferenceMap()), nil
 }
 
-// IngressCount returns number of Ingresses in the namespaces watched by NIC.
-func (c *Collector) IngressCount() int {
+// RegularIngressCount returns number of Minion Ingresses in the namespaces watched by NIC.
+func (c *Collector) RegularIngressCount() int {
+	ingressCount := c.Config.Configurator.GetIngressCounts()
+	return ingressCount["regular"]
+}
+
+// MasterIngressCount returns number of Minion Ingresses in the namespaces watched by NIC.
+func (c *Collector) MasterIngressCount() int {
+	ingressCount := c.Config.Configurator.GetIngressCounts()
+	return ingressCount["master"]
+}
+
+// MinionIngressCount returns number of Minion Ingresses in the namespaces watched by NIC.
+func (c *Collector) MinionIngressCount() int {
+	ingressCount := c.Config.Configurator.GetIngressCounts()
+	return ingressCount["minion"]
+}
+
+// IngressAnnotations returns a list of all the unique annotations found in Ingresses.
+func (c *Collector) IngressAnnotations() []string {
 	if c.Config.Configurator == nil {
-		return 0
+		return nil
 	}
-	ic := c.Config.Configurator.GetIngressCounts()
-	total := 0
-	for _, v := range ic {
-		total += v
-	}
-	return total
+	annotations := c.Config.Configurator.GetIngressAnnotations()
+	return annotations
 }
 
 // IngressClassCount returns number of Ingress Classes.
@@ -145,12 +159,73 @@ func (c *Collector) IngressClassCount(ctx context.Context) (int, error) {
 	return len(ic.Items), nil
 }
 
-// PolicyCount returns number of Policies watched by NIC.
-func (c *Collector) PolicyCount() int {
+// PolicyCount returns the count in each Policy
+func (c *Collector) PolicyCount() map[string]int {
+	policyCounters := make(map[string]int)
+
 	if c.Config.Policies == nil {
-		return 0
+		return policyCounters
 	}
-	return len(c.Config.Policies())
+
+	policies := c.Config.Policies()
+	if policies == nil {
+		return policyCounters
+	}
+
+	for _, policy := range policies {
+		spec := policy.Spec
+
+		switch {
+		case spec.AccessControl != nil:
+			policyCounters["AccessControl"]++
+		case spec.RateLimit != nil:
+			policyCounters["RateLimit"]++
+		case spec.JWTAuth != nil:
+			policyCounters["JWTAuth"]++
+		case spec.BasicAuth != nil:
+			policyCounters["BasicAuth"]++
+		case spec.IngressMTLS != nil:
+			policyCounters["IngressMTLS"]++
+		case spec.EgressMTLS != nil:
+			policyCounters["EgressMTLS"]++
+		case spec.OIDC != nil:
+			policyCounters["OIDC"]++
+		case spec.WAF != nil:
+			policyCounters["WAF"]++
+		}
+	}
+	return policyCounters
+}
+
+// AppProtectVersion returns the AppProtect Version
+func (c *Collector) AppProtectVersion() string {
+	return c.Config.AppProtectVersion
+}
+
+// IsPlusEnabled returns true or false depending on if NGINX is Plus or OSS
+func (c *Collector) IsPlusEnabled() bool {
+	return c.Config.IsPlus
+}
+
+// InstallationFlags returns the list of all set flags
+func (c *Collector) InstallationFlags() []string {
+	return c.Config.InstallationFlags
+}
+
+// ServiceCounts returns a map of service names and their counts in the Kubernetes cluster.
+func (c *Collector) ServiceCounts() (map[string]int, error) {
+	serviceCounts := make(map[string]int)
+
+	services, err := c.Config.K8sClientReader.CoreV1().Services("").List(context.Background(), metaV1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, service := range services.Items {
+		serviceCounts[string(service.Spec.Type)]++
+	}
+
+	return serviceCounts, nil
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

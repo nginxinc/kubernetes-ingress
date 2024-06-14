@@ -190,6 +190,7 @@ var helperFunctions = template.FuncMap{
 	"hasSuffix":               strings.HasSuffix,
 	"toLower":                 strings.ToLower,
 	"toUpper":                 strings.ToUpper,
+	"replaceAll":              strings.ReplaceAll,
 	"makeLocationPath":        makeLocationPath,
 	"makeSecretPath":          commonhelpers.MakeSecretPath,
 	"generateProxySetHeaders": generateProxySetHeaders,
