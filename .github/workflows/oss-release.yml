@@ -94,9 +94,6 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.gcr-auth.outputs.access_token }}
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Publish OSS images
         run: |
           export CONFIG_PATH=.github/config/config-oss-gcr-release
@@ -147,9 +144,6 @@ jobs:
         with:
           registry: public.ecr.aws
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Publish images
         run: |
           export CONFIG_PATH=.github/config/config-oss-ecr
@@ -194,9 +188,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
 
       - name: Publish images
         run: |
@@ -244,9 +235,6 @@ jobs:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Publish images
         run: |
           export CONFIG_PATH=.github/config/config-oss-quay
@@ -293,9 +281,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
 
       - name: Publish images
         run: |
