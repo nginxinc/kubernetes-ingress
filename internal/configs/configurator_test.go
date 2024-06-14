@@ -1567,10 +1567,47 @@ func TestGetMixedIngressAnnotations(t *testing.T) {
 	}
 }
 
+func TestGetVitualServerCountsReportsNumberOfVSAndVSR(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+	tcnf.virtualServers = map[string]*VirtualServerEx{
+		"vs": validVirtualServerExWithUpstreams,
+	}
+
+	gotVS, gotVSRoutes := tcnf.GetVirtualServerCounts()
+	wantVS, wantVSRoutes := 1, 0
+
+	if gotVS != wantVS {
+		t.Errorf("GetVirtualServerCounts() = %d, %d, want %d, %d", gotVS, gotVSRoutes, wantVS, wantVSRoutes)
+	}
+	if gotVSRoutes != wantVSRoutes {
+		t.Errorf("GetVirtualServerCounts() = %d, %d, want %d, %d", gotVS, gotVSRoutes, wantVS, wantVSRoutes)
+	}
+}
+
+func TestGetVitualServerCountsNotExistingVS(t *testing.T) {
+	t.Parallel()
+
+	tcnf := createTestConfigurator(t)
+	tcnf.virtualServers = nil
+
+	gotVS, gotVSRoutes := tcnf.GetVirtualServerCounts()
+	wantVS, wantVSRoutes := 0, 0
+
+	if gotVS != wantVS {
+		t.Errorf("GetVirtualServerCounts() = %d, %d, want %d, %d", gotVS, gotVSRoutes, wantVS, wantVSRoutes)
+	}
+	if gotVSRoutes != wantVSRoutes {
+		t.Errorf("GetVirtualServerCounts() = %d, %d, want %d, %d", gotVS, gotVSRoutes, wantVS, wantVSRoutes)
+	}
+}
+
 var (
 	invalidVirtualServerEx = &VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{},
 	}
+
 	validVirtualServerExWithUpstreams = &VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -1587,6 +1624,7 @@ var (
 			},
 		},
 	}
+
 	validTransportServerExWithUpstreams = &TransportServerEx{
 		TransportServer: &conf_v1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
