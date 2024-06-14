@@ -174,7 +174,7 @@ jobs:
           push: true
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
+            IC_VERSION=${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && steps.meta.outputs.version || 'CI' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
@@ -203,7 +203,7 @@ jobs:
           build-args: |
             BUILD_OS=${{ inputs.image }}
             PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
-            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
+            IC_VERSION=${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
             ${{ contains(inputs.image, 'v5') && 'WAF_VERSION=v5' || '' }}
             ${{ (contains(inputs.target, 'aws') && inputs.nap_modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
