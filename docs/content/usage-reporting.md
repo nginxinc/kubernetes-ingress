@@ -3,10 +3,14 @@ docs: DOCS-1445
 doctypes:
 - concept
 title: Enable Usage Reporting
+title: Enable Usage Reporting
 toc: true
 weight: 1800
 ---
 
+This page describes how to enable Usage Reporting for F5 NGINX Ingress Controller and how to view usage data through the API.
+
+---
 This page describes how to enable Usage Reporting for F5 NGINX Ingress Controller and how to view usage data through the API.
 
 ---
@@ -15,6 +19,9 @@ This page describes how to enable Usage Reporting for F5 NGINX Ingress Controlle
 
 Usage Reporting is a Kubernetes controller that connects to the NGINX Management Suite and reports the number of NGINX Ingress Controller nodes in the cluster. It is installed as a Kubernetes Deployment in the same cluster as NGINX Ingress Controller whose nodes you would like reported.
 
+To use Usage Reporting, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.f5.com/products/nginx/instance-manager/). Usage Reporting is a requirement of the new Flexible Consumption Program for NGINX Ingress Controller.
+
+---
 To use Usage Reporting, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.f5.com/products/nginx/instance-manager/). Usage Reporting is a requirement of the new Flexible Consumption Program for NGINX Ingress Controller.
 
 ---
@@ -37,6 +44,9 @@ In addition to the software requirements, you will need:
 ---
 
 ## Add a user account to NGINX Management Suite
+---
+
+## Add a user account to NGINX Management Suite
 
 Usage Reporting needs a user account to send usage data to NGINX Instance Manager: these are the steps involved.
 
@@ -48,13 +58,22 @@ Usage Reporting needs a user account to send usage data to NGINX Instance Manage
 1. Create a user account following the steps in [Add Users](https://docs.nginx.com/nginx-management-suite/admin-guides/access-control/set-up-rbac/#add-users) section of the NGINX Management Suite documentation. In step 6, assign the user to the role created above. Note that currently only "basic auth" authentication is supported for usage reporting purposes.
 
 ---
+1. Create a user account following the steps in [Add Users](https://docs.nginx.com/nginx-management-suite/admin-guides/access-control/set-up-rbac/#add-users) section of the NGINX Management Suite documentation. In step 6, assign the user to the role created above. Note that currently only "basic auth" authentication is supported for usage reporting purposes.
 
+---
+
+## Deploy Usage Reporting
 ## Deploy Usage Reporting
 
 ### Create a namespace
+### Create a namespace
 
 Create the Kubernetes namespace `nginx-cluster-connector` for Usage Reporting:
+Create the Kubernetes namespace `nginx-cluster-connector` for Usage Reporting:
 
+  ```shell
+  kubectl create namespace nginx-cluster-connector
+  ```
   ```shell
   kubectl create namespace nginx-cluster-connector
   ```
@@ -62,7 +81,15 @@ Create the Kubernetes namespace `nginx-cluster-connector` for Usage Reporting:
 ---
 
 ### Pass the credential to the NGINX Management Suite API
+---
 
+### Pass the credential to the NGINX Management Suite API
+
+To make the credential available to Usage Reporting, create a Kubernetes secret. The username and password created in the previous section are required to connect the NGINX Management Suite API. 
+
+Both the username and password are stored in the Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`. 
+
+To obtain the base64 representation of a string, use the following command:
 To make the credential available to Usage Reporting, create a Kubernetes secret. The username and password created in the previous section are required to connect the NGINX Management Suite API. 
 
 Both the username and password are stored in the Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`. 
@@ -75,9 +102,27 @@ echo -n 'foo' | base64
 echo -n 'bar' | base64
 # YmFy
 ```
+```shell
+echo -n 'foo' | base64
+# Zm9v
+echo -n 'bar' | base64
+# YmFy
+```
 
 Add the following content to a text editor, and insert the base64 representations of the username and password (Obtained in the previous step) to the `data` parameter:
+Add the following content to a text editor, and insert the base64 representations of the username and password (Obtained in the previous step) to the `data` parameter:
 
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nms-basic-auth
+  namespace: nginx-cluster-connector
+type: kubernetes.io/basic-auth
+data:
+  username: Zm9v # base64 representation of 'foo'
+  password: YmFy # base64 representation of 'bar'
+```
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -99,7 +144,19 @@ If you are using a different namespace, change the namespace in the `metadata` s
 ---
 
 ### Deploy the Kubernetes secret to the Kubernetes cluster
+Save this in a file named `nms-basic-auth.yaml`. In the example, the namespace is `nginx-cluster-connector` (The default namespace) and the secret name is `nms-basic-auth`.
 
+If you are using a different namespace, change the namespace in the `metadata` section of the file above.
+
+{{< note >}} Usage Reporting only supports basic-auth secret type in `data` format, not `stringData`, with the username and password encoded in base64. {{< /note >}}
+
+---
+
+### Deploy the Kubernetes secret to the Kubernetes cluster
+
+```shell
+kubectl apply -f nms-basic-auth.yaml
+```
 ```shell
 kubectl apply -f nms-basic-auth.yaml
 ```
@@ -108,6 +165,11 @@ If you need to update the basic-auth credentials for NGINX Management Suite in t
 
 Download and save the deployment file [cluster-connector.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
 
+```yaml
+    args:
+    - -nms-server-address=https://nms.example.com/api/platform/v1
+    - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
+```
 ```yaml
     args:
     - -nms-server-address=https://nms.example.com/api/platform/v1
@@ -122,7 +184,13 @@ Download and save the deployment file [cluster-connector.yaml](https://raw.githu
 It can be created with the command `oc create -f scc.yaml`, using the file found in `shared-examples/` {{< /note >}}
 
 For more information, read the [Command-line arguments](#command-line-arguments) section of this page.
+For more information, read the [Command-line arguments](#command-line-arguments) section of this page.
 
+---
+
+### Finish deployment
+
+To deploy Usage Reporting, run the following command to deploy it to your Kubernetes cluster:
 ---
 
 ### Finish deployment
@@ -132,7 +200,13 @@ To deploy Usage Reporting, run the following command to deploy it to your Kubern
 ```shell
 kubectl apply -f cluster-connector.yaml
 ```
+```shell
+kubectl apply -f cluster-connector.yaml
+```
 
+---
+
+## Viewing usage data from the NGINX Management Suite API
 ---
 
 ## Viewing usage data from the NGINX Management Suite API
@@ -141,7 +215,11 @@ Usage Reporting sends the number of NGINX Ingress Controller instances and nodes
 
 
 ```shell
+
+```shell
 curl --user "foo:bar" https://nms.example.com/api/platform/v1/k8s-usage
+```
+```json
 ```
 ```json
 {
@@ -199,9 +277,13 @@ curl --user "foo:bar" https://nms.example.com/api/platform/v1/k8s-usage
 If you want a friendly name for each cluster in the response, You can specify the `displayName` for the cluster with the `-cluster-display-name` command-line argument when you deploy Usage Reporting. In the response, you can see the cluster `uid` corresponding to the cluster name. For more information, read the [Command-line Arguments](#command-line-arguments) section.
 
 You can query the usage data for a specific cluster by specifying the cluster uid in the endpoint, for example:
+You can query the usage data for a specific cluster by specifying the cluster uid in the endpoint, for example:
 
 ```shell
+```shell
 curl --user "foo:bar" https://nms.example.com/api/platform/v1/k8s-usage/d290f1ee-6c54-4b01-90e6-d701748f0851
+```
+```json
 ```
 ```json
 {
@@ -232,6 +314,9 @@ curl --user "foo:bar" https://nms.example.com/api/platform/v1/k8s-usage/d290f1ee
 ---
 
 ## Uninstall Usage Reporting
+---
+
+## Uninstall Usage Reporting
 
 To remove Usage Reporting from your Kubernetes cluster, run the following command:
 
@@ -242,7 +327,15 @@ kubectl delete -f cluster-connector.yaml
 ---
 
 ## Command-line arguments
+---
 
+## Command-line arguments
+
+Usage Reporting supports several command-line arguments, which can be specified in the `args` section of the Kubernetes deployment file. 
+
+The following is a list of the supported command-line arguments and their usage:
+
+---
 Usage Reporting supports several command-line arguments, which can be specified in the `args` section of the Kubernetes deployment file. 
 
 The following is a list of the supported command-line arguments and their usage:
@@ -255,10 +348,16 @@ The address of the NGINX Management Suite host. IPv4 addresses and hostnames are
 Default: `http://apigw.nms.svc.cluster.local/api/platform/v1/k8s-usage`.
 
 ---
+Default: `http://apigw.nms.svc.cluster.local/api/platform/v1/k8s-usage`.
+
+---
 
 ### -nms-basic-auth-secret `<string>`
 
 Secret for basic authentication to the NGINX Management Suite API. The secret must be in `kubernetes.io/basic-auth` format using base64 encoding.
+Format: `<namespace>/<name>`.
+
+---
 Format: `<namespace>/<name>`.
 
 ---
@@ -269,8 +368,15 @@ The display name of the Kubernetes cluster.
 
 ---
 
+---
+
 ### -skip-tls-verify
 
+Skip TLS verification for the NGINX Management Suite server. 
+
+{{< warning >}} This argument is intended for using a self-assigned certificate for testing purposes only. {{< /warning >}}
+
+---
 Skip TLS verification for the NGINX Management Suite server. 
 
 {{< warning >}} This argument is intended for using a self-assigned certificate for testing purposes only. {{< /warning >}}
@@ -279,6 +385,10 @@ Skip TLS verification for the NGINX Management Suite server.
 
 ### -min-update-interval `<string>`
 
+The minimum interval between updates to the NGINX Management Suite.
+Default: `24h`.
+
+{{< warning >}} This argument is intended for testing purposes only. {{< /warning >}}
 The minimum interval between updates to the NGINX Management Suite.
 Default: `24h`.
 
