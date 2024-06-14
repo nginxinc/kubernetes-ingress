@@ -406,8 +406,9 @@ class TestRateLimitingPoliciesVsr:
                 ic_pods[i].metadata.name,
                 ingress_controller_prerequisites.namespace,
             )
-            assert "rate=20r/m" in conf
-
+            assert "rate=16r/s" in conf
+        # restore replicas, policy and vsr
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
         assert (

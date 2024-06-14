@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    nginx.org/limit-req-rate: 1r/s
+    nginx.org/limit-req-rate: 50r/s
     nginx.org/limit-req-key: ${binary_remote_addr}
     nginx.org/limit-req-zone-size: 10M
     nginx.org/limit-req-scale: "true"

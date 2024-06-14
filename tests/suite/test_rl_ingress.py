@@ -138,4 +138,6 @@ class TestRateLimitIngressScaled:
                 ic_pods[i].metadata.name,
                 ingress_controller_prerequisites.namespace,
             )
-            assert "rate=20r/m" in conf
+            assert "rate=16r/s" in conf
+        # restore replicas
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
