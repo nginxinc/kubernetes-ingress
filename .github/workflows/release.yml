@@ -372,10 +372,11 @@ jobs:
     if: ${{ ! contains(inputs.skip_step, 'github-release') }}
     name: Publish release to GitHub
     runs-on: ubuntu-22.04
-    needs: [variables, binaries, release-oss, release-plus]
+    needs: [variables, binaries, release-oss, release-plus, azure-upload]
     permissions:
       contents: write # to modify the release
       issues: write # to close milestone
+      actions: read # for slack notification
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
