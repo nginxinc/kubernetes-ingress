@@ -2,7 +2,6 @@ package configs
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"net/url"
@@ -1354,11 +1353,8 @@ func (p *policiesCfg) addAPIKeyConfig(
 	}
 
 	secretKey := fmt.Sprintf("%v/%v", polNamespace, apiKey.ClientSecret)
-	glog.Infof("secretKey: %v", secretKey)
 	secretRef := secretRefs[secretKey]
-	glog.Infof("secretRefs: %v", secretRefs)
 	var secretType api_v1.SecretType
-	glog.Infof("secret: %v", secretRef)
 	if secretRef.Secret != nil {
 		secretType = secretRef.Secret.Type
 	}
@@ -1376,12 +1372,9 @@ func (p *policiesCfg) addAPIKeyConfig(
 
 	mapName := fmt.Sprintf(
 		"apikey_auth_client_name_%s_%s_%s",
-		// vsNamespace,
-		// vsName,
-		strings.Replace(vsNamespace, "-", "_", -1), // TODO:refactor
-		strings.Replace(vsName, "-", "_", -1),
-		// strings.Split(polKey, "/")[1],
-		strings.Split(strings.Replace(polKey, "-", "_", -1), "/")[1],
+		rfc1123ToSnake(vsNamespace),
+		rfc1123ToSnake(vsName),
+		strings.Split(rfc1123ToSnake(polKey), "/")[1],
 	)
 	p.APIKey = &version2.APIKey{
 		Header:  apiKey.SuppliedIn.Header,
@@ -1392,6 +1385,10 @@ func (p *policiesCfg) addAPIKeyConfig(
 	return res
 }
 
+func rfc1123ToSnake(rfc1123String string) string {
+	return strings.Replace(rfc1123String, "-", "_", -1)
+}
+
 func generateAPIKeyClients(secretData map[string][]byte) []apiKeyClient {
 	var clients []apiKeyClient
 	for clientID, apiKey := range secretData {
@@ -1399,11 +1396,6 @@ func generateAPIKeyClients(secretData map[string][]byte) []apiKeyClient {
 		h := sha256.New()
 		h.Write(apiKey)
 		sha256Hash := hex.EncodeToString(h.Sum(nil))
-		base64Str := base64.URLEncoding.EncodeToString(h.Sum(nil))
-
-		glog.Infof("apiKey %s", apiKey)
-		glog.Infof("sha %s", sha256Hash)
-		glog.Infof("base64Str %s", base64Str)
 		clients = append(clients, apiKeyClient{ClientID: clientID, HashedKey: sha256Hash}) //
 	}
 	return clients

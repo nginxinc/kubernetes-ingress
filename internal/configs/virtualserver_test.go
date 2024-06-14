@@ -15540,3 +15540,24 @@ func (*fakeBundleValidator) validate(bundle string) (string, error) {
 	}
 	return bundle, nil
 }
+
+func TestRFC1123ToSnake(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "valid",
+			input:    "api-policy-1",
+			expected: "api_policy_1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !cmp.Equal(rfc1123ToSnake(tt.input), tt.expected) {
+				t.Errorf(cmp.Diff(rfc1123ToSnake(tt.input), tt.expected))
+			}
+		})
+	}
+}
