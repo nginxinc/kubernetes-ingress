@@ -189,7 +189,36 @@ data:
 
 #### APIKey Merging Behavior
 
-A VirtualServer or VirtualServerRoute can be associated with only one API Key policy per route or subroute. However, it is possible to replace an API Key policy from a higher-level route with a different policy defined on a more specific route.
+A VirtualServer or VirtualServerRoute can be associated with only one API Key policy per route or subroute. However, it is possible to replace an API Key policy from a higher-level with a different policy defined on a more specific route.
+
+For example, a VirtualServer can implement different API Key policies at various levels. In the configuration below, the server-wide api-key-policy-server applies to /backend1 for authorization, as it lacks a more specific policy. Meanwhile, /backend2 uses the api-key-policy-route defined at the route level.
+
+```yaml
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  policies:
+  - name: api-key-policy-server
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  routes:
+  - path: /backend1
+    action:
+      pass: backend1
+  - path: /backend2
+    action:
+      pass: backend2
+    policies:
+      - name: api-key-policy-route
+```
 
 ### BasicAuth
 
