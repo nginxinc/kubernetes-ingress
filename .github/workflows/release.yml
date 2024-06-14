@@ -372,10 +372,11 @@ jobs:
     if: ${{ ! contains(inputs.skip_step, 'github-release') }}
     name: Publish release to GitHub
     runs-on: ubuntu-22.04
-    needs: [variables, binaries, release-oss, release-plus]
+    needs: [variables, binaries, release-oss, release-plus, azure-upload]
     permissions:
       contents: write # to modify the release
       issues: write # to close milestone
+      actions: read # for slack notification
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
@@ -446,37 +447,98 @@ jobs:
           RELEASE_ID: ${{ steps.release-id.outputs.release_id }}
         if: ${{ ! inputs.dry_run }}
 
-  # release-image-notification:
-  #   if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
-  #   name: Notify Slack channels about image release
-  #   runs-on: ubuntu-22.04
-  #   needs: [variables, binaries, release-oss, release-plus]
-  #   permissions:
-  #     contents: read
-  #     actions: read
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-ubi", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-  #       with:
-  #         ref: ${{ inputs.release_branch }}
+      - name: Send Notification
+        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "NGINX Ingress Controller v${{ inputs.nic_version }} is out! Check it out: https://github.com/nginxinc/kubernetes-ingress/releases/tag/v${{ inputs.nic_version }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_COMMUNITY }}
+        if: ${{ ! inputs.dry_run }}
 
-  #     - name: Get Image manifest digest
-  #       id: digest
-  #       run: |
-  #         digest=$(docker buildx imagetools inspect ${{ matrix.image }} --format '{{ json . }}' | jq -r .manifest.digest)
+  release-image-notification:
+    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
+    name: Notify Slack channels about image release
+    runs-on: ubuntu-22.04
+    needs: [variables, binaries, release-oss, release-plus]
+    permissions:
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["nginx/nginx-ingress:${{ inputs.nic_version }}", "nginx/nginx-ingress:${{ inputs.nic_version }}-ubi", "nginx/nginx-ingress:${{ inputs.nic_version }}-alpine"]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          ref: ${{ inputs.release_branch }}
 
-  #     - name: Get Image tag
-  #       id: tag
-  #       run: |
-  #         tag=$(echo ${{ matrix.image }} | cut -d ':' -f 2)
+      - name: Get Image manifest digest
+        id: digest
+        run: |
+          digest=$(docker buildx imagetools inspect ${{ matrix.image }} --format '{{ json . }}' | jq -r .manifest.digest)
 
-  #     - name: Notify Slack of Dockerhub image release
-  #       uses: ./.github/workflows/updates-notification.yml
-  #       with:
-  #         tag: ${{ steps.tag.outputs.tag }}
-  #         version: ${{ inputs.nic_version }}
-  #         image_digest: ${{ steps.digest.outputs.digest }}
+      - name: Get Image tag
+        id: tag
+        run: |
+          tag=$(echo ${{ matrix.image }} | cut -d ':' -f 2)
+
+      - name: Get variables for Slack
+        id: slack
+        run: |
+          echo "message=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
+          echo "date=$(date +%s)" >> $GITHUB_OUTPUT
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "sha_long=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Send Notification
+        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
+        with:
+          status: custom
+          custom_payload: |
+            {
+              username: "Docker",
+              icon_emoji: ":docker:",
+              mention: "here",
+              attachments: [{
+                title: `New Docker image was pushed to DockerHub for ${process.env.AS_REPO}`,
+                color: "good",
+                fields: [{
+                  title: "Docker Image",
+                  value: `<https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=${{ steps.tag.outputs.tag }}|nginx/nginx-ingress:${{ inputs.nic_version }}>`,
+                  short: true
+                },
+                {
+                  title: "Image digest",
+                  value: "${{ steps.digest.outputs.digest }}",
+                  short: true
+                },
+                {
+                  title: "Commit Message",
+                  value: `${{ steps.slack.outputs.message }}`,
+                  short: true
+                },
+                {
+                  title: "Commit Hash",
+                  value: `<https://github.com/${{ github.repository }}/commit/${{ steps.slack.outputs.sha_long }}|${{ steps.slack.outputs.sha_short }}>`,
+                  short: true
+                }],
+                footer: "Update DockerHub Image",
+                footer_icon: "https://raw.githubusercontent.com/docker-library/docs/c350af05d3fac7b5c3f6327ac82fe4d990d8729c/docker/logo.png",
+                ts: ${{ steps.slack.outputs.date }}
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
