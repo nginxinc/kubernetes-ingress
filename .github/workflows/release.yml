@@ -456,7 +456,7 @@ jobs:
   #   runs-on: ubuntu-22.04
   #   needs: [variables, binaries, release-oss, release-plus]
   #   permissions:
-  #     contents: read   s
+  #     contents: read
   #     actions: read
   #   strategy:
   #     fail-fast: false
