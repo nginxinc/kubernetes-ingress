@@ -17,8 +17,8 @@ require (
 	github.com/nginxinc/nginx-prometheus-exporter v1.1.2
 	github.com/nginxinc/nginx-service-mesh v1.7.0
 	github.com/nginxinc/telemetry-exporter v0.1.0
-	github.com/prometheus/client_golang v1.19.1
-	github.com/prometheus/common v0.48.0
+	github.com/prometheus/client_golang v1.18.0
+	github.com/prometheus/common v0.47.0
 	github.com/spiffe/go-spiffe/v2 v2.2.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.27.0
