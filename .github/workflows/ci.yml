@@ -195,7 +195,7 @@ jobs:
         with:
           minor-label: "enhancement"
           major-label: "change"
-          publish: ${{ github.ref_type == 'tag' }}
+          publish: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
           collapse-after: 50
           variables: |
             helm-chart=${{ needs.checks.outputs.chart_version }}
@@ -234,17 +234,17 @@ jobs:
 
       - name: Download Syft
         uses: anchore/sbom-action/download-syft@e8d2a6937ecead383dfe75190d104edd1f9c5751 # v0.16.0
-        if: github.ref_type == 'tag'
+        if: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3.5.0
-        if: github.ref_type == 'tag'
+        if: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
 
       - name: Build binaries
         uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
         with:
           version: latest
-          args: ${{ github.ref_type == 'tag' && 'release' || 'build --snapshot' }} --clean
+          args: build --snapshot --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ needs.checks.outputs.go_path }}
@@ -256,10 +256,6 @@ jobs:
           AWS_NAP_WAF_PUB_KEY: ${{ secrets.AWS_NAP_WAF_PUB_KEY }}
           AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
           AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_COMMUNITY }}
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
-          AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
           GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
