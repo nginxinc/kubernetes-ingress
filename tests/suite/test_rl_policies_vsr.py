@@ -111,60 +111,6 @@ class TestRateLimitingPoliciesVsr:
         )
         assert occur.count(200) <= 1
 
-    @pytest.mark.parametrize("src", [rl_vsr_pri_sca_src])
-    def test_rl_policy_scaled_vsr(
-        self,
-        kube_apis,
-        ingress_controller_prerequisites,
-        crd_ingress_controller,
-        v_s_route_app_setup,
-        v_s_route_setup,
-        test_namespace,
-        src,
-    ):
-        """
-        Test if rate-limiting policy is working with ~1 rps in vsr:subroute
-        """
-
-        ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 3)
-
-        print(f"Create rl policy")
-        pol_name = create_policy_from_yaml(
-            kube_apis.custom_objects, rl_pol_pri_sca_src, v_s_route_setup.route_m.namespace
-        )
-        print(f"Patch vsr with policy: {src}")
-        patch_v_s_route_from_yaml(
-            kube_apis.custom_objects,
-            v_s_route_setup.route_m.name,
-            src,
-            v_s_route_setup.route_m.namespace,
-        )
-
-        wait_before_test()
-        policy_info = read_custom_resource(
-            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
-        )
-
-        ic_pods = get_pod_list(kube_apis.v1, ns)
-        for i in range(len(ic_pods)):
-            conf = get_vs_nginx_template_conf(
-                kube_apis.v1,
-                v_s_route_setup.route_m.namespace,
-                v_s_route_setup.vs_name,
-                ic_pods[i].metadata.name,
-                ingress_controller_prerequisites.namespace,
-            )
-            assert "rate=20r/m" in conf
-
-        delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
-        self.restore_default_vsr(kube_apis, v_s_route_setup)
-        assert (
-            policy_info["status"]
-            and policy_info["status"]["reason"] == "AddedOrUpdated"
-            and policy_info["status"]["state"] == "Valid"
-        )
-
     @pytest.mark.parametrize("src", [rl_vsr_sec_src])
     def test_rl_policy_5rs_vsr(
         self,
@@ -415,3 +361,57 @@ class TestRateLimitingPoliciesVsr:
             kube_apis.custom_objects, v_s_route_setup.vs_name, std_vs_src, v_s_route_setup.namespace
         )
         assert rate_sec >= occur.count(200) >= (rate_sec - 2)
+
+    @pytest.mark.parametrize("src", [rl_vsr_pri_sca_src])
+    def test_rl_policy_scaled_vsr(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        v_s_route_app_setup,
+        v_s_route_setup,
+        test_namespace,
+        src,
+    ):
+        """
+        Test if rate-limiting policy is working with ~1 rps in vsr:subroute
+        """
+
+        ns = ingress_controller_prerequisites.namespace
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 3)
+
+        print(f"Create rl policy")
+        pol_name = create_policy_from_yaml(
+            kube_apis.custom_objects, rl_pol_pri_sca_src, v_s_route_setup.route_m.namespace
+        )
+        print(f"Patch vsr with policy: {src}")
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            v_s_route_setup.route_m.name,
+            src,
+            v_s_route_setup.route_m.namespace,
+        )
+
+        wait_before_test()
+        policy_info = read_custom_resource(
+            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
+        )
+
+        ic_pods = get_pod_list(kube_apis.v1, ns)
+        for i in range(len(ic_pods)):
+            conf = get_vs_nginx_template_conf(
+                kube_apis.v1,
+                v_s_route_setup.route_m.namespace,
+                v_s_route_setup.vs_name,
+                ic_pods[i].metadata.name,
+                ingress_controller_prerequisites.namespace,
+            )
+            assert "rate=20r/m" in conf
+
+        delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
+        self.restore_default_vsr(kube_apis, v_s_route_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )
