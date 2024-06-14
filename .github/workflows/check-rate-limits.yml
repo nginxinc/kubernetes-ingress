@@ -14,6 +14,9 @@ jobs:
     name: Check Rate Limit API
     steps:
       - name: Checkout
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - name: Check Rates
         uses: ./.github/actions/check-api-rates
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
