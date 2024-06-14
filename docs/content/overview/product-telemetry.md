@@ -1,23 +1,24 @@
 ---
-title: Product Telemetry
+title: Product telemetry
 toc: true
 weight: 500
 ---
 
-Learn why NGINX Ingress Controller collects telemetry, and understand how and what it gathers.
+Learn why, what and how F5 NGINX Ingress Controller collects telemetry.
+
+---
 
 ## Overview
 
-NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users.
-This data is used to triage development work, prioritizing features and functionality that will benefit the most people.
+NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users. This data is used to triage development work, prioritizing features and functionality that will benefit the most people.
 
 Product telemetry is enabled by default, collected once every 24 hours. It's then sent to a service managed by F5 over HTTPS.
 
-{{< note >}}
-If you would prefer to avoid sending any telemetry data, you can [opt-out](#opt-out) when installing NGINX Ingress Controller.
-{{< /note >}}
+{{< note >}} If you would prefer not to send any telemetry data, you can [opt-out](#opt-out) when installing NGINX Ingress Controller. {{< /note >}}
 
-## Data Collected
+---
+
+## Data collected
 
 These are the data points collected and reported by NGINX Ingress Controller:
 
@@ -56,19 +57,23 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **IsPlus** Represents whether NGINX is Plus or OSS
 - **InstallationFlags** List of command line arguments configured for NGINX Ingress Controller
 
+---
+
 ## Opt out
 
 Product telemetry can be disabled when installing NGINX Ingress Controller.
 
 ### Helm
 
+When installing or upgrading NGINX Ingress Controller with Helm, set the `controller.telemetry.enable` option to `false`.
 
-When installing or upgrading NGINX Ingress Controller with Helm, set the `controller.telemetry.enable` option to `false`
 This can be set directly in the `values.yaml` file, or using the `--set` option
 
 ```shell
 helm upgrade --install ... --set controller.telemetry.enable=false
 ```
+
+---
 
 ### Manifests
 

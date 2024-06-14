@@ -2,24 +2,28 @@
 docs: DOCS-617
 doctypes:
 - concept
-title: Technical Specifications
+title: Technical specifications
 toc: true
 weight: 200
 ---
 
-This page describes technical specifications for NGINX Ingress Controller, such as its version compatibility with Kubernetes and other NGINX software.
+This page describes technical specifications for F5 NGINX Ingress Controller, such as its version compatibility with Kubernetes and other NGINX software.
 
-## Supported NGINX Ingress Controller Versions
+---
 
-We recommend upgrading to the latest release of NGINX Ingress Controller. We provide software updates for the most recent release. We provide technical support for F5 customers who are using the most recent version of NGINX Ingress Controller, and any version released within two years of the current release.
+## Supported NGINX Ingress Controller versions
 
-Release 3.0.0 provides support for the `discovery.k8s.io/v1` API version of EndpointSlice, available from Kubernetes 1.21 onwards.
-Release 2.4.2 is compatible with the Kubernetes Ingress v1 API, available in Kubernetes 1.19 and later.
-Release 1.12 supports the Ingress v1beta1 API and continues to receive security fixes to support environments running Kubernetes versions older than 1.19. The v1beta1 Ingress API was deprecated in Kubernetes release 1.19, and removed in the Kubernetes 1.22.
+We recommend using the latest release of NGINX Ingress Controller. We provide software updates for the most recent release. We provide technical support for F5 customers who are using the most recent version of NGINX Ingress Controller, and any version released within two years of the current release.
 
-## Supported Kubernetes Versions
+- Release 3.0.0 provides support for the `discovery.k8s.io/v1` API version of EndpointSlice, available from Kubernetes 1.21 onwards.
+- Release 2.4.2 is compatible with the Kubernetes Ingress v1 API, available in Kubernetes 1.19 and later.
+- Release 1.12 supports the Ingress v1beta1 API and continues to receive security fixes to support environments running Kubernetes versions older than 1.19. The v1beta1 Ingress API was deprecated in Kubernetes release 1.19, and removed in the Kubernetes 1.22.
 
-We explicitly test NGINX Ingress Controller on a range of Kubernetes platforms for each release, and we list them in the [release notes]({{< relref "/releases.md" >}}). We provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider, and which passes the [Kubernetes conformance tests](https://www.cncf.io/certification/software-conformance/).
+---
+
+## Supported Kubernetes versions
+
+We test NGINX Ingress Controller on a range of Kubernetes platforms for each release, and list them in the [release notes]({{< relref "/releases.md" >}}). We provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider, and that passes the [Kubernetes conformance tests](https://www.cncf.io/certification/software-conformance/).
 
 {{< bootstrap-table "table table-bordered table-striped table-responsive" >}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
@@ -41,7 +45,9 @@ We explicitly test NGINX Ingress Controller on a range of Kubernetes platforms f
 | 1.9.1 | 1.18 - 1.16 | 0.7.1 | 0.0.7 | 1.19.3 / R22 |
 {{% /bootstrap-table %}}
 
-## Supported Docker Images
+---
+
+## Supported Docker images
 
 We provide the following Docker images, which include NGINX or NGINX Plus bundled with the Ingress Controller binary.
 
@@ -57,13 +63,17 @@ _All images include NGINX 1.27.0._
 |Ubi-based image | ``nginxcontrib/nginx:1.27.0-ubi``,<br>based on on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:3.5.2-ubi`` | arm64<br>amd64<br>ppc64le<br>s390x |
 {{% /bootstrap-table %}}
 
+---
+
 ### Images with NGINX Plus
 
 _NGINX Plus images include NGINX Plus R31._
 
+---
+
 #### **F5 Container registry**
 
-NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Getting the NGINX Ingress Controller Image with JWT]({{<relref "/installation/nic-images/using-the-jwt-token-docker-secret.md">}}) and [Getting the F5 Registry NGINX Ingress Controller Image]({{<relref "/installation/nic-images/pulling-ingress-controller-image.md">}}).
+NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com`, explained in the [Get the NGINX Ingress Controller image with JWT]({{<relref "/installation/nic-images/using-the-jwt-token-docker-secret.md">}}) and [Get the F5 Registry NGINX Ingress Controller image]({{<relref "/installation/nic-images/pulling-ingress-controller-image.md">}}) topics.
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | F5 Container Registry Image | Architectures |
@@ -81,9 +91,13 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 |Ubi-based image with NGINX App Protect WAF and DoS | ``redhat/ubi8`` | NGINX App Protect WAF and DoS<br><br>NGINX Plus JavaScript module | `nginx-ic-nap-dos/nginx-plus-ingress:3.5.2-ubi` | amd64 |
 {{% /bootstrap-table %}}
 
+---
+
 #### **AWS Marketplace**
 
-We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image]({{< relref "/installation/nic-images/using-aws-marketplace-image.md" >}}) for details on how to set up the required IAM resources in your EKS cluster.
+NGINX Plus images are available through the AWS Marketplace. 
+
+View the [Use the AWS Marketplace Ingress Controller image]({{< relref "/installation/nic-images/using-aws-marketplace-image.md" >}}) topic for details on how to set up the required IAM resources in your EKS cluster.
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | AWS Marketplace Link | Architectures |
@@ -94,8 +108,12 @@ We also provide NGINX Plus images through the AWS Marketplace. Please see [Using
 |Debian-based image with NGINX App Protect WAF and DoS | ``debian:11-slim`` | NGINX App Protect WAF and DoS<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller with F5 NGINX App Protect DoS](https://aws.amazon.com/marketplace/pp/prodview-sghjw2csktega) | amd64 |
 {{% /bootstrap-table %}}
 
+---
+
 #### **Google Cloud Marketplace**
-We also provide NGINX Plus images through the Google Cloud Marketplace. Please see [Using the GCP Marketplace NGINX Ingress Controller Image]({{< relref "/installation/nic-images/using-gcp-marketplace-package.md" >}}) for details on how to use them.
+NGINX Plus images are available through the Google Cloud Marketplace. 
+
+View the [Use the GCP Marketplace NGINX Ingress Controller image]({{< relref "/installation/nic-images/using-gcp-marketplace-package.md" >}}) topic for details on how to use them.
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | GCP Marketplace Link | Architectures |
@@ -105,7 +123,7 @@ We also provide NGINX Plus images through the Google Cloud Marketplace. Please s
 {{% /bootstrap-table %}}
 
 #### **Microsoft Azure Marketplace**
-We also provide NGINX Plus image through the Microsoft Azure Marketplace.
+NGINX Plus images are available through the Microsoft Azure Marketplace.
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | Azure Marketplace Link | Architectures |
@@ -113,13 +131,17 @@ We also provide NGINX Plus image through the Microsoft Azure Marketplace.
 |Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/nginxinc.nginx_ingress_premium) | amd64 |
 {{% /bootstrap-table %}}
 
-### Custom Images
+---
 
-You can customize an existing Dockerfile or use it as a reference to create a new one, which is necessary for the following cases:
+### Custom images
+
+You can customize an existing Dockerfile or use it as a reference to create a new one, which is necessary when:
 
 - Choosing a different base image.
 - Installing additional NGINX modules.
 
-## Supported Helm Versions
+---
+
+## Supported Helm versions
 
 NGINX Ingress Controller can be [installed]({{< relref "/installation/installing-nic/installation-with-helm.md" >}}) using Helm 3.0 or later.
