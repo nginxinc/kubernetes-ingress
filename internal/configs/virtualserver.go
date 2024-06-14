@@ -1402,8 +1402,6 @@ func generateAPIKeyClients(secretData map[string][]byte) []apiKeyClient {
 }
 
 func generateAPIKeyClientMap(mapName string, apiKeyClients []apiKeyClient) *version2.Map {
-	glog.Infof("mapName: %v, apiKeyClients: %v", mapName, apiKeyClients)
-
 	defaultParam := version2.Parameter{
 		Value:  "default",
 		Result: "\"\"",
