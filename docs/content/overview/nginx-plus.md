@@ -6,9 +6,11 @@ title: Extensibility with NGINX Plus
 weight: 300
 ---
 
-This document explains how F5 NGINX Plus can extend the functionality of the F5 NGINX Ingress Controller.
+This document explains how F5 NGINX Plus can extend the functionality of F5 NGINX Ingress Controller.
 
 NGINX Ingress Controller works with [NGINX](https://nginx.org/) as well as [NGINX Plus](https://www.nginx.com/products/nginx/), a commercial closed source version of NGINX which has additional features and support from NGINX Inc. NGINX Ingress Controller can leverage functionality from NGINX Plus to extend its base capabilities.
+
+---
 
 ## Additional features
 
@@ -20,9 +22,11 @@ NGINX Ingress Controller works with [NGINX](https://nginx.org/) as well as [NGIN
 
 For a comprehensive guide of NGINX Plus features available with Ingress resources, see the [ConfigMap]({{< relref "configuration/global-configuration/configmap-resource">}}) and [Annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations">}}) documentation.
 
-{{< note >}}NGINX Plus features are configured for Ingress resources using Annotations that start with `nginx.com`.{{< /note >}}
+{{< note >}} NGINX Plus features are configured for Ingress resources using Annotations that start with `nginx.com`. {{< /note >}}
 
 For a comprehensive guide of NGINX Plus features available with custom resources, see the [Policy]({{< relref "configuration/policy-resource" >}}), [VirtualServer]({{< relref "configuration/virtualserver-and-virtualserverroute-resources" >}}) and [TransportServer]({{< relref "configuration/transportserver-resource" >}}) documentation.
+
+---
 
 ## Dynamic reconfiguration
 

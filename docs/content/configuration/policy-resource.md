@@ -2,9 +2,9 @@
 docs: DOCS-596
 doctypes:
 - ''
-title: Policy Resource
+title: Policy resources
 toc: true
-weight: 1800
+weight: 600
 ---
 
 The Policy resource allows you to configure features like access control and rate-limiting, which you can add to your [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/).

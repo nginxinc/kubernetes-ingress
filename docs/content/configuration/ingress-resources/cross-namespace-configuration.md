@@ -2,12 +2,12 @@
 docs: DOCS-594
 doctypes:
 - ''
-title: Cross-namespace Configuration
+title: Cross-namespace configuration
 toc: true
-weight: 2000
+weight: 500
 ---
 
-This document explains how to spread Ingress configuration across different namespaces.
+This topic explains how to spread Ingress configuration across different namespaces in F5 NGINX Ingress Controller.
 
 You can spread the Ingress configuration for a common host across multiple Ingress resources using Mergeable Ingress resources. Such resources can belong to the *same* or *different* namespaces. This enables easier management when using a large number of paths. See the [Mergeable Ingress Resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/mergeable-ingress-types) example in our GitHub repo.
 

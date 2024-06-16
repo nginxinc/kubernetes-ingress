@@ -174,7 +174,7 @@ jobs:
           push: true
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
+            IC_VERSION=${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && steps.meta.outputs.version || 'CI' }}
             ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
@@ -203,7 +203,7 @@ jobs:
           build-args: |
             BUILD_OS=${{ inputs.image }}
             PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
-            IC_VERSION=${{ github.ref_type == 'tag' && steps.meta.outputs.version || 'CI' }}
+            IC_VERSION=${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && steps.meta.outputs.version || 'CI' }}
             ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
             ${{ contains(inputs.image, 'v5') && 'WAF_VERSION=v5' || '' }}
             ${{ (contains(inputs.target, 'aws') && inputs.nap_modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
@@ -265,7 +265,7 @@ jobs:
         if: ${{ inputs.publish-image }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@2e230e8fe0ad3a14a340ad0815ddb96d599d2aff # v3.25.8
+        uses: github/codeql-action/upload-sarif@530d4feaa9c62aaab2d250371e2061eb7a172363 # v3.25.9
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
