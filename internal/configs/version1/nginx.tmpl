@@ -20,6 +20,8 @@ load_module modules/ngx_http_opentracing_module.so;
 {{$value}}{{end}}
 {{- end}}
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  {{.WorkerConnections}};
 }
@@ -29,6 +31,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size {{.MapHashMaxSize}};
     map_hash_bucket_size {{.MapHashBucketSize}};
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}
