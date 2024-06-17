@@ -57,9 +57,6 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.gcr-auth.outputs.access_token }}
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Retag images
         run: |
           export CONFIG_PATH=.github/config/config-gcr-retag

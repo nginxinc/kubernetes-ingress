@@ -55,7 +55,7 @@ jobs:
         with:
           minor-label: "enhancement"
           major-label: "change"
-          publish: ${{ github.ref_type == 'tag' }}
+          publish: false
           collapse-after: 50
           variables: |
             helm-chart=${{ needs.checks.outputs.chart_version }}

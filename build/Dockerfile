@@ -531,6 +531,7 @@ ARG BUILD_OS
 ARG IC_VERSION
 ARG TARGETPLATFORM
 ARG NAP_MODULES=none
+ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=bind,target=/tmp \
 	--mount=type=bind,from=nginx-files,src=common.sh,target=/usr/local/bin/common.sh \

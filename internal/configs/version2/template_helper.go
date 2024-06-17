@@ -1,6 +1,7 @@
 package version2
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"text/template"
@@ -121,16 +122,34 @@ func makeHTTPSListener(s Server) string {
 	return makeListener(https, s)
 }
 
+func makeHeaderQueryValue(apiKey APIKey) string {
+	var parts []string
+
+	for _, header := range apiKey.Header {
+		nginxHeader := strings.ReplaceAll(header, "-", "_")
+		nginxHeader = strings.ToLower(nginxHeader)
+
+		parts = append(parts, fmt.Sprintf("${http_%s}", nginxHeader))
+	}
+
+	for _, query := range apiKey.Query {
+		parts = append(parts, fmt.Sprintf("${arg_%s}", query))
+	}
+
+	return fmt.Sprintf("\"%s\"", strings.Join(parts, ""))
+}
+
 var helperFunctions = template.FuncMap{
-	"headerListToCIMap": headerListToCIMap,
-	"hasCIKey":          hasCIKey,
-	"contains":          strings.Contains,
-	"hasPrefix":         strings.HasPrefix,
-	"hasSuffix":         strings.HasSuffix,
-	"toLower":           strings.ToLower,
-	"toUpper":           strings.ToUpper,
-	"replaceAll":        strings.ReplaceAll,
-	"makeHTTPListener":  makeHTTPListener,
-	"makeHTTPSListener": makeHTTPSListener,
-	"makeSecretPath":    commonhelpers.MakeSecretPath,
+	"headerListToCIMap":    headerListToCIMap,
+	"hasCIKey":             hasCIKey,
+	"contains":             strings.Contains,
+	"hasPrefix":            strings.HasPrefix,
+	"hasSuffix":            strings.HasSuffix,
+	"toLower":              strings.ToLower,
+	"toUpper":              strings.ToUpper,
+	"replaceAll":           strings.ReplaceAll,
+	"makeHTTPListener":     makeHTTPListener,
+	"makeHTTPSListener":    makeHTTPSListener,
+	"makeSecretPath":       commonhelpers.MakeSecretPath,
+	"makeHeaderQueryValue": makeHeaderQueryValue,
 }

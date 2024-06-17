@@ -107,7 +107,7 @@ jobs:
           publish=false
           if ${{ github.event_name == 'workflow_dispatch' && inputs.publish-image }}; then
             publish=true
-          elif ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') }}; then
+          elif ${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && startsWith(github.ref, 'refs/heads/release-') }}; then
             publish=true
           elif ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request' && ! startsWith(github.ref, 'refs/heads/release-') }}; then
             publish=true
@@ -181,7 +181,7 @@ jobs:
         with:
           minor-label: "enhancement"
           major-label: "change"
-          publish: ${{ github.ref_type == 'tag' }}
+          publish: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
           collapse-after: 50
           variables: |
             helm-chart=${{ needs.checks.outputs.chart_version }}
@@ -220,17 +220,17 @@ jobs:
 
       - name: Download Syft
         uses: anchore/sbom-action/download-syft@e8d2a6937ecead383dfe75190d104edd1f9c5751 # v0.16.0
-        if: github.ref_type == 'tag'
+        if: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3.5.0
-        if: github.ref_type == 'tag'
+        if: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
 
       - name: Build binaries
         uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
         with:
           version: latest
-          args: ${{ github.ref_type == 'tag' && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --clean
+          args: ${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ needs.checks.outputs.go_path }}
@@ -690,7 +690,7 @@ jobs:
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
-      publish-aws-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && contains(matrix.target, 'aws') }}
+      publish-aws-market-place: ${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && startsWith(github.ref, 'refs/heads/release-') && contains(matrix.target, 'aws') }}
       publish-nginx-reqistry: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
     permissions:
@@ -765,7 +765,7 @@ jobs:
       nap_modules: ${{ matrix.nap_modules }}
       release-url: ${{ needs.release-notes.outputs.release-url }}
       publish-image: ${{ needs.checks.outputs.publish_images == 'true' }}
-      publish-aws-market-place: ${{ github.ref_type == 'tag' && startsWith(github.ref, 'refs/heads/release-') && contains(matrix.target, 'aws') }}
+      publish-aws-market-place: ${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && startsWith(github.ref, 'refs/heads/release-') && contains(matrix.target, 'aws') }}
       publish-nginx-reqistry: ${{ needs.checks.outputs.publish_images == 'true' && ! contains(matrix.target, 'aws') }}
       forked-workflow: ${{ needs.checks.outputs.forked_workflow == 'true' }}
     permissions:
@@ -784,9 +784,9 @@ jobs:
     uses: ./.github/workflows/publish-helm.yml
     with:
       branch: ${{ github.ref_name }}
-      ic_version: ${{ github.ref_type == 'tag' && needs.checks.outputs.ic_version || 'edge' }}
-      chart_version: ${{ github.ref_type == 'tag' && needs.checks.outputs.chart_version || '0.0.0-edge' }}
-      nginx_helm_repo: ${{ github.ref_type == 'tag' }}
+      ic_version: ${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && needs.checks.outputs.ic_version || 'edge' }}
+      chart_version: ${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && needs.checks.outputs.chart_version || '0.0.0-edge' }}
+      nginx_helm_repo: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
     secrets: inherit
 
   operator:
@@ -808,7 +808,7 @@ jobs:
                 chart_version: '${{ needs.checks.outputs.chart_version }}'
               },
             })
-    if: github.ref_type == 'tag'
+    if: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
 
   gcp-marketplace:
     name: Trigger PR for GCP Marketplace
@@ -829,4 +829,4 @@ jobs:
                 chart_version: '${{ needs.checks.outputs.chart_version }}'
               },
             })
-    if: github.ref_type == 'tag'
+    if: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
