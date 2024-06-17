@@ -343,6 +343,9 @@ controller:
   ## Enable OIDC policies.
   enableOIDC: false
 
+  ## Enable NJS. This will load the NJS module. Is is required if using OIDC or API Key Auth.
+  enableNJS: true
+
   ## Include year in log header. This parameter will be removed in release 2.7 and the year will be included by default.
   includeYear: false
 

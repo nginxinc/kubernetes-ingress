@@ -908,6 +908,14 @@
             false
           ]
         },
+        "enableNJS": {
+          "type": "boolean",
+          "default": true,
+          "title": "The enableNJS",
+          "examples": [
+            true
+          ]
+        },
         "includeYear": {
           "type": "boolean",
           "default": false,

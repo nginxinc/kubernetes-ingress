@@ -20,6 +20,7 @@ func ValidatePolicy(policy *v1.Policy, isPlus, enableNJS, enableOIDC, enableAppP
 	return allErrs.ToAggregate()
 }
 
+// nolint: gocyclo
 func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enableNJS, enableOIDC, enableAppProtect bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 

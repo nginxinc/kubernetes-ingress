@@ -286,6 +286,7 @@ Build the args for the service binary.
 {{- end }}
 - -enable-cert-manager={{ .Values.controller.enableCertManager }}
 - -enable-oidc={{ .Values.controller.enableOIDC }}
+- -enable-njs={{ .Values.controller.enableNJS }}
 - -enable-external-dns={{ .Values.controller.enableExternalDNS }}
 - -default-http-listener-port={{ .Values.controller.defaultHTTPListenerPort}}
 - -default-https-listener-port={{ .Values.controller.defaultHTTPSListenerPort}}
