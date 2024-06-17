@@ -1893,6 +1893,9 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 	case secrets.SecretTypeOIDC:
 		// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
 		return ""
+	case secrets.SecretTypeAPIKey:
+		// APIKey ClientSecret is not required on the filesystem, it is written directly to the config file.
+		return ""
 	default:
 		return cnf.addOrUpdateTLSSecret(secret)
 	}
