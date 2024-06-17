@@ -33,14 +33,14 @@ http {
     map_hash_max_size {{.MapHashMaxSize}};
     map_hash_bucket_size {{.MapHashBucketSize}};
 
-    {{ if .NJSLoadModule }}
-    js_import /etc/nginx/njs/apikey_auth.js;
-    js_set $apikey_auth_hash apikey_auth.hash;
-    {{- end}}
-
     {{- if .HTTPSnippets}}
     {{range $value := .HTTPSnippets}}
     {{$value}}{{end}}
+    {{- end}}
+
+    {{ if .NJSLoadModule }}
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
     {{- end}}
 
     {{if .LogFormat -}}

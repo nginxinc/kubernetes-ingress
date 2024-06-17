@@ -1392,6 +1392,7 @@ func rfc1123ToSnake(rfc1123String string) string {
 func generateAPIKeyClients(secretData map[string][]byte) []apiKeyClient {
 	var clients []apiKeyClient
 	for clientID, apiKey := range secretData {
+
 		h := sha256.New()
 		h.Write(apiKey)
 		sha256Hash := hex.EncodeToString(h.Sum(nil))
