@@ -126,7 +126,7 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap-modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap-modules, 'waf') && '-nap' || '' }}/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap-modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap-modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
           flavor: |
             suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}
           tags: |

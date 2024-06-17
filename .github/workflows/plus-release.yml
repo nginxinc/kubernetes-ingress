@@ -94,9 +94,6 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.gcr-auth.outputs.access_token }}
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Publish Plus images
         run: |
           export CONFIG_PATH=.github/config/config-plus-gcr-release
@@ -151,9 +148,6 @@ jobs:
           username: ${{ steps.idtoken.outputs.id_token }}
           password: ${{ github.actor }}
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Publish images
         run: |
           export CONFIG_PATH=.github/config/config-plus-nginx
@@ -193,9 +187,6 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
-
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
 
       - name: Publish Plus images
         run: |
@@ -249,9 +240,6 @@ jobs:
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Publish images
         run: |
           export CONFIG_PATH=.github/config/config-plus-ecr
@@ -294,9 +282,6 @@ jobs:
           registry: nginxmktpl.azurecr.io
           username: ${{ secrets.AZ_MKTPL_ID }}
           password: ${{ secrets.AZ_MKTPL_SECRET }}
-
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
 
       - name: Publish images
         run: |

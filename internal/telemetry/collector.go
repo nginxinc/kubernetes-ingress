@@ -80,6 +80,9 @@ type CollectorConfig struct {
 
 	// InstallationFlags represents the list of set flags managed by NIC
 	InstallationFlags []string
+
+	// Indicates if using of Custom Resources is enabled.
+	CustomResourcesEnabled bool
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -139,6 +142,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			IngressClasses:        int64(report.IngressClassCount),
 			AccessControlPolicies: int64(report.AccessControlCount),
 			RateLimitPolicies:     int64(report.RateLimitCount),
+			APIKeyPolicies:        int64(report.APIKeyAuthCount),
 			JWTAuthPolicies:       int64(report.JWTAuthCount),
 			BasicAuthPolicies:     int64(report.BasicAuthCount),
 			IngressMTLSPolicies:   int64(report.IngressMTLSCount),
@@ -188,6 +192,7 @@ type Report struct {
 	AccessControlCount   int
 	RateLimitCount       int
 	JWTAuthCount         int
+	APIKeyAuthCount      int
 	BasicAuthCount       int
 	IngressMTLSCount     int
 	EgressMTLSCount      int
@@ -206,7 +211,8 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	vsrCount := 0
 	tsCount := 0
 
-	if c.Config.Configurator != nil {
+	// Collect Custom Resources only if CR enabled at startup.
+	if c.Config.Configurator != nil && c.Config.CustomResourcesEnabled {
 		vsCount, vsrCount = c.Config.Configurator.GetVirtualServerCounts()
 		tsCount = c.Config.Configurator.GetTransportServerCounts()
 	}
@@ -254,25 +260,35 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
 	}
 
-	policies := c.PolicyCount()
-
-	accessControlCount := policies["AccessControl"]
-	rateLimitCount := policies["RateLimit"]
-	jwtAuthCount := policies["JWTAuth"]
-	basicAuthCount := policies["BasicAuth"]
-	ingressMTLSCount := policies["IngressMTLS"]
-	egressMTLSCount := policies["EgressMTLS"]
-	oidcCount := policies["OIDC"]
-	wafCount := policies["WAF"]
+	var (
+		accessControlCount int
+		rateLimitCount     int
+		apiKeyCount        int
+		jwtAuthCount       int
+		basicAuthCount     int
+		ingressMTLSCount   int
+		egressMTLSCount    int
+		oidcCount          int
+		wafCount           int
+	)
+	// Collect Custom Resources (Policies) only if CR enabled at startup.
+	if c.Config.CustomResourcesEnabled {
+		policies := c.PolicyCount()
+		accessControlCount = policies["AccessControl"]
+		rateLimitCount = policies["RateLimit"]
+		apiKeyCount = policies["APIKey"]
+		jwtAuthCount = policies["JWTAuth"]
+		basicAuthCount = policies["BasicAuth"]
+		ingressMTLSCount = policies["IngressMTLS"]
+		egressMTLSCount = policies["EgressMTLS"]
+		oidcCount = policies["OIDC"]
+		wafCount = policies["WAF"]
+	}
 
 	ingressAnnotations := c.IngressAnnotations()
-
 	appProtectVersion := c.AppProtectVersion()
-
 	isPlus := c.IsPlusEnabled()
-
 	installationFlags := c.InstallationFlags()
-
 	serviceCounts, err := c.ServiceCounts()
 	if err != nil {
 		glog.V(3).Infof("Unable to collect telemetry data: Service Counts: %v", err)
@@ -306,6 +322,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		IngressClassCount:    ingressClassCount,
 		AccessControlCount:   accessControlCount,
 		RateLimitCount:       rateLimitCount,
+		APIKeyAuthCount:      apiKeyCount,
 		JWTAuthCount:         jwtAuthCount,
 		BasicAuthCount:       basicAuthCount,
 		IngressMTLSCount:     ingressMTLSCount,
