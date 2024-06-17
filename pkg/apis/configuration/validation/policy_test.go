@@ -1303,6 +1303,98 @@ func TestValidateOIDC_PassesOnValidOIDC(t *testing.T) {
 	}
 }
 
+func TestValidateAPIKeyPolicy_PassOnValidInput(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		apiKey *v1.APIKey
+		msg    string
+	}{
+		{
+			apiKey: &v1.APIKey{
+				SuppliedIn: &v1.SuppliedIn{
+					Header: []string{
+						"X-API-Key",
+					},
+				},
+				ClientSecret: "secret",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateAPIKey(test.apiKey, field.NewPath("apiKey"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateAPIKey() returned errors %v for valid input for the case of %v", allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateAPIKeyPolicy_FailsOnInvalidInput(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		apiKey *v1.APIKey
+		msg    string
+	}{
+		{
+			apiKey: &v1.APIKey{
+				SuppliedIn: &v1.SuppliedIn{
+					Query: []string{
+						"api_key",
+					},
+				},
+			},
+			msg: "missing secret",
+		},
+		{
+			apiKey: &v1.APIKey{
+				SuppliedIn:   &v1.SuppliedIn{},
+				ClientSecret: "secret",
+			},
+			msg: "both  header and query are missing",
+		},
+		{
+			apiKey: &v1.APIKey{
+				SuppliedIn: &v1.SuppliedIn{
+					Header: []string{
+						`api.key"`,
+					},
+				},
+				ClientSecret: "secret",
+			},
+			msg: "invalid header",
+		},
+		{
+			apiKey: &v1.APIKey{
+				SuppliedIn: &v1.SuppliedIn{
+					Query: []string{
+						`api_key\`,
+					},
+				},
+				ClientSecret: "secret",
+			},
+			msg: "invalid query",
+		},
+		{
+			apiKey: &v1.APIKey{
+				SuppliedIn: &v1.SuppliedIn{
+					Query: []string{
+						`api_key`,
+					},
+				},
+				ClientSecret: "secret_1",
+			},
+			msg: "invalid secret name",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateAPIKey(test.apiKey, field.NewPath("apiKey"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateAPIKey() returned no errors for invalid input for the case of %v", test.msg)
+		}
+	}
+}
+
 func TestValidateOIDCScope_ErrorsOnInvalidInput(t *testing.T) {
 	t.Parallel()
 

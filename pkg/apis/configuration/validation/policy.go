@@ -72,6 +72,11 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 		fieldCount++
 	}
 
+	if spec.APIKey != nil {
+		allErrs = append(allErrs, validateAPIKey(spec.APIKey, fieldPath.Child("apiKey"))...)
+		fieldCount++
+	}
+
 	if spec.WAF != nil {
 		if !isPlus {
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"), "WAF is only supported in NGINX Plus"))
@@ -86,7 +91,7 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 	}
 
 	if fieldCount != 1 {
-		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`"
+		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`, `apiKey`"
 		if isPlus {
 			msg = fmt.Sprint(msg, ", `jwt`, `oidc`, `waf`")
 		}
@@ -275,6 +280,38 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateURL(oidc.JWKSURI, fieldPath.Child("jwksURI"))...)
 	allErrs = append(allErrs, validateSecretName(oidc.ClientSecret, fieldPath.Child("clientSecret"))...)
 	return append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
+}
+
+func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if apiKey.SuppliedIn.Query == nil && apiKey.SuppliedIn.Header == nil {
+		msg := "at least one query or header name must be provided"
+		allErrs = append(allErrs, field.Required(fieldPath.Child("SuppliedIn"), msg))
+	}
+
+	if apiKey.SuppliedIn.Header != nil {
+		for _, header := range apiKey.SuppliedIn.Header {
+			for _, msg := range validation.IsHTTPHeaderName(header) {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("suppliedIn.header"), header, msg))
+			}
+		}
+	}
+
+	if apiKey.SuppliedIn.Query != nil {
+		for _, query := range apiKey.SuppliedIn.Query {
+			if err := ValidateEscapedString(query); err != nil {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("suppliedIn.query"), query, err.Error()))
+			}
+		}
+	}
+
+	if apiKey.ClientSecret == "" {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("clientSecret"), ""))
+	}
+
+	allErrs = append(allErrs, validateSecretName(apiKey.ClientSecret, fieldPath.Child("clientSecret"))...)
+
+	return allErrs
 }
 
 func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {

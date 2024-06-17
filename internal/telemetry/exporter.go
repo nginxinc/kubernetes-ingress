@@ -95,6 +95,8 @@ type NICResourceCounts struct {
 	AccessControlPolicies int64
 	// RateLimitPolicies is the number of RateLimit policies managed by NGINX Ingress Controller
 	RateLimitPolicies int64
+	// APIKeyPolicies is the number of APIKey policies managed by NGINX Ingress Controller
+	APIKeyPolicies int64
 	// JWTAuthPolicies is the number of JWTAuth policies managed by NGINX Ingress Controller
 	JWTAuthPolicies int64
 	// BasicAuthPolicies is the number of BasicAuth policies managed by NGINX Ingress Controller
