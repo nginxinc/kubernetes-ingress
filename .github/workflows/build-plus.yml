@@ -21,18 +21,20 @@ on:
       branch:
         required: false
         type: string
-      forked-workflow:
-        required: false
-        type: boolean
       nap-modules:
         required: false
         type: string
       target:
         required: true
         type: string
-      docs-only:
+      authenticated:
         required: true
         type: boolean
+      full-build:
+        description: Always build base image
+        required: false
+        type: boolean
+        default: false
 
 defaults:
   run:
@@ -70,7 +72,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: ${{ ! inputs.forked-workflow || ! inputs.docs-only }}
+        if: ${{ inputs.authenticated }}
 
       - name: Login to GCR
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
@@ -78,7 +80,7 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: ${{ ! inputs.forked-workflow || ! inputs.docs-only }}
+        if: ${{ inputs.authenticated }}
 
       - name: NAP modules
         id: nap_modules
@@ -92,34 +94,35 @@ jobs:
       - name: Check if base images exist
         id: base_exists
         run: |
-          if docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}; then
+          base_image="gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}"
+          echo "image=${base_image}"
+          if docker pull ${base_image}; then
             echo "exists=0" >> $GITHUB_OUTPUT
           else
             echo "exists=1" >> $GITHUB_OUTPUT
           fi
-        if: ${{ ! inputs.forked-workflow || ! inputs.docs-only }}
+        if: ${{ inputs.authenticated && ! inputs.full-build }}
 
       - name: Build Base Container
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
           cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: common
-          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}
+          tags: ${{ steps.base_exists.outputs.image }}
           platforms: ${{ inputs.platforms }}
           pull: true
           push: true
+          no-cache: true
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            IC_VERSION=${{ steps.meta.outputs.version }}
             ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ inputs.nap-modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ ( ! inputs.forked-workflow || ! inputs.docs-only ) && steps.base_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated && steps.base_exists.outputs.exists != 0 }}
 
       - name: Docker meta
         id: meta
@@ -131,6 +134,7 @@ jobs:
             suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}
           tags: |
             type=raw,value=${{ inputs.tag }}
+            type=ref,event=pr
           labels: |
             org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
         env:
@@ -144,23 +148,22 @@ jobs:
           else
             echo "exists=1" >> $GITHUB_OUTPUT
           fi
-        if: ${{ ! inputs.forked-workflow || ! inputs.docs-only }}
+        if: ${{ inputs.authenticated && ! inputs.full-build }}
 
       - name: Debug values
         run: |
-          echo "forked-workflow: ${{ inputs.forked-workflow }}"
-          echo "docs-only: ${{ inputs.docs-only }}"
-          echo "docs-only invert: ${{ ! inputs.docs-only }}"
+          echo "authenticated: ${{ inputs.authenticated }}"
           echo "base_exists: ${{ steps.base_exists.outputs.exists }}"
           echo "target_exists: ${{ steps.target_exists.outputs.exists }}"
-          echo "all: ${{ ! inputs.docs-only || inputs.forked-workflow || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}"
+          echo "full-build: ${{ inputs.full-build }}"
+          echo "all: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}"
 
       - name: Fetch Cached Artifacts
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
-        if: ${{ ! inputs.docs-only || inputs.forked-workflow || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
 
       - name: Build Docker image
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
@@ -170,36 +173,35 @@ jobs:
           context: "."
           cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
           cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
-          target: ${{ inputs.target }}${{ ! inputs.forked-workflow && '-prebuilt' || '' }}
+          target: ${{ inputs.target }}${{ inputs.authenticated && '-prebuilt' || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           platforms: ${{ inputs.platforms }}
           load: false
-          push: ${{ ! inputs.forked-workflow }}
+          push: ${{ inputs.authenticated }}
           pull: true
-          no-cache: ${{ ! inputs.forked-workflow }}
-          sbom: ${{ ! inputs.forked-workflow }}
+          sbom: ${{ inputs.authenticated }}
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            ${{ ! inputs.forked-workflow && format('PREBUILT_BASE_IMG=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:{0}-{1}{2}', inputs.base-image-md5, inputs.image, steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '') || '' }}
+            ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.base_exists.outputs.image ) }}
             IC_VERSION=${{ steps.meta.outputs.version }}
-            ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
-            ${{ (contains(inputs.target, 'aws') && inputs.nap_modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
+            ${{ (contains(inputs.target, 'aws') && inputs.nap-modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
             ${{ contains(inputs.image, 'v5') && 'WAF_VERSION=v5' || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ ! inputs.docs-only || inputs.forked-workflow || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
 
       - name: Extract image name for Trivy
         id: trivy-tag
         run: |
           tag=$(echo $DOCKER_METADATA_OUTPUT_JSON | jq -r '[ .tags[] | select(contains("f5-gcs-7899"))] | .[0]')
           echo "tag=$tag" >> $GITHUB_OUTPUT
-        if: ${{ ( ! inputs.forked-workflow || ! inputs.docs-only ) && steps.build-push.conclusion == 'success' }}
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # 0.22.0
@@ -209,14 +211,14 @@ jobs:
           format: "sarif"
           output: "trivy-results-${{ inputs.image }}.sarif"
           ignore-unfixed: "true"
-        if: ${{ ( ! inputs.forked-workflow || ! inputs.docs-only ) && steps.build-push.conclusion == 'success' }}
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@530d4feaa9c62aaab2d250371e2061eb7a172363 # v3.25.9
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
-        if: ${{ ( ! inputs.forked-workflow || ! inputs.docs-only ) && steps.build-push.conclusion == 'success' }}
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Upload Scan Results
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3

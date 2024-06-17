@@ -1,16 +1,23 @@
+# This workflow will:
+# - build images for forked workflows
+# - tag stable for forked workflows
+# - tag edge for main workflows
+# - tag release branch name for release branch workflows
+# - release edge images & helm charts for edge
+
 on:
-  pull_request:
+  push:
     branches:
       - main
-    types:
-      - closed
+      - release-*
+  workflow_call:
 
 defaults:
   run:
     shell: bash
 
 concurrency:
-  group: ${{ github.ref_name }}-edge
+  group: ${{ github.ref_name }}-image-promotion
   cancel-in-progress: true
 
 permissions:
@@ -19,7 +26,6 @@ permissions:
 jobs:
   checks:
     name: Checks and variables
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -107,8 +113,7 @@ jobs:
       image: ${{ matrix.image }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      forked-workflow: false
-      docs-only: false
+      authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
     permissions:
@@ -140,8 +145,7 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      forked-workflow: false
-      docs-only: false
+      authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
     permissions:
@@ -198,8 +202,7 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       nap-modules: ${{ matrix.nap_modules }}
-      forked-workflow: false
-      docs-only: false
+      authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
     permissions:
@@ -231,11 +234,12 @@ jobs:
     uses: ./.github/workflows/retag-images.yml
     with:
       source_tag: ${{ needs.checks.outputs.stable_tag }}
-      target_tag: "edge"
+      target_tag: ${{ github.ref_name == github.event.repository.default_branch && 'edge' || github.ref_name }}
       dry_run: false
     secrets: inherit
 
   release-oss:
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
     name: Release Docker OSS
     needs: [checks, build-docker]
     uses: ./.github/workflows/oss-release.yml
@@ -255,6 +259,7 @@ jobs:
     secrets: inherit
 
   release-plus:
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
     name: Release Docker Plus
     needs: [checks, build-docker-plus, build-docker-nap ]
     uses: ./.github/workflows/plus-release.yml
@@ -273,6 +278,7 @@ jobs:
     secrets: inherit
 
   publish-helm-chart:
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
     name: Publish Helm Chart
     needs: [checks ]
     uses: ./.github/workflows/publish-helm.yml
@@ -287,6 +293,7 @@ jobs:
     secrets: inherit
 
   certify-openshift-images:
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
     name: Certify OpenShift UBI images
     runs-on: ubuntu-22.04
     needs: [release-oss]
