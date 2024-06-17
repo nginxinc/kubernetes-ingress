@@ -14,7 +14,7 @@ kind: Ingress
 metadata:
   name: annotations-rl-ingress-minion
   annotations:
-    nginx.org/limit-req-rate: 50r/s
+    nginx.org/limit-req-rate: 40r/s
     nginx.org/limit-req-key: ${binary_remote_addr}
     nginx.org/limit-req-zone-size: 10M
     nginx.org/mergeable-ingress-type: "minion"

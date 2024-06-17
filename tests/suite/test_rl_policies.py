@@ -330,7 +330,7 @@ class TestRateLimitingPolicies:
         Test if rate-limit scaling is being calculated correctly
         """
         ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 3)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 4)
 
         print(f"Create rl policy")
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, rl_pol_pri_sca_src, test_namespace)
@@ -353,7 +353,7 @@ class TestRateLimitingPolicies:
                 ic_pods[i].metadata.name,
                 ingress_controller_prerequisites.namespace,
             )
-            assert "rate=16r/s" in conf
+            assert "rate=10r/s" in conf
         # restore replicas, policy and vs
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)

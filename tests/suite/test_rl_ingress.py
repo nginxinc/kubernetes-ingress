@@ -128,7 +128,7 @@ class TestRateLimitIngressScaled:
         Test if rate-limit scaling works with standard and mergeable ingresses
         """
         ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 3)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 4)
         ic_pods = get_pod_list(kube_apis.v1, ns)
         for i in range(len(ic_pods)):
             conf = get_ingress_nginx_template_conf(
@@ -138,6 +138,6 @@ class TestRateLimitIngressScaled:
                 ic_pods[i].metadata.name,
                 ingress_controller_prerequisites.namespace,
             )
-            assert "rate=16r/s" in conf
+            assert "rate=10r/s" in conf
         # restore replicas
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)

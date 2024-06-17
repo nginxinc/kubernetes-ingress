@@ -378,7 +378,7 @@ class TestRateLimitingPoliciesVsr:
         """
 
         ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 3)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 4)
 
         print(f"Create rl policy")
         pol_name = create_policy_from_yaml(
@@ -406,7 +406,7 @@ class TestRateLimitingPoliciesVsr:
                 ic_pods[i].metadata.name,
                 ingress_controller_prerequisites.namespace,
             )
-            assert "rate=16r/s" in conf
+            assert "rate=10r/s" in conf
         # restore replicas, policy and vsr
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
