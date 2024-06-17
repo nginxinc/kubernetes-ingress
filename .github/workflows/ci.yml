@@ -757,10 +757,10 @@ jobs:
     name: Promote images on Force Run
     needs: [build-docker,build-docker-plus,build-docker-nap,smoke-results]
     permissions:
-      contents: read # To checkout repository
+      contents: write # for pushing to Helm Charts repository
       id-token: write # To sign into Google Container Registry
       actions: read
-      packages: write
+      packages: write # for helm to push to GHCR
       security-events: write
     uses: ./.github/workflows/image-promotion.yml
     if: ${{ inputs.force }}
