@@ -666,6 +666,7 @@ func vsConfig() VirtualServerConfig {
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -1013,6 +1014,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -1358,6 +1360,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -1703,6 +1706,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2049,6 +2053,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2395,6 +2400,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2740,6 +2746,7 @@ var (
 			WAF: &WAF{
 				ApBundle:            "/fake/bundle/path/NginxDefaultPolicy.tgz",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -3092,6 +3099,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -3715,6 +3723,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -4063,6 +4072,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -4411,6 +4421,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},

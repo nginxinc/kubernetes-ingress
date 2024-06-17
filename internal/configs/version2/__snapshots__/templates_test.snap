@@ -160,7 +160,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -1532,7 +1532,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -1904,7 +1904,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -2333,7 +2333,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -2760,7 +2760,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -3187,7 +3187,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -3616,7 +3616,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -4045,7 +4045,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -4474,7 +4474,7 @@ server {gunzip on;
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -4903,7 +4903,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
@@ -5776,7 +5776,7 @@ server {
          delay=10;
     auth_jwt "My Api";
     auth_jwt_key_file jwk-secret;
-    app_protect_enable ;
+    app_protect_enable on;
         
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
         
