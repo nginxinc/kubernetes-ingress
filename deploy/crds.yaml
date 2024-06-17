@@ -269,6 +269,25 @@ spec:
                       type: string
                     type: array
                 type: object
+              apiKey:
+                description: APIKey defines an API Key policy.
+                properties:
+                  clientSecret:
+                    type: string
+                  suppliedIn:
+                    description: SuppliedIn defines the locations API Key should be
+                      supplied in.
+                    properties:
+                      header:
+                        items:
+                          type: string
+                        type: array
+                      query:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
               basicAuth:
                 description: |-
                   BasicAuth holds HTTP Basic authentication configuration
