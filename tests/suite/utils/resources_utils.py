@@ -1,5 +1,6 @@
 """Describe methods to utilize the kubernetes-client."""
 
+import base64
 import json
 import os
 import re
@@ -292,11 +293,22 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     while not are_all_pods_in_ready_state(v1, namespace) and counter < 200:
         # remove counter based condition from line #264 and #269 if --batch-start="True"
         print("There are pods that are not Ready. Wait for 1 sec...")
-        time.sleep(1)
+        wait_before_test()
         counter = counter + 1
     if counter >= 300:
         raise PodNotReadyException()
     print("All pods are Ready")
+
+
+def get_pod_list(v1: CoreV1Api, namespace) -> []:
+    """
+    Get a list of pods in a namespace.
+
+    :param v1: CoreV1Api
+    :param namespace: namespace
+    :return: []
+    """
+    return v1.list_namespaced_pod(namespace).items
 
 
 def get_first_pod_name(v1: CoreV1Api, namespace) -> str:
@@ -900,16 +912,26 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace, print_l
     :return: str
     """
     command = ["cat", file_path]
-    resp = stream(
-        v1.connect_get_namespaced_pod_exec,
-        pod_name,
-        pod_namespace,
-        command=command,
-        stderr=True,
-        stdin=False,
-        stdout=True,
-        tty=False,
-    )
+    retries = 0
+    while retries <= 3:
+        wait_before_test()
+        try:
+            resp = stream(
+                v1.connect_get_namespaced_pod_exec,
+                pod_name,
+                pod_namespace,
+                command=command,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+            )
+            break
+        except Exception as e:
+            print(f"Error: {e}")
+            retries += 1
+            if retries == 3:
+                raise e
     result_conf = str(resp)
     if print_log:
         print("\nFile contents:\n" + result_conf)
@@ -1748,3 +1770,42 @@ def get_resource_metrics(kube_apis, plural, namespace="nginx-ingress") -> str:
     else:
         return "Invalid plural specified. Please use 'pods' or 'nodes' as the plural"
     return metrics["items"]
+
+
+def get_apikey_auth_secrets_from_yaml(yaml_manifest) -> list:
+    """
+    Get apikey auth keys from yaml file.
+
+    :param yaml_manifest: an absolute path to file
+    :return: []apikeys
+    """
+    api_keys = []
+
+    with open(yaml_manifest) as file:
+        data = yaml.safe_load(file)
+        if "data" in data:
+            for key, encoded_value in data["data"].items():
+                decoded_value = base64.b64decode(encoded_value).decode("utf-8")
+                api_keys.append(decoded_value)
+    return api_keys
+
+
+def get_apikey_policy_details_from_yaml(yaml_manifest) -> dict:
+    """
+    Extract headers and queries from an API key policy yaml file.
+
+    :param yaml_manifest: an absolute path to file
+    :return: dictionary with 'headers' and 'queries'
+    """
+    details = {"headers": [], "queries": []}
+
+    with open(yaml_manifest) as file:
+        data = yaml.safe_load(file)
+
+        if "spec" in data and "apiKey" in data["spec"] and "suppliedIn" in data["spec"]["apiKey"]:
+            if "header" in data["spec"]["apiKey"]["suppliedIn"]:
+                details["headers"] = data["spec"]["apiKey"]["suppliedIn"]["header"]
+            if "query" in data["spec"]["apiKey"]["suppliedIn"]:
+                details["queries"] = data["spec"]["apiKey"]["suppliedIn"]["query"]
+
+    return details

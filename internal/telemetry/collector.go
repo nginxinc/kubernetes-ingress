@@ -142,6 +142,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			IngressClasses:        int64(report.IngressClassCount),
 			AccessControlPolicies: int64(report.AccessControlCount),
 			RateLimitPolicies:     int64(report.RateLimitCount),
+			APIKeyPolicies:        int64(report.APIKeyAuthCount),
 			JWTAuthPolicies:       int64(report.JWTAuthCount),
 			BasicAuthPolicies:     int64(report.BasicAuthCount),
 			IngressMTLSPolicies:   int64(report.IngressMTLSCount),
@@ -191,6 +192,7 @@ type Report struct {
 	AccessControlCount   int
 	RateLimitCount       int
 	JWTAuthCount         int
+	APIKeyAuthCount      int
 	BasicAuthCount       int
 	IngressMTLSCount     int
 	EgressMTLSCount      int
@@ -261,6 +263,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	var (
 		accessControlCount int
 		rateLimitCount     int
+		apiKeyCount        int
 		jwtAuthCount       int
 		basicAuthCount     int
 		ingressMTLSCount   int
@@ -273,6 +276,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		policies := c.PolicyCount()
 		accessControlCount = policies["AccessControl"]
 		rateLimitCount = policies["RateLimit"]
+		apiKeyCount = policies["APIKey"]
 		jwtAuthCount = policies["JWTAuth"]
 		basicAuthCount = policies["BasicAuth"]
 		ingressMTLSCount = policies["IngressMTLS"]
@@ -318,6 +322,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		IngressClassCount:    ingressClassCount,
 		AccessControlCount:   accessControlCount,
 		RateLimitCount:       rateLimitCount,
+		APIKeyAuthCount:      apiKeyCount,
 		JWTAuthCount:         jwtAuthCount,
 		BasicAuthCount:       basicAuthCount,
 		IngressMTLSCount:     ingressMTLSCount,
