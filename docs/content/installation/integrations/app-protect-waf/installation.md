@@ -2,9 +2,9 @@
 docs: DOCS-579
 doctypes:
 - ''
-title: Building NGINX Ingress Controller with NGINX App Protect WAF
+title: Build NGINX Ingress Controller with NGINX App Protect WAF
 toc: true
-weight: 1800
+weight: 100
 ---
 
 This document explains how to build a F5 NGINX Ingress Controller image with F5 NGINX App Protect WAF from source code.
@@ -28,7 +28,7 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 1. Clone the NGINX Ingress Controller repository:
 
     ```console
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.1
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.2
     cd kubernetes-ingress
     ```
 
@@ -68,7 +68,7 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
 
 ### Makefile targets {#makefile-targets}
 
-{{<bootstrap-table "table table-striped table-bordered">}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 | Makefile Target           | Description                                                       | Compatible Systems  |
 |---------------------------|-------------------------------------------------------------------|---------------------|
 | **debian-image-nap-plus** | Builds a Debian-based image with NGINX Plus and the [NGINX App Protect WAF](/nginx-app-protect-waf/) module. | Debian  |
@@ -80,13 +80,6 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
 <br>
 
 {{<see-also>}} For the complete list of _Makefile_ targets and customizable variables, see the [Building NGINX Ingress Controller]({{< relref "installation/building-nginx-ingress-controller.md#makefile-details" >}}) guide. {{</see-also>}}
-
-If you intend to use [external references](/nginx-app-protect-waf/configuration/#external-references) in NGINX App Protect WAF policies, you may want to provide a custom CA certificate to authenticate with the hosting server.
-
-To do so, place the `*.crt` file in the build folder and uncomment the lines following this comment:
-`#Uncomment the lines below if you want to install a custom CA certificate`
-
-{{<warning>}} External references are deprecated in NGINX Ingress Controller and will not be supported in future releases. {{</warning>}}
 
 ---
 
@@ -138,7 +131,7 @@ This single YAML file creates CRDs for the following resources:
 - `APUserSig`
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.1/deploy/crds-nap-waf.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/deploy/crds-nap-waf.yaml
 ```
 
 {{%/tab%}}
@@ -216,7 +209,7 @@ To enable the NGINX App Protect DoS Module:
 
 {{< include "installation/manifests/verify-pods-are-running.md" >}}
 
-For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.1/examples/ingress-resources/app-protect-waf" >}}).
+For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/app-protect-waf" >}}).
 
 ---
 

@@ -4,10 +4,10 @@ doctypes:
 - ''
 title: Security recommendations
 toc: true
-weight: 1500
+weight: 300
 ---
 
-NGINX Ingress Controller follows Kubernetes best practices: this page outlines configuration specific to NGINX Ingress Controller you may require, including links to examples in the [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/tree/release-3.5).
+F5 NGINX Ingress Controller follows Kubernetes best practices: this page outlines configuration specific to NGINX Ingress Controller you may require, including links to examples in the [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples).
 
 For general guidance, we recommend the official Kubernetes documentation for [Securing a Cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/). 
 
@@ -19,8 +19,8 @@ Kubernetes uses [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/r
 
 NGINX Ingress Controller requires RBAC to configure a [ServiceUser](https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts), and provides least privilege access in its standard deployment configurations:
 
-- [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.1/deployments/rbac/rbac.yaml)
-- [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.1/deployments/rbac/rbac.yaml)
+- [Helm](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/deployments/rbac/rbac.yaml)
+- [Manifests](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/deployments/rbac/rbac.yaml)
 
 By default, the ServiceAccount has access to all Secret resources in the cluster.
 
@@ -93,7 +93,7 @@ Snippets are disabled by default. To use snippets, set the [**enable-snippets**]
 
 For more information, read the following: 
 
-- [Advanced Configuration using Snippets]({{< relref "/configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) 
+- [Advanced configuration using Snippets]({{< relref "/configuration/ingress-resources/advanced-configuration-with-snippets.md" >}}) 
 - [Using Snippets with VirtualServer/VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md#using-snippets" >}})
 - [Using Snippets with TransportServer]({{< relref "/configuration/transportserver-resource.md#using-snippets" >}})
-- [ConfigMap Snippets and Custom Templates]({{< relref "configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}})
+- [ConfigMap snippets and custom templates]({{< relref "configuration/global-configuration/configmap-resource.md#snippets-and-custom-templates" >}})

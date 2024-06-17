@@ -18,8 +18,13 @@ func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
 	attrs = append(attrs, attribute.Int64("TransportServers", d.TransportServers))
 	attrs = append(attrs, attribute.Int64("Replicas", d.Replicas))
 	attrs = append(attrs, attribute.Int64("Secrets", d.Secrets))
-	attrs = append(attrs, attribute.Int64("Services", d.Services))
-	attrs = append(attrs, attribute.Int64("Ingresses", d.Ingresses))
+	attrs = append(attrs, attribute.Int64("ClusterIPServices", d.ClusterIPServices))
+	attrs = append(attrs, attribute.Int64("NodePortServices", d.NodePortServices))
+	attrs = append(attrs, attribute.Int64("LoadBalancerServices", d.LoadBalancerServices))
+	attrs = append(attrs, attribute.Int64("ExternalNameServices", d.ExternalNameServices))
+	attrs = append(attrs, attribute.Int64("RegularIngressCount", d.RegularIngressCount))
+	attrs = append(attrs, attribute.Int64("MasterIngressCount", d.MasterIngressCount))
+	attrs = append(attrs, attribute.Int64("MinionIngressCount", d.MinionIngressCount))
 	attrs = append(attrs, attribute.Int64("IngressClasses", d.IngressClasses))
 	attrs = append(attrs, attribute.Int64("AccessControlPolicies", d.AccessControlPolicies))
 	attrs = append(attrs, attribute.Int64("RateLimitPolicies", d.RateLimitPolicies))
@@ -31,6 +36,9 @@ func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
 	attrs = append(attrs, attribute.Int64("WAFPolicies", d.WAFPolicies))
 	attrs = append(attrs, attribute.Bool("GlobalConfiguration", d.GlobalConfiguration))
 	attrs = append(attrs, attribute.StringSlice("IngressAnnotations", d.IngressAnnotations))
+	attrs = append(attrs, attribute.String("AppProtectVersion", d.AppProtectVersion))
+	attrs = append(attrs, attribute.Bool("IsPlus", d.IsPlus))
+	attrs = append(attrs, attribute.StringSlice("InstallationFlags", d.InstallationFlags))
 
 	return attrs
 }

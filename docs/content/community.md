@@ -1,11 +1,11 @@
 ---
 docs: DOCS-1447
-title: Community and Contribution
+title: Community and contributing
 toc: true
 weight: 2200
 ---
 
-There are a few ways to get involved with the NGINX Ingress Controller community and contribute to the project.
+There are a few ways to get involved with the F5 NGINX Ingress Controller community and contribute to the project.
 
 # Community
 

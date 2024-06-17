@@ -1,7 +1,7 @@
 ---
-title: Global Configuration
+title: Global configuration
 description:
-weight: 1400
+weight: 100
 menu:
   docs:
     parent: NGINX Ingress Controller
