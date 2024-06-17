@@ -759,5 +759,8 @@ jobs:
     permissions:
       contents: read # To checkout repository
       id-token: write # To sign into Google Container Registry
+      actions: read
+      packages: write
+      security-events: write
     uses: ./.github/workflows/image-promotion.yml
     if: ${{ inputs.force }}

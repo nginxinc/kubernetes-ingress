@@ -150,8 +150,10 @@ jobs:
       branch: ${{ github.ref }}
     permissions:
       contents: read
+      actions: read
       security-events: write
       id-token: write
+      packages: write
     secrets: inherit
 
   build-docker-nap:
@@ -207,8 +209,10 @@ jobs:
       branch: ${{ github.ref }}
     permissions:
       contents: read
+      actions: read
       security-events: write
       id-token: write
+      packages: write
     secrets: inherit
 
   tag-stable:
