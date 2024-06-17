@@ -2,6 +2,9 @@
 # this is here so we can grab the latest version of kind and have dependabot keep it up to date
 FROM kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e
 
+# this is here so we can grab the latest version of skopeo and have dependabot keep it up to date
+FROM quay.io/skopeo/stable:v1.15.1@sha256:981737142fd7ac5315561fc1e39d42203b6efa97ddd2870bde0204b791574efa
+
 FROM python:3.12@sha256:00389e020fe42a6c74a8f091ce9b28324422d084efdff26eabe93bc4ae9a110b
 
 RUN apt-get update \

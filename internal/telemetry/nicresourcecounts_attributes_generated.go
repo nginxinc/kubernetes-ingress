@@ -28,6 +28,7 @@ func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
 	attrs = append(attrs, attribute.Int64("IngressClasses", d.IngressClasses))
 	attrs = append(attrs, attribute.Int64("AccessControlPolicies", d.AccessControlPolicies))
 	attrs = append(attrs, attribute.Int64("RateLimitPolicies", d.RateLimitPolicies))
+	attrs = append(attrs, attribute.Int64("APIKeyPolicies", d.APIKeyPolicies))
 	attrs = append(attrs, attribute.Int64("JWTAuthPolicies", d.JWTAuthPolicies))
 	attrs = append(attrs, attribute.Int64("BasicAuthPolicies", d.BasicAuthPolicies))
 	attrs = append(attrs, attribute.Int64("IngressMTLSPolicies", d.IngressMTLSPolicies))

@@ -1,6 +1,8 @@
 package configs
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"os"
@@ -421,6 +423,12 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		policiesCfg.JWTAuthList[jwtAuthKey] = policiesCfg.JWTAuth
 	}
 
+	if policiesCfg.APIKeyEnabled {
+		apiMapName := policiesCfg.APIKey.MapName
+		policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
+		policiesCfg.APIKeyClientMap[apiMapName] = policiesCfg.APIKeyClients
+	}
+
 	dosCfg := generateDosCfg(dosResources[""])
 
 	// enabledInternalRoutes controls if a virtual server is configured as an internal route.
@@ -580,6 +588,16 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
 			}
 		}
+		if routePoliciesCfg.APIKeyEnabled {
+			policiesCfg.APIKeyEnabled = routePoliciesCfg.APIKeyEnabled
+			apiMapName := routePoliciesCfg.APIKey.MapName
+			if policiesCfg.APIKeyClientMap == nil {
+				policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
+			}
+			if _, exists := policiesCfg.APIKeyClientMap[apiMapName]; !exists {
+				policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
+			}
+		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -710,6 +728,17 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 					policiesCfg.JWTAuthList[jwtAuthKey] = routePoliciesCfg.JWTAuth
 				}
 			}
+			if routePoliciesCfg.APIKeyEnabled {
+				policiesCfg.APIKeyEnabled = routePoliciesCfg.APIKeyEnabled
+				apiMapName := routePoliciesCfg.APIKey.MapName
+				if policiesCfg.APIKeyClientMap == nil {
+					policiesCfg.APIKeyClientMap = make(map[string][]apiKeyClient)
+				}
+				if _, exists := policiesCfg.APIKeyClientMap[apiMapName]; !exists {
+					policiesCfg.APIKeyClientMap[apiMapName] = routePoliciesCfg.APIKeyClients
+				}
+			}
+
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 			dosRouteCfg := generateDosCfg(dosResources[r.Path])
@@ -777,6 +806,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		}
 	}
 
+	for mapName, apiKeyClients := range policiesCfg.APIKeyClientMap {
+		maps = append(maps, *generateAPIKeyClientMap(mapName, apiKeyClients))
+	}
+
 	httpSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.HTTPSnippets, []string{})
 	serverSnippets := generateSnippets(
 		vsc.enableSnippets,
@@ -826,6 +859,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			JWKSAuthEnabled:           policiesCfg.JWKSAuthEnabled,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
+			APIKey:                    policiesCfg.APIKey,
+			APIKeyEnabled:             policiesCfg.APIKeyEnabled,
 			OIDC:                      vsc.oidcPolCfg.oidc,
 			WAF:                       policiesCfg.WAF,
 			Dos:                       dosCfg,
@@ -859,6 +894,10 @@ type policiesCfg struct {
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
+	APIKeyEnabled   bool
+	APIKey          *version2.APIKey
+	APIKeyClients   []apiKeyClient
+	APIKeyClientMap map[string][]apiKeyClient
 	WAF             *version2.WAF
 	ErrorReturn     *version2.Return
 	BundleValidator bundleValidator
@@ -871,6 +910,11 @@ type bundleValidator interface {
 
 type internalBundleValidator struct {
 	bundlePath string
+}
+
+type apiKeyClient struct {
+	ClientID  string
+	HashedKey string
 }
 
 func (i internalBundleValidator) validate(bundle string) (string, error) {
@@ -1290,6 +1334,96 @@ func (p *policiesCfg) addOIDCConfig(
 	return res
 }
 
+func (p *policiesCfg) addAPIKeyConfig(
+	apiKey *conf_v1.APIKey,
+	polKey string,
+	polNamespace string,
+	vsNamespace string,
+	vsName string,
+	secretRefs map[string]*secrets.SecretReference,
+) *validationResults {
+	res := newValidationResults()
+	if p.APIKey != nil {
+		res.addWarningf(
+			"Multiple API Key policies in the same context is not valid. API Key policy %s will be ignored",
+			polKey,
+		)
+		res.isError = true
+		return res
+	}
+
+	secretKey := fmt.Sprintf("%v/%v", polNamespace, apiKey.ClientSecret)
+	secretRef := secretRefs[secretKey]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
+	if secretType != "" && secretType != secrets.SecretTypeAPIKey {
+		res.addWarningf("API Key policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, secrets.SecretTypeAPIKey)
+		res.isError = true
+		return res
+	} else if secretRef.Error != nil {
+		res.addWarningf("API Key %s references an invalid secret %s: %v", polKey, secretKey, secretRef.Error)
+		res.isError = true
+		return res
+	}
+
+	p.APIKeyClients = generateAPIKeyClients(secretRef.Secret.Data)
+
+	mapName := fmt.Sprintf(
+		"apikey_auth_client_name_%s_%s_%s",
+		rfc1123ToSnake(vsNamespace),
+		rfc1123ToSnake(vsName),
+		strings.Split(rfc1123ToSnake(polKey), "/")[1],
+	)
+	p.APIKey = &version2.APIKey{
+		Header:  apiKey.SuppliedIn.Header,
+		Query:   apiKey.SuppliedIn.Query,
+		MapName: mapName,
+	}
+	p.APIKeyEnabled = true
+	return res
+}
+
+func rfc1123ToSnake(rfc1123String string) string {
+	return strings.Replace(rfc1123String, "-", "_", -1)
+}
+
+func generateAPIKeyClients(secretData map[string][]byte) []apiKeyClient {
+	var clients []apiKeyClient
+	for clientID, apiKey := range secretData {
+
+		h := sha256.New()
+		h.Write(apiKey)
+		sha256Hash := hex.EncodeToString(h.Sum(nil))
+		clients = append(clients, apiKeyClient{ClientID: clientID, HashedKey: sha256Hash}) //
+	}
+	return clients
+}
+
+func generateAPIKeyClientMap(mapName string, apiKeyClients []apiKeyClient) *version2.Map {
+	defaultParam := version2.Parameter{
+		Value:  "default",
+		Result: "\"\"",
+	}
+
+	params := []version2.Parameter{defaultParam}
+	for _, client := range apiKeyClients {
+		params = append(params, version2.Parameter{
+			Value:  fmt.Sprintf("\"%s\"", client.HashedKey),
+			Result: fmt.Sprintf("\"%s\"", client.ClientID),
+		})
+	}
+
+	sourceName := "$apikey_auth_token"
+
+	return &version2.Map{
+		Source:     sourceName,
+		Variable:   fmt.Sprintf("$%s", mapName),
+		Parameters: params,
+	}
+}
+
 func (p *policiesCfg) addWAFConfig(
 	waf *conf_v1.WAF,
 	polKey string,
@@ -1420,6 +1554,9 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				res = config.addEgressMTLSConfig(pol.Spec.EgressMTLS, key, polNamespace, policyOpts.secretRefs)
 			case pol.Spec.OIDC != nil:
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
+			case pol.Spec.APIKey != nil:
+				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, ownerDetails.vsNamespace,
+					ownerDetails.vsName, policyOpts.secretRefs)
 			case pol.Spec.WAF != nil:
 				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			default:
@@ -1507,6 +1644,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.EgressMTLS = cfg.EgressMTLS
 	location.OIDC = cfg.OIDC
 	location.WAF = cfg.WAF
+	location.APIKey = cfg.APIKey
 	location.PoliciesErrorReturn = cfg.ErrorReturn
 }
 

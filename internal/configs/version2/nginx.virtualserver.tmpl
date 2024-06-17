@@ -143,9 +143,22 @@ server {
         {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
     {{- end }}
 
+    {{- if $s.APIKeyEnabled}}
+    location = /_validate_apikey_njs {
+        internal;
+        js_content apikey_auth.validate;
+    }
+    {{- end }}
+
     {{- with $s.BasicAuth }}
     auth_basic {{ printf "%q" .Realm }};
     auth_basic_user_file {{ .Secret }};
+    {{- end }}
+
+    {{- with $s.APIKey}}
+    js_var $apikey_auth_local_map "{{ .MapName}}";
+    js_var $apikey_auth_token $apikey_auth_hash;
+    auth_request /_validate_apikey_njs;
     {{- end }}
 
     {{- with $s.EgressMTLS }}
@@ -253,6 +266,18 @@ server {
         {{- with $l.BasicAuth }}
         auth_basic {{ printf "%q" .Realm }};
         auth_basic_user_file {{ .Secret }};
+        {{- end }}
+
+        {{- with $l.APIKey}}
+        set $apikey_auth_local_map  "{{ .MapName }}";
+        set $header_query_value {{ makeHeaderQueryValue $l.APIKey | printf }};
+        set $apikey_auth_token $apikey_auth_hash;
+        auth_request /_validate_apikey_njs;
+
+        {{- else }}
+        {{- with $s.APIKey }}
+        set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
+        {{- end }}
         {{- end }}
 
         {{ $proxyOrGRPC := "proxy" }}{{ if $l.GRPCPass }}{{ $proxyOrGRPC = "grpc" }}{{ end }}

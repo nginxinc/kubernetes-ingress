@@ -1,5 +1,6 @@
 """Describe methods to utilize the kubernetes-client."""
 
+import base64
 import json
 import os
 import re
@@ -1748,3 +1749,42 @@ def get_resource_metrics(kube_apis, plural, namespace="nginx-ingress") -> str:
     else:
         return "Invalid plural specified. Please use 'pods' or 'nodes' as the plural"
     return metrics["items"]
+
+
+def get_apikey_auth_secrets_from_yaml(yaml_manifest) -> list:
+    """
+    Get apikey auth keys from yaml file.
+
+    :param yaml_manifest: an absolute path to file
+    :return: []apikeys
+    """
+    api_keys = []
+
+    with open(yaml_manifest) as file:
+        data = yaml.safe_load(file)
+        if "data" in data:
+            for key, encoded_value in data["data"].items():
+                decoded_value = base64.b64decode(encoded_value).decode("utf-8")
+                api_keys.append(decoded_value)
+    return api_keys
+
+
+def get_apikey_policy_details_from_yaml(yaml_manifest) -> dict:
+    """
+    Extract headers and queries from an API key policy yaml file.
+
+    :param yaml_manifest: an absolute path to file
+    :return: dictionary with 'headers' and 'queries'
+    """
+    details = {"headers": [], "queries": []}
+
+    with open(yaml_manifest) as file:
+        data = yaml.safe_load(file)
+
+        if "spec" in data and "apiKey" in data["spec"] and "suppliedIn" in data["spec"]["apiKey"]:
+            if "header" in data["spec"]["apiKey"]["suppliedIn"]:
+                details["headers"] = data["spec"]["apiKey"]["suppliedIn"]["header"]
+            if "query" in data["spec"]["apiKey"]["suppliedIn"]:
+                details["queries"] = data["spec"]["apiKey"]["suppliedIn"]["query"]
+
+    return details
