@@ -9,9 +9,10 @@ on:
   workflow_dispatch:
     inputs:
       force:
+        type: boolean
         description: "Force rebuild"
         required: false
-        default: "false"
+        default: false
 
 defaults:
   run:
