@@ -95,7 +95,7 @@ jobs:
         id: base_exists
         run: |
           base_image="gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}"
-          echo "image=${base_image}"
+          echo "image=${base_image}" >> $GITHUB_OUTPUT
           if docker pull ${base_image}; then
             echo "exists=true" >> $GITHUB_OUTPUT
           fi

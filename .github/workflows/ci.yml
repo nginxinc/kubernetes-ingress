@@ -9,9 +9,10 @@ on:
   workflow_dispatch:
     inputs:
       force:
+        type: boolean
         description: "Force rebuild"
         required: false
-        default: "false"
+        default: false
 
 defaults:
   run:
@@ -248,14 +249,6 @@ jobs:
           go-version-file: go.mod
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-      - name: Download Syft
-        uses: anchore/sbom-action/download-syft@e8d2a6937ecead383dfe75190d104edd1f9c5751 # v0.16.0
-        if: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3.5.0
-        if: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
-
       - name: Build binaries
         uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
         with:
@@ -301,7 +294,7 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
-      full-build: ${{ inputs.force }}
+      full-build: ${{ inputs.force && inputs.force || false }}
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.head_ref && github.head_ref || github.ref }}
     permissions:
@@ -335,7 +328,7 @@ jobs:
       branch: ${{ github.head_ref && github.head_ref || github.ref }}
       tag: ${{ needs.checks.outputs.build_tag }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
-      full-build: ${{ inputs.force }}
+      full-build: ${{ inputs.force && inputs.force || false }}
     permissions:
       contents: read
       security-events: write
@@ -408,7 +401,7 @@ jobs:
       tag: ${{ needs.checks.outputs.build_tag }}
       nap-modules: ${{ matrix.nap_modules }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
-      full-build: ${{ inputs.force }}
+      full-build: ${{ inputs.force && inputs.force || false }}
     permissions:
       contents: read
       security-events: write
