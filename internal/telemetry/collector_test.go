@@ -2316,7 +2316,7 @@ func newSecretStore(t *testing.T) *secrets.LocalSecretStore {
 }
 
 // newTestClientset takes k8s runtime objects and returns a k8s fake clientset.
-// The clientset is configured to return kubernetes version v1.29.2.
+// The clientset is configured to return kubernetes version v1.30.0.
 // (call to Discovery().ServerVersion())
 //
 // version.Info struct can hold more information about K8s platform, for example:
@@ -2335,7 +2335,7 @@ func newSecretStore(t *testing.T) *secrets.LocalSecretStore {
 func newTestClientset(objects ...k8sruntime.Object) *testClient.Clientset {
 	client := testClient.NewSimpleClientset(objects...)
 	client.Discovery().(*fakediscovery.FakeDiscovery).FakedServerVersion = &version.Info{
-		GitVersion: "v1.29.2",
+		GitVersion: "v1.30.0",
 	}
 	return client
 }
@@ -2351,7 +2351,7 @@ const (
 var telemetryNICData = tel.Data{
 	ProjectName:         "NIC",
 	ProjectVersion:      "3.5.0",
-	ClusterVersion:      "v1.29.2",
+	ClusterVersion:      "v1.30.0",
 	ProjectArchitecture: runtime.GOARCH,
 	ClusterID:           "329766ff-5d78-4c9e-8736-7faad1f2e937",
 	ClusterNodeCount:    1,

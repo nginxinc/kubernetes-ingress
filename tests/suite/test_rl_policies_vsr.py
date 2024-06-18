@@ -5,12 +5,18 @@ import requests
 from settings import TEST_DATA
 from suite.utils.custom_resources_utils import read_custom_resource
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
-from suite.utils.resources_utils import wait_before_test
-from suite.utils.vs_vsr_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml
+from suite.utils.resources_utils import get_pod_list, scale_deployment, wait_before_test
+from suite.utils.vs_vsr_resources_utils import (
+    get_vs_nginx_template_conf,
+    patch_v_s_route_from_yaml,
+    patch_virtual_server_from_yaml,
+)
 
 std_vs_src = f"{TEST_DATA}/virtual-server-route/standard/virtual-server.yaml"
 rl_pol_pri_src = f"{TEST_DATA}/rate-limit/policies/rate-limit-primary.yaml"
+rl_pol_pri_sca_src = f"{TEST_DATA}/rate-limit/policies/rate-limit-primary-scaled.yaml"
 rl_vsr_pri_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-pri-subroute.yaml"
+rl_vsr_pri_sca_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-pri-subroute-scaled.yaml"
 rl_pol_sec_src = f"{TEST_DATA}/rate-limit/policies/rate-limit-secondary.yaml"
 rl_vsr_sec_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-sec-subroute.yaml"
 rl_pol_invalid_src = f"{TEST_DATA}/rate-limit/policies/rate-limit-invalid.yaml"
@@ -355,3 +361,58 @@ class TestRateLimitingPoliciesVsr:
             kube_apis.custom_objects, v_s_route_setup.vs_name, std_vs_src, v_s_route_setup.namespace
         )
         assert rate_sec >= occur.count(200) >= (rate_sec - 2)
+
+    @pytest.mark.parametrize("src", [rl_vsr_pri_sca_src])
+    def test_rl_policy_scaled_vsr(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        v_s_route_app_setup,
+        v_s_route_setup,
+        test_namespace,
+        src,
+    ):
+        """
+        Test if rate-limiting policy is working with ~1 rps in vsr:subroute
+        """
+
+        ns = ingress_controller_prerequisites.namespace
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 4)
+
+        print(f"Create rl policy")
+        pol_name = create_policy_from_yaml(
+            kube_apis.custom_objects, rl_pol_pri_sca_src, v_s_route_setup.route_m.namespace
+        )
+        print(f"Patch vsr with policy: {src}")
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            v_s_route_setup.route_m.name,
+            src,
+            v_s_route_setup.route_m.namespace,
+        )
+
+        wait_before_test()
+        policy_info = read_custom_resource(
+            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
+        )
+
+        ic_pods = get_pod_list(kube_apis.v1, ns)
+        for i in range(len(ic_pods)):
+            conf = get_vs_nginx_template_conf(
+                kube_apis.v1,
+                v_s_route_setup.route_m.namespace,
+                v_s_route_setup.vs_name,
+                ic_pods[i].metadata.name,
+                ingress_controller_prerequisites.namespace,
+            )
+            assert "rate=10r/s" in conf
+        # restore replicas, policy and vsr
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
+        delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
+        self.restore_default_vsr(kube_apis, v_s_route_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )

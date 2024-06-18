@@ -193,6 +193,8 @@ func (c *Collector) PolicyCount() map[string]int {
 			policyCounters["OIDC"]++
 		case spec.WAF != nil:
 			policyCounters["WAF"]++
+		case spec.APIKey != nil:
+			policyCounters["APIKey"]++
 		}
 	}
 	return policyCounters
