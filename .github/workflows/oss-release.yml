@@ -77,7 +77,7 @@ jobs:
     if: ${{ inputs.gcr_release_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -116,7 +116,7 @@ jobs:
     if: ${{ inputs.ecr_public_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -166,7 +166,7 @@ jobs:
     if: ${{ inputs.dockerhub_public_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -211,7 +211,7 @@ jobs:
     if: ${{ inputs.quay_public_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -258,7 +258,7 @@ jobs:
     if: ${{ inputs.github_public_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
