@@ -147,10 +147,24 @@ jobs:
         run: |
           if docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-ingress:${{ steps.vars.outputs.stable_tag }}; then
             echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
           fi
         if: ${{ steps.vars.outputs.forked_workflow == 'false' }}
+
+      - name: Output variables
+        run: |
+          echo docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
+          echo k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
+          echo latest_kindest_node_versions: ${{ steps.vars.outputs.latest_kindest_node_versions }}
+          echo go_path: ${{ steps.vars.outputs.go_path }}
+          echo go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
+          echo binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+          echo chart_version: ${{ steps.vars.outputs.chart_version }}
+          echo ic_version: ${{ steps.vars.outputs.ic_version }}
+          echo docker_md5: ${{ steps.vars.outputs.docker_md5 }}
+          echo build_tag: ${{ steps.vars.outputs.build_tag }}
+          echo stable_tag: ${{ steps.vars.outputs.stable_tag }}
+          echo forked_workflow: ${{ steps.vars.outputs.forked_workflow }}
+          echo stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
 
   unit-tests:
     name: Unit Tests
