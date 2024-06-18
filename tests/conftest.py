@@ -16,7 +16,7 @@ from settings import (
     NS_COUNT,
     NUM_REPLICAS,
 )
-from suite.utils.resources_utils import get_first_pod_name
+from suite.utils.resources_utils import get_first_pod_name, wait_until_all_pods_are_ready
 
 
 def pytest_addoption(parser) -> None:
@@ -200,6 +200,7 @@ def pytest_runtest_makereport(item) -> None:
         pod_namespace = item.funcargs["ingress_controller_prerequisites"].namespace
         pod_name = get_first_pod_name(item.funcargs["kube_apis"].v1, pod_namespace)
         print("\n===================== IC Logs Start =====================")
+        wait_until_all_pods_are_ready(item.funcargs["kube_apis"].v1, pod_namespace)
         print(item.funcargs["kube_apis"].v1.read_namespaced_pod_log(pod_name, pod_namespace))
         print("\n===================== IC Logs End =====================")
 

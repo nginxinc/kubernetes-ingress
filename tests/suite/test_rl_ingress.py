@@ -8,6 +8,7 @@ from settings import DEPLOYMENTS, TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
 from suite.utils.custom_assertions import assert_event_count_increased
 from suite.utils.resources_utils import (
+    are_all_pods_in_ready_state,
     create_example_app,
     create_items_from_yaml,
     delete_common_app,
@@ -129,14 +130,18 @@ class TestRateLimitIngressScaled:
         """
         ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 4)
-        ic_pods = get_pod_list(kube_apis.v1, ns)
-        for i in range(len(ic_pods)):
-            conf = get_ingress_nginx_template_conf(
-                kube_apis.v1,
-                annotations_setup.namespace,
-                annotations_setup.ingress_name,
-                ic_pods[i].metadata.name,
-                ingress_controller_prerequisites.namespace,
-            )
-            flag = ("rate=10r/s" in conf) or ("rate=13r/s" in conf)
-            assert flag
+        wait_before_test()
+        if are_all_pods_in_ready_state(kube_apis.v1, ns):
+            ic_pods = get_pod_list(kube_apis.v1, ns)
+            for i in range(len(ic_pods)):
+                conf = get_ingress_nginx_template_conf(
+                    kube_apis.v1,
+                    annotations_setup.namespace,
+                    annotations_setup.ingress_name,
+                    ic_pods[i].metadata.name,
+                    ingress_controller_prerequisites.namespace,
+                )
+                flag = ("rate=10r/s" in conf) or ("rate=13r/s" in conf)
+                assert flag
+        else:
+            assert False, "Pods are not in ready state"
