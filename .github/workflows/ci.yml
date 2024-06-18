@@ -294,7 +294,7 @@ jobs:
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
-      full-build: ${{ inputs.force }}
+      full-build: ${{ inputs.force && inputs.force || false }}
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.head_ref && github.head_ref || github.ref }}
     permissions:
@@ -328,7 +328,7 @@ jobs:
   #     branch: ${{ github.head_ref && github.head_ref || github.ref }}
   #     tag: ${{ needs.checks.outputs.build_tag }}
   #     authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
-  #     full-build: ${{ inputs.force }}
+  #     full-build: ${{ inputs.force && inputs.force || false }}
   #   permissions:
   #     contents: read
   #     security-events: write
@@ -401,7 +401,7 @@ jobs:
   #     tag: ${{ needs.checks.outputs.build_tag }}
   #     nap-modules: ${{ matrix.nap_modules }}
   #     authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
-  #     full-build: ${{ inputs.force }}
+  #     full-build: ${{ inputs.force && inputs.force || false }}
   #   permissions:
   #     contents: read
   #     security-events: write
