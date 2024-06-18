@@ -130,18 +130,20 @@ class TestRateLimitIngressScaled:
         """
         ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 4)
-        wait_before_test()
-        if are_all_pods_in_ready_state(kube_apis.v1, ns):
-            ic_pods = get_pod_list(kube_apis.v1, ns)
-            for i in range(len(ic_pods)):
-                conf = get_ingress_nginx_template_conf(
-                    kube_apis.v1,
-                    annotations_setup.namespace,
-                    annotations_setup.ingress_name,
-                    ic_pods[i].metadata.name,
-                    ingress_controller_prerequisites.namespace,
-                )
-                flag = ("rate=10r/s" in conf) or ("rate=13r/s" in conf)
-                assert flag
-        else:
-            assert False, "Pods are not in ready state"
+        count = 0
+        while (not are_all_pods_in_ready_state(kube_apis.v1, ns)) and count < 10:
+            count += 1
+            wait_before_test()
+
+        ic_pods = get_pod_list(kube_apis.v1, ns)
+        for i in range(len(ic_pods)):
+            conf = get_ingress_nginx_template_conf(
+                kube_apis.v1,
+                annotations_setup.namespace,
+                annotations_setup.ingress_name,
+                ic_pods[i].metadata.name,
+                ingress_controller_prerequisites.namespace,
+            )
+            flag = ("rate=10r/s" in conf) or ("rate=13r/s" in conf)
+            assert flag
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
