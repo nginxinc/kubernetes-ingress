@@ -149,6 +149,7 @@ jobs:
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
+          fail-on-cache-miss: true
         if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Build Docker image
