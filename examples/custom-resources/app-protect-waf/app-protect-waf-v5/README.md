@@ -4,6 +4,8 @@ In this example we deploy the NGINX Plus Ingress Controller with [NGINX App
 Protect WAF version 5](https://www.nginx.com/products/nginx-app-protect/), a simple web application and then configure load balancing
 and WAF protection for that application using the VirtualServer resource.
 
+Before applying a policy, a WAF v5 policy bundle must be created, then copied to a volume mounted to `/etc/app_protect/bundles`.
+
 ## Prerequisites
 
 1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the
@@ -29,7 +31,11 @@ Create the application deployment and service:
 kubectl apply -f webapp.yaml
 ```
 
-## Step 2 - Deploy the WAF Policy Bundle
+## Step 2 - Create and Deploy the WAF Policy Bundle
+
+1. Create a WAF v5 policy bundle (`<your_policy_bundle.tgz>`) and copy the bundle to a volume mounted to `/etc/app_protect/bundles`.
+
+## Step 3 - Create and Deploy the WAF Policy
 
 1. Create the syslog service and pod for the App Protect security logs:
 
@@ -95,6 +101,8 @@ of a request with `webapp.example.com`
     As you can see, the suspicious requests were blocked by App Protect
 
 1. To check the security logs in the syslog pod:
+
+    Note that this step applies only if the `syslog.yaml` was created (Step 2).
 
     ```console
     kubectl exec -it <SYSLOG_POD> -- cat /var/log/messages
