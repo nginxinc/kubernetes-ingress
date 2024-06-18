@@ -667,6 +667,7 @@ USER 101
 
 
 ############################################# Builder style stage to avoid duplicate layers for ingress and ingress with setcap #############################################
+# Builder image for goreleaser
 FROM common AS goreleaser-setcap
 ARG TARGETARCH
 
@@ -684,13 +685,23 @@ LABEL org.nginx.kic.image.build.version="goreleaser"
 COPY --link --chown=101:0 --from=goreleaser-setcap /nginx-ingress /
 
 
+############################################# Builder style stage to avoid duplicate layers for ingress and ingress with setcap #############################################
+# Builder image for goreleaser-prebuilt
+FROM ${PREBUILT_BASE_IMG} AS goreleaser-setcap-prebuilt
+ARG TARGETARCH
+
+COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+
+
 ############################################# Create image with nginx-ingress built by GoReleaser & using prebuilt base image #############################################
 FROM ${PREBUILT_BASE_IMG} AS goreleaser-prebuilt
 ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --link --chown=101:0 --from=goreleaser-setcap /nginx-ingress /
+COPY --link --chown=101:0 --from=goreleaser-setcap-prebuilt /nginx-ingress /
 # root is required for `setcap` invocation
 USER 0
 RUN --mount=type=bind,target=/tmp [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
@@ -701,6 +712,7 @@ USER 101
 
 
 ############################################# Builder style stage to avoid duplicate layers for ingress and ingress with setcap #############################################
+# Builder image for aws
 FROM common AS aws-setcap
 ARG TARGETARCH
 ARG NAP_MODULES_AWS
@@ -720,6 +732,17 @@ LABEL org.nginx.kic.image.build.version="aws"
 COPY --link --chown=101:0 --from=aws-setcap /nginx-ingress /
 
 
+############################################# Builder style stage to avoid duplicate layers for ingress and ingress with setcap #############################################
+# Builder image for aws-prebuilt
+FROM ${PREBUILT_BASE_IMG} AS aws-setcap-prebuilt
+ARG TARGETARCH
+ARG NAP_MODULES_AWS
+
+COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
+USER 0
+RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_service=+ep' /nginx-ingress
+
+
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
 FROM ${PREBUILT_BASE_IMG} AS aws-prebuilt
 ARG TARGETARCH
@@ -727,7 +750,7 @@ ARG NAP_MODULES_AWS
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --link --chown=101:0 --from=aws-setcap /nginx-ingress /
+COPY --link --chown=101:0 --from=aws-setcap-prebuilt /nginx-ingress /
 USER 0
 RUN --mount=type=bind,target=/tmp [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
 	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
