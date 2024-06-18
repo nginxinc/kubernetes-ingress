@@ -775,4 +775,4 @@ jobs:
       packages: write # for helm to push to GHCR
       security-events: write
     uses: ./.github/workflows/image-promotion.yml
-    if: ${{ inputs.force }}
+    if: ${{ inputs.force && inputs.force || false }}
