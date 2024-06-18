@@ -89,9 +89,7 @@ jobs:
         id: stable_exists
         run: |
           if docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-ingress:${{ steps.vars.outputs.stable_tag }}; then
-            echo "exists=0" >> $GITHUB_OUTPUT
-          else
-            echo "exists=1" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
           fi
 
   build-docker:
@@ -265,7 +263,7 @@ jobs:
   release-plus:
     if: ${{ github.ref_name == github.event.repository.default_branch }}
     name: Release Docker Plus
-    needs: [checks, build-docker-plus, build-docker-nap ]
+    needs: [checks, build-docker-plus, build-docker-nap]
     uses: ./.github/workflows/plus-release.yml
     with:
       nginx_registry: true
@@ -284,7 +282,7 @@ jobs:
   publish-helm-chart:
     if: ${{ github.ref_name == github.event.repository.default_branch }}
     name: Publish Helm Chart
-    needs: [checks ]
+    needs: [checks]
     uses: ./.github/workflows/publish-helm.yml
     with:
       branch: ${{ github.ref_name }}

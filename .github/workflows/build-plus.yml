@@ -97,9 +97,7 @@ jobs:
           base_image="gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}"
           echo "image=${base_image}"
           if docker pull ${base_image}; then
-            echo "exists=0" >> $GITHUB_OUTPUT
-          else
-            echo "exists=1" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
           fi
         if: ${{ inputs.authenticated && ! inputs.full-build }}
 
@@ -122,7 +120,7 @@ jobs:
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ inputs.nap-modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ inputs.authenticated && steps.base_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated && steps.base_exists.outputs.exists != 'true' }}
 
       - name: Docker meta
         id: meta
@@ -144,9 +142,7 @@ jobs:
         id: target_exists
         run: |
           if docker pull ${{ steps.meta.outputs.tags }}; then
-            echo "exists=0" >> $GITHUB_OUTPUT
-          else
-            echo "exists=1" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
           fi
         if: ${{ inputs.authenticated && ! inputs.full-build }}
 
@@ -156,14 +152,14 @@ jobs:
           echo "base_exists: ${{ steps.base_exists.outputs.exists }}"
           echo "target_exists: ${{ steps.target_exists.outputs.exists }}"
           echo "full-build: ${{ inputs.full-build }}"
-          echo "all: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}"
+          echo "all: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}"
 
       - name: Fetch Cached Artifacts
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
-        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Build Docker image
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
@@ -194,7 +190,7 @@ jobs:
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Extract image name for Trivy
         id: trivy-tag

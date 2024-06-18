@@ -83,9 +83,7 @@ jobs:
           base_image="gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ inputs.base-image-md5 }}-${{ inputs.image }}"
           echo "image=${base_image}"
           if docker manifest inspect ${base_image}; then
-            echo "exists=0" >> $GITHUB_OUTPUT
-          else
-            echo "exists=1" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
           fi
         if: ${{ inputs.authenticated && ! inputs.full-build }}
 
@@ -103,7 +101,7 @@ jobs:
           no-cache: true
           build-args: |
             BUILD_OS=${{ inputs.image }}
-        if: ${{ inputs.authenticated && steps.base_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated && steps.base_exists.outputs.exists != 'true' }}
 
       - name: Docker meta
         id: meta
@@ -131,9 +129,7 @@ jobs:
         id: target_exists
         run: |
           if docker pull ${{ steps.meta.outputs.tags }}; then
-            echo "exists=0" >> $GITHUB_OUTPUT
-          else
-            echo "exists=1" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
           fi
         if: ${{ inputs.authenticated && ! inputs.full-build }}
 
@@ -143,14 +139,14 @@ jobs:
           echo "base_exists: ${{ steps.base_exists.outputs.exists }}"
           echo "target_exists: ${{ steps.target_exists.outputs.exists }}"
           echo "full-build: ${{ inputs.full-build }}"
-          echo "all: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}"
+          echo "all: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}"
 
       - name: Fetch Cached Artifacts
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
-        if:  ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Build Docker image
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
@@ -174,7 +170,7 @@ jobs:
             BUILD_OS=${{ inputs.image }}
             ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.base_exists.outputs.image) }}
             IC_VERSION=${{ (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release-')) && 'CI' || steps.meta.outputs.version }}
-        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 0 || steps.target_exists.outputs.exists != 0 }}
+        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # 0.22.0
