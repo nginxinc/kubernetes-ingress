@@ -196,6 +196,22 @@ jobs:
           - image: alpine-plus-nap-fips
             platforms: "linux/amd64"
             nap_modules: waf
+          - image: alpine-plus-nap-v5-fips
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: debian-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-9-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
     steps:
       - name: Checkout Repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
