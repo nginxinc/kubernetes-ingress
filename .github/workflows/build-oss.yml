@@ -169,7 +169,7 @@ jobs:
             BUILD_OS=${{ inputs.image }}
             ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.base_exists.outputs.image) }}
             IC_VERSION=${{ (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release-')) && 'CI' || steps.meta.outputs.version }}
-        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
+        if: ${{ steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # 0.22.0
