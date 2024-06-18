@@ -9,6 +9,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -18,6 +20,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -126,6 +132,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -135,6 +143,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -258,6 +269,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -267,6 +280,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -1626,6 +1642,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -1635,6 +1653,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -1758,6 +1779,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -1767,6 +1790,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -1890,6 +1916,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -1899,6 +1927,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -2022,6 +2053,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -2031,6 +2064,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -2154,6 +2190,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -2163,6 +2201,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -2304,6 +2345,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -2313,6 +2356,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -2436,6 +2482,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -2445,6 +2493,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -2569,6 +2620,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -2578,6 +2631,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -2701,6 +2757,8 @@ error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 load_module modules/ngx_fips_check_module.so;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -2710,6 +2768,9 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -2849,6 +2910,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -2858,6 +2921,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -2964,6 +3031,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -2973,6 +3042,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -3079,6 +3152,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -3088,6 +3163,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -3194,6 +3273,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -3203,6 +3284,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -3309,6 +3394,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -3318,6 +3405,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -3443,6 +3534,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -3452,6 +3545,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -3558,6 +3655,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -3567,6 +3666,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -3674,6 +3777,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -3683,6 +3788,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
@@ -3789,6 +3898,8 @@ daemon off;
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
 
+load_module modules/ngx_http_js_module.so;
+
 events {
     worker_connections  1024;
 }
@@ -3798,6 +3909,10 @@ http {
     default_type  application/octet-stream;
     map_hash_max_size ;
     map_hash_bucket_size ;
+
+
+    js_import /etc/nginx/njs/apikey_auth.js;
+    js_set $apikey_auth_hash apikey_auth.hash;
 
     log_format  main escape=default 
                      '$remote_addr'
