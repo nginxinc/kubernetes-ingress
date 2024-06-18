@@ -132,7 +132,6 @@ jobs:
             suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}
           tags: |
             type=raw,value=${{ inputs.tag }}
-            type=ref,event=pr
           labels: |
             org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
         env:
