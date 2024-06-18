@@ -35,6 +35,9 @@ on:
         required: false
         type: boolean
         default: false
+      ic-version:
+        required: false
+        type: string
 
 defaults:
   run:
@@ -91,6 +94,21 @@ jobs:
           echo "name=${name}" >> $GITHUB_OUTPUT
         if: ${{ inputs.nap-modules != '' }}
 
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        with:
+          images: |
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap-modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap-modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
+          flavor: |
+            suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}
+          tags: |
+            type=raw,value=${{ inputs.tag }}
+          labels: |
+            org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+
       - name: Check if base images exist
         id: base_exists
         run: |
@@ -115,28 +133,13 @@ jobs:
           no-cache: true
           build-args: |
             BUILD_OS=${{ inputs.image }}
+            IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
             ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ inputs.nap-modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
         if: ${{ inputs.authenticated && steps.base_exists.outputs.exists != 'true' }}
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
-        with:
-          images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap-modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap-modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
-          flavor: |
-            suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}
-          tags: |
-            type=raw,value=${{ inputs.tag }}
-            type=ref,event=pr
-          labels: |
-            org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
-        env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Check if target image exists
         id: target_exists
@@ -159,6 +162,7 @@ jobs:
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
+          fail-on-cache-miss: true
         if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Build Docker image
@@ -182,7 +186,7 @@ jobs:
           build-args: |
             BUILD_OS=${{ inputs.image }}
             ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.base_exists.outputs.image ) }}
-            IC_VERSION=${{ steps.meta.outputs.version }}
+            IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
             ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
             ${{ (contains(inputs.target, 'aws') && inputs.nap-modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
             ${{ contains(inputs.image, 'v5') && 'WAF_VERSION=v5' || '' }}
@@ -190,7 +194,7 @@ jobs:
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
+        if: ${{ steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Extract image name for Trivy
         id: trivy-tag
