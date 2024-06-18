@@ -1,4 +1,5 @@
 @namespace("ingress.nginx.com") protocol NICProductTelemetry {
+	/** Data is the product telemetry data of NGINX Ingress Controller. */
 	@df_datatype("nic-product-telemetry") record Data {
 		/** The field that identifies what type of data this is. */
 		string dataType;
