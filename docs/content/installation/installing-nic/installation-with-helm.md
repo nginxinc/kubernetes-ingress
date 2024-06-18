@@ -350,7 +350,6 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.watchSecretNamespace** | Comma separated list of namespaces the Ingress Controller should watch for resources of type Secret. If this arg is not configured, the Ingress Controller watches the same namespaces for all resources. See `controller.watchNamespace` and `controller.watchNamespaceLabel`. Please note that if configuring multiple namespaces using the Helm cli `--set` option, the string needs to wrapped in double quotes and the commas escaped using a backslash - e.g. `--set controller.watchSecretNamespace="default\,nginx-ingress"`. | "" |
 | **controller.enableCustomResources** | Enable the custom resources. | true |
 | **controller.enableOIDC** | Enable OIDC policies. | false |
-| **controller.enableNJS** | Enable NJS. This will load the NJS module. Is is required if using OIDC or API Key Auth. | true |
 | **controller.enableTLSPassthrough** | Enable TLS Passthrough on default port 443. Requires `controller.enableCustomResources`. | false |
 | **controller.tlsPassThroughPort** | Set the port for the TLS Passthrough. Requires `controller.enableCustomResources` and `controller.enableTLSPassthrough`.  | 443 |
 | **controller.enableCertManager** | Enable x509 automated certificate management for VirtualServer resources using cert-manager (cert-manager.io). Requires `controller.enableCustomResources`. | false |
