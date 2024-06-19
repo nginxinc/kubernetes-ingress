@@ -9,7 +9,7 @@ weight: 200
 
 This document explains how to use F5 NGINX Ingress Controller to configure NGINX App Protect WAF version 5.
 
-{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/custom-resources/app-protect-waf5) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/ingress-resources/app-protect-waf5).{{< /note >}}
+{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/custom-resources/app-protect-waf-v5) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/ingress-resources/app-protect-waf-v5).{{< /note >}}
 
 
 ## Global Configuration
@@ -31,7 +31,7 @@ You define App Protect WAF bundles for VirtualServer custom resources by creatin
 
 Before applying a policy, a WAF policy bundle must be created, then copied to a volume mounted to `/etc/app_protect/bundles`.
 
-{{< note >}} NGINX Ingress Controller supports `securityLogs` for policy bundles. Log bundles must also be copied to a volume mounted to `/etc/nginx/waf/bundles`. {{< /note >}}
+{{< note >}} NGINX Ingress Controller supports `securityLogs` for policy bundles. Log bundles must also be copied to a volume mounted to `/etc/app_protect/bundles`. {{< /note >}}
 
 This example shows how a policy is configured by referencing a generated WAF Policy Bundle:
 
@@ -95,7 +95,7 @@ It contains violations related to OpenAPI set to blocking (enforced).
 
 In this example we deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF v5, deploy a simple web application, and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
-{{< note >}} You can find the example, and the files referenced, on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/custom-resources/app-protect-waf/app-protect-waf5).{{< /note >}}
+{{< note >}} You can find the example, and the files referenced, on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/custom-resources/app-protect-waf/app-protect-waf-v55).{{< /note >}}
 
 ## Prerequisites
 
@@ -118,28 +118,23 @@ In this example we deploy NGINX Ingress Controller with NGINX Plus and NGINX App
 Create the application deployment and service:
 
   ```shell
-  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf/app-protect-waf-v5/webapp.yaml
+  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/webapp.yaml
   ```
 
 ### Step 2. Deploy the Policy Bundle
 
-1. Create the syslog service and pod for the NGINX App Protect WAF security logs:
+Create the syslog service and pod for the NGINX App Protect WAF security logs:
 
    ```shell
    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/syslog.yaml
    ```
-
-2. Create and upload WAF policy bundle and log configuration:
-
-    ```shell
-    ```
 
 ### Step 3 - Deploy the WAF Policy
 
 Create the WAF policy
 
  ```shell
-  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/examples/custom-resources/app-protect-waf/waf.yaml
+  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/waf.yaml
  ```
 
   Note the NGINX App Protect WAF configuration settings in the Policy resource. They enable WAF protection by configuring NGINX App Protect WAF with the policy and log configuration created in the previous step.
@@ -149,7 +144,7 @@ Create the WAF policy
 1. Create the VirtualServer Resource:
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/examples/custom-resources/app-protect-waf/virtual-server.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/virtual-server.yaml
     ```
 
 Note that the VirtualServer references the policy waf-policy bundle created in Step 3.
@@ -179,18 +174,6 @@ To access the application, curl the coffee and the tea services. We'll use the -
   <html><head><title>Request Rejected</title></head><body>
   ```
 
-1. Lastly, let's try to send some suspicious data that matches the user defined signature.
-
-  ```shell
-  curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP -X POST -d "apple" http://webapp.example.com:$IC_HTTP_PORT/
-  ```
-
-  ```shell
-  <html><head><title>Request Rejected</title></head><body>
-  ```
-
-  As you can see, the suspicious requests were blocked by NGINX App Protect WAF.
-
 1. To check the security logs in the syslog pod:
 
   ```shell
@@ -199,7 +182,7 @@ To access the application, curl the coffee and the tea services. We'll use the -
 
 ### Configuration Example of Virtual Server
 
-Refer to GitHub repo for [Virtual Server example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf/app-protect-waf-v5/webapp.yaml).
+Refer to GitHub repo for [Virtual Server example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/webapp.yaml).
 
 ```yaml
 apiVersion: k8s.nginx.org/v1
