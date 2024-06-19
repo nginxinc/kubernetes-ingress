@@ -9,8 +9,8 @@ on:
       image:
         required: true
         type: string
-      target:
-        required: true
+      tag:
+        required: false
         type: string
       go-md5:
         required: true
@@ -18,24 +18,26 @@ on:
       base-image-md5:
         required: false
         type: string
-      nap_modules:
+      branch:
         required: false
         type: string
-      release-url:
+      nap-modules:
         required: false
         type: string
-      publish-image:
+      target:
+        required: true
+        type: string
+      authenticated:
+        required: true
+        type: boolean
+      full-build:
+        description: Always build base image
         required: false
         type: boolean
-      publish-aws-market-place:
+        default: false
+      ic-version:
         required: false
-        type: boolean
-      publish-nginx-reqistry:
-        required: false
-        type: boolean
-      forked-workflow:
-        required: false
-        type: boolean
+        type: string
 
 defaults:
   run:
@@ -50,24 +52,18 @@ jobs:
       contents: read # for docker/build-push-action to read repo content
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       id-token: write # for OIDC login to AWS
-    runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-22.04' || 'kic-plus' }}
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
+          ref: ${{ inputs.branch }}
           fetch-depth: 0
-
-      - name: Fetch Cached Artifacts
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ inputs.go-md5 }}
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
         with:
           platforms: arm64,s390x
-        if: ${{ inputs.publish-image }}
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
@@ -79,7 +75,7 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
-        if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
+        if: ${{ inputs.authenticated }}
 
       - name: Login to GCR
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
@@ -87,172 +83,125 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-        if: ${{ inputs.publish-image || ! inputs.forked-workflow }}
+        if: ${{ inputs.authenticated }}
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
-        if: ${{ inputs.publish-aws-market-place }}
-      - name: Login to ECR
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-        with:
-          registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
-        if: ${{ inputs.publish-aws-market-place }}
-
-      - name: Get Id Token
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        id: idtoken
-        with:
-          script: |
-            let id_token = await core.getIDToken()
-            core.setOutput('id_token', id_token)
-        if: ${{ inputs.publish-nginx-reqistry }}
-
-      - name: Login to NGINX Registry
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
-        with:
-          registry: docker-mgmt.nginx.com
-          username: ${{ steps.idtoken.outputs.id_token }}
-          password: ${{ github.actor }}
-        if: ${{ inputs.publish-nginx-reqistry }}
+      - name: NAP modules
+        id: nap_modules
+        run: |
+          [[ "${{ inputs.nap-modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ inputs.nap-modules }}"
+          [[ "${{ inputs.nap-modules }}" == "waf,dos" ]] && modules="both" || modules="${{ inputs.nap-modules }}"
+          echo "modules=${modules}" >> $GITHUB_OUTPUT
+          echo "name=${name}" >> $GITHUB_OUTPUT
+        if: ${{ inputs.nap-modules != '' }}
 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
-            name=docker-mgmt.nginx.com/nginx-ic${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ inputs.publish-nginx-reqistry && ! contains(inputs.target, 'aws') }}
-            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(inputs.nap_modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap_modules, 'waf') && '-nap' || '' }},enable=${{ inputs.publish-aws-market-place && contains(inputs.target, 'aws') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap-modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap-modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
           flavor: |
-            suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}},onlatest=true
-            latest=${{ contains(inputs.target, 'aws') && 'false' || 'auto' }}
+            suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}
           tags: |
-            type=edge
-            type=ref,event=pr
-            type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/release-') }}
-            type=schedule
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ inputs.tag }}
           labels: |
             org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
-
-      - name: NAP modules
-        id: nap_modules
-        run: |
-          [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ inputs.nap_modules }}"
-          [[ "${{ inputs.nap_modules }}" == "waf,dos" ]] && modules="both" || modules="${{ inputs.nap_modules }}"
-          echo "modules=${modules}" >> $GITHUB_OUTPUT
-          echo "name=${name}" >> $GITHUB_OUTPUT
-        if: ${{ inputs.nap_modules != '' }}
 
       - name: Check if base images exist
         id: base_exists
         run: |
           base_image="gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}"
           echo "image=${base_image}" >> $GITHUB_OUTPUT
-          if docker manifest inspect ${base_image}; then
+          if docker pull ${base_image}; then
             echo "exists=true" >> $GITHUB_OUTPUT
           fi
-        if: ${{ ! inputs.forked-workflow }}
+        if: ${{ inputs.authenticated && ! inputs.full-build }}
 
       - name: Build Base Container
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           file: build/Dockerfile
           context: "."
-          cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
           cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: common
           tags: ${{ steps.base_exists.outputs.image }}
           platforms: ${{ inputs.platforms }}
           pull: true
           push: true
+          no-cache: true
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            IC_VERSION=${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && steps.meta.outputs.version || 'CI' }}
-            ${{ steps.nap_modules.outputs.modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
+            IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
+            ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
           secrets: |
-            "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
-            "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
-            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ ! inputs.forked-workflow && steps.base_exists.outputs.exists != 'true' }}
+            "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
+            ${{ inputs.nap-modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+        if: ${{ inputs.authenticated && steps.base_exists.outputs.exists != 'true' }}
 
-      - name: Build Plus Docker image
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+      - name: Check if target image exists
+        id: target_exists
+        run: |
+          if docker pull ${{ steps.meta.outputs.tags }}; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          fi
+        if: ${{ inputs.authenticated && ! inputs.full-build }}
+
+      - name: Debug values
+        run: |
+          echo "authenticated: ${{ inputs.authenticated }}"
+          echo "base_exists: ${{ steps.base_exists.outputs.exists }}"
+          echo "target_exists: ${{ steps.target_exists.outputs.exists }}"
+          echo "full-build: ${{ inputs.full-build }}"
+          echo "all: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}"
+
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ inputs.go-md5 }}
+          fail-on-cache-miss: true
+        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        id: build-push
         with:
           file: build/Dockerfile
           context: "."
           cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
           cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
-          target: ${{ inputs.target }}${{ ! inputs.forked-workflow && '-prebuilt' || '' }}
+          target: ${{ inputs.target }}${{ inputs.authenticated && '-prebuilt' || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ inputs.publish-image && steps.meta.outputs.annotations || '' }}
-          platforms: ${{ inputs.publish-image && inputs.platforms || '' }}
-          load: ${{ ! inputs.publish-image }}
-          push: ${{ inputs.publish-image }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          platforms: ${{ inputs.platforms }}
+          load: false
+          push: ${{ inputs.authenticated }}
           pull: true
-          no-cache: ${{ inputs.publish-image }}
-          sbom: ${{ inputs.publish-image }}
+          sbom: ${{ inputs.authenticated }}
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            ${{ ! inputs.forked-workflow && format('PREBUILT_BASE_IMG={0}', steps.base_exists.outputs.image) || '' }}
-            IC_VERSION=${{ (github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true') && steps.meta.outputs.version || 'CI' }}
-            ${{ inputs.nap_modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.base_exists.outputs.image ) }}
+            IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
+            ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
+            ${{ (contains(inputs.target, 'aws') && inputs.nap-modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
             ${{ contains(inputs.image, 'v5') && 'WAF_VERSION=v5' || '' }}
-            ${{ (contains(inputs.target, 'aws') && inputs.nap_modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
           secrets: |
-            "nginx-repo.crt=${{ inputs.nap_modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
-            "nginx-repo.key=${{ inputs.nap_modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
-            ${{ inputs.nap_modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-
-      - name: AWS variables
-        id: aws
-        run: |
-          aws_registry=$(echo "${{ steps.meta.outputs.tags }}" | grep -oP "709825985650.dkr.ecr.us-east-1.amazonaws.com/[^[:space:]]+:${{ steps.meta.outputs.version }}")
-          version=$(echo ${{ steps.meta.outputs.version }} | sed 's/-mktpl//')
-          declare -A nap_mapping=(
-              ["waf"]=_NAP_WAF
-              ["dos"]=_NAP_DOS
-              ["waf,dos"]=_NAP_WAF_DOS
-          )
-          modules=${{ inputs.nap_modules }}
-          [[ -n $modules && ${nap_mapping[$modules]+_} ]] && nap=${nap_mapping[$modules]}
-
-          echo "version=$version" >> $GITHUB_OUTPUT
-          echo "product_code=AWS${nap}_PRODUCT_ID" >> $GITHUB_OUTPUT
-          echo "registry=${aws_registry}" >> $GITHUB_OUTPUT
-        if: ${{ inputs.publish-aws-market-place }}
-
-      - name: Publish to AWS Marketplace
-        uses: nginxinc/aws-marketplace-publish@be512a7ae9666098bc4429a1afa27a11be6a3995 # v1.0.3
-        continue-on-error: true
-        with:
-          version: ${{ steps.aws.outputs.version }}
-          product-id: ${{ secrets[steps.aws.outputs.product_code] }}
-          registry: ${{ steps.aws.outputs.registry }}
-          release-notes: ${{ inputs.release-url }}
-          description: |
-            Best-in-class traffic management solution for services in Amazon EKS.
-            This is the official implementation of NGINX Ingress Controller (based on NGINX Plus) from NGINX.
-          usage-instructions: |
-            This container requires Kubernetes and can be deployed to EKS.
-            Review the installation instructions https://docs.nginx.com/nginx-ingress-controller/installation/ and utilize the deployment resources available https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments
-            Use this image instead of building your own.
-        if: ${{ inputs.publish-aws-market-place }}
+            "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
+            ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
+        if: ${{ steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
       - name: Extract image name for Trivy
         id: trivy-tag
         run: |
           tag=$(echo $DOCKER_METADATA_OUTPUT_JSON | jq -r '[ .tags[] | select(contains("f5-gcs-7899"))] | .[0]')
           echo "tag=$tag" >> $GITHUB_OUTPUT
-        if: ${{ inputs.publish-image }}
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # 0.22.0
@@ -262,14 +211,14 @@ jobs:
           format: "sarif"
           output: "trivy-results-${{ inputs.image }}.sarif"
           ignore-unfixed: "true"
-        if: ${{ inputs.publish-image }}
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@530d4feaa9c62aaab2d250371e2061eb7a172363 # v3.25.9
         continue-on-error: true
         with:
           sarif_file: "trivy-results-${{ inputs.image }}.sarif"
-        if: ${{ inputs.publish-image }}
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Upload Scan Results
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3

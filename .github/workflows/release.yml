@@ -1,4 +1,5 @@
 name: Release NIC
+run-name: ${{ inputs.dry_run && '[DRY RUN] ' || '' }}Release NIC ${{ inputs.nic_version }} from ${{ inputs.release_branch }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
