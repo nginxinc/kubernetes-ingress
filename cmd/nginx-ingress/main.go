@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-kit/log/level"
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
@@ -737,10 +736,16 @@ func createPlusAndLatencyCollectors(
 			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
 				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, nil, nil)
-			promlogConfig := &promlog.Config{}
+			infoLevel := new(promlog.AllowedLevel)
+			err := infoLevel.Set("info")
+			if err != nil {
+				glog.Error("Error setting prometheus exporter log level")
+			}
+			promlogConfig := &promlog.Config{
+				Level: infoLevel,
+			}
 			logger := promlog.New(promlogConfig)
-			wrappedLogger := level.NewFilter(logger, level.AllowInfo())
-			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, wrappedLogger)
+			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
 			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
 		} else {
 			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
