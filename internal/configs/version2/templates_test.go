@@ -3,8 +3,20 @@ package version2
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"testing"
+
+	"github.com/gkampitakis/go-snaps/snaps"
 )
+
+func TestMain(m *testing.M) {
+	v := m.Run()
+
+	// After all tests have run `go-snaps` will sort snapshots
+	snaps.Clean(m, snaps.CleanOpts{Sort: true})
+
+	os.Exit(v)
+}
 
 func createPointerFromInt(n int) *int {
 	return &n
@@ -35,6 +47,7 @@ func TestVirtualServerForNginxPlus(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -48,6 +61,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOn(t *testi
 	if !bytes.Contains(got, []byte("gunzip on;")) {
 		t.Error("want `gunzip on` directive, got no directive")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -61,6 +75,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOff(t *test
 	if bytes.Contains(got, []byte("gunzip on;")) {
 		t.Error("want no directive, got `gunzip on`")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -74,6 +89,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *t
 	if bytes.Contains(got, []byte("gunzip on;")) {
 		t.Error("want no directive, got `gunzip on` directive")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -87,6 +103,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithSessionCookieSameSite(t
 	if !bytes.Contains(got, []byte("samesite=strict")) {
 		t.Error("want `samesite=strict` in generated template")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -108,6 +125,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithCustomListener(t *testi
 			t.Errorf("want `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -136,6 +154,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithCustomListenerHTTPOnly(
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -164,6 +183,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithCustomListenerHTTPSOnly
 			t.Errorf("want no `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -195,6 +215,7 @@ func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2On(t *testing.
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 
 	t.Log(string(got))
 }
@@ -225,6 +246,7 @@ func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2Off(t *testing
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 
 	t.Log(string(got))
 }
@@ -257,6 +279,7 @@ func TestExecuteVirtualServerTemplate_RendersOSSTemplateWithHTTP2On(t *testing.T
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 
 	t.Log(string(got))
 }
@@ -287,6 +310,7 @@ func TestExecuteVirtualServerTemplate_RendersOSSTemplateWithHTTP2Off(t *testing.
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 
 	t.Log(string(got))
 }
@@ -308,6 +332,7 @@ func TestVirtualServerForNginx(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -324,10 +349,11 @@ func TestTransportServerForNginxPlus(t *testing.T) {
 func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINXPlus(t)
-	_, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
+	got, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(got))
 }
 
 func TestTransportServerForNginx(t *testing.T) {
@@ -337,6 +363,7 @@ func TestTransportServerForNginx(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -403,6 +430,7 @@ func TestExecuteTemplateForTransportServerWithBackupServerForNGINXPlus(t *testin
 	if !bytes.Contains(got, []byte(want)) {
 		t.Errorf("want backup %q in the transport server config", want)
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -413,6 +441,7 @@ func TestTransportServerWithSSL(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -428,6 +457,7 @@ func TestTLSPassthroughHosts(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -447,6 +477,7 @@ func TestExecuteVirtualServerTemplateWithJWKSWithToken(t *testing.T) {
 	if !bytes.Contains(got, []byte("proxy_cache_valid 200 12h;")) {
 		t.Error("want `proxy_cache_valid 200 12h;` in generated template")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -466,6 +497,7 @@ func TestExecuteVirtualServerTemplateWithJWKSWithoutToken(t *testing.T) {
 	if !bytes.Contains(got, []byte("proxy_cache_valid 200 12h;")) {
 		t.Error("want `proxy_cache_valid 200 12h;` in generated template")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -490,6 +522,7 @@ func TestExecuteVirtualServerTemplateWithBackupServerNGINXPlus(t *testing.T) {
 	if !bytes.Contains(got, []byte(want)) {
 		t.Errorf("want %q in generated template", want)
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -633,6 +666,7 @@ func vsConfig() VirtualServerConfig {
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -980,6 +1014,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -1325,6 +1360,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -1670,6 +1706,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2016,6 +2053,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2362,6 +2400,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2707,6 +2746,7 @@ var (
 			WAF: &WAF{
 				ApBundle:            "/fake/bundle/path/NginxDefaultPolicy.tgz",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -3059,6 +3099,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -3682,6 +3723,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -4030,6 +4072,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -4378,6 +4421,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
