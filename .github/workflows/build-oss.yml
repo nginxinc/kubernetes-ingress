@@ -215,13 +215,6 @@ jobs:
           summary: true
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
-      - name: Upload Trivy/Scout scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@530d4feaa9c62aaab2d250371e2061eb7a172363 # v3.25.9
-        continue-on-error: true
-        with:
-          sarif_file: "${{ inputs.image }}-results/"
-        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
-
       - name: Upload Scan Results to the cache
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         continue-on-error: true
