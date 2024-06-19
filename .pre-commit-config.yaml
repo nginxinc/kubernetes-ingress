@@ -6,7 +6,7 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: '(\.md$)'
+        exclude: '(\.md|\.snap)$'
       - id: end-of-file-fixer
       - id: check-yaml
         args: [--allow-multiple-documents]
@@ -70,12 +70,12 @@ repos:
         name: "Check Helm Chart JSON Schema"
         files: charts/nginx-ingress/values.yaml
         types: [yaml]
-        args: ['--schemafile', 'charts/nginx-ingress/values.schema.json']
+        args: ["--schemafile", "charts/nginx-ingress/values.schema.json"]
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.13.0
     hooks:
-    - id: markdownlint-cli2
+      - id: markdownlint-cli2
 
 ci:
   skip: [golang-diff, golangci-lint, check-jsonschema, markdownlint-cli2]
