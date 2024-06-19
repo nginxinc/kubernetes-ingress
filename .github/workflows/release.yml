@@ -413,12 +413,12 @@ jobs:
         run: |
           milestone_number=$(gh api \
             -H "Accept: application/vnd.github.v3+json" \
-            /repos/${{ github.repository_owner }}/${{ github.repository }}/milestones \
+            /repos/${{ github.repository }}/milestones \
             | jq --arg version ${{ inputs.nic_version }} -r \
             '.[] | select(.title == $version) | .number')
           if ! ${{ inputs.dry_run }}
             gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
-              /repos/${{ github.repository_owner }}/${{ github.repository }}/milestones/${milestone_number} \
+              /repos/${{ github.repository }}/milestones/${milestone_number} \
           else
             echo "Skipping closing Github Release milestone, DRY_RUN"
           fi
@@ -431,7 +431,7 @@ jobs:
           release_id=$(gh api \
             -H "Accept: application/vnd.github.v3+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository_owner }}/${{ github.repository }}/releases \
+            /repos/${{ github.repository }}/releases \
             | jq --arg version ${{ inputs.nic_version }} -r \
             '.[] | select(.name == $version) | .id')
           echo "release_id=${release_id}" >> $GITHUB_OUTPUT

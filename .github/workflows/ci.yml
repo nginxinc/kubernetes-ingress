@@ -754,13 +754,15 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-22.04
     name: Final CI Results
-    needs: [tag-stable]
+    needs: [tag-stable, smoke-tests]
     steps:
       - run: |
-          result="${{ needs.tag-stable.result }}"
-          if [[ $result == "success" || $result == "skipped" ]]; then
-            exit 0
-          else
+          tagResult="${{ needs.tag-stable.result }}"
+          smokeResult="${{ needs.smoke-tests.result }}"
+          if [[ $tagResult != "success" && $tagResult != "skipped" ]]; then
+            exit 1
+          fi
+          if [[ $smokeResult != "success" && $smokeResult != "skipped" ]]; then
             exit 1
           fi
 
