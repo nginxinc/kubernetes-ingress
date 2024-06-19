@@ -118,11 +118,13 @@ jobs:
       - name: Fetch Binary Artifacts ID from GitHub
         id: binary-artifact
         run: |
-          workflow_id=$(gh api \
+          result=$(gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/${{ github.repository }}/actions/artifacts | \
             jq '.artifacts[] | select(.name=="nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}")')
+          echo $result
+          workflow_id=$(echo $result | jq -r '.workflow_run.id')
           echo "id=${workflow_id}" >> $GITHUB_OUTPUT
         env:
             GH_TOKEN: ${{ github.token }}
