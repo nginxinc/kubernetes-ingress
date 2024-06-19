@@ -4,7 +4,7 @@ In this example we deploy the NGINX Plus Ingress Controller with [NGINX App
 Protect WAF version 5](https://www.nginx.com/products/nginx-app-protect/), a simple web application and then configure load balancing
 and WAF protection for that application using the VirtualServer resource.
 
-Before applying a policy, a WAF v5 policy bundle must be created, then copied to a volume mounted to `/etc/app_protect/bundles`.
+Before applying a policy and security log configuration, a WAF v5 policy and logconf bundle must be created, then copied to a volume mounted to `/etc/app_protect/bundles`.
 
 ## Prerequisites
 
@@ -86,19 +86,6 @@ of a request with `webapp.example.com`
     <html><head><title>Request Rejected</title></head><body>
     ...
     ```
-
-1. Lastly, let's try to send some suspicious data that matches the user defined signature.
-
-    ```console
-    curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP -X POST -d "apple" http://webapp.example.com:$IC_HTTP_PORT/
-    ```
-
-    ```text
-    <html><head><title>Request Rejected</title></head><body>
-    ...
-    ```
-
-    As you can see, the suspicious requests were blocked by App Protect
 
 1. To check the security logs in the syslog pod:
 
