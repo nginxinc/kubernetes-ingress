@@ -65,15 +65,6 @@ spec:
       logDest: "syslog:server=syslog-svc.default:514"
 ```
 
-## NGINX App Protect WAF Logs {#waf-logs}
-
-todo
-
-## NGINX App Protect WAF User Defined Signatures
-
-todo
-
-
 ## OpenAPI Specification in NGINX Ingress Controller
 
 The OpenAPI Specification defines the spec file format needed to describe RESTful APIs. The spec file can be written either in JSON or YAML. Using a spec file simplifies the work of implementing API protection. Refer to the [OpenAPI Specification](https://github.com/OAI/OpenAPI-Specification) (formerly called Swagger) for details.
