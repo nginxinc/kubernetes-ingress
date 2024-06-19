@@ -51,6 +51,7 @@ jobs:
       contents: read # for docker/build-push-action to read repo content
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       id-token: write # for OIDC login to AWS
+      pull-requests: write # for scout report
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository

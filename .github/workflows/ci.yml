@@ -303,6 +303,7 @@ jobs:
       security-events: write
       id-token: write
       packages: write
+      pull-requests: write # for scout report
     secrets: inherit
 
   build-docker-plus:
@@ -333,6 +334,7 @@ jobs:
       contents: read
       security-events: write
       id-token: write
+      pull-requests: write # for scout report
     secrets: inherit
 
   build-docker-nap:
@@ -406,6 +408,7 @@ jobs:
       contents: read
       security-events: write
       id-token: write
+      pull-requests: write # for scout report
     secrets: inherit
 
   helm-tests:
@@ -774,5 +777,6 @@ jobs:
       actions: read
       packages: write # for helm to push to GHCR
       security-events: write
+      pull-requests: write # for scout report
     uses: ./.github/workflows/image-promotion.yml
     if: ${{ inputs.force && inputs.force || false }}
