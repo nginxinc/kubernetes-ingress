@@ -299,7 +299,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=nap-waf-v5-12.sources,target=/tmp/app-protect.sources \
 	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
 	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
-	--mount=type=bind,from=nginx-files,src=debian-agent-11.sources,target=/etc/apt/sources.list.d/nginx-agent.sources \
+	--mount=type=bind,from=nginx-files,src=debian-agent-12.sources,target=/etc/apt/sources.list.d/nginx-agent.sources \
 	if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	cp /tmp/app-protect.sources /etc/apt/sources.list.d/app-protect.sources; \
 	fi \
