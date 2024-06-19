@@ -8,7 +8,6 @@ require (
 	github.com/cert-manager/cert-manager v1.15.0
 	github.com/dlclark/regexp2 v1.11.0
 	github.com/go-chi/chi/v5 v5.0.12
-	github.com/go-kit/log v0.2.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/glog v1.2.0
 	github.com/google/go-cmp v0.6.0
@@ -61,6 +60,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.6 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
+	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-ldap/ldap/v3 v3.4.8 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
