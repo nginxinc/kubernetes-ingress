@@ -47,6 +47,10 @@ jobs:
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       id-token: write # for OIDC login to GCR
       packages: write # for docker/build-push-action to push to GHCR
+      pull-requests: write # for scout report
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      image_digest: ${{ steps.build-push.outputs.digest }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
@@ -175,27 +179,46 @@ jobs:
             IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
         if: ${{ steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
+      - name: Make directory for security scan results
+        run: |
+          mkdir -p "${{ inputs.image }}-results/"
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # 0.22.0
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
           format: "sarif"
-          output: "trivy-results-${{ inputs.image }}.sarif"
+          output: "${{ inputs.image }}-results/trivy.sarif"
           ignore-unfixed: "true"
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@530d4feaa9c62aaab2d250371e2061eb7a172363 # v3.25.9
-        continue-on-error: true
+      - name: DockerHub Login for Docker Scount
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
-          sarif_file: "trivy-results-${{ inputs.image }}.sarif"
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
-      - name: Upload Scan Results
+      - name: Run Docker Scout vulnerability scanner
+        id: docker-scout
+        uses: docker/scout-action@5dae9c7571dd0f3de81f5b501240c593c13c3eb6 # v1.9.3
+        continue-on-error: true
+        with:
+          command: cves,recommendations
+          image: ${{ steps.meta.outputs.tags }}
+          ignore-base: true
+          only-fixed: true
+          sarif-file: "${{ inputs.image }}-results/scout.sarif"
+          write-comment: false
+          github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
+          summary: true
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
+
+      - name: Upload Scan Results to the cache
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         continue-on-error: true
         with:
-          name: "trivy-results-${{ inputs.image }}.sarif"
-          path: "trivy-results-${{ inputs.image }}.sarif"
-        if: always()
+          name: "${{ inputs.image }}-results"
+          path: "${{ inputs.image }}-results/"
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}

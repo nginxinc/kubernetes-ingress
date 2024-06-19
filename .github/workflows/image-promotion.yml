@@ -173,6 +173,7 @@ jobs:
       security-events: write
       id-token: write
       packages: write
+      pull-requests: write # for scout report
     secrets: inherit
 
   build-docker-plus:
@@ -205,6 +206,7 @@ jobs:
       security-events: write
       id-token: write
       packages: write
+      pull-requests: write # for scout report
     secrets: inherit
 
   build-docker-nap:
@@ -280,6 +282,7 @@ jobs:
       security-events: write
       id-token: write
       packages: write
+      pull-requests: write # for scout report
     secrets: inherit
 
   tag-stable:

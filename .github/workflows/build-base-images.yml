@@ -41,6 +41,9 @@ jobs:
     name: Build OSS base images
     runs-on: ubuntu-22.04
     needs: checks
+    permissions:
+      contents: read
+      pull-requests: write # for scout report
     strategy:
       fail-fast: false
       matrix:
@@ -108,6 +111,9 @@ jobs:
     name: Build Plus base images
     runs-on: ubuntu-22.04
     needs: checks
+    permissions:
+      contents: read
+      pull-requests: write # for scout report
     strategy:
       fail-fast: false
       matrix:
@@ -177,6 +183,9 @@ jobs:
     name: Build Plus NAP base images
     runs-on: ubuntu-22.04
     needs: checks
+    permissions:
+      contents: read
+      pull-requests: write # for scout report
     strategy:
       fail-fast: false
       matrix:
