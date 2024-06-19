@@ -30,7 +30,7 @@ get_chart_md5() {
 }
 
 get_actions_md5() {
-  find .github .github/data/version.txt -type f -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }'
+  find .github -type f -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }'
 }
 
 get_build_tag() {
