@@ -733,23 +733,9 @@ jobs:
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}-${{ matrix.k8s }}.html
         if: always()
 
-  smoke-results:
-    if: ${{ always() }}
-    runs-on: ubuntu-22.04
-    name: Final Smoke Test Results
-    needs: [smoke-tests]
-    steps:
-      - run: |
-          result="${{ needs.smoke-tests.result }}"
-          if [[ $result == "success" || $result == "skipped" ]]; then
-            exit 0
-          else
-            exit 1
-          fi
-
   tag-stable:
     name: Tag tested image as stable
-    needs: [checks, smoke-results]
+    needs: [checks, smoke-tests]
     permissions:
       contents: read # To checkout repository
       id-token: write # To sign into Google Container Registry
@@ -759,7 +745,21 @@ jobs:
       target_tag: ${{ needs.checks.outputs.stable_tag }}
       dry_run: false
     secrets: inherit
-    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'false' && needs.smoke-results.result == 'success' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
+    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
+
+  tag-results:
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    name: Final CI Results
+    needs: [tag-stable]
+    steps:
+      - run: |
+          result="${{ needs.tag-stable.result }}"
+          if [[ $result == "success" || $result == "skipped" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
 
   trigger-image-promotion:
     name: Promote images on Force Run
@@ -767,7 +767,7 @@ jobs:
       - build-docker
       - build-docker-plus
       - build-docker-nap
-      - smoke-results
+      - tag-results
     permissions:
       contents: write # for pushing to Helm Charts repository
       id-token: write # To sign into Google Container Registry
