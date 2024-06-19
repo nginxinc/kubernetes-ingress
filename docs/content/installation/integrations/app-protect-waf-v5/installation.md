@@ -7,7 +7,7 @@ toc: true
 weight: 100
 ---
 
-This document explains how to build a F5 NGINX Ingress Controller image with F5 NGINX App Protect WAF v5 from source code.
+This document explains how to build a F5 NGINX Ingress Controller image with NGINX App Protect WAF v5 from source code.
 
 {{<call-out "tip" "Pre-built image alternatives" >}} If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
 
