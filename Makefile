@@ -65,6 +65,10 @@ staticcheck: ## Run staticcheck linter
 test: ## Run GoLang tests
 	go test -tags=aws -shuffle=on -race ./...
 
+.PHONY: test-update-snaps
+test-update-snaps:
+	UPDATE_SNAPS=true go test -tags=aws -shuffle=on -race ./...
+
 cover: ## Generate coverage report
 	@./hack/test-cover.sh
 
