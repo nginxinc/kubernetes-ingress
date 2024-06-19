@@ -49,7 +49,7 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Output Variables
+      - name: Set Variables
         id: vars
         run: |
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
@@ -60,7 +60,6 @@ jobs:
           ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh build_tag >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
-          cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
@@ -92,10 +91,64 @@ jobs:
             echo "exists=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Output variables
+        run: |
+          echo go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
+          echo go_path: ${{ steps.vars.outputs.go_path }}
+          echo binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+          echo chart_version: ${{ steps.vars.outputs.chart_version }}
+          echo ic_version: ${{ steps.vars.outputs.ic_version }}
+          echo docker_md5: ${{ steps.vars.outputs.docker_md5 }}
+          echo build_tag: ${{ steps.vars.outputs.build_tag }}
+          echo stable_tag: ${{ steps.vars.outputs.stable_tag }}
+          echo stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
+
+  binaries:
+    name: Build Binaries
+    runs-on: ubuntu-22.04
+    needs: [checks]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+        with:
+          go-version-file: go.mod
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
+      - name: Build binaries
+        uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
+        with:
+          version: latest
+          args: build --snapshot --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: ${{ needs.checks.outputs.go_path }}
+          AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
+          AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
+          AWS_NAP_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_DOS_PRODUCT_CODE }}
+          AWS_NAP_DOS_PUB_KEY: ${{ secrets.AWS_NAP_DOS_PUB_KEY }}
+          AWS_NAP_WAF_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_PRODUCT_CODE }}
+          AWS_NAP_WAF_PUB_KEY: ${{ secrets.AWS_NAP_WAF_PUB_KEY }}
+          AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
+          AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
+          GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
+      - name: Store Artifacts in Cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
   build-docker:
     if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
     name: Build Docker OSS
-    needs: [checks]
+    needs: [checks, binaries]
     strategy:
       fail-fast: false
       matrix:
@@ -125,7 +178,7 @@ jobs:
   build-docker-plus:
     if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
     name: Build Docker Plus
-    needs: [checks]
+    needs: [checks, binaries]
     strategy:
       fail-fast: false
       matrix:
@@ -157,7 +210,7 @@ jobs:
   build-docker-nap:
     if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
     name: Build Docker NAP
-    needs: [checks]
+    needs: [checks, binaries]
     strategy:
       fail-fast: false
       matrix:
@@ -302,8 +355,8 @@ jobs:
     uses: ./.github/workflows/publish-helm.yml
     with:
       branch: ${{ github.ref_name }}
-      ic_version: 0.0.0-edge
-      chart_version: edge
+      ic_version: edge
+      chart_version: 0.0.0-edge
       nginx_helm_repo: false
     permissions:
       contents: write # for pushing to Helm Charts repository

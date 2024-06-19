@@ -26,7 +26,6 @@ on:
         type: boolean
       full-build:
         description: Always build base image
-        required: false
         type: boolean
         default: false
       ic-version:
