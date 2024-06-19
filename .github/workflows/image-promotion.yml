@@ -1,0 +1,328 @@
+# This workflow will:
+# - build images for forked workflows
+# - tag stable for forked workflows
+# - tag edge for main workflows
+# - tag release branch name for release branch workflows
+# - release edge images & helm charts for edge
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  workflow_call:
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref_name }}-image-promotion
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks and variables
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      go_path: ${{ steps.vars.outputs.go_path }}
+      go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
+      binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+      chart_version: ${{ steps.vars.outputs.chart_version }}
+      ic_version: ${{ steps.vars.outputs.ic_version }}
+      docker_md5: ${{ steps.vars.outputs.docker_md5 }}
+      build_tag: ${{ steps.vars.outputs.build_tag }}
+      stable_tag: ${{ steps.vars.outputs.stable_tag }}
+      stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Output Variables
+        id: vars
+        run: |
+          echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
+          source .github/data/version.txt
+          echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
+          echo "chart_version=${HELM_CHART_VERSION}" >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh build_tag >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Fetch Cached Binary Artifacts
+        id: binary-cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
+          lookup-only: true
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Check if stable image exists
+        id: stable_exists
+        run: |
+          if docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-ingress:${{ steps.vars.outputs.stable_tag }}; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          fi
+
+  build-docker:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Build Docker OSS
+    needs: [checks]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian, alpine]
+        platforms:
+          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+        include:
+          - image: ubi
+            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
+      authenticated: true
+      tag: ${{ needs.checks.outputs.build_tag }}
+      branch: ${{ github.ref }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
+    secrets: inherit
+
+  build-docker-plus:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Build Docker Plus
+    needs: [checks]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian-plus, alpine-plus, alpine-plus-fips]
+        platforms: ["linux/arm64, linux/amd64"]
+        target: [goreleaser, aws]
+        include:
+          - image: ubi-plus
+            platforms: "linux/arm64, linux/amd64, linux/s390x"
+            target: goreleaser
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
+      authenticated: true
+      tag: ${{ needs.checks.outputs.build_tag }}
+      branch: ${{ github.ref }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
+    secrets: inherit
+
+  build-docker-nap:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Build Docker NAP
+    needs: [checks]
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [debian-plus-nap]
+        platforms: ["linux/amd64"]
+        target: [goreleaser, aws]
+        nap_modules: [dos, waf, "waf,dos"]
+        include:
+          - image: ubi-9-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: dos
+          - image: ubi-8-plus-nap
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: "waf,dos"
+          - image: ubi-9-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: dos
+          - image: ubi-8-plus-nap
+            target: aws
+            platforms: "linux/amd64"
+            nap_modules: "waf,dos"
+          - image: alpine-plus-nap-fips
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: alpine-plus-nap-v5-fips
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: debian-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-9-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+          - image: ubi-8-plus-nap-v5
+            target: goreleaser
+            platforms: "linux/amd64"
+            nap_modules: waf
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
+      nap-modules: ${{ matrix.nap_modules }}
+      authenticated: true
+      tag: ${{ needs.checks.outputs.build_tag }}
+      branch: ${{ github.ref }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
+    secrets: inherit
+
+  tag-stable:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Tag build image as stable
+    needs: [checks, build-docker, build-docker-plus, build-docker-nap]
+    permissions:
+      contents: read # To checkout repository
+      id-token: write # To sign into Google Container Registry
+    uses: ./.github/workflows/retag-images.yml
+    with:
+      source_tag: ${{ needs.checks.outputs.build_tag }}
+      target_tag: ${{ needs.checks.outputs.stable_tag }}
+      dry_run: false
+    secrets: inherit
+
+  tag-edge:
+    name: Tag tested image as stable
+    needs: [checks, build-docker, build-docker-plus, build-docker-nap]
+    permissions:
+      contents: read # To checkout repository
+      id-token: write # To sign into Google Container Registry
+    uses: ./.github/workflows/retag-images.yml
+    with:
+      source_tag: ${{ needs.checks.outputs.stable_tag }}
+      target_tag: ${{ github.ref_name == github.event.repository.default_branch && 'edge' || github.ref_name }}
+      dry_run: false
+    secrets: inherit
+
+  release-oss:
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
+    name: Release Docker OSS
+    needs: [checks, build-docker]
+    uses: ./.github/workflows/oss-release.yml
+    with:
+      gcr_release_registry: false
+      ecr_public_registry: true
+      dockerhub_public_registry: true
+      quay_public_registry: true
+      github_public_registry: true
+      source_tag: ${{ needs.checks.outputs.stable_tag }}
+      target_tag: "edge"
+      dry_run: false
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    secrets: inherit
+
+  release-plus:
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
+    name: Release Docker Plus
+    needs: [checks, build-docker-plus, build-docker-nap]
+    uses: ./.github/workflows/plus-release.yml
+    with:
+      nginx_registry: true
+      gcr_release_registry: false
+      gcr_mktpl_registry: false
+      ecr_mktpl_registry: false
+      az_mktpl_registry: false
+      source_tag: ${{ needs.checks.outputs.stable_tag }}
+      target_tag: "edge"
+      dry_run: false
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  publish-helm-chart:
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
+    name: Publish Helm Chart
+    needs: [checks]
+    uses: ./.github/workflows/publish-helm.yml
+    with:
+      branch: ${{ github.ref_name }}
+      ic_version: 0.0.0-edge
+      chart_version: edge
+      nginx_helm_repo: false
+    permissions:
+      contents: write # for pushing to Helm Charts repository
+      packages: write # for helm to push to GHCR
+    secrets: inherit
+
+  certify-openshift-images:
+    if: ${{ github.ref_name == github.event.repository.default_branch }}
+    name: Certify OpenShift UBI images
+    runs-on: ubuntu-22.04
+    needs: [release-oss]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - name: Certify UBI OSS images in quay
+        uses: ./.github/actions/certify-openshift-image
+        continue-on-error: true
+        with:
+          image: quay.io/nginx/nginx-ingress:edge-ubi
+          project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
+          pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}

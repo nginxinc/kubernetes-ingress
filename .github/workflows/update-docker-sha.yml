@@ -37,7 +37,7 @@ jobs:
         id: vars
         run: |
           source_branch=main
-          if ${{ inputs.source_branch }}; then
+          if [ -n "${{ inputs.source_branch }}" ]; then
             source_branch=${{ inputs.source_branch }}
           fi
           echo "source_branch=${source_branch}" >> $GITHUB_OUTPUT
