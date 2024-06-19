@@ -99,7 +99,7 @@ In this example we deploy NGINX Ingress Controller with NGINX Plus and NGINX App
 
 ## Prerequisites
 
-1. Follow the installation [instructions]({{< relref "installation/integrations/app-protect-waf/installation.md" >}}) to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF.
+1. Follow the installation [instructions]({{< relref "installation/integrations/app-protect-waf-v5/installation.md" >}}) to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF.
 
 2. Save the public IP address of NGINX Ingress Controller into a shell variable:
 
