@@ -51,6 +51,7 @@ jobs:
       contents: read # for docker/build-push-action to read repo content
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       id-token: write # for OIDC login to AWS
+      pull-requests: write # for scout report
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
@@ -195,8 +196,12 @@ jobs:
             ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
         if: ${{ steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
 
-      - name: Extract image name for Trivy
-        id: trivy-tag
+      - name: Make directory for security scan results
+        run: |
+          mkdir -p "${{ inputs.image }}-results/"
+
+      - name: Extract image name for Scans
+        id: scan-tag
         run: |
           tag=$(echo $DOCKER_METADATA_OUTPUT_JSON | jq -r '[ .tags[] | select(contains("f5-gcs-7899"))] | .[0]')
           echo "tag=$tag" >> $GITHUB_OUTPUT
@@ -206,23 +211,38 @@ jobs:
         uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # 0.22.0
         continue-on-error: true
         with:
-          image-ref: ${{ steps.trivy-tag.outputs.tag }}
+          image-ref: ${{ steps.scan-tag.outputs.tag }}
           format: "sarif"
-          output: "trivy-results-${{ inputs.image }}.sarif"
+          output: "${{ inputs.image }}-results/trivy.sarif"
           ignore-unfixed: "true"
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@530d4feaa9c62aaab2d250371e2061eb7a172363 # v3.25.9
+      - name: DockerHub Login for Docker Scount
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
+
+      - name: Run Docker Scout vulnerability scanner
+        id: docker-scout
+        uses: docker/scout-action@5dae9c7571dd0f3de81f5b501240c593c13c3eb6 # v1.9.3
         continue-on-error: true
         with:
-          sarif_file: "trivy-results-${{ inputs.image }}.sarif"
+          command: cves,recommendations
+          image: ${{ steps.scan-tag.outputs.tag }}
+          ignore-base: true
+          only-fixed: true
+          sarif-file: "${{ inputs.image }}-results/scout.sarif"
+          write-comment: false
+          github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
+          summary: true
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Upload Scan Results
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         continue-on-error: true
         with:
-          name: "trivy-results-${{ inputs.image }}.sarif"
-          path: "trivy-results-${{ inputs.image }}.sarif"
-        if: always()
+          name: "${{ inputs.image }}-results"
+          path: "${{ inputs.image }}-results/"
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
