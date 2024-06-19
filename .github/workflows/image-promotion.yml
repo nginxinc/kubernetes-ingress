@@ -11,6 +11,7 @@ on:
     branches:
       - main
       - release-*
+      - promotion-fixes
   workflow_call:
 
 defaults:
@@ -312,10 +313,10 @@ jobs:
       target_tag: ${{ github.ref_name == github.event.repository.default_branch && 'edge' || github.ref_name }}
       dry_run: false
     secrets: inherit
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && !failure() }}
 
   release-oss:
-    if: ${{ github.ref_name == github.event.repository.default_branch && '!cancelled()' }}
+    if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
     name: Release Docker OSS
     needs: [checks, build-docker]
     uses: ./.github/workflows/oss-release.yml
@@ -335,7 +336,7 @@ jobs:
     secrets: inherit
 
   release-plus:
-    if: ${{ github.ref_name == github.event.repository.default_branch && !cancelled() }}
+    if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
     name: Release Docker Plus
     needs: [checks, build-docker-plus, build-docker-nap]
     uses: ./.github/workflows/plus-release.yml
@@ -354,7 +355,7 @@ jobs:
     secrets: inherit
 
   publish-helm-chart:
-    if: ${{ github.ref_name == github.event.repository.default_branch && !cancelled() }}
+    if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
     name: Publish Helm Chart
     needs: [checks]
     uses: ./.github/workflows/publish-helm.yml
@@ -369,7 +370,7 @@ jobs:
     secrets: inherit
 
   certify-openshift-images:
-    if: ${{ github.ref_name == github.event.repository.default_branch && !cancelled() }}
+    if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
     name: Certify OpenShift UBI images
     runs-on: ubuntu-22.04
     needs: [release-oss]
