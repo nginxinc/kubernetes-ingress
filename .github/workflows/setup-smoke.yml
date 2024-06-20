@@ -15,6 +15,9 @@ on:
       marker:
         required: true
         type: string
+      label:
+        required: true
+        type: string
       go-md5:
         required: true
         type: string
@@ -150,6 +153,7 @@ jobs:
           image-name: ${{ steps.image_details.outputs.name }}
           tag: ${{ steps.image_details.outputs.build_tag }}
           marker: ${{ inputs.marker != '' && inputs.marker || '' }}
+          label: ${{ inputs.label }}
           k8s-version: ${{ inputs.k8s-version }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
@@ -158,6 +162,6 @@ jobs:
       - name: Upload Test Results
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: ${{ steps.smoke-tests.outputs.test-results-name }}-${{ inputs.k8s-version }}
+          name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ steps.smoke-tests.outputs.test-results-path }}
         if: always()

@@ -660,6 +660,7 @@ jobs:
       target: ${{ matrix.images.target }}
       nap-modules: ${{ matrix.images.nap_modules }}
       marker: ${{ matrix.images.marker }}
+      label: ${{ matrix.images.label }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       build-tag: ${{ needs.checks.outputs.build_tag }}
       stable-tag: ${{ needs.checks.outputs.stable_tag }}
@@ -686,6 +687,7 @@ jobs:
       target: ${{ matrix.images.target }}
       nap-modules: ${{ matrix.images.nap_modules }}
       marker: ${{ matrix.images.marker }}
+      label: ${{ matrix.images.label }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       build-tag: ${{ needs.checks.outputs.build_tag }}
       stable-tag: ${{ needs.checks.outputs.stable_tag }}
@@ -712,6 +714,7 @@ jobs:
       target: ${{ matrix.images.target }}
       nap-modules: ${{ matrix.images.nap_modules }}
       marker: ${{ matrix.images.marker }}
+      label: ${{ matrix.images.label }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       build-tag: ${{ needs.checks.outputs.build_tag }}
       stable-tag: ${{ needs.checks.outputs.stable_tag }}

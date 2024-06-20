@@ -25,6 +25,9 @@ inputs:
   marker:
     description: Marker to use
     required: false
+  label:
+    description: Label for test
+    required: false
   azure-ad-secret:
     description: Azure Active Directory secret for JWKs
     required: false
@@ -45,12 +48,13 @@ runs:
       run: |
         make -f tests/Makefile create-kind-cluster K8S_CLUSTER_NAME=${{ github.run_id }} K8S_CLUSTER_VERSION=${{ inputs.k8s-version }} K8S_TIMEOUT=${{ inputs.k8s-timeout }}
         make -f tests/Makefile image-load REGISTRY="" PREFIX=${{ inputs.image-name }} TAG=${{ inputs.tag }} K8S_CLUSTER_NAME=${{ github.run_id }}
-        marker="${{ inputs.marker }}"
-        nospaces="${marker// /_}"
-        sanitized_marker="${nospaces//\'/}"
-        name="${sanitized_marker:-${{ inputs.k8s-version }}}"
+        label="${{ inputs.label }}"
+        nospaces="${label// /_}"
+        noslash="${nospaces//\//_}"
+        sanitized_marker="${noslash//\'/}"
+        name="${sanitized_marker}-${{ inputs.k8s-version }}"
         cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
-        test_name=tests-nginx-${{ inputs.image-type }}-$name.html
+        test_name=tests-nginx-${{ inputs.image-type }}-${name}.html
         test_output_path=${{ github.workspace }}/tests/${test_name}
         echo "cluster_ip=${cluster_ip}" >> $GITHUB_OUTPUT
         echo "test_name=${test_name}" >> $GITHUB_OUTPUT
