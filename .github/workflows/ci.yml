@@ -252,7 +252,7 @@ jobs:
   binaries:
     name: Build Binaries
     runs-on: ubuntu-22.04
-    needs: [checks, unit-tests]
+    needs: [checks, unit-tests, verify-codegen]
     permissions:
       contents: write # for goreleaser/goreleaser-action to manage releases
       id-token: write # for goreleaser/goreleaser-action to sign artifacts
