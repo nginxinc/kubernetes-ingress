@@ -50,7 +50,7 @@ runs:
         sanitized_marker="${nospaces//\'/}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
         cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
-        test_name=tests-nginx-${{ inputs.image-type }}-$namehtml
+        test_name=tests-nginx-${{ inputs.image-type }}-$name.html
         test_output_path=${{ github.workspace }}/tests/${test_name}
         echo "cluster_ip=${cluster_ip}" >> $GITHUB_OUTPUT
         echo "test_name=${test_name}" >> $GITHUB_OUTPUT
