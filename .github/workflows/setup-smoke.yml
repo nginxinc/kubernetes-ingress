@@ -159,5 +159,5 @@ jobs:
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}-${{ inputs.k8s-version }}
-          path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}-${{ inputs.k8s-version }}.html
+          path: ${{ steps.smoke-tests.outputs.test-results-path }}
         if: always()

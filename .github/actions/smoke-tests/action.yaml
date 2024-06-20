@@ -32,7 +32,10 @@ inputs:
 outputs:
   test-results-name:
     description: Test results name
-    value: tests-${{ steps.k8s.outputs.cluster }}
+    value: ${{ steps.k8s.outputs.test_name }}
+  test-results-path:
+    description: Test results full path
+    value: ${{ steps.k8s.outputs.test_output_path }}
 
 runs:
   using: composite
@@ -46,8 +49,15 @@ runs:
         nospaces="${marker// /_}"
         sanitized_marker="${nospaces//\'/}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
-        echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
-        echo "cluster=$(echo nginx-${{ inputs.image-type }}-$name)" >> $GITHUB_OUTPUT
+        cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
+        test_name=tests-nginx-${{ inputs.image-type }}-$namehtml
+        test_output_path=${{ github.workspace }}/tests/${test_name}
+        echo "cluster_ip=${cluster_ip}" >> $GITHUB_OUTPUT
+        echo "test_name=${test_name}" >> $GITHUB_OUTPUT
+        echo "test_output_path=${test_output_path}" >> $GITHUB_OUTPUT
+        echo "Output:"
+        echo "  cluster_ip=${cluster_ip}"
+        echo "  test_output_path=${test_output_path}"
       shell: bash
 
     - name: Setup Kubeconfig
@@ -57,7 +67,7 @@ runs:
 
     - name: Run Smoke Tests
       run: |
-        touch tests-${{ steps.k8s.outputs.cluster }}.html
+        touch ${{ steps.k8s.outputs.test_output_path }}
         docker run --rm \
         --name test-runner-${{ github.run_id }} \
         --network=kind \
@@ -70,7 +80,7 @@ runs:
         --image-pull-policy=Never \
         --ic-type=nginx${{ contains(inputs.image-type, 'plus') && '-plus' || '' }}-ingress \
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
-        --html=${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
+        --html=$${{ steps.k8s.outputs.test_output_path }} \
         --self-contained-html \
         --durations=10 \
         --show-ic-logs=yes \
