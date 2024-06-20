@@ -643,6 +643,7 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/setup-smoke.yml
+    secrets: inherit
     with:
       image: ${{ matrix.images.image }}
       target: ${{ matrix.images.target }}
@@ -668,6 +669,7 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/setup-smoke.yml
+    secrets: inherit
     with:
       image: ${{ matrix.images.image }}
       target: ${{ matrix.images.target }}
@@ -693,6 +695,7 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/setup-smoke.yml
+    secrets: inherit
     with:
       image: ${{ matrix.images.image }}
       target: ${{ matrix.images.target }}
