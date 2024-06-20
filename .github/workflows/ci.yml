@@ -190,9 +190,7 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-22.04
-    needs:
-      - checks
-      - verify-codegen
+    needs: checks
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -217,7 +215,7 @@ jobs:
   release-notes:
     name: Release Notes
     runs-on: ubuntu-22.04
-    needs: [checks, unit-tests]
+    needs: [checks, unit-tests, verify-codegen]
     outputs:
       release-url: ${{ steps.release-notes.outputs.release-url }}
     permissions:
