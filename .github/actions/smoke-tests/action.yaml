@@ -70,7 +70,7 @@ runs:
         --image-pull-policy=Never \
         --ic-type=nginx${{ contains(inputs.image-type, 'plus') && '-plus' || '' }}-ingress \
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
-        --html=tests-${{ steps.k8s.outputs.cluster }}.html \
+        --html=${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
         --self-contained-html \
         --durations=10 \
         --show-ic-logs=yes \
