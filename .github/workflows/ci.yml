@@ -122,18 +122,6 @@ jobs:
           key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
           lookup-only: true
 
-      - name: Check if go.mod and go.sum are up to date
-        run: go mod tidy && git diff --exit-code -- go.mod go.sum
-
-      - name: Check if CRDs changed
-        run: make update-crds && git diff --name-only --exit-code config/crd/bases
-
-      - name: Check if Codegen changed
-        run: |
-          cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
-          make update-codegen && git diff --name-only --exit-code pkg/**
-          cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
-
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
@@ -176,10 +164,35 @@ jobs:
           echo stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
           echo additional_tag: ${{ steps.vars.outputs.additional_tag }}
 
+  verify-codegen:
+    name: Verify generated code
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - name: Check if go.mod and go.sum are up to date
+        run: go mod tidy && git diff --exit-code -- go.mod go.sum
+
+      - name: Check if CRDs changed
+        run: make update-crds && git diff --name-only --exit-code config/crd/bases
+
+      - name: Check if Codegen changed
+        run: |
+          cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
+          make update-codegen && git diff --name-only --exit-code pkg/**
+          cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-22.04
-    needs: checks
+    needs:
+      - checks
+      - verify-codegen
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
