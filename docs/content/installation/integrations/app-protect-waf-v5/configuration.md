@@ -65,32 +65,15 @@ spec:
       logDest: "syslog:server=syslog-svc.default:514"
 ```
 
-## OpenAPI Specification in NGINX Ingress Controller
-
-The OpenAPI Specification defines the spec file format needed to describe RESTful APIs. The spec file can be written either in JSON or YAML. Using a spec file simplifies the work of implementing API protection. Refer to the [OpenAPI Specification](https://github.com/OAI/OpenAPI-Specification) (formerly called Swagger) for details.
-
-NGINX Ingress Controller supports OpenAPI Specification versions 2.0 and 3.0.
-
-The simplest way to create an API protection policy is using an OpenAPI Specification file to import the details of the APIs. If you use an OpenAPI Specification file, NGINX App Protect WAF will automatically create a policy for the following properties (depending on what's included in the spec file):
-
-- Methods
-- URLs
-- Parameters
-- JSON profiles
-
-An OpenAPI-ready policy template is provided with the NGINX App Protect WAF packages and is located in: `/etc/app_protect/conf/NginxApiSecurityPolicy.json`
-
-It contains violations related to OpenAPI set to blocking (enforced).
-
 ## Configuration in NGINX Plus Ingress Controller using Virtual Server Resource
 
 In this example we deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF v5, deploy a simple web application, and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
-{{< note >}} You can find the example, and the files referenced, on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/custom-resources/app-protect-waf/app-protect-waf-v55).{{< /note >}}
+{{< note >}} You can find the example, and the files referenced, on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/custom-resources/app-protect-waf/app-protect-waf-v5).{{< /note >}}
 
 ## Prerequisites
 
-1. Follow the installation [instructions]({{< relref "installation/integrations/app-protect-waf-v5/installation.md" >}}) to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF.
+1. Follow the installation [instructions]({{< relref "installation/integrations/app-protect-waf-v5/installation.md" >}}) to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF version 5.
 
 2. Save the public IP address of NGINX Ingress Controller into a shell variable:
 
@@ -120,9 +103,9 @@ Create the syslog service and pod for the NGINX App Protect WAF security logs:
    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/syslog.yaml
    ```
 
-### Step 3 - Deploy the WAF Policy
+### Step 3 - Deploy the WAF Policy Bundle
 
-Create the WAF policy
+Create and deploy the WAF policy
 
  ```shell
   kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/waf.yaml
