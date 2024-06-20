@@ -26,7 +26,15 @@ func NewNginxMetricsClient(httpClient *http.Client) *prometheusClient.NginxClien
 
 // RunPrometheusListenerForNginx runs an http server to expose Prometheus metrics for NGINX
 func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string, prometheusSecret *v1.Secret) {
-	promlogConfig := &promlog.Config{}
+	infoLevel := new(promlog.AllowedLevel)
+	err := infoLevel.Set("info")
+	if err != nil {
+		glog.Error("Error setting prometheus exporter log level")
+	}
+	promlogConfig := &promlog.Config{
+		Level: infoLevel,
+	}
+
 	logger := promlog.New(promlogConfig)
 	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", constLabels, logger))
 	runServer(strconv.Itoa(port), registry, prometheusSecret)
