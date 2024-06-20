@@ -641,7 +641,6 @@ jobs:
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix_oss) }}
     permissions:
       contents: read
-      security-events: write
       id-token: write
     uses: ./.github/workflows/setup-smoke.yml
     secrets: inherit
@@ -668,7 +667,6 @@ jobs:
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix_plus) }}
     permissions:
       contents: read
-      security-events: write
       id-token: write
     uses: ./.github/workflows/setup-smoke.yml
     secrets: inherit
@@ -695,7 +693,6 @@ jobs:
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix_nap) }}
     permissions:
       contents: read
-      security-events: write
       id-token: write
     uses: ./.github/workflows/setup-smoke.yml
     secrets: inherit
