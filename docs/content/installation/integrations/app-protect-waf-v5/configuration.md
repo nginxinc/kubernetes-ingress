@@ -1,7 +1,5 @@
 ---
 docs: DOCS-000
-doctypes:
-- ''
 title: Configuration
 toc: true
 weight: 200
