@@ -347,6 +347,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      security-events: write
     if: ${{ !cancelled() && !failure() }}
     strategy:
       fail-fast: false
