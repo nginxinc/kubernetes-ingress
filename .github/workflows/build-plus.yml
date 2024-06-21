@@ -58,15 +58,6 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: ${{ inputs.branch }}
-          fetch-depth: 0
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
-        with:
-          platforms: arm64,s390x
-
-      - name: Docker Buildx
-        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -109,15 +100,28 @@ jobs:
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
-      - name: Check if base images exist
-        id: base_exists
+      - name: Check if images exist
+        id: images_exist
         run: |
           base_image="gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/plus:${{ inputs.base-image-md5 }}-${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}"
           echo "image=${base_image}" >> $GITHUB_OUTPUT
-          if docker pull ${base_image}; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+          if docker manifest inspect ${base_image}; then
+            echo "base_exists=true" >> $GITHUB_OUTPUT
+          fi
+          if docker manifest inspect ${{ steps.meta.outputs.tags }}; then
+            echo "target_exists=true" >> $GITHUB_OUTPUT
           fi
         if: ${{ inputs.authenticated && ! inputs.full-build }}
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+        with:
+          platforms: arm,arm64,ppc64le,s390x
+        if: ${{ steps.images_exist.outputs.target_exists != 'true' }}
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
+        if: ${{ steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Base Container
         uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
@@ -126,7 +130,7 @@ jobs:
           context: "."
           cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: common
-          tags: ${{ steps.base_exists.outputs.image }}
+          tags: ${{ steps.images_exist.outputs.image }}
           platforms: ${{ inputs.platforms }}
           pull: true
           push: true
@@ -139,23 +143,14 @@ jobs:
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ inputs.nap-modules != '' && contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ inputs.authenticated && steps.base_exists.outputs.exists != 'true' }}
-
-      - name: Check if target image exists
-        id: target_exists
-        run: |
-          if docker pull ${{ steps.meta.outputs.tags }}; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          fi
-        if: ${{ inputs.authenticated && ! inputs.full-build }}
+        if: ${{ inputs.authenticated && steps.images_exist.outputs.base_exists != 'true' }}
 
       - name: Debug values
         run: |
           echo "authenticated: ${{ inputs.authenticated }}"
-          echo "base_exists: ${{ steps.base_exists.outputs.exists }}"
-          echo "target_exists: ${{ steps.target_exists.outputs.exists }}"
+          echo "images_exist: ${{ steps.images_exist.outputs.base_exists }}"
+          echo "target_exists: ${{ steps.images_exist.outputs.target_exists }}"
           echo "full-build: ${{ inputs.full-build }}"
-          echo "all: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}"
 
       - name: Fetch Cached Artifacts
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
@@ -163,7 +158,7 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
           fail-on-cache-miss: true
-        if: ${{ inputs.authenticated || steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
+        if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Docker image
         uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
@@ -185,7 +180,7 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.base_exists.outputs.image ) }}
+            ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.images_exist.outputs.image ) }}
             IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
             ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
             ${{ (contains(inputs.target, 'aws') && inputs.nap-modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
@@ -194,7 +189,7 @@ jobs:
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
             ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
-        if: ${{ steps.base_exists.outputs.exists != 'true' || steps.target_exists.outputs.exists != 'true' }}
+        if: ${{  steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Make directory for security scan results
         run: |
