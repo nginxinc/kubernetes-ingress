@@ -421,7 +421,7 @@ jobs:
       - name: Upload Scan Results to Github Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: "${{ steps.directory.outputs.directory }}"
+          name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
 
       - name: Upload Scan results to GitHub Security tab
@@ -510,7 +510,7 @@ jobs:
       - name: Upload Scan Results to Github Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: "${{ steps.directory.outputs.directory }}"
+          name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
 
       - name: Upload Scan results to GitHub Security tab
@@ -608,8 +608,9 @@ jobs:
       - name: Upload Scan Results to Github Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: "${{ steps.directory.outputs.directory }}"
+          name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
+          overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
