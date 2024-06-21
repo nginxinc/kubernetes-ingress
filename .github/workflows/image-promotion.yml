@@ -357,8 +357,11 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Make directory for security scan results
+        id: directory
         run: |
-          mkdir -p "${{ matrix.image }}-results/"
+          directory=${{ matrix.image }}-${{ matrix.target }}-results
+          echo "directory=${directory}" >> $GITHUB_OUTPUT
+          mkdir -p "${directory}"
 
       - name: Docker meta
         id: meta
@@ -393,7 +396,7 @@ jobs:
         with:
           image-ref: ${{ steps.meta.outputs.tags }}
           format: "sarif"
-          output: "${{ matrix.image }}-results/trivy.sarif"
+          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
           ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scount
@@ -410,7 +413,7 @@ jobs:
           image: ${{ steps.meta.outputs.tags }}
           ignore-base: true
           only-fixed: true
-          sarif-file: "${{ matrix.image }}-results/scout.sarif"
+          sarif-file: "${{ steps.directory.outputs.directory }}/scout.sarif"
           write-comment: false
           github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
           summary: true
@@ -418,13 +421,13 @@ jobs:
       - name: Upload Scan Results to Github Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: "${{ matrix.image }}-results"
-          path: "${{ matrix.image }}-results/"
+          name: "${{ steps.directory.outputs.directory }}"
+          path: "${{ steps.directory.outputs.directory }}/"
 
       - name: Upload Scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
         with:
-          sarif_file: "${{ matrix.image }}-results/"
+          sarif_file: "${{ steps.directory.outputs.directory }}/"
 
   scan-docker-plus:
     name: Scan Docker Plus
@@ -443,8 +446,11 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Make directory for security scan results
+        id: directory
         run: |
-          mkdir -p "${{ matrix.image }}-results/"
+          directory=${{ matrix.image }}-${{ matrix.target }}-results
+          echo "directory=${directory}" >> $GITHUB_OUTPUT
+          mkdir -p "${directory}"
 
       - name: Docker meta
         id: meta
@@ -479,7 +485,7 @@ jobs:
         with:
           image-ref: ${{ steps.meta.outputs.tags }}
           format: "sarif"
-          output: "${{ matrix.image }}-results/trivy.sarif"
+          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
           ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scount
@@ -496,7 +502,7 @@ jobs:
           image: ${{ steps.meta.outputs.tags }}
           ignore-base: true
           only-fixed: true
-          sarif-file: "${{ matrix.image }}-results/scout.sarif"
+          sarif-file: "${{ steps.directory.outputs.directory }}/scout.sarif"
           write-comment: false
           github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
           summary: true
@@ -504,13 +510,13 @@ jobs:
       - name: Upload Scan Results to Github Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: "${{ matrix.image }}-results"
-          path: "${{ matrix.image }}-results/"
+          name: "${{ steps.directory.outputs.directory }}"
+          path: "${{ steps.directory.outputs.directory }}/"
 
       - name: Upload Scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
         with:
-          sarif_file: "${{ matrix.image }}-results/"
+          sarif_file: "${{ steps.directory.outputs.directory }}/"
 
   scan-docker-nap:
     name: Scan Docker Plus + NAP WAF/DOS
@@ -529,8 +535,11 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Make directory for security scan results
+        id: directory
         run: |
-          mkdir -p "${{ matrix.image }}-results/"
+          directory=${{ matrix.image }}-${{ matrix.target }}-results
+          echo "directory=${directory}" >> $GITHUB_OUTPUT
+          mkdir -p "${directory}"
 
       - name: NAP modules
         id: nap_modules
@@ -574,7 +583,7 @@ jobs:
         with:
           image-ref: ${{ steps.meta.outputs.tags }}
           format: "sarif"
-          output: "${{ matrix.image }}-results/trivy.sarif"
+          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
           ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scount
@@ -591,7 +600,7 @@ jobs:
           image: ${{ steps.meta.outputs.tags }}
           ignore-base: true
           only-fixed: true
-          sarif-file: "${{ matrix.image }}-results/scout.sarif"
+          sarif-file: "${{ steps.directory.outputs.directory }}/scout.sarif"
           write-comment: false
           github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
           summary: true
@@ -599,10 +608,10 @@ jobs:
       - name: Upload Scan Results to Github Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          name: "${{ matrix.image }}-results"
-          path: "${{ matrix.image }}-results/"
+          name: "${{ steps.directory.outputs.directory }}"
+          path: "${{ steps.directory.outputs.directory }}/"
 
       - name: Upload Scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
         with:
-          sarif_file: "${{ matrix.image }}-results/"
+          sarif_file: "${{ steps.directory.outputs.directory }}/"
