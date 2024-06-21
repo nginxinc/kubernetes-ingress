@@ -46,6 +46,7 @@ jobs:
       stable_tag: ${{ steps.vars.outputs.stable_tag }}
       forked_workflow: ${{ steps.vars.outputs.forked_workflow }}
       stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
+      additional_tag: ${{ steps.vars.outputs.additional_tag }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -104,6 +105,13 @@ jobs:
           ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh build_tag >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh stable_tag >> $GITHUB_OUTPUT
+          ref=${{ github.ref_name }}
+          if [[ $ref =~ merge ]]; then
+            additional_tag="pr-${ref%*/merge}"
+          else
+            additional_tag="${ref//\//-}"
+          fi
+          echo "additional_tag=${additional_tag}" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Binary Artifacts
@@ -166,6 +174,7 @@ jobs:
           echo stable_tag: ${{ steps.vars.outputs.stable_tag }}
           echo forked_workflow: ${{ steps.vars.outputs.forked_workflow }}
           echo stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
+          echo additional_tag: ${{ steps.vars.outputs.additional_tag }}
 
   unit-tests:
     name: Unit Tests
@@ -410,6 +419,20 @@ jobs:
       id-token: write
       pull-requests: write # for scout report
     secrets: inherit
+
+  tag-target:
+    name: Tag untested image with PR number
+    needs: [checks, build-docker, build-docker-plus, build-docker-nap]
+    permissions:
+      contents: read # To checkout repository
+      id-token: write # To sign into Google Container Registry
+    uses: ./.github/workflows/retag-images.yml
+    with:
+      source_tag: ${{ needs.checks.outputs.build_tag }}
+      target_tag: ${{ needs.checks.outputs.additional_tag }}
+      dry_run: false
+    secrets: inherit
+    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
 
   helm-tests:
     if: ${{ needs.checks.outputs.docs_only != 'true' }}
