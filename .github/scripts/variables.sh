@@ -51,11 +51,11 @@ case $INPUT in
     ;;
 
   build_tag)
-    echo "build_tag=$(get_build_tag)"
+    echo "build_tag=t-$(get_build_tag)"
     ;;
 
   stable_tag)
-    echo "stable_tag=$(get_stable_tag)"
+    echo "stable_tag=s-$(get_stable_tag)"
     ;;
 
   *)
