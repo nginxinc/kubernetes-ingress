@@ -344,6 +344,9 @@ jobs:
     name: Scan Docker OSS
     runs-on: ubuntu-22.04
     needs: [checks]
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ !cancelled() && !failure() }}
     strategy:
       fail-fast: false
