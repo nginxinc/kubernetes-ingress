@@ -35,7 +35,6 @@ jobs:
     outputs:
       docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
-      latest_kindest_node_versions: ${{ steps.vars.outputs.latest_kindest_node_versions }}
       go_path: ${{ steps.vars.outputs.go_path }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
@@ -83,19 +82,6 @@ jobs:
             | sed 's/^.\{1\}//' \
             | tr -d '\n')
           echo "k8s_latest=$kindest_latest" >> $GITHUB_OUTPUT
-          kindest_versions=$(curl -s "https://hub.docker.com/v2/repositories/kindest/node/tags" \
-            | grep -o '"name": *"[^"]*' \
-            | grep -o '[^"]*$' \
-            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            | sort -rV \
-            | awk -F. '!seen[$1"."$2]++' \
-            | head -n 7 \
-            | sort -V \
-            | sed 's/v//g' \
-            | sed 's/$//' \
-            | sed 's/, $//' \
-            | jq -R -s -c 'split("\n")[:-1]')
-          echo "latest_kindest_node_versions=$kindest_versions" >> $GITHUB_OUTPUT
           echo "go_path=$(go env GOPATH)" >> $GITHUB_OUTPUT
           source .github/data/version.txt
           echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
@@ -163,7 +149,6 @@ jobs:
         run: |
           echo docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
           echo k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
-          echo latest_kindest_node_versions: ${{ steps.vars.outputs.latest_kindest_node_versions }}
           echo go_path: ${{ steps.vars.outputs.go_path }}
           echo go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
           echo binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
