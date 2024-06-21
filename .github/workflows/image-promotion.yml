@@ -543,20 +543,13 @@ jobs:
           echo "directory=${directory}" >> $GITHUB_OUTPUT
           mkdir -p "${directory}"
 
-      - name: NAP modules
-        id: nap_modules
-        run: |
-          [[ "${{ matrix.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ matrix.nap_modules }}"
-          echo "name=${name}" >> $GITHUB_OUTPUT
-        if: ${{ matrix.nap_modules != '' }}
-
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           context: workflow
           images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(steps.nap_modules.outputs.name, 'dos') && '-dos' || '' }}${{ contains(steps.nap_modules.outputs.name, 'waf') && '-nap' || '' }}${{ contains(steps.nap_modules.outputs.name, 'v5') && '-v5' || '' }}/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(matrix.nap_modules, 'dos') && '-dos' || '' }}${{ contains(matrix.nap_modules, 'waf') && '-nap' || '' }}${{ contains(matrix.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
           flavor: |
             suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }}${{ contains(matrix.image, 'fips') && '-fips' || ''}}
           tags: |
