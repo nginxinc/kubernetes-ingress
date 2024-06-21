@@ -108,7 +108,7 @@ Create the syslog service and pod for the NGINX App Protect WAF security logs:
 ### Step 3 - Deploy the WAF Policy
 
 
-{{< note >}}Configuration settings in the Policy resource enable WAF protection by configuring NGINX App Protect WAF with the log configuration created in the previous step. The policy bundle referenced as `your_policy_bundle_name.tgz` need to be created and placed in the `/etc/app_protect/bundles` volume first.{{</ note >}}
+{{< note >}} Configuration settings in the Policy resource enable WAF protection by configuring NGINX App Protect WAF with the log configuration created in the previous step. The policy bundle referenced as `your_policy_bundle_name.tgz` need to be created and placed in the `/etc/app_protect/bundles` volume first.{{</ note >}}
 
 Create and deploy the WAF policy.
 
@@ -120,7 +120,7 @@ Create and deploy the WAF policy.
 ### Step 4 - Configure Load Balancing
 
 
-{{< note >}}VirtualServer references the `waf-policy` created in Step 3.{{</ note >}}
+{{< note >}} VirtualServer references the `waf-policy` created in Step 3.{{</ note >}}
 
 1. Create the VirtualServer Resource:
 
