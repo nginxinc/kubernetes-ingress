@@ -531,7 +531,7 @@ jobs:
     if: ${{ !cancelled() && !failure() }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_nap ) }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
