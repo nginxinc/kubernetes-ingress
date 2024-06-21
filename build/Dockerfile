@@ -1,3 +1,4 @@
+# Please build, thanks
 # syntax=docker/dockerfile:1.6
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=R32
