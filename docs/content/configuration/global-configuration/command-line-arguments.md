@@ -81,13 +81,13 @@ Default `false`.
 
 ---
 
-### -include-year
+<!-- ### -include-year 
 
-Adds year to log headers.
+ Adds year to log headers.
 
 Default `false`.
 
-{{< note >}} This flag will be removed in release 3.7 and the year will be included by default. {{< /note >}}
+{{< note >}} This flag will be removed in release 3.7 and the year will be included by default. {{< /note >}} -->
 
 ---
 
