@@ -19,7 +19,7 @@ FROM golang:1.22-alpine@sha256:32c85006b1edf29c097514e0c81a33334aa1450685a885c10
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.27.0-alpine@sha256:d68d230c2c7f0b28c7e5f17ed66d521deeba23aa467568202af72f7f7f61cd94 AS alpine
+FROM nginx:1.27.0-alpine@sha256:5c0c2272256857e486cf9fe2983db41c0e14c72476f5ebedf474289fd9ca8627 AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
