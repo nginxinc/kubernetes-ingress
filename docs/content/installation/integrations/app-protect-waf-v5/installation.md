@@ -190,7 +190,7 @@ controller:
 
 ### Configuring volumes
 
-Weather you have created a new `PersistentVolume` and `PersistentVolumeClaim`, or you are referencing an existing `PersistentVolumeClaim`, update the `app-protect-bundles` volume to reference your `PersistentVolumeClaim`.
+Whether you have created a new `PersistentVolume` and `PersistentVolumeClaim`, or you are referencing an existing `PersistentVolumeClaim`, update the `app-protect-bundles` volume to reference your `PersistentVolumeClaim`.
 
 Example helm values:
 
@@ -206,6 +206,24 @@ controller:
         claimName: <my_claim_name>
 ...
 ```
+
+{{< note >}}
+By default, `emptyDirs` mounts are used.
+Bundles that are added to these kind of volume mounts will **NOT** persist across pod restarts.
+
+Example default volumes:
+```yaml
+...
+controller:
+  ...
+  appprotect:
+  ...
+   volumes:
+   - name: app-protect-bundles
+     emptyDir: {}
+...
+```
+{{< /note >}}
 
 {{%/tab%}}
 
