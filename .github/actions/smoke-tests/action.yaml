@@ -84,7 +84,7 @@ runs:
         --image-pull-policy=Never \
         --ic-type=nginx${{ contains(inputs.image-type, 'plus') && '-plus' || '' }}-ingress \
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
-        --html=$${{ steps.k8s.outputs.test_output_path }} \
+        --html=${{ steps.k8s.outputs.test_output_path }} \
         --self-contained-html \
         --durations=10 \
         --show-ic-logs=yes \
