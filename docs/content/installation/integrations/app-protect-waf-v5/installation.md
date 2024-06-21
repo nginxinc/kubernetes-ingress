@@ -122,14 +122,11 @@ docker push <my-docker-registry>/waf-config-mgr:<your-tag>
 docker push <my-docker-registry>/waf-enforcer:<your-tag>
 ```
 
----
-
 ## Set up role-based access control (RBAC) {#set-up-rbac}
 
 {{< include "rbac/set-up-rbac.md" >}}
 
 ---
-
 
 {{< include "installation/create-custom-resources.md" >}}
 
