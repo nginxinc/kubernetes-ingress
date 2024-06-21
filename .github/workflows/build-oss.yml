@@ -209,11 +209,3 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
           summary: true
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
-
-      - name: Upload Scan Results to the cache
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-        continue-on-error: true
-        with:
-          name: "${{ inputs.image }}-results"
-          path: "${{ inputs.image }}-results/"
-        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
