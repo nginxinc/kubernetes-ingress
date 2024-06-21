@@ -130,7 +130,7 @@ jobs:
           context: "."
           cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: common
-          tags: ${{ steps.images_exist.outputs.base_exists }}
+          tags: ${{ steps.images_exist.outputs.image }}
           platforms: ${{ inputs.platforms }}
           pull: true
           push: true
