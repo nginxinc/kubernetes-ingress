@@ -546,11 +546,9 @@ jobs:
       - name: NAP modules
         id: nap_modules
         run: |
-          [[ "${{ matrix.nap-modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ matrix.nap-modules }}"
-          [[ "${{ matrix.nap-modules }}" == "waf,dos" ]] && modules="both" || modules="${{ matrix.nap-modules }}"
-          echo "modules=${modules}" >> $GITHUB_OUTPUT
+          [[ "${{ matrix.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ matrix.nap_modules }}"
           echo "name=${name}" >> $GITHUB_OUTPUT
-        if: ${{ matrix.nap-modules != '' }}
+        if: ${{ matrix.nap_modules != '' }}
 
       - name: Docker meta
         id: meta
@@ -558,7 +556,7 @@ jobs:
         with:
           context: workflow
           images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(matrix.nap-modules, 'dos') && '-dos' || '' }}${{ contains(matrix.nap-modules, 'waf') && '-nap' || '' }}${{ contains(matrix.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(steps.nap_modules.outputs.name, 'dos') && '-dos' || '' }}${{ contains(steps.nap_modules.outputs.name, 'waf') && '-nap' || '' }}${{ contains(steps.nap_modules.outputs.name, 'v5') && '-v5' || '' }}/nginx-plus-ingress
           flavor: |
             suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }}${{ contains(matrix.image, 'fips') && '-fips' || ''}}
           tags: |
