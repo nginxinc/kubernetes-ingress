@@ -229,7 +229,7 @@ jobs:
           summary: true
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
-      - name: Upload Scan Results to the cache
+      - name: Upload Scan Results to Github Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         continue-on-error: true
         with:

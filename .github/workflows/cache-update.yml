@@ -21,6 +21,9 @@ jobs:
     outputs:
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       docker_md5: ${{ steps.vars.outputs.docker_md5 }}
+      image_matrix_oss: ${{ steps.vars.outputs.image_matrix_oss }}
+      image_matrix_plus: ${{ steps.vars.outputs.image_matrix_plus }}
+      image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -30,7 +33,9 @@ jobs:
         run: |
           ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
-          source .github/data/version.txt
+          echo "image_matrix_oss=$(cat .github/data/matrix-images-oss.json | jq -c)" >> $GITHUB_OUTPUT
+          echo "image_matrix_plus=$(cat .github/data/matrix-images-plus.json | jq -c)" >> $GITHUB_OUTPUT
+          echo "image_matrix_nap=$(cat .github/data/matrix-images-nap.json | jq -c)" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   build-docker:
@@ -38,13 +43,7 @@ jobs:
     needs: [checks]
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian, alpine]
-        platforms:
-          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
-        include:
-          - image: ubi
-            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_oss ) }}
     uses: ./.github/workflows/build-oss.yml
     with:
       platforms: ${{ matrix.platforms }}
@@ -68,14 +67,7 @@ jobs:
     needs: [checks]
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian-plus, alpine-plus, alpine-plus-fips]
-        platforms: ["linux/arm64, linux/amd64"]
-        target: [goreleaser, aws]
-        include:
-          - image: ubi-plus
-            platforms: "linux/arm64, linux/amd64, linux/s390x"
-            target: goreleaser
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
@@ -98,56 +90,7 @@ jobs:
     needs: [checks]
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian-plus-nap]
-        platforms: ["linux/amd64"]
-        target: [goreleaser, aws]
-        nap_modules: [dos, waf, "waf,dos"]
-        include:
-          - image: ubi-9-plus-nap
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: ubi-8-plus-nap
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: dos
-          - image: ubi-8-plus-nap
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: "waf,dos"
-          - image: ubi-9-plus-nap
-            target: aws
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: ubi-8-plus-nap
-            target: aws
-            platforms: "linux/amd64"
-            nap_modules: dos
-          - image: ubi-8-plus-nap
-            target: aws
-            platforms: "linux/amd64"
-            nap_modules: "waf,dos"
-          - image: alpine-plus-nap-fips
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: alpine-plus-nap-v5-fips
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: debian-plus-nap-v5
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: ubi-9-plus-nap-v5
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: ubi-8-plus-nap-v5
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_nap ) }}
     uses: ./.github/workflows/build-plus.yml
     with:
       platforms: ${{ matrix.platforms }}
