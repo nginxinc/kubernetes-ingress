@@ -11,7 +11,6 @@ on:
     branches:
       - main
       - release-*
-      - scout-on-main
   workflow_call:
 
 defaults:
@@ -111,239 +110,239 @@ jobs:
           echo stable_tag: ${{ steps.vars.outputs.stable_tag }}
           echo stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
 
-  # binaries:
-  #   name: Build Binaries
-  #   runs-on: ubuntu-22.04
-  #   needs: [checks]
-  #   permissions:
-  #     contents: read
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+  binaries:
+    name: Build Binaries
+    runs-on: ubuntu-22.04
+    needs: [checks]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-  #     - name: Setup Golang Environment
-  #       uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
-  #       with:
-  #         go-version-file: go.mod
-  #       if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+      - name: Setup Golang Environment
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+        with:
+          go-version-file: go.mod
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-  #     - name: Build binaries
-  #       uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
-  #       with:
-  #         version: latest
-  #         args: build --snapshot --clean
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         GOPATH: ${{ needs.checks.outputs.go_path }}
-  #         AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
-  #         AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
-  #         AWS_NAP_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_DOS_PRODUCT_CODE }}
-  #         AWS_NAP_DOS_PUB_KEY: ${{ secrets.AWS_NAP_DOS_PUB_KEY }}
-  #         AWS_NAP_WAF_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_PRODUCT_CODE }}
-  #         AWS_NAP_WAF_PUB_KEY: ${{ secrets.AWS_NAP_WAF_PUB_KEY }}
-  #         AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
-  #         AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
-  #         GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
-  #       if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+      - name: Build binaries
+        uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
+        with:
+          version: latest
+          args: build --snapshot --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: ${{ needs.checks.outputs.go_path }}
+          AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
+          AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
+          AWS_NAP_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_DOS_PRODUCT_CODE }}
+          AWS_NAP_DOS_PUB_KEY: ${{ secrets.AWS_NAP_DOS_PUB_KEY }}
+          AWS_NAP_WAF_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_PRODUCT_CODE }}
+          AWS_NAP_WAF_PUB_KEY: ${{ secrets.AWS_NAP_WAF_PUB_KEY }}
+          AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
+          AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
+          GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-  #     - name: Store Artifacts in Cache
-  #       uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-  #       with:
-  #         path: ${{ github.workspace }}/dist
-  #         key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
-  #       if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+      - name: Store Artifacts in Cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-  # build-docker:
-  #   if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
-  #   name: Build Docker OSS
-  #   needs: [checks, binaries]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_oss ) }}
-  #   uses: ./.github/workflows/build-oss.yml
-  #   with:
-  #     platforms: ${{ matrix.platforms }}
-  #     image: ${{ matrix.image }}
-  #     go-md5: ${{ needs.checks.outputs.go_code_md5 }}
-  #     base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-  #     authenticated: true
-  #     tag: ${{ needs.checks.outputs.build_tag }}
-  #     branch: ${{ github.ref }}
-  #   permissions:
-  #     contents: read
-  #     actions: read
-  #     security-events: write
-  #     id-token: write
-  #     packages: write
-  #     pull-requests: write # for scout report
-  #   secrets: inherit
+  build-docker:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Build Docker OSS
+    needs: [checks, binaries]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_oss ) }}
+    uses: ./.github/workflows/build-oss.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
+      authenticated: true
+      tag: ${{ needs.checks.outputs.build_tag }}
+      branch: ${{ github.ref }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
+      pull-requests: write # for scout report
+    secrets: inherit
 
-  # build-docker-plus:
-  #   if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
-  #   name: Build Docker Plus
-  #   needs: [checks, binaries]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
-  #   uses: ./.github/workflows/build-plus.yml
-  #   with:
-  #     platforms: ${{ matrix.platforms }}
-  #     image: ${{ matrix.image }}
-  #     target: ${{ matrix.target }}
-  #     go-md5: ${{ needs.checks.outputs.go_code_md5 }}
-  #     base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-  #     authenticated: true
-  #     tag: ${{ needs.checks.outputs.build_tag }}
-  #     branch: ${{ github.ref }}
-  #   permissions:
-  #     contents: read
-  #     actions: read
-  #     security-events: write
-  #     id-token: write
-  #     packages: write
-  #     pull-requests: write # for scout report
-  #   secrets: inherit
+  build-docker-plus:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Build Docker Plus
+    needs: [checks, binaries]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
+      authenticated: true
+      tag: ${{ needs.checks.outputs.build_tag }}
+      branch: ${{ github.ref }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
+      pull-requests: write # for scout report
+    secrets: inherit
 
-  # build-docker-nap:
-  #   if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
-  #   name: Build Docker NAP
-  #   needs: [checks, binaries]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_nap ) }}
-  #   uses: ./.github/workflows/build-plus.yml
-  #   with:
-  #     platforms: ${{ matrix.platforms }}
-  #     image: ${{ matrix.image }}
-  #     target: ${{ matrix.target }}
-  #     go-md5: ${{ needs.checks.outputs.go_code_md5 }}
-  #     base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-  #     nap-modules: ${{ matrix.nap_modules }}
-  #     authenticated: true
-  #     tag: ${{ needs.checks.outputs.build_tag }}
-  #     branch: ${{ github.ref }}
-  #   permissions:
-  #     contents: read
-  #     actions: read
-  #     security-events: write
-  #     id-token: write
-  #     packages: write
-  #     pull-requests: write # for scout report
-  #   secrets: inherit
+  build-docker-nap:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Build Docker NAP
+    needs: [checks, binaries]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_nap ) }}
+    uses: ./.github/workflows/build-plus.yml
+    with:
+      platforms: ${{ matrix.platforms }}
+      image: ${{ matrix.image }}
+      target: ${{ matrix.target }}
+      go-md5: ${{ needs.checks.outputs.go_code_md5 }}
+      base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
+      nap-modules: ${{ matrix.nap_modules }}
+      authenticated: true
+      tag: ${{ needs.checks.outputs.build_tag }}
+      branch: ${{ github.ref }}
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+      packages: write
+      pull-requests: write # for scout report
+    secrets: inherit
 
-  # tag-stable:
-  #   if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
-  #   name: Tag build image as stable
-  #   needs: [checks, build-docker, build-docker-plus, build-docker-nap]
-  #   permissions:
-  #     contents: read # To checkout repository
-  #     id-token: write # To sign into Google Container Registry
-  #   uses: ./.github/workflows/retag-images.yml
-  #   with:
-  #     source_tag: ${{ needs.checks.outputs.build_tag }}
-  #     target_tag: ${{ needs.checks.outputs.stable_tag }}
-  #     dry_run: false
-  #   secrets: inherit
+  tag-stable:
+    if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
+    name: Tag build image as stable
+    needs: [checks, build-docker, build-docker-plus, build-docker-nap]
+    permissions:
+      contents: read # To checkout repository
+      id-token: write # To sign into Google Container Registry
+    uses: ./.github/workflows/retag-images.yml
+    with:
+      source_tag: ${{ needs.checks.outputs.build_tag }}
+      target_tag: ${{ needs.checks.outputs.stable_tag }}
+      dry_run: false
+    secrets: inherit
 
-  # tag-candidate:
-  #   # pushes edge or release images to gcr/dev
-  #   # for main: this keeps a copy of edge in gcr/dev
-  #   # for release-*: this stages a release candidate in gcr/dev which can be used for release promotion
-  #   name: Tag tested image as stable
-  #   needs:
-  #     - checks
-  #     - build-docker
-  #     - build-docker-plus
-  #     - build-docker-nap
-  #     - tag-stable
-  #   permissions:
-  #     contents: read # To checkout repository
-  #     id-token: write # To sign into Google Container Registry
-  #   uses: ./.github/workflows/retag-images.yml
-  #   with:
-  #     source_tag: ${{ needs.checks.outputs.stable_tag }}
-  #     target_tag: ${{ github.ref_name == github.event.repository.default_branch && 'edge' || github.ref_name }}
-  #     dry_run: false
-  #   secrets: inherit
-  #   if: ${{ !cancelled() && !failure() }}
+  tag-candidate:
+    # pushes edge or release images to gcr/dev
+    # for main: this keeps a copy of edge in gcr/dev
+    # for release-*: this stages a release candidate in gcr/dev which can be used for release promotion
+    name: Tag tested image as stable
+    needs:
+      - checks
+      - build-docker
+      - build-docker-plus
+      - build-docker-nap
+      - tag-stable
+    permissions:
+      contents: read # To checkout repository
+      id-token: write # To sign into Google Container Registry
+    uses: ./.github/workflows/retag-images.yml
+    with:
+      source_tag: ${{ needs.checks.outputs.stable_tag }}
+      target_tag: ${{ github.ref_name == github.event.repository.default_branch && 'edge' || github.ref_name }}
+      dry_run: false
+    secrets: inherit
+    if: ${{ !cancelled() && !failure() }}
 
-  # release-oss:
-  #   # pushes edge images to docker hub
-  #   if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
-  #   name: Release Docker OSS
-  #   needs: [checks, build-docker]
-  #   uses: ./.github/workflows/oss-release.yml
-  #   with:
-  #     gcr_release_registry: false
-  #     ecr_public_registry: true
-  #     dockerhub_public_registry: true
-  #     quay_public_registry: true
-  #     github_public_registry: true
-  #     source_tag: ${{ needs.checks.outputs.stable_tag }}
-  #     target_tag: "edge"
-  #     dry_run: false
-  #   permissions:
-  #     contents: read
-  #     id-token: write
-  #     packages: write
-  #   secrets: inherit
+  release-oss:
+    # pushes edge images to docker hub
+    if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
+    name: Release Docker OSS
+    needs: [checks, build-docker]
+    uses: ./.github/workflows/oss-release.yml
+    with:
+      gcr_release_registry: false
+      ecr_public_registry: true
+      dockerhub_public_registry: true
+      quay_public_registry: true
+      github_public_registry: true
+      source_tag: ${{ needs.checks.outputs.stable_tag }}
+      target_tag: "edge"
+      dry_run: false
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    secrets: inherit
 
-  # release-plus:
-  #   # pushes plus edge images to nginx registry
-  #   if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
-  #   name: Release Docker Plus
-  #   needs: [checks, build-docker-plus, build-docker-nap]
-  #   uses: ./.github/workflows/plus-release.yml
-  #   with:
-  #     nginx_registry: true
-  #     gcr_release_registry: false
-  #     gcr_mktpl_registry: false
-  #     ecr_mktpl_registry: false
-  #     az_mktpl_registry: false
-  #     source_tag: ${{ needs.checks.outputs.stable_tag }}
-  #     target_tag: "edge"
-  #     dry_run: false
-  #   permissions:
-  #     contents: read
-  #     id-token: write
-  #   secrets: inherit
+  release-plus:
+    # pushes plus edge images to nginx registry
+    if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
+    name: Release Docker Plus
+    needs: [checks, build-docker-plus, build-docker-nap]
+    uses: ./.github/workflows/plus-release.yml
+    with:
+      nginx_registry: true
+      gcr_release_registry: false
+      gcr_mktpl_registry: false
+      ecr_mktpl_registry: false
+      az_mktpl_registry: false
+      source_tag: ${{ needs.checks.outputs.stable_tag }}
+      target_tag: "edge"
+      dry_run: false
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
 
-  # publish-helm-chart:
-  #   if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
-  #   name: Publish Helm Chart
-  #   needs: [checks]
-  #   uses: ./.github/workflows/publish-helm.yml
-  #   with:
-  #     branch: ${{ github.ref_name }}
-  #     ic_version: edge
-  #     chart_version: 0.0.0-edge
-  #     nginx_helm_repo: false
-  #   permissions:
-  #     contents: write # for pushing to Helm Charts repository
-  #     packages: write # for helm to push to GHCR
-  #   secrets: inherit
+  publish-helm-chart:
+    if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
+    name: Publish Helm Chart
+    needs: [checks]
+    uses: ./.github/workflows/publish-helm.yml
+    with:
+      branch: ${{ github.ref_name }}
+      ic_version: edge
+      chart_version: 0.0.0-edge
+      nginx_helm_repo: false
+    permissions:
+      contents: write # for pushing to Helm Charts repository
+      packages: write # for helm to push to GHCR
+    secrets: inherit
 
-  # certify-openshift-images:
-  #   if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
-  #   name: Certify OpenShift UBI images
-  #   runs-on: ubuntu-22.04
-  #   needs: [release-oss]
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+  certify-openshift-images:
+    if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
+    name: Certify OpenShift UBI images
+    runs-on: ubuntu-22.04
+    needs: [release-oss]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-  #     - name: Certify UBI OSS images in quay
-  #       uses: ./.github/actions/certify-openshift-image
-  #       continue-on-error: true
-  #       with:
-  #         image: quay.io/nginx/nginx-ingress:edge-ubi
-  #         project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
-  #         pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
+      - name: Certify UBI OSS images in quay
+        uses: ./.github/actions/certify-openshift-image
+        continue-on-error: true
+        with:
+          image: quay.io/nginx/nginx-ingress:edge-ubi
+          project_id: ${{ secrets.CERTIFICATION_PROJECT_ID }}
+          pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
 
   scan-docker-oss:
     name: Scan Docker OSS
     runs-on: ubuntu-22.04
-    needs: [checks]
+    needs: [checks, tag-candidate]
     permissions:
       contents: read
       id-token: write
@@ -370,7 +369,188 @@ jobs:
           flavor: |
             suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}
           tags: |
-            type=raw,value=edge
+            type=raw,value=${{ github.ref_name == github.event.repository.default_branch && 'edge' || github.ref_name }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # 0.23.0
+        continue-on-error: true
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: "sarif"
+          output: "${{ matrix.image }}-results/trivy.sarif"
+          ignore-unfixed: "true"
+
+      - name: DockerHub Login for Docker Scount
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Run Docker Scout vulnerability scanner
+        id: docker-scout
+        uses: docker/scout-action@fc749439af4870e8f6feb592250ab728600d10a6 # v1.10.0
+        with:
+          command: cves,recommendations
+          image: ${{ steps.meta.outputs.tags }}
+          ignore-base: true
+          only-fixed: true
+          sarif-file: "${{ matrix.image }}-results/scout.sarif"
+          write-comment: false
+          github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
+          summary: true
+
+      - name: Upload Scan Results to Github Artifacts
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: "${{ matrix.image }}-results"
+          path: "${{ matrix.image }}-results/"
+
+      - name: Upload Scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
+        with:
+          sarif_file: "${{ matrix.image }}-results/"
+
+  scan-docker-plus:
+    name: Scan Docker Plus
+    runs-on: ubuntu-22.04
+    needs: [checks, tag-candidate]
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+    if: ${{ !cancelled() && !failure() }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Make directory for security scan results
+        run: |
+          mkdir -p "${{ matrix.image }}-results/"
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        with:
+          context: workflow
+          images: |
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
+          flavor: |
+            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }}${{ contains(matrix.image, 'fips') && '-fips' || ''}}
+          tags: |
+            type=raw,value=${{ github.ref_name == github.event.repository.default_branch && 'edge' || github.ref_name }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # 0.23.0
+        continue-on-error: true
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: "sarif"
+          output: "${{ matrix.image }}-results/trivy.sarif"
+          ignore-unfixed: "true"
+
+      - name: DockerHub Login for Docker Scount
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Run Docker Scout vulnerability scanner
+        id: docker-scout
+        uses: docker/scout-action@fc749439af4870e8f6feb592250ab728600d10a6 # v1.10.0
+        with:
+          command: cves,recommendations
+          image: ${{ steps.meta.outputs.tags }}
+          ignore-base: true
+          only-fixed: true
+          sarif-file: "${{ matrix.image }}-results/scout.sarif"
+          write-comment: false
+          github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
+          summary: true
+
+      - name: Upload Scan Results to Github Artifacts
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: "${{ matrix.image }}-results"
+          path: "${{ matrix.image }}-results/"
+
+      - name: Upload Scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
+        with:
+          sarif_file: "${{ matrix.image }}-results/"
+
+  scan-docker-nap:
+    name: Scan Docker Plus + NAP WAF/DOS
+    runs-on: ubuntu-22.04
+    needs: [checks, tag-candidate]
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+    if: ${{ !cancelled() && !failure() }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Make directory for security scan results
+        run: |
+          mkdir -p "${{ matrix.image }}-results/"
+
+      - name: NAP modules
+        id: nap_modules
+        run: |
+          [[ "${{ matrix.nap-modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ matrix.nap-modules }}"
+          [[ "${{ matrix.nap-modules }}" == "waf,dos" ]] && modules="both" || modules="${{ matrix.nap-modules }}"
+          echo "modules=${modules}" >> $GITHUB_OUTPUT
+          echo "name=${name}" >> $GITHUB_OUTPUT
+        if: ${{ matrix.nap-modules != '' }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        with:
+          context: workflow
+          images: |
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(matrix.nap-modules, 'dos') && '-dos' || '' }}${{ contains(matrix.nap-modules, 'waf') && '-nap' || '' }}${{ contains(matrix.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
+          flavor: |
+            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }}${{ contains(matrix.image, 'fips') && '-fips' || ''}}
+          tags: |
+            type=raw,value=${{ github.ref_name == github.event.repository.default_branch && 'edge' || github.ref_name }}
 
       - name: Authenticate to Google Cloud
         id: auth
