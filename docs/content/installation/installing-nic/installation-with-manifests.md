@@ -33,9 +33,19 @@ Clone the NGINX Ingress Controller repository using the command shown below, and
 git clone https://github.com/nginxinc/kubernetes-ingress.git --branch <version_number>
 ```
 
-For example, if you want to use version 3.5.0, the command would be `git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.0`.
+For example, if you want to use version 3.5.2, the command would be `git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.5.2`.
 
 This guide assumes you are using the latest release.
+
+Change the active directory.
+
+```shell
+cd kubernetes-ingress
+```
+
+### App Protect DoS
+
+To use App Protect DoS, install the App Protect DoS Arbitrator using the provided manifests in the same namespace as the NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
 
 ---
 
@@ -64,7 +74,7 @@ This guide assumes you are using the latest release.
 1. Create CRDs for [VirtualServer and VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md" >}}), [TransportServer]({{< relref "configuration/transportserver-resource.md" >}}), [Policy]({{< relref "configuration/policy-resource.md" >}}) and [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}):
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/deploy/crds.yaml
     ```
 
 ### Optional custom resource definitions
@@ -72,13 +82,13 @@ This guide assumes you are using the latest release.
 1. For the NGINX App Protect WAF module, create CRDs for `APPolicy`, `APLogConf` and `APUserSig`:
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds-nap-waf.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/deploy/crds-nap-waf.yaml
     ```
 
 2. For the NGINX App Protect DoS module, create CRDs for `APDosPolicy`, `APDosLogConf` and `DosProtectedResource`:
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds-nap-dos.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/deploy/crds-nap-dos.yaml
     ```
 
 {{%/tab%}}
@@ -257,17 +267,17 @@ Connect to ports 80 and 443 using the IP address of any node in the cluster wher
 
    1. Delete core custom resource definitions:
     ```shell
-    kubectl delete -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds.yaml
+    kubectl delete -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/deploy/crds.yaml
     ```
    2. Delete custom resource definitions for the NGINX App Protect WAF module:
 
    ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds-nap-waf.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/deploy/crds-nap-waf.yaml
     ```
 
    3. Delete custom resource definitions for the NGINX App Protect DoS module:
    ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.0/deploy/crds-nap-dos.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/deploy/crds-nap-dos.yaml
     ```
    {{%/tab%}}
 

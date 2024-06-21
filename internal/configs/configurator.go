@@ -31,7 +31,6 @@ import (
 
 const (
 	pemFileNameForWildcardTLSSecret = "/etc/nginx/secrets/wildcard" // #nosec G101
-	appProtectBundleFolder          = "/etc/nginx/waf/bundles/"
 	appProtectPolicyFolder          = "/etc/nginx/waf/nac-policies/"
 	appProtectLogConfFolder         = "/etc/nginx/waf/nac-logconfs/"
 	appProtectUserSigFolder         = "/etc/nginx/waf/nac-usersigs/"
@@ -136,6 +135,7 @@ type Configurator struct {
 	isLatencyMetricsEnabled   bool
 	isReloadsEnabled          bool
 	isDynamicSSLReloadEnabled bool
+	ingressControllerReplicas int
 }
 
 // ConfiguratorParams is a collection of parameters used for the
@@ -391,15 +391,16 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (bool, Warnings, e
 
 	isMinion := false
 	nginxCfg, warnings := generateNginxCfg(NginxCfgParams{
-		staticParams:         cnf.staticCfgParams,
-		ingEx:                ingEx,
-		apResources:          apResources,
-		dosResource:          dosResource,
-		isMinion:             isMinion,
-		isPlus:               cnf.isPlus,
-		baseCfgParams:        cnf.cfgParams,
-		isResolverConfigured: cnf.IsResolverConfigured(),
-		isWildcardEnabled:    cnf.isWildcardEnabled,
+		staticParams:              cnf.staticCfgParams,
+		ingEx:                     ingEx,
+		apResources:               apResources,
+		dosResource:               dosResource,
+		isMinion:                  isMinion,
+		isPlus:                    cnf.isPlus,
+		baseCfgParams:             cnf.cfgParams,
+		isResolverConfigured:      cnf.IsResolverConfigured(),
+		isWildcardEnabled:         cnf.isWildcardEnabled,
+		ingressControllerReplicas: cnf.ingressControllerReplicas,
 	})
 
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
@@ -454,14 +455,15 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	}
 
 	nginxCfg, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
-		mergeableIngs:        mergeableIngs,
-		apResources:          apResources,
-		dosResource:          dosResource,
-		baseCfgParams:        cnf.cfgParams,
-		isPlus:               cnf.isPlus,
-		isResolverConfigured: cnf.IsResolverConfigured(),
-		staticParams:         cnf.staticCfgParams,
-		isWildcardEnabled:    cnf.isWildcardEnabled,
+		mergeableIngs:             mergeableIngs,
+		apResources:               apResources,
+		dosResource:               dosResource,
+		baseCfgParams:             cnf.cfgParams,
+		isPlus:                    cnf.isPlus,
+		isResolverConfigured:      cnf.IsResolverConfigured(),
+		staticParams:              cnf.staticCfgParams,
+		isWildcardEnabled:         cnf.isWildcardEnabled,
+		ingressControllerReplicas: cnf.ingressControllerReplicas,
 	})
 
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
@@ -607,6 +609,7 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled, nil)
+	vsc.IngressControllerReplicas = cnf.ingressControllerReplicas
 	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, apResources, dosResources)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
@@ -772,7 +775,7 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 		if err != nil {
 			return false, nil, err
 		}
-		return (changed || ptChanged), warnings, nil
+		return changed || ptChanged, warnings, nil
 	}
 	return changed, warnings, nil
 }
@@ -1548,104 +1551,56 @@ func (cnf *Configurator) GetIngressCounts() map[string]int {
 	return counters
 }
 
-// GetServiceCount returns the total number of unique services referenced by Ingresses, VS's, VSR's, and TS's
-func (cnf *Configurator) GetServiceCount() int {
-	setOfUniqueServices := make(map[string]bool)
-	cnf.addVSAndVSRServicesToSet(setOfUniqueServices)
-	cnf.addTSServicesToSet(setOfUniqueServices)
-	cnf.addIngressesServicesToSet(setOfUniqueServices)
-	return len(setOfUniqueServices)
-}
-
-// addVSAndVSRServicesToSet adds services from VirtualServers and VirtualServerRoutes to the set
-func (cnf *Configurator) addVSAndVSRServicesToSet(set map[string]bool) {
-	for _, vs := range cnf.virtualServers {
-		ns := vs.VirtualServer.Namespace
-		for _, upstream := range vs.VirtualServer.Spec.Upstreams {
-			svc := upstream.Service
-			addServiceToSet(set, ns, svc)
-
-			if upstream.Backup != "" {
-				addServiceToSet(set, ns, upstream.Backup)
-			}
-
-			if upstream.HealthCheck != nil && upstream.HealthCheck.GRPCService != "" {
-				addServiceToSet(set, ns, upstream.HealthCheck.GRPCService)
-			}
-		}
-
-		for _, vsr := range vs.VirtualServerRoutes {
-			ns := vsr.Namespace
-			for _, upstream := range vsr.Spec.Upstreams {
-				svc := upstream.Service
-				addServiceToSet(set, ns, svc)
-
-				if upstream.Backup != "" {
-					addServiceToSet(set, ns, upstream.Backup)
-				}
-
-				if upstream.HealthCheck != nil && upstream.HealthCheck.GRPCService != "" {
-					addServiceToSet(set, ns, upstream.HealthCheck.GRPCService)
-				}
-			}
-		}
+// GetIngressAnnotations returns a list of annotation keys set across all Ingress resources
+func (cnf *Configurator) GetIngressAnnotations() []string {
+	if cnf == nil || cnf.ingresses == nil {
+		return nil
 	}
-}
 
-// addTSServicesToSet adds services from TransportServers to the set
-func (cnf *Configurator) addTSServicesToSet(set map[string]bool) {
-	for _, ts := range cnf.transportServers {
-		ns := ts.TransportServer.Namespace
-		for _, upstream := range ts.TransportServer.Spec.Upstreams {
-			svc := upstream.Service
-			addServiceToSet(set, ns, svc)
+	annotationSet := make(map[string]bool)
+	annotationSet = cnf.getMinionIngressAnnotations(annotationSet)
+	annotationSet = cnf.getStandardIngressAnnotations(annotationSet)
 
-			if upstream.Backup != "" {
-				addServiceToSet(set, ns, upstream.Backup)
-			}
-
-		}
+	var annotations []string
+	for key := range annotationSet {
+		annotations = append(annotations, key)
 	}
+
+	return annotations
 }
 
-// addIngressesServicesToSet adds services from Ingresses to the set
-func (cnf *Configurator) addIngressesServicesToSet(set map[string]bool) {
+// getStandardIngressAnnotations returns a map of allowedAnnotations detected in Standard or Master Ingresses
+func (cnf *Configurator) getStandardIngressAnnotations(annotationSet map[string]bool) map[string]bool {
 	for _, ing := range cnf.ingresses {
-		cnf.addIngressServicesToSet(ing, set)
-	}
-	for _, mergeIngs := range cnf.mergeableIngresses {
-		cnf.addIngressServicesToSet(mergeIngs.Master, set)
-		for _, minion := range mergeIngs.Minions {
-			cnf.addIngressServicesToSet(minion, set)
-		}
-	}
-}
-
-// addIngressServicesToSet processes a single ingress and adds its services to the set
-func (cnf *Configurator) addIngressServicesToSet(ing *IngressEx, set map[string]bool) {
-	if ing == nil || ing.Ingress == nil {
-		return
-	}
-	ns := ing.Ingress.Namespace
-	if ing.Ingress.Spec.DefaultBackend != nil && ing.Ingress.Spec.DefaultBackend.Service != nil {
-		svc := ing.Ingress.Spec.DefaultBackend.Service.Name
-		addServiceToSet(set, ns, svc)
-	}
-	for _, rule := range ing.Ingress.Spec.Rules {
-		if rule.HTTP != nil {
-			for _, path := range rule.HTTP.Paths {
-				if path.Backend.Service != nil {
-					svc := path.Backend.Service.Name
-					addServiceToSet(set, ns, svc)
+		if ing != nil && ing.Ingress != nil && ing.Ingress.Annotations != nil {
+			for key := range ing.Ingress.Annotations {
+				for _, allowedAnnotationKey := range allowedAnnotationKeys {
+					if strings.Contains(key, allowedAnnotationKey) {
+						annotationSet[key] = true
+					}
 				}
 			}
 		}
 	}
+	return annotationSet
 }
 
-// Helper function to add services to the set
-func addServiceToSet(set map[string]bool, ns string, svc string) {
-	set[fmt.Sprintf("%s/%s", ns, svc)] = true
+// getMinionIngressAnnotations returns a map of allowedAnnotations detected in Minion Ingresses
+func (cnf *Configurator) getMinionIngressAnnotations(annotationSet map[string]bool) map[string]bool {
+	for _, ing := range cnf.mergeableIngresses {
+		for _, minionIng := range ing.Minions {
+			if minionIng != nil && minionIng.Ingress.Annotations != nil {
+				for key := range minionIng.Ingress.Annotations {
+					for _, allowedAnnotationKey := range allowedAnnotationKeys {
+						if strings.Contains(key, allowedAnnotationKey) {
+							annotationSet[key] = true
+						}
+					}
+				}
+			}
+		}
+	}
+	return annotationSet
 }
 
 // GetVirtualServerCounts returns the total count of
@@ -1938,6 +1893,9 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 	case secrets.SecretTypeOIDC:
 		// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
 		return ""
+	case secrets.SecretTypeAPIKey:
+		// APIKey ClientSecret is not required on the filesystem, it is written directly to the config file.
+		return ""
 	default:
 		return cnf.addOrUpdateTLSSecret(secret)
 	}
@@ -1956,4 +1914,15 @@ func (cnf *Configurator) DynamicSSLReloadEnabled() bool {
 // UpsertSplitClientsKeyVal upserts a key-value pair in a keyzal zone for weight changes without reloads.
 func (cnf *Configurator) UpsertSplitClientsKeyVal(zoneName, key, value string) {
 	cnf.nginxManager.UpsertSplitClientsKeyVal(zoneName, key, value)
+}
+
+// GetIngressControllerReplicas returns the number of ingresscontroller-replicas (previously stored via SetIngressControllerReplicas)
+func (cnf *Configurator) GetIngressControllerReplicas() int {
+	return cnf.ingressControllerReplicas
+}
+
+// SetIngressControllerReplicas sets the number of ingresscontroller-replicas
+// Is used for calculating ratelimits
+func (cnf *Configurator) SetIngressControllerReplicas(replicas int) {
+	cnf.ingressControllerReplicas = replicas
 }

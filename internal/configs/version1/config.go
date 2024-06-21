@@ -245,6 +245,8 @@ type MainConfig struct {
 	WorkerRlimitNofile                 string
 	WorkerShutdownTimeout              string
 	AppProtectLoadModule               bool
+	AppProtectV5LoadModule             bool
+	AppProtectV5EnforcerAddr           string
 	AppProtectFailureModeAction        string
 	AppProtectCompressedRequestsAction string
 	AppProtectCookieSeed               string

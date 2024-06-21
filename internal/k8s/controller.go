@@ -185,6 +185,7 @@ type NewLoadBalancerControllerInput struct {
 	DefaultServerSecret          string
 	AppProtectEnabled            bool
 	AppProtectDosEnabled         bool
+	AppProtectVersion            string
 	IsNginxPlus                  bool
 	IngressClass                 string
 	ExternalServiceName          string
@@ -217,6 +218,7 @@ type NewLoadBalancerControllerInput struct {
 	TelemetryReportingEndpoint   string
 	NICVersion                   string
 	DynamicWeightChangesReload   bool
+	InstallationFlags            []string
 }
 
 // NewLoadBalancerController creates a controller
@@ -364,6 +366,8 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			Period:              24 * time.Hour,
 			K8sClientReader:     input.KubeClient,
 			Version:             input.NICVersion,
+			AppProtectVersion:   input.AppProtectVersion,
+			InstallationFlags:   input.InstallationFlags,
 			GlobalConfiguration: lbc.watchGlobalConfiguration,
 			Configurator:        lbc.configurator,
 			SecretStore:         lbc.secretStore,
@@ -371,7 +375,9 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 				Namespace: os.Getenv("POD_NAMESPACE"),
 				Name:      os.Getenv("POD_NAME"),
 			},
-			Policies: lbc.getAllPolicies,
+			Policies:               lbc.getAllPolicies,
+			IsPlus:                 lbc.isNginxPlus,
+			CustomResourcesEnabled: lbc.areCustomResourcesEnabled,
 		}
 		collector, err := telemetry.NewCollector(
 			collectorConfig,
@@ -848,6 +854,11 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 	svcName := endpointSlice.Labels["kubernetes.io/service-name"]
 	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, svcName)
 
+	// check if this is the endpointslice for the controller's own service
+	if lbc.statusUpdater.namespace == endpointSlice.Namespace && lbc.statusUpdater.externalServiceName == svcName {
+		return lbc.updateNumberOfIngressControllerReplicas(*endpointSlice)
+	}
+
 	resourceExes := lbc.createExtendedResources(svcResource)
 
 	if len(resourceExes.IngressExes) > 0 {
@@ -905,6 +916,63 @@ func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
 	return resourcesFound
 }
 
+// finds the number of currently active endpoints for the service pointing at the ingresscontroller and updates all configs that depend on that number
+func (lbc *LoadBalancerController) updateNumberOfIngressControllerReplicas(controllerEndpointSlice discovery_v1.EndpointSlice) bool {
+	previous := lbc.configurator.GetIngressControllerReplicas()
+	current := countReadyEndpoints(controllerEndpointSlice)
+	found := false
+
+	if current != previous {
+		// number of active endpoints changed. Update configuration of all ingresses that depend on it
+		lbc.configurator.SetIngressControllerReplicas(len(controllerEndpointSlice.Endpoints))
+
+		// handle ingresses
+		resources := lbc.configuration.FindIngressesWithRatelimitScaling(controllerEndpointSlice.Namespace)
+		resourceExes := lbc.createExtendedResources(resources)
+		for _, ingress := range resourceExes.IngressExes {
+			found = true
+			_, err := lbc.configurator.AddOrUpdateIngress(ingress)
+			if err != nil {
+				glog.Errorf("Error updating ratelimit for Ingress %s/%s: %s", ingress.Ingress.Namespace, ingress.Ingress.Name, err)
+			}
+		}
+		for _, ingress := range resourceExes.MergeableIngresses {
+			found = true
+			_, err := lbc.configurator.AddOrUpdateMergeableIngress(ingress)
+			if err != nil {
+				glog.Errorf("Error updating ratelimit for Ingress %s/%s: %s", ingress.Master.Ingress.Namespace, ingress.Master.Ingress.Name, err)
+			}
+		}
+
+		// handle virtualservers
+		if lbc.areCustomResourcesEnabled {
+			resources = lbc.findVirtualServersUsingRatelimitScaling()
+			resourceExes = lbc.createExtendedResources(resources)
+			for _, vserver := range resourceExes.VirtualServerExes {
+				found = true
+				_, err := lbc.configurator.AddOrUpdateVirtualServer(vserver)
+				if err != nil {
+					glog.Errorf("Error updating ratelimit for VirtualServer %s/%s: %s", vserver.VirtualServer.Namespace, vserver.VirtualServer.Name, err)
+				}
+			}
+		}
+
+	}
+	return found
+}
+
+func (lbc *LoadBalancerController) findVirtualServersUsingRatelimitScaling() []Resource {
+	policies := lbc.getAllPolicies()
+	resources := make([]Resource, 0, len(policies))
+	for _, policy := range policies {
+		if policy.Spec.RateLimit != nil && policy.Spec.RateLimit.Scale {
+			newresources := lbc.configuration.FindResourcesForPolicy(policy.Namespace, policy.Name)
+			resources = append(resources, newresources...)
+		}
+	}
+	return resources
+}
+
 func (lbc *LoadBalancerController) virtualServerRequiresEndpointsUpdate(vsEx *configs.VirtualServerEx, serviceName string) bool {
 	for _, upstream := range vsEx.VirtualServer.Spec.Upstreams {
 		if upstream.Service == serviceName && !upstream.UseClusterIP {
@@ -960,6 +1028,17 @@ func (lbc *LoadBalancerController) mergeableIngressRequiresEndpointsUpdate(merge
 	}
 
 	return lbc.ingressRequiresEndpointsUpdate(masterIngress, serviceName)
+}
+
+// countReadyEndpoints returns the number of ready endpoints in this endpointslice
+func countReadyEndpoints(slice discovery_v1.EndpointSlice) int {
+	count := 0
+	for _, endpoint := range slice.Endpoints {
+		if endpoint.Conditions.Ready != nil && *endpoint.Conditions.Ready {
+			count = count + 1
+		}
+	}
+	return count
 }
 
 func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) configs.ExtendedResources {
@@ -3165,6 +3244,10 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	if err != nil {
 		glog.Warningf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
+	err = lbc.addAPIKeySecretRefs(virtualServerEx.SecretRefs, policies)
+	if err != nil {
+		glog.Warningf("Error getting APIKey secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+	}
 
 	err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, policies)
 	if err != nil {
@@ -3288,6 +3371,12 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		if err != nil {
 			glog.Warningf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 		}
+
+		err = lbc.addAPIKeySecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
+		if err != nil {
+			glog.Warningf("Error getting APIKey secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		}
+
 	}
 
 	for _, vsr := range virtualServerRoutes {
@@ -3316,6 +3405,11 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
 			if err != nil {
 				glog.Warningf("Error getting OIDC secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+			}
+
+			err = lbc.addAPIKeySecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
+			if err != nil {
+				glog.Warningf("Error getting APIKey secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
 
 			err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, vsrSubroutePolicies)
@@ -3571,6 +3665,25 @@ func (lbc *LoadBalancerController) addOIDCSecretRefs(secretRefs map[string]*secr
 	return nil
 }
 
+func (lbc *LoadBalancerController) addAPIKeySecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
+	for _, pol := range policies {
+		if pol.Spec.APIKey == nil {
+			continue
+		}
+
+		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.APIKey.ClientSecret)
+		secretRef := lbc.secretStore.GetSecret(secretKey)
+
+		secretRefs[secretKey] = secretRef
+
+		if secretRef.Error != nil {
+			return secretRef.Error
+		}
+
+	}
+	return nil
+}
+
 // addWAFPolicyRefs ensures the app protect resources that are referenced in policies exist.
 func (lbc *LoadBalancerController) addWAFPolicyRefs(
 	apPolRef, logConfRef map[string]*unstructured.Unstructured,
@@ -3648,6 +3761,8 @@ func findPoliciesForSecret(policies []*conf_v1.Policy, secretNamespace string, s
 		} else if pol.Spec.EgressMTLS != nil && pol.Spec.EgressMTLS.TrustedCertSecret == secretName && pol.Namespace == secretNamespace {
 			res = append(res, pol)
 		} else if pol.Spec.OIDC != nil && pol.Spec.OIDC.ClientSecret == secretName && pol.Namespace == secretNamespace {
+			res = append(res, pol)
+		} else if pol.Spec.APIKey != nil && pol.Spec.APIKey.ClientSecret == secretName && pol.Namespace == secretNamespace {
 			res = append(res, pol)
 		}
 	}

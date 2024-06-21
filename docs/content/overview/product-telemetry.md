@@ -1,23 +1,24 @@
 ---
-title: Product Telemetry
+title: Product telemetry
 toc: true
 weight: 500
 ---
 
-Learn why NGINX Ingress Controller collects telemetry, and understand how and what it gathers.
+Learn why, what and how F5 NGINX Ingress Controller collects telemetry.
+
+---
 
 ## Overview
 
-NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users.
-This data is used to triage development work, prioritizing features and functionality that will benefit the most people.
+NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users. This data is used to triage development work, prioritizing features and functionality that will benefit the most people.
 
 Product telemetry is enabled by default, collected once every 24 hours. It's then sent to a service managed by F5 over HTTPS.
 
-{{< note >}}
-If you would prefer to avoid sending any telemetry data, you can [opt-out](#opt-out) when installing NGINX Ingress Controller.
-{{< /note >}}
+{{< note >}} If you would prefer not to send any telemetry data, you can [opt-out](#opt-out) when installing NGINX Ingress Controller. {{< /note >}}
 
-## Data Collected
+---
+
+## Data collected
 
 These are the data points collected and reported by NGINX Ingress Controller:
 
@@ -34,11 +35,30 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **TransportServers** The number of TransportServer resources managed by NGINX Ingress Controller.
 - **Replicas** Number of Deployment replicas, or Daemonset instances.
 - **Secrets** Number of Secret resources managed by NGINX Ingress Controller.
-- **Services** Number of Services referenced by VirtualServers, VirtualServerRoutes, TransportServers and Ingresses.
-- **Ingresses** The number of Ingress resources managed by the NGINX Ingress Controller.
+- **ClusterIPServices** Number of ClusterIP Services managed by NGINX Ingress Controller.
+- **NodePortServices** Number of NodePort Services managed by NGINX Ingress Controller.
+- **LoadBalancerServices** Number of LoadBalancer Services managed by NGINX Ingress Controller.
+- **ExternalNameServices** Number of ExternalName Services managed by NGINX Ingress Controller.
+- **RegularIngressCount** The number of Regular Ingress resources managed by NGINX Ingress Controller.
+- **MasterIngressCount** The number of Master Ingress resources managed by NGINX Ingress Controller.
+- **MinionIngressCount** The number of Minion Ingress resources managed by NGINX Ingress Controller.
 - **IngressClasses** Number of Ingress Classes in the cluster.
-- **Policies** Number of policy resources managed by NGINX Ingress Controller
+- **IngressAnnotations** List of Ingress annotations managed by NGINX Ingress Controller
+- **AccessControlPolicies** Number of AccessControl policies.
+- **RateLimitPolicies** Number of RateLimit policies.
+- **APIKeyPolicies** Number of API Key Auth policies.
+- **JWTAuthPolicies** Number of JWTAuth policies.
+- **BasicAuthPolicies** Number of BasicAuth policies.
+- **IngressMTLSPolicies** Number of IngressMTLS policies.
+- **EgressMTLSPolicies** Number of EgressMTLS policies.
+- **OIDCPolicies** Number of OIDC policies.
+- **WAFPolicies** Number of WAF policies.
 - **GlobalConfiguration** Represents the use of a GlobalConfiguration resource.
+- **AppProtectVersion** The AppProtect version
+- **IsPlus** Represents whether NGINX is Plus or OSS
+- **InstallationFlags** List of command line arguments configured for NGINX Ingress Controller
+
+---
 
 ## Opt out
 
@@ -46,13 +66,15 @@ Product telemetry can be disabled when installing NGINX Ingress Controller.
 
 ### Helm
 
+When installing or upgrading NGINX Ingress Controller with Helm, set the `controller.telemetry.enable` option to `false`.
 
-When installing or upgrading NGINX Ingress Controller with Helm, set the `controller.telemetry.enable` option to `false`
 This can be set directly in the `values.yaml` file, or using the `--set` option
 
 ```shell
 helm upgrade --install ... --set controller.telemetry.enable=false
 ```
+
+---
 
 ### Manifests
 

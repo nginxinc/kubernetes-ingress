@@ -577,6 +577,7 @@ type PolicySpec struct {
 	EgressMTLS    *EgressMTLS    `json:"egressMTLS"`
 	OIDC          *OIDC          `json:"oidc"`
 	WAF           *WAF           `json:"waf"`
+	APIKey        *APIKey        `json:"apiKey"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -606,6 +607,7 @@ type RateLimit struct {
 	DryRun     *bool  `json:"dryRun"`
 	LogLevel   string `json:"logLevel"`
 	RejectCode *int   `json:"rejectCode"`
+	Scale      bool   `json:"scale"`
 }
 
 // JWTAuth holds JWT authentication configuration.
@@ -674,4 +676,16 @@ type SecurityLog struct {
 	ApLogConf   string `json:"apLogConf"`
 	ApLogBundle string `json:"apLogBundle"`
 	LogDest     string `json:"logDest"`
+}
+
+// APIKey defines an API Key policy.
+type APIKey struct {
+	SuppliedIn   *SuppliedIn `json:"suppliedIn"`
+	ClientSecret string      `json:"clientSecret"`
+}
+
+// SuppliedIn defines the locations API Key should be supplied in.
+type SuppliedIn struct {
+	Header []string `json:"header"`
+	Query  []string `json:"query"`
 }
