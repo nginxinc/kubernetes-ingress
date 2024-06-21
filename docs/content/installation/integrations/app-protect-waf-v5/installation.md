@@ -1,7 +1,5 @@
 ---
 docs: DOCS-000
-doctypes:
-- ''
 title: Build NGINX Ingress Controller with NGINX App Protect WAF v5
 toc: true
 weight: 100
