@@ -154,9 +154,9 @@ jobs:
           echo forked_workflow: ${{ steps.vars.outputs.forked_workflow }}
           echo stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
           echo additional_tag: ${{ steps.vars.outputs.additional_tag }}
-          echo image_matrix_oss: ${{ steps.vars.outputs.image_matrix_oss }}
-          echo image_matrix_plus: ${{ steps.vars.outputs.image_matrix_plus }}
-          echo image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}
+          echo 'image_matrix_oss: ${{ steps.vars.outputs.image_matrix_oss }}'
+          echo 'image_matrix_plus: ${{ steps.vars.outputs.image_matrix_plus }}'
+          echo 'image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}'
 
   verify-codegen:
     name: Verify generated code
