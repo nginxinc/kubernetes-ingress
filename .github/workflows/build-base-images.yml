@@ -25,9 +25,12 @@ jobs:
     outputs:
       docker_md5: ${{ steps.vars.outputs.docker_md5 }}
       ic_version: ${{ steps.vars.outputs.ic_version }}
+      image_matrix_oss: ${{ steps.vars.outputs.image_matrix_oss }}
+      image_matrix_plus: ${{ steps.vars.outputs.image_matrix_plus }}
+      image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Output Variables
         id: vars
@@ -35,6 +38,9 @@ jobs:
           ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
           source .github/data/version.txt
           echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
+          echo "image_matrix_oss=$(cat .github/data/matrix-images-oss.json | jq -c)" >> $GITHUB_OUTPUT
+          echo "image_matrix_plus=$(cat .github/data/matrix-images-plus.json | jq -c)" >> $GITHUB_OUTPUT
+          echo "image_matrix_nap=$(cat .github/data/matrix-images-nap.json | jq -c)" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   build-oss:
@@ -46,16 +52,10 @@ jobs:
       pull-requests: write # for scout report
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian, alpine]
-        platforms:
-          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
-        include:
-          - image: ubi
-            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_oss ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
@@ -92,7 +92,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
         with:
           file: build/Dockerfile
           context: "."
@@ -116,15 +116,10 @@ jobs:
       pull-requests: write # for scout report
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian-plus, alpine-plus, alpine-plus-fips]
-        platforms: ["linux/arm64, linux/amd64"]
-        include:
-          - image: ubi-plus
-            platforms: "linux/arm64, linux/amd64, linux/s390x"
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
@@ -161,7 +156,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
         with:
           file: build/Dockerfile
           context: "."
@@ -188,42 +183,10 @@ jobs:
       pull-requests: write # for scout report
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian-plus-nap]
-        platforms: ["linux/amd64"]
-        nap_modules: [dos, waf, "waf,dos"]
-        include:
-          - image: ubi-9-plus-nap
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: ubi-8-plus-nap
-            platforms: "linux/amd64"
-            nap_modules: dos
-          - image: ubi-8-plus-nap
-            platforms: "linux/amd64"
-            nap_modules: "waf,dos"
-          - image: alpine-plus-nap-fips
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: alpine-plus-nap-v5-fips
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: debian-plus-nap-v5
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: ubi-9-plus-nap-v5
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: ubi-8-plus-nap-v5
-            target: goreleaser
-            platforms: "linux/amd64"
-            nap_modules: waf
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_nap ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
@@ -262,7 +225,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
         with:
           file: build/Dockerfile
           context: "."

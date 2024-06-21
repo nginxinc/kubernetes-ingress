@@ -1,0 +1,21 @@
+{
+  "image": [
+    "debian-plus",
+    "alpine-plus",
+    "alpine-plus-fips"
+  ],
+  "platforms": [
+    "linux/arm64, linux/amd64"
+  ],
+  "target": [
+    "goreleaser",
+    "aws"
+  ],
+  "include": [
+    {
+      "image": "ubi-plus",
+      "platforms": "linux/arm64, linux/amd64, linux/s390x",
+      "target": "goreleaser"
+    }
+  ]
+}
