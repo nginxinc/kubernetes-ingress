@@ -107,15 +107,20 @@ Create the syslog service and pod for the NGINX App Protect WAF security logs:
 
 ### Step 3 - Deploy the WAF Policy
 
-Create and deploy the WAF policy
+
+{{< note >}}Configuration settings in the Policy resource enable WAF protection by configuring NGINX App Protect WAF with the log configuration created in the previous step. The policy bundle referenced as `your_policy_bundle_name.tgz` need to be created and placed in the `/etc/app_protect/bundles` volume first.{{</ note >}}
+
+Create and deploy the WAF policy.
 
  ```shell
   kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/waf.yaml
  ```
 
-  Note: the NGINX App Protect WAF configuration settings in the Policy resource. They enable WAF protection by configuring NGINX App Protect WAF with the log configuration created in the previous step. The policy bundle referenced as `your_policy_bundle_name.tgz` need to be created and placed in the volume `/etc/app_protect/bundles` first.
-
+  
 ### Step 4 - Configure Load Balancing
+
+
+{{< note >}}VirtualServer references the `waf-policy` created in Step 3.{{</ note >}}
 
 1. Create the VirtualServer Resource:
 
@@ -123,11 +128,10 @@ Create and deploy the WAF policy
     kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/virtual-server.yaml
     ```
 
-Note that the VirtualServer references the policy waf-policy bundle created in Step 3.
 
 ### Step 5 - Test the Application
 
-To access the application, curl the coffee and the tea services. We'll use the --resolve option to set the Host header of a request with `webapp.example.com`
+To access the application, curl the coffee and the tea services. We'll use the `--resolve` option to set the Host header of a request with `webapp.example.com`
 
 1. Send a request to the application:
 
