@@ -169,8 +169,24 @@ volumeMounts:
 
 ### Enabling WAF v5
 
-Start by setting `controller.appprotect.v5` to `true` in your Helm values.
+Start by setting `controller.appprotect.enable` to `true` in your Helm values. This will the standard App Protect WAF fetatures.
+Afterwords, set `controller.approtect.v5` to `true`.
 This ensures that both the `waf-enforcer` and `waf-config-mgr` containers are deployed alongside the NGINX Ingress Controller containers.
+These two additional containers are required when using App Protect WAF v5.
+
+Your Helm values should look something like this:
+
+```yaml
+controller:
+  ...
+  ## Support for App Protect WAF
+  appprotect:
+    ## Enable the App Protect WAF module in the Ingress Controller.
+    enable: true
+    ## Enables App Protect WAF v5.
+    v5: true
+```
+
 
 ### Configuring volumes
 
@@ -180,7 +196,11 @@ Example helm values:
 
 ```yaml
 ...
-volumes:
+controller:
+  ...
+  appprotect:
+  ...
+   volumes:
    - name: app-protect-bundles
      persistentVolumeClaim:
         claimName: <my_claim_name>
