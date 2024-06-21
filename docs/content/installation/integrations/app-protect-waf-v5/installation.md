@@ -1,11 +1,13 @@
 ---
 docs: DOCS-000
+doctypes:
+   - ''
 title: Build NGINX Ingress Controller with NGINX App Protect WAF v5
 toc: true
 weight: 100
 ---
 
-This document explains how to build a F5 NGINX Ingress Controller image with NGINX App Protect WAF v5 from source code.
+This document explains how to build a F5 NGINX Ingress Controller image with F5 NGINX App Protect WAF v5 from source code.
 
 {{<call-out "tip" "Pre-built image alternatives" >}} If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
 
@@ -29,7 +31,7 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
     docker pull private-registry.nginx.com/nap/waf-config-mgr:<image-tag>
     ```
 
-1. Pull the WAF Enforcer Docker image    
+1. Pull the WAF Enforcer Docker image
 
     ```shell
     docker pull private-registry.nginx.com/nap/waf-enforcer:<image-tag>
@@ -37,7 +39,7 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 
 1. Clone the NGINX Ingress Controller repository:
 
-    ```shell
+    ```console
     git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.6.0
     cd kubernetes-ingress
     ```
@@ -54,7 +56,7 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
     ls nginx-repo.*
     ```
 
-    You should see:
+   You should see:
 
     ```shell
     nginx-repo.crt  nginx-repo.key
@@ -66,13 +68,13 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
     make <makefile target> PREFIX=<my-docker-registry>/nginx-plus-ingress TARGET=download
     ```
 
-    For example, to build a Debian-based image with NGINX Plus and NGINX App Protect WAF v5, run:
+   For example, to build a Debian-based image with NGINX Plus and NGINX App Protect WAF v5, run:
 
     ```shell
     make debian-image-nap-v5-plus PREFIX=<my-docker-registry>/nginx-plus-ingress TARGET=download
     ```
 
-     **What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_]({{< relref "installation/building-nginx-ingress-controller.md#makefile-details" >}}). This version number is used for tracking and deployment purposes.
+   **What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_]({{< relref "installation/building-nginx-ingress-controller.md#makefile-details" >}}). This version number is used for tracking and deployment purposes.
 
 {{<note>}} In the event a patch of NGINX Plus is released, make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the make command. {{</note>}}
 
@@ -122,22 +124,79 @@ docker push <my-docker-registry>/waf-config-mgr:<your-tag>
 docker push <my-docker-registry>/waf-enforcer:<your-tag>
 ```
 
+---
+
 ## Set up role-based access control (RBAC) {#set-up-rbac}
 
 {{< include "rbac/set-up-rbac.md" >}}
 
 ---
 
+
 {{< include "installation/create-custom-resources.md" >}}
 
 
 ## Deploy NGINX Ingress Controller {#deploy-ingress-controller}
 
-{{< include "installation/deploy-controller.md" >}}
+{{< important >}} NGINX Ingress Controller with the AppProtect WAF v5 module works only with policy bundles. You need to modify the Deployment or DaemonSet file to include volumes, volume mounts and two WAF 5 docker images: `waf-config-mgr` and `waf-enforcer`.
 
-{{< note >}} NGINX Ingress Controller with the AppProtect WAF v5 module works only with policy bundles. You need to modify the Deployment or DaemonSet file to include volumes, volume mounts and two WAF 5 docker images: `waf-config-mgr` and `waf-enforcer`.
+NGINX Ingress Controller **requires** the volume mount path to be `/etc/app_protect/bundles`. {{< /important >}}
 
-NGINX Ingress Controller **requires** the volume mount path to be `/etc/app_protect/bundles`. {{< /note >}}
+{{<tabs name="deploy-nic">}}
+
+{{%tab name="With Helm"%}}
+
+Below are examples of a `PersistentVolume` and `PersistentVolumeClaim` that you can reference in your Helm values:
+
+```yaml
+...
+volumes:
+- name: <volume_name>
+persistentVolumeClaim:
+    claimName: <claim_name>
+...
+```
+
+Add volume mounts to the `containers` section:
+
+```yaml
+...
+volumeMounts:
+- name: <volume_mount_name>
+    mountPath: /etc/app_protect/bundles
+...
+```
+
+### Enabling WAF v5
+
+Start by setting `controller.appprotect.v5` to `true` in your Helm values.
+This ensures that both the `waf-enforcer` and `waf-config-mgr` containers are deployed alongside the NGINX Ingress Controller containers.
+
+### Configuring volumes
+
+Weather you have created a new `PersistentVolume` and `PersistentVolumeClaim`, or you are referencing an existing `PersistentVolumeClaim`, update the `app-protect-bundles` volume to reference your `PersistentVolumeClaim`.
+
+Example helm values:
+
+```yaml
+...
+volumes:
+   - name: app-protect-bundles
+     persistentVolumeClaim:
+        claimName: <my_claim_name>
+...
+```
+
+{{%/tab%}}
+
+{{%tab name="With Manifest"%}}
+
+You have two options for deploying NGINX Ingress Controller:
+
+- **Deployment**. Choose this method for the flexibility to dynamically change the number of NGINX Ingress Controller replicas.
+- **DaemonSet**. Choose this method if you want NGINX Ingress Controller to run on all nodes or a subset of nodes.
+
+Before you start, update the [command-line arguments]({{< relref "configuration/global-configuration/command-line-arguments.md" >}}) for the NGINX Ingress Controller container in the relevant manifest file to meet your specific requirements.
 
 Add a `volumes` section to deployment template spec:
 
@@ -211,11 +270,15 @@ Add `waf-enforcer` image to the `containers` section:
 
 ---
 
-## Enable NGINX App Protect WAF module
+### Enable NGINX App Protect WAF module
 
 To enable the NGINX App Protect DoS Module:
 
 - Add the `enable-app-protect` [command-line argument]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-enable-app-protect" >}}) to your Deployment or DaemonSet file.
+
+{{%/tab%}}
+
+{{</tabs>}}
 
 ---
 
@@ -223,7 +286,7 @@ To enable the NGINX App Protect DoS Module:
 
 {{< include "installation/manifests/verify-pods-are-running.md" >}}
 
-For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf-v5/configuration.md" >}}) and the NGINX Ingress Controller with App Protect version 5 example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/custom-resources/app-protect-waf/app-protect-waf-v5) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/ingress-resources/app-protect-waf-v5).
+For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf-v5/configuration.md" >}}) and the NGINX Ingress Controller with App Protect version 5 example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/custom-resources/app-protect-waf/app-protect-waf-v5) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/ingress-resources/app-protect-waf-v5" >}}).
 
 ---
 
