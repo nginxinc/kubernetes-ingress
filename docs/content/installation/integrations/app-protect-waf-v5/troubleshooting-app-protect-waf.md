@@ -26,7 +26,7 @@ The table below categorizes some potential problems with the Ingress Controller 
 |APLogConf, Policy or Ingress Resource. | The configuration is not applied. | Check the events of the APLogConf, Policy and Ingress Resource, check the logs, replace the policy bundle. | Policy bundle is invalid. |
 {{% /table %}}
 
-## Troubleshooting Methods
+## Troubleshooting methods
 
 ### Check NGINX Ingress Controller and App Protect logs
 
