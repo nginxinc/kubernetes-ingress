@@ -113,7 +113,7 @@ When using NGINX Ingress Controller with the App Protect WAF module, the followi
 
 When you make a change that requires NGINX to apply a new configuration, NGINX Ingress Controller reloads NGINX automatically. Without the App Protect WAF module enabled, usual reload times are around 150ms. If App Protect WAF module is enabled and is being used by any number of Ingress Resources, these reloads might take a few seconds instead.
 
-### NGINX Configuration Skew
+### NGINX configuration drift
 
 If you are running more than one instance of NGINX Ingress Controller, the extended reload time may cause the NGINX configuration of your instances to be out of sync. This can occur because there is no order imposed on how NGINX Ingress Controller processes the Kubernetes Resources. The configurations will be the same after all instances have completed the reload.
 
