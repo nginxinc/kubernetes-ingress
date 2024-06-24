@@ -144,7 +144,7 @@ To access the application, curl the coffee and the tea services. We'll use the `
   Server name: webapp-7586895968-r26zn
   ```
 
-1. Now, let's try to send a request with a suspicious URL:
+1. Try to send a request with a suspicious URL:
 
   ```shell
   curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP "http://webapp.example.com:$IC_HTTP_PORT/<script>"
