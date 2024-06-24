@@ -162,7 +162,7 @@ To access the application, curl the coffee and the tea services. We'll use the `
 
 ### Configuration Example of Virtual Server
 
-Refer to GitHub repo for [Virtual Server example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/webapp.yaml).
+The GitHub repository has a full [VirtualServer example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/webapp.yaml).
 
 ```yaml
 apiVersion: k8s.nginx.org/v1
