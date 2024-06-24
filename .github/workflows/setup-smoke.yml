@@ -164,4 +164,4 @@ jobs:
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ steps.smoke-tests.outputs.test-results-path }}
-        if: ${{ success() || failure() }}
+        if: ${{ !cancelled() && steps.stable_exists.outputs.exists != 'true' }}
