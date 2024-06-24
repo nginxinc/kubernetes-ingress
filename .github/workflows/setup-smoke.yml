@@ -164,4 +164,4 @@ jobs:
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ steps.smoke-tests.outputs.test-results-path }}
-        if: always()
+        if: ${{ success() || failure() }}
