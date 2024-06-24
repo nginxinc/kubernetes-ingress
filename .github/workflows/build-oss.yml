@@ -44,7 +44,6 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: read # for docker/build-push-action to read repo content
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       id-token: write # for OIDC login to GCR
       packages: write # for docker/build-push-action to push to GHCR
       pull-requests: write # for scout report
