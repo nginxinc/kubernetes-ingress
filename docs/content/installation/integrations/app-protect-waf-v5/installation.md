@@ -208,7 +208,7 @@ controller:
 ```
 
 {{< note >}}
-By default, `emptyDirs` mounts are used.
+By default, `emptyDir` mounts are used.
 Bundles that are added to these kind of volume mounts will **NOT** persist across pod restarts.
 
 Example default volumes:
