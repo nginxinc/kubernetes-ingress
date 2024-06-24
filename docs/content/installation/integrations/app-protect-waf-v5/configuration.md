@@ -154,7 +154,7 @@ To access the application, curl the coffee and the tea services. We'll use the `
   <html><head><title>Request Rejected</title></head><body>
   ```
 
-1. To check the security logs in the syslog pod:
+1.  Check the security logs in the syslog pod:
 
   ```shell
   kubectl exec -it <SYSLOG_POD> -- cat /var/log/messages
