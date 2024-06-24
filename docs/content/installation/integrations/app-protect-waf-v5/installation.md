@@ -126,13 +126,6 @@ docker push <my-docker-registry>/waf-enforcer:<your-tag>
 
 ---
 
-## Set up role-based access control (RBAC) {#set-up-rbac}
-
-{{< include "rbac/set-up-rbac.md" >}}
-
----
-
-
 {{< include "installation/create-custom-resources.md" >}}
 
 
@@ -234,7 +227,27 @@ You have two options for deploying NGINX Ingress Controller:
 - **Deployment**. Choose this method for the flexibility to dynamically change the number of NGINX Ingress Controller replicas.
 - **DaemonSet**. Choose this method if you want NGINX Ingress Controller to run on all nodes or a subset of nodes.
 
-Before you start, update the [command-line arguments]({{< relref "configuration/global-configuration/command-line-arguments.md" >}}) for the NGINX Ingress Controller container in the relevant manifest file to meet your specific requirements.
+---
+
+### Set up role-based access control (RBAC) {#set-up-rbac}
+
+{{<call-out "important" "Admin access required" >}}To complete these steps you need admin access to your cluster. Refer to to your Kubernetes platform's documentation to set up admin access. For Google Kubernetes Engine (GKE), you can refer to their [Role-Based Access Control guide](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control).{{</call-out>}}
+
+1. Create a namespace and a service account:
+
+    ```shell
+    kubectl apply -f deployments/common/ns-and-sa.yaml
+    ```
+
+2. Create a cluster role and binding for the service account:
+
+    ```shell
+    kubectl apply -f deployments/rbac/rbac.yaml
+    ```
+
+---
+
+### Volumes and VolumeMounts
 
 Add a `volumes` section to deployment template spec:
 
@@ -257,6 +270,7 @@ volumeMounts:
 ...
 ```
 
+### WAF Config Manager and WAF Enforcer
 
 Add `waf-config-mgr` image to the `containers` section:
 
@@ -280,7 +294,6 @@ Add `waf-config-mgr` image to the `containers` section:
 ...
 ```
 
-
 Add `waf-enforcer` image to the `containers` section:
 
 ```yaml
@@ -296,7 +309,6 @@ Add `waf-enforcer` image to the `containers` section:
       mountPath: /opt/app_protect/bd_config
 ...
 ```
-
 
 ### Using a Deployment
 
