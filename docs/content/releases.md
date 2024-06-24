@@ -6,19 +6,30 @@ doctypes:
 title: Releases
 toc: true
 weight: 2100
+---
 ## 3.6.0
 
 25 Jun 2024
 
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
 ### <i class="fa-solid fa-rocket"></i> Features
+- [5698](https://github.com/nginxinc/kubernetes-ingress/pull/5698), [5771](https://github.com/nginxinc/kubernetes-ingress/pull/5771) & [5784](https://github.com/nginxinc/kubernetes-ingress/pull/5784) Add support for F5 NGINX AppProtect WAF v5
+- [5580](https://github.com/nginxinc/kubernetes-ingress/pull/5580) & [5752](https://github.com/nginxinc/kubernetes-ingress/pull/5752) Add APIKey Authentication policy
+- [5205](https://github.com/nginxinc/kubernetes-ingress/pull/5205) Preserve valid listeners when invalid listeners are present in GlobalConfiguration
+- [5366](https://github.com/nginxinc/kubernetes-ingress/pull/5366) Add proxy-set-headers annotation for ingress
+- [5406](https://github.com/nginxinc/kubernetes-ingress/pull/5406), [5408](https://github.com/nginxinc/kubernetes-ingress/pull/5408), [5418](https://github.com/nginxinc/kubernetes-ingress/pull/5418), [5404](https://github.com/nginxinc/kubernetes-ingress/pull/5404) & [5415](https://github.com/nginxinc/kubernetes-ingress/pull/5415) Add additional telemetry data
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [5350](https://github.com/nginxinc/kubernetes-ingress/pull/5350) Fix ap-waf flag in error message
+- [5318](https://github.com/nginxinc/kubernetes-ingress/pull/5318) Don't reload when `use-cluster-ip` endpoints update, and change the ingress `use-cluster-ip` implementation to use the cluster ip instead of the fqdn
+- [5375](https://github.com/nginxinc/kubernetes-ingress/pull/5375) Fix status for invalid vs and vsr, for weight changes dynamic reload
 
 ### <i class="fa-solid fa-box"></i> Helm Chart
+- [5313](https://github.com/nginxinc/kubernetes-ingress/pull/5313) Update helm flag in docs for enableWeightChangesDynamicReload
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+- [5693](https://github.com/nginxinc/kubernetes-ingress/pull/5693) Bump Go version to v1.22.4
+- [5368](https://github.com/nginxinc/kubernetes-ingress/pull/5368), [5331](https://github.com/nginxinc/kubernetes-ingress/pull/5331) & [5423](https://github.com/nginxinc/kubernetes-ingress/pull/5423) Bump the go dependencies
+- [5298](https://github.com/nginxinc/kubernetes-ingress/pull/5298), [5344](https://github.com/nginxinc/kubernetes-ingress/pull/5344), [5345](https://github.com/nginxinc/kubernetes-ingress/pull/5345),[5371](https://github.com/nginxinc/kubernetes-ingress/pull/5371), [5378](https://github.com/nginxinc/kubernetes-ingress/pull/5378), [5379](https://github.com/nginxinc/kubernetes-ingress/pull/5379), [5398](https://github.com/nginxinc/kubernetes-ingress/pull/5398), [5397](https://github.com/nginxinc/kubernetes-ingress/pull/5397), [5399](https://github.com/nginxinc/kubernetes-ingress/pull/5399) & [5400](https://github.com/nginxinc/kubernetes-ingress/pull/5400) Bump base Docker images
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
