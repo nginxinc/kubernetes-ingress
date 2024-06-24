@@ -76,7 +76,7 @@ Events:
 
 The events section has a *Normal* event with the *AddedOrUpdated reason*, indicating the policy was successfully accepted.
 
-### Replace the Policy
+### Replace the policy
 
 NOTE: This method only applies if using [external references](/nginx-app-protect/v4/configuration/#external-references)
 If items on the external reference change but the spec of the APPolicy remains unchanged (even when re-applying the policy), Kubernetes will not detect the update.
