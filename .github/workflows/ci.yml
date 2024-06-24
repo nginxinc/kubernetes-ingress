@@ -302,7 +302,7 @@ jobs:
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
       tag: ${{ needs.checks.outputs.build_tag }}
-      branch: ${{ github.head_ref && github.head_ref || github.ref }}
+      branch: ${{ (github.head_ref && needs.checks.outputs.forked_workflow != 'true') && github.head_ref || github.ref }}
     permissions:
       contents: read
       actions: read
@@ -325,7 +325,7 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      branch: ${{ github.head_ref && github.head_ref || github.ref }}
+      branch: ${{ (github.head_ref && needs.checks.outputs.forked_workflow != 'true') && github.head_ref || github.ref }}
       tag: ${{ needs.checks.outputs.build_tag }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
@@ -349,7 +349,7 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      branch: ${{ github.head_ref && github.head_ref || github.ref }}
+      branch: ${{ (github.head_ref && needs.checks.outputs.forked_workflow != 'true') && github.head_ref || github.ref }}
       tag: ${{ needs.checks.outputs.build_tag }}
       nap-modules: ${{ matrix.nap_modules }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
@@ -441,7 +441,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Docker Image ${{ matrix.base-os }}
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6.1.0
         with:
           file: build/Dockerfile
           context: "."
@@ -559,7 +559,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6.1.0
         with:
           file: tests/Dockerfile
           context: "."
