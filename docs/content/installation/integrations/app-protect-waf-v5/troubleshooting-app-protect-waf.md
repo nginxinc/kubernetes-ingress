@@ -78,7 +78,8 @@ The events section has a *Normal* event with the *AddedOrUpdated reason*, indica
 
 ### Replace the policy
 
-NOTE: This method only applies if using [external references](/nginx-app-protect/v4/configuration/#external-references)
+{{< note >}} This method only applies if using [external references](/nginx-app-protect/v4/configuration/#external-references) {{< /note >}}
+
 If items on the external reference change but the spec of the APPolicy remains unchanged (even when re-applying the policy), Kubernetes will not detect the update.
 In this case you can force-replace the resource. This will remove the resource and add it again, triggering a reload. For example:
 
