@@ -160,7 +160,7 @@ To access the application, curl the coffee and the tea services. We'll use the `
   kubectl exec -it <SYSLOG_POD> -- cat /var/log/messages
   ```
 
-### Configuration Example of Virtual Server
+### Example VirtualServer configuration
 
 The GitHub repository has a full [VirtualServer example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.0/examples/custom-resources/app-protect-waf-v5/webapp.yaml).
 
