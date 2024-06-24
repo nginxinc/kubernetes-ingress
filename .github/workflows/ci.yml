@@ -157,6 +157,10 @@ jobs:
           echo 'image_matrix_oss: ${{ steps.vars.outputs.image_matrix_oss }}'
           echo 'image_matrix_plus: ${{ steps.vars.outputs.image_matrix_plus }}'
           echo 'image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}'
+          echo head_ref: ${{ github.head_ref }}
+          echo ref: ${{ github.ref }}
+          echo additional_tag: ${{ steps.vars.outputs.additional_tag }}
+          echo additional_tag: ${{ steps.vars.outputs.additional_tag }}
 
   verify-codegen:
     name: Verify generated code
