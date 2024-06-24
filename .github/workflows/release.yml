@@ -275,7 +275,7 @@ jobs:
           ref: ${{ inputs.release_branch }}
 
       - name: Publish to AWS Marketplace
-        uses: nginxinc/aws-marketplace-publish@be512a7ae9666098bc4429a1afa27a11be6a3995 # v1.0.3
+        uses: nginxinc/aws-marketplace-publish@9f178512e8e7658fe4aab73d1dac15f3f86fb7b4 # v1.0.4
         continue-on-error: true
         with:
           version: ${{ inputs.nic_version }}

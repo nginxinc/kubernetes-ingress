@@ -427,7 +427,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
+        uses: github/codeql-action/upload-sarif@23acc5c183826b7a8a97bce3cecc52db901f8251 # v3.25.10
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -517,7 +517,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
+        uses: github/codeql-action/upload-sarif@23acc5c183826b7a8a97bce3cecc52db901f8251 # v3.25.10
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -607,6 +607,6 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@3ab4101902695724f9365a384f86c1074d94e18c # v3.24.7
+        uses: github/codeql-action/upload-sarif@23acc5c183826b7a8a97bce3cecc52db901f8251 # v3.25.10
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
