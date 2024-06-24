@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/golang/glog"
@@ -197,8 +198,8 @@ var (
 	enableExternalDNS = flag.Bool("enable-external-dns", false,
 		"Enable external-dns controller for VirtualServer resources. Requires -enable-custom-resources")
 
-	// includeYearInLogs = flag.Bool("includeYear", false,
-	// 	"Option to include the year in the log header")
+	includeYearInLogs = flag.Bool("includeYear", false,
+		"Option to include the year in the log header")
 
 	disableIPV6 = flag.Bool("disable-ipv6", false,
 		`Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack`)
@@ -304,10 +305,10 @@ func initialChecks() {
 		glog.Fatalf("Error setting logtostderr to true: %v", err)
 	}
 
-	// err = flag.Lookup("include_year").Value.Set(strconv.FormatBool(*includeYearInLogs))
-	// if err != nil {
-	// 	glog.Fatalf("Error setting include_year flag: %v", err)
-	// }
+	err = flag.Lookup("include_year").Value.Set(strconv.FormatBool(*includeYearInLogs))
+	if err != nil {
+		glog.Fatalf("Error setting include_year flag: %v", err)
+	}
 
 	if startupCheckFn != nil {
 		err := startupCheckFn()
