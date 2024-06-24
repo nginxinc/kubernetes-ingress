@@ -91,7 +91,7 @@ kubectl replace appolicy -f your-policy-manifest.yaml --force
 
 {{< note >}} This method only applies if you're using [external references](/nginx-app-protect/v4/configuration/#external-references) in NGINX App Protect policies. {{< /note >}}
 
-To check what servers host the external references of a policy:
+To check which servers host the external references of a policy:
 
 ```shell
 kubectl get appolicy mypolicy -o jsonpath='{.items[*].spec.policy.*.link}' | tr ' ' '\n'
