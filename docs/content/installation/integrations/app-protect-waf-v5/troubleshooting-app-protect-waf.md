@@ -15,7 +15,7 @@ For general troubleshooting of NGINX Ingress Controller, check the general [trou
 
 ## Potential problems
 
-The table below categorizes some potential problems with the Ingress Controller when App Protect WAF module is enabled. It suggests how to troubleshoot those problems, using one or more methods from the next section.
+The table below categorizes some potential problems with NGINX Ingress Controller when App Protect WAF module is enabled. It suggests how to troubleshoot those problems, using one or more methods from the next section.
 
 {{% table %}}
 |Problem area | Symptom | Troubleshooting method | Common cause |
