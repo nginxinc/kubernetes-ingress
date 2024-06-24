@@ -119,7 +119,7 @@ If you are running more than one instance of NGINX Ingress Controller, the exten
 
 In order to reduce these inconsistencies, we advise that you do not apply changes to multiple resources handled by NGINX Ingress Controller at the same time.
 
-### NGINX Fails to Start or Reload
+### NGINX fails to start or reload
 
 The first time NGINX Ingress Controller starts, or whenever there is a change that requires reloading NGINX, NGINX Ingress Controller will verify if the reload was successful. The timeout for this verification is normally 4 seconds. When App Protect is enabled, this timeout increases to 20 seconds.
 
