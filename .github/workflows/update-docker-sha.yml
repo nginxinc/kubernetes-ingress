@@ -6,12 +6,12 @@ on:
       source_branch:
         required: true
         type: string
-        default: 'main'
+        default: "main"
       excludes:
         description: Comma separated list of strings to exclude images from the update
         required: false
         type: string
-        default: ''
+        default: ""
       dry_run:
         type: boolean
         default: false
@@ -78,7 +78,7 @@ jobs:
           token: ${{ secrets.NGINX_PAT }}
           commit-message: Update docker images ${{ steps.update_images.outputs.docker_md5 }}
           title: Docker image update ${{ steps.update_images.outputs.docker_md5 }}
-          branch: chore/image-update-${{ needs.vars.outputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
+          branch: deps/image-update-${{ needs.vars.outputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
           author: nginx-bot <integrations@nginx.com>
           labels: |
             dependencies
