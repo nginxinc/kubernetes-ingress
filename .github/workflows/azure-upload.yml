@@ -1,5 +1,5 @@
 name: Upload NIC Release to Azure
-
+#
 on:
   push:
     branches:
