@@ -306,7 +306,6 @@ jobs:
     permissions:
       contents: read
       actions: read
-      security-events: write
       id-token: write
       packages: write
       pull-requests: write # for scout report
@@ -331,7 +330,6 @@ jobs:
       full-build: ${{ inputs.force && inputs.force || false }}
     permissions:
       contents: read
-      security-events: write
       id-token: write
       pull-requests: write # for scout report
     secrets: inherit
@@ -356,8 +354,7 @@ jobs:
       full-build: ${{ inputs.force && inputs.force || false }}
     permissions:
       contents: read
-      security-events: write
-      id-token: write
+      id-token: write # gcr login
       pull-requests: write # for scout report
     secrets: inherit
 
