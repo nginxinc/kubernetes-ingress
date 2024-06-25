@@ -4,7 +4,7 @@ doctypes:
 - concept
 title: F5 BIG-IP
 toc: true
-weight: 300
+weight: 400
 ---
 
 Learn how to use NGINX Ingress Controller with F5 IngressLink to configure your F5 BIG-IP device.
