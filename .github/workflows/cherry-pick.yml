@@ -39,4 +39,5 @@ jobs:
           author: nginx-bot <integrations@nginx.com>
           labels: |
             dependencies
+            needs cherry pick
           title: "[cherry-pick] {old_title}"
