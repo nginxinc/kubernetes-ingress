@@ -11,7 +11,7 @@ weight: 2100
 
 25 Jun 2024
 
-Adding support for the latest generation of NGINX App Protect Web Application Firewall, v5. NGINX Ingress Controller will continue to support the NGINX App Protect v4 family to allow customers to implement new Policy Bundle workflow at their own pace.
+Added support for the latest generation of NGINX App Protect Web Application Firewall, v5. NGINX Ingress Controller will continue to support the NGINX App Protect v4 family to allow customers to implement new Policy Bundle workflow at their own pace.
 NGINX App Protect WAF v5 does not accept the JSON based policies, instead requiring users to compile a Policy Bundle outside of the NGINX Ingress Controller pod. Policy bundles contain a combination of custom Policy, signatures, and campaigns. Bundles can be compiled using either App Protect [compiler](https://docs.nginx.com/nginx-app-protect-waf/v5/admin-guide/compiler/), or [NGINX Instance Manager](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#list-security-policy-bundles).  Learn more here, https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/.
 
 With this release, NGINX Ingress Controller is implementing a new image maintenance policy. Container images for subscribed users will be updated on a regular basis in-between releases to reduce the CVE vulnerabilities.
