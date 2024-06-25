@@ -194,6 +194,7 @@ jobs:
       - name: Make directory for security scan results
         run: |
           mkdir -p "${{ inputs.image }}-results/"
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Extract image name for Scans
         id: scan-tag
@@ -204,7 +205,6 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # 0.23.0
-        continue-on-error: true
         with:
           image-ref: ${{ steps.scan-tag.outputs.tag }}
           format: "sarif"
@@ -222,7 +222,6 @@ jobs:
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
         uses: docker/scout-action@fc749439af4870e8f6feb592250ab728600d10a6 # v1.10.0
-        continue-on-error: true
         with:
           command: cves,recommendations
           image: ${{ steps.scan-tag.outputs.tag }}
@@ -232,12 +231,4 @@ jobs:
           write-comment: false
           github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
           summary: true
-        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
-
-      - name: Upload Scan Results
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-        continue-on-error: true
-        with:
-          name: "${{ inputs.image }}-results"
-          path: "${{ inputs.image }}-results/"
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
