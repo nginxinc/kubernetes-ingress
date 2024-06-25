@@ -664,6 +664,7 @@ ENTRYPOINT ["/dlv"]
 
 ############################################# Create image with nginx-ingress built locally & using prebuilt base image #############################################
 FROM ${PREBUILT_BASE_IMG} AS local-prebuilt
+ARG BUILD_OS
 
 LABEL org.nginx.kic.image.build.version="local"
 
@@ -711,6 +712,7 @@ RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_
 ############################################# Create image with nginx-ingress built by GoReleaser & using prebuilt base image #############################################
 FROM ${PREBUILT_BASE_IMG} AS goreleaser-prebuilt
 ARG TARGETARCH
+ARG BUILD_OS
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
@@ -760,6 +762,7 @@ RUN setcap 'cap_net_bind_service=+ep' /nginx-ingress && setcap -v 'cap_net_bind_
 FROM ${PREBUILT_BASE_IMG} AS aws-prebuilt
 ARG TARGETARCH
 ARG NAP_MODULES_AWS
+ARG BUILD_OS
 
 LABEL org.nginx.kic.image.build.version="aws"
 
