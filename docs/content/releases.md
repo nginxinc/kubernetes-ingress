@@ -11,6 +11,12 @@ weight: 2100
 
 25 Jun 2024
 
+Adding support for the latest generation of NGINX App Protect Web Application Firewall, v5. NGINX Ingress Controller will continue to support the NGINX App Protect v4 family to allow customers to implement new Policy Bundle workflow at their own pace.
+NGINX App Protect WAF 5 does not accept the JSON based Policy object, requiring customers to compile a Policy Bundle outside of the NGINX Ingress Controller pod. Policy bundles contain a combination of custom Policy, signatures, and campaigns. Bundles can be compiled using either App Protect [compiler](https://docs.nginx.com/nginx-app-protect-waf/v5/admin-guide/compiler/), or [NGINX Instance Manager](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#list-security-policy-bundles).  Learn more here, https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/.
+
+With this release NGINX Ingress Controller is implementing a new image maintenance policy. Container images for subscribed users will be updated on a regular basis in-between releases to reduce the CVE vulnerabilities.
+Customers can observe the 3.6.x tag when listing images in the registry and select the latest image to update to for the current release.
+
 ### <i class="fa-solid fa-rocket"></i> Features
 - [5698](https://github.com/nginxinc/kubernetes-ingress/pull/5698), [5771](https://github.com/nginxinc/kubernetes-ingress/pull/5771) & [5784](https://github.com/nginxinc/kubernetes-ingress/pull/5784) Add support for F5 NGINX AppProtect WAF v5
 - [5580](https://github.com/nginxinc/kubernetes-ingress/pull/5580) & [5752](https://github.com/nginxinc/kubernetes-ingress/pull/5752) Add APIKey Authentication policy
