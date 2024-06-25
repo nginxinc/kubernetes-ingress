@@ -57,7 +57,7 @@ To pull an image, follow these steps. Replace `<version-tag>` with the specific 
 - For NGINX Plus Ingress Controller with NGINX App Protect WAF v5, run:
 
    ```shell
-   docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+   docker pull private-registry.nginx.com/nginx-ic-nap-v5/nginx-plus-ingress:<version-tag>
    ```
 
    ```shell
@@ -146,7 +146,7 @@ After pulling the image, tag it and upload it to your private registry.
       - For NGINX Controller with NGINX App Protect WAF v5, run:
 
       ```shell
-      docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:<version-tag> <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+      docker tag private-registry.nginx.com/nginx-ic-nap-v5/nginx-plus-ingress:<version-tag> <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
       docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
       ```
 
