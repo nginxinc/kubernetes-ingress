@@ -54,6 +54,21 @@ To pull an image, follow these steps. Replace `<version-tag>` with the specific 
    docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:<version-tag>
    ```
 
+- For NGINX Plus Ingress Controller with NGINX App Protect WAF v5, run:
+
+   ```shell
+   docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+   ```
+
+   ```shell
+   docker pull private-registry.nginx.com/nap/waf-config-mgr:<waf-version-tag>
+   ```
+
+   ```shell
+   docker pull private-registry.nginx.com/nap/waf-enforcer:<waf-version-tag>
+   ```
+
+
 - For NGINX Plus Ingress Controller with NGINX App Protect DoS, run:
 
    ```shell
@@ -126,6 +141,23 @@ After pulling the image, tag it and upload it to your private registry.
       ```shell
       docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:<version-tag> <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
       docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+      ```
+
+      - For NGINX Controller with NGINX App Protect WAF v5, run:
+
+      ```shell
+      docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:<version-tag> <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+      docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+      ```
+
+      ```shell
+      docker tag private-registry.nginx.com/nap/waf-config-mgr:<waf-version-tag> <my-docker-registry>/nap/waf-config-mgr:<waf-version-tag>
+      docker push <my-docker-registry>/nap/waf-config-mgr:<waf-version-tag>
+      ```
+
+      ```shell
+      docker tag private-registry.nginx.com/nap/waf-enforcer:<waf-version-tag> <my-docker-registry>/nap/waf-enforcer:<waf-version-tag>
+      docker push <my-docker-registry>/nap/waf-enforcer:<waf-version-tag>
       ```
 
    - For NGINX Controller with NGINX App Protect DoS, run:
