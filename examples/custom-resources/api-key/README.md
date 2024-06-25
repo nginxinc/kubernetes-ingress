@@ -25,7 +25,7 @@ a web application, configure load balancing for it via a VirtualServer, and appl
 Create the application deployment and service:
 
 ```console
-k apply -f cafe.yaml -f cafe-secret.yaml
+kubectl apply -f cafe.yaml -f cafe-secret.yaml
 ```
 
 ## Step 2 - Deploy the API Key Auth Secret
