@@ -112,6 +112,18 @@ class TestAPIKeyAuthPolicies:
         wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
         wait_before_test()
 
+        # /undefined path (is not a route defined in the VirtualServer)
+        undefined_without_auth_headers = {"host": host}
+        undefined_with_wrong_auth_header = {"host": host, apikey_policy_details.headers[0]: "wrongpassword"}
+        undefined_with_auth_headers = {"host": host, apikey_policy_details.headers[0]: apikey_policy_details.apikeys[0]}
+        undefined_path = (
+            f"http://{virtual_server_setup.public_endpoint.public_ip}"
+            f":{virtual_server_setup.public_endpoint.port}/undefined"
+        )
+        undefined_resp_no_auth_header = requests.get(undefined_path, headers=undefined_without_auth_headers)
+        undefined_resp_with_wrong_auth_header = requests.get(undefined_path, headers=undefined_with_wrong_auth_header)
+        undefined_resp_with_auth_header = requests.get(undefined_path, headers=undefined_with_auth_headers)
+
         # /no-auth path
         no_auth_headers = {"host": host}
         no_auth_path = (
@@ -221,6 +233,15 @@ class TestAPIKeyAuthPolicies:
             virtual_server_setup.namespace,
         )
 
+        # /undefined (without an auth header)
+        assert undefined_resp_no_auth_header.status_code == 401
+
+        # /undefined (with wrong password in header)
+        assert undefined_resp_with_wrong_auth_header.status_code == 403
+
+        # /undefined (with an auth header)
+        assert undefined_resp_with_auth_header.status_code == 404
+
         # /no-auth (snippet to turn off auth_request on this route)
         assert no_auth_resp.status_code == 200
 
@@ -301,6 +322,21 @@ class TestAPIKeyAuthPolicies:
         host = virtual_server_setup.vs_host
         wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
         wait_before_test(5)
+
+        # /undefined path (is not a route defined in the VirtualServer)
+        undefined_without_auth_headers = {"host": host}
+        undefined_with_wrong_auth_header = {"host": host, apikey_policy_details_server.headers[0]: "wrongpassword"}
+        undefined_with_auth_headers = {
+            "host": host,
+            apikey_policy_details_server.headers[0]: apikey_policy_details_server.apikeys[0],
+        }
+        undefined_path = (
+            f"http://{virtual_server_setup.public_endpoint.public_ip}"
+            f":{virtual_server_setup.public_endpoint.port}/undefined"
+        )
+        undefined_resp_no_auth_header = requests.get(undefined_path, headers=undefined_without_auth_headers)
+        undefined_resp_with_wrong_auth_header = requests.get(undefined_path, headers=undefined_with_wrong_auth_header)
+        undefined_resp_with_auth_header = requests.get(undefined_path, headers=undefined_with_auth_headers)
 
         # /no-auth path
         no_auth_path_server = (
@@ -408,6 +444,15 @@ class TestAPIKeyAuthPolicies:
             std_vs_src,
             virtual_server_setup.namespace,
         )
+
+        # /undefined (without an auth header)
+        assert undefined_resp_no_auth_header.status_code == 401
+
+        # /undefined (with wrong password in header)
+        assert undefined_resp_with_wrong_auth_header.status_code == 403
+
+        # /undefined (with an auth header)
+        assert undefined_resp_with_auth_header.status_code == 404
 
         # /no-auth (snippet to turn off auth_request on this route)
         assert no_auth_server_resp.status_code == 200
