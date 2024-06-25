@@ -380,7 +380,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	agent.sh \
 	; fi
 
-	
+
 ############################################# Base image for UBI with NGINX Plus and App Protect WAFv5 #############################################
 FROM ubi-minimal AS ubi-9-plus-nap-v5
 ARG NAP_MODULES
