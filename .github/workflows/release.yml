@@ -298,6 +298,7 @@ jobs:
     needs: [variables]
     permissions:
       contents: read
+      id-token: write # for cosign to sign artifacts
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
