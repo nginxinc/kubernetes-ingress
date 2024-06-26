@@ -267,7 +267,6 @@ def crd_ingress_controller_with_dos(
 
         print("------------------------- Create syslog svc -----------------------")
         src_syslog_yaml = f"{TEST_DATA}/dos/dos-syslog.yaml"
-        f"/var/log/messages"
         create_items_from_yaml(kube_apis, src_syslog_yaml, namespace)
         before = time.time()
         wait_until_all_pods_are_ready(kube_apis.v1, namespace)
