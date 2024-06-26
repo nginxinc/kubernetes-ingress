@@ -182,7 +182,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # 0.23.0
         with:
-          image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
+          image-ref: ${{ steps.meta.outputs.tags }}
           format: "sarif"
           output: "${{ inputs.image }}-results/trivy.sarif"
           ignore-unfixed: "true"
