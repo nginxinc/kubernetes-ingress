@@ -431,7 +431,9 @@ jobs:
             '.[] | select(.title == $version) | .number')
           if ! ${{ inputs.dry_run }}; then
             gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
-              /repos/${{ github.repository }}/milestones/${milestone_number};
+              /repos/${{ github.repository }}/milestones/${milestone_number} \
+              -f "title=v${{ inputs.nic_version }}" \
+              -f "state=closed";
           else
             echo "Skipping closing Github Release milestone, DRY_RUN"
           fi
