@@ -2,11 +2,8 @@ import time
 
 import pytest
 import requests
-import yaml
-from kubernetes.client import NetworkingV1Api
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
-from suite.utils.custom_assertions import assert_event_count_increased
 from suite.utils.resources_utils import (
     are_all_pods_in_ready_state,
     create_example_app,
