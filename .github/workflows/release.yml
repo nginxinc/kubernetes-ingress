@@ -245,8 +245,8 @@ jobs:
               workflow_id: 'build-cnab.yml',
               ref: 'main',
               inputs: {
-                chart_version: '${{ inputs.chart_version }}'
-                ic_version: '${{ inputs.nic_version }}'
+                chart_version: '${{ inputs.chart_version }}',
+                ic_version: '${{ inputs.nic_version }}',
                 cnab_version: '${{ inputs.cnab_version }}'
               },
             })
@@ -417,7 +417,7 @@ jobs:
           milestone_number=$(gh api \
             -H "Accept: application/vnd.github.v3+json" \
             /repos/${{ github.repository }}/milestones \
-            | jq --arg version ${{ inputs.nic_version }} -r \
+            | jq --arg version "v${{ inputs.nic_version }}" -r \
             '.[] | select(.title == $version) | .number')
           if [ -n "${milestone_number}" ]; then
             if ! ${{ inputs.dry_run }}; then
