@@ -1,7 +1,7 @@
 import pytest
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
-from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, patch_ts_from_yaml, read_ts
+from suite.utils.custom_resources_utils import create_ts_from_yaml, delete_ts, patch_ts_from_yaml
 from suite.utils.resources_utils import (
     create_configmap_from_yaml,
     create_items_from_yaml,
