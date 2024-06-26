@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import pytest
 from settings import DEPLOYMENTS, TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
