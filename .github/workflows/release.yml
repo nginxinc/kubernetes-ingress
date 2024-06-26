@@ -429,13 +429,17 @@ jobs:
             /repos/${{ github.repository }}/milestones \
             | jq --arg version "v${{ inputs.nic_version }}" -r \
             '.[] | select(.title == $version) | .number')
-          if ! ${{ inputs.dry_run }}; then
-            gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
-              /repos/${{ github.repository }}/milestones/${milestone_number} \
-              -f "title=v${{ inputs.nic_version }}" \
-              -f "state=closed";
+          if [ -n "${milestone_number}" ]; then
+            if ! ${{ inputs.dry_run }}; then
+              gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
+                /repos/${{ github.repository }}/milestones/${milestone_number} \
+                -f "title=v${{ inputs.nic_version }}" \
+                -f "state=closed";
+            else
+              echo "Skipping closing Github Release milestone, DRY_RUN"
+            fi
           else
-            echo "Skipping closing Github Release milestone, DRY_RUN"
+            echo "Github Milestone not available, closed already."
           fi
 
       - name: Get Github release id
