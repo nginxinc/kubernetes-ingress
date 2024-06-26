@@ -50,11 +50,11 @@ class TestVirtualServerValidation:
     def test_virtual_server_behavior(
         self, kube_apis, cli_arguments, ingress_controller_prerequisites, crd_ingress_controller, virtual_server_setup
     ):
-        ic_pods_amount = get_pods_amount(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        get_pods_amount(kube_apis.v1, ingress_controller_prerequisites.namespace)
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
 
         print("Step 1: initial check")
-        step_1_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
+        get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_vs_conf_exists(kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace, virtual_server_setup)
         assert_response_200(virtual_server_setup)
 
@@ -66,7 +66,7 @@ class TestVirtualServerValidation:
             virtual_server_setup.namespace,
         )
         wait_before_test(1)
-        step_2_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
+        get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_vs_conf_not_exists(
             kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace, virtual_server_setup
         )
@@ -107,7 +107,7 @@ class TestVirtualServerValidation:
             virtual_server_setup.namespace,
         )
         wait_before_test(1)
-        step_5_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
+        get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_vs_conf_not_exists(
             kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace, virtual_server_setup
         )
