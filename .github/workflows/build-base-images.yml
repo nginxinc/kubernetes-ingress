@@ -16,7 +16,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   checks:
@@ -44,6 +43,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write # for scout report
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -113,6 +113,7 @@ jobs:
     needs: checks
     permissions:
       contents: read
+      id-token: write
       pull-requests: write # for scout report
     strategy:
       fail-fast: false
@@ -185,6 +186,7 @@ jobs:
     needs: checks
     permissions:
       contents: read
+      id-token: write
       pull-requests: write # for scout report
     strategy:
       fail-fast: false
