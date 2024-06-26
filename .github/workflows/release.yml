@@ -247,8 +247,8 @@ jobs:
               workflow_id: 'build-cnab.yml',
               ref: 'main',
               inputs: {
-                chart_version: '${{ inputs.chart_version }}'
-                ic_version: '${{ inputs.nic_version }}'
+                chart_version: '${{ inputs.chart_version }}',
+                ic_version: '${{ inputs.nic_version }}',
                 cnab_version: '${{ inputs.cnab_version }}'
               },
             })
