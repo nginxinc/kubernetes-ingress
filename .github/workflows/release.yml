@@ -276,9 +276,14 @@ jobs:
         with:
           ref: ${{ inputs.release_branch }}
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
+
       - name: Publish to AWS Marketplace
         uses: nginxinc/aws-marketplace-publish@be512a7ae9666098bc4429a1afa27a11be6a3995 # v1.0.3
-        continue-on-error: true
         with:
           version: ${{ inputs.nic_version }}
           product-id: ${{ secrets[matrix.product_id] }}
