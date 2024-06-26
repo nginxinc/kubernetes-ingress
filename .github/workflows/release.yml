@@ -447,7 +447,7 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/${{ github.repository }}/releases \
-            | jq --arg version ${{ inputs.nic_version }} -r \
+            | jq --arg version "v${{ inputs.nic_version }}" -r \
             '.[] | select(.name == $version) | .id')
           echo "release_id=${release_id}" >> $GITHUB_OUTPUT
 
