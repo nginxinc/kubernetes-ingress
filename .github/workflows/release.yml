@@ -419,7 +419,7 @@ jobs:
           milestone_number=$(gh api \
             -H "Accept: application/vnd.github.v3+json" \
             /repos/${{ github.repository }}/milestones \
-            | jq --arg version ${{ inputs.nic_version }} -r \
+            | jq --arg version "v${{ inputs.nic_version }}" -r \
             '.[] | select(.title == $version) | .number')
           if ! ${{ inputs.dry_run }}; then
             gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
