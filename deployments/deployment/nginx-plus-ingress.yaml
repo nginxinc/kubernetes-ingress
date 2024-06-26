@@ -93,7 +93,6 @@ spec:
           - -report-ingress-status
           - -external-service=nginx-ingress
          #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
-         #- -include-year
          #- -enable-cert-manager
          #- -enable-external-dns
          #- -enable-app-protect
