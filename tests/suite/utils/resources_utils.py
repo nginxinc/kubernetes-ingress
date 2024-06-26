@@ -1595,7 +1595,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
             if resp.status_code != 502 and resp.status_code != 504:
                 print(f"After {_} retries at 1 second interval, got non 502|504 response. Continue with tests...")
                 return
-            time.sleep(1)
+            wait_before_test()
         pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
 
 

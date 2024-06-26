@@ -6,6 +6,7 @@ ROOTDIR=$(git rev-parse --show-toplevel || echo ".")
 TMPDIR=/tmp
 HELM_CHART_PATH="${ROOTDIR}/charts/nginx-ingress"
 DEPLOYMENT_PATH="${ROOTDIR}/deployments"
+EXAMPLES_PATH="${ROOTDIR}/examples"
 DEBUG=${DEBUG:-"false"}
 
 DOCS_TO_UPDATE_FOLDER=${ROOTDIR}/docs/content
@@ -108,6 +109,22 @@ done
 # update docs with new versions
 docs_files=$(find "${DOCS_TO_UPDATE_FOLDER}" -type f -name "*.md" ! -name releases.md ! -name CHANGELOG.md)
 for i in ${docs_files}; do
+    if [ "${DEBUG}" != "false" ]; then
+        echo "Processing ${i}"
+    fi
+    file_name=$(basename "${i}")
+    mv "${i}" "${TMPDIR}/${file_name}"
+    cat "${TMPDIR}/${file_name}" | sed -e "$regex_ic" | sed -e "$regex_helm" > "${i}"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: failed processing ${i}"
+        mv "${TMPDIR}/${file_name}" "${i}"
+        exit 2
+    fi
+done
+
+# update examples with new versions
+example_files=$(find "${EXAMPLES_PATH}" -type f -name "*.md")
+for i in ${example_files}; do
     if [ "${DEBUG}" != "false" ]; then
         echo "Processing ${i}"
     fi

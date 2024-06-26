@@ -44,7 +44,6 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: read # for docker/build-push-action to read repo content
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       id-token: write # for OIDC login to GCR
       packages: write # for docker/build-push-action to push to GHCR
       pull-requests: write # for scout report
@@ -56,6 +55,7 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: ${{ inputs.branch }}
+          fetch-depth: 0
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -119,7 +119,7 @@ jobs:
         if: ${{ steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6.1.0
         with:
           file: build/Dockerfile
           context: "."
@@ -151,7 +151,7 @@ jobs:
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Docker image
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6.1.0
         id: build-push
         with:
           file: build/Dockerfile
@@ -177,10 +177,10 @@ jobs:
       - name: Make directory for security scan results
         run: |
           mkdir -p "${{ inputs.image }}-results/"
+        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # 0.23.0
-        continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
           format: "sarif"
@@ -198,7 +198,6 @@ jobs:
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
         uses: docker/scout-action@fc749439af4870e8f6feb592250ab728600d10a6 # v1.10.0
-        continue-on-error: true
         with:
           command: cves,recommendations
           image: ${{ steps.meta.outputs.tags }}
@@ -208,12 +207,4 @@ jobs:
           write-comment: false
           github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
           summary: true
-        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
-
-      - name: Upload Scan Results to Github Artifacts
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-        continue-on-error: true
-        with:
-          name: "${{ inputs.image }}-results"
-          path: "${{ inputs.image }}-results/"
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
