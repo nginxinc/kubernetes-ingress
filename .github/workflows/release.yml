@@ -258,6 +258,9 @@ jobs:
     name: Publish to AWS Marketplace
     runs-on: ubuntu-22.04
     needs: [release-plus]
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
