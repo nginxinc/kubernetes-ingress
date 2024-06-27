@@ -395,11 +395,13 @@ jobs:
           docker pull ${{ matrix.image }}:${{ needs.checks.outputs.build_tag }}
         if: ${{ ( needs.checks.outputs.forked_workflow == 'false' || needs.checks.outputs.docs_only == 'false' ) && steps.stable_exists.outputs.exists != 'true' }}
 
-      - name: Fetch Cached Artifacts
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - name: Download Binary Artifacts from GitHub Artifacts
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
         with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+          name: nginx-ingress-${{ needs.checks.outputs.go_code_md5}}
+          path: dist
+          run-id: ${{ needs.checks.outputs.binary_artifact_id }}
+          github-token: ${{ github.token }}
         if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Docker Buildx

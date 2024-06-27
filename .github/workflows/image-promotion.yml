@@ -36,7 +36,7 @@ jobs:
     outputs:
       go_path: ${{ steps.vars.outputs.go_path }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
-      binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+      binary_artifact_id: ${{ steps.binary-artifact.outputs.id }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
       ic_version: ${{ steps.vars.outputs.ic_version }}
       docker_md5: ${{ steps.vars.outputs.docker_md5 }}
@@ -70,13 +70,18 @@ jobs:
           echo "image_matrix_plus=$(cat .github/data/matrix-images-plus.json | jq -c)" >> $GITHUB_OUTPUT
           echo "image_matrix_nap=$(cat .github/data/matrix-images-nap.json | jq -c)" >> $GITHUB_OUTPUT
 
-      - name: Fetch Cached Binary Artifacts
-        id: binary-cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
-          lookup-only: true
+      - name: Fetch Binary Artifacts ID from GitHub
+        id: binary-artifact
+        run: |
+          result=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/actions/artifacts | \
+            jq '.artifacts[] | select(.name=="nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}")')
+          workflow_id=$(echo $result | jq -r '.workflow_run.id')
+          echo "id=${workflow_id}" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -104,7 +109,7 @@ jobs:
         run: |
           echo go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
           echo go_path: ${{ steps.vars.outputs.go_path }}
-          echo binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
+          echo binary_artifact_id: ${{ steps.binary-artifact.outputs.id }}
           echo chart_version: ${{ steps.vars.outputs.chart_version }}
           echo ic_version: ${{ steps.vars.outputs.ic_version }}
           echo docker_md5: ${{ steps.vars.outputs.docker_md5 }}
@@ -163,7 +168,7 @@ jobs:
         uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: go.mod
-        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
 
       - name: Build binaries
         uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
@@ -182,14 +187,14 @@ jobs:
           AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
           AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
           GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
-        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
 
-      - name: Store Artifacts in Cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - name: Upload Artifacts to GitHub Artifacts
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
-        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+          name: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
 
   build-docker:
     if: ${{ needs.checks.outputs.stable_image_exists != 'true' }}
