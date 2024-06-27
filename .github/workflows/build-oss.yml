@@ -171,7 +171,7 @@ jobs:
 
       - name: Debug Download Binary Artifacts from GitHub Artifacts
         run: |
-          ls -al
+          find dist/
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Docker image
