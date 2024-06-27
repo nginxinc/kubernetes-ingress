@@ -94,6 +94,8 @@ jobs:
 
       - name: Create new release Tag
         run: |
+          git config --global user.email "kubernetes@nginx.com"
+          git config --global user.name "NGINX Kubernetes Team"
           branch="${{ inputs.release_branch }}"
           tag="v${{ inputs.nic_version }}"
           if ! git rev-parse --verify refs/tags/${tag}; then
@@ -113,7 +115,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.NGINX_PAT }}
 
   release-oss:
-    if: ${{ ! contains(inputs.skip_step, 'release-oss') }}
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-oss') }}
     name: Release Docker OSS
     needs: [variables]
     uses: ./.github/workflows/oss-release.yml
@@ -134,7 +136,7 @@ jobs:
     secrets: inherit
 
   release-plus:
-    if: ${{ ! contains(inputs.skip_step, 'release-plus') }}
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-plus') }}
     name: Release Docker Plus
     needs: [variables]
     uses: ./.github/workflows/plus-release.yml
@@ -154,7 +156,7 @@ jobs:
     secrets: inherit
 
   publish-helm-chart:
-    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'publish-helm-chart') }}
+    if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'publish-helm-chart') }}
     name: Publish Helm Chart
     uses: ./.github/workflows/publish-helm.yml
     with:
@@ -168,7 +170,7 @@ jobs:
     secrets: inherit
 
   certify-openshift-images:
-    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'certify-openshift-images') }}
+    if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'certify-openshift-images') }}
     name: Certify OpenShift UBI images
     runs-on: ubuntu-22.04
     needs: [release-oss]
@@ -187,7 +189,7 @@ jobs:
           pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
 
   operator:
-    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'operator') && !contains(inputs.skip_step, 'publish-helm-chart') }}
+    if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'operator') && !contains(inputs.skip_step, 'publish-helm-chart') }}
     name: Trigger PR for Operator
     runs-on: ubuntu-22.04
     needs: [publish-helm-chart]
@@ -208,7 +210,7 @@ jobs:
             })
 
   gcp-marketplace:
-    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'gcp-marketplace') }}
+    if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'gcp-marketplace') }}
     name: Trigger PR for GCP Marketplace
     runs-on: ubuntu-22.04
     needs: [publish-helm-chart]
@@ -229,7 +231,7 @@ jobs:
             })
 
   azure-marketplace:
-    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'azure-marketplace') }}
+    if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'azure-marketplace') }}
     name: Trigger CNAB Build for Azure Marketplace
     runs-on: ubuntu-22.04
     needs: [publish-helm-chart]
@@ -245,17 +247,20 @@ jobs:
               workflow_id: 'build-cnab.yml',
               ref: 'main',
               inputs: {
-                chart_version: '${{ inputs.chart_version }}'
-                ic_version: '${{ inputs.nic_version }}'
+                chart_version: '${{ inputs.chart_version }}',
+                ic_version: '${{ inputs.nic_version }}',
                 cnab_version: '${{ inputs.cnab_version }}'
               },
             })
 
   aws-marketplace:
-    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'aws-marketplace') }}
+    if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'aws-marketplace') }}
     name: Publish to AWS Marketplace
     runs-on: ubuntu-22.04
     needs: [release-plus]
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -296,9 +301,12 @@ jobs:
     needs: [variables]
     permissions:
       contents: read
+      id-token: write # for cosign to sign artifacts
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ inputs.release_branch }}
 
       - name: Fetch Binary Artifacts from Cache
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
@@ -331,7 +339,7 @@ jobs:
         if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
 
   azure-upload:
-    if: ${{ ! contains(inputs.skip_step, 'azure-upload') }}
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'azure-upload') }}
     name: Upload packages to Azure
     runs-on: ubuntu-22.04
     needs: [variables, binaries]
@@ -374,7 +382,7 @@ jobs:
             done
 
   github-release:
-    if: ${{ ! contains(inputs.skip_step, 'github-release') }}
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'github-release') }}
     name: Publish release to GitHub
     runs-on: ubuntu-22.04
     needs: [variables, binaries, release-oss, release-plus, azure-upload]
@@ -400,7 +408,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # clobber overwrites existing assets of the same name
         run: |
-          if ! ${{ inputs.dry_run }}
+          if ! ${{ inputs.dry_run }}; then
             gh release upload --clobber v${{ inputs.nic_version }} \
               $(find ./tarballs -type f)
           else
@@ -414,13 +422,19 @@ jobs:
           milestone_number=$(gh api \
             -H "Accept: application/vnd.github.v3+json" \
             /repos/${{ github.repository }}/milestones \
-            | jq --arg version ${{ inputs.nic_version }} -r \
+            | jq --arg version "v${{ inputs.nic_version }}" -r \
             '.[] | select(.title == $version) | .number')
-          if ! ${{ inputs.dry_run }}
-            gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
-              /repos/${{ github.repository }}/milestones/${milestone_number} \
+          if [ -n "${milestone_number}" ]; then
+            if ! ${{ inputs.dry_run }}; then
+              gh api --method PATCH -H "Accept: application/vnd.github.v3+json" \
+                /repos/${{ github.repository }}/milestones/${milestone_number} \
+                -f "title=v${{ inputs.nic_version }}" \
+                -f "state=closed";
+            else
+              echo "Skipping closing Github Release milestone, DRY_RUN"
+            fi
           else
-            echo "Skipping closing Github Release milestone, DRY_RUN"
+            echo "Github Milestone not available, closed already."
           fi
 
       - name: Get Github release id
@@ -432,7 +446,7 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/${{ github.repository }}/releases \
-            | jq --arg version ${{ inputs.nic_version }} -r \
+            | jq --arg version "v${{ inputs.nic_version }}" -r \
             '.[] | select(.name == $version) | .id')
           echo "release_id=${release_id}" >> $GITHUB_OUTPUT
 
@@ -473,7 +487,7 @@ jobs:
         if: ${{ ! inputs.dry_run }}
 
   release-image-notification:
-    if: ${{ ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
+    if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
     name: Notify Slack channels about image release
     runs-on: ubuntu-22.04
     needs: [variables, binaries, release-oss, release-plus]
