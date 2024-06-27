@@ -8,7 +8,7 @@ ARG NGINX_AGENT=false
 ARG IMAGE_NAME=nginx/nginx-ingress
 ARG WAF_VERSION=v4
 
-# force build
+# force build2
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
 FROM ghcr.io/nginxinc/k8s-common:nginx-opentracing-1.27.0@sha256:d9f6f930b7bfcc026785aca49fdb96fbecdc517ebbdb893f6393ac78b247c8fb AS opentracing-lib
