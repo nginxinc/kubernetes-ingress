@@ -1,4 +1,5 @@
 name: "Update pinned container SHAs"
+run-name: Update pinned container SHAs, triggered from ${{ github.event_name }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:

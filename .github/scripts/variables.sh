@@ -30,7 +30,15 @@ get_chart_md5() {
 }
 
 get_actions_md5() {
-  find .github -type f -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }'
+  exclude_list="$(dirname $0)/exclude_ci_files.txt"
+  find_command="find .github -type f -not -path '${exclude_list}'"
+  while IFS= read -r file
+  do
+    find_command+=" -not -path '$file'"
+  done < "$exclude_list"
+
+  find_command+=" -exec md5sum {} +"
+  eval "$find_command" | LC_ALL=C sort  | md5sum | awk '{ print $1 }'
 }
 
 get_build_tag() {

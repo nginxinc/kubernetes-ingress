@@ -1,4 +1,5 @@
 name: CI
+run-name: CI on "${{ github.head_ref && github.head_ref || github.ref }}" by @${{ github.actor }}
 
 on:
   pull_request:
