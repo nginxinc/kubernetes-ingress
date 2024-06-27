@@ -165,6 +165,7 @@ jobs:
         with:
           name: nginx-ingress-${{ inputs.go-md5}}
           run-id: ${{ steps.binary-artifact.outputs.id }}
+          github-token: ${{ github.token }}
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Docker image
