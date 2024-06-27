@@ -5,13 +5,7 @@ import requests
 from settings import TEST_DATA
 from suite.utils.custom_resources_utils import read_custom_resource
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
-from suite.utils.resources_utils import (
-    get_first_pod_name,
-    get_pod_list,
-    get_vs_nginx_template_conf,
-    scale_deployment,
-    wait_before_test,
-)
+from suite.utils.resources_utils import get_pod_list, get_vs_nginx_template_conf, scale_deployment, wait_before_test
 from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_virtual_server,
