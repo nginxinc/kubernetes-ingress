@@ -908,14 +908,6 @@
             false
           ]
         },
-        "includeYear": {
-          "type": "boolean",
-          "default": false,
-          "title": "The includeYear",
-          "examples": [
-            false
-          ]
-        },
         "enableTLSPassthrough": {
           "type": "boolean",
           "default": false,
@@ -1728,7 +1720,6 @@
           "watchNamespace": "",
           "enableCustomResources": true,
           "enableOIDC": false,
-          "includeYear": false,
           "enableTLSPassthrough": false,
           "tlsPassthroughPort": 443,
           "enableCertManager": false,
@@ -2262,7 +2253,6 @@
         "watchNamespace": "",
         "enableCustomResources": true,
         "enableOIDC": false,
-        "includeYear": false,
         "enableTLSPassthrough": false,
         "enableCertManager": false,
         "enableExternalDNS": false,

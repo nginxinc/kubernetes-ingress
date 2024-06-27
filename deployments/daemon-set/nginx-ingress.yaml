@@ -91,7 +91,6 @@ spec:
           - -report-ingress-status
           - -external-service=nginx-ingress
          #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
-         #- -include-year
          #- -v=3 # Enables extensive logging. Useful for troubleshooting.
          #- -enable-prometheus-metrics
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
