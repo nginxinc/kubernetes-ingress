@@ -247,14 +247,14 @@ jobs:
           AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
           AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
           GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
-        if: ${{ needs.checks.outputs.binary_artifact_id != '' }}
+        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
 
       - name: Upload Artifacts to GitHub Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           path: ${{ github.workspace }}/dist
           name: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
-        if: ${{ needs.checks.outputs.binary_artifact_id != '' }}
+        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
 
   build-docker:
     name: Build Docker OSS
