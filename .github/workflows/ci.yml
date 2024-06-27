@@ -198,18 +198,18 @@ jobs:
         uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: go.mod
-        if: ${{ needs.checks.outputs.binary_artifact_id != '' }}
+        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
 
       - name: Run Tests
         run: make cover
-        if: ${{ needs.checks.outputs.binary_artifact_id != '' }}
+        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }} # required
-        if: ${{ needs.checks.outputs.binary_artifact_id != '' }}
+        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
 
   binaries:
     name: Build Binaries
