@@ -63,6 +63,13 @@ repos:
     hooks:
       - id: black
 
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        files: tests/.*\.py$
+        args: ['--in-place', '--remove-all-unused-imports', '--remove-unused-variable']
+
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.28.6
     hooks:
