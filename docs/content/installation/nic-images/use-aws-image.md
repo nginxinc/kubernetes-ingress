@@ -2,7 +2,7 @@
 docs: DOCS-607
 doctypes:
 - ''
-title: Using the AWS Marketplace NGINX Ingress Controller Image
+title: Use the AWS Marketplace NGINX Ingress Controller image
 toc: true
 weight: 200
 ---
