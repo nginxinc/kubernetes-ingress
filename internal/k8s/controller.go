@@ -529,20 +529,6 @@ func (nsi *namespacedInformer) addPolicyHandler(handlers cache.ResourceEventHand
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.ResourceEventHandlerFuncs, namespace string, name string) {
-	lbc.globalConfigurationLister, lbc.globalConfigurationController = cache.NewInformer(
-		cache.NewListWatchFromClient(
-			lbc.confClient.K8sV1().RESTClient(),
-			"globalconfigurations",
-			namespace,
-			fields.Set{"metadata.name": name}.AsSelector()),
-		&conf_v1.GlobalConfiguration{},
-		lbc.resync,
-		handlers,
-	)
-	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.globalConfigurationController.HasSynced)
-}
-
 func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.ResourceEventHandlerFuncs, name string) {
 	optionsModifier := func(options *meta_v1.ListOptions) {
 		options.FieldSelector = fields.Set{"metadata.name": name}.String()
@@ -1259,55 +1245,6 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 
 	// Note: updating the status of a policy based on a reload is not needed.
-}
-
-func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
-	key := task.Key
-	obj, gcExists, err := lbc.globalConfigurationLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	var changes []ResourceChange
-	var problems []ConfigurationProblem
-	var validationErr error
-
-	if !gcExists {
-		glog.V(2).Infof("Deleting GlobalConfiguration: %v\n", key)
-
-		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
-	} else {
-		glog.V(2).Infof("Adding or Updating GlobalConfiguration: %v\n", key)
-
-		gc := obj.(*conf_v1.GlobalConfiguration)
-		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
-	}
-
-	updateErr := lbc.processChangesFromGlobalConfiguration(changes)
-
-	if gcExists {
-		eventTitle := "Updated"
-		eventType := api_v1.EventTypeNormal
-		eventMessage := fmt.Sprintf("GlobalConfiguration %s was added or updated", key)
-
-		if validationErr != nil {
-			eventTitle = "AddedOrUpdatedWithError"
-			eventType = api_v1.EventTypeWarning
-			eventMessage = fmt.Sprintf("GlobalConfiguration %s is updated with errors: %v", key, validationErr)
-		}
-
-		if updateErr != nil {
-			eventTitle += "WithError"
-			eventType = api_v1.EventTypeWarning
-			eventMessage = fmt.Sprintf("%s; with reload error: %v", eventMessage, updateErr)
-		}
-
-		gc := obj.(*conf_v1.GlobalConfiguration)
-		lbc.recorder.Eventf(gc, eventType, eventTitle, eventMessage)
-	}
-
-	lbc.processProblems(problems)
 }
 
 func (lbc *LoadBalancerController) syncVirtualServer(task task) {
