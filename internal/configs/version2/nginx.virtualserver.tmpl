@@ -156,6 +156,7 @@ server {
     {{- end }}
 
     {{- with $s.APIKey}}
+    js_var $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
     js_var $apikey_auth_local_map "{{ .MapName}}";
     js_var $apikey_auth_token $apikey_auth_hash;
     auth_request /_validate_apikey_njs;

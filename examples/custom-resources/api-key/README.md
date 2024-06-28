@@ -17,7 +17,7 @@ a web application, configure load balancing for it via a VirtualServer, and appl
 1. Save the HTTP port of the Ingress Controller into a shell variable:
 
     ```console
-    IC_HTTP_PORT=<port number>
+    IC_HTTPS_PORT=<port number>
     ```
 
 ## Step 1 - Deploy a Web Application
@@ -25,7 +25,7 @@ a web application, configure load balancing for it via a VirtualServer, and appl
 Create the application deployment and service:
 
 ```console
-kubectl apply -f cafe.yaml
+kubectl apply -f cafe.yaml -f cafe-secret.yaml
 ```
 
 ## Step 2 - Deploy the API Key Auth Secret
@@ -62,7 +62,7 @@ Note that the VirtualServer references the policy `api-key-policy` created in St
 If you attempt to access the application without providing a valid API Key in a expected header or query param for that VirtualServer:
 
 ```console
-curl --resolve cafe.example.com:$IC_HTTP_PORT:$IC_IP http://cafe.example.com:$IC_HTTP_PORT/
+curl -k --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/
 ```
 
 ```text
@@ -78,7 +78,7 @@ curl --resolve cafe.example.com:$IC_HTTP_PORT:$IC_IP http://cafe.example.com:$IC
 If you attempt to access the application providing an incorrect API Key in an expected header or query param for that VirtualServer:
 
 ```console
-curl --resolve cafe.example.com:$IC_HTTP_PORT:$IC_IP -H "X-header-name: wrongpassword" http://cafe.example.com:$IC_HTTP_PORT/coffee
+curl -k --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP -H "X-header-name: wrongpassword" https://cafe.example.com:$IC_HTTPS_PORT/coffee
 ```
 
 ```text
@@ -94,7 +94,7 @@ curl --resolve cafe.example.com:$IC_HTTP_PORT:$IC_IP -H "X-header-name: wrongpas
 If you provide a valid API Key in an a header or query defined in the policy, your request will succeed:
 
 ```console
-curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP -H "X-header-name: password" https://cafe.example.com:$IC_HTTPS_PORT/coffee 
+curl -k --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP -H "X-header-name: password" https://cafe.example.com:$IC_HTTPS_PORT/coffee 
 ```
 
 ```text
@@ -108,7 +108,7 @@ Request ID: 4feedb3265a0430a1f58831d016e846d
 If you attempt to access the /tea path, the request will be allowed without an API Key, because the auth_request directive is turned off for that path with a location snippet:
 
 ```console
-curl --resolve cafe.example.com:$IC_HTTP_PORT:$IC_IP http://cafe.example.com:$IC_HTTP_PORT/tea
+curl -k --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea
 ```
 
 ```text

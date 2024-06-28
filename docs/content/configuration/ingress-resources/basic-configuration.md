@@ -53,7 +53,7 @@ Here is a breakdown of what this Ingress resource definition means:
 
 To learn more about the Ingress resource, view [the official Kubernetes documentation for Ingress resources](https://kubernetes.io/docs/concepts/services-networking/ingress/).
 
-{{< note >}} For complete instructions on deploying Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.5.2/examples/ingress-resources/complete-example) in the GitHub repository. {{< /note >}}
+{{< note >}} For complete instructions on deploying Ingress and Secret resources in the cluster, see the [complete example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.0/examples/ingress-resources/complete-example) in the GitHub repository. {{< /note >}}
 
 
 ## New features available in Kubernetes 1.18

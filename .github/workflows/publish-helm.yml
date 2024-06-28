@@ -95,7 +95,7 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.NGINX_PAT }}
           path: helm-charts
-        if: ${{ inputs.nginx_helm_repo == 'true' }}
+        if: ${{ inputs.nginx_helm_repo }}
 
       - name: Push Helm Chart to Helm Charts Repository
         run: |
@@ -106,4 +106,4 @@ jobs:
           git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
           commit -m "NGINX Ingress Controller - Release ${{ inputs.chart_version }}"
           git push -u origin master
-        if: ${{ inputs.nginx_helm_repo == 'true' }}
+        if: ${{ inputs.nginx_helm_repo }}

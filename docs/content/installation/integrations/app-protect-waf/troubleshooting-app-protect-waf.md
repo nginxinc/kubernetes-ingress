@@ -1,5 +1,5 @@
 ---
-docs: DOCS-1460
+docs: DOCS-0000
 doctypes:
 - ''
 title: Troubleshooting NGINX App Protect WAF
@@ -7,25 +7,26 @@ toc: true
 weight: 300
 ---
 
-This document describes how to troubleshoot problems when using NGINX Ingress Controller and the NGINX App Protect WAF module.
+This document describes how to troubleshoot problems when using NGINX Ingress Controller and the NGINX App Protect WAF module version 5.
 
 For general troubleshooting of NGINX Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting/troubleshoot-common" >}}) documentation.
 
-{{< see-also >}} You can find more troubleshooting tips in the NGINX App Protect WAF [troubleshooting guide](/nginx-app-protect/v4/troubleshooting/) {{< /see-also >}}.
+{{< see-also >}} You can find more troubleshooting tips in the NGINX App Protect WAF [troubleshooting guide](/nginx-app-protect/v5/troubleshooting/) {{< /see-also >}}.
 
 ## Potential problems
 
-The table below categorizes some potential problems with the Ingress Controller when App Protect WAF module is enabled. It suggests how to troubleshoot those problems, using one or more methods from the next section.
+The table below categorizes some potential problems with NGINX Ingress Controller when App Protect WAF module is enabled. It suggests how to troubleshoot those problems, using one or more methods from the next section.
 
 {{% table %}}
 |Problem area | Symptom | Troubleshooting method | Common cause |
 | ---| ---| ---| --- |
-|Start. | The Ingress Controller fails to start. | Check the logs. | Misconfigured APLogConf or APPolicy. |
-|APLogConf, APPolicy or Ingress Resource. | The configuration is not applied. | Check the events of the APLogConf, APPolicy and Ingress Resource, check the logs, replace the policy. | APLogConf or APPolicy is invalid. |
-|NGINX. | The Ingress Controller NGINX verification timeouts while starting for the first time or while reloading after a change. | Check the logs for ``Unable to fetch version: X`` message. Check the Availability of APPolicy External References. | Too many Ingress Resources with App Protect enabled. Check the `NGINX fails to start/reload section <#nginx-fails-to-start-or-reload>`_ of the Known Issues. |
+|Start. | The Ingress Controller fails to start. | Check the logs. | Misconfigured policy bundle. |
+|Start | The configuration is not applied. | Check if a policy bundle is compiled using version of the compiler running in NGINX Ingress Controller. | Policy bundle is invalid. |
+|Start | The configuration is not applied. | Check if bundle is present in a volume. | Policy bundle is not present in the mounted volume. |
+|APLogConf, Policy or Ingress Resource. | The configuration is not applied. | Check the events of the APLogConf, Policy and Ingress Resource, check the logs, replace the policy bundle. | Policy bundle is invalid. |
 {{% /table %}}
 
-## Troubleshooting Methods
+## Troubleshooting methods
 
 ### Check NGINX Ingress Controller and App Protect logs
 
@@ -75,9 +76,10 @@ Events:
 
 The events section has a *Normal* event with the *AddedOrUpdated reason*, indicating the policy was successfully accepted.
 
-### Replace the Policy
+### Replace the policy
 
-NOTE: This method only applies if using [external references](/nginx-app-protect/v4/configuration/#external-references)
+{{< note >}} This method only applies if using [external references](/nginx-app-protect/v4/configuration/#external-references) {{< /note >}}
+
 If items on the external reference change but the spec of the APPolicy remains unchanged (even when re-applying the policy), Kubernetes will not detect the update.
 In this case you can force-replace the resource. This will remove the resource and add it again, triggering a reload. For example:
 
@@ -87,9 +89,9 @@ kubectl replace appolicy -f your-policy-manifest.yaml --force
 
 ### Check the availability of APPolicy external references
 
-NOTE: This method only applies if you're using [external references](/nginx-app-protect/v4/configuration/#external-references) in NGINX App Protect policies.
+{{< note >}} This method only applies if you're using [external references](/nginx-app-protect/v4/configuration/#external-references) in NGINX App Protect policies. {{< /note >}}
 
-To check what servers host the external references of a policy:
+To check which servers host the external references of a policy:
 
 ```shell
 kubectl get appolicy mypolicy -o jsonpath='{.items[*].spec.policy.*.link}' | tr ' ' '\n'
@@ -112,13 +114,13 @@ When using NGINX Ingress Controller with the App Protect WAF module, the followi
 
 When you make a change that requires NGINX to apply a new configuration, NGINX Ingress Controller reloads NGINX automatically. Without the App Protect WAF module enabled, usual reload times are around 150ms. If App Protect WAF module is enabled and is being used by any number of Ingress Resources, these reloads might take a few seconds instead.
 
-### NGINX Configuration Skew
+### NGINX configuration drift
 
 If you are running more than one instance of NGINX Ingress Controller, the extended reload time may cause the NGINX configuration of your instances to be out of sync. This can occur because there is no order imposed on how NGINX Ingress Controller processes the Kubernetes Resources. The configurations will be the same after all instances have completed the reload.
 
 In order to reduce these inconsistencies, we advise that you do not apply changes to multiple resources handled by NGINX Ingress Controller at the same time.
 
-### NGINX Fails to Start or Reload
+### NGINX fails to start or reload
 
 The first time NGINX Ingress Controller starts, or whenever there is a change that requires reloading NGINX, NGINX Ingress Controller will verify if the reload was successful. The timeout for this verification is normally 4 seconds. When App Protect is enabled, this timeout increases to 20 seconds.
 

@@ -2,9 +2,8 @@ from unittest import mock
 
 import pytest
 import requests
-from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
-from suite.utils.resources_utils import create_secret_from_yaml, ensure_response_from_backend, wait_before_test
+from suite.utils.resources_utils import create_secret_from_yaml, wait_before_test
 from suite.utils.ssl_utils import create_sni_session
 
 

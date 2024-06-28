@@ -66,12 +66,12 @@ Product telemetry can be disabled when installing NGINX Ingress Controller.
 
 ### Helm
 
-When installing or upgrading NGINX Ingress Controller with Helm, set the `controller.telemetry.enable` option to `false`.
+When installing or upgrading NGINX Ingress Controller with Helm, set the `controller.telemetryReporting.enable` option to `false`.
 
 This can be set directly in the `values.yaml` file, or using the `--set` option
 
 ```shell
-helm upgrade --install ... --set controller.telemetry.enable=false
+helm upgrade --install ... --set controller.telemetryReporting.enable=false
 ```
 
 ---

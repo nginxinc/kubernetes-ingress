@@ -526,6 +526,31 @@ func TestExecuteVirtualServerTemplateWithBackupServerNGINXPlus(t *testing.T) {
 	t.Log(string(got))
 }
 
+func TestExecuteVirtualServerTemplateWithAPIKeyPolicyNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	vscfg := vsConfig()
+	vscfg.Server.APIKey = &APIKey{
+		Header:  []string{"X-header-name", "other-header"},
+		Query:   []string{"myQuery", "myOtherQuery"},
+		MapName: "vs-default-cafe-apikey-policy",
+	}
+
+	e := newTmplExecutorNGINXPlus(t)
+	got, err := e.ExecuteVirtualServerTemplate(&vscfg)
+	if err != nil {
+		t.Error(err)
+	}
+
+	want := "js_var $header_query_value \"${http_x_header_name}${http_other_header}${arg_myQuery}${arg_myOtherQuery}\";"
+
+	if !bytes.Contains(got, []byte(want)) {
+		t.Errorf("want %q in generated template", want)
+	}
+	snaps.MatchSnapshot(t, string(got))
+	t.Log(string(got))
+}
+
 func vsConfig() VirtualServerConfig {
 	return VirtualServerConfig{
 		LimitReqZones: []LimitReqZone{

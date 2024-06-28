@@ -565,8 +565,6 @@ class TestStandardFlows:
         expected_strings,
         unexpected_strings,
     ):
-        initial_events = get_events(kube_apis.v1, annotations_setup.namespace)
-        initial_count = get_event_count(annotations_setup.ingress_event_text, initial_events)
         print("Case 8: standard ingress")
         replace_ingresses_from_yaml(kube_apis.networking_v1, annotations_setup.namespace, yaml_file)
         wait_before_test(1)
@@ -577,7 +575,6 @@ class TestStandardFlows:
             annotations_setup.ingress_pod_name,
             ingress_controller_prerequisites.namespace,
         )
-        new_events = get_events(kube_apis.v1, annotations_setup.namespace)
         for _ in expected_strings:
             assert _ in result_conf
         for _ in unexpected_strings:

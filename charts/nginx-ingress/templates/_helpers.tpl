@@ -277,7 +277,6 @@ Build the args for the service binary.
 - -service-insight-tls-secret={{ .Values.serviceInsight.secret }}
 - -enable-custom-resources={{ .Values.controller.enableCustomResources }}
 - -enable-snippets={{ .Values.controller.enableSnippets }}
-- -include-year={{ .Values.controller.includeYear }}
 - -disable-ipv6={{ .Values.controller.disableIPV6 }}
 {{- if .Values.controller.enableCustomResources }}
 - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}

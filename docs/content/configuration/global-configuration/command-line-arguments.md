@@ -81,16 +81,6 @@ Default `false`.
 
 ---
 
-### -include-year
-
-Adds year to log headers.
-
-Default `false`.
-
-{{< note >}} This flag will be removed in release 3.7 and the year will be included by default. {{< /note >}}
-
----
-
 ### -enable-leader-election
 
 Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status.

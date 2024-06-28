@@ -102,7 +102,7 @@ def crd_ingress_controller(
             ingress_controller_endpoint.port,
             ingress_controller_endpoint.port_ssl,
         )
-    except ApiException as ex:
+    except ApiException:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
@@ -267,7 +267,6 @@ def crd_ingress_controller_with_dos(
 
         print("------------------------- Create syslog svc -----------------------")
         src_syslog_yaml = f"{TEST_DATA}/dos/dos-syslog.yaml"
-        log_loc = f"/var/log/messages"
         create_items_from_yaml(kube_apis, src_syslog_yaml, namespace)
         before = time.time()
         wait_until_all_pods_are_ready(kube_apis.v1, namespace)
@@ -397,7 +396,7 @@ def crd_ingress_controller_with_ed(
             ingress_controller_prerequisites.namespace,
             cm_source,
         )
-    except ApiException as ex:
+    except ApiException:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")

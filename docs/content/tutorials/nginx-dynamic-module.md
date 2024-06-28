@@ -35,7 +35,7 @@ Once you have cloned the repository, edit the `Dockerfile` located in the `build
 In this example, we add the `Headers-more` dynamic module to the NGINX Ingress Controller image. We choose the `debian-plus` operating system: modify the entry for the system you are using.
 
 ```docker
-FROM debian:11-slim AS debian-plus
+FROM debian:12-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 ARG BUILD_OS

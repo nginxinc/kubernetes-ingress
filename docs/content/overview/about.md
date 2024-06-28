@@ -14,4 +14,4 @@ NGINX Ingress Controller is an [Ingress Controller]({{< relref "glossary.md#ingr
 
 NGINX Ingress Controller supports the [VirtualServer and VirtualServerRoute resources]({{< relref "configuration/virtualserver-and-virtualserverroute-resources">}}) as alternatives to Ingress, enabling traffic splitting and advanced content-based routing. It also supports TCP, UDP and TLS Passthrough load balancing using [TransportServer resources]({{< relref "configuration/transportserver-resource">}}).
 
-To learn more about NGINX Ingress Controller, please read the [The design of NGINX Ingress Controller]({{< relref "overview/design.nd">}}) and [Extensibility with NGINX Plus]({{< relref "overview/nginx-plus.md">}}) topics.
+To learn more about NGINX Ingress Controller, please read the [The design of NGINX Ingress Controller]({{< relref "overview/design.md">}}) and [Extensibility with NGINX Plus]({{< relref "overview/nginx-plus.md">}}) topics.

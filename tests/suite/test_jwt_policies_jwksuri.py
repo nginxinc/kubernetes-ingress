@@ -1,4 +1,3 @@
-import time
 from unittest import mock
 
 import pytest
@@ -10,7 +9,6 @@ from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_and_create_vs_from_yaml,
     delete_virtual_server,
-    patch_v_s_route_from_yaml,
 )
 
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"

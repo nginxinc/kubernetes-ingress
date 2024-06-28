@@ -38,8 +38,8 @@ github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
-github.com/cert-manager/cert-manager v1.15.0 h1:xVL8tzdQECMypoYQa9rv4DLjkn2pJXJLTqH4JUsxfko=
-github.com/cert-manager/cert-manager v1.15.0/go.mod h1:Vxq6yNKAbgQeMtzu5gqU8n0vXDiZcGTa5LDyCJRbmXE=
+github.com/cert-manager/cert-manager v1.15.1 h1:HSG4k2GlJ2YgTLkZfQzrArNaQpM9+ehDDg550IxAD94=
+github.com/cert-manager/cert-manager v1.15.1/go.mod h1:p98JoGv3J9JhdKU9ngsj2EhWGI6/GlU7kpjWu5lf2js=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr4=
@@ -75,8 +75,8 @@ github.com/gkampitakis/go-snaps v0.5.4/go.mod h1:ZABkO14uCuVxBHAXAfKG+bqNz+aa1bG
 github.com/go-asn1-ber/asn1-ber v1.5.5/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
 github.com/go-asn1-ber/asn1-ber v1.5.6 h1:CYsqysemXfEaQbyrLJmdsCRuufHoLa3P/gGWGl5TDrM=
 github.com/go-asn1-ber/asn1-ber v1.5.6/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
-github.com/go-chi/chi/v5 v5.0.13 h1:JlH2F2M8qnwl0N1+JFFzlX9TlKJYas3aPXdiuTmJL+w=
-github.com/go-chi/chi/v5 v5.0.13/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
+github.com/go-chi/chi/v5 v5.0.14 h1:PyEwo2Vudraa0x/Wl6eDRRW2NXBvekgfxyydcM0WGE0=
+github.com/go-chi/chi/v5 v5.0.14/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
 github.com/go-jose/go-jose/v4 v4.0.2 h1:R3l3kkBds16bO7ZFAEEcofK0MkrAJt3jlJznWZG0nvk=
 github.com/go-jose/go-jose/v4 v4.0.2/go.mod h1:WVf9LFMHh/QVrmqrOfqun0C45tMe3RoiKJMPvgWwLfY=
 github.com/go-kit/log v0.2.1 h1:MRVx0/zhvdseW+Gza6N9rVzU/IVzaeE1SFI4raAhmBU=

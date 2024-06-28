@@ -50,7 +50,7 @@ class TestBuildVersion:
         try:
             _info = _log[_log.find("Version") :].strip()
             logging.info(f"Version and GitCommit info: {_info}")
-        except Exception as e:
+        except Exception:
             logging.exception(f"Tag labels not found")
 
         return _info
