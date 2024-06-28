@@ -356,7 +356,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	if input.EnableTelemetryReporting {
 		// Default endpoint
 		exporterCfg := telemetry.ExporterCfg{
-			Endpoint: "oss-dev.edge.df.f5.com:443",
+			Endpoint: "oss.edge.df.f5.com:443",
 		}
 		if input.TelemetryReportingEndpoint != "" {
 			exporterCfg.Endpoint = input.TelemetryReportingEndpoint
