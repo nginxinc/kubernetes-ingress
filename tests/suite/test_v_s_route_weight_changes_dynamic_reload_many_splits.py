@@ -114,6 +114,7 @@ def vsr_weight_changes_dynamic_reload_many_splits_setup(
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_splits
 @pytest.mark.smok
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
