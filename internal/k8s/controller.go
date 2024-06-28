@@ -492,15 +492,6 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
 }
 
-// addServiceHandler adds the handler for services to the controller
-func (nsi *namespacedInformer) addServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.sharedInformerFactory.Core().V1().Services().Informer()
-	informer.AddEventHandler(handlers)
-	nsi.svcLister = informer.GetStore()
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
 // addIngressHandler adds the handler for ingresses to the controller
 func (nsi *namespacedInformer) addIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.sharedInformerFactory.Networking().V1().Ingresses().Informer()
@@ -2199,79 +2190,6 @@ func (lbc *LoadBalancerController) updateTransportServerMetrics() {
 
 	metrics := lbc.configuration.GetTransportServerMetrics()
 	lbc.metricsCollector.SetTransportServers(metrics.TotalTLSPassthrough, metrics.TotalTCP, metrics.TotalUDP)
-}
-
-func (lbc *LoadBalancerController) syncService(task task) {
-	key := task.Key
-
-	var obj interface{}
-	var exists bool
-	var err error
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, exists, err = lbc.getNamespacedInformer(ns).svcLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	// First case: the service is the external service for the Ingress Controller
-	// In that case we need to update the statuses of all resources
-
-	if lbc.IsExternalServiceKeyForStatus(key) {
-		glog.V(3).Infof("Syncing service %v", key)
-
-		if !exists {
-			// service got removed
-			lbc.statusUpdater.ClearStatusFromExternalService()
-		} else {
-			// service added or updated
-			lbc.statusUpdater.SaveStatusFromExternalService(obj.(*api_v1.Service))
-		}
-
-		if lbc.reportStatusEnabled() {
-			ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
-
-			glog.V(3).Infof("Updating status for %v Ingresses", len(ingresses))
-
-			err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
-			if err != nil {
-				glog.Errorf("error updating ingress status in syncService: %v", err)
-			}
-		}
-
-		if lbc.areCustomResourcesEnabled && lbc.reportCustomResourceStatusEnabled() {
-			virtualServers := lbc.configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
-
-			glog.V(3).Infof("Updating status for %v VirtualServers", len(virtualServers))
-
-			err := lbc.statusUpdater.UpdateExternalEndpointsForResources(virtualServers)
-			if err != nil {
-				glog.V(3).Infof("error updating VirtualServer/VirtualServerRoute status in syncService: %v", err)
-			}
-		}
-
-		// we don't return here because technically the same service could be used in the second case
-	}
-
-	// Second case: the service is referenced by some resources in the cluster
-
-	// it is safe to ignore the error
-	namespace, name, _ := ParseNamespaceName(key)
-
-	resources := lbc.configuration.FindResourcesForService(namespace, name)
-
-	if len(resources) == 0 {
-		return
-	}
-	glog.V(3).Infof("Syncing service %v", key)
-
-	glog.V(3).Infof("Updating %v resources", len(resources))
-
-	resourceExes := lbc.createExtendedResources(resources)
-
-	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
-	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 }
 
 // IsExternalServiceForStatus matches the service specified by the external-service cli arg
