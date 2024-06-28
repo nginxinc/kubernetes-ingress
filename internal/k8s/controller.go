@@ -543,14 +543,6 @@ func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.globalConfigurationController.HasSynced)
 }
 
-func (nsi *namespacedInformer) addTransportServerHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.confSharedInformerFactory.K8s().V1().TransportServers().Informer()
-	informer.AddEventHandler(handlers)
-	nsi.transportServerLister = informer.GetStore()
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
 func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.ResourceEventHandlerFuncs, name string) {
 	optionsModifier := func(options *meta_v1.ListOptions) {
 		options.FieldSelector = fields.Set{"metadata.name": name}.String()
@@ -1269,35 +1261,6 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 	// Note: updating the status of a policy based on a reload is not needed.
 }
 
-func (lbc *LoadBalancerController) syncTransportServer(task task) {
-	key := task.Key
-	var obj interface{}
-	var tsExists bool
-	var err error
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, tsExists, err = lbc.getNamespacedInformer(ns).transportServerLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	var changes []ResourceChange
-	var problems []ConfigurationProblem
-
-	if !tsExists {
-		glog.V(2).Infof("Deleting TransportServer: %v\n", key)
-		changes, problems = lbc.configuration.DeleteTransportServer(key)
-	} else {
-		glog.V(2).Infof("Adding or Updating TransportServer: %v\n", key)
-		ts := obj.(*conf_v1.TransportServer)
-		changes, problems = lbc.configuration.AddOrUpdateTransportServer(ts)
-	}
-
-	lbc.processChanges(changes)
-	lbc.processProblems(problems)
-}
-
 func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 	key := task.Key
 	obj, gcExists, err := lbc.globalConfigurationLister.GetByKey(key)
@@ -1577,45 +1540,6 @@ func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes
 	return updateErr
 }
 
-func (lbc *LoadBalancerController) updateTransportServerStatusAndEventsOnDelete(tsConfig *TransportServerConfiguration, changeError string, deleteErr error) {
-	eventType := api_v1.EventTypeWarning
-	eventTitle := "Rejected"
-	eventWarningMessage := ""
-	var state string
-
-	// TransportServer either became invalid or lost its host or listener
-	if changeError != "" {
-		state = conf_v1.StateInvalid
-		eventWarningMessage = fmt.Sprintf("with error: %s", changeError)
-	} else if len(tsConfig.Warnings) > 0 {
-		state = conf_v1.StateWarning
-		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(tsConfig.Warnings))
-	}
-
-	// we don't need to report anything if eventWarningMessage is empty
-	// in that case, the resource was deleted because its class became incorrect
-	// (some other Ingress Controller will handle it)
-
-	if eventWarningMessage != "" {
-		if deleteErr != nil {
-			eventType = api_v1.EventTypeWarning
-			eventTitle = "RejectedWithError"
-			eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, deleteErr)
-			state = conf_v1.StateInvalid
-		}
-
-		msg := fmt.Sprintf("TransportServer %s was rejected %s", getResourceKey(&tsConfig.TransportServer.ObjectMeta), eventWarningMessage)
-		lbc.recorder.Eventf(tsConfig.TransportServer, eventType, eventTitle, msg)
-
-		if lbc.reportCustomResourceStatusEnabled() {
-			err := lbc.statusUpdater.UpdateTransportServerStatus(tsConfig.TransportServer, state, eventTitle, msg)
-			if err != nil {
-				glog.Errorf("Error when updating the status for TransportServer %v/%v: %v", tsConfig.TransportServer.Namespace, tsConfig.TransportServer.Name, err)
-			}
-		}
-	}
-}
-
 // UpdateVirtualServerStatusAndEventsOnDelete updates the virtual server status and events
 func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vsConfig *VirtualServerConfiguration, changeError string, deleteErr error) {
 	eventType := api_v1.EventTypeWarning
@@ -1828,44 +1752,6 @@ func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(ingConfig
 	}
 }
 
-func (lbc *LoadBalancerController) updateTransportServerStatusAndEvents(tsConfig *TransportServerConfiguration, warnings configs.Warnings, operationErr error) {
-	eventTitle := "AddedOrUpdated"
-	eventType := api_v1.EventTypeNormal
-	eventWarningMessage := ""
-	state := conf_v1.StateValid
-
-	if len(tsConfig.Warnings) > 0 {
-		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithWarning"
-		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(tsConfig.Warnings))
-		state = conf_v1.StateWarning
-	}
-
-	if messages, ok := warnings[tsConfig.TransportServer]; ok {
-		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithWarning"
-		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(messages))
-		state = conf_v1.StateWarning
-	}
-
-	if operationErr != nil {
-		eventType = api_v1.EventTypeWarning
-		eventTitle = "AddedOrUpdatedWithError"
-		eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, operationErr)
-		state = conf_v1.StateInvalid
-	}
-
-	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&tsConfig.TransportServer.ObjectMeta), eventWarningMessage)
-	lbc.recorder.Eventf(tsConfig.TransportServer, eventType, eventTitle, msg)
-
-	if lbc.reportCustomResourceStatusEnabled() {
-		err := lbc.statusUpdater.UpdateTransportServerStatus(tsConfig.TransportServer, state, eventTitle, msg)
-		if err != nil {
-			glog.Errorf("Error when updating the status for TransportServer %v/%v: %v", tsConfig.TransportServer.Namespace, tsConfig.TransportServer.Name, err)
-		}
-	}
-}
-
 func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *VirtualServerConfiguration, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
 	eventTitle := "AddedOrUpdated"
@@ -2010,15 +1896,6 @@ func (lbc *LoadBalancerController) updateVirtualServerMetrics() {
 	lbc.metricsCollector.SetVirtualServerRoutes(vsrCount)
 }
 
-func (lbc *LoadBalancerController) updateTransportServerMetrics() {
-	if !lbc.areCustomResourcesEnabled {
-		return
-	}
-
-	metrics := lbc.configuration.GetTransportServerMetrics()
-	lbc.metricsCollector.SetTransportServers(metrics.TotalTLSPassthrough, metrics.TotalTCP, metrics.TotalUDP)
-}
-
 // IsExternalServiceForStatus matches the service specified by the external-service cli arg
 func (lbc *LoadBalancerController) IsExternalServiceForStatus(svc *api_v1.Service) bool {
 	return lbc.statusUpdater.namespace == svc.Namespace && lbc.statusUpdater.externalServiceName == svc.Name
@@ -2160,45 +2037,6 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() e
 
 	if len(allErrs) > 0 {
 		return fmt.Errorf("not all VirtualServerRoutes statuses were updated: %v", allErrs)
-	}
-
-	return nil
-}
-
-func (lbc *LoadBalancerController) updateTransportServersStatusFromEvents() error {
-	var allErrs []error
-	for _, nsi := range lbc.namespacedInformers {
-		for _, obj := range nsi.transportServerLister.List() {
-			ts := obj.(*conf_v1.TransportServer)
-
-			events, err := lbc.client.CoreV1().Events(ts.Namespace).List(context.TODO(),
-				meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", ts.Name, ts.UID)})
-			if err != nil {
-				allErrs = append(allErrs, fmt.Errorf("error trying to get events for TransportServer %v/%v: %w", ts.Namespace, ts.Name, err))
-				break
-			}
-
-			if len(events.Items) == 0 {
-				continue
-			}
-
-			var timestamp time.Time
-			var latestEvent api_v1.Event
-			for _, event := range events.Items {
-				if event.CreationTimestamp.After(timestamp) {
-					latestEvent = event
-				}
-			}
-
-			err = lbc.statusUpdater.UpdateTransportServerStatus(ts, getStatusFromEventTitle(latestEvent.Reason), latestEvent.Reason, latestEvent.Message)
-			if err != nil {
-				allErrs = append(allErrs, err)
-			}
-		}
-	}
-
-	if len(allErrs) > 0 {
-		return fmt.Errorf("not all TransportServers statuses were updated: %v", allErrs)
 	}
 
 	return nil
@@ -2437,6 +2275,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 	return ingEx
 }
 
+// nolint:gocyclo
 func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.VirtualServer, virtualServerRoutes []*conf_v1.VirtualServerRoute) *configs.VirtualServerEx {
 	virtualServerEx := configs.VirtualServerEx{
 		VirtualServer:  virtualServer,
@@ -2800,72 +2639,6 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 	}
 
 	return result, errors
-}
-
-func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1.TransportServer, listenerPort int) *configs.TransportServerEx {
-	endpoints := make(map[string][]string)
-	externalNameSvcs := make(map[string]bool)
-	podsByIP := make(map[string]string)
-	disableIPV6 := lbc.configuration.isIPV6Disabled
-
-	for _, u := range transportServer.Spec.Upstreams {
-		podEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
-		if err == nil && external && lbc.isNginxPlus {
-			externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Service)] = true
-		}
-		if err != nil {
-			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-		}
-
-		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
-		endpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Service, nil, uint16(u.Port))
-
-		endps := getIPAddressesFromEndpoints(podEndps)
-		endpoints[endpointsKey] = endps
-
-		if lbc.isNginxPlus && lbc.isPrometheusEnabled {
-			for _, endpoint := range podEndps {
-				podsByIP[endpoint.Address] = endpoint.PodName
-			}
-		}
-
-		// If backup defined on Upstream retrieve its external name and port.
-		if u.Backup != "" && u.BackupPort != nil {
-			backupEndpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Backup, nil, *u.BackupPort)
-			backupEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Backup, *u.BackupPort)
-			if err != nil {
-				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-			}
-			if err == nil && external {
-				externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Backup)] = true
-			}
-			bendps := getIPAddressesFromEndpoints(backupEndps)
-			endpoints[backupEndpointsKey] = bendps
-		}
-	}
-
-	scrtRefs := make(map[string]*secrets.SecretReference)
-
-	if transportServer.Spec.TLS != nil && transportServer.Spec.TLS.Secret != "" {
-		scrtKey := transportServer.Namespace + "/" + transportServer.Spec.TLS.Secret
-
-		scrtRef := lbc.secretStore.GetSecret(scrtKey)
-		if scrtRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for TransportServer %v: %v", scrtKey, transportServer.Name, scrtRef.Error)
-		}
-
-		scrtRefs[scrtKey] = scrtRef
-	}
-
-	return &configs.TransportServerEx{
-		ListenerPort:     listenerPort,
-		TransportServer:  transportServer,
-		Endpoints:        endpoints,
-		PodsByIP:         podsByIP,
-		ExternalNameSvcs: externalNameSvcs,
-		DisableIPV6:      disableIPV6,
-		SecretRefs:       scrtRefs,
-	}
 }
 
 func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstreamService string, upstreamPort uint16) (endps []podEndpoint, isExternal bool, err error) {
