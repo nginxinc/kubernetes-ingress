@@ -149,6 +149,7 @@ def clean_up(request, kube_apis, ingress_controller_prerequisites, test_namespac
 
 
 @pytest.mark.vs
+@pytest.mark.vs_config_map
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -342,6 +343,7 @@ class TestVirtualServerConfigMapNoTls:
 
 
 @pytest.mark.vs
+@pytest.mark.vs_config_map
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
