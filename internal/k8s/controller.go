@@ -2303,36 +2303,6 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() e
 	return nil
 }
 
-func (lbc *LoadBalancerController) updatePoliciesStatus() error {
-	var allErrs []error
-	for _, nsi := range lbc.namespacedInformers {
-		for _, obj := range nsi.policyLister.List() {
-			pol := obj.(*conf_v1.Policy)
-
-			err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
-			if err != nil {
-				msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
-				if err != nil {
-					allErrs = append(allErrs, err)
-				}
-			} else {
-				msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
-				if err != nil {
-					allErrs = append(allErrs, err)
-				}
-			}
-		}
-	}
-
-	if len(allErrs) != 0 {
-		return fmt.Errorf("not all Policies statuses were updated: %v", allErrs)
-	}
-
-	return nil
-}
-
 func (lbc *LoadBalancerController) updateTransportServersStatusFromEvents() error {
 	var allErrs []error
 	for _, nsi := range lbc.namespacedInformers {
