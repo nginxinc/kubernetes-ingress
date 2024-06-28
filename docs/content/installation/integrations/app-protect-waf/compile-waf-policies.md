@@ -4,16 +4,56 @@ title: Compile NAP WAF policies using NGINX Instance Manager
 weight: 300
 ---
 
-# Overview
+## Overview
 
-A very important piece to understanding is why the need to compline NAP waf policies and why do we want to accomplish this using NIM, instead of on our NGINX Ingress controller deployment. 
+This guide describes how to use F5 NGINX Instance Manager to compile NGINX App WAF Policies for use with NGINX Ingress Controller.
 
-A new WAF policy needs to be compiled so the enforcing engage can act upon the newly created policy. Therefore, it is critical to ensure that any new or  modifications to exisiting security policies are compiled so the enforcement engine will enforce the new rules in WAF.
+NGINX App Protect WAF uses policies to configure which security features are enabled or disabled. When these policies are changed, they need to be compiled so that the engine can begin to use them. Compiling policies can take a large amount of time and resources (Depending on the size), so the preferred way to do this is with NGINX Instance Manager, reducing the impact on a NGINX Ingress Controller deployment.
 
-Why do we do this through NIM and not directly within NGINX Ingress controller or kubernetes?    
-The reason is simple. Compling a new policy can take quite a bit of time, depending on the size of the policy. It also consumes a lot of resources during compliation. This is not ideal for a Kubernetes environment and NGINX Ingress controller setup. Another benefit of compiling the WAF policies within NIM and then deploying them to your NGINX Ingress controlled deployment is that this new bundle can be consumed without having NGINX Ingress controller peform a reload. With that in mind, the better solution is to use NIM as your main point to build new policiess and bundles for NAP. Once the bundle is compiled, then update/add new policies to your NGINX Ingress controller deployment.
+By using NGINX Instance Manager to compile WAF policies, the policy bundle can also be used immediately by NGINX Ingress Controller without reloading.
 
-In the following steps, we are going to walk through step by step the process of what it takes to create a security policy, create a bundle and then add that to our NGINX Ingress controller deployment.
+The following steps describe how to use the NGINX Instance Manager API to create a new security policy, compile a bundle, then add it to NGINX Ingress Controller.
+
+## Before you start
+### Requirements
+- A working [NGINX Management Suite](https://docs.nginx.com/nginx-management-suite/installation/) instance.
+- A NGINX Ingress Controller [deployment with NGINX App Protect WAF]({{< relref "/installation/integrations/app-protect-waf/installation" >}}).
+
+## Configure NGINX Instance Manager
+<!-- This looks like it corresponds to step 1 of the draft:
+
+- The reader will need a working NMS instance (Covered in the requirements above)
+- They will need a user account with API access (Link to NIM/NMS RBAC user creation/auth documentation?) -->
+
+## Create a new security policy
+
+<!-- step 2 of the draft -->
+
+## Create a new security bundle
+
+<!-- step 3 of the draft -->
+
+## Download the security bundle
+
+<!-- step 4 & 5 of the draft - list and download can be one step -->
+
+## Add volumes and volumeMounts to NGINX Ingress Controller
+
+<!-- step 6 of the draft -->
+
+## Upload the security bundle
+
+<!-- step 9 of the draft -->
+
+## Create WAF policy
+
+<!-- step 7 of the draft -->
+
+## Create VirtualServer resource and apply policy
+
+<!-- step 8 of the draft -->
+
+<!-- ROUGH WORK BELOW THIS POINT -->
 
 # Outline of the steps to follow
 
@@ -96,7 +136,7 @@ https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-
 
 A very important item that must be followed is that the bundle you will be creating, must line up with the proper WAF compiler version you are using. If you use the wrong version in your json payload (see above), you will receive an error similar to the below:
 
-```
+```text
 {"code":13018,"message":"Error compiling the security policy set: One or more of the specified compiler versions does not exist. Check the compiler versions, then try again."}
 ```
 
