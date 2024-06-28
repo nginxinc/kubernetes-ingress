@@ -1060,34 +1060,6 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 }
 
-// preSyncSecrets adds Secret resources to the SecretStore.
-// It must be called after the caches are synced but before the queue starts processing elements.
-// If we don't add Secrets, there is a chance that during the IC start
-// syncing an Ingress or other resource that references a Secret will happen before that Secret was synced.
-// As a result, the IC will generate configuration for that resource assuming that the Secret is missing and
-// it will report warnings. (See https://github.com/nginxinc/kubernetes-ingress/issues/1448 )
-func (lbc *LoadBalancerController) preSyncSecrets() {
-	for _, ni := range lbc.namespacedInformers {
-		if !ni.isSecretsEnabledNamespace {
-			break
-		}
-		objects := ni.secretLister.List()
-		glog.V(3).Infof("PreSync %d Secrets", len(objects))
-
-		for _, obj := range objects {
-			secret := obj.(*api_v1.Secret)
-
-			if !secrets.IsSupportedSecretType(secret.Type) {
-				glog.V(3).Infof("Ignoring Secret %s/%s of unsupported type %s", secret.Namespace, secret.Name, secret.Type)
-				continue
-			}
-
-			glog.V(3).Infof("Adding Secret: %s/%s", secret.Namespace, secret.Name)
-			lbc.secretStore.AddOrUpdateSecret(secret)
-		}
-	}
-}
-
 func (lbc *LoadBalancerController) sync(task task) {
 	if lbc.isNginxReady && lbc.syncQueue.Len() > 1 && !lbc.batchSyncEnabled {
 		lbc.configurator.DisableReloads()
