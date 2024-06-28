@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"reflect"
 
-	discovery_v1 "k8s.io/api/discovery/v1"
-
 	"github.com/jinzhu/copier"
 
 	"github.com/golang/glog"
@@ -53,39 +51,6 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 					glog.V(3).Infof("ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
 					lbc.AddSyncQueue(cur)
 				}
-			}
-		},
-	}
-}
-
-// createEndpointSliceHandlers builds the handler funcs for EndpointSlices
-func createEndpointSliceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			endpointSlice := obj.(*discovery_v1.EndpointSlice)
-			glog.V(3).Infof("Adding EndpointSlice: %v", endpointSlice.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			endpointSlice, isEndpointSlice := obj.(*discovery_v1.EndpointSlice)
-			if !isEndpointSlice {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				endpointSlice, ok = deletedState.Obj.(*discovery_v1.EndpointSlice)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-EndpointSlice object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing EndpointSlice: %v", endpointSlice.Name)
-			lbc.AddSyncQueue(obj)
-		}, UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("EndpointSlice %v changed, syncing", cur.(*discovery_v1.EndpointSlice).Name)
-				lbc.AddSyncQueue(cur)
 			}
 		},
 	}
