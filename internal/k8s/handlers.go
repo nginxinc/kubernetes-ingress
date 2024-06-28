@@ -10,7 +10,6 @@ import (
 	"github.com/jinzhu/copier"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/client-go/tools/cache"
@@ -124,56 +123,6 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			if hasChanges(o, c) {
 				glog.V(3).Infof("Ingress %v changed, syncing", c.Name)
 				lbc.AddSyncQueue(c)
-			}
-		},
-	}
-}
-
-// createSecretHandlers builds the handler funcs for secrets
-func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			secret := obj.(*v1.Secret)
-			if !secrets.IsSupportedSecretType(secret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
-				return
-			}
-			glog.V(3).Infof("Adding Secret: %v", secret.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			secret, isSecr := obj.(*v1.Secret)
-			if !isSecr {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				secret, ok = deletedState.Obj.(*v1.Secret)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Secret object: %v", deletedState.Obj)
-					return
-				}
-			}
-			if !secrets.IsSupportedSecretType(secret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
-				return
-			}
-
-			glog.V(3).Infof("Removing Secret: %v", secret.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			// A secret cannot change its type. That's why we only need to check the type of the current secret.
-			curSecret := cur.(*v1.Secret)
-			if !secrets.IsSupportedSecretType(curSecret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", curSecret.Name, curSecret.Type)
-				return
-			}
-
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Secret %v changed, syncing", cur.(*v1.Secret).Name)
-				lbc.AddSyncQueue(cur)
 			}
 		},
 	}

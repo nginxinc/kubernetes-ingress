@@ -492,15 +492,6 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
 }
 
-// addSecretHandler adds the handler for secrets to the controller
-func (nsi *namespacedInformer) addSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.secretInformerFactory.Core().V1().Secrets().Informer()
-	informer.AddEventHandler(handlers)
-	nsi.secretLister = informer.GetStore()
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
 // addServiceHandler adds the handler for services to the controller
 func (nsi *namespacedInformer) addServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.sharedInformerFactory.Core().V1().Services().Informer()
@@ -2314,66 +2305,6 @@ func (lbc *LoadBalancerController) reportCustomResourceStatusEnabled() bool {
 	return true
 }
 
-func (lbc *LoadBalancerController) syncSecret(task task) {
-	key := task.Key
-	var obj interface{}
-	var secrExists bool
-	var err error
-
-	namespace, name, err := ParseNamespaceName(key)
-	if err != nil {
-		glog.Warningf("Secret key %v is invalid: %v", key, err)
-		return
-	}
-	obj, secrExists, err = lbc.getNamespacedInformer(namespace).secretLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	resources := lbc.configuration.FindResourcesForSecret(namespace, name)
-
-	if lbc.areCustomResourcesEnabled {
-		secretPols := lbc.getPoliciesForSecret(namespace, name)
-		for _, pol := range secretPols {
-			resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
-		}
-
-		resources = removeDuplicateResources(resources)
-	}
-
-	glog.V(2).Infof("Found %v Resources with Secret %v", len(resources), key)
-
-	if !secrExists {
-		lbc.secretStore.DeleteSecret(key)
-
-		glog.V(2).Infof("Deleting Secret: %v\n", key)
-
-		if len(resources) > 0 {
-			lbc.handleRegularSecretDeletion(resources)
-		}
-		if lbc.isSpecialSecret(key) {
-			glog.Warningf("A special TLS Secret %v was removed. Retaining the Secret.", key)
-		}
-		return
-	}
-
-	glog.V(2).Infof("Adding / Updating Secret: %v\n", key)
-
-	secret := obj.(*api_v1.Secret)
-
-	lbc.secretStore.AddOrUpdateSecret(secret)
-
-	if lbc.isSpecialSecret(key) {
-		lbc.handleSpecialSecretUpdate(secret)
-		// we don't return here in case the special secret is also used in resources.
-	}
-
-	if len(resources) > 0 {
-		lbc.handleSecretUpdate(secret, resources)
-	}
-}
-
 func removeDuplicateResources(resources []Resource) []Resource {
 	encountered := make(map[string]bool)
 	var uniqueResources []Resource
@@ -2386,62 +2317,6 @@ func removeDuplicateResources(resources []Resource) []Resource {
 	}
 
 	return uniqueResources
-}
-
-func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
-	return secretName == lbc.defaultServerSecret || secretName == lbc.wildcardTLSSecret
-}
-
-func (lbc *LoadBalancerController) handleRegularSecretDeletion(resources []Resource) {
-	resourceExes := lbc.createExtendedResources(resources)
-
-	warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
-
-	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
-}
-
-func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, resources []Resource) {
-	secretNsName := secret.Namespace + "/" + secret.Name
-
-	var warnings configs.Warnings
-	var addOrUpdateErr error
-
-	resourceExes := lbc.createExtendedResources(resources)
-
-	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes, !lbc.configurator.DynamicSSLReloadEnabled())
-	if addOrUpdateErr != nil {
-		glog.Errorf("Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, addOrUpdateErr)
-	}
-
-	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
-}
-
-func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
-	var specialSecretsToUpdate []string
-	secretNsName := secret.Namespace + "/" + secret.Name
-	err := secrets.ValidateTLSSecret(secret)
-	if err != nil {
-		glog.Errorf("Couldn't validate the special Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
-		return
-	}
-
-	if secretNsName == lbc.defaultServerSecret {
-		specialSecretsToUpdate = append(specialSecretsToUpdate, configs.DefaultServerSecretName)
-	}
-	if secretNsName == lbc.wildcardTLSSecret {
-		specialSecretsToUpdate = append(specialSecretsToUpdate, configs.WildcardSecretName)
-	}
-
-	err = lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialSecretsToUpdate)
-	if err != nil {
-		glog.Errorf("Error when updating the special Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
-		return
-	}
-
-	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
 }
 
 func getStatusFromEventTitle(eventTitle string) string {
@@ -3210,132 +3085,6 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 	}
 
 	return result, errors
-}
-
-func (lbc *LoadBalancerController) addJWTSecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
-	for _, pol := range policies {
-		if pol.Spec.JWTAuth == nil {
-			continue
-		}
-
-		if pol.Spec.JWTAuth.JwksURI != "" {
-			continue
-		}
-
-		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.JWTAuth.Secret)
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-
-		secretRefs[secretKey] = secretRef
-
-		if secretRef.Error != nil {
-			return secretRef.Error
-		}
-	}
-
-	return nil
-}
-
-func (lbc *LoadBalancerController) addBasicSecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
-	for _, pol := range policies {
-		if pol.Spec.BasicAuth == nil {
-			continue
-		}
-
-		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.BasicAuth.Secret)
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-
-		secretRefs[secretKey] = secretRef
-
-		if secretRef.Error != nil {
-			return secretRef.Error
-		}
-	}
-
-	return nil
-}
-
-func (lbc *LoadBalancerController) addIngressMTLSSecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
-	for _, pol := range policies {
-		if pol.Spec.IngressMTLS == nil {
-			continue
-		}
-
-		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.IngressMTLS.ClientCertSecret)
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-
-		secretRefs[secretKey] = secretRef
-
-		return secretRef.Error
-	}
-
-	return nil
-}
-
-func (lbc *LoadBalancerController) addEgressMTLSSecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
-	for _, pol := range policies {
-		if pol.Spec.EgressMTLS == nil {
-			continue
-		}
-		if pol.Spec.EgressMTLS.TLSSecret != "" {
-			secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.EgressMTLS.TLSSecret)
-			secretRef := lbc.secretStore.GetSecret(secretKey)
-
-			secretRefs[secretKey] = secretRef
-
-			if secretRef.Error != nil {
-				return secretRef.Error
-			}
-		}
-		if pol.Spec.EgressMTLS.TrustedCertSecret != "" {
-			secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.EgressMTLS.TrustedCertSecret)
-			secretRef := lbc.secretStore.GetSecret(secretKey)
-
-			secretRefs[secretKey] = secretRef
-
-			if secretRef.Error != nil {
-				return secretRef.Error
-			}
-		}
-	}
-
-	return nil
-}
-
-func (lbc *LoadBalancerController) addOIDCSecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
-	for _, pol := range policies {
-		if pol.Spec.OIDC == nil {
-			continue
-		}
-
-		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.OIDC.ClientSecret)
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-
-		secretRefs[secretKey] = secretRef
-
-		if secretRef.Error != nil {
-			return secretRef.Error
-		}
-	}
-	return nil
-}
-
-func (lbc *LoadBalancerController) addAPIKeySecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
-	for _, pol := range policies {
-		if pol.Spec.APIKey == nil {
-			continue
-		}
-
-		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.APIKey.ClientSecret)
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-
-		secretRefs[secretKey] = secretRef
-
-		if secretRef.Error != nil {
-			return secretRef.Error
-		}
-
-	}
-	return nil
 }
 
 func (lbc *LoadBalancerController) getPoliciesForSecret(secretNamespace string, secretName string) []*conf_v1.Policy {
