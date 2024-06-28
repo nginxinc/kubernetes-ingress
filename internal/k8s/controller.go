@@ -527,13 +527,6 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.configMapController.HasSynced)
 }
 
-func (nsi *namespacedInformer) addPodHandler() {
-	informer := nsi.sharedInformerFactory.Core().V1().Pods().Informer()
-	nsi.podLister = indexerToPodLister{Indexer: informer.GetIndexer()}
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
 func (nsi *namespacedInformer) addVirtualServerHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.confSharedInformerFactory.K8s().V1().VirtualServers().Informer()
 	informer.AddEventHandler(handlers)
@@ -3209,13 +3202,6 @@ func ipv6SafeAddrPort(addr string, port int32) string {
 	return net.JoinHostPort(addr, strconv.Itoa(int(port)))
 }
 
-func getPodName(pod *api_v1.ObjectReference) string {
-	if pod != nil {
-		return pod.Name
-	}
-	return ""
-}
-
 func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *networking.IngressBackend, namespace string) *api_v1.Probe {
 	svc, err := lbc.getServiceForIngressBackend(backend, namespace)
 	if err != nil {
@@ -3234,37 +3220,6 @@ func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *net
 		return nil
 	}
 	return findProbeForPods(pods, svcPort)
-}
-
-func findProbeForPods(pods []*api_v1.Pod, svcPort *api_v1.ServicePort) *api_v1.Probe {
-	if len(pods) > 0 {
-		pod := pods[0]
-		for _, container := range pod.Spec.Containers {
-			for _, port := range container.Ports {
-				if compareContainerPortAndServicePort(port, *svcPort) {
-					// only http ReadinessProbes are useful for us
-					if container.ReadinessProbe != nil && container.ReadinessProbe.ProbeHandler.HTTPGet != nil && container.ReadinessProbe.PeriodSeconds > 0 {
-						return container.ReadinessProbe
-					}
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func compareContainerPortAndServicePort(containerPort api_v1.ContainerPort, svcPort api_v1.ServicePort) bool {
-	targetPort := svcPort.TargetPort
-	if (targetPort == intstr.IntOrString{}) {
-		return svcPort.Port > 0 && svcPort.Port == containerPort.ContainerPort
-	}
-	switch targetPort.Type {
-	case intstr.String:
-		return targetPort.StrVal == containerPort.Name && svcPort.Protocol == containerPort.Protocol
-	case intstr.Int:
-		return targetPort.IntVal > 0 && targetPort.IntVal == containerPort.ContainerPort
-	}
-	return false
 }
 
 func (lbc *LoadBalancerController) getExternalEndpointsForIngressBackend(backend *networking.IngressBackend, svc *api_v1.Service) []podEndpoint {
