@@ -15,10 +15,24 @@
       "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
     },
     {
-      "label": "VSR",
+      "label": "VSR 1/3",
       "image": "alpine",
       "type": "oss",
-      "marker": "vsr",
+      "marker": "'vsr and not vsr_upstream and not vsr_grpc and not vsr_status and not vsr_canary and not vsr_routing and not vsr_api and not vsr_redirects and not vsr_rewrite and not vsr_canned and not vsr_basic'",
+      "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    },
+    {
+      "label": "VSR 2/3",
+      "image": "alpine",
+      "type": "oss",
+      "marker": "'vsr_basic or vsr_canned or vsr_rewrite or vsr_redirects or vsr_upstream'",
+      "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+    },
+    {
+      "label": "VSR 3/3",
+      "image": "alpine",
+      "type": "oss",
+      "marker": "'vsr_api or vsr_routing or vsr_canary or vsr_status or vsr_grpc'",
       "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
     },
     {
