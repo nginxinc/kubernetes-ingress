@@ -1345,66 +1345,6 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 	}
 }
 
-// processChangesFromGlobalConfiguration processes changes that come from updates to the GlobalConfiguration resource.
-// Such changes need to be processed at once to prevent any inconsistencies in the generated NGINX config.
-func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes []ResourceChange) error {
-	var updatedTSExes []*configs.TransportServerEx
-	var updatedVSExes []*configs.VirtualServerEx
-	var deletedTSKeys []string
-	var deletedVSKeys []string
-
-	var updatedResources []Resource
-
-	for _, c := range changes {
-		switch impl := c.Resource.(type) {
-		case *VirtualServerConfiguration:
-			if c.Op == AddOrUpdate {
-				vsEx := lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes)
-
-				updatedVSExes = append(updatedVSExes, vsEx)
-				updatedResources = append(updatedResources, impl)
-			} else if c.Op == Delete {
-				key := getResourceKey(&impl.VirtualServer.ObjectMeta)
-
-				deletedVSKeys = append(deletedVSKeys, key)
-			}
-		case *TransportServerConfiguration:
-			if c.Op == AddOrUpdate {
-				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
-
-				updatedTSExes = append(updatedTSExes, tsEx)
-				updatedResources = append(updatedResources, impl)
-			} else if c.Op == Delete {
-				key := getResourceKey(&impl.TransportServer.ObjectMeta)
-
-				deletedTSKeys = append(deletedTSKeys, key)
-			}
-		}
-	}
-
-	var updateErr error
-
-	if len(updatedTSExes) > 0 || len(deletedTSKeys) > 0 {
-		tsUpdateErrs := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedTSKeys)
-
-		if len(tsUpdateErrs) > 0 {
-			updateErr = fmt.Errorf("errors received from updating TransportServers after GlobalConfiguration change: %v", tsUpdateErrs)
-		}
-	}
-
-	if len(updatedVSExes) > 0 || len(deletedVSKeys) > 0 {
-		vsUpdateErrs := lbc.configurator.UpdateVirtualServers(updatedVSExes, deletedVSKeys)
-
-		if len(vsUpdateErrs) > 0 {
-			updateErr = fmt.Errorf("errors received from updating VirtualSrvers after GlobalConfiguration change: %v", vsUpdateErrs)
-		}
-	}
-
-	lbc.updateResourcesStatusAndEvents(updatedResources, configs.Warnings{}, updateErr)
-
-	return updateErr
-}
-
 // UpdateVirtualServerStatusAndEventsOnDelete updates the virtual server status and events
 func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vsConfig *VirtualServerConfiguration, changeError string, deleteErr error) {
 	eventType := api_v1.EventTypeWarning
