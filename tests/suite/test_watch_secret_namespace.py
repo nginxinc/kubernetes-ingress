@@ -9,6 +9,7 @@ from suite.utils.ssl_utils import create_sni_session
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_secrets
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
@@ -63,6 +64,7 @@ class TestVSRWatchSecretNamespacesValid:
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_secrets
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [

@@ -68,6 +68,7 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_grpc
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
