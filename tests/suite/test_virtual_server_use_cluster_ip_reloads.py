@@ -5,6 +5,7 @@ from tests.suite.utils.custom_assertions import assert_pods_scaled_to_count
 
 
 @pytest.mark.vs
+@pytest.mark.vs_use_cluster_ip
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
