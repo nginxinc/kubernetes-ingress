@@ -8,48 +8,11 @@ import (
 
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1"
 	"k8s.io/client-go/tools/cache"
 
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-// createIngressHandlers builds the handler funcs for ingresses
-func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			ingress := obj.(*networking.Ingress)
-			glog.V(3).Infof("Adding Ingress: %v", ingress.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			ingress, isIng := obj.(*networking.Ingress)
-			if !isIng {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				ingress, ok = deletedState.Obj.(*networking.Ingress)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing Ingress: %v", ingress.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		UpdateFunc: func(old, current interface{}) {
-			c := current.(*networking.Ingress)
-			o := old.(*networking.Ingress)
-			if hasChanges(o, c) {
-				glog.V(3).Infof("Ingress %v changed, syncing", c.Name)
-				lbc.AddSyncQueue(c)
-			}
-		},
-	}
-}
 
 func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
