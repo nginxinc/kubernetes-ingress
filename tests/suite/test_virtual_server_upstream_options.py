@@ -20,6 +20,7 @@ from suite.utils.vs_vsr_resources_utils import (
 
 
 @pytest.mark.vs
+@pytest.mark.vs_upstream
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -354,6 +355,7 @@ class TestVirtualServerUpstreamOptions:
 
 
 @pytest.mark.vs
+@pytest.mark.vs_upstream
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -471,6 +473,7 @@ class TestVirtualServerUpstreamOptionValidation:
 
 
 @pytest.mark.vs
+@pytest.mark.vs_upstream
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",

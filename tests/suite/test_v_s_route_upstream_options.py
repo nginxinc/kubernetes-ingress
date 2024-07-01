@@ -26,6 +26,7 @@ from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch
     indirect=True,
 )
 @pytest.mark.vsr
+@pytest.mark.vsr_upstream
 class TestVSRouteUpstreamOptions:
     def test_nginx_config_upstreams_defaults(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup
@@ -393,6 +394,7 @@ class TestVSRouteUpstreamOptions:
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_upstream
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
@@ -544,6 +546,7 @@ class TestVSRouteUpstreamOptionsValidation:
 
 
 @pytest.mark.vsr
+@pytest.mark.vsr_upstream
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",

@@ -354,8 +354,12 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
+		// Default endpoint
 		exporterCfg := telemetry.ExporterCfg{
-			Endpoint: input.TelemetryReportingEndpoint,
+			Endpoint: "oss.edge.df.f5.com:443",
+		}
+		if input.TelemetryReportingEndpoint != "" {
+			exporterCfg.Endpoint = input.TelemetryReportingEndpoint
 		}
 
 		exporter, err := telemetry.NewExporter(exporterCfg)
