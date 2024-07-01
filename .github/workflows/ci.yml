@@ -1,4 +1,5 @@
 name: CI
+run-name: CI on "${{ github.head_ref && github.head_ref || github.ref }}" by @${{ github.actor }}
 
 on:
   pull_request:
@@ -302,11 +303,10 @@ jobs:
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
       tag: ${{ needs.checks.outputs.build_tag }}
-      branch: ${{ github.head_ref && github.head_ref || github.ref }}
+      branch: ${{ (github.head_ref && needs.checks.outputs.forked_workflow != 'true') && github.head_ref || github.ref }}
     permissions:
       contents: read
       actions: read
-      security-events: write
       id-token: write
       packages: write
       pull-requests: write # for scout report
@@ -325,13 +325,12 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      branch: ${{ github.head_ref && github.head_ref || github.ref }}
+      branch: ${{ (github.head_ref && needs.checks.outputs.forked_workflow != 'true') && github.head_ref || github.ref }}
       tag: ${{ needs.checks.outputs.build_tag }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
     permissions:
       contents: read
-      security-events: write
       id-token: write
       pull-requests: write # for scout report
     secrets: inherit
@@ -349,15 +348,14 @@ jobs:
       target: ${{ matrix.target }}
       go-md5: ${{ needs.checks.outputs.go_code_md5 }}
       base-image-md5: ${{ needs.checks.outputs.docker_md5 }}
-      branch: ${{ github.head_ref && github.head_ref || github.ref }}
+      branch: ${{ (github.head_ref && needs.checks.outputs.forked_workflow != 'true') && github.head_ref || github.ref }}
       tag: ${{ needs.checks.outputs.build_tag }}
       nap-modules: ${{ matrix.nap_modules }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
     permissions:
       contents: read
-      security-events: write
-      id-token: write
+      id-token: write # gcr login
       pull-requests: write # for scout report
     secrets: inherit
 
@@ -441,7 +439,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Docker Image ${{ matrix.base-os }}
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0
         with:
           file: build/Dockerfile
           context: "."
@@ -559,7 +557,7 @@ jobs:
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0
         with:
           file: tests/Dockerfile
           context: "."
@@ -666,7 +664,7 @@ jobs:
     if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
 
   tag-results:
-    if: ${{ always() }}
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     name: Final CI Results
     needs: [tag-stable, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]

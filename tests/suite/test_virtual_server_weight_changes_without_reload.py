@@ -1,6 +1,5 @@
 import pytest
 import requests
-import yaml
 from settings import TEST_DATA
 from suite.utils.custom_assertions import wait_and_assert_status_code
 from suite.utils.resources_utils import ensure_response_from_backend, get_reload_count, wait_before_test

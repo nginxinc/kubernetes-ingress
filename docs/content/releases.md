@@ -7,6 +7,55 @@ title: Releases
 toc: true
 weight: 2100
 ---
+## 3.6.0
+
+25 Jun 2024
+
+Added support for the latest generation of NGINX App Protect Web Application Firewall, v5. NGINX Ingress Controller will continue to support the NGINX App Protect v4 family to allow customers to implement new Policy Bundle workflow at their own pace.
+NGINX App Protect WAF v5 does not accept the JSON based policies, instead requiring users to compile a Policy Bundle outside of the NGINX Ingress Controller pod. Policy bundles contain a combination of custom Policy, signatures, and campaigns. Bundles can be compiled using either App Protect [compiler](https://docs.nginx.com/nginx-app-protect-waf/v5/admin-guide/compiler/), or [NGINX Instance Manager](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#list-security-policy-bundles).  Learn more here, https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/.
+
+With this release, NGINX Ingress Controller is implementing a new image maintenance policy. Container images for subscribed users will be updated on a regular basis in-between releases to reduce the CVE vulnerabilities.
+Customers can observe the 3.6.x tag when listing images in the registry and select the latest image to update to for the current release.
+
+### <i class="fa-solid fa-rocket"></i> Features
+- [5698](https://github.com/nginxinc/kubernetes-ingress/pull/5698), [5771](https://github.com/nginxinc/kubernetes-ingress/pull/5771) & [5784](https://github.com/nginxinc/kubernetes-ingress/pull/5784) Add support for F5 NGINX AppProtect WAF v5
+- [5580](https://github.com/nginxinc/kubernetes-ingress/pull/5580) & [5752](https://github.com/nginxinc/kubernetes-ingress/pull/5752) Add APIKey Authentication policy
+- [5205](https://github.com/nginxinc/kubernetes-ingress/pull/5205) Preserve valid listeners when invalid listeners are present in GlobalConfiguration
+- [5366](https://github.com/nginxinc/kubernetes-ingress/pull/5366) Add proxy-set-headers annotation for ingress
+- [5406](https://github.com/nginxinc/kubernetes-ingress/pull/5406), [5408](https://github.com/nginxinc/kubernetes-ingress/pull/5408), [5418](https://github.com/nginxinc/kubernetes-ingress/pull/5418), [5404](https://github.com/nginxinc/kubernetes-ingress/pull/5404) & [5415](https://github.com/nginxinc/kubernetes-ingress/pull/5415) Add additional telemetry data
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [5350](https://github.com/nginxinc/kubernetes-ingress/pull/5350) Fix ap-waf flag in error message
+- [5318](https://github.com/nginxinc/kubernetes-ingress/pull/5318) Don't reload when `use-cluster-ip` endpoints update, and change the ingress `use-cluster-ip` implementation to use the cluster ip instead of the fqdn
+- [5375](https://github.com/nginxinc/kubernetes-ingress/pull/5375) Fix status for invalid vs and vsr, for weight changes dynamic reload
+
+### <i class="fa-solid fa-box"></i> Helm Chart
+- [5313](https://github.com/nginxinc/kubernetes-ingress/pull/5313) Update helm flag in docs for enableWeightChangesDynamicReload
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+- [5693](https://github.com/nginxinc/kubernetes-ingress/pull/5693) Bump Go version to v1.22.4
+- [5368](https://github.com/nginxinc/kubernetes-ingress/pull/5368), [5331](https://github.com/nginxinc/kubernetes-ingress/pull/5331) & [5423](https://github.com/nginxinc/kubernetes-ingress/pull/5423) Bump the go dependencies
+- [5298](https://github.com/nginxinc/kubernetes-ingress/pull/5298), [5344](https://github.com/nginxinc/kubernetes-ingress/pull/5344), [5345](https://github.com/nginxinc/kubernetes-ingress/pull/5345),[5371](https://github.com/nginxinc/kubernetes-ingress/pull/5371), [5378](https://github.com/nginxinc/kubernetes-ingress/pull/5378), [5379](https://github.com/nginxinc/kubernetes-ingress/pull/5379), [5398](https://github.com/nginxinc/kubernetes-ingress/pull/5398), [5397](https://github.com/nginxinc/kubernetes-ingress/pull/5397), [5399](https://github.com/nginxinc/kubernetes-ingress/pull/5399) & [5400](https://github.com/nginxinc/kubernetes-ingress/pull/5400) Bump base Docker images
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.6.0 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.6.0),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.6.0 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.6.0 source code
+- For Helm, use version 1.3.0 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.25-1.30.
+
+---
 ## 3.5.2
 
 31 May 2024

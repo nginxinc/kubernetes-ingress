@@ -16,7 +16,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   checks:
@@ -50,6 +49,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write # for scout report
+      id-token: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_oss ) }}
@@ -92,7 +92,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0
         with:
           file: build/Dockerfile
           context: "."
@@ -113,6 +113,7 @@ jobs:
     needs: checks
     permissions:
       contents: read
+      id-token: write
       pull-requests: write # for scout report
     strategy:
       fail-fast: false
@@ -156,7 +157,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0
         with:
           file: build/Dockerfile
           context: "."
@@ -180,6 +181,7 @@ jobs:
     needs: checks
     permissions:
       contents: read
+      id-token: write
       pull-requests: write # for scout report
     strategy:
       fail-fast: false
@@ -225,7 +227,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@f6010ea70151369b06f0194be1051fbbdff851b2 # v6.0.2
+        uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0
         with:
           file: build/Dockerfile
           context: "."
