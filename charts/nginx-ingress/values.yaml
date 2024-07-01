@@ -134,7 +134,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress Controller image. If not specified the appVersion from Chart.yaml is used as a tag.
-    # tag: "3.5.2"
+    # tag: "3.6.0"
     ## The digest of the Ingress Controller image.
     ## If digest is specified it has precedence over tag and will be used instead
     # digest: "sha256:CHANGEME"
@@ -342,9 +342,6 @@ controller:
 
   ## Enable OIDC policies.
   enableOIDC: false
-
-  ## Include year in log header. This parameter will be removed in release 3.7 and the year will be included by default.
-  includeYear: false
 
   ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
   enableTLSPassthrough: false

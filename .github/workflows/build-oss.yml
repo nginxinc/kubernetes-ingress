@@ -95,12 +95,16 @@ jobs:
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
-      - name: Check if images exist
-        id: images_exist
+      - name: Set base name variable
+        id: base_name
         run: |
           base_image="gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-base/oss:${{ inputs.base-image-md5 }}-${{ inputs.image }}"
           echo "image=${base_image}" >> $GITHUB_OUTPUT
-          if docker manifest inspect ${base_image}; then
+
+      - name: Check if images exist
+        id: images_exist
+        run: |
+          if docker manifest inspect ${{ steps.base_name.outputs.image }}; then
             echo "base_exists=true" >> $GITHUB_OUTPUT
           fi
           if docker manifest inspect ${{ steps.meta.outputs.tags }}; then
@@ -119,13 +123,13 @@ jobs:
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6.1.0
+        uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0
         with:
           file: build/Dockerfile
           context: "."
           cache-to: type=gha,scope=${{ inputs.image }},mode=max
           target: common
-          tags: ${{ steps.images_exist.outputs.image }}
+          tags: ${{ steps.base_name.outputs.image }}
           platforms: ${{ inputs.platforms }}
           pull: true
           push: true
@@ -138,7 +142,7 @@ jobs:
       - name: Debug values
         run: |
           echo "authenticated: ${{ inputs.authenticated }}"
-          echo "images_exist: ${{ steps.images_exist.outputs.base_exists }}"
+          echo "base_exists: ${{ steps.images_exist.outputs.base_exists }}"
           echo "target_exists: ${{ steps.images_exist.outputs.target_exists }}"
           echo "full-build: ${{ inputs.full-build }}"
 
@@ -151,7 +155,7 @@ jobs:
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Docker image
-        uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6.1.0
+        uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0
         id: build-push
         with:
           file: build/Dockerfile
@@ -170,7 +174,7 @@ jobs:
           provenance: false
           build-args: |
             BUILD_OS=${{ inputs.image }}
-            ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.images_exist.outputs.image) }}
+            ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.base_name.outputs.image) }}
             IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
