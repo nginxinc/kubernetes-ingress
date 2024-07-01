@@ -254,7 +254,7 @@ jobs:
         with:
           name: ${{ steps.regression-tests.outputs.test-results-name }}
           path: ${{ steps.regression-tests.outputs.test-results-path }}
-        if: always()
+        if: ${{ !cancelled() }}
 
   tag-stable:
     name: Tag tested image as nightly
