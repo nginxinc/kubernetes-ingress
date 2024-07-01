@@ -332,7 +332,6 @@ server {
             {{- else }}
         proxy_pass {{ $hc.ProxyPass }};
             {{- end }}
-
         health_check{{- if $hc.URI }} uri={{ $hc.URI }} {{ end -}}
         {{- if $hc.Port }} port={{ $hc.Port }} {{ end -}}
         interval={{ $hc.Interval }} jitter={{ $hc.Jitter }} fails={{ $hc.Fails }} passes={{ $hc.Passes }}
