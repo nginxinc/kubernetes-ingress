@@ -265,6 +265,7 @@ func newHealthCheckWithDefaults(upstream conf_v1.Upstream, upstreamName string, 
 		ProxySendTimeout:    generateTimeWithDefault(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
 		Headers:             make(map[string]string),
 		GRPCPass:            generateGRPCPass(isGRPC(upstream.Type), upstream.TLS.Enable, upstreamName),
+		IsGRPC:              isGRPC(upstream.Type),
 	}
 }
 
