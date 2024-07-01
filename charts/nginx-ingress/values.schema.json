@@ -540,10 +540,10 @@
             },
             "tag": {
               "type": "string",
-              "default": "3.5.2",
+              "default": "3.6.0",
               "title": "The tag of the Ingress Controller image",
               "examples": [
-                "3.5.2"
+                "3.6.0"
               ]
             },
             "digest": {
@@ -580,7 +580,7 @@
           "examples": [
             {
               "repository": "nginx/nginx-ingress",
-              "tag": "3.5.2",
+              "tag": "3.6.0",
               "pullPolicy": "IfNotPresent"
             }
           ]
@@ -904,14 +904,6 @@
           "type": "boolean",
           "default": false,
           "title": "The enableOIDC",
-          "examples": [
-            false
-          ]
-        },
-        "includeYear": {
-          "type": "boolean",
-          "default": false,
-          "title": "The includeYear",
           "examples": [
             false
           ]
@@ -1670,7 +1662,7 @@
           "customPorts": [],
           "image": {
             "repository": "nginx/nginx-ingress",
-            "tag": "3.5.2",
+            "tag": "3.6.0",
             "digest": "",
             "pullPolicy": "IfNotPresent"
           },
@@ -1728,7 +1720,6 @@
           "watchNamespace": "",
           "enableCustomResources": true,
           "enableOIDC": false,
-          "includeYear": false,
           "enableTLSPassthrough": false,
           "tlsPassthroughPort": 443,
           "enableCertManager": false,
@@ -2211,7 +2202,7 @@
         "customPorts": [],
         "image": {
           "repository": "nginx/nginx-ingress",
-          "tag": "3.5.2",
+          "tag": "3.6.0",
           "digest": "",
           "pullPolicy": "IfNotPresent"
         },
@@ -2262,7 +2253,6 @@
         "watchNamespace": "",
         "enableCustomResources": true,
         "enableOIDC": false,
-        "includeYear": false,
         "enableTLSPassthrough": false,
         "enableCertManager": false,
         "enableExternalDNS": false,
