@@ -177,7 +177,7 @@ class TestAppProtectWAFPolicyVS:
                 "syslog:server=127.0.0.1:514",
             )
         elif waf == waf_pol_default_src:
-            pol_name = create_policy_from_yaml(kube_apis.custom_objects, waf, test_namespace)
+            create_policy_from_yaml(kube_apis.custom_objects, waf, test_namespace)
         else:
             pytest.fail(f"Invalid argument")
 

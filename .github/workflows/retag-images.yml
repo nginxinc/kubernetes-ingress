@@ -40,7 +40,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -56,9 +56,6 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.gcr-auth.outputs.access_token }}
-
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
 
       - name: Retag images
         run: |

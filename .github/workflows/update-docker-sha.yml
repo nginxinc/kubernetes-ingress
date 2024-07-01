@@ -1,4 +1,5 @@
 name: "Update pinned container SHAs"
+run-name: Update pinned container SHAs, triggered from ${{ github.event_name }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
@@ -6,12 +7,12 @@ on:
       source_branch:
         required: true
         type: string
-        default: 'main'
+        default: "main"
       excludes:
         description: Comma separated list of strings to exclude images from the update
         required: false
         type: string
-        default: ''
+        default: ""
       dry_run:
         type: boolean
         default: false
@@ -37,7 +38,7 @@ jobs:
         id: vars
         run: |
           source_branch=main
-          if ${{ inputs.source_branch }}; then
+          if [ -n "${{ inputs.source_branch }}" ]; then
             source_branch=${{ inputs.source_branch }}
           fi
           echo "source_branch=${source_branch}" >> $GITHUB_OUTPUT
@@ -49,7 +50,7 @@ jobs:
     needs: [vars]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: ${{ needs.vars.outputs.source_branch }}
 
@@ -73,12 +74,12 @@ jobs:
           echo $GITHUB_OUTPUT
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # v6.0.5
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
         with:
           token: ${{ secrets.NGINX_PAT }}
           commit-message: Update docker images ${{ steps.update_images.outputs.docker_md5 }}
           title: Docker image update ${{ steps.update_images.outputs.docker_md5 }}
-          branch: chore/image-update-${{ needs.vars.outputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
+          branch: deps/image-update-${{ needs.vars.outputs.source_branch }}-${{ steps.update_images.outputs.docker_md5 }}
           author: nginx-bot <integrations@nginx.com>
           labels: |
             dependencies

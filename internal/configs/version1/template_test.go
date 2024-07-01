@@ -2,13 +2,24 @@ package version1
 
 import (
 	"bytes"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"text/template"
 
+	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 )
+
+func TestMain(m *testing.M) {
+	v := m.Run()
+
+	// After all tests have run `go-snaps` will sort snapshots
+	snaps.Clean(m, snaps.CleanOpts{Sort: true})
+
+	os.Exit(v)
+}
 
 func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
 	t.Parallel()
@@ -20,6 +31,7 @@ func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 	t.Log(buf.String())
 }
 
@@ -33,6 +45,7 @@ func TestExecuteMainTemplateForNGINXPlusR31(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 	t.Log(buf.String())
 }
 
@@ -46,6 +59,7 @@ func TestExecuteMainTemplateForNGINX(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 	t.Log(buf.String())
 }
 
@@ -60,6 +74,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINX(t *testing.T) {
@@ -73,6 +88,7 @@ func TestExecuteTemplate_ForIngressForNGINX(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseSensitiveModifier(t *testing.T) {
@@ -91,6 +107,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseSensitiveM
 	if !strings.Contains(buf.String(), wantLocation) {
 		t.Errorf("want %q in generated config", wantLocation)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseInsensitiveModifier(t *testing.T) {
@@ -109,6 +126,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseInsensitiv
 	if !strings.Contains(buf.String(), wantLocation) {
 		t.Errorf("want %q in generated config", wantLocation)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationExactMatchModifier(t *testing.T) {
@@ -127,6 +145,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationExactMatchModi
 	if !strings.Contains(buf.String(), wantLocation) {
 		t.Errorf("want %q in generated config", wantLocation)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationEmpty(t *testing.T) {
@@ -145,6 +164,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationEmpty(t *testi
 	if !strings.Contains(buf.String(), wantLocation) {
 		t.Errorf("want %q in generated config", wantLocation)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlus(t *testing.T) {
@@ -166,6 +186,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlus(t *testing.T) {
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithMasterPathRegex(t *testing.T) {
@@ -187,6 +208,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithMasterPathRegex(t *t
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressWithOneMinionWithPathRegexAnnotation(t *testing.T) {
@@ -210,6 +232,7 @@ func TestExecuteTemplate_ForMergeableIngressWithOneMinionWithPathRegexAnnotation
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressWithSecondMinionWithPathRegexAnnotation(t *testing.T) {
@@ -233,6 +256,7 @@ func TestExecuteTemplate_ForMergeableIngressWithSecondMinionWithPathRegexAnnotat
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMaster(t *testing.T) {
@@ -255,6 +279,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationO
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMasterAndMinions(t *testing.T) {
@@ -277,6 +302,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationO
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("did not get %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMinionsNotOnMaster(t *testing.T) {
@@ -299,6 +325,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationO
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithCustomTLSPassthroughPort(t *testing.T) {
@@ -325,6 +352,7 @@ func TestExecuteTemplate_ForMainForNGINXWithCustomTLSPassthroughPort(t *testing.
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithCustomTLSPassthroughPort(t *testing.T) {
@@ -351,6 +379,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomTLSPassthroughPort(t *test
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithoutCustomTLSPassthroughPort(t *testing.T) {
@@ -377,6 +406,7 @@ func TestExecuteTemplate_ForMainForNGINXWithoutCustomTLSPassthroughPort(t *testi
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomTLSPassthroughPort(t *testing.T) {
@@ -403,6 +433,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomTLSPassthroughPort(t *t
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXTLSPassthroughDisabled(t *testing.T) {
@@ -429,6 +460,7 @@ func TestExecuteTemplate_ForMainForNGINXTLSPassthroughDisabled(t *testing.T) {
 			t.Errorf("unwant %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusTLSPassthroughPortDisabled(t *testing.T) {
@@ -455,6 +487,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusTLSPassthroughPortDisabled(t *testin
 			t.Errorf("unwant %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPAndHTTPSListenerPorts(t *testing.T) {
@@ -483,6 +516,7 @@ func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPAndHTTPSListenerPor
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPAndHTTPSListenerPorts(t *testing.T) {
@@ -511,6 +545,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPAndHTTPSListene
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithoutCustomDefaultHTTPAndHTTPSListenerPorts(t *testing.T) {
@@ -539,6 +574,7 @@ func TestExecuteTemplate_ForMainForNGINXWithoutCustomDefaultHTTPAndHTTPSListener
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomDefaultHTTPAndHTTPSListenerPorts(t *testing.T) {
@@ -567,6 +603,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomDefaultHTTPAndHTTPSList
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPListenerPort(t *testing.T) {
@@ -595,6 +632,7 @@ func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPListenerPort(t *tes
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPSListenerPort(t *testing.T) {
@@ -623,6 +661,7 @@ func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPSListenerPort(t *te
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPListenerPort(t *testing.T) {
@@ -651,6 +690,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPListenerPort(t 
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPSListenerPort(t *testing.T) {
@@ -679,6 +719,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPSListenerPort(t
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithHTTP2On(t *testing.T) {
@@ -717,6 +758,7 @@ func TestExecuteTemplate_ForMainForNGINXWithHTTP2On(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2On(t *testing.T) {
@@ -755,6 +797,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2On(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithHTTP2Off(t *testing.T) {
@@ -791,6 +834,7 @@ func TestExecuteTemplate_ForMainForNGINXWithHTTP2Off(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
@@ -827,6 +871,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithDefaultValue(t *testing.T) {
@@ -873,6 +918,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithDefa
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -920,6 +966,7 @@ func TestExecuteTemplate_ForIngressForNGINXMasterWithProxySetHeadersAnnotationWi
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -975,6 +1022,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithoutAnnotationMinio
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -994,6 +1042,7 @@ func TestExecuteTemplate_ForMergeableIngressForProxySetHeaderAnnotation(t *testi
 	if !strings.Contains(buf.String(), wantHeader) {
 		t.Errorf("expected header %q not found in generated coffee config", wantHeader)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithoutAnnotationMinionsWithCustomValuesProxySetHeadersAnnotation(t *testing.T) {
@@ -1048,6 +1097,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithoutAnnotationMinio
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -1103,6 +1153,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithoutAnnotationMinio
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -1157,6 +1208,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithAnnotationForProxy
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -1215,6 +1267,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXMasterMinionsWithDifferentHe
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -1267,6 +1320,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXWithProxySetHeadersAnnotatio
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -1330,6 +1384,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXMasterMinionsWithMultipleDif
 				t.Errorf("expected header %q not found in generated tea config", wantHeader)
 			}
 		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -1368,6 +1423,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2On(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithHTTP2On(t *testing.T) {
@@ -1405,6 +1461,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithHTTP2On(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2Off(t *testing.T) {
@@ -1440,6 +1497,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2Off(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithHTTP2Off(t *testing.T) {
@@ -1475,6 +1533,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithHTTP2Off(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimit(t *testing.T) {
@@ -1505,6 +1564,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimit(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimitMinions(t *testing.T) {
@@ -1540,6 +1600,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimitMinions(t *testin
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimit(t *testing.T) {
@@ -1570,6 +1631,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimit(t *testing.T
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimitMinions(t *testing.T) {
@@ -1605,6 +1667,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimitMinions(t *te
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func newNGINXPlusIngressTmpl(t *testing.T) *template.Template {

@@ -77,7 +77,7 @@ jobs:
     if: ${{ inputs.gcr_release_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -93,9 +93,6 @@ jobs:
           registry: gcr.io
           username: oauth2accesstoken
           password: ${{ steps.gcr-auth.outputs.access_token }}
-
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
 
       - name: Publish Plus images
         run: |
@@ -119,7 +116,7 @@ jobs:
     if: ${{ inputs.nginx_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -151,9 +148,6 @@ jobs:
           username: ${{ steps.idtoken.outputs.id_token }}
           password: ${{ github.actor }}
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Publish images
         run: |
           export CONFIG_PATH=.github/config/config-plus-nginx
@@ -176,7 +170,7 @@ jobs:
     if: ${{ inputs.gcr_mktpl_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-priv-auth
@@ -193,9 +187,6 @@ jobs:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY_MKTPL }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT_MKTPL }}
-
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
 
       - name: Publish Plus images
         run: |
@@ -221,7 +212,7 @@ jobs:
     if: ${{ inputs.ecr_mktpl_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -249,9 +240,6 @@ jobs:
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
 
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
-
       - name: Publish images
         run: |
           export CONFIG_PATH=.github/config/config-plus-ecr
@@ -271,7 +259,7 @@ jobs:
     if: ${{ inputs.az_mktpl_registry }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -294,9 +282,6 @@ jobs:
           registry: nginxmktpl.azurecr.io
           username: ${{ secrets.AZ_MKTPL_ID }}
           password: ${{ secrets.AZ_MKTPL_SECRET }}
-
-      - name: Install latest skopeo
-        uses: ./.github/actions/install-skopeo
 
       - name: Publish images
         run: |

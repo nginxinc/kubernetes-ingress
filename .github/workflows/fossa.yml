@@ -23,7 +23,7 @@ jobs:
     if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Scan
         uses: fossas/fossa-action@47ef11b1e1e3812e88dae436ccbd2d0cbd1adab0 # v1.3.3

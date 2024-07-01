@@ -1,4 +1,5 @@
 @namespace("ingress.nginx.com") protocol NICProductTelemetry {
+	/** Data is the product telemetry data of NGINX Ingress Controller. */
 	@df_datatype("nic-product-telemetry") record Data {
 		/** The field that identifies what type of data this is. */
 		string dataType;
@@ -77,6 +78,9 @@ It is the UID of the `kube-system` Namespace. */
 
 		/** RateLimitPolicies is the number of RateLimit policies managed by NGINX Ingress Controller */
 		long? RateLimitPolicies = null;
+
+		/** APIKeyPolicies is the number of APIKey policies managed by NGINX Ingress Controller */
+		long? APIKeyPolicies = null;
 
 		/** JWTAuthPolicies is the number of JWTAuth policies managed by NGINX Ingress Controller */
 		long? JWTAuthPolicies = null;
