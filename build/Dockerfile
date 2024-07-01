@@ -12,8 +12,8 @@ ARG WAF_VERSION=v4
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
 FROM ghcr.io/nginxinc/k8s-common:nginx-opentracing-1.27.0@sha256:d9f6f930b7bfcc026785aca49fdb96fbecdc517ebbdb893f6393ac78b247c8fb AS opentracing-lib
 FROM ghcr.io/nginxinc/k8s-common:nginx-opentracing-1.27.0-alpine@sha256:5dc5c76384a775316c541995b145d4cef86d529934951319fd127f4d4fdb9ef7 AS alpine-opentracing-lib
-FROM ghcr.io/nginxinc/alpine-fips:0.2.1-alpine3.17@sha256:c44d4b1fe0b389ebec52370357e5c1d54598e8116055ba3bbe6f603fd064cc39 AS alpine-fips-3.17
-FROM ghcr.io/nginxinc/alpine-fips:0.2.1-alpine3.19@sha256:7c5baa9b5df90e1fa67cf9cd4d9286ce7573b30a2fdb48b4db55fc125c2ed5f3 AS alpine-fips-3.19
+FROM ghcr.io/nginxinc/alpine-fips:0.2.2-alpine3.17@sha256:0dcd9149b66a6b35c1253b7662c8ed7ef0e0172ceae893a82058c30668799bf2 AS alpine-fips-3.17
+FROM ghcr.io/nginxinc/alpine-fips:0.2.2-alpine3.19@sha256:792036617a6dfce9d6bcc81886f5c18e49aaee7807e94a1c7eeb5b0b0303d7aa AS alpine-fips-3.19
 FROM redhat/ubi9-minimal@sha256:a7d837b00520a32502ada85ae339e33510cdfdbc8d2ddf460cc838e12ec5fa5a AS ubi-minimal
 FROM golang:1.22-alpine@sha256:ace6cc3fe58d0c7b12303c57afe6d6724851152df55e08057b43990b927ad5e8 AS golang-builder
 
