@@ -296,6 +296,14 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
         wait_before_test()
         counter = counter + 1
     if counter >= 300:
+        print("\n===================== IC Logs Start =====================")
+        try:
+            pod_name = get_pod_name_that_contains(kube_apis.v1, "nginx-ingress", "nginx-ingress")
+            logs = kube_apis.v1.read_namespaced_pod_log(pod_name, "nginx-ingress")
+            print(logs)
+        except:
+            print("Failed to load logs for nginx-ingress pod")
+        print("\n===================== IC Logs End =====================")
         raise PodNotReadyException()
     print("All pods are Ready")
 
