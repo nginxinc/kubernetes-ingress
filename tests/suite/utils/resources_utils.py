@@ -298,6 +298,7 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     if counter >= 300:
         print("\n===================== IC Logs Start =====================")
         try:
+            pod_name = get_pod_name_that_contains(kube_apis.v1, "nginx-ingress", "nginx-ingress")
             logs = kube_apis.v1.read_namespaced_pod_log(pod_name, "nginx-ingress")
             print(logs)
         except:
