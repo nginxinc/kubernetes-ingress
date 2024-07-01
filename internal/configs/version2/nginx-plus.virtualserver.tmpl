@@ -339,9 +339,10 @@ server {
         {{- if $hc.Match }} match={{ $hc.Match }}{{- end -}}
         {{- if $hc.Mandatory }} mandatory {{ end -}}
         {{- if $hc.Persistent }} persistent {{ end -}}
+        {{- if not $hc.IsGRPC }} keepalive_time={{ $hc.KeepaliveTime }}{{ end -}}
         {{- if $hc.GRPCPass }} type=grpc{{- if $hc.GRPCStatus }} grpc_status={{ $hc.GRPCStatus }}{{- end -}}
-        {{- if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{ end -}}
-        {{- if not $hc.IsGRPC }} keepalive_time={{ $hc.KeepaliveTime }}{{ end }}{{ end }};
+        {{- if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{- end -}}{{ end -}};
+
    }
     {{- end }}
 
