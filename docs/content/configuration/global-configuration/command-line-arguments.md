@@ -57,7 +57,8 @@ Enables custom resources.
 
 Default `true`.
 
-<a name="cmdoption-enable-preview-policies"></a>
+
+<a name="cmdoption-enable-oidc"></a>
 
 ---
 
