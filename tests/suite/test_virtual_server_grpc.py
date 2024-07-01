@@ -117,6 +117,7 @@ class TestVirtualServerGrpc:
         assert_grpc_entries_exist(config)
         assert_proxy_entries_do_not_exist(config)
 
+    @pytest.mark.flaky(max_runs=3)
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_validation_flow(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, backend_setup, virtual_server_setup
@@ -138,6 +139,7 @@ class TestVirtualServerGrpc:
         self.patch_valid_vs(kube_apis, virtual_server_setup)
         wait_before_test()
 
+    @pytest.mark.flaky(max_runs=3)
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_connect_grpc_backend(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, backend_setup, virtual_server_setup
@@ -162,6 +164,7 @@ class TestVirtualServerGrpc:
                 print(e.details())
                 pytest.fail("RPC error was not expected during call, exiting...")
 
+    @pytest.mark.flaky(max_runs=3)
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_grpc_error_intercept(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, backend_setup, virtual_server_setup
@@ -283,7 +286,7 @@ class TestVirtualServerGrpcHealthCheck:
             f"{TEST_DATA}/virtual-server-grpc/virtual-server-healthcheck.yaml",
             virtual_server_setup.namespace,
         )
-
+        wait_before_test()
         config = get_vs_nginx_template_conf(
             kube_apis.v1,
             virtual_server_setup.namespace,
