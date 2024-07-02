@@ -510,7 +510,7 @@ class TestOptionsSpecificForPlus:
                 [
                     "health_check uri=/ interval=5s jitter=0s",
                     "fails=1 passes=1",
-                    "mandatory persistent",
+                    "mandatory  persistent",
                     "keepalive_time=60s;",
                     "slow_start=3h",
                     "queue 100 timeout=60s;",
@@ -539,7 +539,7 @@ class TestOptionsSpecificForPlus:
                 [
                     "health_check uri=/ interval=5s jitter=0s",
                     "fails=1 passes=1",
-                    "mandatory persistent",
+                    "mandatory  persistent",
                     "keepalive_time=60s;",
                     "slow_start=3h",
                     "queue 100 timeout=60s;",
@@ -568,7 +568,7 @@ class TestOptionsSpecificForPlus:
                 [
                     "health_check uri=/ interval=5s jitter=0s",
                     "fails=1 passes=1",
-                    "mandatory persistent",
+                    "mandatory  persistent",
                     "keepalive_time=60s;",
                     "slow_start=3h",
                     "queue 100 timeout=60s;",
@@ -600,8 +600,7 @@ class TestOptionsSpecificForPlus:
                     "ntlm": True,
                 },
                 [
-                    "health_check uri=/health port=8080 interval=15s jitter=3",
-                    "fails=2 passes=2 match=",
+                    "health_check uri=/health  port=8080 interval=15s jitter=3s fails=2 passes=2 match=",
                     "proxy_pass https://vs",
                     "status 200;",
                     "proxy_connect_timeout 35s;",
