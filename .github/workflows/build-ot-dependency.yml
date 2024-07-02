@@ -1,9 +1,9 @@
 name: Build OpenTracing Dependency
 
 on:
-  #   push:
-  #     branches:
-  #       - "ot-build"
+  push:
+    branches:
+      - "ot-build"
   workflow_dispatch:
     inputs:
       nginx_version:
@@ -42,7 +42,7 @@ jobs:
           if [ -z "${{ inputs.nginx_version }}" ]; then
             nginx_version="${{ inputs.nginx_version }}"
           else
-            nginx_version=$(grep -m1 'ARG BUILD_NGINX_VERSION=' <Dockerfile | awk -F'[= ]' '{print $3}')
+            nginx_version=$(grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print $3}')
           fi
           echo "nginx_version=${nginx_version}"
           echo "nginx_version=${nginx_version}" >> $GITHUB_OUTPUT
@@ -93,4 +93,6 @@ jobs:
           target: final
           sbom: false
           provenance: mode=max
-          build-args: BUILD_OS=${{ matrix.os }}
+          build-args: |
+            BUILD_OS=${{ matrix.os }}
+            NGINX_VERSION=${{ steps.var.outputs.nginx_version }}
