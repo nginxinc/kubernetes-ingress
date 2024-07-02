@@ -10,7 +10,7 @@
     },
     {
       "label": "AP_WAF 2/4",
-      "image": "alpine-plus-nap-fips",
+      "image": "ubi-9-plus-nap",
       "type": "plus",
       "nap_modules": "waf",
       "marker": "'appprotect_waf_policies and not appprotect_waf_policies_allow'",
