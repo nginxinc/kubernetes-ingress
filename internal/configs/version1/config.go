@@ -190,6 +190,7 @@ type Location struct {
 
 // MainConfig describe the main NGINX configuration file.
 type MainConfig struct {
+	AccessLog                          string
 	AccessLogOff                       bool
 	DefaultServerAccessLogOff          bool
 	DefaultServerReturn                string
