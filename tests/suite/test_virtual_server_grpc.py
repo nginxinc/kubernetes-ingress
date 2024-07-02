@@ -266,7 +266,7 @@ class TestVirtualServerGrpc:
 
 
 @pytest.mark.vs
-@pytest.mark.vs_gprc
+@pytest.mark.vs_grpc
 @pytest.mark.smoke
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
