@@ -436,7 +436,7 @@ controller:
       ## The HTTP port of the Ingress Controller service.
       port: 80
 
-      ## The custom NodePort for the HTTP port. Requires controller.service.type set to NodePort.
+      ## The custom NodePort for the HTTP port. Requires controller.service.type set to NodePort or LoadBalancer.
       # nodePort: 80
 
       ## The HTTP port on the POD where the Ingress Controller service is running.
@@ -449,7 +449,7 @@ controller:
       ## The HTTPS port of the Ingress Controller service.
       port: 443
 
-      ## The custom NodePort for the HTTPS port. Requires controller.service.type set to NodePort.
+      ## The custom NodePort for the HTTPS port. Requires controller.service.type set to NodePort or LoadBalancer.
       # nodePort: 443
 
       ## The HTTPS port on the POD where the Ingress Controller service is running.
