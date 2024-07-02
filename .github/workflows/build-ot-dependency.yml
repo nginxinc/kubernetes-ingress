@@ -71,7 +71,7 @@ jobs:
         with:
           images: |
             name=ghcr.io/nginx/nic-ot-dependency,enable=true
-          flavor: suffix=${{ matrix.os != 'debian' && '-' || '' }}${{ matrix.os != 'debian' && matrix.os || '' }},onlatest=true
+          flavor: suffix=${{ matrix.os != 'debian' && format('-{0}', matrix.os) || '' }},onlatest=true
           tags: |
             type=raw,value=nginx-${{ steps.var.outputs.nginx_version }},enable=true
         env:
