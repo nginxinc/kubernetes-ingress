@@ -159,6 +159,7 @@ type WAF struct {
 type Dos struct {
 	Enable                 string
 	Name                   string
+	AllowListPath          string
 	ApDosPolicy            string
 	ApDosSecurityLogEnable bool
 	ApDosLogConf           string

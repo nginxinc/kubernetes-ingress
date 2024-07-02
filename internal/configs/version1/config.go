@@ -123,6 +123,7 @@ type Server struct {
 	AppProtectDosMonitorProtocol string
 	AppProtectDosMonitorTimeout  uint64
 	AppProtectDosName            string
+	AppProtectDosAllowListPath   string
 	AppProtectDosAccessLogDst    string
 
 	SpiffeCerts bool

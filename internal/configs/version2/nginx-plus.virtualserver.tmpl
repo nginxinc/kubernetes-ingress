@@ -283,6 +283,10 @@ server {
     app_protect_dos_name "{{ .Name }}";
         {{- end }}
 
+        {{- if .AllowListPath }}
+    app_protect_dos_access_file "{{ .AllowListPath }}";
+        {{- end }}
+
         {{- if .ApDosPolicy }}
     app_protect_dos_policy_file {{ .ApDosPolicy }};
         {{- end }}
@@ -521,6 +525,10 @@ server {
 
             {{- if .Name }}
         app_protect_dos_name "{{ .Name }}";
+            {{- end }}
+
+            {{- if .AllowListPath }}
+        app_protect_dos_access_file "{{ .AllowListPath }}";
             {{- end }}
 
             {{- if .ApDosPolicy }}
