@@ -332,12 +332,17 @@ server {
             {{- else }}
         proxy_pass {{ $hc.ProxyPass }};
             {{- end }}
-        health_check {{ if $hc.URI }}uri={{ $hc.URI }} {{ end }}{{ if $hc.Port }}port={{ $hc.Port }} {{ end }}interval={{ $hc.Interval }} jitter={{ $hc.Jitter }}
-            fails={{ $hc.Fails }} passes={{ $hc.Passes }}{{ if $hc.Match }} match={{ $hc.Match }}{{ end }}
-            {{ if $hc.Mandatory }} mandatory{{ if $hc.Persistent }} persistent{{ end }}{{ end }}
-            {{ if $hc.GRPCPass }} type=grpc{{ if $hc.GRPCStatus }} grpc_status={{ $hc.GRPCStatus }}{{ end }}
-            {{ if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{ end }}{{ end }} keepalive_time={{ $hc.KeepaliveTime }};
-    }
+        health_check{{- if $hc.URI }} uri={{ $hc.URI }} {{ end -}}
+        {{- if $hc.Port }} port={{ $hc.Port }} {{ end -}}
+        interval={{ $hc.Interval }} jitter={{ $hc.Jitter }} fails={{ $hc.Fails }} passes={{ $hc.Passes }}
+        {{- if $hc.Match }} match={{ $hc.Match }}{{- end -}}
+        {{- if $hc.Mandatory }} mandatory {{ end -}}
+        {{- if $hc.Persistent }} persistent {{ end -}}
+        {{- if not $hc.IsGRPC }} keepalive_time={{ $hc.KeepaliveTime }}{{ end -}}
+        {{- if $hc.GRPCPass }} type=grpc{{- if $hc.GRPCStatus }} grpc_status={{ $hc.GRPCStatus }}{{- end -}}
+        {{- if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{- end -}}{{ end -}};
+
+   }
     {{- end }}
 
     {{- range $e := $s.ErrorPageLocations }}
