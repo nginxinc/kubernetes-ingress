@@ -177,6 +177,15 @@ server {
         
         
     
+    app_protect_dos_enable on;
+    app_protect_dos_name "my-dos-coffee";
+    app_protect_dos_policy_file /test/policy.json;
+    app_protect_dos_security_log_enable on;
+    app_protect_dos_security_log /test/log.json;
+    set $loggable '0';
+    # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+    access_log svc.dns.com:123 log_dos if=$loggable;
+    app_protect_dos_monitor uri=test.example.com protocol=http timeout=30;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -609,6 +618,15 @@ server {
         
         
     
+    app_protect_dos_enable on;
+    app_protect_dos_name "my-dos-coffee";
+    app_protect_dos_policy_file /test/policy.json;
+    app_protect_dos_security_log_enable on;
+    app_protect_dos_security_log /test/log.json;
+    set $loggable '0';
+    # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+    access_log svc.dns.com:123 log_dos if=$loggable;
+    app_protect_dos_monitor uri=test.example.com protocol=http timeout=30;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -1976,6 +1994,7 @@ server {
         
         
     
+    app_protect_dos_enable on;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;

@@ -75,7 +75,7 @@ http {
                     {{range $i, $value := .AppProtectDosLogFormat -}}
                     {{with $value}}'{{if $i}} {{end}}{{$value}}'
                     {{end}}{{end}};
-    {{- else -}}
+    {{- else }}
     log_format  log_dos ', vs_name_al=$app_protect_dos_vs_name, ip=$remote_addr, tls_fp=$app_protect_dos_tls_fp, '
                         'outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, '
                         'ip_tls=$remote_addr:$app_protect_dos_tls_fp, ';
