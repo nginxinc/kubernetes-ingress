@@ -1319,6 +1319,13 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		}
 	}
 
+	if cfgParams.TransportServerTemplate != nil {
+		err := cnf.templateExecutorV2.UpdateTransportServerTemplate(cfgParams.TransportServerTemplate)
+		if err != nil {
+			return allWarnings, fmt.Errorf("error when parsing the TransportServer template: %w", err)
+		}
+	}
+
 	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
