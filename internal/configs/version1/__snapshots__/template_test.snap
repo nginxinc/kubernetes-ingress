@@ -546,8 +546,8 @@ server {
     app_protect_enable on;
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
     app_protect_security_log_enable on;
-    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514;;
-    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf2;;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf2;
     
     app_protect_dos_enable on;
     app_protect_dos_policy_file /test/policy.json;
@@ -641,8 +641,8 @@ server {
     app_protect_enable on;
     app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
     app_protect_security_log_enable on;
-    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514;;
-    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf2;;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf2;
     
     app_protect_dos_enable on;
     app_protect_dos_policy_file /test/policy.json;

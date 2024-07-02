@@ -1754,8 +1754,8 @@ var (
 				AppProtectEnable: "on",
 				AppProtectPolicy: "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				AppProtectLogConfs: []string{
-					"/etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514;",
-					"/etc/nginx/waf/nac-logconfs/test_logconf2;",
+					"/etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514",
+					"/etc/nginx/waf/nac-logconfs/test_logconf2",
 				},
 				AppProtectLogEnable:          "on",
 				AppProtectDosEnable:          "on",
