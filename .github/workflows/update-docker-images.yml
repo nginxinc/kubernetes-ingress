@@ -105,11 +105,6 @@ jobs:
             image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
             target_image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
             platforms: "linux/arm64, linux/amd64"
-          - tag: ${{ needs.variables.outputs.tag }}-alpine-fips
-            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-fips"
-            image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
-            target_image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
-            platforms: "linux/arm64, linux/amd64"
           - tag: ${{ needs.variables.outputs.tag }}-mktpl
             target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-mktpl"
             image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
@@ -117,11 +112,6 @@ jobs:
             platforms: "linux/arm64, linux/amd64"
           - tag: ${{ needs.variables.outputs.tag }}-alpine-mktpl
             target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-mktpl"
-            image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
-            target_image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
-            platforms: "linux/arm64, linux/amd64"
-          - tag: ${{ needs.variables.outputs.tag }}-alpine-mktpl-fips
-            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-mktpl-fips"
             image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
             target_image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
             platforms: "linux/arm64, linux/amd64"
@@ -170,11 +160,6 @@ jobs:
             image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap/nginx-plus-ingress"
             target_image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-nap/nginx-plus-ingress"
             platforms: "linux/amd64"
-          - tag: "${{ needs.variables.outputs.tag }}-alpine-fips"
-            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-fips"
-            image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap/nginx-plus-ingress"
-            target_image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-nap/nginx-plus-ingress"
-            platforms: "linux/amd64"
           - tag: "${{ needs.variables.outputs.tag }}"
             target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}"
             image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap-v5/nginx-plus-ingress"
@@ -182,11 +167,6 @@ jobs:
             platforms: "linux/amd64"
           - tag: "${{ needs.variables.outputs.tag }}-ubi"
             target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-ubi"
-            image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap-v5/nginx-plus-ingress"
-            target_image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-nap-v5/nginx-plus-ingress"
-            platforms: "linux/amd64"
-          - tag: "${{ needs.variables.outputs.tag }}-alpine-fips"
-            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-fips"
             image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap-v5/nginx-plus-ingress"
             target_image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-nap-v5/nginx-plus-ingress"
             platforms: "linux/amd64"
