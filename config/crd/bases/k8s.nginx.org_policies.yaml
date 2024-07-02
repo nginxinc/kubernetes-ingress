@@ -151,6 +151,8 @@ spec:
                     type: boolean
                   authEndpoint:
                     type: string
+                  logoutEndpoint:
+                    type: string
                   authExtraArgs:
                     items:
                       type: string
@@ -162,6 +164,8 @@ spec:
                   jwksURI:
                     type: string
                   redirectURI:
+                    type: string
+                  redirectPostLogout:
                     type: string
                   scope:
                     type: string
