@@ -6,8 +6,7 @@ a web application, configure load balancing for it via a VirtualServer, and appl
 
 ## Prerequisites
 
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/)
-   instructions to deploy the Ingress Controller. In this example we will be using a snippet to turn the policy off on a specific path so ensure that the `enable-snippets` flag is set.
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller.
 1. Save the public IP address of the Ingress Controller into a shell variable:
 
     ```console
@@ -103,20 +102,6 @@ Server name: coffee-56b44d4c55-vjwxd
 Date: 13/Jun/2024:13:12:17 +0000
 URI: /coffee
 Request ID: 4feedb3265a0430a1f58831d016e846d
-```
-
-If you attempt to access the /tea path, the request will be allowed without an API Key, because the auth_request directive is turned off for that path with a location snippet:
-
-```console
-curl -k --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea
-```
-
-```text
-Server address: 10.244.0.5:8080
-Server name: tea-596697966f-dmq7t
-Date: 13/Jun/2024:13:16:46 +0000
-URI: /tea
-Request ID: 26e6d7dd0272eca82f31f33bf90698c9
 ```
 
 Additionally you can set [error pages](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#errorpage) to handle the 401 and 403 responses.
