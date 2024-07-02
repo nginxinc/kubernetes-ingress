@@ -268,11 +268,16 @@ def crd_ingress_controller_with_dos(
         print("------------------------- Create syslog svc -----------------------")
         src_syslog_yaml = f"{TEST_DATA}/dos/dos-syslog.yaml"
         create_items_from_yaml(kube_apis, src_syslog_yaml, namespace)
+
+        print("------------------------- Create accesslog svc -----------------------")
+        src_accesslog_yaml = f"{TEST_DATA}/dos/dos-accesslog.yaml"
+        create_items_from_yaml(kube_apis, src_accesslog_yaml, namespace)
+
         before = time.time()
         wait_until_all_pods_are_ready(kube_apis.v1, namespace)
         after = time.time()
         print(f"All pods came up in {int(after-before)} seconds")
-        print(f"syslog svc was created")
+        print(f"syslog and accesslog svc was created")
 
         print("------------------------- Create dos arbitrator -----------------------")
         dos_arbitrator_name = create_dos_arbitrator(
@@ -341,6 +346,8 @@ def crd_ingress_controller_with_dos(
             delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
             print("Remove the syslog svc:")
             delete_items_from_yaml(kube_apis, src_syslog_yaml, namespace)
+            print("Remove the accesslog svc:")
+            delete_items_from_yaml(kube_apis, src_accesslog_yaml, namespace)
 
     request.addfinalizer(fin)
 

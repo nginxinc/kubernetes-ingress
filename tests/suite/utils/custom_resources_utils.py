@@ -316,6 +316,7 @@ def create_dos_protected_from_yaml(custom_objects: CustomObjectsApi, yaml_manife
             "<NAMESPACE>", ing_namespace
         )
         dep["spec"]["apDosPolicy"] = dep["spec"]["apDosPolicy"].replace("<NAMESPACE>", namespace)
+        dep["spec"]["dosAccessLogDest"] = dep["spec"]["dosAccessLogDest"].replace("<NAMESPACE>", ing_namespace)
     custom_objects.create_namespaced_custom_object(
         "appprotectdos.f5.com", "v1beta1", namespace, "dosprotectedresources", dep
     )

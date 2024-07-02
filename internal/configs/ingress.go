@@ -190,6 +190,7 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 			server.AppProtectDosMonitorProtocol = p.dosResource.AppProtectDosMonitorProtocol
 			server.AppProtectDosMonitorTimeout = p.dosResource.AppProtectDosMonitorTimeout
 			server.AppProtectDosName = p.dosResource.AppProtectDosName
+			server.AppProtectDosAllowListPath = p.dosResource.AppProtectDosAllowListPath
 			server.AppProtectDosAccessLogDst = p.dosResource.AppProtectDosAccessLogDst
 			server.AppProtectDosPolicyFile = p.dosResource.AppProtectDosPolicyFile
 			server.AppProtectDosLogConfFile = p.dosResource.AppProtectDosLogConfFile
