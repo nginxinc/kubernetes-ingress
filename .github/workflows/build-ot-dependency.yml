@@ -1,6 +1,9 @@
 name: Build OpenTracing Dependency
 
 on:
+  push:
+    branches:
+      - "ot-build"
   schedule:
     - cron: "30 4 * * 1" # run Mon at 04:30 UTC
   workflow_dispatch:
