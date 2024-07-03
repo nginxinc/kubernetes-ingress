@@ -70,7 +70,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            name=ghcr.io/nginx/nic-ot-dependency,enable=true
+            name=ghcr.io/nginxinc/nic-ot-dependency,enable=true
           flavor: suffix=${{ matrix.os != 'debian' && format('-{0}', matrix.os) || '' }},onlatest=true
           tags: |
             type=raw,value=nginx-${{ steps.var.outputs.nginx_version }},enable=true
