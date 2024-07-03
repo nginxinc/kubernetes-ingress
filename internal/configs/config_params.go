@@ -99,9 +99,10 @@ type ConfigParams struct {
 	MainServerSSLPreferServerCiphers bool
 	MainServerSSLProtocols           string
 
-	IngressTemplate       *string
-	VirtualServerTemplate *string
-	MainTemplate          *string
+	IngressTemplate         *string
+	VirtualServerTemplate   *string
+	MainTemplate            *string
+	TransportServerTemplate *string
 
 	JWTKey      string
 	JWTLoginURL string

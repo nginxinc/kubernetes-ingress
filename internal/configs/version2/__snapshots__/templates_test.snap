@@ -177,6 +177,15 @@ server {
         
         
     
+    app_protect_dos_enable on;
+    app_protect_dos_name "my-dos-coffee";
+    app_protect_dos_policy_file /test/policy.json;
+    app_protect_dos_security_log_enable on;
+    app_protect_dos_security_log /test/log.json;
+    set $loggable '0';
+    # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+    access_log svc.dns.com:123 log_dos if=$loggable;
+    app_protect_dos_monitor uri=test.example.com protocol=http timeout=30;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -190,23 +199,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -614,6 +618,15 @@ server {
         
         
     
+    app_protect_dos_enable on;
+    app_protect_dos_name "my-dos-coffee";
+    app_protect_dos_policy_file /test/policy.json;
+    app_protect_dos_security_log_enable on;
+    app_protect_dos_security_log /test/log.json;
+    set $loggable '0';
+    # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+    access_log svc.dns.com:123 log_dos if=$loggable;
+    app_protect_dos_monitor uri=test.example.com protocol=http timeout=30;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -627,23 +640,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -1986,6 +1994,7 @@ server {
         
         
     
+    app_protect_dos_enable on;
     # server snippet
     location /split {
         rewrite ^ @split_0 last;
@@ -1999,23 +2008,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -2371,23 +2375,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -2800,23 +2799,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -3227,23 +3221,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -3654,23 +3643,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -4083,23 +4067,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -4512,23 +4491,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -4941,23 +4915,18 @@ server {gunzip on;
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -5370,23 +5339,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
@@ -6243,23 +6207,18 @@ server {
         proxy_read_timeout ;
         proxy_send_timeout ;
         proxy_pass http://coffee-v2;
-        health_check uri=/ port=50 interval=5s jitter=0s
-            fails=1 passes=1
-             mandatory persistent
-             keepalive_time=;
-    }
+        health_check uri=/  port=50 interval=5s jitter=0s fails=1 passes=1 mandatory  persistent  keepalive_time=60s;
+
+   }
     location @hc-tea {
         
         grpc_connect_timeout ;
         grpc_read_timeout ;
         grpc_send_timeout ;
         grpc_pass grpc://tea-v3;
-        health_check port=50 interval=5s jitter=0s
-            fails=1 passes=1
-            
-             type=grpc grpc_status=12
-             grpc_service=tea-servicev2 keepalive_time=;
-    }
+        health_check port=50 interval=5s jitter=0s fails=1 passes=1 type=grpc grpc_status=12 grpc_service=tea-servicev2;
+
+   }
     location @vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0 {
         
         default_type "application/json";
