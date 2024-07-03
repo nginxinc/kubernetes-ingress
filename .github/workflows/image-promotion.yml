@@ -670,7 +670,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [checks]
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
