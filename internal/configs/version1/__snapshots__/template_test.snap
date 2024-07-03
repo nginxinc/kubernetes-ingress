@@ -130,6 +130,8 @@ daemon off;
 
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
+load_module modules/ngx_http_app_protect_module.so;
+load_module modules/ngx_http_app_protect_dos_module.so;
 load_module modules/ngx_fips_check_module.so;
 
 load_module modules/ngx_http_js_module.so;
@@ -156,7 +158,20 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
+    log_format  log_dos escape=json 
+                    '$remote_addr - $remote_user [$time_local]'
+                    ' "$request" $status $body_bytes_sent '
+                    ' "$http_referer" "$http_user_agent"'
+                    ;
+    app_protect_dos_arb_fqdn arb.test.server.com;
     access_log  /dev/stdout  main;
+    app_protect_failure_mode_action pass;
+    app_protect_compressed_requests_action pass;
+    app_protect_cookie_seed ABCDEFGHIJKLMNOP;
+    app_protect_cpu_thresholds high=low=100;
+    app_protect_physical_memory_util_thresholds high=low=100;
+    app_protect_reconnect_period_seconds 10;
+    include /etc/nginx/waf/nac-usersigs/index.conf;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -251,9 +266,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-mgmt {
-    usage_report interval=0s;
-}
 
 ---
 
@@ -293,6 +305,7 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
+    app_protect_enforcer_address enforcer.svc.local;
     access_log  /dev/stdout  main;
 
     sendfile        on;
@@ -530,6 +543,21 @@ server {
     set $resource_type "ingress";
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
+    app_protect_enable on;
+    app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+    app_protect_security_log_enable on;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf2;
+    
+    app_protect_dos_enable on;
+    app_protect_dos_policy_file /test/policy.json;
+    app_protect_dos_security_log_enable on;
+    app_protect_dos_security_log /test/logConf.json;
+    set $loggable '0';
+    # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+    access_log /var/log/dos log_dos if=$loggable;
+    app_protect_dos_monitor uri=/path/to/monitor protocol=http1 timeout=30;
+    app_protect_dos_name "testdos";
 
     
     if ($scheme = http) {
@@ -610,6 +638,21 @@ server {
     set $resource_type "ingress";
     set $resource_name "cafe-ingress";
     set $resource_namespace "default";
+    app_protect_enable on;
+    app_protect_policy_file /etc/nginx/waf/nac-policies/default-dataguard-alarm;
+    app_protect_security_log_enable on;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514;
+    app_protect_security_log /etc/nginx/waf/nac-logconfs/test_logconf2;
+    
+    app_protect_dos_enable on;
+    app_protect_dos_policy_file /test/policy.json;
+    app_protect_dos_security_log_enable on;
+    app_protect_dos_security_log /test/logConf.json;
+    set $loggable '0';
+    # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+    access_log /var/log/dos log_dos if=$loggable;
+    app_protect_dos_monitor uri=/path/to/monitor protocol=http1 timeout=30;
+    app_protect_dos_name "testdos";
 
     
     if ($scheme = http) {
@@ -2343,6 +2386,8 @@ daemon off;
 
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
+load_module modules/ngx_http_app_protect_module.so;
+load_module modules/ngx_http_app_protect_dos_module.so;
 load_module modules/ngx_fips_check_module.so;
 
 load_module modules/ngx_http_js_module.so;
@@ -2369,7 +2414,20 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
+    log_format  log_dos escape=json 
+                    '$remote_addr - $remote_user [$time_local]'
+                    ' "$request" $status $body_bytes_sent '
+                    ' "$http_referer" "$http_user_agent"'
+                    ;
+    app_protect_dos_arb_fqdn arb.test.server.com;
     access_log  /dev/stdout  main;
+    app_protect_failure_mode_action pass;
+    app_protect_compressed_requests_action pass;
+    app_protect_cookie_seed ABCDEFGHIJKLMNOP;
+    app_protect_cpu_thresholds high=low=100;
+    app_protect_physical_memory_util_thresholds high=low=100;
+    app_protect_reconnect_period_seconds 10;
+    include /etc/nginx/waf/nac-usersigs/index.conf;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2464,9 +2522,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-mgmt {
-    usage_report interval=0s;
-}
 
 ---
 
@@ -2480,6 +2535,8 @@ daemon off;
 
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
+load_module modules/ngx_http_app_protect_module.so;
+load_module modules/ngx_http_app_protect_dos_module.so;
 load_module modules/ngx_fips_check_module.so;
 
 load_module modules/ngx_http_js_module.so;
@@ -2506,7 +2563,18 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
+    log_format  log_dos ', vs_name_al=$app_protect_dos_vs_name, ip=$remote_addr, tls_fp=$app_protect_dos_tls_fp, '
+                        'outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, '
+                        'ip_tls=$remote_addr:$app_protect_dos_tls_fp, ';
+    app_protect_dos_arb_fqdn arb.test.server.com;
     access_log  /dev/stdout  main;
+    app_protect_failure_mode_action pass;
+    app_protect_compressed_requests_action pass;
+    app_protect_cookie_seed ABCDEFGHIJKLMNOP;
+    app_protect_cpu_thresholds high=low=100;
+    app_protect_physical_memory_util_thresholds high=low=100;
+    app_protect_reconnect_period_seconds 10;
+    include /etc/nginx/waf/nac-usersigs/index.conf;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2618,6 +2686,8 @@ daemon off;
 
 error_log  stderr ;
 pid        /var/lib/nginx/nginx.pid;
+load_module modules/ngx_http_app_protect_module.so;
+load_module modules/ngx_http_app_protect_dos_module.so;
 load_module modules/ngx_fips_check_module.so;
 
 load_module modules/ngx_http_js_module.so;
@@ -2644,7 +2714,20 @@ http {
         default $upstream_trailer_grpc_status;
         '' $sent_http_grpc_status;
     }
+    log_format  log_dos escape=json 
+                    '$remote_addr - $remote_user [$time_local]'
+                    ' "$request" $status $body_bytes_sent '
+                    ' "$http_referer" "$http_user_agent"'
+                    ;
+    app_protect_dos_arb_fqdn arb.test.server.com;
     access_log  /dev/stdout  main;
+    app_protect_failure_mode_action pass;
+    app_protect_compressed_requests_action pass;
+    app_protect_cookie_seed ABCDEFGHIJKLMNOP;
+    app_protect_cpu_thresholds high=low=100;
+    app_protect_physical_memory_util_thresholds high=low=100;
+    app_protect_reconnect_period_seconds 10;
+    include /etc/nginx/waf/nac-usersigs/index.conf;
 
     sendfile        on;
     #tcp_nopush     on;
@@ -2738,9 +2821,6 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
-}
-mgmt {
-    usage_report interval=0s;
 }
 
 ---
