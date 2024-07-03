@@ -620,7 +620,6 @@ type JWTAuth struct {
 }
 
 // BasicAuth holds HTTP Basic authentication configuration
-// policy status: preview
 type BasicAuth struct {
 	Realm  string `json:"realm"`
 	Secret string `json:"secret"`

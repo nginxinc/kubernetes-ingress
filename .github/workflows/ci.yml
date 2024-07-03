@@ -664,7 +664,7 @@ jobs:
     if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
 
   tag-results:
-    if: ${{ always() }}
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     name: Final CI Results
     needs: [tag-stable, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]

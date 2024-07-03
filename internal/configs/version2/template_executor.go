@@ -57,6 +57,17 @@ func (te *TemplateExecutor) UpdateVirtualServerTemplate(templateString *string) 
 	return nil
 }
 
+// UpdateTransportServerTemplate updates the TransportServer template.
+func (te *TemplateExecutor) UpdateTransportServerTemplate(templateString *string) error {
+	newTemplate, err := template.New("transportServerTemplate").Funcs(helperFunctions).Parse(*templateString)
+	if err != nil {
+		return err
+	}
+	te.transportServerTemplate = newTemplate
+
+	return nil
+}
+
 // ExecuteVirtualServerTemplate generates the content of an NGINX configuration file for a VirtualServer resource.
 func (te *TemplateExecutor) ExecuteVirtualServerTemplate(cfg *VirtualServerConfig) ([]byte, error) {
 	var configBuffer bytes.Buffer
