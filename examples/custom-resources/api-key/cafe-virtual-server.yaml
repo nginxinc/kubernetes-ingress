@@ -12,15 +12,7 @@ spec:
   - name: coffee
     service: coffee-svc
     port: 80
-  - name: tea
-    service: tea-svc
-    port: 80
   routes:
   - path: /coffee
     action:
       pass: coffee
-  - path: /tea
-    location-snippets: |
-      auth_request off;
-    action:
-      pass: tea
