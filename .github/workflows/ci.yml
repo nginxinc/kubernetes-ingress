@@ -288,11 +288,22 @@ jobs:
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-      - name: Compress binaries
-        run: |
-          tar -czf dist.tgz dist
-          echo ""
-        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
+
+      - name: Login to GCR
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+        if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
 
       - name: Build Binary storage Container
         uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0

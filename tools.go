@@ -11,4 +11,4 @@ import (
 	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
 )
 
-// TODO - remove please, don't merge me
+// TODO - remove please, don't merge me, comma please
