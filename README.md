@@ -67,7 +67,7 @@ Controller with NGINX Plus.
 >
 > This project is different from the NGINX Ingress Controller in
 [kubernetes/ingress-nginx](https://github.com/kubernetes/ingress-nginx) repo. See [this
-doc](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-ingress-controllers) to find out about the key
+doc](https://github.com/nginxinc/kubernetes-ingress/blob/main/docs/content/overview/controller-comparison.md) to find out about the key
 differences.
 
 ## Ingress and Ingress Controller
