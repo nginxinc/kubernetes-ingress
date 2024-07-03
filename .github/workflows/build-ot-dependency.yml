@@ -1,14 +1,13 @@
 name: Build OpenTracing Dependency
 
 on:
-  push:
-    branches:
-      - "ot-build"
+  schedule:
+    - cron: "30 4 * * 1" # run Mon at 04:30 UTC
   workflow_dispatch:
     inputs:
       nginx_version:
         type: string
-        description: "NGINX Version to build"
+        description: "NGINX Version to build OT for"
         required: false
 
 env:
@@ -70,7 +69,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            name=ghcr.io/nginxinc/nic-ot-dependency,enable=true
+            name=ghcr.io/nginxinc/dependencies/nginx-ot,enable=true
           flavor: suffix=${{ matrix.os != 'debian' && format('-{0}', matrix.os) || '' }},onlatest=true
           tags: |
             type=raw,value=nginx-${{ steps.var.outputs.nginx_version }},enable=true
