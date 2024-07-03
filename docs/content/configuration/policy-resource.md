@@ -155,8 +155,6 @@ If the hashed keys match, the NGINX JavaScript (NJS) subrequest issues a 204 No 
 
 It is possible to use the [errorPages](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#errorpage) property on a route, to change the default behaviour of 401 or 403 errors.
 
-An API Key policy can be disabled on a route by adding the [location snippet](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#using-snippets) `auth_request off;`
-
 At least one header or query param is required.
 
 The policy below configures NGINX Ingress Controller to require the API Key `password` in the header "my-header".
