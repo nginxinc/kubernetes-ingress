@@ -51,7 +51,7 @@ jobs:
       source_tag: ${{ steps.vars.outputs.stable_tag }}
       short_tag: ${{ steps.vars.outputs.short_tag }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
-      signed_binary_artifact_id: ${{ steps.binary-cache-sign.outputs.id }}
+      binary_cache_sign_hit: ${{ steps.binary-cache-sign.outputs.cache-hit }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -72,18 +72,13 @@ jobs:
           ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
-      - name: Fetch Cached Signed Binary Artifacts ID from GitHub
+      - name: Fetch Cached Signed Binary Artifacts
         id: binary-cache-sign
-        run: |
-          result=$(gh api \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/artifacts | \
-            jq '.artifacts[] | select(.name=="nginx-ingress-release-${{ steps.vars.outputs.go_code_md5 }}")')
-          workflow_id=$(echo $result | jq -r '.workflow_run.id')
-          echo "id=${workflow_id}" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/tarballs
+          key: nginx-ingress-release-${{ steps.vars.outputs.go_code_md5 }}
+          lookup-only: true
 
   tag:
     name: Create Tag on release branch in NIC repo
@@ -313,37 +308,35 @@ jobs:
         with:
           ref: ${{ inputs.release_branch }}
 
-      - name: Download Binary Artifacts from GitHub Artifacts
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - name: Fetch Binary Artifacts from Cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: nginx-ingress-${{ needs.variables.outputs.go_code_md5}}
-          path: dist
-          run-id: ${{ needs.variables.outputs.signed_binary_artifact_id }}
-          github-token: ${{ github.token }}
-        if: ${{ needs.variables.outputs.signed_binary_artifact_id == '' }}
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ needs.variables.outputs.go_code_md5 }}
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
 
       - name: Download Syft
         id: syft
         uses: anchore/sbom-action/download-syft@e8d2a6937ecead383dfe75190d104edd1f9c5751 # v0.16.0
-        if: ${{ needs.variables.outputs.signed_binary_artifact_id == '' }}
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3.5.0
-        if: ${{ needs.variables.outputs.signed_binary_artifact_id == '' }}
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
 
       - name: Create Tarballs
         run: |
           ./.github/scripts/create-release-tarballs.sh dist ${{ inputs.nic_version }}
         env:
           SYFT_BIN: ${{ steps.syft.outputs.cmd }}
-        if: ${{ needs.variables.outputs.signed_binary_artifact_id == '' }}
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
 
-      - name: Upload Tarball Artifacts to GitHub Artifacts
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - name: Store Tarball Artifacts in Cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/tarballs
-          name: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5 }}
-        if: ${{ needs.variables.outputs.signed_binary_artifact_id == '' }}
+          key: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5 }}
+        if: ${{ needs.variables.outputs.binary_cache_sign_hit != 'true' }}
 
   azure-upload:
     if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'azure-upload') }}
@@ -359,13 +352,12 @@ jobs:
         with:
           ref: ${{ inputs.release_branch }}
 
-      - name: Download Tarball Artifacts from GitHub Artifacts
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - name: Fetch Cached Tarball Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5}}
-          path: tarballs
-          run-id: ${{ needs.variables.outputs.signed_binary_artifact_id }}
-          github-token: ${{ github.token }}
+          key: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5 }}
+          path: ${{ github.workspace }}/tarballs
+          fail-on-cache-miss: true
 
       - name: Azure login
         uses: azure/login@6c251865b4e6290e7b78be643ea2d005bc51f69a # v2.1.1
@@ -404,13 +396,12 @@ jobs:
         with:
           ref: ${{ inputs.release_branch }}
 
-      - name: Download Tarball Artifacts from GitHub Artifacts
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - name: Fetch Cached Tarball Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5}}
-          path: tarballs
-          run-id: ${{ needs.variables.outputs.signed_binary_artifact_id }}
-          github-token: ${{ github.token }}
+          key: nginx-ingress-release-${{ needs.variables.outputs.go_code_md5 }}
+          path: ${{ github.workspace }}/tarballs
+          fail-on-cache-miss: true
 
       - name: Upload Release Assets
         env:

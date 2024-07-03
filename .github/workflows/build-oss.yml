@@ -146,32 +146,12 @@ jobs:
           echo "target_exists: ${{ steps.images_exist.outputs.target_exists }}"
           echo "full-build: ${{ inputs.full-build }}"
 
-      - name: Fetch Binary Artifacts ID from GitHub
-        id: binary-artifact
-        run: |
-          result=$(gh api \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/artifacts | \
-            jq '.artifacts[] | select(.name=="nginx-ingress-${{ inputs.go-md5 }}")')
-          workflow_id=$(echo $result | jq -r '.workflow_run.id')
-          echo "id=${workflow_id}" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
-        if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
-
-      - name: Download Binary Artifacts from GitHub Artifacts
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: nginx-ingress-${{ inputs.go-md5}}
-          path: dist
-          run-id: ${{ steps.binary-artifact.outputs.id }}
-          github-token: ${{ github.token }}
-        if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
-
-      - name: Debug Download Binary Artifacts from GitHub Artifacts
-        run: |
-          find dist/
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ inputs.go-md5 }}
+          fail-on-cache-miss: true
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Docker image

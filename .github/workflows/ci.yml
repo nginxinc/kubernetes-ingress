@@ -38,7 +38,7 @@ jobs:
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
       go_path: ${{ steps.vars.outputs.go_path }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
-      binary_artifact_id: ${{ steps.binary-artifact.outputs.id }}
+      binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
       ic_version: ${{ steps.vars.outputs.ic_version }}
       docker_md5: ${{ steps.vars.outputs.docker_md5 }}
@@ -107,18 +107,13 @@ jobs:
           echo "image_matrix_nap=$(cat .github/data/matrix-images-nap.json | jq -c)" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
-      - name: Fetch Binary Artifacts ID from GitHub
-        id: binary-artifact
-        run: |
-          result=$(gh api \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/artifacts | \
-            jq '.artifacts[] | select(.name=="nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}")')
-          workflow_id=$(echo $result | jq -r '.workflow_run.id')
-          echo "id=${workflow_id}" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Fetch Cached Binary Artifacts
+        id: binary-cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
+          lookup-only: true
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -151,7 +146,7 @@ jobs:
           echo k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
           echo go_path: ${{ steps.vars.outputs.go_path }}
           echo go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
-          echo binary_artifact_id: ${{ steps.binary-artifact.outputs.id }}
+          echo binary_cache_hit: ${{ steps.binary-cache.outputs.cache-hit }}
           echo chart_version: ${{ steps.vars.outputs.chart_version }}
           echo ic_version: ${{ steps.vars.outputs.ic_version }}
           echo docker_md5: ${{ steps.vars.outputs.docker_md5 }}
@@ -163,7 +158,6 @@ jobs:
           echo 'image_matrix_oss: ${{ steps.vars.outputs.image_matrix_oss }}'
           echo 'image_matrix_plus: ${{ steps.vars.outputs.image_matrix_plus }}'
           echo 'image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}'
-          echo binary_artifact_id: ${{ steps.binary-artifact.outputs.id }}
 
   verify-codegen:
     name: Verify generated code
@@ -198,18 +192,55 @@ jobs:
         uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: go.mod
-        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Run Tests
         run: make cover
-        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }} # required
-        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
+  release-notes:
+    name: Release Notes
+    runs-on: ubuntu-22.04
+    needs: [checks, unit-tests, verify-codegen]
+    outputs:
+      release-url: ${{ steps.release-notes.outputs.release-url }}
+    permissions:
+      contents: write # for lucacome/draft-release
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - name: Create/Update Draft
+        uses: lucacome/draft-release@8a63d32c79a171ae6048e614a8988f0ac3ed56d4 # v1.1.0
+        id: release-notes
+        with:
+          minor-label: "enhancement"
+          major-label: "change"
+          publish: false
+          collapse-after: 50
+          variables: |
+            helm-chart=${{ needs.checks.outputs.chart_version }}
+          notes-footer: |
+            ## Upgrade
+            - For NGINX, use the {{version}} images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name={{version-number}}), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+            - For NGINX Plus, use the {{version}} images from the F5 Container registry, the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE), the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking) or build your own image using the {{version}} source code.
+            - For Helm, use version {{helm-chart}} of the chart.
+
+            ## Resources
+            - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
+            - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/examples
+            - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/charts/nginx-ingress
+            - Operator -- https://github.com/nginxinc/nginx-ingress-helm-operator
+        if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
   binaries:
     name: Build Binaries
@@ -229,6 +260,7 @@ jobs:
         uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: go.mod
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Build binaries
         uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
@@ -247,14 +279,30 @@ jobs:
           AWS_NAP_WAF_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_WAF_DOS_PRODUCT_CODE }}
           AWS_NAP_WAF_DOS_PUB_KEY: ${{ secrets.AWS_NAP_WAF_DOS_PUB_KEY }}
           GORELEASER_CURRENT_TAG: "v${{ needs.checks.outputs.ic_version }}"
-        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-      - name: Upload Artifacts to GitHub Artifacts
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - name: Store Artifacts in Cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ github.workspace }}/dist
-          name: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
-        if: ${{ needs.checks.outputs.binary_artifact_id == '' }}
+          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
+      - name: Compress binaries
+        run: |
+          tar -czf dist.tgz dist
+          echo ""
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
+      - name: Build Binary storage Container
+        uses: docker/build-push-action@15560696de535e4014efeff63c48f16952e52dd1 # v6.2.0
+        with:
+          file: hack/Dockerfile-binaries
+          context: "."
+          tags: |
+            gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nic-binaries:${{ needs.checks.outputs.go_code_md5 }}
+          push: true
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' && needs.checks.outputs.forked_workflow != 'true' }}
 
   build-docker:
     name: Build Docker OSS
@@ -395,13 +443,11 @@ jobs:
           docker pull ${{ matrix.image }}:${{ needs.checks.outputs.build_tag }}
         if: ${{ ( needs.checks.outputs.forked_workflow == 'false' || needs.checks.outputs.docs_only == 'false' ) && steps.stable_exists.outputs.exists != 'true' }}
 
-      - name: Download Binary Artifacts from GitHub Artifacts
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          name: nginx-ingress-${{ needs.checks.outputs.go_code_md5}}
-          path: dist
-          run-id: ${{ needs.checks.outputs.binary_artifact_id }}
-          github-token: ${{ github.token }}
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
         if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Docker Buildx
