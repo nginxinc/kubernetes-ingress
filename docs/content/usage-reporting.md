@@ -117,6 +117,10 @@ Download and save the deployment file [cluster-connector.yaml](https://raw.githu
 - `-nms-server-address` should be the address of the Usage Reporting API, which will be the combination of NGINX Management Suite server hostname and the URI `api/platform/v1`
 - `nms-basic-auth-secret` should be the namespace/name of the secret created in step 3: `nginx-cluster-connector/nms-basic-auth`.
 
+{{< note >}}  OpenShift requires a SecurityContextConstraints object for NGINX Cluster Connector. 
+
+It can be created with the command `oc create -f scc.yaml`, using the file found in `shared-examples/` {{< /note >}}
+
 For more information, read the [Command-line arguments](#command-line-arguments) section of this page.
 
 ---
