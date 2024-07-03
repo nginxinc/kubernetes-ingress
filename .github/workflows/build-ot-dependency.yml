@@ -39,7 +39,7 @@ jobs:
       - name: Variables
         id: var
         run: |
-          if [ -z "${{ inputs.nginx_version }}" ]; then
+          if [ -n "${{ inputs.nginx_version }}" ]; then
             nginx_version="${{ inputs.nginx_version }}"
           else
             nginx_version=$(grep -m1 'FROM nginx:' <Dockerfile | awk -F'[: ]' '{print $3}')
