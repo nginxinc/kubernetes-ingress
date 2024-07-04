@@ -68,13 +68,13 @@ To install the chart with the release name my-release (my-release is the name th
 - For NGINX:
 
     ```shell
-    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.3.0
+    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}}
     ```
 
 - For NGINX Plus: (assuming you have pushed the Ingress Controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
 
     ```shell
-    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.3.0 --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+    helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}} --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
     ```
 
 This will install the latest `edge` version of the Ingress Controller from GitHub Container Registry. If you prefer to use Docker Hub, you can replace `ghcr.io/nginxinc/charts/nginx-ingress` with `registry-1.docker.io/nginxcharts/nginx-ingress`.
@@ -86,7 +86,7 @@ Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a re
 To upgrade the release `my-release`:
 
 ```shell
-helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.3.0
+helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}}
 ```
 
 ### Uninstalling the Chart
@@ -123,7 +123,7 @@ This step is required if you're installing the chart using its sources. Addition
 1. Pull the chart sources:
 
     ```shell
-    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.3.0
+    helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version {{< nic-helm-version >}}
     ```
 
 2. Change your working directory to nginx-ingress:
