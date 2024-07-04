@@ -6,19 +6,19 @@ doctypes:
 title: Releases
 toc: true
 weight: 2100
+---
 ## 3.6.1
 
-02 Jul 2024
-
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
-### <i class="fa-solid fa-rocket"></i> Features
+04 Jul 2024
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
-
-### <i class="fa-solid fa-box"></i> Helm Chart
+- [5921](https://github.com/nginxinc/kubernetes-ingress/pull/5921) GRPC healthcheck should not have keepalive time
+- [5889](https://github.com/nginxinc/kubernetes-ingress/pull/5889) Add default telemetry endpoint
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+- [5930](https://github.com/nginxinc/kubernetes-ingress/pull/5930) Bump Go version to 1.22.5
+- [5947](https://github.com/nginxinc/kubernetes-ingress/pull/5947), [5923](https://github.com/nginxinc/kubernetes-ingress/pull/5923), [5943](https://github.com/nginxinc/kubernetes-ingress/pull/5943), [5939](https://github.com/nginxinc/kubernetes-ingress/pull/5939) and [5882](https://github.com/nginxinc/kubernetes-ingress/pull/5882) Docker image updates
+- [5951](https://github.com/nginxinc/kubernetes-ingress/pull/5951), [5933](https://github.com/nginxinc/kubernetes-ingress/pull/5933), [5884](https://github.com/nginxinc/kubernetes-ingress/pull/5884) and [5877](https://github.com/nginxinc/kubernetes-ingress/pull/5877) Go dependencies update
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
@@ -28,7 +28,7 @@ weight: 2100
 [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 - For NGINX Plus, use the 3.6.1 images from the F5 Container registry,
 the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
-the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), [Azure Marketplace](https://azuremarketplace.microsoft.com/en-gb/marketplace/apps/category/containers?page=1&search=f5&subcategories=container-apps)
 or build your own image using the 3.6.1 source code
 - For Helm, use version 1.3.1 of the chart.
 
@@ -77,7 +77,7 @@ Customers can observe the 3.6.x tag when listing images in the registry and sele
 [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 - For NGINX Plus, use the 3.6.0 images from the F5 Container registry,
 the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
-the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), [Azure Marketplace](https://azuremarketplace.microsoft.com/en-gb/marketplace/apps/category/containers?page=1&search=f5&subcategories=container-apps)
 or build your own image using the 3.6.0 source code
 - For Helm, use version 1.3.0 of the chart.
 
