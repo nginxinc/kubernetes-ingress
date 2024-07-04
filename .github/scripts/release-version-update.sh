@@ -121,9 +121,9 @@ for i in "${FILE_TO_UPDATE_HELM_CHART_VERSION[@]}"; do
 done
 
 # update docs with new versions
-echo "${new_ic_version}" > ./docs/layouts/shortcodes/nic-version.html
-echo "${new_helm_chart_version}" > ./docs/layouts/shortcodes/nic-helm-version.html
-echo "${new_operator_version}" > ./docs/layouts/shortcodes/nic-operator-version.html
+echo -n "${new_ic_version}" > ./docs/layouts/shortcodes/nic-version.html
+echo -n "${new_helm_chart_version}" > ./docs/layouts/shortcodes/nic-helm-version.html
+echo -n "${new_operator_version}" > ./docs/layouts/shortcodes/nic-operator-version.html
 
 # update examples with new versions
 example_files=$(find "${EXAMPLES_PATH}" -type f -name "*.md")
