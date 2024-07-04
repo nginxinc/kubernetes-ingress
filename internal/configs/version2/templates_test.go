@@ -694,6 +694,17 @@ func vsConfig() VirtualServerConfig {
 				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
+			Dos: &Dos{
+				Enable:                 "on",
+				Name:                   "my-dos-coffee",
+				ApDosMonitorURI:        "test.example.com",
+				ApDosMonitorProtocol:   "http",
+				ApDosAccessLogDest:     "svc.dns.com:123",
+				ApDosPolicy:            "/test/policy.json",
+				ApDosSecurityLogEnable: true,
+				ApDosLogConf:           "/test/log.json",
+				ApDosMonitorTimeout:    30,
+			},
 			Snippets: []string{"# server snippet"},
 			InternalRedirectLocations: []InternalRedirectLocation{
 				{
@@ -1393,6 +1404,9 @@ var (
 				ApSecurityLogEnable: true,
 				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
+			},
+			Dos: &Dos{
+				Enable: "on",
 			},
 			Snippets: []string{"# server snippet"},
 			InternalRedirectLocations: []InternalRedirectLocation{

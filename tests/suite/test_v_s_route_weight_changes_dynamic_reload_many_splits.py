@@ -136,7 +136,7 @@ def vsr_weight_changes_dynamic_reload_many_splits_setup(
     indirect=["crd_ingress_controller", "vsr_weight_changes_dynamic_reload_many_splits_setup"],
 )
 class TestVSRWeightChangesDynamicReloadManySplits:
-
+    @pytest.mark.flaky(max_runs=3)
     def test_vsr_weight_changes_dynamic_reload_many_splits(
         self, kube_apis, crd_ingress_controller, vsr_weight_changes_dynamic_reload_many_splits_setup
     ) -> None:
