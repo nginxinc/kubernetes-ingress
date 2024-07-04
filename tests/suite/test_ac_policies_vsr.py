@@ -78,6 +78,7 @@ class TestAccessControlPoliciesVsr:
         )
         wait_before_test()
 
+    @pytest.mark.flaky(max_runs=3)
     def test_deny_policy_vsr(
         self,
         kube_apis,

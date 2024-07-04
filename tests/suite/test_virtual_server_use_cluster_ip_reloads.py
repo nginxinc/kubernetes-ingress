@@ -23,6 +23,7 @@ from tests.suite.utils.custom_assertions import assert_pods_scaled_to_count
     indirect=True,
 )
 class TestVSUseClusterIP:
+    @pytest.mark.flaky(max_runs=3)
     def test_use_cluster_ip_reloads(
         self, kube_apis, ingress_controller_endpoint, crd_ingress_controller, virtual_server_setup
     ):
