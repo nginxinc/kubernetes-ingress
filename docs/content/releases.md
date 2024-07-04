@@ -39,7 +39,7 @@ This release does not include FIPS compliant images due to compatibility issues 
 [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 - For NGINX Plus, use the 3.6.1 images from the F5 Container registry,
 the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
-the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), [Azure Marketplace](https://azuremarketplace.microsoft.com/en-gb/marketplace/apps/category/containers?page=1&search=f5&subcategories=container-apps)
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), the [Azure Marketplace](https://azuremarketplace.microsoft.com/en-gb/marketplace/apps/category/containers?page=1&search=f5&subcategories=container-apps)
 or build your own image using the 3.6.1 source code
 - For Helm, use version 1.3.1 of the chart.
 
@@ -88,7 +88,7 @@ Customers can observe the 3.6.x tag when listing images in the registry and sele
 [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 - For NGINX Plus, use the 3.6.0 images from the F5 Container registry,
 the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
-the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), [Azure Marketplace](https://azuremarketplace.microsoft.com/en-gb/marketplace/apps/category/containers?page=1&search=f5&subcategories=container-apps)
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), the [Azure Marketplace](https://azuremarketplace.microsoft.com/en-gb/marketplace/apps/category/containers?page=1&search=f5&subcategories=container-apps)
 or build your own image using the 3.6.0 source code
 - For Helm, use version 1.3.0 of the chart.
 
