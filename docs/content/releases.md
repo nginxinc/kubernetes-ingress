@@ -7,6 +7,49 @@ title: Releases
 toc: true
 weight: 2100
 ---
+{{< note >}} 
+[Release 3.6.1](#361) does not include FIPS compliant images due to compatibility issues with a dependent library.
+We recommend against:
+1. Patching older FIPS images, which could re-introduce the incompatible dependency.
+2. Building new custom FIPS images.
+{{< /note >}}
+
+## 3.6.1
+
+04 Jul 2024
+
+{{< note >}}
+This release does not include FIPS compliant images due to compatibility issues with a dependent library.
+{{< /note >}}
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [5921](https://github.com/nginxinc/kubernetes-ingress/pull/5921) GRPC healthcheck should not have keepalive time
+- [5889](https://github.com/nginxinc/kubernetes-ingress/pull/5889) Add default telemetry endpoint
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+- [5930](https://github.com/nginxinc/kubernetes-ingress/pull/5930) Bump Go version to 1.22.5
+- [5947](https://github.com/nginxinc/kubernetes-ingress/pull/5947), [5923](https://github.com/nginxinc/kubernetes-ingress/pull/5923), [5943](https://github.com/nginxinc/kubernetes-ingress/pull/5943), [5939](https://github.com/nginxinc/kubernetes-ingress/pull/5939) and [5882](https://github.com/nginxinc/kubernetes-ingress/pull/5882) Docker image updates
+- [5951](https://github.com/nginxinc/kubernetes-ingress/pull/5951), [5933](https://github.com/nginxinc/kubernetes-ingress/pull/5933), [5884](https://github.com/nginxinc/kubernetes-ingress/pull/5884) and [5877](https://github.com/nginxinc/kubernetes-ingress/pull/5877) Go dependencies update
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.6.1 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.6.1),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.6.1 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), the [Azure Marketplace](https://azuremarketplace.microsoft.com/en-gb/marketplace/apps/category/containers?page=1&search=f5&subcategories=container-apps)
+or build your own image using the 3.6.1 source code
+- For Helm, use version 1.3.1 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.25-1.30.
+
+---
 ## 3.6.0
 
 25 Jun 2024
@@ -45,7 +88,7 @@ Customers can observe the 3.6.x tag when listing images in the registry and sele
 [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
 - For NGINX Plus, use the 3.6.0 images from the F5 Container registry,
 the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
-the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking), the [Azure Marketplace](https://azuremarketplace.microsoft.com/en-gb/marketplace/apps/category/containers?page=1&search=f5&subcategories=container-apps)
 or build your own image using the 3.6.0 source code
 - For Helm, use version 1.3.0 of the chart.
 
