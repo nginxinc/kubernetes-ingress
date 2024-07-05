@@ -231,6 +231,11 @@ func (c *Collector) ServiceCounts() (map[string]int, error) {
 	return serviceCounts, nil
 }
 
+// BuildOS returns a string which is the base operating system image tha NIC is running in.
+func (c *Collector) BuildOS() string {
+	return c.Config.BuildOS
+}
+
 // lookupPlatform takes a string representing a K8s PlatformID
 // retrieved from a cluster node and returns a string
 // representing the platform name.
