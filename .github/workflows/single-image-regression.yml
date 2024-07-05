@@ -93,6 +93,10 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
+      - name: Pull image to local docker engine
+        run: |
+          docker pull ${{ inputs.image }}:${{ inputs.tag }}
+
       - name: Run Tests
         uses: ./.github/actions/smoke-tests
         with:
