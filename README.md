@@ -1,6 +1,6 @@
 <!-- markdownlint-disable-next-line first-line-h1 -->
 [![OpenSSFScorecard](https://api.securityscorecards.dev/projects/github.com/nginxinc/kubernetes-ingress/badge)](https://api.securityscorecards.dev/projects/github.com/nginxinc/kubernetes-ingress)
-[![CI](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/ci.yml/badge.svg)](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/ci.yml)
+[![Regression](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml/badge.svg)](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B5618%2Fgithub.com%2Fnginxinc%2Fkubernetes-ingress.svg?type=shield)](https://app.fossa.com/projects/custom%2B5618%2Fgithub.com%2Fnginxinc%2Fkubernetes-ingress?ref=badge_shield)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nginxinc/kubernetes-ingress)](https://goreportcard.com/report/github.com/nginxinc/kubernetes-ingress)
@@ -20,9 +20,9 @@ This repo provides an implementation of an Ingress Controller for NGINX and NGIN
 
 ---
 
-## Join Our Next Community Call
+## Join The Next Community Call
 
-We value community input and would love to see you at our next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
+We value community input and would love to see you at the next community call. At these calls, we discuss PRs by community members as well as issues, discussions and feature requests.
 
 **Zoom Link**: [KIC - GitHub Issues Triage](https://f5networks.zoom.us/j/91421953779?pwd=197738)  
 **Password**: `197738`  
@@ -31,9 +31,6 @@ We value community input and would love to see you at our next community call. A
 
 | **Community Call Dates** | Notes                        |
 | ------------------------ | ---------------------------- |
-| **2024-06-04**           | On Tuesday, just this once   |
-| **2024-06-17**           |                              |
-| **2024-07-01**           |                              |
 | **2024-07-15**           |                              |
 | **2024-07-29**           |                              |
 | **2024-08-12**           |                              |
