@@ -39,6 +39,7 @@
 .github/workflows/release.yml
 .github/workflows/retag-images.yml
 .github/workflows/scorecards.yml
+.github/workflows/single-image-regression.yml
 .github/workflows/stale.yml
 .github/workflows/update-docker-images.yml
 .github/workflows/update-docker-sha.yml
