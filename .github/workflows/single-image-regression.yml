@@ -1,0 +1,106 @@
+name: Run python tests on single image
+run-name: Testing ${{ inputs.image }}:${{ inputs.tag }} on ${{ inputs.k8s-version }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        type: string
+        description: "Image to test"
+        required: true
+      tag:
+        type: string
+        description: "Image tag to test"
+        required: true
+      k8s-version:
+        type: string
+        description: "e.g. 1.30.0"
+        required: true
+      type:
+        type: string
+        description: "oss or plus"
+        required: false
+        default: oss
+      marker:
+        type: string
+        description: "pytest markers to apply"
+        required: false
+        default: "'not upgrade'"
+      test-image-tag:
+        type: string
+        description: "The tag for the test image"
+        required: false
+        default: latest
+  workflow_call:
+    inputs:
+      image:
+        type: string
+        description: "Image to test"
+        required: true
+      tag:
+        type: string
+        description: "Image tag to test"
+        required: true
+      k8s-version:
+        type: string
+        description: "e.g. 1.30.0"
+        required: true
+      type:
+        type: string
+        description: "oss or plus"
+        required: false
+        default: oss
+      marker:
+        type: string
+        description: "pytest markers to apply"
+        required: false
+        default: "'not upgrade'"
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref_name }}-single-run
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Run regression
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Run Tests
+        uses: ./.github/actions/smoke-tests
+        with:
+          image-type: ${{ inputs.type }}
+          image-name: ${{ inputs.image }}
+          tag: ${{ inputs.tag }}
+          marker: ${{ inputs.marker }}
+          label: "${{ inputs.image }} regression"
+          k8s-version: ${{ inputs.k8s-version }}
+          azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
+          test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ inputs.test-image-tag }}"
