@@ -1152,6 +1152,11 @@ func TestCollectBuildOS(t *testing.T) {
 			buildOS: "alpine",
 			wantOS:  "alpine",
 		},
+		{
+			name:    "self built image",
+			buildOS: "",
+			wantOS:  "",
+		},
 	}
 
 	for _, tc := range testCases {

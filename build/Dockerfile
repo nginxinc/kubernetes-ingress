@@ -20,9 +20,6 @@ FROM golang:1.22-alpine@sha256:8c9183f715b0b4eca05b8b3dbf59766aaedb41ec07477b132
 
 ############################################# Base image for Alpine #############################################
 FROM nginx:1.27.0-alpine@sha256:a45ee5d042aaa9e81e013f97ae40c3dda26fbe98f22b6251acdf28e579560d55 AS alpine
-ARG BUILD_OS=alpine
-
-ENV BUILD_OS=${BUILD_OS}
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -33,9 +30,6 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 ############################################# Base image for Debian #############################################
 FROM nginx:1.27.0@sha256:67682bda769fae1ccf5183192b8daf37b64cae99c6c3302650f6f8bf5f0f95df AS debian
-ARG BUILD_OS=debian
-
-ENV BUILD_OS=${BUILD_OS}
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -48,9 +42,6 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 ############################################# Base image for UBI #############################################
 FROM nginxcontrib/nginx:1.27.0-ubi@sha256:5547fe1036d63cc9dfdc3aba1cfc822dbb42dbf63ec68e32bcf363e0b1653fc4 AS ubi
 ARG IC_VERSION
-ARG BUILD_OS=ubi
-
-ENV BUILD_OS=${BUILD_OS}
 
 LABEL name="NGINX Ingress Controller" \
 	maintainer="kubernetes@nginx.com" \
@@ -123,9 +114,7 @@ USER 101
 ############################################# Base image for Alpine with NGINX Plus #############################################
 FROM alpine:3.19@sha256:af4785ccdbcd5cde71bfd5b93eabd34250b98651f19fe218c91de6c8d10e21c5 AS alpine-plus
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=alpine-plus
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
@@ -144,9 +133,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 ############################################# Base image for Alpine with NGINX Plus and FIPS #############################################
 FROM alpine-plus AS alpine-plus-fips
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=alpine-plus-fips
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=bind,from=alpine-fips-3.19,target=/tmp/fips/ \
@@ -161,9 +148,7 @@ FROM alpine:3.17@sha256:a6063e988bcd597b4f1f7cfd4ec38402b02edd0c79250f00c9e14dc1
 ARG NGINX_PLUS_VERSION
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=alpine-plus-nap-fips
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
@@ -199,9 +184,7 @@ FROM alpine:3.17@sha256:a6063e988bcd597b4f1f7cfd4ec38402b02edd0c79250f00c9e14dc1
 ARG NGINX_PLUS_VERSION
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=alpine-plus-nap-v5-fips
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
@@ -233,9 +216,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 ############################################# Base image for Debian with NGINX Plus #############################################
 FROM debian:12-slim@sha256:f528891ab1aa484bf7233dbcc84f3c806c3e427571d75510a9d74bb5ec535b33 AS debian-plus
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=debian-plus
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -265,9 +246,7 @@ FROM debian-plus AS debian-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=debian-plus-nap
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -311,9 +290,7 @@ FROM debian-plus AS debian-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=debian-plus-nap-v5
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -342,9 +319,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for UBI with NGINX Plus #############################################
 FROM ubi-minimal AS ubi-plus
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=ubi-plus
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -367,9 +342,7 @@ FROM ubi-minimal AS ubi-9-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=ubi-9-plus-nap
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -413,9 +386,7 @@ FROM ubi-minimal AS ubi-9-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=ubi-v9-plus-nap-v5
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -460,9 +431,7 @@ FROM redhat/ubi8@sha256:44d75007b39e0e1bbf1bcfd0721245add54c54c3f83903f8926fb4be
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=ubi-8-plus-nap
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -526,9 +495,7 @@ FROM redhat/ubi8@sha256:44d75007b39e0e1bbf1bcfd0721245add54c54c3f83903f8926fb4be
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG BUILD_OS=ubi-8-plus-nap-v5
 
-ENV BUILD_OS=${BUILD_OS}
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \

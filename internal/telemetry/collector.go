@@ -303,8 +303,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	loadBalancerServices := serviceCounts["LoadBalancer"]
 	externalNameServices := serviceCounts["ExternalName"]
 
-	buildOS := c.BuildOS()
-
 	return Report{
 		Name:                 "NIC",
 		Version:              c.Config.Version,
@@ -341,6 +339,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		AppProtectVersion:    appProtectVersion,
 		IsPlus:               isPlus,
 		InstallationFlags:    installationFlags,
-		BuildOS:              buildOS,
+		BuildOS:              c.BuildOS(),
 	}, err
 }

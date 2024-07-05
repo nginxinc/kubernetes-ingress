@@ -65,7 +65,6 @@ func main() {
 	parsedFlags := os.Args[1:]
 
 	buildOS := os.Getenv("BUILD_OS")
-	fmt.Println("BUILD OS:", buildOS)
 
 	config, kubeClient := createConfigAndKubeClient()
 
