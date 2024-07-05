@@ -8,7 +8,8 @@ toc: true
 weight: 2100
 ---
 {{< note >}} 
-[Release 3.6.1](#361) does not include FIPS compliant images due to compatibility issues with a dependent library.
+FIPS compliant images are currently impacted by compatibility issues with a dependent library.
+
 We recommend against:
 1. Patching older FIPS images, which could re-introduce the incompatible dependency.
 2. Building new custom FIPS images.
@@ -17,10 +18,6 @@ We recommend against:
 ## 3.6.1
 
 04 Jul 2024
-
-{{< note >}}
-This release does not include FIPS compliant images due to compatibility issues with a dependent library.
-{{< /note >}}
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
 - [5921](https://github.com/nginxinc/kubernetes-ingress/pull/5921) GRPC healthcheck should not have keepalive time
