@@ -17,45 +17,10 @@ The following steps describe how to use the NGINX Instance Manager API to create
 ## Before you start
 ### Requirements
 - A working [NGINX Management Suite](https://docs.nginx.com/nginx-management-suite/installation/) instance.
+- An [NGINX Management Suite user](https://docs.nginx.com/nginx-management-suite/admin-guides/authentication/basic-authentication/) for API requests.
 - A NGINX Ingress Controller [deployment with NGINX App Protect WAF]({{< relref "/installation/integrations/app-protect-waf/installation" >}}).
 
-## Configure NGINX Instance Manager
-<!-- This looks like it corresponds to step 1 of the draft:
-
-- The reader will need a working NMS instance (Covered in the requirements above)
-- They will need a user account with API access (Link to NIM/NMS RBAC user creation/auth documentation?) -->
-
-## Create a new security policy
-
-<!-- step 2 of the draft -->
-
-## Create a new security bundle
-
-<!-- step 3 of the draft -->
-
-## Download the security bundle
-
-<!-- step 4 & 5 of the draft - list and download can be one step -->
-
-## Add volumes and volumeMounts to NGINX Ingress Controller
-
-<!-- step 6 of the draft -->
-
-## Upload the security bundle
-
-<!-- step 9 of the draft -->
-
-## Create WAF policy
-
-<!-- step 7 of the draft -->
-
-## Create VirtualServer resource and apply policy
-
-<!-- step 8 of the draft -->
-
-<!-- ROUGH WORK BELOW THIS POINT -->
-
-# Outline of the steps to follow
+### What to expect
 
 1. Setup NIM console (install all necessary pieces including authentication)
 2. Create a new security policy through the API
@@ -66,15 +31,18 @@ The following steps describe how to use the NGINX Instance Manager API to create
 4. Once the bundle has been compiled, download the bundle through the API
 5. Use new bundle with NAP in NIC
 
-# Step 1.
-## Setup and ensure NIM is running and a user account as Access to the API
+## Configure NGINX Instance Manager
+<!-- This looks like it corresponds to step 1 of the draft:
+
+- The reader will need a working NMS instance (Covered in the requirements above)
+- They will need a user account with API access (Link to NIM/NMS RBAC user creation/auth documentation?) -->
 
 The first step required when creating a NAP bundle for NIC is to create a new security policy, or use an exisiting security policy within NIM. This is required as we will associate the bundle we are creating with the security policy, allowing us to use a variety of policies and their perspective bundles as needed. In this example, we are going to be using the NIM API to create both the security policy and the bundle. Once those are created, we are then going to download the bundle in a .tgz format, which can then be used with NIC+NAP.
 
 Before we can create our policy and generate the bundle, we need to make sure have proper access. Once you have created the account to be used and has proper RBAC access, we need to Authorize the request user to the NIM API. You can use Basic Auth or OIDC.
 
-# Step 2.
-## Create the security policy 
+
+## Create a new security policy
 
 Now we are going to create our security policy using the API.      
 https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy
@@ -128,8 +96,7 @@ THe response back from the API, after the policy is successfully created.
 
 NOTE: Take note of the `uid` field as we will need that when we download our bundle.
 
-# Step 3.   
-## Create the security bundle
+## Create a new security bundle
 
 Next, we are going to create the security policy bundle using the API.   
 https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy-bundles   
@@ -193,8 +160,7 @@ Response from NIM after successful POST of our bundle:
 
 Now we can query for the bundlle that we just created in the above command:
 
-# Step 4.
-## List security bundles
+
 Here we are going to list or newly created bundle
 Here we can list our security bundles:
 
@@ -228,9 +194,7 @@ Response showing our bundle we created earlier
 ```
 Take note of the `uid` field. this is the UID for the security bundle which is required when download our bundle once it is compiled.
 
-
-# Step 5.
-## Download our security bundle
+## Download the security bundle
 
 ```shell
 curl -X GET "https://{NMS_FQDN}/api/platform/v1/security/policies/{security-policy-uid}/bundles/{security-policy-bundle-uid}" -H "Authorization: Bearer xxxxx.yyyyy.zzzzz" | jq -r '.content' | base64 -d > security-policy-bundle.tgz
@@ -243,9 +207,7 @@ curl -X GET -k 'https://127.0.0.1/api/platform/v1/security/policies/6af9f261-658
      | jq -r '.content' | base64 -d > security-policy-bundle.tgz
 ```
 
-
-# Step 6. 
-## Configure NIC Deployment
+## Add volumes and volumeMounts to NGINX Ingress Controller
 
 Since we are going to use bundles for WAF running on NGINX Ingress controller, we will need to modify the deployment for NIC to add volumes and volumeMounts, where NIC can pick up the bundle when new ones are uploaded to the cluster. This path is specific and must be correct in order for the bundle to be pickedup and used within NIC:
 Quick overview of what needs to be added:
@@ -345,8 +307,7 @@ spec:
           - -external-service=nginx-ingress
 ```
 
-# Step 7.
-## Create WAF policy:
+## Create WAF policy
 
 Before applying a policy, a WAF policy needs to be created. This WAF policy will use the newly created bundle we did in the previous steps. It must be copied over to `/etc/nginx/waf/bundles` so NIC can load the new bundle into WAF. 
 
@@ -367,8 +328,8 @@ spec:
         logDest: "syslog:server=syslog-svc.default:514"
 ```
 
-# Step 8.
-## Create virtualServer resource and apply WAF policy
+## Create VirtualServer resource and apply policy
+
 Now that we have our WAF policy created, we can now link the policy to our `virtualServer` resource:
 
 ```yaml
@@ -390,7 +351,7 @@ spec:
       pass: webapp
 ```
 
-# Step 9. 
-## Upload the bundle to Kubernetes storage
+## Upload the security bundle
+
 Upload tarball to kubernetes cluster. `kubectl cp` or another mechanism.    
 Once the new bundle is uploaded to the kubernetes cluster, NIC will pick up the new bundle and load in the new WAF policy automatically.
