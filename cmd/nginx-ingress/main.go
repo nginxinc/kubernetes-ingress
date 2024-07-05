@@ -64,6 +64,8 @@ func main() {
 	parseFlags()
 	parsedFlags := os.Args[1:]
 
+	buildOS := os.Getenv("BUILD_OS")
+
 	config, kubeClient := createConfigAndKubeClient()
 
 	kubernetesVersionInfo(kubeClient)
@@ -230,6 +232,7 @@ func main() {
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
 		TelemetryReportingEndpoint:   telemetryEndpoint,
+		BuildOS:                      buildOS,
 		NICVersion:                   version,
 		DynamicWeightChangesReload:   *enableDynamicWeightChangesReload,
 		InstallationFlags:            parsedFlags,
