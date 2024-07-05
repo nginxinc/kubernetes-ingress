@@ -40,7 +40,7 @@ The steps provided are for Linux. For Mac or Windows, consult the [Docker for Ma
 
 Next, pull the image you need from `private-registry.nginx.com`. To find the correct image, consult the [Tech Specs guide]({{< relref "technical-specifications#images-with-nginx-plus" >}}).
 
-To pull an image, follow these steps. Replace `<version-tag>` with the specific version you need, for example, `3.6.1`.
+To pull an image, follow these steps. Replace `<version-tag>` with the specific version you need, for example, `{{< nic-version >}}`.
 
 - For NGINX Plus Ingress Controller, run:
 
@@ -88,10 +88,10 @@ $ curl https://private-registry.nginx.com/v2/nginx-ic/nginx-plus-ingress/tags/li
 {
   "name": "nginx-ic/nginx-plus-ingress",
   "tags": [
-    "3.6.1-alpine",
-    "3.6.1-alpine-fips",
-    "3.6.1-ubi",
-    "3.6.1"
+    "{{< nic-version >}}-alpine",
+    "{{< nic-version >}}-alpine-fips",
+    "{{< nic-version >}}-ubi",
+    "{{< nic-version >}}"
   ]
 }
 
@@ -99,9 +99,9 @@ $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tag
 {
   "name": "nginx-ic-nap/nginx-plus-ingress",
   "tags": [
-    "3.6.1-alpine-fips",
-    "3.6.1-ubi",
-    "3.6.1"
+    "{{< nic-version >}}-alpine-fips",
+    "{{< nic-version >}}-ubi",
+    "{{< nic-version >}}"
   ]
 }
 
@@ -109,8 +109,8 @@ $ curl https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tag
 {
   "name": "nginx-ic-dos/nginx-plus-ingress",
   "tags": [
-    "3.6.1-ubi",
-    "3.6.1"
+    "{{< nic-version >}}-ubi",
+    "{{< nic-version >}}"
   ]
 }
 ```
@@ -127,7 +127,7 @@ After pulling the image, tag it and upload it to your private registry.
    docker login <my-docker-registry>
    ```
 
-1. Tag and push the image. Replace `<my-docker-registry>` with your registry's path and `<version-tag>` with the version you're using, for example `3.6.1`:
+1. Tag and push the image. Replace `<my-docker-registry>` with your registry's path and `<version-tag>` with the version you're using, for example `{{< nic-version >}}`:
 
    - For NGINX Plus Ingress Controller, run:
 

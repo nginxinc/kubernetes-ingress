@@ -19,6 +19,14 @@ on:
         description: "Helm version to release"
         required: true
         default: "1.1.3"
+      current_operator_version:
+        description: "Current operator version to replace"
+        required: true
+        default: "2.3.0"
+      new_operator_version:
+        description: "Operator version to release"
+        required: true
+        default: "2.3.1"
       k8s_versions:
         description: "Kubernetes versions this release has been tested on"
         required: true
@@ -56,7 +64,9 @@ jobs:
 
       - name: Replace
         run: |
-          .github/scripts/release-version-update.sh ${{ github.event.inputs.current_version }} ${{ github.event.inputs.current_helm_version }} ${{ github.event.inputs.new_version }} ${{ github.event.inputs.new_helm_version }}
+          .github/scripts/release-version-update.sh \
+            ${{ github.event.inputs.current_version }} ${{ github.event.inputs.current_helm_version }} ${{ github.event.inputs.current_operator_version }} \
+            ${{ github.event.inputs.new_version }} ${{ github.event.inputs.new_helm_version }} ${{ github.event.inputs.new_operator_version }}
           .github/scripts/release-notes-update.sh ${{ github.event.inputs.new_version }} ${{ github.event.inputs.new_helm_version }} "${{ github.event.inputs.k8s_versions }}" "${{ github.event.inputs.release_date }}"
 
       - name: Create Pull Request
