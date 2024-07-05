@@ -43,10 +43,10 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
     cd kubernetes-ingress
     ```
 
-    For instance if you want to clone version v3.6.0, the commands to run would be:
+    For instance if you want to clone version v3.6.1, the commands to run would be:
 
     ```shell
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.6.0
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.6.1
     cd kubernetes-ingress
     ```
 
