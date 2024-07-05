@@ -10,7 +10,7 @@ weight: 200
 
 This document explains how to use F5 NGINX Ingress Controller to configure [NGINX App Protect WAF v5](https://docs.nginx.com/nginx-app-protect-waf/v5/).
 
-{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.1/examples/custom-resources/app-protect-waf-v5) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.1/examples/ingress-resources/app-protect-waf-v5).{{< /note >}}
+{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/app-protect-waf-v5).{{< /note >}}
 
 
 ## Global Configuration
@@ -70,7 +70,7 @@ spec:
 
 This example shows how to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF v5, deploy a simple web application, and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
-{{< note >}} You can find the files for this example on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.1/examples/custom-resources/app-protect-waf/app-protect-waf-v5).{{< /note >}}
+{{< note >}} You can find the files for this example on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf/app-protect-waf-v5).{{< /note >}}
 
 ## Prerequisites
 
@@ -93,7 +93,7 @@ This example shows how to deploy NGINX Ingress Controller with NGINX Plus and NG
 Create the application deployment and service:
 
   ```shell
-  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.1/examples/custom-resources/app-protect-waf-v5/webapp.yaml
+  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/webapp.yaml
   ```
 
 ### Step 2. Create the Syslog Service
@@ -102,7 +102,7 @@ Create the syslog service and pod for the NGINX App Protect WAF security logs:
 
 
    ```shell
-   kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.1/examples/custom-resources/app-protect-waf-v5/syslog.yaml
+   kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/syslog.yaml
    ```
 
 ### Step 3 - Deploy the WAF Policy
@@ -113,7 +113,7 @@ Create the syslog service and pod for the NGINX App Protect WAF security logs:
 Create and deploy the WAF policy.
 
  ```shell
-  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.1/examples/custom-resources/app-protect-waf-v5/waf.yaml
+  kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/waf.yaml
  ```
 
   
@@ -125,7 +125,7 @@ Create and deploy the WAF policy.
 1. Create the VirtualServer Resource:
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.1/examples/custom-resources/app-protect-waf-v5/virtual-server.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/virtual-server.yaml
     ```
 
 
@@ -162,7 +162,7 @@ To access the application, curl the coffee and the tea services. We'll use the `
 
 ### Example VirtualServer configuration
 
-The GitHub repository has a full [VirtualServer example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.1/examples/custom-resources/app-protect-waf-v5/webapp.yaml).
+The GitHub repository has a full [VirtualServer example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5/webapp.yaml).
 
 ```yaml
 apiVersion: k8s.nginx.org/v1
