@@ -546,6 +546,8 @@ ARG IC_VERSION
 ARG TARGETPLATFORM
 ARG NAP_MODULES=none
 
+ENV BUILD_OS=${BUILD_OS}
+
 RUN --mount=type=bind,target=/tmp \
 	--mount=type=bind,from=nginx-files,src=common.sh,target=/usr/local/bin/common.sh \
 	--mount=type=bind,from=nginx-files,src=patch-os.sh,target=/usr/local/bin/patch-os.sh \

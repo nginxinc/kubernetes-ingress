@@ -119,4 +119,6 @@ type NICResourceCounts struct {
 	IsPlus bool
 	// InstallationFlags is the list of command line arguments configured for NGINX Ingress Controller
 	InstallationFlags []string
+	// BuildOS represents the base operating system image
+	BuildOS string
 }
