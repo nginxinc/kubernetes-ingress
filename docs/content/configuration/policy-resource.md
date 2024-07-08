@@ -11,7 +11,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.6.0/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -154,8 +154,6 @@ The policies' API keys are securely stored using SHA-256 hashing. When a client 
 If the hashed keys match, the NGINX JavaScript (NJS) subrequest issues a 204 No Content response to the `auth_request` directive, indicating successful authorization. Conversely, if no API Key is provided in the specified header or query parameter, a 401 Unauthorized response is returned. Similarly, if an invalid key is presented in the expected header or query parameter, a 403 Forbidden response is issued, denying access.
 
 It is possible to use the [errorPages](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#errorpage) property on a route, to change the default behaviour of 401 or 403 errors.
-
-An API Key policy can be disabled on a route by adding the [location snippet](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#using-snippets) `auth_request off;`
 
 At least one header or query param is required.
 
@@ -538,7 +536,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 #### Prerequisites
 
 In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
-You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.6.0/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 

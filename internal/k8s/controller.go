@@ -216,6 +216,7 @@ type NewLoadBalancerControllerInput struct {
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
 	TelemetryReportingEndpoint   string
+	BuildOS                      string
 	NICVersion                   string
 	DynamicWeightChangesReload   bool
 	InstallationFlags            []string
@@ -371,6 +372,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			K8sClientReader:     input.KubeClient,
 			Version:             input.NICVersion,
 			AppProtectVersion:   input.AppProtectVersion,
+			BuildOS:             input.BuildOS,
 			InstallationFlags:   input.InstallationFlags,
 			GlobalConfiguration: lbc.watchGlobalConfiguration,
 			Configurator:        lbc.configurator,
