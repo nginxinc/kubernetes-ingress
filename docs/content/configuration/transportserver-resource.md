@@ -11,7 +11,7 @@ This document is reference material for the TransportServer resource used by F5 
 
 The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-The GitHub repository has [examples of the resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.1/examples/custom-resources) for specific use cases.
+The GitHub repository has [examples of the resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources) for specific use cases.
 
 ## Prerequisites
 

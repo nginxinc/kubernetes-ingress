@@ -8,6 +8,7 @@ repos:
       - id: trailing-whitespace
         exclude: '(\.md|\.snap)$'
       - id: end-of-file-fixer
+        exclude: docs/layouts/shortcodes/nic-.*.html
       - id: check-yaml
         args: [--allow-multiple-documents]
         exclude: ^(charts/nginx-ingress/templates)
