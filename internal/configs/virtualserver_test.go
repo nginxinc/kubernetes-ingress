@@ -4531,6 +4531,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 			AppProtectDosAccessLogDst:    "svc.dns.com:123",
 			AppProtectDosPolicyFile:      "",
 			AppProtectDosLogConfFile:     "",
+			AppProtectDosAllowListPath:   "/etc/nginx/dos/allowlist/default_coffee",
 		},
 		"/tea": {
 			AppProtectDosEnable:          "on",
@@ -4542,6 +4543,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 			AppProtectDosAccessLogDst:    "svc.dns.com:123",
 			AppProtectDosPolicyFile:      "",
 			AppProtectDosLogConfFile:     "",
+			AppProtectDosAllowListPath:   "/etc/nginx/dos/allowlist/default_tea",
 		},
 		"/juice": {
 			AppProtectDosEnable:          "on",
@@ -4553,6 +4555,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 			AppProtectDosAccessLogDst:    "svc.dns.com:123",
 			AppProtectDosPolicyFile:      "",
 			AppProtectDosLogConfFile:     "",
+			AppProtectDosAllowListPath:   "/etc/nginx/dos/allowlist/default_juice",
 		},
 	}
 
@@ -4741,6 +4744,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_coffee",
 			},
 		},
 		{
@@ -4763,6 +4767,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_coffee",
 			},
 		},
 		{
@@ -4785,6 +4790,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_tea",
 			},
 		},
 		{
@@ -4802,6 +4808,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_juice",
 			},
 			ServiceName:  "juice-svc-v1",
 			IsVSR:        true,
@@ -4823,6 +4830,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 				ApDosMonitorURI:      "test.example.com",
 				ApDosMonitorProtocol: "http",
 				ApDosAccessLogDest:   "svc.dns.com:123",
+				AllowListPath:        "/etc/nginx/dos/allowlist/default_juice",
 			},
 			ServiceName:  "juice-svc-v2",
 			IsVSR:        true,

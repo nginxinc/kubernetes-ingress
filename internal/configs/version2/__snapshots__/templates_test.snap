@@ -179,6 +179,7 @@ server {
     
     app_protect_dos_enable on;
     app_protect_dos_name "my-dos-coffee";
+    app_protect_dos_access_file "/etc/nginx/dos/allowlist/default_test.example.com";
     app_protect_dos_policy_file /test/policy.json;
     app_protect_dos_security_log_enable on;
     app_protect_dos_security_log /test/log.json;
@@ -620,6 +621,7 @@ server {
     
     app_protect_dos_enable on;
     app_protect_dos_name "my-dos-coffee";
+    app_protect_dos_access_file "/etc/nginx/dos/allowlist/default_test.example.com";
     app_protect_dos_policy_file /test/policy.json;
     app_protect_dos_security_log_enable on;
     app_protect_dos_security_log /test/log.json;

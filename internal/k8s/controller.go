@@ -2065,6 +2065,7 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 
 			case *appprotectdos.DosProtectedResourceEx:
 				glog.V(3).Infof("handling change DELETE for DOS protected %s/%s", impl.Obj.Namespace, impl.Obj.Name)
+				lbc.configurator.DeleteAppProtectDosAllowList(impl.Obj)
 				resources := lbc.configuration.FindResourcesForAppProtectDosProtected(impl.Obj.Namespace, impl.Obj.Name)
 				resourceExes := lbc.createExtendedResources(resources)
 				warnings, err := lbc.configurator.AddOrUpdateResourcesThatUseDosProtected(resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
