@@ -14,7 +14,7 @@ on:
         required: true
       k8s-version:
         type: string
-        description: "e.g. 1.30.0"
+        description: "k8s version to test with, e.g. 1.30.0"
         required: true
       type:
         type: string
