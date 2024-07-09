@@ -704,6 +704,7 @@ func vsConfig() VirtualServerConfig {
 				ApDosSecurityLogEnable: true,
 				ApDosLogConf:           "/test/log.json",
 				ApDosMonitorTimeout:    30,
+				AllowListPath:          "/etc/nginx/dos/allowlist/default_test.example.com",
 			},
 			Snippets: []string{"# server snippet"},
 			InternalRedirectLocations: []InternalRedirectLocation{

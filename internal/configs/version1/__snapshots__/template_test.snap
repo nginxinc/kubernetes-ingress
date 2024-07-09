@@ -558,6 +558,7 @@ server {
     access_log /var/log/dos log_dos if=$loggable;
     app_protect_dos_monitor uri=/path/to/monitor protocol=http1 timeout=30;
     app_protect_dos_name "testdos";
+    app_protect_dos_access_file "/etc/nginx/dos/allowlist/default_test.example.com";
 
     
     if ($scheme = http) {
@@ -653,6 +654,7 @@ server {
     access_log /var/log/dos log_dos if=$loggable;
     app_protect_dos_monitor uri=/path/to/monitor protocol=http1 timeout=30;
     app_protect_dos_name "testdos";
+    app_protect_dos_access_file "/etc/nginx/dos/allowlist/default_test.example.com";
 
     
     if ($scheme = http) {

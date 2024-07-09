@@ -1,5 +1,4 @@
 @namespace("ingress.nginx.com") protocol NICProductTelemetry {
-	/** Data is the product telemetry data of NGINX Ingress Controller. */
 	@df_datatype("nic-product-telemetry") record Data {
 		/** The field that identifies what type of data this is. */
 		string dataType;
@@ -114,6 +113,9 @@ It is the UID of the `kube-system` Namespace. */
 
 		/** InstallationFlags is the list of command line arguments configured for NGINX Ingress Controller */
 		union {null, array<string>} InstallationFlags = null;
+
+		/** BuildOS returns the base buildOS image */
+		string? BuildOS = null;
 
 	}
 }

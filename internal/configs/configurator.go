@@ -37,6 +37,7 @@ const (
 	appProtectUserSigIndex          = "/etc/nginx/waf/nac-usersigs/index.conf"
 	appProtectDosPolicyFolder       = "/etc/nginx/dos/policies/"
 	appProtectDosLogConfFolder      = "/etc/nginx/dos/logconfs/"
+	appProtectDosAllowListFolder    = "/etc/nginx/dos/allowlist/"
 )
 
 // DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server. #nosec G101
@@ -1679,6 +1680,11 @@ func (cnf *Configurator) updateApResources(ingEx *IngressEx) *AppProtectResource
 
 func (cnf *Configurator) updateDosResource(dosEx *DosEx) {
 	if dosEx != nil {
+		if dosEx.DosProtected != nil {
+			allowListFileName := appProtectDosAllowListFileName(dosEx.DosProtected.GetNamespace(), dosEx.DosProtected.GetName())
+			allowListContent := generateApDosAllowListFileContent(dosEx.DosProtected.Spec.AllowList)
+			cnf.nginxManager.CreateAppProtectResourceFile(allowListFileName, allowListContent)
+		}
 		if dosEx.DosPolicy != nil {
 			policyFileName := appProtectDosPolicyFileName(dosEx.DosPolicy.GetNamespace(), dosEx.DosPolicy.GetName())
 			policyContent := generateApResourceFileContent(dosEx.DosPolicy)
@@ -1735,6 +1741,48 @@ func generateApResourceFileContent(apResource *unstructured.Unstructured) []byte
 	// Safe to ignore errors since validation already checked those
 	spec, _, _ := unstructured.NestedMap(apResource.Object, "spec")
 	data, _ := json.Marshal(spec)
+	return data
+}
+
+func generateApDosAllowListFileContent(allowList []v1beta1.AllowListEntry) []byte {
+	type IPAddress struct {
+		IPAddress string `json:"ipAddress"`
+	}
+
+	type IPAddressList struct {
+		IPAddresses   []IPAddress `json:"ipAddresses"`
+		BlockRequests string      `json:"blockRequests"`
+	}
+
+	type Policy struct {
+		IPAddressLists []IPAddressList `json:"ip-address-lists"`
+	}
+
+	type AllowListPolicy struct {
+		Policy Policy `json:"policy"`
+	}
+
+	ipAddresses := make([]IPAddress, len(allowList))
+	for i, entry := range allowList {
+		ipAddresses[i] = IPAddress{IPAddress: entry.IPWithMask}
+	}
+
+	allowListPolicy := AllowListPolicy{
+		Policy: Policy{
+			IPAddressLists: []IPAddressList{
+				{
+					IPAddresses:   ipAddresses,
+					BlockRequests: "transparent",
+				},
+			},
+		},
+	}
+
+	data, err := json.Marshal(allowListPolicy)
+	if err != nil {
+		return nil
+	}
+
 	return data
 }
 
@@ -1862,6 +1910,10 @@ func appProtectDosLogConfFileName(namespace string, name string) string {
 	return fmt.Sprintf("%s%s_%s.json", appProtectDosLogConfFolder, namespace, name)
 }
 
+func appProtectDosAllowListFileName(namespace string, name string) string {
+	return fmt.Sprintf("%s%s_%s.json", appProtectDosAllowListFolder, namespace, name)
+}
+
 // DeleteAppProtectDosPolicy updates Ingresses and VirtualServers that use AP Dos Policy after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectDosPolicy(resource *unstructured.Unstructured) {
 	cnf.nginxManager.DeleteAppProtectResourceFile(appProtectDosPolicyFileName(resource.GetNamespace(), resource.GetName()))
@@ -1870,6 +1922,11 @@ func (cnf *Configurator) DeleteAppProtectDosPolicy(resource *unstructured.Unstru
 // DeleteAppProtectDosLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectDosLogConf(resource *unstructured.Unstructured) {
 	cnf.nginxManager.DeleteAppProtectResourceFile(appProtectDosLogConfFileName(resource.GetNamespace(), resource.GetName()))
+}
+
+// DeleteAppProtectDosAllowList updates Ingresses and VirtualServers that use AP Allow List Configuration after that policy is deleted
+func (cnf *Configurator) DeleteAppProtectDosAllowList(obj *v1beta1.DosProtectedResource) {
+	cnf.nginxManager.DeleteAppProtectResourceFile(appProtectDosAllowListFileName(obj.Namespace, obj.Name))
 }
 
 // AddInternalRouteConfig adds internal route server to NGINX Configuration and reloads NGINX

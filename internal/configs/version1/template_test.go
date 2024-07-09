@@ -1767,6 +1767,7 @@ var (
 				AppProtectDosMonitorTimeout:  30,
 				AppProtectDosName:            "testdos",
 				AppProtectDosAccessLogDst:    "/var/log/dos",
+				AppProtectDosAllowListPath:   "/etc/nginx/dos/allowlist/default_test.example.com",
 			},
 		},
 		Upstreams: []Upstream{testUpstream},
