@@ -551,6 +551,48 @@ func TestExecuteVirtualServerTemplateWithAPIKeyPolicyNGINXPlus(t *testing.T) {
 	t.Log(string(got))
 }
 
+func TestExecuteVirtualServerTemplateWithActionReturnAndLocationSnippetsNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	vscfg := vsConfig()
+	vscfg.Server.ServerTokens = "on"
+	vscfg.Server.Locations = []Location{
+		{
+			Path: "/robots.txt",
+			Snippets: []string{
+				"add_header 'Cache-Control' 'private, max-age=0' always;",
+				"add_header 'Cross-Origin-Resource-Policy' 'cross-origin' always;",
+				"add_header 'X-Content-Type-Options' 'nosniff' always;",
+				"add_header 'X-Xss-Protection' '1; mode=block' always;",
+				"add_header 'X-Frame-Options' 'SAMEORIGIN' always;",
+				"add_header 'Frame-Options' 'SAMEORIGIN' always;",
+			},
+		},
+	}
+	vscfg.Server.ReturnLocations = []ReturnLocation{
+		{
+			Name:        "@return_0",
+			DefaultType: "text/plain",
+			Return: Return{
+				Code: 0,
+				Text: "User-agent: *\nDisallow: /",
+			},
+		},
+	}
+
+	te := newTmplExecutorNGINXPlus(t)
+	got, err := te.ExecuteVirtualServerTemplate(&vscfg)
+	if err != nil {
+		t.Error(err)
+	}
+	want := "add_header 'Cache-Control' 'private, max-age=0' always;"
+	if !bytes.Contains(got, []byte(want)) {
+		t.Errorf("want %q, in generated template", want)
+	}
+	snaps.MatchSnapshot(t, string(got))
+	t.Log(string(got))
+}
+
 func vsConfig() VirtualServerConfig {
 	return VirtualServerConfig{
 		LimitReqZones: []LimitReqZone{
