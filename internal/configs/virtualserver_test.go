@@ -9300,6 +9300,66 @@ func TestGenerateReturnBlock(t *testing.T) {
 	}
 }
 
+func TestGenerateLocationForActionReturnWithLocationSnippets(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name               string
+		path               string
+		action             *conf_v1.ActionReturn
+		wantLocation       version2.Location
+		wantReturnLocation *version2.ReturnLocation
+	}{
+		{
+			name: "multiple locatin snippets",
+			action: &conf_v1.ActionReturn{
+				Code: 200,
+				Type: "text/plain",
+				Body: "User-agent: *\nDisallow: /",
+			},
+			wantLocation: version2.Location{
+				Path: "/robots.txt",
+				Snippets: []string{
+					"add_header 'Cache-Control' 'private, max-age=0' always;",
+					"add_header 'Cross-Origin-Resource-Policy' 'cross-origin' always;",
+					"add_header 'X-Content-Type-Options' 'nosniff' always;",
+					"add_header 'X-Xss-Protection' '1; mode=block' always;",
+					"add_header 'X-Frame-Options' 'SAMEORIGIN' always;",
+					"add_header 'Frame-Options' 'SAMEORIGIN' always;",
+				},
+			},
+			wantReturnLocation: &version2.ReturnLocation{
+				Name:        "@return_0",
+				DefaultType: "text/plain",
+				Return:      version2.Return{},
+			},
+		},
+	}
+
+	path := "/robots.txt"
+	snippets := []string{
+		"add_header 'Cache-Control' 'private, max-age=0' always;",
+		"add_header 'Cross-Origin-Resource-Policy' 'cross-origin' always;",
+		"add_header 'X-Content-Type-Options' 'nosniff' always;",
+		"add_header 'X-Xss-Protection' '1; mode=block' always;",
+		"add_header 'X-Frame-Options' 'SAMEORIGIN' always;",
+		"add_header 'Frame-Options' 'SAMEORIGIN' always;",
+	}
+	returnLocationIndex := 0
+
+	for _, tc := range tt {
+		location, returnLocation := generateLocationForReturn(path, snippets, tc.action, returnLocationIndex)
+
+		if !cmp.Equal(tc.wantLocation, location) {
+			t.Error(cmp.Diff(tc.wantLocation, location))
+		}
+
+		if !cmp.Equal(tc.wantReturnLocation, returnLocation) {
+			t.Error(cmp.Diff(tc.wantReturnLocation, returnLocation))
+		}
+	}
+}
+
 func TestGenerateLocationForReturn(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
