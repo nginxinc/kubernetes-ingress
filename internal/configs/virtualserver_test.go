@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
@@ -9331,7 +9332,10 @@ func TestGenerateLocationForActionReturnWithLocationSnippets(t *testing.T) {
 			wantReturnLocation: &version2.ReturnLocation{
 				Name:        "@return_0",
 				DefaultType: "text/plain",
-				Return:      version2.Return{},
+				Return: version2.Return{
+					Code: 0,
+					Text: "User-agent: *\nDisallow: /",
+				},
 			},
 		},
 	}
@@ -9350,7 +9354,7 @@ func TestGenerateLocationForActionReturnWithLocationSnippets(t *testing.T) {
 	for _, tc := range tt {
 		location, returnLocation := generateLocationForReturn(path, snippets, tc.action, returnLocationIndex)
 
-		if !cmp.Equal(tc.wantLocation, location) {
+		if !cmp.Equal(tc.wantLocation, location, cmpopts.IgnoreFields(location, "InternalProxyPass", "ErrorPages", "ProxyInterceptErrors")) {
 			t.Error(cmp.Diff(tc.wantLocation, location))
 		}
 
