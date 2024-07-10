@@ -369,6 +369,7 @@ class TestAppProtectWAFPolicyVS:
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
 @pytest.mark.appprotect_waf_policies
+@pytest.mark.appprotect_waf_policies_vsr
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap, v_s_route_setup",
     [

@@ -144,6 +144,7 @@ def dos_setup(
 
 
 @pytest.mark.dos
+@pytest.mark.dos_ingress
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_dos",
     [

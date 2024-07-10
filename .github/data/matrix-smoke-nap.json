@@ -13,7 +13,7 @@
       "image": "ubi-9-plus-nap",
       "type": "plus",
       "nap_modules": "waf",
-      "marker": "'appprotect_waf_policies and not appprotect_waf_policies_allow'",
+      "marker": "'appprotect_waf_policies and not appprotect_waf_policies_allow and not appprotect_waf_policies_vsr'",
       "platforms": "linux/amd64"
     },
     {
@@ -29,19 +29,27 @@
       "image": "debian-plus-nap",
       "type": "plus",
       "nap_modules": "waf",
-      "marker": "'appprotect_watch or appprotect_batch or appprotect_integration'",
+      "marker": "'appprotect_watch or appprotect_batch or appprotect_integration or appprotect_waf_policies_vsr'",
       "platforms": "linux/amd64"
     },
     {
-      "label": "AP_DOS",
+      "label": "AP_DOS 1/3",
       "image": "debian-plus-nap",
       "type": "plus",
       "nap_modules": "dos",
-      "marker": "'dos and not dos_learning'",
+      "marker": "'dos and not dos_learning and not dos_ingress'",
       "platforms": "linux/amd64"
     },
     {
-      "label": "AP_DOS_Learning",
+      "label": "AP_DOS 2/3",
+      "image": "debian-plus-nap",
+      "type": "plus",
+      "nap_modules": "dos",
+      "marker": "'dos_ingress and not dos_learning'",
+      "platforms": "linux/amd64"
+    },
+    {
+      "label": "AP_DOS 3/3",
       "image": "ubi-8-plus-nap",
       "type": "plus",
       "nap_modules": "dos",
