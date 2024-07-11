@@ -58,7 +58,7 @@ jobs:
       packages: write # for helm to push to GHCR
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: refs/heads/${{ inputs.branch }}
           path: kic
@@ -89,13 +89,13 @@ jobs:
           helm push ${{ steps.package.outputs.path }} oci://registry-1.docker.io/nginxcharts
 
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           repository: nginxinc/helm-charts
           fetch-depth: 1
           token: ${{ secrets.NGINX_PAT }}
           path: helm-charts
-        if: ${{ inputs.nginx_helm_repo == 'true' }}
+        if: ${{ inputs.nginx_helm_repo }}
 
       - name: Push Helm Chart to Helm Charts Repository
         run: |
@@ -106,4 +106,4 @@ jobs:
           git -c user.name='NGINX Kubernetes Team' -c user.email='kubernetes@nginx.com' \
           commit -m "NGINX Ingress Controller - Release ${{ inputs.chart_version }}"
           git push -u origin master
-        if: ${{ inputs.nginx_helm_repo == 'true' }}
+        if: ${{ inputs.nginx_helm_repo }}

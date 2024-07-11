@@ -106,7 +106,7 @@ kubectl apply -f nms-basic-auth.yaml
 
 If you need to update the basic-auth credentials for NGINX Management Suite in the future, update the `username` and `password` fields, and apply the changes by running the command again. Usage Reporting will automatically detect the changes, using the new username and password without redeployment.
 
-Download and save the deployment file [cluster-connector.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
+Download and save the deployment file [cluster-connector.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
 
 ```yaml
     args:
@@ -116,6 +116,10 @@ Download and save the deployment file [cluster-connector.yaml](https://raw.githu
 
 - `-nms-server-address` should be the address of the Usage Reporting API, which will be the combination of NGINX Management Suite server hostname and the URI `api/platform/v1`
 - `nms-basic-auth-secret` should be the namespace/name of the secret created in step 3: `nginx-cluster-connector/nms-basic-auth`.
+
+{{< note >}}  OpenShift requires a SecurityContextConstraints object for NGINX Cluster Connector. 
+
+It can be created with the command `oc create -f scc.yaml`, using the file found in `shared-examples/` {{< /note >}}
 
 For more information, read the [Command-line arguments](#command-line-arguments) section of this page.
 

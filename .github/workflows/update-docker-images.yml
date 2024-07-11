@@ -33,7 +33,7 @@ jobs:
       date: ${{ steps.kic.outputs.date }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
@@ -105,11 +105,6 @@ jobs:
             image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
             target_image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
             platforms: "linux/arm64, linux/amd64"
-          - tag: ${{ needs.variables.outputs.tag }}-alpine-fips
-            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-fips"
-            image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
-            target_image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
-            platforms: "linux/arm64, linux/amd64"
           - tag: ${{ needs.variables.outputs.tag }}-mktpl
             target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-mktpl"
             image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
@@ -117,11 +112,6 @@ jobs:
             platforms: "linux/arm64, linux/amd64"
           - tag: ${{ needs.variables.outputs.tag }}-alpine-mktpl
             target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-mktpl"
-            image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
-            target_image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
-            platforms: "linux/arm64, linux/amd64"
-          - tag: ${{ needs.variables.outputs.tag }}-alpine-mktpl-fips
-            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-mktpl-fips"
             image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress
             target_image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
             platforms: "linux/arm64, linux/amd64"
@@ -170,10 +160,15 @@ jobs:
             image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap/nginx-plus-ingress"
             target_image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-nap/nginx-plus-ingress"
             platforms: "linux/amd64"
-          - tag: "${{ needs.variables.outputs.tag }}-alpine-fips"
-            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-alpine-fips"
-            image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap/nginx-plus-ingress"
-            target_image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-nap/nginx-plus-ingress"
+          - tag: "${{ needs.variables.outputs.tag }}"
+            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}"
+            image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap-v5/nginx-plus-ingress"
+            target_image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-nap-v5/nginx-plus-ingress"
+            platforms: "linux/amd64"
+          - tag: "${{ needs.variables.outputs.tag }}-ubi"
+            target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}-ubi"
+            image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic-nap-v5/nginx-plus-ingress"
+            target_image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic-nap-v5/nginx-plus-ingress"
             platforms: "linux/amd64"
           - tag: "${{ needs.variables.outputs.tag }}"
             target_tag: "${{ needs.variables.outputs.tag }}-${{ needs.variables.outputs.date }}"
@@ -244,6 +239,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write
     secrets: inherit
 
   release-oss-public:
@@ -341,7 +337,7 @@ jobs:
     needs: [variables, release-oss-public]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Certify UBI OSS images in quay
         uses: ./.github/actions/certify-openshift-image

@@ -40,6 +40,7 @@ spec:
 |``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
 |``dosSecurityLog.apDosLogConf`` | The [App Protect DoS log conf]({{< relref "installation/integrations/app-protect-dos/configuration.md#app-protect-dos-logs" >}}) resource. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost &#124; dns-name>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
+|``allowList`` | List of allowed IP addresses and subnet masks. Each entry is represented by an `IPWithMask` string. | ``[]AllowListEntry`` | No |
 {{% /table %}}
 
 ### DosProtectedResource.apDosPolicy

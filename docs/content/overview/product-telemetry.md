@@ -46,6 +46,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **IngressAnnotations** List of Ingress annotations managed by NGINX Ingress Controller
 - **AccessControlPolicies** Number of AccessControl policies.
 - **RateLimitPolicies** Number of RateLimit policies.
+- **APIKeyPolicies** Number of API Key Auth policies.
 - **JWTAuthPolicies** Number of JWTAuth policies.
 - **BasicAuthPolicies** Number of BasicAuth policies.
 - **IngressMTLSPolicies** Number of IngressMTLS policies.
@@ -56,6 +57,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **AppProtectVersion** The AppProtect version
 - **IsPlus** Represents whether NGINX is Plus or OSS
 - **InstallationFlags** List of command line arguments configured for NGINX Ingress Controller
+- **BuildOS** The base operating system image in which NGINX Ingress Controller is running on.
 
 ---
 
@@ -65,12 +67,12 @@ Product telemetry can be disabled when installing NGINX Ingress Controller.
 
 ### Helm
 
-When installing or upgrading NGINX Ingress Controller with Helm, set the `controller.telemetry.enable` option to `false`.
+When installing or upgrading NGINX Ingress Controller with Helm, set the `controller.telemetryReporting.enable` option to `false`.
 
 This can be set directly in the `values.yaml` file, or using the `--set` option
 
 ```shell
-helm upgrade --install ... --set controller.telemetry.enable=false
+helm upgrade --install ... --set controller.telemetryReporting.enable=false
 ```
 
 ---

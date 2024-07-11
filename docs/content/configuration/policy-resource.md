@@ -11,7 +11,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -38,6 +38,7 @@ spec:
 |``accessControl`` | The access control policy based on the client IP address. | [accessControl](#accesscontrol) | No |
 |``ingressClassName`` | Specifies which instance of NGINX Ingress Controller must handle the Policy resource. | ``string`` | No |
 |``rateLimit`` | The rate limit policy controls the rate of processing requests per a defined key. | [rateLimit](#ratelimit) | No |
+|``apiKey`` | The API Key policy configures NGINX to authorize requests which provide a valid API Key in a specified header or query param. | [apiKey](#apikey) | No |
 |``basicAuth`` | The basic auth policy configures NGINX to authenticate client requests using HTTP Basic authentication credentials. | [basicAuth](#basicauth) | No |
 |``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | [jwt](#jwt) | No |
 |``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No |
@@ -140,6 +141,82 @@ policies:
 ```
 
 When you reference more than one rate limit policy, NGINX Ingress Controller will configure NGINX to use all referenced rate limits. When you define multiple policies, each additional policy inherits the `dryRun`, `logLevel`, and `rejectCode` parameters from the first policy referenced (`rate-limit-policy-one`, in the example above).
+
+
+### APIKey
+
+The API Key auth policy configures NGINX to authorize client requests based on the presence of a valid API Key in a header or query param specified in the policy.
+
+> Note: The feature is implemented using NGINX [ngx_http_auth_request_module](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) and [NGINX JavaScript (NJS)](https://nginx.org/en/docs/njs/).
+
+The policies' API keys are securely stored using SHA-256 hashing. When a client sends an API Key, it is hashed by NJS and then compared to the hashed API Key in the NGINX config.
+
+If the hashed keys match, the NGINX JavaScript (NJS) subrequest issues a 204 No Content response to the `auth_request` directive, indicating successful authorization. Conversely, if no API Key is provided in the specified header or query parameter, a 401 Unauthorized response is returned. Similarly, if an invalid key is presented in the expected header or query parameter, a 403 Forbidden response is issued, denying access.
+
+It is possible to use the [errorPages](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#errorpage) property on a route, to change the default behaviour of 401 or 403 errors.
+
+At least one header or query param is required.
+
+The policy below configures NGINX Ingress Controller to require the API Key `password` in the header "my-header".
+
+```yaml
+apiKey:
+    suppliedIn:
+      header:
+      - "my-header"
+    clientSecret: api-key-secret
+```
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-key-secret
+type: nginx.org/apikey
+data:
+    client1: cGFzc3dvcmQ= # password
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``suppliedIn.header`` | An array of headers that the API Key may appear in. | ``string[]`` | No |
+|``suppliedIn.query`` | An array of query params that the API Key may appear in. | ``string[]`` | No |
+|``clientSecret`` | The name of the Kubernetes secret that stores the API Key(s). It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/apikey``, and the API Key(s) must be stored in a key: val format where each key is a unique clientID and each value is a unique base64 encoded API Key  | ``string`` | Yes |
+{{% /table %}}
+
+#### APIKey Merging Behavior
+
+A VirtualServer or VirtualServerRoute can be associated with only one API Key policy per route or subroute. However, it is possible to replace an API Key policy from a higher-level with a different policy defined on a more specific route.
+
+For example, a VirtualServer can implement different API Key policies at various levels. In the configuration below, the server-wide api-key-policy-server applies to /backend1 for authorization, as it lacks a more specific policy. Meanwhile, /backend2 uses the api-key-policy-route defined at the route level.
+
+```yaml
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  policies:
+  - name: api-key-policy-server
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  routes:
+  - path: /backend1
+    action:
+      pass: backend1
+  - path: /backend2
+    action:
+      pass: backend2
+    policies:
+      - name: api-key-policy-route
+```
 
 ### BasicAuth
 
@@ -459,7 +536,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 #### Prerequisites
 
 In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
-You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v3.5.2/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 

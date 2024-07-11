@@ -2,23 +2,20 @@ import time
 
 import pytest
 import requests
-import yaml
-from kubernetes.client import NetworkingV1Api
-from settings import DEPLOYMENTS, TEST_DATA
+from settings import TEST_DATA
 from suite.fixtures.fixtures import PublicEndpoint
-from suite.utils.custom_assertions import assert_event_count_increased
 from suite.utils.resources_utils import (
+    are_all_pods_in_ready_state,
     create_example_app,
     create_items_from_yaml,
     delete_common_app,
     delete_items_from_yaml,
     ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
-    get_events,
     get_first_pod_name,
     get_ingress_nginx_template_conf,
-    replace_configmap_from_yaml,
-    replace_ingress,
+    get_pod_list,
+    scale_deployment,
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
@@ -74,6 +71,7 @@ def annotations_setup(
 
     create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
+
     ensure_connection_to_public_endpoint(
         ingress_controller_endpoint.public_ip, ingress_controller_endpoint.port, ingress_controller_endpoint.port_ssl
     )
@@ -98,7 +96,6 @@ def annotations_setup(
     )
 
 
-@pytest.mark.ingresses
 @pytest.mark.annotations
 @pytest.mark.parametrize("annotations_setup", ["standard", "mergeable"], indirect=True)
 class TestRateLimitIngress:
@@ -117,3 +114,33 @@ class TestRateLimitIngress:
             )
             counter.append(resp.status_code)
         assert (counter.count(200)) <= 2 and (429 in counter)  # check for only 2 200s in the list
+
+
+@pytest.mark.annotations
+@pytest.mark.parametrize("annotations_setup", ["standard-scaled", "mergeable-scaled"], indirect=True)
+class TestRateLimitIngressScaled:
+    def test_ingress_rate_limit_sscaled(
+        self, kube_apis, annotations_setup, ingress_controller_prerequisites, test_namespace
+    ):
+        """
+        Test if rate-limit scaling works with standard and mergeable ingresses
+        """
+        ns = ingress_controller_prerequisites.namespace
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 4)
+        count = 0
+        while (not are_all_pods_in_ready_state(kube_apis.v1, ns)) and count < 10:
+            count += 1
+            wait_before_test()
+
+        ic_pods = get_pod_list(kube_apis.v1, ns)
+        for i in range(len(ic_pods)):
+            conf = get_ingress_nginx_template_conf(
+                kube_apis.v1,
+                annotations_setup.namespace,
+                annotations_setup.ingress_name,
+                ic_pods[i].metadata.name,
+                ingress_controller_prerequisites.namespace,
+            )
+            flag = ("rate=10r/s" in conf) or ("rate=13r/s" in conf)
+            assert flag
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)

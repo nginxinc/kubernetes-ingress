@@ -42,7 +42,7 @@ The steps provided are for Linux. For Mac or Windows, consult the [Docker for Ma
 
 Next, pull the image you need from `private-registry.nginx.com`. To find the correct image, consult the [Tech Specs guide]({{< relref "technical-specifications#images-with-nginx-plus" >}}).
 
-To pull an image, follow these steps. Replace `<version-tag>` with the specific version you need, for example, `3.5.2`.
+To pull an image, follow these steps. Replace `<version-tag>` with the specific version you need, for example, `{{< nic-version >}}`.
 
 - For NGINX Plus Ingress Controller, run:
 
@@ -55,6 +55,21 @@ To pull an image, follow these steps. Replace `<version-tag>` with the specific 
    ```shell
    docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:<version-tag>
    ```
+
+- For NGINX Plus Ingress Controller with NGINX App Protect WAF v5, run:
+
+   ```shell
+   docker pull private-registry.nginx.com/nginx-ic-nap-v5/nginx-plus-ingress:<version-tag>
+   ```
+
+   ```shell
+   docker pull private-registry.nginx.com/nap/waf-config-mgr:<waf-version-tag>
+   ```
+
+   ```shell
+   docker pull private-registry.nginx.com/nap/waf-enforcer:<waf-version-tag>
+   ```
+
 
 - For NGINX Plus Ingress Controller with NGINX App Protect DoS, run:
 
@@ -75,10 +90,10 @@ $ curl https://private-registry.nginx.com/v2/nginx-ic/nginx-plus-ingress/tags/li
 {
   "name": "nginx-ic/nginx-plus-ingress",
   "tags": [
-    "3.5.2-alpine",
-    "3.5.2-alpine-fips",
-    "3.5.2-ubi",
-    "3.5.2"
+    "{{< nic-version >}}-alpine",
+    "{{< nic-version >}}-alpine-fips",
+    "{{< nic-version >}}-ubi",
+    "{{< nic-version >}}"
   ]
 }
 
@@ -86,9 +101,9 @@ $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tag
 {
   "name": "nginx-ic-nap/nginx-plus-ingress",
   "tags": [
-    "3.5.2-alpine-fips",
-    "3.5.2-ubi",
-    "3.5.2"
+    "{{< nic-version >}}-alpine-fips",
+    "{{< nic-version >}}-ubi",
+    "{{< nic-version >}}"
   ]
 }
 
@@ -96,8 +111,8 @@ $ curl https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tag
 {
   "name": "nginx-ic-dos/nginx-plus-ingress",
   "tags": [
-    "3.5.2-ubi",
-    "3.5.2"
+    "{{< nic-version >}}-ubi",
+    "{{< nic-version >}}"
   ]
 }
 ```
@@ -114,7 +129,7 @@ After pulling the image, tag it and upload it to your private registry.
    docker login <my-docker-registry>
    ```
 
-1. Tag and push the image. Replace `<my-docker-registry>` with your registry's path and `<version-tag>` with the version you're using, for example `3.5.2`:
+1. Tag and push the image. Replace `<my-docker-registry>` with your registry's path and `<version-tag>` with the version you're using, for example `{{< nic-version >}}`:
 
    - For NGINX Plus Ingress Controller, run:
 
@@ -128,6 +143,23 @@ After pulling the image, tag it and upload it to your private registry.
       ```shell
       docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:<version-tag> <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
       docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+      ```
+
+      - For NGINX Controller with NGINX App Protect WAF v5, run:
+
+      ```shell
+      docker tag private-registry.nginx.com/nginx-ic-nap-v5/nginx-plus-ingress:<version-tag> <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+      docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:<version-tag>
+      ```
+
+      ```shell
+      docker tag private-registry.nginx.com/nap/waf-config-mgr:<waf-version-tag> <my-docker-registry>/nap/waf-config-mgr:<waf-version-tag>
+      docker push <my-docker-registry>/nap/waf-config-mgr:<waf-version-tag>
+      ```
+
+      ```shell
+      docker tag private-registry.nginx.com/nap/waf-enforcer:<waf-version-tag> <my-docker-registry>/nap/waf-enforcer:<waf-version-tag>
+      docker push <my-docker-registry>/nap/waf-enforcer:<waf-version-tag>
       ```
 
    - For NGINX Controller with NGINX App Protect DoS, run:

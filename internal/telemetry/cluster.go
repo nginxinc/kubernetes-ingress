@@ -193,6 +193,8 @@ func (c *Collector) PolicyCount() map[string]int {
 			policyCounters["OIDC"]++
 		case spec.WAF != nil:
 			policyCounters["WAF"]++
+		case spec.APIKey != nil:
+			policyCounters["APIKey"]++
 		}
 	}
 	return policyCounters
@@ -227,6 +229,11 @@ func (c *Collector) ServiceCounts() (map[string]int, error) {
 	}
 
 	return serviceCounts, nil
+}
+
+// BuildOS returns a string which is the base operating system image tha NIC is running in.
+func (c *Collector) BuildOS() string {
+	return c.Config.BuildOS
 }
 
 // lookupPlatform takes a string representing a K8s PlatformID

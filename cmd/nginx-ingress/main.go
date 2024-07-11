@@ -64,6 +64,8 @@ func main() {
 	parseFlags()
 	parsedFlags := os.Args[1:]
 
+	buildOS := os.Getenv("BUILD_OS")
+
 	config, kubeClient := createConfigAndKubeClient()
 
 	kubernetesVersionInfo(kubeClient)
@@ -230,6 +232,7 @@ func main() {
 		WatchNamespaceLabel:          *watchNamespaceLabel,
 		EnableTelemetryReporting:     *enableTelemetryReporting,
 		TelemetryReportingEndpoint:   telemetryEndpoint,
+		BuildOS:                      buildOS,
 		NICVersion:                   version,
 		DynamicWeightChangesReload:   *enableDynamicWeightChangesReload,
 		InstallationFlags:            parsedFlags,
@@ -736,7 +739,14 @@ func createPlusAndLatencyCollectors(
 			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
 				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, nil, nil)
-			promlogConfig := &promlog.Config{}
+			infoLevel := new(promlog.AllowedLevel)
+			err := infoLevel.Set("info")
+			if err != nil {
+				glog.Error("Error setting prometheus exporter log level")
+			}
+			promlogConfig := &promlog.Config{
+				Level: infoLevel,
+			}
 			logger := promlog.New(promlogConfig)
 			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
 			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)

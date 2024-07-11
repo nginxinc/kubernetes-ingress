@@ -78,6 +78,9 @@ It is the UID of the `kube-system` Namespace. */
 		/** RateLimitPolicies is the number of RateLimit policies managed by NGINX Ingress Controller */
 		long? RateLimitPolicies = null;
 
+		/** APIKeyPolicies is the number of APIKey policies managed by NGINX Ingress Controller */
+		long? APIKeyPolicies = null;
+
 		/** JWTAuthPolicies is the number of JWTAuth policies managed by NGINX Ingress Controller */
 		long? JWTAuthPolicies = null;
 
@@ -110,6 +113,9 @@ It is the UID of the `kube-system` Namespace. */
 
 		/** InstallationFlags is the list of command line arguments configured for NGINX Ingress Controller */
 		union {null, array<string>} InstallationFlags = null;
+
+		/** BuildOS returns the base buildOS image */
+		string? BuildOS = null;
 
 	}
 }

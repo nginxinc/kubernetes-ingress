@@ -1129,6 +1129,65 @@ func TestCollectInstallationFlags(t *testing.T) {
 	}
 }
 
+func TestCollectBuildOS(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name    string
+		buildOS string
+		wantOS  string
+	}{
+		{
+			name:    "debian plus image",
+			buildOS: "debian-plus",
+			wantOS:  "debian-plus",
+		},
+		{
+			name:    "ubi-9 plus app protect image",
+			buildOS: "ubi-9-plus-nap",
+			wantOS:  "ubi-9-plus-nap",
+		},
+		{
+			name:    "alpine oss image",
+			buildOS: "alpine",
+			wantOS:  "alpine",
+		},
+		{
+			name:    "self built image",
+			buildOS: "",
+			wantOS:  "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:    configurator,
+				K8sClientReader: newTestClientset(node1, kubeNS),
+				Version:         telemetryNICData.ProjectVersion,
+				BuildOS:         tc.buildOS,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			buildOS := c.BuildOS()
+
+			if tc.wantOS != buildOS {
+				t.Errorf("want: %s, got: %s", tc.wantOS, buildOS)
+			}
+		})
+	}
+}
+
 func TestCountVirtualServersOnCustomResourceEnabled(t *testing.T) {
 	t.Parallel()
 
@@ -2316,7 +2375,7 @@ func newSecretStore(t *testing.T) *secrets.LocalSecretStore {
 }
 
 // newTestClientset takes k8s runtime objects and returns a k8s fake clientset.
-// The clientset is configured to return kubernetes version v1.29.2.
+// The clientset is configured to return kubernetes version v1.30.0.
 // (call to Discovery().ServerVersion())
 //
 // version.Info struct can hold more information about K8s platform, for example:
@@ -2335,7 +2394,7 @@ func newSecretStore(t *testing.T) *secrets.LocalSecretStore {
 func newTestClientset(objects ...k8sruntime.Object) *testClient.Clientset {
 	client := testClient.NewSimpleClientset(objects...)
 	client.Discovery().(*fakediscovery.FakeDiscovery).FakedServerVersion = &version.Info{
-		GitVersion: "v1.29.2",
+		GitVersion: "v1.30.0",
 	}
 	return client
 }
@@ -2351,7 +2410,7 @@ const (
 var telemetryNICData = tel.Data{
 	ProjectName:         "NIC",
 	ProjectVersion:      "3.5.0",
-	ClusterVersion:      "v1.29.2",
+	ClusterVersion:      "v1.30.0",
 	ProjectArchitecture: runtime.GOARCH,
 	ClusterID:           "329766ff-5d78-4c9e-8736-7faad1f2e937",
 	ClusterNodeCount:    1,

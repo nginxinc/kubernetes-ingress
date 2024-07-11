@@ -75,6 +75,9 @@ type CollectorConfig struct {
 	// AppProtectVersion represents the version of App Protect.
 	AppProtectVersion string
 
+	// BuildOS represents the base operating system image
+	BuildOS string
+
 	// IsPlus represents whether NGINX is Plus or OSS
 	IsPlus bool
 
@@ -142,6 +145,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			IngressClasses:        int64(report.IngressClassCount),
 			AccessControlPolicies: int64(report.AccessControlCount),
 			RateLimitPolicies:     int64(report.RateLimitCount),
+			APIKeyPolicies:        int64(report.APIKeyAuthCount),
 			JWTAuthPolicies:       int64(report.JWTAuthCount),
 			BasicAuthPolicies:     int64(report.BasicAuthCount),
 			IngressMTLSPolicies:   int64(report.IngressMTLSCount),
@@ -153,6 +157,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			AppProtectVersion:     report.AppProtectVersion,
 			IsPlus:                report.IsPlus,
 			InstallationFlags:     report.InstallationFlags,
+			BuildOS:               report.BuildOS,
 		},
 	}
 
@@ -191,6 +196,7 @@ type Report struct {
 	AccessControlCount   int
 	RateLimitCount       int
 	JWTAuthCount         int
+	APIKeyAuthCount      int
 	BasicAuthCount       int
 	IngressMTLSCount     int
 	EgressMTLSCount      int
@@ -201,6 +207,7 @@ type Report struct {
 	AppProtectVersion    string
 	IsPlus               bool
 	InstallationFlags    []string
+	BuildOS              string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -261,6 +268,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	var (
 		accessControlCount int
 		rateLimitCount     int
+		apiKeyCount        int
 		jwtAuthCount       int
 		basicAuthCount     int
 		ingressMTLSCount   int
@@ -273,6 +281,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		policies := c.PolicyCount()
 		accessControlCount = policies["AccessControl"]
 		rateLimitCount = policies["RateLimit"]
+		apiKeyCount = policies["APIKey"]
 		jwtAuthCount = policies["JWTAuth"]
 		basicAuthCount = policies["BasicAuth"]
 		ingressMTLSCount = policies["IngressMTLS"]
@@ -318,6 +327,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		IngressClassCount:    ingressClassCount,
 		AccessControlCount:   accessControlCount,
 		RateLimitCount:       rateLimitCount,
+		APIKeyAuthCount:      apiKeyCount,
 		JWTAuthCount:         jwtAuthCount,
 		BasicAuthCount:       basicAuthCount,
 		IngressMTLSCount:     ingressMTLSCount,
@@ -329,5 +339,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		AppProtectVersion:    appProtectVersion,
 		IsPlus:               isPlus,
 		InstallationFlags:    installationFlags,
+		BuildOS:              c.BuildOS(),
 	}, err
 }
