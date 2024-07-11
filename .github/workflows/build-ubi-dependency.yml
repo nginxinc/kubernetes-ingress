@@ -1,10 +1,11 @@
 name: Build UBI ppc64le Dependency
 
 on:
-  # TODO: remove push
   push:
-  schedule:
-    - cron: "30 4 * * 1" # run Mon at 04:30 UTC
+    branches:
+      - main
+    paths:
+      - build/dependencies/Dockerfile.ubi-ppc64le
   workflow_dispatch:
     inputs:
       nginx_version:
@@ -75,7 +76,7 @@ jobs:
 
   build-binaries:
     name: Build Binary Container Image
-    if: ${{ needs.checks.outputs.target_exists != 'true' || inputs.force || true }}
+    if: ${{ needs.checks.outputs.target_exists != 'true' || inputs.force }}
     needs: checks
     runs-on: ubuntu-22.04
     permissions:
