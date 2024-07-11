@@ -58,7 +58,6 @@ curl -X POST https://{{NMS_FQDN}}/api/platform/v1/security/policies \
 
 You should receive an API response similar to the following output, indicating the policy has been successfully created.
 
-
 ```json
 {
     "metadata": {
