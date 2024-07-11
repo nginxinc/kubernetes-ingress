@@ -75,7 +75,7 @@ jobs:
 
   build-binaries:
     name: Build Binary Container Image
-    if: ${{ needs.checks.outputs.target_exists != 'true' || inputs.force }}
+    if: ${{ needs.checks.outputs.target_exists != 'true' || inputs.force || true }}
     needs: checks
     runs-on: ubuntu-22.04
     permissions:
