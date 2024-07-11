@@ -9341,7 +9341,7 @@ func TestGenerateLocationForActionReturnWithLocationSnippets(t *testing.T) {
 	}
 
 	path := "/robots.txt"
-	snippets := []string{
+	locationSnippets := []string{
 		"add_header 'Cache-Control' 'private, max-age=0' always;",
 		"add_header 'Cross-Origin-Resource-Policy' 'cross-origin' always;",
 		"add_header 'X-Content-Type-Options' 'nosniff' always;",
@@ -9352,7 +9352,7 @@ func TestGenerateLocationForActionReturnWithLocationSnippets(t *testing.T) {
 	returnLocationIndex := 0
 
 	for _, tc := range tt {
-		location, returnLocation := generateLocationForReturn(path, snippets, tc.action, returnLocationIndex)
+		location, returnLocation := generateLocationForReturn(path, locationSnippets, tc.action, returnLocationIndex)
 
 		if !cmp.Equal(tc.wantLocation, location, cmpopts.IgnoreFields(location, "InternalProxyPass", "ErrorPages", "ProxyInterceptErrors")) {
 			t.Error(cmp.Diff(tc.wantLocation, location))
