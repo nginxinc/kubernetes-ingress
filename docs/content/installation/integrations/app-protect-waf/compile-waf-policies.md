@@ -1,6 +1,7 @@
 ---
 docs: DOCS-000
 title: Compile NAP WAF policies using NGINX Instance Manager
+toc: true
 weight: 300
 ---
 
@@ -17,43 +18,19 @@ The following steps describe how to use the NGINX Instance Manager API to create
 ## Before you start
 ### Requirements
 - A working [NGINX Management Suite](https://docs.nginx.com/nginx-management-suite/installation/) instance.
-- An [NGINX Management Suite user](https://docs.nginx.com/nginx-management-suite/admin-guides/authentication/basic-authentication/) for API requests.
-- A NGINX Ingress Controller [deployment with NGINX App Protect WAF]({{< relref "/installation/integrations/app-protect-waf/installation" >}}).
-
-### What to expect
-
-1. Setup NIM console (install all necessary pieces including authentication)
-2. Create a new security policy through the API
-    a. To create security policy bundles, send an HTTP POST request to the Security Policies Bundles API endpoint. The specified security policies you’d like to compile into security policy bundles must already exist in Instance Manager. This will be a .json file that will be uploaded (POST) to NIM.
-    b. The content of the policy **must** be base64 encoded before uploading.
-3. Create a new security bundle through the API.
-    a. This has to have specific requirements for the security policy it will be attached to.
-4. Once the bundle has been compiled, download the bundle through the API
-5. Use new bundle with NAP in NIC
-
-## Configure NGINX Instance Manager
-<!-- This looks like it corresponds to step 1 of the draft:
-
-- The reader will need a working NMS instance (Covered in the requirements above)
-- They will need a user account with API access (Link to NIM/NMS RBAC user creation/auth documentation?) -->
-
-The first step required when creating a NAP bundle for NIC is to create a new security policy, or use an exisiting security policy within NIM. This is required as we will associate the bundle we are creating with the security policy, allowing us to use a variety of policies and their perspective bundles as needed. In this example, we are going to be using the NIM API to create both the security policy and the bundle. Once those are created, we are then going to download the bundle in a .tgz format, which can then be used with NIC+NAP.
-
-Before we can create our policy and generate the bundle, we need to make sure have proper access. Once you have created the account to be used and has proper RBAC access, we need to Authorize the request user to the NIM API. You can use Basic Auth or OIDC.
-
+- An [NGINX Management Suite user](https://docs.nginx.com/nginx-management-suite/admin-guides/rbac/rbac-getting-started/) for API requests.
+- A NGINX Ingress Controller [deployment with NGINX App Protect WAF]({{< relref "/installation/integrations/app-protect-waf/installation.md" >}}).
 
 ## Create a new security policy
 
-Now we are going to create our security policy using the API.      
-https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy
+{{< tip >}} You can skip this step if you intend to use an existing security policy. {{< /tip >}}
 
-We can use a tool like `Postman`, or `curl` to interact with API. 
+First, create a [new security policy](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
 
-We will be uploading .json files to create the security policy as well as the bundle in this document.
+You will use the API to upload JSON files for the policy, which will be the same method for creating the bundle later.
 
-NOTE: For the policy "content" itself, this **MUST** be base64 encoded or it will fail.
+Create the file `simple-policy.json` with the contents below:
 
-For are example, we are going to use this`simple-policy.json` file with contents below:
 ```json
 {
   "metadata": {
@@ -65,7 +42,13 @@ For are example, we are going to use this`simple-policy.json` file with contents
 }
 ```
 
-Next step, we need to POST the new security policy into NIM through the API.
+{{< warning >}}
+
+The `content` value must be base64 encoded or you will encounter an error.
+
+{{< /warning >}}
+
+In the same directory you created `simple-policy.json`, create a POST request for NGINX Instance Manager using the API.
 
 ```shell
 curl -X POST https://{{NMS_FQDN}}/api/platform/v1/security/policies \
@@ -73,7 +56,8 @@ curl -X POST https://{{NMS_FQDN}}/api/platform/v1/security/policies \
     -d @simple-policy.json
 ```
 
-THe response back from the API, after the policy is successfully created.
+You should receive an API response similar to the following output, indicating the policy has been successfully created.
+
 
 ```json
 {
@@ -94,22 +78,19 @@ THe response back from the API, after the policy is successfully created.
 }
 ```
 
-NOTE: Take note of the `uid` field as we will need that when we download our bundle.
+**Take note of the *uid* field**, which will be used to download the bundle later.
 
 ## Create a new security bundle
 
-Next, we are going to create the security policy bundle using the API.   
-https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy-bundles   
+Once you have created (Or selected) a security policy, you can now [create a security bundle](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy-bundles) using the API. The version in the bundle you create **must** match the WAF compiler version you intend to use. You can check which version is installed in NGINX Instance Manager by checking the operating system packages.
 
-A very important item that must be followed is that the bundle you will be creating, must line up with the proper WAF compiler version you are using. If you use the wrong version in your json payload (see above), you will receive an error similar to the below:
+If the wrong version is noted in the JSON payload, you will receive an error similar to below:
 
 ```text
 {"code":13018,"message":"Error compiling the security policy set: One or more of the specified compiler versions does not exist. Check the compiler versions, then try again."}
 ```
 
-You can verify which compilers are installed on NIM, by checking which packages have been installed through the operating system (apt, dnf for example):
-
-Here is the contents of our `security-policy-bundles.json` file:
+Create the file `security-policy-bundles.json`:
 
 ```json
 {
@@ -125,14 +106,15 @@ Here is the contents of our `security-policy-bundles.json` file:
 }
 ```
 
-Now, we send our request to create the bundle in NIM:
+Send a POST request to create the bundle through the API:
 
-```
+```shell
 curl -X POST https://{{NMS_FQDN}}/api/platform/v1/security/policies/bundles \
     -H "Authorization: Bearer <access token>" \
     -d @security-policy-bundles.json
 ```
-Response from NIM after successful POST of our bundle:
+
+You should receive a response similar to the following:
 
 ```json
 {
@@ -158,17 +140,12 @@ Response from NIM after successful POST of our bundle:
 }
 ```
 
-Now we can query for the bundlle that we just created in the above command:
+You can use the API to list the security bundles, verifying the new addition:
 
-
-Here we are going to list or newly created bundle
-Here we can list our security bundles:
-
-```
+```shell
 curl --location 'https://127.0.0.1/api/platform/v1/security/policies/bundles' \
 -H 'Authorization: Bearer <access_token>
 ```
-Response showing our bundle we created earlier
 ```json
 {
     "items": [
