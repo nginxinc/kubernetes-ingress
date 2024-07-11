@@ -3764,6 +3764,10 @@ func TestValidateRegexPath(t *testing.T) {
 			regexPath: "~ ^/coffee/(?!.*\\/latte)(?!.*\\/americano)(.*)",
 			msg:       "regexp with Perl5 regex",
 		},
+		{
+			regexPath: "~ /api/accounts-service(/|$)(?P<lmatch>.*)",
+			msg:       "regexp with Python regex",
+		},
 	}
 
 	for _, test := range tests {

@@ -925,7 +925,7 @@ func validatePath(path string, pathType *networking.PathType, fieldPath *field.P
 //
 // Internally it uses Perl5 compatible regexp2 package.
 func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
-	if _, err := regexp2.Compile(path, 0); err != nil {
+	if _, err := regexp2.Compile(path, regexp2.RE2); err != nil {
 		return field.ErrorList{field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err))}
 	}
 	if err := ValidateEscapedString(path, "*.jpg", "^/images/image_*.png$"); err != nil {
