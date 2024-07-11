@@ -54,7 +54,7 @@ jobs:
           if [ -n "${{ inputs.nginx_version }}" ]; then
             nginx_v=${{ inputs.nginx_version }}
           else
-            nginx_v=$(grep -m1 'FROM nginx:' <Dockerfile | cut -d '@' -f1 | awk -F'[: ]' '{print $3}')
+            nginx_v=$(grep -m1 'FROM nginx:' <build/dependencies/Dockerfile.ubi-ppc64le | cut -d '@' -f1 | awk -F'[: ]' '{print $3}')
           fi
           target_image=${{ env.IMAGE_NAME }}:nginx-${nginx_v}
           if docker manifest inspect ${target_image}; then
