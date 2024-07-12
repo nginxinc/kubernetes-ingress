@@ -2061,7 +2061,7 @@ func generateLocation(path string, upstreamName string, upstream conf_v1.Upstrea
 	}
 
 	if action.Return != nil {
-		return generateLocationForReturn(path, cfgParams.LocationSnippets, action.Return, retLocIndex)
+		return generateLocationForReturn(path, locationSnippets, action.Return, retLocIndex)
 	}
 
 	checkGrpcErrorPageCodes(errorPages, isGRPC(upstream.Type), upstream.Name, vscWarnings)

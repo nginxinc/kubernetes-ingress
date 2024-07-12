@@ -10181,6 +10181,7 @@ func TestGenerateSplits(t *testing.T) {
 				},
 			},
 			InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+			Snippets:          []string{locSnippet},
 		},
 	}
 	expectedReturnLocations := []version2.ReturnLocation{
