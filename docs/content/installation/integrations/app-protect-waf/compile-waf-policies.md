@@ -143,7 +143,7 @@ You can use the API to list the security bundles, verifying the new addition:
 
 ```shell
 curl --location 'https://127.0.0.1/api/platform/v1/security/policies/bundles' \
--H 'Authorization: Bearer <access_token>
+-H "Authorization: Bearer <access_token>"
 ```
 ```json
 {
