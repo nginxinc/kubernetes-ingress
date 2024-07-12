@@ -77,7 +77,13 @@ You should receive an API response similar to the following output, indicating t
 }
 ```
 
-**Take note of the *uid* field**, which will be used to download the bundle later.
+{{< important >}}
+
+Take note of the *uid* field. 
+
+It is one of two unique IDs we will use to download the bundle: it will be referenced as *policy-UID*.
+
+{{< /important >}}
 
 ## Create a new security bundle
 
@@ -104,6 +110,8 @@ Create the file `security-policy-bundles.json`:
   ]
 }
 ```
+
+The *policyUID* value is left blank, as it is generated as part of the creating the bundle.
 
 Send a POST request to create the bundle through the API:
 
@@ -168,15 +176,25 @@ curl --location 'https://127.0.0.1/api/platform/v1/security/policies/bundles' \
     ]
 }
 ```
-Take note of the `uid` field. this is the UID for the security bundle which is required when download our bundle once it is compiled.
+
+{{< important >}}
+
+Take note of the *uid* field. 
+
+It is one of two unique IDs we will use to download the bundle: it will be referenced as *bundle-UID*.
+
+{{< /important >}}
 
 ## Download the security bundle
 
+Use a GET request to download the security bundle using the policy and bundle IDs:
+
 ```shell
-curl -X GET "https://{NMS_FQDN}/api/platform/v1/security/policies/{security-policy-uid}/bundles/{security-policy-bundle-uid}" -H "Authorization: Bearer xxxxx.yyyyy.zzzzz" | jq -r '.content' | base64 -d > security-policy-bundle.tgz
+curl -X GET "https://{NMS_FQDN}/api/platform/v1/security/policies/<policy-UID>/bundles/<bundle-UID>" -H "Authorization: Bearer <access token>" | jq -r '.content' | base64 -d > security-policy-bundle.tgz
 ```
 
-In our example, we are using the `seucrity-policy-id` and the `security-policy-bundle-id`
+This GET request uses the policy and bundle IDs from the previous examples:
+
 ```shell
 curl -X GET -k 'https://127.0.0.1/api/platform/v1/security/policies/6af9f261-658b-4be1-b07a-cebd83e917a1/bundles/de08b324-99d8-4155-b2eb-fe687b21034e' \                                                                                                     
     -H "Authorization: Basic YWRtaW46UncxQXBQS3lRRTRuQXRXOFRYa1J4ZFdVSWVTSGtU" \
