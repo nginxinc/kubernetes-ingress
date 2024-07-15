@@ -10,7 +10,7 @@ weight: 200
 
 This document explains how to use F5 NGINX Ingress Controller to configure [NGINX App Protect WAF v5](https://docs.nginx.com/nginx-app-protect-waf/v5/).
 
-{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/app-protect-waf-v5).{{< /note >}}
+{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5).{{< /note >}}
 
 
 ## Global Configuration
@@ -19,11 +19,7 @@ NGINX Ingress Controller has global configuration parameters that match those in
 
 ## Enable NGINX App Protect WAF v5
 
-NGINX App Protect WAF can be enabled and configured for custom resources (VirtualServer, VirtualServerRoute) or Ingress resources.
-
-- For custom resources, you need to create a Policy Custom Resource referencing a policy bundle, then add it to the VirtualServer definition. Additional detail can be found in the [Policy Resource documentation]({{< relref "configuration/policy-resource.md#waf" >}}).
-- For Ingress resources, apply the [`app-protect` annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) to each desired resource.
-
+NGINX App Protect WAF v5 can be enabled and configured for custom resources only(VirtualServer, VirtualServerRoute). You need to create a Policy Custom Resource referencing a policy bundle, then add it to the VirtualServer/VirtualServerRoute definition. Additional detail can be found in the [Policy Resource documentation]({{< relref "configuration/policy-resource.md#waf" >}}).
 
 
 ## NGINX App Protect WAF Bundles {#waf-bundles}
