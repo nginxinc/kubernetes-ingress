@@ -21,7 +21,8 @@ It explains the following topics:
 
 ## Ingress class
 
-Due to the design of the Ingress class, multiple Ingress Controllers can coexist in one cluster. The Ingress class has the following characteristics:
+The [IngressClass](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class) resource allows for multiple Ingress Controller to operate in the same cluster. It also allow developers to select which Ingress Controller implementation to use for their Ingress resource.
+The IngressClass has the following characteristics:
 
 - Every Ingress Controller must only handle Ingress resources for its particular class.
 - Ingress resources need to have the `ingressClassName` field set to the value of the class of the Ingress Controller the user wants to use.
@@ -40,7 +41,7 @@ The default Ingress class of NGINX Ingress Controller is `nginx`, which means th
 
 It is possible to run NGINX Ingress Controller and an Ingress Controller for another load balancer in the same cluster. This is often the case if you create your cluster through a cloud provider's managed Kubernetes service that by default might include the Ingress Controller for the HTTP load balancer of the cloud provider, and you want to use NGINX Ingress Controller.
 
-To make sure that NGINX Ingress Controller handles specific configuration resources, update those resources with the class set to `nginx` (or the Ingress class value that you configured in NGINX Ingress Controller).
+To make sure that NGINX Ingress Controller handles specific configuration resources, update those resources with the class set to the value that is configured in NGINX Ingress Controller. By default, this is `nginx`.
 
 ---
 
