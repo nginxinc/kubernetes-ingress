@@ -194,7 +194,7 @@ If you prefer not to build your own NGINX Ingress Controller image, you can use 
 
 **NGINX Ingress Controller**: Download the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress) or [GitHub](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress).
 
-**NGINX Plus Ingress Controller**: You have two options for this: both require an NGINX Ingress Controller subscription.
+**NGINX Plus Ingress Controller**: You have two options for this:
 
 - Download the image using your NGINX Ingress Controller subscription certificate and key. View the [Get NGINX Ingress Controller from the F5 Registry]({{< relref "installation/nic-images/get-registry-image" >}}) topic.
 - Use your NGINX Ingress Controller subscription JWT token to get the image. View the [Get the NGINX Ingress Controller image with JWT]({{< relref "installation/nic-images/get-image-using-jwt.md" >}}) topic.
