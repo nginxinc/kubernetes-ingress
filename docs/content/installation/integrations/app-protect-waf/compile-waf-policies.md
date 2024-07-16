@@ -203,8 +203,9 @@ curl -X GET -k 'https://127.0.0.1/api/platform/v1/security/policies/6af9f261-658
 
 ## Add volumes and volumeMounts to NGINX Ingress Controller
 
-Since we are going to use bundles for WAF running on NGINX Ingress controller, we will need to modify the deployment for NIC to add volumes and volumeMounts, where NIC can pick up the bundle when new ones are uploaded to the cluster. This path is specific and must be correct in order for the bundle to be pickedup and used within NIC:
-Quick overview of what needs to be added:
+In order to use the WAF security bundles, your NGINX Ingress Controller instance must have *volumes* and *volumeMounts*. Precise paths are used to detect when bundles are uploaded to the cluster.
+
+Here is an example of what must be added:
 
 ```yaml
 volumes:
@@ -217,7 +218,7 @@ volumeMounts:
     mountPath: /etc/nginx/waf/bundles
 ```
 
-Full example of a deployment file with `volumes` and `volumeMounts` added:
+A full example of a deployment file with `volumes` and `volumeMounts` may look like the following:
 
 ```yaml
 
@@ -303,19 +304,21 @@ spec:
 
 ## Create WAF policy
 
-Before applying a policy, a WAF policy needs to be created. This WAF policy will use the newly created bundle we did in the previous steps. It must be copied over to `/etc/nginx/waf/bundles` so NIC can load the new bundle into WAF. 
+Before a bundle can be processed, a WAF policy must be created. 
 
-In the below, `spec.waf.apBundle` is the name of the bundle that we downloaded from NIM. 
+This policy is added to `/etc/nginx/waf/bundles`, allowing NGINX Ingress Controller to load it into WAF.
+
+The example below shows the required WAF policy, and the *apBundle* and *apLogConf* fields you must use for the security bundle binary file (A tar ball).
 
 ```yaml
 apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
-  name: waf-policy
+  name: <waf-policy-name>
 spec:
   waf:
     enable: true
-    apBundle: "<bundle-name>.tgz" ### <-- this is the name of the bundle downloaded from NIM
+    apBundle: "<bundle-name>.tgz"
     securityLogs:
     - enable: true
         apLogConf: "<bundle-name>.tgz"
@@ -324,7 +327,7 @@ spec:
 
 ## Create VirtualServer resource and apply policy
 
-Now that we have our WAF policy created, we can now link the policy to our `virtualServer` resource:
+Once the WAF policy has been created, link it to your *virtualServer resource*.
 
 ```yaml
 apiVersion: k8s.nginx.org/v1
@@ -334,7 +337,7 @@ metadata:
 spec:
   host: webapp.example.com
   policies:
-  - name: waf-policy
+  - name: <waf-policy-name>
   upstreams:
   - name: webapp
     service: webapp-svc
@@ -347,5 +350,10 @@ spec:
 
 ## Upload the security bundle
 
-Upload tarball to kubernetes cluster. `kubectl cp` or another mechanism.    
-Once the new bundle is uploaded to the kubernetes cluster, NIC will pick up the new bundle and load in the new WAF policy automatically.
+The final step is to upload the security bundle binary to the Kubernetes cluster.
+
+```shell
+kubectl cp
+```
+
+Once the bundle has been uploaded to the cluster, NGINX Ingress Controller will pick up and automatically load the new WAF policy.
