@@ -14,12 +14,12 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/kr/pretty v0.3.1
-	github.com/nginxinc/nginx-plus-go-client v1.2.1
+	github.com/nginxinc/nginx-plus-go-client v1.2.2
 	github.com/nginxinc/nginx-prometheus-exporter v1.1.2
 	github.com/nginxinc/nginx-service-mesh v1.7.0
 	github.com/nginxinc/telemetry-exporter v0.1.0
-	github.com/prometheus/client_golang v1.18.0
-	github.com/prometheus/common v0.47.0
+	github.com/prometheus/client_golang v1.19.1
+	github.com/prometheus/common v0.48.0
 	github.com/spiffe/go-spiffe/v2 v2.3.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.28.0
