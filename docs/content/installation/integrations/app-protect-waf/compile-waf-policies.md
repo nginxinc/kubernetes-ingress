@@ -178,7 +178,7 @@ curl --location 'https://127.0.0.1/api/platform/v1/security/policies/bundles' \
 
 {{< important >}}
 
-Take note of the *uid* field. 
+Take note of the *uid* field: `"uid": "de08b324-99d8-4155-b2eb-fe687b21034e"`
 
 It is one of two unique IDs we will use to download the bundle: it will be referenced as *bundle-UID*.
 
@@ -320,7 +320,7 @@ spec:
     apBundle: "<bundle-name>.tgz"
     securityLogs:
     - enable: true
-        apLogConf: "<bundle-name>.tgz"
+        apLogBundle: "<bundle-name>.tgz"
         logDest: "syslog:server=syslog-svc.default:514"
 ```
 
