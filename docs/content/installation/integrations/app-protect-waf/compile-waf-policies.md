@@ -353,7 +353,7 @@ spec:
 The final step is to upload the security bundle binary to the Kubernetes cluster.
 
 ```shell
-kubectl cp
+kubectl cp /your/local/path/<bundle_name>.tgz  <namespace>/<pod-name>:etc/nginx/waf/bundles<bundle_name>.tgz
 ```
 
 Once the bundle has been uploaded to the cluster, NGINX Ingress Controller will pick up and automatically load the new WAF policy.
