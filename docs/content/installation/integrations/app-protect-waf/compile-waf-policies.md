@@ -350,7 +350,7 @@ spec:
 
 ## Upload the security bundle
 
-The final step is to upload the security bundle binary to the Kubernetes cluster.
+The final step is to upload the security bundle binary to the NIC pods.
 
 ```shell
 kubectl cp /your/local/path/<bundle_name>.tgz  <namespace>/<pod-name>:etc/nginx/waf/bundles<bundle_name>.tgz
