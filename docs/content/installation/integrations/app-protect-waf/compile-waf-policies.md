@@ -349,7 +349,7 @@ spec:
 
 ## Upload the security bundle
 
-The final step is to upload the security bundle binary to the NIC pods.
+The final step is to upload the security bundle binary to the NGINX Ingress Controller pods.
 
 ```shell
 kubectl cp /your/local/path/<bundle_name>.tgz  <namespace>/<pod-name>:etc/nginx/waf/bundles<bundle_name>.tgz
