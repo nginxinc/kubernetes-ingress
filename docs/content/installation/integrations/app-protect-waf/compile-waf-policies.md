@@ -321,7 +321,7 @@ spec:
     securityLogs:
     - enable: true
         apLogBundle: "<bundle-name>.tgz"
-        logDest: "syslog:server=syslog-svc.default:514"
+        logDest: "<security-log-destination-URL>"
 ```
 
 ## Create VirtualServer resource and apply policy
