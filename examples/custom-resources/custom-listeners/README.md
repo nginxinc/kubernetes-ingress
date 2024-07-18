@@ -155,7 +155,7 @@ when sending requests to the endpoints of this VirtualServer:
     For `/coffee` on `8083`:
 
     ```console
-    curl -k https://cafe.example.com:8083/coffee
+    curl -k http://cafe.example.com:8083/coffee
     ```
 
     ```text
