@@ -99,9 +99,10 @@ type ConfigParams struct {
 	MainServerSSLPreferServerCiphers bool
 	MainServerSSLProtocols           string
 
-	IngressTemplate       *string
-	VirtualServerTemplate *string
-	MainTemplate          *string
+	IngressTemplate         *string
+	VirtualServerTemplate   *string
+	MainTemplate            *string
+	TransportServerTemplate *string
 
 	JWTKey      string
 	JWTLoginURL string
@@ -125,6 +126,7 @@ type ConfigParams struct {
 	LimitReqDryRun     bool
 	LimitReqLogLevel   string
 	LimitReqRejectCode int
+	LimitReqScale      bool
 }
 
 // StaticConfigParams holds immutable NGINX configuration parameters that affect the main NGINX config.
@@ -144,7 +146,9 @@ type StaticConfigParams struct {
 	NginxServiceMesh               bool
 	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool
+	MainAppProtectV5LoadModule     bool
 	MainAppProtectDosLoadModule    bool
+	MainAppProtectV5EnforcerAddr   string
 	InternalRouteServerName        string
 	EnableLatencyMetrics           bool
 	EnableOIDC                     bool
@@ -154,6 +158,7 @@ type StaticConfigParams struct {
 	StaticSSLPath                  string
 	DynamicWeightChangesReload     bool
 	NginxVersion                   nginx.Version
+	AppProtectBundlePath           string
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.

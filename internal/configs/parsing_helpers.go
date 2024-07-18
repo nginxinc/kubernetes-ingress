@@ -250,16 +250,16 @@ func ParseRequestRate(s string) (string, error) {
 	match := rateRegexp.FindStringSubmatch(s)
 
 	if match == nil {
-		return "", errors.New("String does not match rate-pattern: ^(\\d+)(r/s|r/m)$")
+		return "", errors.New("string does not match rate-pattern: ^(\\d+)(r/s|r/m)$")
 	}
 
 	number, err := strconv.Atoi(match[1])
 	if err != nil {
-		return "", errors.New("String does not match rate-pattern")
+		return "", errors.New("string does not match rate-pattern")
 	}
 
 	if number <= 0 {
-		return "", errors.New("Rate must be >0")
+		return "", errors.New("rate must be >0")
 	}
 
 	return s, nil

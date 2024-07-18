@@ -2,20 +2,18 @@
 docs: DOCS-581
 doctypes:
 - ''
-title: DoS Protected Resource
+title: DoS protected resource specification
 toc: true
 weight: 300
 ---
 
-NGINX App Protect DoS Protected Resource Specification
+NGINX App Protect DoS protected resource specification
 
-> Note: This feature is only available in NGINX Plus with App Protect DoS.
+{{< note >}} This feature is only available using the NGINX Plus [NGINX App Protect DoS Module](/nginx-app-protect-dos/deployment-guide/learn-about-deployment/). {{< /note >}}
 
-> Note: The feature is implemented using the NGINX Plus [NGINX App Protect DoS Module](/nginx-app-protect-dos/deployment-guide/learn-about-deployment/).
+## DoS Protected resource specification
 
-## DoS Protected Resource Specification
-
-Below is an example of a dos protected resource.
+Below is an example of a DoS protected resource.
 
 ```yaml
 apiVersion: appprotectdos.f5.com/v1beta1
@@ -27,7 +25,6 @@ spec:
   name: "my-dos"
   apDosMonitor:
     uri: "webapp.example.com"
-
 ```
 
 {{% table %}}
@@ -43,6 +40,7 @@ spec:
 |``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
 |``dosSecurityLog.apDosLogConf`` | The [App Protect DoS log conf]({{< relref "installation/integrations/app-protect-dos/configuration.md#app-protect-dos-logs" >}}) resource. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost &#124; dns-name>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
+|``allowList`` | List of allowed IP addresses and subnet masks. Each entry is represented by an `IPWithMask` string. | ``[]AllowListEntry`` | No |
 {{% /table %}}
 
 ### DosProtectedResource.apDosPolicy
@@ -53,51 +51,56 @@ The `apDosPolicy` is a reference (qualified identifier in the format `namespace/
 
 This is how NGINX App Protect DoS monitors the stress level of the protected object. The monitor requests are sent from localhost (127.0.0.1).
 
-### Invalid DoS Protected Resources
+### Invalid DoS Protected resources
 
-NGINX will treat a dos protected resource as invalid if one of the following conditions is met:
+NGINX will treat a DoS protected resource as invalid if one of the following conditions is met:
 
-- The dos protected resource doesn't pass the [comprehensive validation](#comprehensive-validation).
-- The dos protected resource isn't present in the cluster.
+- The DoS protected resource doesn't pass the [comprehensive validation](#comprehensive-validation).
+- The DoS protected resource isn't present in the cluster.
 
 ### Validation
 
-Two types of validation are available for the dos protected resource:
+Two types of validation are available for the DoS protected resource:
 
 - *Structural validation*, done by `kubectl` and the Kubernetes API server.
-- *Comprehensive validation*, done by the Ingress Controller.
+- *Comprehensive validation*, done by NGINX Ingress Controller.
 
-#### Structural Validation
+#### Structural validation
 
-The custom resource definition for the dos protected resource includes a structural OpenAPI schema, which describes the type of every field of the resource.
+The custom resource definition for the DoS protected resource includes a structural OpenAPI schema, which describes the type of every field of the resource.
 
 If you try to create (or update) a resource that violates the structural schema -- for example, the resource uses a string value instead of a bool in the `enable` field -- `kubectl` and the Kubernetes API server will reject the resource.
 
 - Example of `kubectl` validation:
 
+    ```shell
+    kubectl apply -f apdos-protected.yaml
     ```
-    $ kubectl apply -f apdos-protected.yaml
+    ```shell
     error: error validating "examples/app-protect-dos/apdos-protected.yaml": error validating data: ValidationError(DosProtectedResource.spec.enable): invalid type for com.f5.appprotectdos.v1beta1.DosProtectedResource.spec.enable: got "string", expected "boolean"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 
 - Example of Kubernetes API server validation:
 
+    ```shell
+    kubectl apply -f access-control-policy-allow.yaml --validate=false
     ```
-    $ kubectl apply -f access-control-policy-allow.yaml --validate=false
+    ```shell
     The DosProtectedResource "dos-protected" is invalid: spec.enable: Invalid value: "string": spec.enable in body must be of type boolean: "string"
     ```
 
-If a resource passes structural validation, then the Ingress Controller's comprehensive validation runs.
+If a resource passes structural validation, then NGINX Ingress Controller will start comprehensive validation.
 
-#### Comprehensive Validation
+#### Comprehensive validation
 
-The Ingress Controller validates the fields of a dos protected resource. If a resource is invalid, the Ingress Controller will reject it. The resource will continue to exist in the cluster, but the Ingress Controller will ignore it.
+NGINX Ingress Controller validates the fields of a DoS protected resource. If a resource is invalid, NGINX Ingress Controller will reject it. The resource will continue to exist in the cluster, but NGINX Ingress Controller will ignore it.
 
-You can use `kubectl` to check if the Ingress Controller successfully applied a dos protected resource configuration. For our example `dos-protected` dos protected resource, we can run:
+You can use `kubectl` to check if NGINX Ingress Controller successfully applied a DoS protected resource configuration. For our example `dos-protected` DoS protected resource, we can run:
 
+```shell
+kubectl describe dosprotectedresource dos-protected
 ```
-$ kubectl describe dosprotectedresource dos-protected
-. . .
+```shell
 Events:
   Type    Reason          Age                From                      Message
   ----    ------          ----               ----                      -------
@@ -106,17 +109,18 @@ Events:
 
 Note how the events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
 
-If you create an invalid resource, the Ingress Controller will reject it and emit a Rejected event. For example, if you create a dos protected resource `dos-protected` with an invalid URI `bad` in the `dosSecurityLog/dosLogDest` field, you will get:
+If you create an invalid resource, NGINX Ingress Controller will reject it and emit a Rejected event. For example, if you create a dos protected resource `dos-protected` with an invalid URI `bad` in the `dosSecurityLog/dosLogDest` field, you will get:
 
+```shell
+kubectl describe policy webapp-policy
 ```
-$ kubectl describe policy webapp-policy
-. . .
+```shell
 Events:
   Type     Reason    Age   From                      Message
   ----     ------    ----  ----                      -------
   Warning  Rejected  2s    nginx-ingress-controller  error validating DosProtectedResource: dos-protected invalid field: dosSecurityLog/dosLogDest err: invalid log destination: bad, must follow format: <ip-address | localhost | dns name>:<port> or stderr
 ```
 
-Note how the events section includes a Warning event with the Rejected reason.
+The events section has Warning event with the rejection error in the message.
 
-**Note**: If you make an existing resource invalid, the Ingress Controller will reject it.
+{{< warning >}} If you invalidate an existing resource, NGINX Ingress Controller will reject it. {{< /warning >}}

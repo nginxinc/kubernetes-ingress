@@ -275,6 +275,34 @@ func TestTrimWhiteSpaceFromInputString(t *testing.T) {
 	}
 }
 
+func TestReplaceAll(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newReplaceAll(t)
+	testCases := []struct {
+		InputString  string
+		OldSubstring string
+		NewSubstring string
+		expected     string
+	}{
+		{InputString: "foobarfoo", OldSubstring: "bar", NewSubstring: "foo", expected: "foofoofoo"},
+		{InputString: "footest", OldSubstring: "test", NewSubstring: "bar", expected: "foobar"},
+		{InputString: "barfoo", OldSubstring: "bar", NewSubstring: "test", expected: "testfoo"},
+		{InputString: "foofoofoo", OldSubstring: "foo", NewSubstring: "bar", expected: "barbarbar"},
+	}
+
+	for _, tc := range testCases {
+		var buf bytes.Buffer
+		err := tmpl.Execute(&buf, tc)
+		if err != nil {
+			t.Fatalf("Failed to execute the template %v", err)
+		}
+		if buf.String() != tc.expected {
+			t.Errorf("Template generated wrong config, got %v but expected %v.", buf.String(), tc.expected)
+		}
+	}
+}
+
 func TestContainsSubstring(t *testing.T) {
 	t.Parallel()
 
@@ -477,6 +505,15 @@ func newToUpperTemplate(t *testing.T) *template.Template {
 	return tmpl
 }
 
+func newReplaceAll(t *testing.T) *template.Template {
+	t.Helper()
+	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(`{{replaceAll .InputString .OldSubstring .NewSubstring}}`)
+	if err != nil {
+		t.Fatalf("Failed to parse template: %v", err)
+	}
+	return tmpl
+}
+
 func TestGenerateProxySetHeadersForValidHeadersInMaster(t *testing.T) {
 	t.Parallel()
 
@@ -586,6 +623,12 @@ func TestGenerateProxySetHeadersForInvalidHeadersForErrorsInMaster(t *testing.T)
 			name: "Headers With Special Characters",
 			annotations: map[string]string{
 				"nginx.org/proxy-set-headers": "X-Forwarded-ABC!,BVC§",
+			},
+		},
+		{
+			name: "Header Value With invalid Characters",
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded ABC$",
 			},
 		},
 		{

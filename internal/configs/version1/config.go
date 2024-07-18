@@ -123,6 +123,7 @@ type Server struct {
 	AppProtectDosMonitorProtocol string
 	AppProtectDosMonitorTimeout  uint64
 	AppProtectDosName            string
+	AppProtectDosAllowListPath   string
 	AppProtectDosAccessLogDst    string
 
 	SpiffeCerts bool
@@ -245,6 +246,8 @@ type MainConfig struct {
 	WorkerRlimitNofile                 string
 	WorkerShutdownTimeout              string
 	AppProtectLoadModule               bool
+	AppProtectV5LoadModule             bool
+	AppProtectV5EnforcerAddr           string
 	AppProtectFailureModeAction        string
 	AppProtectCompressedRequestsAction string
 	AppProtectCookieSeed               string

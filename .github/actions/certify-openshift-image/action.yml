@@ -1,0 +1,57 @@
+name: Certify Openshift Image
+description: This action will attempt to certify an image for use in Openshift
+
+inputs:
+  image:
+    description: The image manifest to certify in the format <registry>/<repository>:<tag>
+    required: true
+  project_id:
+    description: The certification project id
+    required: true
+  pyxis_token:
+    description: The Pyxis API Token
+    required: true
+  preflight_version:
+    description: The version of the preflight utility to install
+    required: false
+    default: 1.9.1
+  platforms:
+    description: A comma separated list of architectures in the image manifest to certify
+    required: false
+    default: ""
+
+outputs:
+  result:
+    description: Did the certification succeed?
+    value: ${{ steps.result.outputs.result == 0 && true || false }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install openshift-preflight
+      run: |
+        curl -fsSL https://github.com/redhat-openshift-ecosystem/openshift-preflight/releases/download/${{ inputs.preflight_version }}/preflight-linux-amd64 --output preflight
+        chmod +x preflight
+      shell: bash
+
+    - name: Certify Images
+      id: result
+      run: |
+        result=0
+        if [ -z "${{ inputs.platforms }}" ]; then
+          # list of platforms passed
+          IFS=',' read -ra arch_list <<< "${{ inputs.platforms }}"
+          for arch in "${arch_list[@]}"; do
+              architecture=("${arch#*/}")
+              ./preflight check container ${{ inputs.image }} --pyxis-api-token ${{ inputs.pyxis_token }} --certification-project-id ${{ inputs.project_id }} --platform $architecture --submit
+              if [ $? -ne 0 ]; then
+                result=1
+              fi
+          done
+        else
+          # no platforms passed, this is either a manifest or a single platform image
+          ./preflight check container ${{ inputs.image }} --pyxis-api-token ${{ inputs.pyxis_token }} --certification-project-id ${{ inputs.project_id }} --submit
+          result=$?
+        fi
+        echo "result=$result" >> $GITHUB_OUTPUT
+      shell: bash

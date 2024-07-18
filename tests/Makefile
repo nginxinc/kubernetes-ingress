@@ -55,6 +55,9 @@ run-tests-in-kind: ## Run tests in Kind
 	docker run --network=kind --rm \
 		-v $(KIND_KUBE_CONFIG_FOLDER):/root/.kube \
 		-v $(ROOT_DIR)/tests:/workspace/tests \
+		-v $(ROOT_DIR)/deployments:/workspace/deployments \
+		-v $(ROOT_DIR)/config:/workspace/config \
+		-v $(ROOT_DIR)/pyproject.toml:/workspace/pyproject.toml \
 		$(TEST_PREFIX):$(TEST_TAG) \
  		--context=kind-$(strip $(K8S_CLUSTER_NAME)) \
  		--image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) \
@@ -91,3 +94,10 @@ image-load: ## Load the image into the Kind K8S cluster
 test-lint: ## Run Python linting tools
 	isort .
 	black .
+
+
+.PHONY: upgrade-resources
+upgrade-resources:
+## Create and delete resources for upgrade tests e.g. `make upgrade-resources PYTEST_ARGS="create OR delete"`
+	pip install -r ../tests/requirements.txt --no-deps
+	pytest -v -s -m $(PYTEST_ARGS)

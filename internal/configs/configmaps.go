@@ -3,8 +3,6 @@ package configs
 import (
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 
@@ -66,20 +64,6 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if proxyPassHeaders, exists := GetMapKeyAsStringSlice(cfgm.Data, "proxy-pass-headers", cfgm, ","); exists {
 		cfgParams.ProxyPassHeaders = proxyPassHeaders
-	}
-
-	if proxySetHeaders, exists := GetMapKeyAsStringSlice(cfgm.Data, "proxy-set-headers", cfgm, ","); exists {
-		var headers []version2.Header
-		for _, headerAndValue := range proxySetHeaders {
-			parts := strings.SplitN(headerAndValue, " ", 2)
-			name := strings.TrimSpace(parts[0])
-			var value string
-			if len(parts) > 1 {
-				value = strings.TrimSpace(parts[1])
-			}
-			headers = append(headers, version2.Header{Name: name, Value: value})
-		}
-		cfgParams.ProxySetHeaders = headers
 	}
 
 	if clientMaxBodySize, exists := cfgm.Data["client-max-body-size"]; exists {
@@ -361,6 +345,10 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.VirtualServerTemplate = &virtualServerTemplate
 	}
 
+	if transportServerTemplate, exists := cfgm.Data["transportserver-template"]; exists {
+		cfgParams.TransportServerTemplate = &transportServerTemplate
+	}
+
 	if mainStreamSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "stream-snippets", cfgm, "\n"); exists {
 		cfgParams.MainStreamSnippets = mainStreamSnippets
 	}
@@ -581,7 +569,9 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		VariablesHashBucketSize:            config.VariablesHashBucketSize,
 		VariablesHashMaxSize:               config.VariablesHashMaxSize,
 		AppProtectLoadModule:               staticCfgParams.MainAppProtectLoadModule,
+		AppProtectV5LoadModule:             staticCfgParams.MainAppProtectV5LoadModule,
 		AppProtectDosLoadModule:            staticCfgParams.MainAppProtectDosLoadModule,
+		AppProtectV5EnforcerAddr:           staticCfgParams.MainAppProtectV5EnforcerAddr,
 		AppProtectFailureModeAction:        config.MainAppProtectFailureModeAction,
 		AppProtectCompressedRequestsAction: config.MainAppProtectCompressedRequestsAction,
 		AppProtectCookieSeed:               config.MainAppProtectCookieSeed,
