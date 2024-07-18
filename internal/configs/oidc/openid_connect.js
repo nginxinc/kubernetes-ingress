@@ -197,9 +197,10 @@ function codeExchange(r) {
                         } else {
                             r.variables.new_access_token = "";
                         }
+
                         r.headersOut["Set-Cookie"] = "auth_token=" + r.variables.request_id + "; " + r.variables.oidc_cookie_flags;
-                        r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
-                   }
+                        r.return(302, r.variables.redirect_base + decodeURIComponent(r.variables.cookie_auth_redir));
+                    }
                 );
             } catch (e) {
                 r.error("OIDC authorization code sent but token response is not JSON. " + reply.responseText);
@@ -265,10 +266,43 @@ function validateIdToken(r) {
 
 function logout(r) {
     r.log("OIDC logout for " + r.variables.cookie_auth_token);
-    r.variables.session_jwt   = "-";
-    r.variables.access_token  = "-";
-    r.variables.refresh_token = "-";
-    r.return(302, r.variables.oidc_logout_redirect);
+
+    // Determine if oidc_logout_redirect is a full URL or a relative path
+    function getLogoutRedirectUrl(base, redirect) {
+        return redirect.match(/^(http|https):\/\//) ? redirect : base + redirect;
+    }
+
+    var logoutRedirectUrl = getLogoutRedirectUrl(r.variables.redirect_base, r.variables.oidc_logout_redirect);
+
+    // Helper function to perform the final logout steps
+    function performLogout(redirectUrl) {
+        r.variables.session_jwt = '-';
+        r.variables.access_token = '-';
+        r.variables.refresh_token = '-';
+        r.return(302, redirectUrl);
+    }
+
+    // Check if OIDC end session endpoint is available
+    if (r.variables.oidc_end_session_endpoint) {
+
+        if (!r.variables.session_jwt || r.variables.session_jwt === '-') {
+            if (r.variables.refresh_token && r.variables.refresh_token !== '-') {
+                // Renew ID token if only refresh token is available
+                auth(r, 0);
+            } else {
+                performLogout(logoutRedirectUrl);
+                return;
+            }
+        }
+
+        // Construct logout arguments for RP-initiated logout
+        var logoutArgs = "?post_logout_redirect_uri=" + encodeURIComponent(logoutRedirectUrl) +
+            "&id_token_hint=" + encodeURIComponent(r.variables.session_jwt);
+        performLogout(r.variables.oidc_end_session_endpoint + logoutArgs);
+    } else {
+        // Fallback to traditional logout approach
+        performLogout(logoutRedirectUrl);
+    }
 }
 
 function getAuthZArgs(r) {
@@ -283,8 +317,10 @@ function getAuthZArgs(r) {
         authZArgs += "&" + r.variables.oidc_authz_extra_args;
     }
 
+    var encodedRequestUri = encodeURIComponent(r.variables.request_uri);
+
     r.headersOut['Set-Cookie'] = [
-        "auth_redir=" + r.variables.request_uri + "; " + r.variables.oidc_cookie_flags,
+        "auth_redir=" + encodedRequestUri + "; " + r.variables.oidc_cookie_flags,
         "auth_nonce=" + noncePlain + "; " + r.variables.oidc_cookie_flags
     ];
 
