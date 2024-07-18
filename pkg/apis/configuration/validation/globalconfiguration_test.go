@@ -74,6 +74,12 @@ func TestValidateListeners(t *testing.T) {
 			Port:     53,
 			Protocol: "UDP",
 		},
+		{
+			Name:     "test-listener-ip",
+			IP:       "127.0.0.1",
+			Port:     8080,
+			Protocol: "HTTP",
+		},
 	}
 
 	gcv := createGlobalConfigurationValidator()
@@ -81,6 +87,34 @@ func TestValidateListeners(t *testing.T) {
 	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) > 0 {
 		t.Errorf("validateListeners() returned errors %v for valid input", allErrs)
+	}
+}
+
+func TestValidateListeners_FailsOnInvalidIP(t *testing.T) {
+	t.Parallel()
+
+	// todo: implement tests for invalid IP addresses, hint use k8s validators for IP used in the `externaldns` pkg
+	// implement IP validation in the getalidListeners
+	listeners := []conf_v1.Listener{
+		{
+			Name:     "test-listener-1",
+			IP:       "267.0.0.1", // invalid IP
+			Port:     8080,
+			Protocol: "HTTP",
+		},
+		{
+			Name:     "test-listener-2",
+			IP:       "127.0.0", // invalid IP, missing octet
+			Port:     8080,
+			Protocol: "HTTP",
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
 	}
 }
 
