@@ -45,52 +45,92 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 	allErrs := field.ErrorList{}
 
 	listenerNames := sets.Set[string]{}
-	portProtocolCombinations := sets.Set[string]{}
-
-	portProtocolMap := make(map[int]string)
+	ipPortProtocolCombinations := make(map[string]map[int]string) // map[IP]map[Port]Protocol
 	var validListeners []conf_v1.Listener
 
 	for i, l := range listeners {
 		idxPath := fieldPath.Index(i)
-		portProtocolKey := generatePortProtocolKey(l.Port, l.Protocol)
 		listenerErrs := gcv.validateListener(l, idxPath)
 		if len(listenerErrs) > 0 {
 			allErrs = append(allErrs, listenerErrs...)
-		} else if listenerNames.Has(l.Name) {
-			allErrs = append(allErrs, field.Duplicate(idxPath.Child("name"), l.Name))
-		} else if portProtocolCombinations.Has(portProtocolKey) {
-			msg := fmt.Sprintf("Listener %s: Duplicated port/protocol combination %s", l.Name, portProtocolKey)
-			allErrs = append(allErrs, field.Duplicate(fieldPath, msg))
-		} else if protocol, ok := portProtocolMap[l.Port]; ok {
-			var msg string
-			switch protocol {
-			case "HTTP":
-				if l.Protocol == "TCP" || l.Protocol == "UDP" {
-					msg = fmt.Sprintf(
-						"Listener %s with protocol %s can't use port %d. Port is taken by an HTTP listener",
-						l.Name, l.Protocol, l.Port)
-					allErrs = append(allErrs, field.Forbidden(fieldPath, msg))
-				} else {
-					validListeners = append(validListeners, l)
-				}
-			case "TCP", "UDP":
-				if l.Protocol == "HTTP" {
-					msg = fmt.Sprintf(
-						"Listener %s with protocol %s can't use port %d. Port is taken by TCP or UDP listener",
-						l.Name, l.Protocol, l.Port)
-					allErrs = append(allErrs, field.Forbidden(fieldPath, msg))
-				} else {
-					validListeners = append(validListeners, l)
-				}
-			}
-		} else {
-			listenerNames.Insert(l.Name)
-			portProtocolCombinations.Insert(portProtocolKey)
-			portProtocolMap[l.Port] = l.Protocol
-			validListeners = append(validListeners, l)
+			continue
 		}
+
+		if err := gcv.validateIP(l, idxPath); err != nil {
+			allErrs = append(allErrs, err)
+			continue
+		}
+
+		if err := gcv.checkForDuplicateName(listenerNames, l, idxPath); err != nil {
+			allErrs = append(allErrs, err)
+			continue
+		}
+
+		if err := gcv.checkPortProtocolConflicts(ipPortProtocolCombinations, l, fieldPath); err != nil {
+			allErrs = append(allErrs, err)
+			continue
+		}
+
+		gcv.updatePortProtocolCombinations(ipPortProtocolCombinations, l)
+		validListeners = append(validListeners, l)
 	}
 	return validListeners, allErrs
+}
+
+// validateIP checks if the provided IP address of the listener is valid.
+func (gcv *GlobalConfigurationValidator) validateIP(listener conf_v1.Listener, idxPath *field.Path) *field.Error {
+	if listener.IP != "" {
+		ipPath := idxPath.Child("IP")
+		if len(validation.IsValidIP(ipPath, listener.IP)) > 0 {
+			return field.Invalid(ipPath, listener.IP, "invalid IP address")
+		}
+	}
+	return nil
+}
+
+// checkForDuplicateName checks if the listener name is unique.
+func (gcv *GlobalConfigurationValidator) checkForDuplicateName(listenerNames sets.Set[string], listener conf_v1.Listener, idxPath *field.Path) *field.Error {
+	if listenerNames.Has(listener.Name) {
+		return field.Duplicate(idxPath.Child("name"), listener.Name)
+	}
+	listenerNames.Insert(listener.Name)
+	return nil
+}
+
+// checkPortProtocolConflicts ensures no duplicate or conflicting port/protocol combinations exist.
+func (gcv *GlobalConfigurationValidator) checkPortProtocolConflicts(combinations map[string]map[int]string, listener conf_v1.Listener, fieldPath *field.Path) *field.Error {
+	ip := listener.IP
+	if ip == "" {
+		ip = ""
+	}
+
+	if combinations[ip] == nil {
+		combinations[ip] = make(map[int]string)
+	}
+
+	existingProtocol, exists := combinations[ip][listener.Port]
+	if exists {
+		if existingProtocol == listener.Protocol {
+			return field.Duplicate(fieldPath, fmt.Sprintf("Listener %s: Duplicated port/protocol combination %d/%s", listener.Name, listener.Port, listener.Protocol))
+		} else if listener.IP != "" || (listener.Protocol == "HTTP" && (existingProtocol == "UDP" || existingProtocol == "TCP")) || ((listener.Protocol == "UDP" || listener.Protocol == "TCP") && existingProtocol == "HTTP") {
+			return field.Invalid(fieldPath.Child("port"), listener.Port, fmt.Sprintf("Listener %s: Port %d is used with a different protocol (current: %s, new: %s)", listener.Name, listener.Port, existingProtocol, listener.Protocol))
+		}
+	}
+	return nil
+}
+
+// updatePortProtocolCombinations updates the port/protocol combinations map with the given listener's details.
+func (gcv *GlobalConfigurationValidator) updatePortProtocolCombinations(combinations map[string]map[int]string, listener conf_v1.Listener) {
+	ip := listener.IP
+	if ip == "" {
+		ip = ""
+	}
+
+	if combinations[ip] == nil {
+		combinations[ip] = make(map[int]string)
+	}
+
+	combinations[ip][listener.Port] = listener.Protocol
 }
 
 func generatePortProtocolKey(port int, protocol string) string {
