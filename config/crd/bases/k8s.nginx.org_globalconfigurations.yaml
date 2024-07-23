@@ -46,6 +46,8 @@ spec:
                 items:
                   description: Listener defines a listener.
                   properties:
+                    ip:
+                      type: string
                     name:
                       type: string
                     port:

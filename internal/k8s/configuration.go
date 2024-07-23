@@ -200,7 +200,6 @@ type VirtualServerConfiguration struct {
 	Warnings            []string
 	HTTPPort            int
 	HTTPSPort           int
-	IP                  string
 }
 
 // NewVirtualServerConfiguration creates a VirtualServerConfiguration.
@@ -826,10 +825,6 @@ func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfi
 				vsc.HTTPSPort = gcListener.Port
 			}
 		}
-
-		if gcListener, ok := c.listenerMap[vs.Spec.Listener.IP]; ok {
-			vsc.IP = gcListener.IP
-		}
 	}
 }
 
@@ -1171,15 +1166,6 @@ func (c *Configuration) addWarningsForVirtualServersWithMissConfiguredListeners(
 				if _, exists := c.listenerMap[vsc.VirtualServer.Spec.Listener.HTTPS]; !exists {
 					warningMsg := fmt.Sprintf("Listener %s is not defined in GlobalConfiguration",
 						vsc.VirtualServer.Spec.Listener.HTTPS)
-					c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
-					continue
-				}
-			}
-
-			if vsc.VirtualServer.Spec.Listener.IP != "" {
-				if _, exists := c.listenerMap[vsc.VirtualServer.Spec.Listener.IP]; !exists {
-					warningMsg := fmt.Sprintf("Listener %s is not defined in GlobalConfiguration",
-						vsc.VirtualServer.Spec.Listener.IP)
 					c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
 					continue
 				}
@@ -1795,10 +1781,6 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 		}
 
 		if newVsc.HTTPPort != oldVsc.HTTPPort || newVsc.HTTPSPort != oldVsc.HTTPSPort {
-			updatedHosts = append(updatedHosts, h)
-		}
-
-		if newVsc.IP != oldVsc.IP {
 			updatedHosts = append(updatedHosts, h)
 		}
 	}

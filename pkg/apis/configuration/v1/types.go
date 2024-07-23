@@ -62,7 +62,6 @@ type VirtualServerSpec struct {
 type VirtualServerListener struct {
 	HTTP  string `json:"http"`
 	HTTPS string `json:"https"`
-	IP    string `json:"ip"`
 }
 
 // ExternalDNS defines externaldns sub-resource of a virtual server.
