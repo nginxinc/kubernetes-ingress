@@ -92,9 +92,15 @@ data:
         # Rest of configuration file truncated
 ```
 
-> **IMPORTANT**
->
-> In Step 3 an NGINX Ingress Controller will be deployed/updated that will use this ConfigMap. Any changes made to this ConfigMap must be made **before** deploying/updating NGINX Ingress Controller. If an update is applied to the ConfigMap after NGINX Ingress Controller is deployed, it will not get applied. Applying any updates to the data in this ConfigMap will require NGINX Ingress Controller to be re-deployed.
+{{< important >}} 
+
+In the next step, NGINX Ingress Controller will be deployed using this ConfigMap. 
+
+Any changes made to this ConfigMap must be made **before** deploying or updating NGINX Ingress Controller. If an update is applied to the ConfigMap after NGINX Ingress Controller is deployed, it will not be applied. 
+
+Applying any updates to the data in this ConfigMap will require NGINX Ingress Controller to be re-deployed.
+
+{{< /important >}}
 
 ## Step 3 - Add Volume and VolumeMount to the Ingress Controller deployment
 

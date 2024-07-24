@@ -110,9 +110,7 @@ You can install the `edge` version by specifying the `--version` flag with the v
 helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.0.0-edge
 ```
 
-> **Warning**
->
-> The `edge` version is not intended for production use. It is intended for testing and development purposes only.
+{{< warning >}} The `edge` version is not intended for production use. It is intended for testing and development purposes only. {{< /warning >}}
 
 ## Managing the Chart via Sources
 
