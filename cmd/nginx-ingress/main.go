@@ -29,7 +29,6 @@ import (
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/promlog"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	util_version "k8s.io/apimachinery/pkg/util/version"
@@ -39,6 +38,9 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	kitlog "github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 // Injected during build
@@ -739,15 +741,8 @@ func createPlusAndLatencyCollectors(
 			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
 				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames, nil, nil)
-			infoLevel := new(promlog.AllowedLevel)
-			err := infoLevel.Set("info")
-			if err != nil {
-				glog.Error("Error setting prometheus exporter log level")
-			}
-			promlogConfig := &promlog.Config{
-				Level: infoLevel,
-			}
-			logger := promlog.New(promlogConfig)
+			logger := kitlog.NewLogfmtLogger(os.Stdout)
+			logger = level.NewFilter(logger, level.AllowError())
 			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
 			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
 		} else {
