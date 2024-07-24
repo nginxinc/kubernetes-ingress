@@ -9,6 +9,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.2
 	github.com/gkampitakis/go-snaps v0.5.4
 	github.com/go-chi/chi/v5 v5.1.0
+	github.com/go-kit/log v0.2.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/glog v1.2.0
 	github.com/google/go-cmp v0.6.0
@@ -19,7 +20,6 @@ require (
 	github.com/nginxinc/nginx-service-mesh v1.7.0
 	github.com/nginxinc/telemetry-exporter v0.1.0
 	github.com/prometheus/client_golang v1.18.0
-	github.com/prometheus/common v0.47.0
 	github.com/spiffe/go-spiffe/v2 v2.3.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.28.0
@@ -63,7 +63,6 @@ require (
 	github.com/gkampitakis/go-diff v1.3.2 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.6 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
-	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-ldap/ldap/v3 v3.4.8 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -96,6 +95,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.47.0 // indirect
 	github.com/prometheus/procfs v0.15.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/spf13/cobra v1.8.0 // indirect

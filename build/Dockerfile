@@ -12,6 +12,7 @@ ARG WAF_VERSION=v4
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
 FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.0@sha256:1a77df60fd641db9e6a9323c8a484f642eb0e276df06104b592ecfd515bc1aef AS opentracing-lib
 FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.0-alpine@sha256:8e582e8cac837ad71372fbe1d80ab4d9894fa9dd9d3ad61163ebe87403b6b9db AS alpine-opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.0@sha256:760ed8cff8e0ae835b1873400673d95642e39420e42a02379e0619545008bc07 AS ubi-ppc64le
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.0-alpine3.19@sha256:1744ae3a8e795daf771f3f7df33b83160981545abb1f1597338e2769d06aa1cc AS alpine-fips-3.19
 FROM redhat/ubi9-minimal@sha256:a7d837b00520a32502ada85ae339e33510cdfdbc8d2ddf460cc838e12ec5fa5a AS ubi-minimal
@@ -37,23 +38,6 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
 	&& ldconfig
-
-
-############################################# Base image for UBI #############################################
-FROM nginxcontrib/nginx:1.27.0-ubi@sha256:5547fe1036d63cc9dfdc3aba1cfc822dbb42dbf63ec68e32bcf363e0b1653fc4 AS ubi
-ARG IC_VERSION
-
-LABEL name="NGINX Ingress Controller" \
-	maintainer="kubernetes@nginx.com" \
-	vendor="NGINX Inc" \
-	version="${IC_VERSION}" \
-	release="1" \
-	summary="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	description="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	io.k8s.description="NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
-
-COPY --link --chown=101:0 LICENSE /licenses/
 
 
 ############################################# NGINX files #############################################
@@ -316,6 +300,46 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ "${NGINX_AGENT}" = "true" ]; then \
 	agent.sh; \
 	fi
+
+
+############################################# Base image for UBI #############################################
+FROM ubi-minimal AS ubi
+ARG IC_VERSION
+
+LABEL name="NGINX Ingress Controller" \
+	maintainer="kubernetes@nginx.com" \
+	vendor="NGINX Inc" \
+	version="${IC_VERSION}" \
+	release="1" \
+	summary="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	description="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	io.k8s.description="NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
+
+COPY --link --chown=101:0 LICENSE /licenses/
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN --mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
+	--mount=type=bind,from=nginx-files,src=ubi-setup.sh,target=/usr/local/bin/ubi-setup.sh \
+	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
+	--mount=type=bind,from=ubi-ppc64le,src=/,target=/ubi-bin/ \
+	ubi-setup.sh; \
+	if [ $(uname -p) != ppc64le ]; then \
+	printf "%s\n" "[nginx]" "name=nginx repo" \
+	"baseurl=https://nginx.org/packages/mainline/centos/9/\$basearch/" \
+	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
+	&& microdnf --nodocs install -y nginx nginx-module-njs nginx-module-image-filter nginx-module-xslt \
+	&& rm /etc/yum.repos.d/nginx.repo; \
+	else \
+	rpm -qa --queryformat "%{NAME}\n" | sort > pkgs-installed \
+	&& microdnf --nodocs --setopt=install_weak_deps=0 install -y diffutils dnf \
+	&& rpm -qa --queryformat "%{NAME}\n" | sort > pkgs-new \
+	&& dnf install -y /ubi-bin/*.rpm \
+	&& dnf -q repoquery --resolve --requires --recursive --whatrequires nginx --queryformat "%{NAME}" > pkgs-nginx \
+	&& dnf --setopt=protected_packages= remove -y $(comm -13 pkgs-installed pkgs-new | comm -13 pkgs-nginx -) \
+	&& rm pkgs-installed pkgs-new pkgs-nginx; \
+	fi \
+	&& ubi-clean.sh
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
