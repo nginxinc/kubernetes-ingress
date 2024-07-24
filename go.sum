@@ -189,8 +189,8 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/nginxinc/glog v1.1.2 h1:zyoZXhCoYvNMJq4qMsKislUCGyJ4eU2gNl3Nt7cjESg=
 github.com/nginxinc/glog v1.1.2/go.mod h1:Q2FpGp/qFhJEVnuC88BVfbLDPmio9aHYUj4al6w0138=
-github.com/nginxinc/nginx-plus-go-client v1.2.2 h1:sl7HqNDDZq2EVu0eQQVoZ6PKYGa4h2dB/Qr5Ib0YKGw=
-github.com/nginxinc/nginx-plus-go-client v1.2.2/go.mod h1:n8OFLzrJulJ2fur28Cwa1Qp5DZNS2VicLV+Adt30LQ4=
+github.com/nginxinc/nginx-plus-go-client v1.2.1 h1:65L9xgPDNbEbd23FTTCcaZ2qF9TX5/Z6vkkEl7RKiVo=
+github.com/nginxinc/nginx-plus-go-client v1.2.1/go.mod h1:n8OFLzrJulJ2fur28Cwa1Qp5DZNS2VicLV+Adt30LQ4=
 github.com/nginxinc/nginx-prometheus-exporter v1.1.2 h1:X2Oe/TOvOF4Ef/2mw72xj2BEWG+7Fud0PRngJlIy9GI=
 github.com/nginxinc/nginx-prometheus-exporter v1.1.2/go.mod h1:A1Fy5uLQonVGmwLC5xNxBX+vPFgYzBOvPjNRs8msT0k=
 github.com/nginxinc/nginx-service-mesh v1.7.0 h1:oxKr+Jdbxkos10VTy5xF2UHCcmfIhqWNlsOK/zPnZDM=
