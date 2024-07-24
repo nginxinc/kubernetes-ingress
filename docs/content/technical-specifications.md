@@ -59,7 +59,7 @@ _All images include NGINX 1.27.0._
 {{< bootstrap-table "table table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | DockerHub image | Architectures |
 | ---| --- | --- | --- | --- |
-|Alpine-based image | ``nginx:1.27.0-alpine``,<br>based on on ``alpine:3.19`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:{{< nic-version >}}-alpine`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
+|Alpine-based image | ``nginx:1.27.0-alpine``,<br>based on on ``alpine:3.20`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:{{< nic-version >}}-alpine`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
 |Debian-based image | ``nginx:1.27.0``,<br>based on on ``debian:12-slim`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:{{< nic-version >}}`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
 |Ubi-based image | ``redhat/ubi9-minimal``,<br>based on on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:{{< nic-version >}}-ubi`` | arm64<br>amd64<br>ppc64le<br>s390x |
 {{% /bootstrap-table %}}
