@@ -87,7 +87,7 @@ jobs:
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -342,7 +342,7 @@ jobs:
           pyxis_token: ${{ secrets.PYXIS_API_TOKEN }}
 
   scan-docker-oss:
-    name: Scan Docker OSS
+    name: Scan ${{ matrix.image }}-${{ matrix.target }}
     runs-on: ubuntu-22.04
     needs: [checks]
     permissions:
@@ -385,7 +385,7 @@ jobs:
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -401,7 +401,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scount
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -427,12 +427,12 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@4fa2a7953630fd2f3fb380f21be14ede0169dd4f # v3.25.12
+        uses: github/codeql-action/upload-sarif@2d790406f505036ef40ecba973cc774a50395aac # v3.25.13
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
   scan-docker-plus:
-    name: Scan Docker Plus
+    name: Scan ${{ matrix.image }}-${{ matrix.target }}
     runs-on: ubuntu-22.04
     needs: [checks]
     permissions:
@@ -475,7 +475,7 @@ jobs:
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -491,7 +491,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scount
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -517,12 +517,12 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@4fa2a7953630fd2f3fb380f21be14ede0169dd4f # v3.25.12
+        uses: github/codeql-action/upload-sarif@2d790406f505036ef40ecba973cc774a50395aac # v3.25.13
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
   scan-docker-nap:
-    name: Scan Docker Plus + NAP WAF/DOS
+    name: Scan ${{ matrix.image }}-${{ matrix.target }}-${{ matrix.nap_modules }}
     runs-on: ubuntu-22.04
     needs: [checks]
     permissions:
@@ -537,10 +537,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
+      - name: NAP modules
+        id: nap_modules
+        run: |
+          [[ "${{ matrix.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ matrix.nap_modules }}"
+          echo "name=${name}" >> $GITHUB_OUTPUT
+        if: ${{ matrix.nap_modules != '' }}
+
       - name: Make directory for security scan results
         id: directory
         run: |
-          directory=${{ matrix.image }}-${{ matrix.target }}-results
+          directory=${{ matrix.image }}-${{ matrix.target }}-${{ steps.nap_modules.outputs.name }}-results
           echo "directory=${directory}" >> $GITHUB_OUTPUT
           mkdir -p "${directory}"
 
@@ -565,7 +572,7 @@ jobs:
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -581,7 +588,7 @@ jobs:
           ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scount
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -607,7 +614,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@4fa2a7953630fd2f3fb380f21be14ede0169dd4f # v3.25.12
+        uses: github/codeql-action/upload-sarif@2d790406f505036ef40ecba973cc774a50395aac # v3.25.13
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
