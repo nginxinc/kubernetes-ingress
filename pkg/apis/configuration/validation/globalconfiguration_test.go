@@ -93,28 +93,144 @@ func TestValidateListeners(t *testing.T) {
 func TestValidateListeners_FailsOnInvalidIP(t *testing.T) {
 	t.Parallel()
 
-	// todo: implement tests for invalid IP addresses, hint use k8s validators for IP used in the `externaldns` pkg
-	// implement IP validation in the getalidListeners
+	testCases := []struct {
+		name      string
+		listeners []conf_v1.Listener
+	}{
+		{
+			name: "Invalid IP",
+			listeners: []conf_v1.Listener{
+				{Name: "test-listener-1", IP: "267.0.0.1", Port: 8082, Protocol: "UDP"},
+			},
+		},
+		{
+			name: "Invalid IP with missing octet",
+			listeners: []conf_v1.Listener{
+				{Name: "test-listener-2", IP: "127.0.0", Port: 8080, Protocol: "HTTP"},
+			},
+		},
+		{
+			name: "Valid and invalid IPs",
+			listeners: []conf_v1.Listener{
+				{Name: "test-listener-3", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+				{Name: "test-listener-4", IP: "256.256.256.256", Port: 8081, Protocol: "HTTP"},
+			},
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, allErrs := gcv.getValidListeners(tc.listeners, field.NewPath("listeners"))
+			if len(allErrs) == 0 {
+				t.Errorf("Expected errors for invalid IPs, but got none")
+			} else {
+				for _, err := range allErrs {
+					t.Logf("Caught expected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateListeners_FailsOnDuplicateNamesDifferentIP(t *testing.T) {
+	t.Parallel()
+
 	listeners := []conf_v1.Listener{
-		{
-			Name:     "test-listener-1",
-			IP:       "267.0.0.1", // invalid IP
-			Port:     8080,
-			Protocol: "HTTP",
-		},
-		{
-			Name:     "test-listener-2",
-			IP:       "127.0.0", // invalid IP, missing octet
-			Port:     8080,
-			Protocol: "HTTP",
-		},
+		{Name: "test-listener", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+		{Name: "test-listener", IP: "192.168.1.2", Port: 8081, Protocol: "HTTP"},
 	}
 
 	gcv := createGlobalConfigurationValidator()
 
 	_, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) == 0 {
-		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+		t.Errorf("validateListeners() returned no errors %v for duplicate names", allErrs)
+	}
+}
+
+func TestValidateListeners_FailsOnPortProtocolConflictsSameIP(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		listeners []conf_v1.Listener
+	}{
+		{
+			name: "Same port used with UDP and HTTP protocols",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "UDP"},
+				{Name: "listener-2", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+			},
+		},
+		{
+			name: "Same port used with the same protocol",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+				{Name: "listener-2", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+			},
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, allErrs := gcv.getValidListeners(tc.listeners, field.NewPath("listeners"))
+			if len(allErrs) > 0 {
+				t.Logf("Caught expected error(s): %v", allErrs)
+			}
+		})
+	}
+}
+
+func TestValidateListeners_PassesOnValidIPListeners(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		listeners []conf_v1.Listener
+	}{
+		{
+			name: "Different Ports and IPs",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IP: "192.168.1.2", Port: 9090, Protocol: "HTTP"},
+			},
+		},
+		{
+			name: "Same IP, Same Protocol and Different Port",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IP: "192.168.1.1", Port: 9090, Protocol: "HTTP"},
+			},
+		},
+		{
+			name: "Same IP, Different Protocol and Different Port",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+				{Name: "listener-2", IP: "192.168.1.1", Port: 9090, Protocol: "UDP"},
+			},
+		},
+		{
+			name: "Same IP, Different Protocol and Same Port",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "UDP"},
+				{Name: "listener-2", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+			},
+		},
+	}
+
+	gcv := createGlobalConfigurationValidator()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, allErrs := gcv.getValidListeners(tc.listeners, field.NewPath("listeners"))
+			if len(allErrs) != 0 {
+				t.Errorf("Unexpected errors for valid listeners: %v", allErrs)
+			}
+		})
 	}
 }
 
