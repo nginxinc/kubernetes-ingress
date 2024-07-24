@@ -113,7 +113,11 @@ To add the [log configurations](/nginx-app-protect-waf/v4/logging-overview/secur
 1. Add the log configuration to the `spec` field in the `APLogConf` resource.
 1. Add a reference to `APLogConf` in the [VirtualServer Policy resource]({{< relref "configuration/policy-resource.md#waf" >}}) or the [Ingress resource]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations.md#app-protect" >}}) as per the documentation.
 
-   > **Note**: The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. NGINX Ingress Controller will transform the YAML into a valid JSON WAF log config.
+{{< note >}}
+
+The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. NGINX Ingress Controller will transform the YAML into a valid JSON WAF log config.
+
+{{< /note >}}
 
 For example, say you want to [log state changing requests](/nginx-app-protect-waf/v4/logging-overview/security-log/#security-log-configuration-file) for your VirtualServer or Ingress resources using NGINX App Protect WAF. The  log configuration looks like this:
 
@@ -148,16 +152,26 @@ spec:
 
 You can define NGINX App Protect WAF [User-Defined Signatures](/nginx-app-protect-waf/v4/configuration-guide/configuration/#user-defined-signatures) for your VirtualServer or Ingress resources by creating an `APUserSig` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
- > **Note**: The field `revisionDatetime` is not currently supported.
+{{< note >}}
 
-> **Note**: `APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Refer to [NGINX Fails to Start or Reload]({{< relref "installation/integrations/app-protect-waf/troubleshooting-app-protect-waf.md#nginx-fails-to-start-or-reload" >}}) for more information.
+The field `revisionDatetime` is not currently supported.
+
+`APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Read [NGINX fails to start or reload]({{< relref "installation/integrations/app-protect-waf/troubleshooting-app-protect-waf.md#nginx-fails-to-start-or-reload" >}}) for more information.
+
+{{< /note >}}
 
 To add the [User Defined Signatures](/nginx-app-protect-waf/v4/configuration-guide/configuration/#user-defined-signatures) to a VirtualServer or Ingress resource:
 
 1. Create an `APUserSig` Custom resource manifest.
 2. Add the desired User defined signature to the `spec` field in the `APUserSig` resource.
 
-   > **Note**: The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. The Ingress Controller will transform the YAML into a valid JSON User-Defined signature. There is no need to reference the user defined signature resource in the Policy or Ingress resources.
+{{< note >}}
+
+The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. 
+
+NGINX Ingress Controller will transform the YAML into a valid JSON User-Defined signature. There is no need to reference the user defined signature resource in the Policy or Ingress resources.
+
+{{< /note >}}
 
 For example, say you want to create the following user defined signature:
 
