@@ -149,6 +149,7 @@ def clean_up(request, kube_apis, ingress_controller_prerequisites, test_namespac
 
 
 @pytest.mark.vs
+@pytest.mark.vs_config_map
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -342,6 +343,7 @@ class TestVirtualServerConfigMapNoTls:
 
 
 @pytest.mark.vs
+@pytest.mark.vs_config_map
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -362,7 +364,6 @@ class TestVirtualServerConfigMapWithTls:
         virtual_server_setup,
         clean_up,
     ):
-        ic_pods_amount = get_pods_amount(kube_apis.v1, ingress_controller_prerequisites.namespace)
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         initial_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
 

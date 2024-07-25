@@ -216,6 +216,7 @@ type NewLoadBalancerControllerInput struct {
 	WatchNamespaceLabel          string
 	EnableTelemetryReporting     bool
 	TelemetryReportingEndpoint   string
+	BuildOS                      string
 	NICVersion                   string
 	DynamicWeightChangesReload   bool
 	InstallationFlags            []string
@@ -354,8 +355,12 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	// NIC Telemetry Reporting
 	if input.EnableTelemetryReporting {
+		// Default endpoint
 		exporterCfg := telemetry.ExporterCfg{
-			Endpoint: input.TelemetryReportingEndpoint,
+			Endpoint: "oss.edge.df.f5.com:443",
+		}
+		if input.TelemetryReportingEndpoint != "" {
+			exporterCfg.Endpoint = input.TelemetryReportingEndpoint
 		}
 
 		exporter, err := telemetry.NewExporter(exporterCfg)
@@ -367,6 +372,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			K8sClientReader:     input.KubeClient,
 			Version:             input.NICVersion,
 			AppProtectVersion:   input.AppProtectVersion,
+			BuildOS:             input.BuildOS,
 			InstallationFlags:   input.InstallationFlags,
 			GlobalConfiguration: lbc.watchGlobalConfiguration,
 			Configurator:        lbc.configurator,
@@ -2059,6 +2065,7 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 
 			case *appprotectdos.DosProtectedResourceEx:
 				glog.V(3).Infof("handling change DELETE for DOS protected %s/%s", impl.Obj.Namespace, impl.Obj.Name)
+				lbc.configurator.DeleteAppProtectDosAllowList(impl.Obj)
 				resources := lbc.configuration.FindResourcesForAppProtectDosProtected(impl.Obj.Namespace, impl.Obj.Name)
 				resourceExes := lbc.createExtendedResources(resources)
 				warnings, err := lbc.configurator.AddOrUpdateResourcesThatUseDosProtected(resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)

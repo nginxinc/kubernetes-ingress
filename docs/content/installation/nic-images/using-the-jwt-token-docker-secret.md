@@ -61,6 +61,8 @@ You will need the following information from [MyF5](https://my.f5.com) for these
 
 1. You can now use the newly created Kubernetes secret in Helm and manifest deployments.
 
+{{< include "installation/jwt-password-note.md" >}}
+
 ---
 
 ## Manifest Deployment
@@ -77,7 +79,7 @@ spec:
     seccompProfile:
       type: RuntimeDefault
   containers:
-  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:3.5.2
+  - image: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:{{< nic-version >}}
     imagePullPolicy: IfNotPresent
     name: nginx-plus-ingress
 ```
@@ -117,7 +119,7 @@ The [Installation with Helm ]({{< relref "installation/installing-nic/installati
     repository: private-registry.nginx.com/nginx-ic/nginx-plus-ingress
 
     ## The version tag
-    tag: 3.5.2
+    tag: {{< nic-version >}}
 
     serviceAccount:
         ## The annotations of the service account of the Ingress Controller pods.
@@ -149,7 +151,7 @@ If the namespace does not exist, `--create-namespace` will create it. Using `-f 
 If you want to install NGINX Ingress Controller using the charts method, the following is an example of using the command line to pass the required arguments using the `set` parameter.
 
 ```shell
-helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version 1.2.2 --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag=3.5.2 --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
+helm install my-release -n nginx-ingress oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}} --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress --set controller.image.tag={{< nic-version >}} --set controller.nginxplus=true --set controller.serviceAccount.imagePullSecretName=regcred
 ```
 You can also use the certificate and key from the MyF5 portal and the Docker registry API to list the available image tags for the repositories, for example:
 
@@ -159,10 +161,10 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "3.5.2-alpine",
-        "3.5.2-alpine-fips",
-        "3.5.2-ubi",
-        "3.5.2"
+        "{{< nic-version >}}-alpine",
+        "{{< nic-version >}}-alpine-fips",
+        "{{< nic-version >}}-ubi",
+        "{{< nic-version >}}"
     ]
     }
 
@@ -170,9 +172,9 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "3.5.2-alpine-fips",
-        "3.5.2-ubi",
-        "3.5.2"
+        "{{< nic-version >}}-alpine-fips",
+        "{{< nic-version >}}-ubi",
+        "{{< nic-version >}}"
     ]
     }
 
@@ -180,8 +182,8 @@ You can also use the certificate and key from the MyF5 portal and the Docker reg
    {
     "name": "nginx-ic-dos/nginx-plus-ingress",
     "tags": [
-        "3.5.2-ubi",
-        "3.5.2"
+        "{{< nic-version >}}-ubi",
+        "{{< nic-version >}}"
     ]
     }
 ```
@@ -198,3 +200,5 @@ docker login private-registry.nginx.com --username=<output_of_jwt_token> --passw
 
 Replace the contents of `<output_of_jwt_token>` with the contents of the JWT token itself.
 Once you have successfully pulled the image, you can then tag it as needed.
+
+{{< include "installation/jwt-password-note.md" >}}

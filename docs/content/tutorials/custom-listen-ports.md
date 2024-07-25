@@ -87,7 +87,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx/nginx-ingress:3.5.2
+      - image: nginx/nginx-ingress:{{< nic-version >}}
         imagePullPolicy: IfNotPresent
         name: nginx-ingress
         ports:

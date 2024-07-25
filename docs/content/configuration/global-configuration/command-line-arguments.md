@@ -57,15 +57,6 @@ Enables custom resources.
 
 Default `true`.
 
-<a name="cmdoption-enable-preview-policies"></a>
-
----
-
-### -enable-preview-policies
-
-Enables preview policies. This flag is deprecated. To enable OIDC Policies please use [-enable-oidc](#cmdoption-enable-oidc) instead.
-
-Default `false`.
 
 <a name="cmdoption-enable-oidc"></a>
 
@@ -78,16 +69,6 @@ Enables OIDC policies.
 Default `false`.
 
 <a name="cmdoption-enable-leader-election"></a>
-
----
-
-### -include-year
-
-Adds year to log headers.
-
-Default `false`.
-
-{{< note >}} This flag will be removed in release 3.7 and the year will be included by default. {{< /note >}}
 
 ---
 

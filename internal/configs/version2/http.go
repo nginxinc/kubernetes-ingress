@@ -159,6 +159,7 @@ type WAF struct {
 type Dos struct {
 	Enable                 string
 	Name                   string
+	AllowListPath          string
 	ApDosPolicy            string
 	ApDosSecurityLogEnable bool
 	ApDosLogConf           string
@@ -286,6 +287,7 @@ type HealthCheck struct {
 	Mandatory           bool
 	Persistent          bool
 	KeepaliveTime       string
+	IsGRPC              bool
 }
 
 // TLSRedirect defines a redirect in a Server.

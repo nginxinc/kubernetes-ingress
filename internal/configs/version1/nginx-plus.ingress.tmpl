@@ -107,6 +107,7 @@ server {
 		{{- end}}
 	{{- end}}
 	{{if $server.AppProtectDosName}}app_protect_dos_name "{{$server.AppProtectDosName}}";{{end}}
+	{{if $server.AppProtectDosAllowListPath}}app_protect_dos_access_file "{{$server.AppProtectDosAllowListPath}}";{{end}}
 	{{- end}}
 
 	{{if not $server.GRPCOnly}}

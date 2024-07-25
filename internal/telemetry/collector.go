@@ -75,6 +75,9 @@ type CollectorConfig struct {
 	// AppProtectVersion represents the version of App Protect.
 	AppProtectVersion string
 
+	// BuildOS represents the base operating system image
+	BuildOS string
+
 	// IsPlus represents whether NGINX is Plus or OSS
 	IsPlus bool
 
@@ -154,6 +157,7 @@ func (c *Collector) Collect(ctx context.Context) {
 			AppProtectVersion:     report.AppProtectVersion,
 			IsPlus:                report.IsPlus,
 			InstallationFlags:     report.InstallationFlags,
+			BuildOS:               report.BuildOS,
 		},
 	}
 
@@ -203,6 +207,7 @@ type Report struct {
 	AppProtectVersion    string
 	IsPlus               bool
 	InstallationFlags    []string
+	BuildOS              string
 }
 
 // BuildReport takes context, collects telemetry data and builds the report.
@@ -334,5 +339,6 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 		AppProtectVersion:    appProtectVersion,
 		IsPlus:               isPlus,
 		InstallationFlags:    installationFlags,
+		BuildOS:              c.BuildOS(),
 	}, err
 }

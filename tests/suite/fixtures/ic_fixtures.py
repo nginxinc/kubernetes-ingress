@@ -102,7 +102,7 @@ def crd_ingress_controller(
             ingress_controller_endpoint.port,
             ingress_controller_endpoint.port_ssl,
         )
-    except ApiException as ex:
+    except ApiException:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
@@ -267,13 +267,17 @@ def crd_ingress_controller_with_dos(
 
         print("------------------------- Create syslog svc -----------------------")
         src_syslog_yaml = f"{TEST_DATA}/dos/dos-syslog.yaml"
-        log_loc = f"/var/log/messages"
         create_items_from_yaml(kube_apis, src_syslog_yaml, namespace)
+
+        print("------------------------- Create accesslog svc -----------------------")
+        src_accesslog_yaml = f"{TEST_DATA}/dos/dos-accesslog.yaml"
+        create_items_from_yaml(kube_apis, src_accesslog_yaml, namespace)
+
         before = time.time()
         wait_until_all_pods_are_ready(kube_apis.v1, namespace)
         after = time.time()
         print(f"All pods came up in {int(after-before)} seconds")
-        print(f"syslog svc was created")
+        print(f"syslog and accesslog svc was created")
 
         print("------------------------- Create dos arbitrator -----------------------")
         dos_arbitrator_name = create_dos_arbitrator(
@@ -342,6 +346,8 @@ def crd_ingress_controller_with_dos(
             delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
             print("Remove the syslog svc:")
             delete_items_from_yaml(kube_apis, src_syslog_yaml, namespace)
+            print("Remove the accesslog svc:")
+            delete_items_from_yaml(kube_apis, src_accesslog_yaml, namespace)
 
     request.addfinalizer(fin)
 
@@ -397,7 +403,7 @@ def crd_ingress_controller_with_ed(
             ingress_controller_prerequisites.namespace,
             cm_source,
         )
-    except ApiException as ex:
+    except ApiException:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")

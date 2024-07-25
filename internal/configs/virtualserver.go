@@ -265,6 +265,7 @@ func newHealthCheckWithDefaults(upstream conf_v1.Upstream, upstreamName string, 
 		ProxySendTimeout:    generateTimeWithDefault(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
 		Headers:             make(map[string]string),
 		GRPCPass:            generateGRPCPass(isGRPC(upstream.Type), upstream.TLS.Enable, upstreamName),
+		IsGRPC:              isGRPC(upstream.Type),
 	}
 }
 
@@ -3004,6 +3005,7 @@ func generateDosCfg(dosResource *appProtectDosResource) *version2.Dos {
 	dos := &version2.Dos{}
 	dos.Enable = dosResource.AppProtectDosEnable
 	dos.Name = dosResource.AppProtectDosName
+	dos.AllowListPath = dosResource.AppProtectDosAllowListPath
 	dos.ApDosMonitorURI = dosResource.AppProtectDosMonitorURI
 	dos.ApDosMonitorProtocol = dosResource.AppProtectDosMonitorProtocol
 	dos.ApDosMonitorTimeout = dosResource.AppProtectDosMonitorTimeout

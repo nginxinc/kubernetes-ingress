@@ -6,16 +6,18 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	kitlog "github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/golang/glog"
 	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/promlog"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -26,16 +28,8 @@ func NewNginxMetricsClient(httpClient *http.Client) *prometheusClient.NginxClien
 
 // RunPrometheusListenerForNginx runs an http server to expose Prometheus metrics for NGINX
 func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string, prometheusSecret *v1.Secret) {
-	infoLevel := new(promlog.AllowedLevel)
-	err := infoLevel.Set("info")
-	if err != nil {
-		glog.Error("Error setting prometheus exporter log level")
-	}
-	promlogConfig := &promlog.Config{
-		Level: infoLevel,
-	}
-
-	logger := promlog.New(promlogConfig)
+	logger := kitlog.NewLogfmtLogger(os.Stdout)
+	logger = level.NewFilter(logger, level.AllowError())
 	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", constLabels, logger))
 	runServer(strconv.Itoa(port), registry, prometheusSecret)
 }
