@@ -187,6 +187,16 @@ spec:
             description: DosProtectedResourceSpec defines the properties and values
               a DosProtectedResource can have.
             properties:
+              allowList:
+                description: AllowList is a list of allowed IPs and subnet masks
+                items:
+                  description: AllowListEntry represents an IP address and a subnet
+                    mask.
+                  properties:
+                    ipWithMask:
+                      type: string
+                  type: object
+                type: array
               apDosMonitor:
                 description: 'ApDosMonitor is how NGINX App Protect DoS monitors the
                   stress level of the protected object. The monitor requests are sent

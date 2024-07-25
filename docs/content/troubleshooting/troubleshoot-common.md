@@ -148,7 +148,7 @@ controller:
   nginxplus: plus
   image:
     repository: nginx/nginx-ingress
-    tag: 3.5.2
+    tag: {{< nic-version >}}
   # NGINX Configmap
   config:
     entries:

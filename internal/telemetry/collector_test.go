@@ -1129,6 +1129,65 @@ func TestCollectInstallationFlags(t *testing.T) {
 	}
 }
 
+func TestCollectBuildOS(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name    string
+		buildOS string
+		wantOS  string
+	}{
+		{
+			name:    "debian plus image",
+			buildOS: "debian-plus",
+			wantOS:  "debian-plus",
+		},
+		{
+			name:    "ubi-9 plus app protect image",
+			buildOS: "ubi-9-plus-nap",
+			wantOS:  "ubi-9-plus-nap",
+		},
+		{
+			name:    "alpine oss image",
+			buildOS: "alpine",
+			wantOS:  "alpine",
+		},
+		{
+			name:    "self built image",
+			buildOS: "",
+			wantOS:  "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			exp := &telemetry.StdoutExporter{Endpoint: buf}
+
+			configurator := newConfiguratorWithIngress(t)
+
+			cfg := telemetry.CollectorConfig{
+				Configurator:    configurator,
+				K8sClientReader: newTestClientset(node1, kubeNS),
+				Version:         telemetryNICData.ProjectVersion,
+				BuildOS:         tc.buildOS,
+			}
+
+			c, err := telemetry.NewCollector(cfg, telemetry.WithExporter(exp))
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.Collect(context.Background())
+
+			buildOS := c.BuildOS()
+
+			if tc.wantOS != buildOS {
+				t.Errorf("want: %s, got: %s", tc.wantOS, buildOS)
+			}
+		})
+	}
+}
+
 func TestCountVirtualServersOnCustomResourceEnabled(t *testing.T) {
 	t.Parallel()
 

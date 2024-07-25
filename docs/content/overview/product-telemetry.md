@@ -57,6 +57,7 @@ These are the data points collected and reported by NGINX Ingress Controller:
 - **AppProtectVersion** The AppProtect version
 - **IsPlus** Represents whether NGINX is Plus or OSS
 - **InstallationFlags** List of command line arguments configured for NGINX Ingress Controller
+- **BuildOS** The base operating system image in which NGINX Ingress Controller is running on.
 
 ---
 

@@ -8,6 +8,7 @@ repos:
       - id: trailing-whitespace
         exclude: '(\.md|\.snap)$'
       - id: end-of-file-fixer
+        exclude: docs/layouts/shortcodes/nic-.*.html
       - id: check-yaml
         args: [--allow-multiple-documents]
         exclude: ^(charts/nginx-ingress/templates)
@@ -63,8 +64,20 @@ repos:
     hooks:
       - id: black
 
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        files: tests/.*\.py$
+        args:
+          [
+            "--in-place",
+            "--remove-all-unused-imports",
+            "--remove-unused-variable",
+          ]
+
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.6
+    rev: 0.29.0
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
@@ -87,7 +100,7 @@ repos:
         types: ["yaml"]
         files: ^\.github/workflows/
         entry: actionlint
-        args: ["-shellcheck",""]
+        args: ["-shellcheck", ""]
 
 ci:
   skip: [golang-diff, golangci-lint, check-jsonschema, markdownlint-cli2]

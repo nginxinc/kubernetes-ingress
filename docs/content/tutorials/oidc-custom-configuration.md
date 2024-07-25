@@ -27,7 +27,7 @@ Run the below command to generate a ConfigMap with the contents of the `oidc.con
 **NOTE** The ConfigMap must be deployed in the same `namespace` as the F5 NGINX Ingress Controller.
 
 ```console
-kubectl create configmap oidc-config-map --from-literal=oidc.conf="$(curl -k https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.5.2/internal/configs/oidc/oidc.conf)"
+kubectl create configmap oidc-config-map --from-literal=oidc.conf="$(curl -k https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/internal/configs/oidc/oidc.conf)"
 ```
 
 Use the `kubectl describe` command to confirm the contents of the ConfigMap are correct.
@@ -92,9 +92,15 @@ data:
         # Rest of configuration file truncated
 ```
 
-> **IMPORTANT**
->
-> In Step 3 an NGINX Ingress Controller will be deployed/updated that will use this ConfigMap. Any changes made to this ConfigMap must be made **before** deploying/updating NGINX Ingress Controller. If an update is applied to the ConfigMap after NGINX Ingress Controller is deployed, it will not get applied. Applying any updates to the data in this ConfigMap will require NGINX Ingress Controller to be re-deployed.
+{{< important >}} 
+
+In the next step, NGINX Ingress Controller will be deployed using this ConfigMap. 
+
+Any changes made to this ConfigMap must be made **before** deploying or updating NGINX Ingress Controller. If an update is applied to the ConfigMap after NGINX Ingress Controller is deployed, it will not be applied. 
+
+Applying any updates to the data in this ConfigMap will require NGINX Ingress Controller to be re-deployed.
+
+{{< /important >}}
 
 ## Step 3 - Add Volume and VolumeMount to the Ingress Controller deployment
 

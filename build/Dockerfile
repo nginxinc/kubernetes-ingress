@@ -10,12 +10,13 @@ ARG WAF_VERSION=v4
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginxinc/k8s-common:nginx-opentracing-1.27.0@sha256:d9f6f930b7bfcc026785aca49fdb96fbecdc517ebbdb893f6393ac78b247c8fb AS opentracing-lib
-FROM ghcr.io/nginxinc/k8s-common:nginx-opentracing-1.27.0-alpine@sha256:5dc5c76384a775316c541995b145d4cef86d529934951319fd127f4d4fdb9ef7 AS alpine-opentracing-lib
-FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 AS alpine-fips-3.17
-FROM ghcr.io/nginxinc/alpine-fips:0.2.0-alpine3.19@sha256:1744ae3a8e795daf771f3f7df33b83160981545abb1f1597338e2769d06aa1cc AS alpine-fips-3.19
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.0@sha256:1a77df60fd641db9e6a9323c8a484f642eb0e276df06104b592ecfd515bc1aef AS opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.0-alpine@sha256:8e582e8cac837ad71372fbe1d80ab4d9894fa9dd9d3ad61163ebe87403b6b9db AS alpine-opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.0@sha256:760ed8cff8e0ae835b1873400673d95642e39420e42a02379e0619545008bc07 AS ubi-ppc64le
+FROM ghcr.io/nginxinc/alpine-fips:0.2.2-alpine3.17@sha256:0dcd9149b66a6b35c1253b7662c8ed7ef0e0172ceae893a82058c30668799bf2 AS alpine-fips-3.17
+FROM ghcr.io/nginxinc/alpine-fips:0.2.2-alpine3.20@sha256:0ddcfb906a5dc931336db5ba6e0d09d5f77cc48c67e3781aba66a0a27dc14605 AS alpine-fips-3.20
 FROM redhat/ubi9-minimal@sha256:a7d837b00520a32502ada85ae339e33510cdfdbc8d2ddf460cc838e12ec5fa5a AS ubi-minimal
-FROM golang:1.22-alpine@sha256:ace6cc3fe58d0c7b12303c57afe6d6724851152df55e08057b43990b927ad5e8 AS golang-builder
+FROM golang:1.22-alpine@sha256:8c9183f715b0b4eca05b8b3dbf59766aaedb41ec07477b132ee2891ac0110a07 AS golang-builder
 
 
 ############################################# Base image for Alpine #############################################
@@ -29,7 +30,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.27.0@sha256:9c367186df9a6b18c6735357b8eb7f407347e84aea09beb184961cb83543d46e AS debian
+FROM nginx:1.27.0@sha256:67682bda769fae1ccf5183192b8daf37b64cae99c6c3302650f6f8bf5f0f95df AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -39,24 +40,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	&& ldconfig
 
 
-############################################# Base image for UBI #############################################
-FROM nginxcontrib/nginx:1.27.0-ubi@sha256:5547fe1036d63cc9dfdc3aba1cfc822dbb42dbf63ec68e32bcf363e0b1653fc4 AS ubi
-ARG IC_VERSION
-
-LABEL name="NGINX Ingress Controller" \
-	maintainer="kubernetes@nginx.com" \
-	vendor="NGINX Inc" \
-	version="${IC_VERSION}" \
-	release="1" \
-	summary="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	description="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	io.k8s.description="NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
-
-COPY --link --chown=101:0 LICENSE /licenses/
-
-
-############################################# NGINX files for NGINX Plus #############################################
+############################################# NGINX files #############################################
 FROM scratch AS nginx-files
 ARG IC_VERSION
 ARG BUILD_OS
@@ -94,6 +78,8 @@ ADD --link --chown=101:0 --chmod=0755 build/scripts/common.sh common.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/nap-waf.sh nap-waf.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/nap-dos.sh nap-dos.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/agent.sh agent.sh
+ADD --link --chown=101:0 --chmod=0755 build/scripts/ubi-setup.sh ubi-setup.sh
+ADD --link --chown=101:0 --chmod=0755 build/scripts/ubi-clean.sh ubi-clean.sh
 
 
 ############################################# Patch Image #############################################
@@ -112,7 +98,7 @@ USER 101
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.19@sha256:af4785ccdbcd5cde71bfd5b93eabd34250b98651f19fe218c91de6c8d10e21c5 AS alpine-plus
+FROM alpine:3.20@sha256:b89d9c93e9ed3597455c90a0b88a8bbb5cb7188438f70953fede212a0c4394e0 AS alpine-plus
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
@@ -136,7 +122,7 @@ ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
-RUN --mount=type=bind,from=alpine-fips-3.19,target=/tmp/fips/ \
+RUN --mount=type=bind,from=alpine-fips-3.20,target=/tmp/fips/ \
 	mkdir -p /usr/ssl \
 	&& cp -av /tmp/fips/usr/lib/ossl-modules/fips.so /usr/lib/ossl-modules/fips.so \
 	&& cp -av /tmp/fips/usr/ssl/fipsmodule.cnf /usr/ssl/fipsmodule.cnf \
@@ -214,7 +200,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:12-slim@sha256:67f3931ad8cb1967beec602d8c0506af1e37e8d73c2a0b38b181ec5d8560d395 AS debian-plus
+FROM debian:12-slim@sha256:f528891ab1aa484bf7233dbcc84f3c806c3e427571d75510a9d74bb5ec535b33 AS debian-plus
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
@@ -316,6 +302,46 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	fi
 
 
+############################################# Base image for UBI #############################################
+FROM ubi-minimal AS ubi
+ARG IC_VERSION
+
+LABEL name="NGINX Ingress Controller" \
+	maintainer="kubernetes@nginx.com" \
+	vendor="NGINX Inc" \
+	version="${IC_VERSION}" \
+	release="1" \
+	summary="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	description="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	io.k8s.description="NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
+
+COPY --link --chown=101:0 LICENSE /licenses/
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN --mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
+	--mount=type=bind,from=nginx-files,src=ubi-setup.sh,target=/usr/local/bin/ubi-setup.sh \
+	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
+	--mount=type=bind,from=ubi-ppc64le,src=/,target=/ubi-bin/ \
+	ubi-setup.sh; \
+	if [ $(uname -p) != ppc64le ]; then \
+	printf "%s\n" "[nginx]" "name=nginx repo" \
+	"baseurl=https://nginx.org/packages/mainline/centos/9/\$basearch/" \
+	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
+	&& microdnf --nodocs install -y nginx nginx-module-njs nginx-module-image-filter nginx-module-xslt \
+	&& rm /etc/yum.repos.d/nginx.repo; \
+	else \
+	rpm -qa --queryformat "%{NAME}\n" | sort > pkgs-installed \
+	&& microdnf --nodocs --setopt=install_weak_deps=0 install -y diffutils dnf \
+	&& rpm -qa --queryformat "%{NAME}\n" | sort > pkgs-new \
+	&& dnf install -y /ubi-bin/*.rpm \
+	&& dnf -q repoquery --resolve --requires --recursive --whatrequires nginx --queryformat "%{NAME}" > pkgs-nginx \
+	&& dnf --setopt=protected_packages= remove -y $(comm -13 pkgs-installed pkgs-new | comm -13 pkgs-nginx -) \
+	&& rm pkgs-installed pkgs-new pkgs-nginx; \
+	fi \
+	&& ubi-clean.sh
+
+
 ############################################# Base image for UBI with NGINX Plus #############################################
 FROM ubi-minimal AS ubi-plus
 ARG NGINX_PLUS_VERSION
@@ -327,14 +353,11 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	--mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_signing.key \
 	--mount=type=bind,from=nginx-files,src=nginx-plus-9.repo,target=/etc/yum.repos.d/nginx-plus.repo \
-	microdnf --nodocs install -y shadow-utils \
-	&& cat /etc/yum.repos.d/nginx-plus.repo \
-	&& groupadd --system --gid 101 nginx \
-	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
-	&& rpm --import /tmp/nginx_signing.key \
+	--mount=type=bind,from=nginx-files,src=ubi-setup.sh,target=/usr/local/bin/ubi-setup.sh \
+	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
+	ubi-setup.sh \
 	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
-	&& microdnf remove -y shadow-utils \
-	&& microdnf clean all
+	&& ubi-clean.sh
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF #############################################
@@ -355,12 +378,12 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=app-protect-9.repo,target=/tmp/app-protect-9.repo \
 	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
 	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
+	--mount=type=bind,from=nginx-files,src=ubi-setup.sh,target=/usr/local/bin/ubi-setup.sh \
+	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
 	source /tmp/rhel_license \
 	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
-	&& microdnf --nodocs install -y shadow-utils ca-certificates subscription-manager \
-	&& groupadd --system --gid 101 nginx \
-	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
-	&& rpm --import /tmp/nginx_signing.key \
+	&& microdnf --nodocs install -y ca-certificates \
+	&& ubi-setup.sh \
 	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then microdnf --nodocs install -y nginx-agent; fi \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
@@ -374,8 +397,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& nap-waf.sh \
 	; fi \
 	&& subscription-manager unregister \
-	&& microdnf remove -y shadow-utils subscription-manager \
-	&& microdnf clean all && rm -rf /var/cache/dnf \
+	&& ubi-clean.sh \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then \
 	agent.sh \
 	; fi
@@ -398,12 +420,12 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=app-protect-v5-9.repo,target=/tmp/app-protect-9.repo \
 	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
 	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
+	--mount=type=bind,from=nginx-files,src=ubi-setup.sh,target=/usr/local/bin/ubi-setup.sh \
+	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
 	source /tmp/rhel_license \
 	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
-	&& microdnf --nodocs install -y shadow-utils ca-certificates subscription-manager \
-	&& groupadd --system --gid 101 nginx \
-	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
-	&& rpm --import /tmp/nginx_signing.key \
+	&& microdnf --nodocs install -y ca-certificates \
+	&& ubi-setup.sh \
 	&& microdnf --nodocs install -y nginx-plus nginx-plus-module-njs nginx-plus-module-fips-check \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then microdnf --nodocs install -y nginx-agent; fi \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
@@ -419,15 +441,14 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& rm -f /etc/yum.repos.d/app-protect-9.repo; \
 	fi \
 	&& subscription-manager unregister \
-	&& microdnf remove -y shadow-utils subscription-manager \
-	&& microdnf clean all && rm -rf /var/cache/dnf \
+	&& ubi-clean.sh \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then \
 	agent.sh; \
 	fi
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF & DoS #############################################
-FROM redhat/ubi8@sha256:143123d85045df426c5bbafc6863659880ebe276eb02c77ee868b88d08dbd05d AS ubi-8-plus-nap
+FROM redhat/ubi8@sha256:44d75007b39e0e1bbf1bcfd0721245add54c54c3f83903f8926fb4bef6827aa2 AS ubi-8-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -491,7 +512,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAFv5  #############################################
-FROM redhat/ubi8@sha256:143123d85045df426c5bbafc6863659880ebe276eb02c77ee868b88d08dbd05d AS ubi-8-plus-nap-v5
+FROM redhat/ubi8@sha256:44d75007b39e0e1bbf1bcfd0721245add54c54c3f83903f8926fb4bef6827aa2 AS ubi-8-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
@@ -545,6 +566,8 @@ ARG BUILD_OS
 ARG IC_VERSION
 ARG TARGETPLATFORM
 ARG NAP_MODULES=none
+
+ENV BUILD_OS=${BUILD_OS}
 
 RUN --mount=type=bind,target=/tmp \
 	--mount=type=bind,from=nginx-files,src=common.sh,target=/usr/local/bin/common.sh \

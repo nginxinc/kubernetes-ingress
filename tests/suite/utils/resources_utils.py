@@ -296,6 +296,14 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
         wait_before_test()
         counter = counter + 1
     if counter >= 300:
+        print("\n===================== IC Logs Start =====================")
+        try:
+            pod_name = get_pod_name_that_contains(kube_apis.v1, "nginx-ingress", "nginx-ingress")
+            logs = kube_apis.v1.read_namespaced_pod_log(pod_name, "nginx-ingress")
+            print(logs)
+        except:
+            print("Failed to load logs for nginx-ingress pod")
+        print("\n===================== IC Logs End =====================")
         raise PodNotReadyException()
     print("All pods are Ready")
 
@@ -935,32 +943,6 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace, print_l
     result_conf = str(resp)
     if print_log:
         print("\nFile contents:\n" + result_conf)
-    return result_conf
-
-
-def clear_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
-    """
-    Execute 'truncate -s 0 file_path' command in a pod.
-
-    :param v1: CoreV1Api
-    :param pod_name: pod name
-    :param pod_namespace: pod namespace
-    :param file_path: an absolute path to a file in the pod
-    :return: str
-    """
-    command = ["truncate", "-s", "0", file_path]
-    resp = stream(
-        v1.connect_get_namespaced_pod_exec,
-        pod_name,
-        pod_namespace,
-        command=command,
-        stderr=True,
-        stdin=False,
-        stdout=True,
-        tty=False,
-    )
-    result_conf = str(resp)
-
     return result_conf
 
 
