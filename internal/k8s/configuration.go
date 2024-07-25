@@ -200,6 +200,7 @@ type VirtualServerConfiguration struct {
 	Warnings            []string
 	HTTPPort            int
 	HTTPSPort           int
+	IP                  string
 }
 
 // NewVirtualServerConfiguration creates a VirtualServerConfiguration.
@@ -817,12 +818,18 @@ func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfi
 		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTP]; ok {
 			if gcListener.Protocol == conf_v1.HTTPProtocol && !gcListener.Ssl {
 				vsc.HTTPPort = gcListener.Port
+				if gcListener.IP == "" {
+					vsc.IP = gcListener.IP
+				}
 			}
 		}
 
 		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTPS]; ok {
 			if gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl {
 				vsc.HTTPSPort = gcListener.Port
+				if gcListener.IP == "" {
+					vsc.IP = gcListener.IP
+				}
 			}
 		}
 	}

@@ -56,11 +56,11 @@ func buildDefaultListenerDirectives(listenerType protocol, s Server) string {
 	var directives string
 	port := getDefaultPort(listenerType)
 
-	directives += buildListenDirective(port, s.ProxyProtocol, ipv4)
+	directives += buildListenDirective(s.IP, port, s.ProxyProtocol, ipv4)
 
 	if !s.DisableIPV6 {
 		directives += spacing
-		directives += buildListenDirective(port, s.ProxyProtocol, ipv6)
+		directives += buildListenDirective(s.IP, port, s.ProxyProtocol, ipv6)
 	}
 
 	return directives
@@ -71,11 +71,11 @@ func buildCustomListenerDirectives(listenerType protocol, s Server) string {
 
 	if (listenerType == http && s.HTTPPort > 0) || (listenerType == https && s.HTTPSPort > 0) {
 		port := getCustomPort(listenerType, s)
-		directives += buildListenDirective(port, s.ProxyProtocol, ipv4)
+		directives += buildListenDirective(s.IP, port, s.ProxyProtocol, ipv4)
 
 		if !s.DisableIPV6 {
 			directives += spacing
-			directives += buildListenDirective(port, s.ProxyProtocol, ipv6)
+			directives += buildListenDirective(s.IP, port, s.ProxyProtocol, ipv6)
 		}
 	}
 
@@ -96,14 +96,22 @@ func getCustomPort(listenerType protocol, s Server) string {
 	return strconv.Itoa(s.HTTPSPort) + " ssl"
 }
 
-func buildListenDirective(port string, proxyProtocol bool, listenType listenerType) string {
+func buildListenDirective(ip string, port string, proxyProtocol bool, listenType listenerType) string {
 	base := "listen"
 	var directive string
 
 	if listenType == ipv6 {
-		directive = base + " [::]:" + port
+		if ip == "" {
+			directive = fmt.Sprintf("%s [::]:%s", base, port)
+		} else {
+			directive = fmt.Sprintf("%s [%s]:%s", base, ip, port)
+		}
 	} else {
-		directive = base + " " + port
+		if ip == "" {
+			directive = fmt.Sprintf("%s %s", base, port)
+		} else {
+			directive = fmt.Sprintf("%s %s:%s", base, ip, port)
+		}
 	}
 
 	if proxyProtocol {
@@ -115,6 +123,7 @@ func buildListenDirective(port string, proxyProtocol bool, listenType listenerTy
 }
 
 func makeHTTPListener(s Server) string {
+	fmt.Println("DEBUGGGG IP ", s.IP)
 	return makeListener(http, s)
 }
 

@@ -118,6 +118,8 @@ spec:
                     type: string
                   https:
                     type: string
+                  ip:
+                    type: string
                 type: object
               policies:
                 items:
