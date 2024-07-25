@@ -1,6 +1,6 @@
 ---
 docs: DOCS-000
-title: Compile NAP WAF policies using NGINX Instance Manager
+title: Compile NGINX App Protect WAF policies using NGINX Instance Manager
 toc: true
 weight: 300
 ---
