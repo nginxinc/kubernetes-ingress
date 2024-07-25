@@ -818,7 +818,7 @@ func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfi
 		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTP]; ok {
 			if gcListener.Protocol == conf_v1.HTTPProtocol && !gcListener.Ssl {
 				vsc.HTTPPort = gcListener.Port
-				if gcListener.IP == "" {
+				if gcListener.IP != "" {
 					vsc.IP = gcListener.IP
 				}
 			}
@@ -827,7 +827,7 @@ func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfi
 		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTPS]; ok {
 			if gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl {
 				vsc.HTTPSPort = gcListener.Port
-				if gcListener.IP == "" {
+				if gcListener.IP != "" {
 					vsc.IP = gcListener.IP
 				}
 			}
@@ -1790,6 +1790,11 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 		if newVsc.HTTPPort != oldVsc.HTTPPort || newVsc.HTTPSPort != oldVsc.HTTPSPort {
 			updatedHosts = append(updatedHosts, h)
 		}
+
+		if newVsc.IP != oldVsc.IP {
+			updatedHosts = append(updatedHosts, h)
+		}
+
 	}
 
 	return removedHosts, updatedHosts, addedHosts
