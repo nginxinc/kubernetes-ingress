@@ -100,7 +100,6 @@ func buildListenDirective(ip string, port string, proxyProtocol bool, listenType
 	base := "listen"
 	var directive string
 
-	fmt.Printf("Helper on %s\n", ip)
 	if listenType == ipv6 {
 		if strings.Contains(ip, ":") {
 			if ip != "" {
@@ -126,7 +125,6 @@ func buildListenDirective(ip string, port string, proxyProtocol bool, listenType
 }
 
 func makeHTTPListener(s Server) string {
-	fmt.Println("DEBUGGGG IP ", s.IP)
 	return makeListener(http, s)
 }
 

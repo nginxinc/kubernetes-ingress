@@ -823,7 +823,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		return upstreams[i].Name < upstreams[j].Name
 	})
 
-	fmt.Println("DEBUG vsEx IP: ", vsEx.IP)
 	vsCfg := version2.VirtualServerConfig{
 		Upstreams:     upstreams,
 		SplitClients:  splitClients,
