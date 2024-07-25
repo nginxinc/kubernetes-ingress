@@ -23,14 +23,14 @@ permissions:
 
 jobs:
   call-docs-build-push:
-    uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@main
+    uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@03a9a3808fcb77cd0c19d7fa5d59b25565dd1d6d # v1.0.2
     with:
       production_url_path: "/nginx-ingress-controller"
       preview_url_path: "/previews/nginx-ingress-controller"
       docs_source_path: "public/nginx-ingress-controller"
       docs_build_path: "./docs"
       doc_type: "hugo"
-      environment: ${{inputs.environment}}
+      environment: ${{ inputs.environment }}
     secrets:
-      AZURE_CREDENTIALS: ${{secrets.AZURE_CREDENTIALS}}
-      AZURE_KEY_VAULT: ${{secrets.AZURE_KEY_VAULT}}
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS_DOCS }}
+      AZURE_KEY_VAULT: ${{ secrets.AZURE_KEY_VAULT_DOCS }}
