@@ -18,6 +18,9 @@ on:
     paths:
       - "docs/**"
 
+permissions:
+  contents: read
+
 jobs:
   call-docs-build-push:
     uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@main
