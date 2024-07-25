@@ -129,7 +129,6 @@ jobs:
           file: build/Dockerfile
           context: "."
           cache-from: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }}
-          cache-to: type=gha,scope=${{ inputs.image }}${{ steps.nap_modules.outputs.name != '' && format('-{0}', steps.nap_modules.outputs.name) || '' }},mode=max
           target: goreleaser
           tags: "${{ steps.image_details.outputs.name }}:${{ steps.image_details.outputs.build_tag }}"
           load: true
