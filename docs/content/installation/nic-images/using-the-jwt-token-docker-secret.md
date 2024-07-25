@@ -61,6 +61,8 @@ You will need the following information from [MyF5](https://my.f5.com) for these
 
 1. You can now use the newly created Kubernetes secret in Helm and manifest deployments.
 
+{{< include "installation/jwt-password-note.md" >}}
+
 ---
 
 ## Manifest Deployment
@@ -198,3 +200,5 @@ docker login private-registry.nginx.com --username=<output_of_jwt_token> --passw
 
 Replace the contents of `<output_of_jwt_token>` with the contents of the JWT token itself.
 Once you have successfully pulled the image, you can then tag it as needed.
+
+{{< include "installation/jwt-password-note.md" >}}
