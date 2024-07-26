@@ -124,7 +124,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 ############################################# Base image for Alpine with NGINX Plus and FIPS #############################################
 FROM alpine-plus AS alpine-plus-fips
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
@@ -210,7 +209,6 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 ############################################# Base image for Debian with NGINX Plus #############################################
 FROM debian:12-slim@sha256:5f7d5664eae4a192c2d2d6cb67fc3f3c7891a8722cd2903cc35aa649a12b0c8d AS debian-plus
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
@@ -241,7 +239,6 @@ FROM debian-plus AS debian-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
@@ -286,7 +283,6 @@ FROM debian-plus AS debian-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
@@ -356,7 +352,6 @@ RUN --mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_s
 ############################################# Base image for UBI with NGINX Plus #############################################
 FROM ubi-minimal AS ubi-plus
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
@@ -377,7 +372,6 @@ FROM ubi-minimal AS ubi-9-plus-nap
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
@@ -421,7 +415,6 @@ FROM ubi-minimal AS ubi-9-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
@@ -466,7 +459,6 @@ FROM redhat/ubi8@sha256:44d75007b39e0e1bbf1bcfd0721245add54c54c3f83903f8926fb4be
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
@@ -531,7 +523,6 @@ FROM redhat/ubi8@sha256:44d75007b39e0e1bbf1bcfd0721245add54c54c3f83903f8926fb4be
 ARG NAP_MODULES
 ARG NGINX_AGENT
 ARG NGINX_PLUS_VERSION
-ARG PACKAGE_REPO
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
 
