@@ -170,6 +170,7 @@ jobs:
       authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       actions: read
@@ -196,6 +197,7 @@ jobs:
       authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       actions: read
@@ -223,6 +225,7 @@ jobs:
       authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       actions: read
