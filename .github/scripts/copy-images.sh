@@ -52,7 +52,6 @@ declare -a NAP_WAF_TAG_POSTFIX_LIST=("" "-ubi" "-alpine-fips")
 declare -a NAP_WAFV5_TAG_POSTFIX_LIST=("" "-ubi" "-alpine-fips")
 declare -a NAP_DOS_TAG_POSTFIX_LIST=("" "-ubi")
 declare -a NAP_WAF_DOS_TAG_POSTFIX_LIST=("" "-ubi")
-declare -a ADDITIONAL_TAGS=("latest" "${ADDITIONAL_TAG}")
 
 CONFIG_PATH=${CONFIG_PATH:-~/.nic-release/config}
 if [ -f "$CONFIG_PATH" ]; then
@@ -96,16 +95,6 @@ if $PUBLISH_OSS; then
         if ! $DRY_RUN; then
             ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${new_tag}
         fi
-        for tag in "${ADDITIONAL_TAGS[@]}"; do
-            if [ -z "${tag}" ]; then
-                continue
-            fi
-            additional_tag=${TARGET_REGISTRY}/${TARGET_OSS_IMAGE_PREFIX}:${tag}${postfix}
-            echo "  Pushing image OSS ${additional_tag}..."
-            if ! $DRY_RUN; then
-                ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
-            fi
-        done
     done
 else
     echo "Skipping Publish OSS flow"
@@ -123,16 +112,6 @@ if $PUBLISH_PLUS; then
             if ! $DRY_RUN; then
                 ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${new_tag}
             fi
-            for tag in "${ADDITIONAL_TAGS[@]}"; do
-                if [ -z "${tag}" ]; then
-                    continue
-                fi
-                additional_tag=${TARGET_REGISTRY}/${TARGET_PLUS_IMAGE_PREFIX}:${tag}${postfix}
-                echo "  Pushing image Plus ${additional_tag}..."
-                if ! $DRY_RUN; then
-                    ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
-                fi
-            done
         fi
     done
 else
@@ -151,16 +130,6 @@ if $PUBLISH_WAF; then
             if ! $DRY_RUN; then
                 ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${new_tag}
             fi
-            for tag in "${ADDITIONAL_TAGS[@]}"; do
-                if [ -z "${tag}" ]; then
-                    continue
-                fi
-                additional_tag=${TARGET_REGISTRY}/${TARGET_NAP_WAF_IMAGE_PREFIX}:${tag}${postfix}
-                echo "  Pushing image NAP WAF ${additional_tag}..."
-                if ! $DRY_RUN; then
-                    ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
-                fi
-            done
         fi
     done
     for postfix in "${NAP_WAFV5_TAG_POSTFIX_LIST[@]}"; do
@@ -174,16 +143,6 @@ if $PUBLISH_WAF; then
             if ! $DRY_RUN; then
                 ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${new_tag}
             fi
-            for tag in "${ADDITIONAL_TAGS[@]}"; do
-                if [ -z "${tag}" ]; then
-                    continue
-                fi
-                additional_tag=${TARGET_REGISTRY}/${TARGET_NAP_WAFV5_IMAGE_PREFIX}:${tag}${postfix}
-                echo "  Pushing image NAP WAFV5 ${additional_tag}..."
-                if ! $DRY_RUN; then
-                    ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
-                fi
-            done
         fi
     done
 else
@@ -202,16 +161,6 @@ if $PUBLISH_DOS; then
             if ! $DRY_RUN; then
                 ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${new_tag}
             fi
-            for tag in "${ADDITIONAL_TAGS[@]}"; do
-                if [ -z "${tag}" ]; then
-                    continue
-                fi
-                additional_tag=${TARGET_REGISTRY}/${TARGET_NAP_DOS_IMAGE_PREFIX}:${tag}${postfix}
-                echo "  Pushing image NAP DOS ${additional_tag}..."
-                if ! $DRY_RUN; then
-                    ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
-                fi
-            done
         fi
     done
 else
@@ -230,16 +179,6 @@ if $PUBLISH_WAF_DOS; then
             if ! $DRY_RUN; then
                 ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${new_tag}
             fi
-            for tag in "${ADDITIONAL_TAGS[@]}"; do
-                if [ -z "${tag}" ]; then
-                    continue
-                fi
-                additional_tag=${TARGET_REGISTRY}/${TARGET_NAP_WAF_DOS_IMAGE_PREFIX}:${tag}${postfix}
-                echo "  Pushing image NAP WAF/DOS ${additional_tag}..."
-                if ! $DRY_RUN; then
-                    ${SKOPEO_BIN} copy --retry-times 5 ${ARCH_OPTS} ${SOURCE_OPTS} ${TARGET_OPTS} docker://${image} docker://${additional_tag}
-                fi
-            done
         fi
     done
 else
