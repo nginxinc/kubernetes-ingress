@@ -196,6 +196,7 @@ jobs:
       authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       actions: read
@@ -222,6 +223,7 @@ jobs:
       authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       actions: read
@@ -249,6 +251,7 @@ jobs:
       authenticated: true
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ github.ref }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       actions: read
@@ -453,7 +456,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@5cf07d8b700b67e235fbb65cbc84f69c0cf10464 # v3.25.14
+        uses: github/codeql-action/upload-sarif@afb54ba388a7dca6ecae48f608c4ff05ff4cc77a # v3.25.15
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -543,7 +546,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@5cf07d8b700b67e235fbb65cbc84f69c0cf10464 # v3.25.14
+        uses: github/codeql-action/upload-sarif@afb54ba388a7dca6ecae48f608c4ff05ff4cc77a # v3.25.15
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -640,7 +643,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@5cf07d8b700b67e235fbb65cbc84f69c0cf10464 # v3.25.14
+        uses: github/codeql-action/upload-sarif@afb54ba388a7dca6ecae48f608c4ff05ff4cc77a # v3.25.15
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 

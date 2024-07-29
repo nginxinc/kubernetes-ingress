@@ -304,6 +304,7 @@ jobs:
       full-build: ${{ inputs.force && inputs.force || false }}
       tag: ${{ needs.checks.outputs.build_tag }}
       branch: ${{ (github.head_ref && needs.checks.outputs.forked_workflow != 'true') && github.head_ref || github.ref }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       actions: read
@@ -329,6 +330,7 @@ jobs:
       tag: ${{ needs.checks.outputs.build_tag }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       id-token: write
@@ -353,6 +355,7 @@ jobs:
       nap-modules: ${{ matrix.nap_modules }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       id-token: write # gcr login
