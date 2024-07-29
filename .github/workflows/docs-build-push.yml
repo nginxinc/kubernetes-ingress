@@ -3,15 +3,15 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
-        default: 'preview'
+        default: "preview"
         type: choice
         options:
-        - preview
-        - dev
-        - staging
-        - prod
+          - preview
+          - dev
+          - staging
+          - prod
   pull_request:
     branches:
       - "*"
