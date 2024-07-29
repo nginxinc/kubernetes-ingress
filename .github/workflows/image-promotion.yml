@@ -134,7 +134,7 @@ jobs:
           output-file: govulncheck.sarif
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@5cf07d8b700b67e235fbb65cbc84f69c0cf10464 # v3.25.14
         with:
           sarif_file: govulncheck.sarif
 
