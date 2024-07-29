@@ -126,6 +126,14 @@ jobs:
 
       - name: govulncheck
         uses: golang/govulncheck-action@dd0578b371c987f96d1185abb54344b44352bd58 # v1.0.3
+        with:
+          output-format: sarif
+          output-file: govulncheck.sarif
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: govulncheck.sarif
 
   binaries:
     name: Build Binaries
