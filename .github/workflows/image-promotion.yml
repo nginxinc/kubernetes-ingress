@@ -133,8 +133,18 @@ jobs:
           output-format: sarif
           output-file: govulncheck.sarif
 
+      - name: Check SARIF file
+        id: check-sarif
+        run: |
+          if [ -s govulncheck.sarif ] && grep -q '"results":' govulncheck.sarif; then
+            echo "sarif_has_results=true" >> $GITHUB_OUTPUT
+          else
+            echo "sarif_has_results=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@5cf07d8b700b67e235fbb65cbc84f69c0cf10464 # v3.25.14
+        if: steps.check-sarif.outputs.sarif_has_results == 'true'
         with:
           sarif_file: govulncheck.sarif
 
