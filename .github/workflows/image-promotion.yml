@@ -112,10 +112,25 @@ jobs:
           echo stable_tag: ${{ steps.vars.outputs.stable_tag }}
           echo stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
 
+  govulncheck:
+    name: Run govulncheck
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+        with:
+          go-version-file: go.mod
+
+      - name: govulncheck
+        uses: golang/govulncheck-action@dd0578b371c987f96d1185abb54344b44352bd58 # v1.0.3
+
   binaries:
     name: Build Binaries
     runs-on: ubuntu-22.04
-    needs: [checks]
+    needs: [checks, govulncheck]
     permissions:
       contents: read
     steps:
