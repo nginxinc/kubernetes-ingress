@@ -2,7 +2,7 @@
 
 This directory contains all of the user documentation for NGINX Ingress Controller, as well as the requirements for building and publishing the documentation.
 
-Documentation is written in Markdown, built using [Hugo](https://gohugo.io) with [nginx-hugo-theme](https://github.com/nginxinc/nginx-hugo-theme), then deployed with [Netlify](https://www.netlify.com/).
+Documentation is written in Markdown, built using [Hugo](https://gohugo.io) with [nginx-hugo-theme](https://github.com/nginxinc/nginx-hugo-theme). Previews and deployments are handled by the [docs-actions](https://github.com/nginxinc/docs-actions?tab=readme-ov-file#docs-actions) workflow.
 
 ## Setup
 

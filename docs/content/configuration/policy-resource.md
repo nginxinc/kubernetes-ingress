@@ -67,8 +67,11 @@ accessControl:
   deny:
   - 10.0.0.0/8
 ```
+{{< note >}}
 
-> Note: The feature is implemented using the NGINX [ngx_http_access_module](http://nginx.org/en/docs/http/ngx_http_access_module.html). NGINX Ingress Controller access control policy supports either allow or deny rules, but not both (as the module does).
+The feature is implemented using the NGINX [ngx_http_access_module](http://nginx.org/en/docs/http/ngx_http_access_module.html). NGINX Ingress Controller access control policy supports either allow or deny rules, but not both (as the module does).
+
+{{< /note >}}
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -110,8 +113,11 @@ rateLimit:
   zoneSize: 10M
   key: ${binary_remote_addr}
 ```
+{{< note >}} 
 
-> Note: The feature is implemented using the NGINX [ngx_http_limit_req_module](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html).
+The feature is implemented using the NGINX [ngx_http_limit_req_module](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html).
+
+{{< /note >}}
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -128,7 +134,11 @@ rateLimit:
 |``scale`` | Enables a constant rate-limit by dividing the configured rate by the number of nginx-ingress pods currently serving traffic. This adjustment ensures that the rate-limit remains consistent, even as the number of nginx-pods fluctuates due to autoscaling. Note: This will not work properly if requests from a client are not evenly distributed accross all ingress pods (sticky sessions, long lived TCP-Connections with many requests etc.). In such cases using NGINX+'s zone-sync feature instead would give better results. | ``bool`` | No |
 {{% /table %}}
 
-> For each policy referenced in a VirtualServer and/or its VirtualServerRoutes, NGINX Ingress Controller will generate a single rate limiting zone defined by the [`limit_req_zone`](http://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) directive. If two VirtualServer resources reference the same policy, NGINX Ingress Controller will generate two different rate limiting zones, one zone per VirtualServer.
+{{< note >}}
+
+For each policy referenced in a VirtualServer and/or its VirtualServerRoutes, NGINX Ingress Controller will generate a single rate limiting zone defined by the [`limit_req_zone`](http://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) directive. If two VirtualServer resources reference the same policy, NGINX Ingress Controller will generate two different rate limiting zones, one zone per VirtualServer.
+
+{{< /note >}}
 
 #### RateLimit Merging Behavior
 
@@ -147,7 +157,11 @@ When you reference more than one rate limit policy, NGINX Ingress Controller wil
 
 The API Key auth policy configures NGINX to authorize client requests based on the presence of a valid API Key in a header or query param specified in the policy.
 
-> Note: The feature is implemented using NGINX [ngx_http_auth_request_module](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) and [NGINX JavaScript (NJS)](https://nginx.org/en/docs/njs/).
+{{< note >}}
+
+The feature is implemented using NGINX [ngx_http_auth_request_module](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) and [NGINX JavaScript (NJS)](https://nginx.org/en/docs/njs/).
+
+{{< /note >}}
 
 The policies' API keys are securely stored using SHA-256 hashing. When a client sends an API Key, it is hashed by NJS and then compared to the hashed API Key in the NGINX config.
 
@@ -229,8 +243,9 @@ basicAuth:
   secret: htpasswd-secret
   realm: "My API"
 ```
-
-> Note: The feature is implemented using the NGINX [ngx_http_auth_basic_module](https://nginx.org/en/docs/http/ngx_http_auth_basic_module.html).
+{{< note >}}
+The feature is implemented using the NGINX [ngx_http_auth_basic_module](https://nginx.org/en/docs/http/ngx_http_auth_basic_module.html).
+{{< /note >}}
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -253,7 +268,11 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 
 ### JWT Using Local Kubernetes Secret
 
-> Note: This feature is only available in NGINX Plus.
+{{< note >}}
+
+This feature is only available with NGINX Plus.
+
+{{< /note >}}
 
 The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens.
 
@@ -284,7 +303,11 @@ We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/conf
 
 The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a period (`.`) are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header.
 
-> Note: This feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
+{{< note >}}
+
+This feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
+
+{{< /note >}}
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -308,7 +331,11 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 
 ### JWT Using JWKS From Remote Location
 
-> Note: This feature is only available in NGINX Plus.
+{{< note >}}
+
+This feature is only available with NGINX Plus.
+
+{{< /note >}}
 
 The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens, allowing import of the keys (JWKS) for JWT policy by means of a URL (for a remote server or an identity provider) as a result they don't have to be copied and updated to the IC pod.
 
@@ -322,7 +349,11 @@ jwt:
   keyCache: 1h
 ```
 
-> Note: This feature is implemented using the NGINX Plus directive [auth_jwt_key_request](http://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html#auth_jwt_key_request) under [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
+{{< note >}}
+
+This feature is implemented using the NGINX Plus directive [auth_jwt_key_request](http://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html#auth_jwt_key_request) under [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
+
+{{< /note >}}
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -333,8 +364,13 @@ jwt:
 |``token`` | The token specifies a variable that contains the JSON Web Token. By default the JWT is passed in the ``Authorization`` header as a Bearer Token. JWT may be also passed as a cookie or a part of a query string, for example: ``$cookie_auth_token``. Accepted variables are ``$http_``, ``$arg_``, ``$cookie_``. | ``string`` | No |
 {{% /table %}}
 
-> Note: Content caching is enabled by default for each JWT policy with a default time of 12 hours.
-> This is done to ensure to improve resiliency by allowing the JWKS (JSON Web Key Set) to be retrieved from the cache even when it has expired.
+{{< note >}}
+
+Content caching is enabled by default for each JWT policy with a default time of 12 hours.
+
+This is done to ensure to improve resiliency by allowing the JWKS (JSON Web Key Set) to be retrieved from the cache even when it has expired.
+
+{{< /note >}}
 
 #### JWT Merging Behavior
 
@@ -396,14 +432,22 @@ action:
 
 We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#actionproxy) to set the values of the two headers that NGINX will pass to the upstream servers. See the [list of embedded variables](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#variables) that are supported by the `ngx_http_ssl_module`, which you can use to pass the client certificate details.
 
-> Note: The feature is implemented using the NGINX [ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
+{{< note >}}
+
+ The feature is implemented using the NGINX [ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
+
+ {{< /note >}}
 
 #### Using a Certificate Revocation List
 
 The IngressMTLS policy supports configuring at CRL for your policy.
 This can be done in one of two ways.
 
-> Note: Only one of these configurations options can be used at a time.
+{{< note >}}
+
+ Only one of these configurations options can be used at a time.
+
+{{< /note >}}
 
 1. Adding the `ca.crl` field to the `nginx.org/ca` secret type, which accepts a base64 encoded certificate revocation list (crl).
    Example YAML:
@@ -421,8 +465,13 @@ data:
 
 2. Adding the `crlFileName` field to your IngressMTLS policy spec with the name of the CRL file.
 
-> Note: This configuration option should only be used when using a CRL that is larger than 1MiB
-> Otherwise we recommend using the `nginx.org/ca` secret type for managing your CRL.
+{{< note >}} 
+
+This configuration option should only be used when using a CRL that is larger than 1MiB.
+
+Otherwise we recommend using the `nginx.org/ca` secret type for managing your CRL.
+
+{{< /note >}}
 
 Example YAML:
 
@@ -482,7 +531,11 @@ egressMTLS:
   verifyDepth: 2
 ```
 
-> Note: The feature is implemented using the NGINX [ngx_http_proxy_module](https://nginx.org/en/docs/http/ngx_http_proxy_module.html).
+{{< note >}}
+
+The feature is implemented using the NGINX [ngx_http_proxy_module](https://nginx.org/en/docs/http/ngx_http_proxy_module.html).
+
+{{< /note >}}
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -512,7 +565,11 @@ In this example NGINX Ingress Controller will use the configuration from the fir
 
 ### OIDC
 
-> **Feature Status**: This feature is disabled by default. To enable it, set the [enable-oidc](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-oidc) command-line argument of NGINX Ingress Controller.
+{{< tip >}}
+
+This feature is disabled by default. To enable it, set the [enable-oidc]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-enable-oidc" >}}) command-line argument of NGINX Ingress Controller.
+
+{{< /tip >}}
 
 The OIDC policy configures NGINX Plus as a relying party for OpenID Connect authentication.
 
@@ -531,14 +588,22 @@ spec:
 
 NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP header `username`.
 
-> Note: The feature is implemented using the [reference implementation](https://github.com/nginxinc/nginx-openid-connect/) of NGINX Plus as a relying party for OpenID Connect authentication.
+{{< note >}}
+
+The feature is implemented using the [reference implementation](https://github.com/nginxinc/nginx-openid-connect/) of NGINX Plus as a relying party for OpenID Connect authentication.
+
+{{< /note >}}
 
 #### Prerequisites
 
 In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
 You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repository](https://github.com/nginxinc/kubernetes-ingress/blob/v{{< nic-version >}}/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
-> **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
+{{< warning >}}
+
+The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
+
+{{< /warning >}}
 
 #### Limitations
 
@@ -559,7 +624,11 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 |``accessTokenEnable`` | Option of whether Bearer token is used to authorize NGINX to access protected backend. | ``boolean`` | No |
 {{% /table %}}
 
-> **Note**: Only one OIDC policy can be referenced in a VirtualServer and its VirtualServerRoutes. However, the same policy can still be applied to different routes in the VirtualServer and VirtualServerRoutes.
+{{< note >}}
+
+Only one OIDC policy can be referenced in a VirtualServer and its VirtualServerRoutes. However, the same policy can still be applied to different routes in the VirtualServer and VirtualServerRoutes.
+
+{{< /note >}}
 
 #### OIDC Merging Behavior
 
@@ -598,7 +667,7 @@ For `kubectl get` and similar commands, you can also use the short name `pol` in
 
 ### WAF {#waf}
 
-> Note: This feature is only available in NGINX Plus with AppProtect.
+{{< note >}} The feature is implemented using the NGINX Plus [NGINX App Protect WAF Module](https://docs.nginx.com/nginx-app-protect/configuration/). {{< /note >}}
 
 The WAF policy configures NGINX Plus to secure client requests using App Protect WAF policies.
 
@@ -617,8 +686,7 @@ waf:
     logDest: "syslog:server=syslog-svc-secondary.default:514"
 ```
 
-> Note: The field `waf.securityLog` is deprecated and will be removed in future releases.It will be ignored if `waf.securityLogs` is populated.
-> Note: The feature is implemented using the NGINX Plus [NGINX App Protect WAF Module](https://docs.nginx.com/nginx-app-protect/configuration/).
+{{< note >}} The field `waf.securityLog` is deprecated and will be removed in future releases.It will be ignored if `waf.securityLogs` is populated. {{< /note >}}
 
 {{% table %}}
 |Field | Description | Type | Required |
