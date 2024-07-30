@@ -9,7 +9,7 @@ on:
         required: true
         type: string
       prefix:
-        description: 'Image prefix to use in GCR, e.g. nginx-ic'
+        description: 'Image prefix to use in GCR, e.g. nginx-ic/nginx-ingress'
         required: true
         type: string
       tag:
@@ -78,10 +78,10 @@ jobs:
 
       - name: Setup plus credentials
         run: |
-          echo ${{ secrets.NGINX_CRT }} > nginx-repo.crt
-          echo ${{ secrets.NGINX_KEY }} > nginx-repo.key
+          printf "${{ secrets.NGINX_CRT }}" > nginx-repo.crt
+          printf "${{ secrets.NGINX_KEY }}" > nginx-repo.key
           if [[ "${{ inputs.target }}" =~ ubi ]]; then
-            echo ${{ secrets.RHEL_LICENSE }} > rhel_license
+            printf "${{ secrets.RHEL_LICENSE }}" > rhel_license
           fi
         if: ${{ contains(inputs.target, 'plus') }}
 
