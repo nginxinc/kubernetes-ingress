@@ -3,27 +3,27 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
-        default: 'preview'
+        default: "preview"
         type: choice
         options:
-        - preview
-        - dev
-        - staging
-        - prod
+          - preview
+          - dev
+          - staging
+          - prod
   pull_request:
     branches:
       - "*"
     paths:
       - "docs/**"
 
-permissions:
-  contents: read
-
 jobs:
   call-docs-build-push:
     uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@03a9a3808fcb77cd0c19d7fa5d59b25565dd1d6d # v1.0.2
+    permissions:
+      pull-requests: write # needed to write preview url comment to PR
+      contents: read
     with:
       production_url_path: "/nginx-ingress-controller"
       preview_url_path: "/previews/nginx-ingress-controller"
