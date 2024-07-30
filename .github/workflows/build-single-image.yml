@@ -103,6 +103,7 @@ jobs:
           PREFIX: ${{ inputs.prefix }}
           TAG: ${{ inputs.tag }}
           PLUS_REPO: ${{ inputs.plus_repo }}
+          TARGET: goreleaser
 
       - name: Push image
         run:
