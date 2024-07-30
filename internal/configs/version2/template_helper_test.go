@@ -268,6 +268,51 @@ func TestMakeHTTPSListener(t *testing.T) {
 	}
 }
 
+func TestMakeHTTPListenerWithCustomIP(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		server   Server
+		expected string
+	}{
+		{server: Server{
+			CustomListeners: true,
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+			HTTPPort:        80,
+			IP:              "192.168.0.2",
+		}, expected: "listen 192.168.0.2:80;\n"},
+		{server: Server{
+			CustomListeners: true,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+			HTTPPort:        80,
+			IP:              "192.168.1.2",
+		}, expected: "listen 192.168.1.2:80;\n    listen [::]:80;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			IP:              "192.168.0.5",
+			DisableIPV6:     true,
+			ProxyProtocol:   false,
+		}, expected: "listen 192.168.0.5:81;\n"},
+		{server: Server{
+			CustomListeners: true,
+			HTTPPort:        81,
+			DisableIPV6:     false,
+			ProxyProtocol:   false,
+			IP:              "192.168.1.5",
+		}, expected: "listen 192.168.1.5:81;\n    listen [::]:81;\n"},
+	}
+
+	for _, tc := range testCases {
+		got := makeHTTPListener(tc.server)
+		if got != tc.expected {
+			t.Errorf("Function generated wrong config, got %v but expected %v.", got, tc.expected)
+		}
+	}
+}
+
 func newContainsTemplate(t *testing.T) *template.Template {
 	t.Helper()
 	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(`{{contains .InputString .Substring}}`)

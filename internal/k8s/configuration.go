@@ -1141,7 +1141,7 @@ func (c *Configuration) addWarningsForVirtualServersWithMissConfiguredListeners(
 		}
 		if vsc.VirtualServer.Spec.Listener != nil {
 			if c.globalConfiguration == nil {
-				warningMsg := "Listeners defined, but no GlobalConfiguration is deployed"
+				warningMsg := "Listeners defined, but no GlobalConfiguration is deployed or Listener is not defined in GlobalConfiguration"
 				c.hosts[vsc.VirtualServer.Spec.Host].AddWarning(warningMsg)
 				continue
 			}

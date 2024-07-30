@@ -2625,7 +2625,7 @@ func TestAddVirtualServerWithValidCustomListenersFirstThenAddGlobalConfiguration
 				VirtualServer: virtualServer,
 				HTTPPort:      0,
 				HTTPSPort:     0,
-				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
+				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed or Listener is not defined in GlobalConfiguration"},
 			},
 		},
 	}
@@ -2663,7 +2663,7 @@ func TestAddVirtualServerWithValidCustomListenersAndNoGlobalConfiguration(t *tes
 				VirtualServer: virtualServer,
 				HTTPPort:      0,
 				HTTPSPort:     0,
-				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
+				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed or Listener is not defined in GlobalConfiguration"},
 			},
 		},
 	}
@@ -2834,7 +2834,7 @@ func TestDeleteGlobalConfigurationWithVirtualServerDeployedWithValidCustomListen
 				VirtualServer: virtualServer,
 				HTTPPort:      0,
 				HTTPSPort:     0,
-				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed"},
+				Warnings:      []string{"Listeners defined, but no GlobalConfiguration is deployed or Listener is not defined in GlobalConfiguration"},
 			},
 		},
 	}

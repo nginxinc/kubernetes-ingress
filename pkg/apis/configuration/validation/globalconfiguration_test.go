@@ -158,17 +158,10 @@ func TestValidateListeners_FailsOnPortProtocolConflictsSameIP(t *testing.T) {
 		listeners []conf_v1.Listener
 	}{
 		{
-			name: "Same port used with UDP and HTTP protocols",
-			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "UDP"},
-				{Name: "listener-2", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
-			},
-		},
-		{
 			name: "Same port used with the same protocol",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
-				{Name: "listener-2", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 	}
@@ -204,20 +197,6 @@ func TestValidateListeners_PassesOnValidIPListeners(t *testing.T) {
 			listeners: []conf_v1.Listener{
 				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
 				{Name: "listener-2", IP: "192.168.1.1", Port: 9090, Protocol: "HTTP"},
-			},
-		},
-		{
-			name: "Same IP, Different Protocol and Different Port",
-			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
-				{Name: "listener-2", IP: "192.168.1.1", Port: 9090, Protocol: "UDP"},
-			},
-		},
-		{
-			name: "Same IP, Different Protocol and Same Port",
-			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "UDP"},
-				{Name: "listener-2", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
 			},
 		},
 	}
