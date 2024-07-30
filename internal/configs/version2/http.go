@@ -133,7 +133,9 @@ type OIDC struct {
 	JwksURI           string
 	Scope             string
 	TokenEndpoint     string
+	LogoutEndpoint    string
 	RedirectURI       string
+	LogoutRedirect    string
 	ZoneSyncLeeway    int
 	AuthExtraArgs     string
 	AccessTokenEnable bool

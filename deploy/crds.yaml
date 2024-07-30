@@ -363,6 +363,10 @@ spec:
                     type: string
                   jwksURI:
                     type: string
+                  logoutEndpoint:
+                    type: string
+                  logoutRedirect:
+                    type: string
                   redirectURI:
                     type: string
                   scope:

@@ -146,3 +146,8 @@ Note that the VirtualServer references the policy `oidc-policy` created in Step 
 ![keycloak](./keycloak.png)
 1. Once logged in, you will be redirected to the web application and get a response from it. Notice the field `User ID`
 in the response, this will match the ID for your user in Keycloak. ![webapp](./webapp.png)
+
+## Step 10 - Log Out
+
+1. To log out, navigate to `https://webapp.example.com/logout`. Your session will be terminated and you will be
+   redirected to the default post logout URI `https://webapp.example.com/_logout`. 

@@ -655,6 +655,8 @@ type OIDC struct {
 	ClientSecret      string   `json:"clientSecret"`
 	Scope             string   `json:"scope"`
 	RedirectURI       string   `json:"redirectURI"`
+	LogoutEndpoint    string   `json:"logoutEndpoint"`
+	LogoutRedirect    string   `json:"logoutRedirect"`
 	ZoneSyncLeeway    *int     `json:"zoneSyncLeeway"`
 	AuthExtraArgs     []string `json:"authExtraArgs"`
 	AccessTokenEnable bool     `json:"accessTokenEnable"`

@@ -5,7 +5,6 @@ metadata:
   namespace: nginx-ingress
 data:
   stream-snippets: |
-    resolver <kube-dns-ip> valid=5s;
     server {
         listen 12345;
         listen [::]:12345;

@@ -260,6 +260,10 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	if oidc.ClientSecret == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("clientSecret"), "")}
 	}
+	if oidc.LogoutEndpoint == "" && oidc.LogoutRedirect != "" {
+		msg := "logoutRedirect can only be set when logoutEndpoint is set"
+		return field.ErrorList{field.Forbidden(fieldPath.Child("logoutRedirect"), msg)}
+	}
 
 	allErrs := field.ErrorList{}
 	if oidc.Scope != "" {
@@ -267,6 +271,12 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	}
 	if oidc.RedirectURI != "" {
 		allErrs = append(allErrs, validatePath(oidc.RedirectURI, fieldPath.Child("redirectURI"))...)
+	}
+	if oidc.LogoutEndpoint != "" {
+		allErrs = append(allErrs, validateURL(oidc.LogoutEndpoint, fieldPath.Child("logoutEndpoint"))...)
+	}
+	if oidc.LogoutRedirect != "" {
+		allErrs = append(allErrs, validatePath(oidc.LogoutRedirect, fieldPath.Child("logoutRedirect"))...)
 	}
 	if oidc.ZoneSyncLeeway != nil {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*oidc.ZoneSyncLeeway, fieldPath.Child("zoneSyncLeeway"))...)
