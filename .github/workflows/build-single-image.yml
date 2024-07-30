@@ -107,4 +107,8 @@ jobs:
 
       - name: Push image
         run:
-          docker push gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ github.actor }}-dev/${{ inputs.prefix }}:${{ inputs.tag }}
+          docker push ${REGISTRY}/${PREFIX}:${TAG}
+        env:
+          REGISTRY: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ github.actor }}-dev
+          PREFIX: ${{ inputs.prefix }}
+          TAG: ${{ inputs.tag }}
