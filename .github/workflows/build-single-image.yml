@@ -78,11 +78,15 @@ jobs:
 
       - name: Setup plus credentials
         run: |
-          printf "${{ secrets.NGINX_CRT }}" > nginx-repo.crt
-          printf "${{ secrets.NGINX_KEY }}" > nginx-repo.key
+          printf '%s\n' "${CERT}" > nginx-repo.crt
+          printf '%s\n' "${KEY}" > nginx-repo.key
           if [[ "${{ inputs.target }}" =~ ubi ]]; then
-            printf "${{ secrets.RHEL_LICENSE }}" > rhel_license
+            printf '%s\n' "${RHEL}" > rhel_license
           fi
+        env:
+          CERT: ${{ secrets.NGINX_CRT }}
+          KEY: ${{ secrets.NGINX_KEY }}
+          RHEL: ${{ secrets.RHEL_LICENSE }}
         if: ${{ contains(inputs.target, 'plus') }}
 
       - name: Fetch Cached Binary Artifacts
