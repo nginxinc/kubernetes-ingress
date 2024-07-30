@@ -50,6 +50,11 @@ jobs:
           ref: ${{ inputs.branch }}
           fetch-depth: 0
 
+      - name: Setup Golang Environment
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: go.mod
+
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
@@ -67,6 +72,15 @@ jobs:
 
       - name: Docker Buildx
         uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
+      - name: Setup plus credentials
+        run: |
+          echo ${{ secrets.NGINX_CRT }} > nginx-repo.crt
+          echo ${{ secrets.NGINX_KEY }} > nginx-repo.key
+          if [[ "${{ inputs.target }}" =~ ubi ]]; then
+            echo ${{ secrets.RHEL_LICENSE }} > rhel_license
+          fi
+        if: ${{ contains(inputs.target, 'plus') }}
 
       - name: Build Image
         run: |

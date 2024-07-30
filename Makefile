@@ -5,6 +5,7 @@ VERSION = $(VER)-SNAPSHOT
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
 # Variables that can be overridden
+REGISTRY                      ?= ## The registry where the image is located.
 PREFIX                        ?= nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
 TAG                           ?= $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
 TARGET                        ?= local ## The target of the build. Possible values: local, container and download
@@ -23,8 +24,14 @@ GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_OPTIONS) $(GO_LINKER_FLAGS_VARS)
 DEBUG_GO_LINKER_FLAGS = $(GO_LINKER_FLAGS_VARS)
 DEBUG_GO_GC_FLAGS = all=-N -l
 
+ifeq (${REGISTRY},)
+BUILD_IMAGE             := $(strip $(PREFIX)):$(strip $(TAG))
+else
+BUILD_IMAGE             := $(strip $(REGISTRY))/$(strip $(PREFIX)):$(strip $(TAG))
+endif
+
 # final docker build command
-DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
+DOCKER_CMD = docker build --platform linux/$(strip $(ARCH)) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(BUILD_IMAGE) .
 
 export DOCKER_BUILDKIT = 1
 
