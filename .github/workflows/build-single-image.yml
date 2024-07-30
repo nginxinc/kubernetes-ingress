@@ -50,6 +50,12 @@ jobs:
           ref: ${{ inputs.branch }}
           fetch-depth: 0
 
+      - name: Output Variables
+        id: vars
+        run: |
+          ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
       - name: Setup Golang Environment
         uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
@@ -81,6 +87,13 @@ jobs:
             echo ${{ secrets.RHEL_LICENSE }} > rhel_license
           fi
         if: ${{ contains(inputs.target, 'plus') }}
+
+      - name: Fetch Cached Binary Artifacts
+        id: binary-cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
 
       - name: Build Image
         run: |
