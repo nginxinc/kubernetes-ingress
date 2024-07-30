@@ -1,0 +1,82 @@
+name: Build single image
+run-name: Building gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ github.actor }}-dev/${{ inputs.prefix }}:${{ inputs.tag }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Image build make target to call'
+        required: true
+        type: string
+      prefix:
+        description: 'Image prefix to use in GCR, e.g. nginx-ic'
+        required: true
+        type: string
+      tag:
+        description: 'Image tag to use in GCR, e.g. 3.7.0-SNAPSHOT'
+        required: true
+        type: string
+      branch:
+        description: 'Branch to checkout for build'
+        required: false
+        type: string
+        default: main
+      plus_repo:
+        description: 'Plus repo to install from'
+        required: true
+        default: 'pkgs.nginx.com'
+        type: choice
+        options:
+          - pkgs.nginx.com
+          - pkgs-test.nginx.com
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    permissions:
+      contents: read # for docker/build-push-action to read repo content
+      id-token: write # for login to GCP
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
+          service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
+
+      - name: Login to GCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: gcr.io
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@aa33708b10e362ff993539393ff100fa93ed6a27 # v3.5.0
+
+      - name: Build Image
+        run: |
+          make ${{ inputs.target }}
+        env:
+          REGISTRY: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ github.actor }}-dev
+          PREFIX: ${{ inputs.prefix }}
+          TAG: ${{ inputs.tag }}
+          PLUS_REPO: ${{ inputs.plus_repo }}
+
+      - name: Push image
+        run:
+          docker push gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ github.actor }}-dev/${{ inputs.prefix }}:${{ inputs.tag }}
