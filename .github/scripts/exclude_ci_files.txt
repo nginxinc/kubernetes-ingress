@@ -15,6 +15,8 @@
 .github/workflows/build-base-images.yml
 .github/workflows/build-ot-dependency.yml
 .github/workflows/build-test-image.yml
+.github/workflows/build-ubi-dependency.yml
+.github/workflows/build-single-image.yml
 .github/workflows/cache-update.yml
 .github/workflows/cherry-pick.yml
 .github/workflows/codeql-analysis.yml
