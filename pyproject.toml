@@ -23,6 +23,7 @@ pythonpath = [
 addopts = "--tb=native -ra --disable-warnings -x -l --profile -v"
 log_cli = true
 markers =[
+    "agent",
     "appprotect",
     "appprotect_integration",
     "appprotect_waf_policies",
