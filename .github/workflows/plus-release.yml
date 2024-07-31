@@ -24,9 +24,6 @@ on:
       target_tag:
         required: true
         type: string
-      short_target_tag:
-        type: string
-        default: ''
       dry_run:
         type: boolean
         default: false
@@ -53,9 +50,6 @@ on:
       target_tag:
         required: true
         type: string
-      short_target_tag:
-        type: string
-        default: ''
       dry_run:
         type: boolean
         default: false
@@ -101,9 +95,6 @@ jobs:
           export TARGET_TAG=${{ inputs.target_tag }}
           if ${{ inputs.dry_run }}; then
             export DRY_RUN=true
-          fi
-          if [ "${{ inputs.short_target_tag }}" != "" ]; then
-            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
           fi
           .github/scripts/copy-images.sh
 
@@ -156,9 +147,6 @@ jobs:
           if ${{ inputs.dry_run }}; then
             export DRY_RUN=true
           fi
-          if [ "${{ inputs.short_target_tag }}" != "" ]; then
-            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
-          fi
           .github/scripts/copy-images.sh
 
   release-plus-to-gcr-marketplace-registry:
@@ -197,9 +185,6 @@ jobs:
           export TARGET_OPTS="--dest-registry-token ${{ steps.gcr-mktpl-auth.outputs.access_token }}"
           if ${{ inputs.dry_run }}; then
             export DRY_RUN=true
-          fi
-          if [ "${{ inputs.short_target_tag }}" != "" ]; then
-            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
           fi
           .github/scripts/copy-images.sh
 
