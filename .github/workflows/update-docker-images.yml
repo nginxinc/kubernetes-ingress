@@ -223,7 +223,7 @@ jobs:
     secrets: inherit
 
   release-oss-public:
-    name: Publish Docker OSS ${{ needs.variables.outputs.tag }} to Public Registries
+    name: Publish Docker OSS ${{ matrix.tag }} to Public Registries
     needs: [variables, patch-oss-images]
     strategy:
       fail-fast: false
@@ -250,7 +250,7 @@ jobs:
     secrets: inherit
 
   release-plus-nginx-gcr:
-    name: Publish Docker Plus ${{ needs.variables.outputs.tag }} to NGINX & GCR Marketplace registries
+    name: Publish Docker Plus ${{ matrix.tag }} to NGINX & GCR Marketplace registries
     needs: [variables, patch-plus-images, patch-plus-nap-images]
     strategy:
       fail-fast: false

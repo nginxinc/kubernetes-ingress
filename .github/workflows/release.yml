@@ -52,6 +52,7 @@ jobs:
       short_tag: ${{ steps.vars.outputs.short_tag }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       binary_cache_sign_hit: ${{ steps.binary-cache-sign.outputs.cache-hit }}
+      date: ${{ steps.vars.outputs.date }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -70,6 +71,8 @@ jobs:
           tag=${{ inputs.nic_version }}
           echo "short_tag=${tag%.*}" >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
+          date=$(date "+%Y%m%d")
+          echo "date=${date}" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Signed Binary Artifacts
@@ -119,6 +122,14 @@ jobs:
     name: Release Docker OSS
     needs: [variables]
     uses: ./.github/workflows/oss-release.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ inputs.nic_version }}"
+          - "${{ needs.variables.outputs.short_tag }}"
+          - "${{ inputs.nic_version }}-${{ needs.variables.outputs.date }}"
+          - "latest"
     with:
       gcr_release_registry: true
       ecr_public_registry: true
@@ -126,8 +137,7 @@ jobs:
       quay_public_registry: true
       github_public_registry: true
       source_tag: ${{ needs.variables.outputs.source_tag }}
-      target_tag: ${{ inputs.nic_version }}
-      short_target_tag: ${{ needs.variables.outputs.short_tag }}
+      target_tag: ${{ matrix.tag }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read
@@ -135,20 +145,103 @@ jobs:
       packages: write
     secrets: inherit
 
-  release-plus:
+  release-plus-gcr-nginx:
     if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-plus') }}
     name: Release Docker Plus
     needs: [variables]
     uses: ./.github/workflows/plus-release.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ inputs.nic_version }}"
+          - "${{ needs.variables.outputs.short_tag }}"
+          - "${{ inputs.nic_version }}-${{ needs.variables.outputs.date }}"
+          - "latest"
     with:
       gcr_release_registry: true
       nginx_registry: true
+      gcr_mktpl_registry: false
+      ecr_mktpl_registry: false
+      az_mktpl_registry: false
+      source_tag: ${{ needs.variables.outputs.source_tag }}
+      target_tag: ${{ inputs.nic_version }}
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  release-plus-gcr-mktpl:
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-plus') }}
+    name: Release Docker Plus
+    needs: [variables]
+    uses: ./.github/workflows/plus-release.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ inputs.nic_version }}"
+          - "${{ needs.variables.outputs.short_tag }}"
+          - "${{ inputs.nic_version }}-${{ needs.variables.outputs.date }}"
+    with:
+      gcr_release_registry: false
+      nginx_registry: false
       gcr_mktpl_registry: true
+      ecr_mktpl_registry: false
+      az_mktpl_registry: false
+      source_tag: ${{ needs.variables.outputs.source_tag }}
+      target_tag: ${{ inputs.nic_version }}
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  release-plus-aws-mktpl:
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-plus') }}
+    name: Release Docker Plus
+    needs: [variables]
+    uses: ./.github/workflows/plus-release.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ inputs.nic_version }}"
+          - "${{ inputs.nic_version }}-${{ needs.variables.outputs.date }}"
+    with:
+      gcr_release_registry: false
+      nginx_registry: false
+      gcr_mktpl_registry: false
       ecr_mktpl_registry: true
+      az_mktpl_registry: false
+      source_tag: ${{ needs.variables.outputs.source_tag }}
+      target_tag: ${{ inputs.nic_version }}
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  release-plus-azure-mktpl:
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-plus') }}
+    name: Release Docker Plus
+    needs: [variables]
+    uses: ./.github/workflows/plus-release.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ inputs.nic_version }}"
+          - "${{ inputs.nic_version }}-${{ needs.variables.outputs.date }}"
+    with:
+      gcr_release_registry: false
+      nginx_registry: false
+      gcr_mktpl_registry: false
+      ecr_mktpl_registry: false
       az_mktpl_registry: true
       source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ inputs.nic_version }}
-      short_target_tag: ${{ needs.variables.outputs.short_tag }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read
@@ -213,7 +306,7 @@ jobs:
     if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'gcp-marketplace') }}
     name: Trigger PR for GCP Marketplace
     runs-on: ubuntu-22.04
-    needs: [publish-helm-chart]
+    needs: [publish-helm-chart,release-plus-gcr-mktpl]
     steps:
       - name:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -234,7 +327,7 @@ jobs:
     if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'azure-marketplace') }}
     name: Trigger CNAB Build for Azure Marketplace
     runs-on: ubuntu-22.04
-    needs: [publish-helm-chart]
+    needs: [publish-helm-chart,release-plus-azure-mktpl]
     steps:
       - name:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -257,7 +350,7 @@ jobs:
     if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'aws-marketplace') }}
     name: Publish to AWS Marketplace
     runs-on: ubuntu-22.04
-    needs: [release-plus]
+    needs: [release-plus-aws-mktpl]
     permissions:
       contents: read
       id-token: write
@@ -385,7 +478,7 @@ jobs:
     if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'github-release') }}
     name: Publish release to GitHub
     runs-on: ubuntu-22.04
-    needs: [variables, binaries, release-oss, release-plus, azure-upload]
+    needs: [variables, binaries, release-oss, release-plus-gcr-nginx, azure-upload]
     permissions:
       contents: write # to modify the release
       issues: write # to close milestone
@@ -490,7 +583,7 @@ jobs:
     if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'release-image-notification') }}
     name: Notify Slack channels about image release
     runs-on: ubuntu-22.04
-    needs: [variables, binaries, release-oss, release-plus]
+    needs: [variables, binaries, release-oss, release-plus-gcr-nginx]
     permissions:
       contents: read
       actions: read
