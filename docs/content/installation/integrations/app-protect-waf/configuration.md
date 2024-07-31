@@ -152,7 +152,9 @@ You can define NGINX App Protect WAF [User-Defined Signatures](/nginx-app-protec
 
  > **Note**: The field `revisionDatetime` is not currently supported.
 
-> **Note**: `APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Refer to [NGINX Fails to Start or Reload]({{< relref "installation/integrations/app-protect-waf/troubleshooting-app-protect-waf.md#nginx-fails-to-start-or-reload" >}}) for more information.
+`APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Read [NGINX fails to start or reload]({{< relref "installation/integrations/app-protect-waf/troubleshoot-app-protect-waf.md#nginx-fails-to-start-or-reload" >}}) for more information.
+
+{{< /note >}}
 
 To add the [User Defined Signatures](/nginx-app-protect-waf/v4/configuration-guide/configuration/#user-defined-signatures) to a VirtualServer or Ingress resource:
 

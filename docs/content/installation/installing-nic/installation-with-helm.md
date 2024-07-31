@@ -5,18 +5,18 @@ toc: true
 weight: 100
 ---
 
-This document explains how to install NGINX Ingress Controller using [Helm](https://helm.sh/).
+This document explains how to install F5 NGINX Ingress Controller using [Helm](https://helm.sh/).
 
 ## Before you begin
 
-{{<note>}} All documentation should only be used with the latest stable release, indicated on [the releases page]({{< relref "releases.md" >}}) of the GitHub repository. {{</note>}}
+{{< note >}} All documentation should only be used with the latest stable release, indicated on [the releases page]({{< relref "releases.md" >}}) of the GitHub repository. {{< /note >}}
 
-- A [Kubernetes Version Supported by the Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
+- A [Kubernetes Version Supported by NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
 - Helm 3.0+.
 - If you’d like to use NGINX Plus:
-  - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames` parameter.
-  - Alternatively, pull an NGINX Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}).
-  - Alternatively, you can NGINX build an Ingress Controller image with NGINX Plus and push it to your private registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}}).
+  - Download the image using your NGINX Ingress Controller subscription certificate and key. View the [Get NGINX Ingress Controller from the F5 Registry]({{< relref "installation/nic-images/get-registry-image.md" >}}) topic.
+  - The [Get the NGINX Ingress Controller image with JWT]({{< relref "installation/nic-images/get-image-using-jwt.md" >}}) topic describes how to use your subscription JWT token to get the image.
+  - The [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md" >}}) topic explains how to push an image to a private Docker registry.
   - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
 
 ---
@@ -293,7 +293,7 @@ If you are running NGINX Ingress Controller releases in your cluster with custom
 
 Ensure the NGINX Ingress Controller versions match the version of the CRDs. When uninstalling a release, ensure that you don’t remove the CRDs until there are no other NGINX Ingress Controller releases running in the cluster.
 
-See [running multiple Ingress Controllers]({{< relref "installation/running-multiple-ingress-controllers.md" >}}) for more details.
+The [Run multiple NGINX Ingress Controllers]({{< relref "installation/run-multiple-ingress-controllers.md" >}}) topic has more details.
 
 ## Configuration
 
