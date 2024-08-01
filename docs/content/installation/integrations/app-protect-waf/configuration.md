@@ -156,7 +156,7 @@ You can define NGINX App Protect WAF [User-Defined Signatures](/nginx-app-protec
 
 The field `revisionDatetime` is not currently supported.
 
-`APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Read [NGINX fails to start or reload]({{< relref "installation/integrations/app-protect-waf/troubleshooting-app-protect-waf.md#nginx-fails-to-start-or-reload" >}}) for more information.
+`APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Read [NGINX fails to start or reload]({{< relref "installation/integrations/app-protect-waf/troubleshoot-app-protect-waf.md#nginx-fails-to-start-or-reload" >}}) for more information.
 
 {{< /note >}}
 

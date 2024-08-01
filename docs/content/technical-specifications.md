@@ -74,7 +74,7 @@ _NGINX Plus images include NGINX Plus R32._
 
 #### **F5 Container registry**
 
-NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com`, explained in the [Get the NGINX Ingress Controller image with JWT]({{<relref "/installation/nic-images/using-the-jwt-token-docker-secret.md">}}) and [Get the F5 Registry NGINX Ingress Controller image]({{<relref "/installation/nic-images/pulling-ingress-controller-image.md">}}) topics.
+NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com`, explained in the [Get the NGINX Ingress Controller image with JWT]({{<relref "/installation/nic-images/get-image-using-jwt.md">}}) and [Get the F5 Registry NGINX Ingress Controller image]({{<relref "/installation/nic-images/get-registry-image.md">}}) topics.
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | F5 Container Registry Image | Architectures |
@@ -101,7 +101,7 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 
 NGINX Plus images are available through the AWS Marketplace. 
 
-View the [Use the AWS Marketplace Ingress Controller image]({{< relref "/installation/nic-images/using-aws-marketplace-image.md" >}}) topic for details on how to set up the required IAM resources in your EKS cluster.
+View the [Use the AWS Marketplace Ingress Controller image]({{< relref "/installation/nic-images/use-aws-image.md" >}}) topic for details on how to set up the required IAM resources in your EKS cluster.
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | AWS Marketplace Link | Architectures |
@@ -117,7 +117,7 @@ View the [Use the AWS Marketplace Ingress Controller image]({{< relref "/install
 #### **Google Cloud Marketplace**
 NGINX Plus images are available through the Google Cloud Marketplace. 
 
-View the [Use the GCP Marketplace NGINX Ingress Controller image]({{< relref "/installation/nic-images/using-gcp-marketplace-package.md" >}}) topic for details on how to use them.
+View the [Use the GCP Marketplace NGINX Ingress Controller image]({{< relref "/installation/nic-images/use-gcp-image.md" >}}) topic for details on how to use them.
 
 {{< bootstrap-table "table table-striped table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | GCP Marketplace Link | Architectures |

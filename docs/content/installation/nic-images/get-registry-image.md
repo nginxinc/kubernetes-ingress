@@ -2,12 +2,14 @@
 docs: DOCS-605
 doctypes:
 - install
-title: Getting the F5 Registry NGINX Ingress Controller Image
+title: Get NGINX Ingress Controller from the F5 Registry
 toc: true
 weight: 100
 ---
 
-Learn how to pull an F5 NGINX Plus Ingress Controller image, including those with NGINX App Protect WAF and NGINX App Protect DoS, from the official F5 Docker registry and upload it to your private registry. 
+Learn how to pull an F5 NGINX Plus Ingress Controller image from the official F5 Docker registry and upload it to your private registry. 
+
+The F5 Registry images include versions with NGINX App Protect WAF and NGINX App Protect DoS.
 
 This guide covers the prerequisites, image tagging, and troubleshooting steps.
 
@@ -195,6 +197,6 @@ If you encounter issues while following this guide, here are solutions to common
 
 You can also get the NGINX Ingress Controller image using the following alternate methods:
 
-- [Install using a JWT token in a Docker Config Secret]({{< relref "using-the-jwt-token-docker-secret" >}}).
-- [Build the Ingress Controller image]({{< relref "building-nginx-ingress-controller" >}}) using the source code from the GitHub repository and your NGINX Plus subscription certificate and key.
-- For NGINX Ingress Controller based on NGINX OSS, you can pull the [nginx/nginx-ingress image](https://hub.docker.com/r/nginx/nginx-ingress/) from DockerHub.
+- [Get the NGINX Ingress Controller image with JWT]({{< relref "get-image-using-jwt.md" >}}).
+- [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md" >}}) using the source code from the GitHub repository and your NGINX Plus subscription certificate and key.
+- For NGINX Ingress Controller using NGINX OSS, you can pull the [nginx/nginx-ingress image](https://hub.docker.com/r/nginx/nginx-ingress/) from DockerHub.

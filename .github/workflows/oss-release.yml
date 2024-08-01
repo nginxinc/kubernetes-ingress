@@ -24,9 +24,6 @@ on:
       target_tag:
         required: true
         type: string
-      short_target_tag:
-        type: string
-        default: ''
       dry_run:
         type: boolean
         default: false
@@ -53,9 +50,6 @@ on:
       target_tag:
         required: true
         type: string
-      short_target_tag:
-        type: string
-        default: ''
       dry_run:
         type: boolean
         default: false
@@ -102,9 +96,6 @@ jobs:
           if ${{ inputs.dry_run }}; then
             export DRY_RUN=true
           fi
-          if [ "${{ inputs.short_target_tag }}" != "" ]; then
-            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
-          fi
           .github/scripts/copy-images.sh
 
   release-oss-to-ecr-public-registry:
@@ -149,9 +140,6 @@ jobs:
           export CONFIG_PATH=.github/config/config-oss-ecr
           export SOURCE_TAG=${{ inputs.source_tag }}
           export TARGET_TAG=${{ inputs.target_tag }}
-          if [ "${{ inputs.short_target_tag }}" != "" ]; then
-            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
-          fi
           if ${{ inputs.dry_run }}; then
             export DRY_RUN=true
           fi
@@ -194,9 +182,6 @@ jobs:
           export CONFIG_PATH=.github/config/config-oss-dockerhub
           export SOURCE_TAG=${{ inputs.source_tag }}
           export TARGET_TAG=${{ inputs.target_tag }}
-          if [ "${{ inputs.short_target_tag }}" != "" ]; then
-            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
-          fi
           if ${{ inputs.dry_run }}; then
             export DRY_RUN=true
           fi
@@ -240,9 +225,6 @@ jobs:
           export CONFIG_PATH=.github/config/config-oss-quay
           export SOURCE_TAG=${{ inputs.source_tag }}
           export TARGET_TAG=${{ inputs.target_tag }}
-          if [ "${{ inputs.short_target_tag }}" != "" ]; then
-            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
-          fi
           if ${{ inputs.dry_run }}; then
             export DRY_RUN=true
           fi
@@ -287,9 +269,6 @@ jobs:
           export CONFIG_PATH=.github/config/config-oss-github
           export SOURCE_TAG=${{ inputs.source_tag }}
           export TARGET_TAG=${{ inputs.target_tag }}
-          if [ "${{ inputs.short_target_tag }}" != "" ]; then
-            export ADDITIONAL_TAG=${{ inputs.short_target_tag }}
-          fi
           if ${{ inputs.dry_run }}; then
             export DRY_RUN=true
           fi

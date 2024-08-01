@@ -8,5 +8,4 @@ declare -a NAP_WAF_TAG_POSTFIX_LIST=("")
 declare -a NAP_DOS_TAG_POSTFIX_LIST=("")
 declare -a NAP_WAFV5_TAG_POSTFIX_LIST=()
 declare -a NAP_WAF_DOS_TAG_POSTFIX_LIST=("")
-declare -a ADDITIONAL_TAGS=()
 export PUBLISH_OSS=false

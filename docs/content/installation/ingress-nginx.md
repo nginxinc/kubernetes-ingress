@@ -4,12 +4,12 @@ doctypes:
 - tutorial
 tags:
 - docs
-title: Migrating from Ingress-NGINX Controller to NGINX Ingress Controller
+title: Migrate from Ingress-NGINX Controller to NGINX Ingress Controller
 toc: true
 weight: 500
 ---
 
-This document describes how to migrate from the community-maintained Ingress-NGINX Controller to the F5 NGINX Ingress Controller.
+This document describes how to migrate from the community-maintained Ingress-NGINX Controller to F5 NGINX Ingress Controller.
 
 ## Overview
 
