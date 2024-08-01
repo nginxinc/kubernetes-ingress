@@ -293,7 +293,8 @@ jobs:
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
       tag: ${{ needs.checks.outputs.build_tag }}
-      branch: ${{ github.head_ref && github.head_ref || github.ref }}
+      branch: ${{ (github.head_ref && needs.checks.outputs.forked_workflow != 'true') && github.head_ref || github.ref }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       actions: read
@@ -320,6 +321,7 @@ jobs:
       tag: ${{ needs.checks.outputs.build_tag }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       security-events: write
@@ -345,6 +347,7 @@ jobs:
       nap-modules: ${{ matrix.nap_modules }}
       authenticated: ${{ needs.checks.outputs.forked_workflow != 'true' }}
       full-build: ${{ inputs.force && inputs.force || false }}
+      ic-version: ${{ needs.checks.outputs.ic_version }}
     permissions:
       contents: read
       security-events: write
@@ -614,6 +617,8 @@ jobs:
         run: |
           [[ "${{ matrix.images.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || modules="${{ matrix.images.nap_modules }}"
           echo "modules=${modules}" >> $GITHUB_OUTPUT
+          [[ "${{ matrix.images.nap_modules }}" =~ waf ]] && agent="true" || agent="false"
+          echo "agent=${agent}" >> $GITHUB_OUTPUT
         if: ${{ matrix.images.nap_modules }}
 
       - name: Pull build image
@@ -664,6 +669,7 @@ jobs:
             BUILD_OS=${{ matrix.images.image }}
             IC_VERSION=CI
             ${{ contains(matrix.images.image, 'nap') && format('NAP_MODULES={0}', steps.nap_modules.outputs.modules) || '' }}
+            ${{ contains(matrix.images.nap_modules,'waf') && format('NGINX_AGENT={0}', steps.nap_modules.outputs.agent) || '' }}
             ${{ contains(matrix.images.marker, 'appprotect') && 'DEBIAN_VERSION=buster-slim' || '' }}
           secrets: |
             ${{ contains(matrix.images.image, 'nap') && format('"nginx-repo.crt={0}"', secrets.NGINX_AP_CRT) || format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) }}
@@ -736,4 +742,5 @@ jobs:
       security-events: write
       pull-requests: write # for scout report
     uses: ./.github/workflows/image-promotion.yml
+    secrets: inherit
     if: ${{ inputs.force && inputs.force || false }}
