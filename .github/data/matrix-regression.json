@@ -14,6 +14,13 @@
       "type": "plus",
       "marker": "'not upgrade'",
       "platforms": "linux/arm64, linux/amd64"
+    },
+    {
+      "label": "regression",
+      "image": "debian-plus-nap",
+      "type": "plus",
+      "marker": "'appprotect or agent'",
+      "platforms": "linux/arm64, linux/amd64"
     }
   ]
 }
