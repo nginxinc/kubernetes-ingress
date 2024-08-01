@@ -25,9 +25,7 @@ The following steps describe how to use the NGINX Instance Manager API to create
 
 {{< tip >}} You can skip this step if you intend to use an existing security policy. {{< /tip >}}
 
-First, create a [new security policy](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
-
-You will use the API to upload JSON files for the policy, which will be the same method for creating the bundle later.
+Create a [new security policy](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
 
 Create the file `simple-policy.json` with the contents below:
 
@@ -42,11 +40,9 @@ Create the file `simple-policy.json` with the contents below:
 }
 ```
 
-{{< warning >}}
+{{< warning >}} The `content` value must be base64 encoded or you will encounter an error. {{< /warning >}}
 
-The `content` value must be base64 encoded or you will encounter an error.
-
-{{< /warning >}}
+Upload the policy JSON files with the API, which is the same method to create the bundle later.
 
 In the same directory you created `simple-policy.json`, create a POST request for NGINX Instance Manager using the API.
 
@@ -86,9 +82,9 @@ It is one of two unique IDs we will use to download the bundle: it will be refer
 
 ## Create a new security bundle
 
-Once you have created (Or selected) a security policy, you can now [create a security bundle](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy-bundles) using the API. The version in the bundle you create **must** match the WAF compiler version you intend to use. You can check which version is installed in NGINX Instance Manager by checking the operating system packages.
+Once you have created (Or selected) a security policy, [create a security bundle](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy-bundles) using the API. The version in the bundle you create **must** match the WAF compiler version you intend to use. 
 
-If the wrong version is noted in the JSON payload, you will receive an error similar to below:
+You can check which version is installed in NGINX Instance Manager by checking the operating system packages. If the wrong version is noted in the JSON payload, you will receive an error similar to below:
 
 ```text
 {"code":13018,"message":"Error compiling the security policy set: One or more of the specified compiler versions does not exist. Check the compiler versions, then try again."}
@@ -202,9 +198,9 @@ curl -X GET -k 'https://127.0.0.1/api/platform/v1/security/policies/6af9f261-658
 
 ## Add volumes and volumeMounts to NGINX Ingress Controller
 
-In order to use the WAF security bundles, your NGINX Ingress Controller instance must have *volumes* and *volumeMounts*. Precise paths are used to detect when bundles are uploaded to the cluster.
+To use WAF security bundles, your NGINX Ingress Controller instance must have *volumes* and *volumeMounts*. Precise paths are used to detect when bundles are uploaded to the cluster.
 
-Here is an example of what must be added:
+Here is an example of what to add:
 
 ```yaml
 volumes:
@@ -217,7 +213,7 @@ volumeMounts:
     mountPath: /etc/nginx/waf/bundles
 ```
 
-A full example of a deployment file with `volumes` and `volumeMounts` may look like the following:
+A full example of a deployment file with `volumes` and `volumeMounts` could look like the following:
 
 ```yaml
 
@@ -303,9 +299,7 @@ spec:
 
 ## Create WAF policy
 
-Before a bundle can be processed, a WAF policy must be created. 
-
-This policy is added to `/etc/nginx/waf/bundles`, allowing NGINX Ingress Controller to load it into WAF.
+To process a bundle, you must create a new WAF policy. This policy is added to `/etc/nginx/waf/bundles`, allowing NGINX Ingress Controller to load it into WAF.
 
 The example below shows the required WAF policy, and the *apBundle* and *apLogConf* fields you must use for the security bundle binary file (A tar ball).
 
@@ -349,10 +343,10 @@ spec:
 
 ## Upload the security bundle
 
-The final step is to upload the security bundle binary to the NGINX Ingress Controller pods.
+To finish adding a security bundle, the binary file to the NGINX Ingress Controller pods.
 
 ```shell
 kubectl cp /your/local/path/<bundle_name>.tgz  <namespace>/<pod-name>:etc/nginx/waf/bundles<bundle_name>.tgz
 ```
 
-Once the bundle has been uploaded to the cluster, NGINX Ingress Controller will pick up and automatically load the new WAF policy.
+Once the bundle has been uploaded to the cluster, NGINX Ingress Controller will detect and automatically load the new WAF policy.
