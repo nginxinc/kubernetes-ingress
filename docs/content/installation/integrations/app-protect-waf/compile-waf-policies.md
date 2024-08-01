@@ -9,7 +9,7 @@ weight: 300
 
 This guide describes how to use F5 NGINX Instance Manager to compile NGINX App Protect WAF Policies for use with NGINX Ingress Controller.
 
-NGINX App Protect WAF uses policies to configure which security features are set. When these policies are changed, they need to be compiled so that the engine can begin to use them. Compiling policies can take a large amount of time and resources, depending on the size. The preferred way to do this is with NGINX Instance Manager. This will reduce the impact on a NGINX Ingress Controller deployment.
+NGINX App Protect WAF uses policies to configure which security features are set. When these policies are changed, they need to be compiled so that the engine can begin to use them. Compiling policies can take a large amount of time and resources. You can do this with the NGINX Instance Manager. This reduces the impact on a NGINX Ingress Controller deployment.
 
 By using NGINX Instance Manager to compile WAF policies, the policy bundle can also be used immediately by NGINX Ingress Controller without reloading.
 
