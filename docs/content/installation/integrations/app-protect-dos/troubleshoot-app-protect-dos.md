@@ -2,7 +2,7 @@
 docs: DOCS-1456
 doctypes:
 - ''
-title: Troubleshooting NGINX App Protect DoS
+title: Troubleshoot NGINX App Protect DoS
 toc: true
 weight: 400
 ---

@@ -2,7 +2,7 @@
 docs: DOCS-0000
 doctypes:
 - ''
-title: Troubleshooting NGINX App Protect WAF
+title: Troubleshoot NGINX App Protect WAF
 toc: true
 weight: 300
 ---
