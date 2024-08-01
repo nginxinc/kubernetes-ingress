@@ -12,5 +12,3 @@ spec:
     logoutEndpoint: https://keycloak.example.com/realms/master/protocol/openid-connect/logout
     scope: openid+profile+email
     accessTokenEnable: true
-    #redirectURI: <redirect URI after login>        # default: /_codexch
-    #logoutRedirect: <redirect URI after logout>    # default: /_logout

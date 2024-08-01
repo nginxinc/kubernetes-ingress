@@ -11,5 +11,5 @@ data:
         zone_sync;
         zone_sync_server nginx-ingress-headless.nginx-ingress.svc.cluster.local:12345 resolve;
     }
-  resolver-addresses: <kube-dns-ip>
+  resolver-addresses: kube-dns.kube-system.svc.cluster.local
   resolver-valid: 5s
