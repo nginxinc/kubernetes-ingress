@@ -19,6 +19,7 @@
       "label": "regression",
       "image": "debian-plus-nap",
       "type": "plus",
+      "nap_modules": "waf",
       "marker": "'appprotect or agent'",
       "platforms": "linux/arm64, linux/amd64"
     }
