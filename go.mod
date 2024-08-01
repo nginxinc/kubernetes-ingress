@@ -5,9 +5,9 @@ go 1.22.5
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.23.3
-	github.com/cert-manager/cert-manager v1.15.1
+	github.com/cert-manager/cert-manager v1.15.2
 	github.com/dlclark/regexp2 v1.11.2
-	github.com/gkampitakis/go-snaps v0.5.5
+	github.com/gkampitakis/go-snaps v0.5.6
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -120,7 +120,7 @@ require (
 	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/oauth2 v0.20.0 // indirect
+	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
