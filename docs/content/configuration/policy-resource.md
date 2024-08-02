@@ -609,7 +609,7 @@ The configuration in the example doesn't enable TLS and the synchronization betw
 
 #### Limitations
 
-The OIDC policy defines a few internal locations that can't be customized: `/_jwks_uri`, `/_token`, `/_refresh`, `/_id_token_validation`, `/logout`. In addition, as explained below, `/_codexch` is the default value for redirect URI, and `/_logout` is the default value for logout endpoint, both of which can be customized. Specifying one of these locations as a route in the VirtualServer or VirtualServerRoute will result in a collision and NGINX Plus will fail to reload.
+The OIDC policy defines a few internal locations that can't be customized: `/_jwks_uri`, `/_token`, `/_refresh`, `/_id_token_validation`, `/logout`. In addition, as explained below, `/_codexch` is the default value for redirect URI, and `/_logout` is the default value for post logout redirect URI, both of which can be customized. Specifying one of these locations as a route in the VirtualServer or VirtualServerRoute will result in a collision and NGINX Plus will fail to reload.
 
 {{% table %}}
 |Field | Description | Type | Required |
