@@ -151,7 +151,7 @@ https: https-8443
 
 ### VirtualServer.ExternalDNS
 
-The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/v0.12.0/) for more information on deploying and configuring ExternalDNS and Providers. Example:
+The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/v0.14.2/) for more information on deploying and configuring ExternalDNS and Providers. Example:
 
 ```yaml
 enable: true
@@ -163,7 +163,7 @@ enable: true
 |``enable`` | Enables ExternalDNS integration for a VirtualServer resource. The default is ``false``. | ``string`` | No |
 |``labels`` | Configure labels to be applied to the Endpoint resources that will be consumed by ExternalDNS. | ``map[string]string`` | No |
 |``providerSpecific`` | Configure provider specific properties which holds the name and value of a configuration which is specific to individual DNS providers. | [[]ProviderSpecific](#virtualserverexternaldnsproviderspecific) | No |
-|``recordTTL`` | TTL for the DNS record. This defaults to 0 if not defined. See [the ExternalDNS TTL documentation for provider-specific defaults](https://kubernetes-sigs.github.io/external-dns/v0.12.0/ttl/#providers) | ``int64`` | No |
+|``recordTTL`` | TTL for the DNS record. This defaults to 0 if not defined. See [the ExternalDNS TTL documentation for provider-specific defaults](https://kubernetes-sigs.github.io/external-dns/v0.14.2/ttl/#providers) | ``int64`` | No |
 |``recordType`` | The record Type that should be created, e.g. "A", "AAAA", "CNAME". This is automatically computed based on the external endpoints if not defined. | ``string`` | No |
 {{</bootstrap-table>}}
 
