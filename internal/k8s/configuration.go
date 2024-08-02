@@ -817,35 +817,20 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 
 func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfiguration) {
 	vs := vsc.VirtualServer
-	if vs.Spec.Listener != nil && c.globalConfiguration != nil {
-		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTP]; ok {
-			if gcListener.Protocol == conf_v1.HTTPProtocol && !gcListener.Ssl {
-				vsc.HTTPPort = gcListener.Port
-				if gcListener.IPv4IP != "" {
-					vsc.HTTPIPv4 = gcListener.IPv4IP
-				}
-				if gcListener.IPv6IP != "" {
-					vsc.HTTPIPv6 = gcListener.IPv6IP
-				}
-			}
-		}
+	if vs.Spec.Listener == nil || c.globalConfiguration == nil {
+		return
+	}
 
-		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTPS]; ok {
-			if gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl {
-				vsc.HTTPSPort = gcListener.Port
-				if gcListener.IPv4IP != "" {
-					vsc.HTTPSIPv4 = gcListener.IPv4IP
-				}
-				if gcListener.IPv6IP != "" {
-					vsc.HTTPSIPv6 = gcListener.IPv6IP
-				}
-			}
+	assignListener := func(listenerName string, isSSL bool, port *int, ipv4 *string, ipv6 *string) {
+		if gcListener, ok := c.listenerMap[listenerName]; ok && gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl == isSSL {
+			*port = gcListener.Port
+			*ipv4 = gcListener.IPv4IP
+			*ipv6 = gcListener.IPv6IP
 		}
 	}
-	// vsc.HTTPIPv4 = "0.0.0.1"
-	// vsc.HTTPSIPv4 = "0.0.0.2"
-	// vsc.HTTPIPv6 = "f7bd:fda1:366e:7043:e97d:2dba:47ec:1e41"
-	// vsc.HTTPSIPv6 = "cf8c:563f:c03f:c3bd:935a:fcd2:cfbd:4197"
+
+	assignListener(vs.Spec.Listener.HTTP, false, &vsc.HTTPPort, &vsc.HTTPIPv4, &vsc.HTTPIPv6)
+	assignListener(vs.Spec.Listener.HTTPS, true, &vsc.HTTPSPort, &vsc.HTTPSIPv4, &vsc.HTTPSIPv6)
 }
 
 // GetResources returns all configuration resources.

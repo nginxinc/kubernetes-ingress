@@ -11,13 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-// IPType is the type of IP, either IPv4 or IPv6.
-type IPType int
+type ipType int
 
-// IPv4 and IPv6 are used to determine the IPType of the the listener.
 const (
-	IPv4 IPType = iota
-	IPv6
+	ipv4 ipType = iota
+	ipv6
 )
 
 var allowedProtocols = map[string]bool{
@@ -71,18 +69,18 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 			continue
 		}
 
-		if err := gcv.checkIPPortProtocolConflicts(ipv4PortProtocolCombinations, IPv4, l, fieldPath); err != nil {
+		if err := gcv.checkIPPortProtocolConflicts(ipv4PortProtocolCombinations, ipv4, l, fieldPath); err != nil {
 			allErrs = append(allErrs, err)
 			continue
 		}
 
-		if err := gcv.checkIPPortProtocolConflicts(ipv6PortProtocolCombinations, IPv6, l, fieldPath); err != nil {
+		if err := gcv.checkIPPortProtocolConflicts(ipv6PortProtocolCombinations, ipv6, l, fieldPath); err != nil {
 			allErrs = append(allErrs, err)
 			continue
 		}
 
-		gcv.updatePortProtocolCombinations(ipv4PortProtocolCombinations, IPv4, l)
-		gcv.updatePortProtocolCombinations(ipv6PortProtocolCombinations, IPv6, l)
+		gcv.updatePortProtocolCombinations(ipv4PortProtocolCombinations, ipv4, l)
+		gcv.updatePortProtocolCombinations(ipv6PortProtocolCombinations, ipv6, l)
 
 		validListeners = append(validListeners, l)
 	}
@@ -98,20 +96,9 @@ func (gcv *GlobalConfigurationValidator) checkForDuplicateName(listenerNames set
 	return nil
 }
 
-// checkPortProtocolConflicts ensures no duplicate or conflicting port/protocol combinations exist.
-func (gcv *GlobalConfigurationValidator) checkIPPortProtocolConflicts(combinations map[string]map[int]string, ipType IPType, listener conf_v1.Listener, fieldPath *field.Path) *field.Error {
-	var ip string
-	if ipType == IPv4 {
-		ip = listener.IPv4IP
-		if ip == "" {
-			ip = "0.0.0.0"
-		}
-	} else {
-		ip = listener.IPv6IP
-		if ip == "" {
-			ip = "::"
-		}
-	}
+// checkIPPortProtocolConflicts ensures no duplicate or conflicting port/protocol combinations exist.
+func (gcv *GlobalConfigurationValidator) checkIPPortProtocolConflicts(combinations map[string]map[int]string, ipType ipType, listener conf_v1.Listener, fieldPath *field.Path) *field.Error {
+	ip := getIP(ipType, listener)
 
 	if combinations[ip] == nil {
 		combinations[ip] = make(map[int]string) // map[ip]map[port]protocol
@@ -130,24 +117,27 @@ func (gcv *GlobalConfigurationValidator) checkIPPortProtocolConflicts(combinatio
 }
 
 // updatePortProtocolCombinations updates the port/protocol combinations map with the given listener's details for both IPv4 and IPv6.
-func (gcv *GlobalConfigurationValidator) updatePortProtocolCombinations(combinations map[string]map[int]string, ipType IPType, listener conf_v1.Listener) {
-	var ip string
-	if ipType == IPv4 {
-		ip = listener.IPv4IP
-		if ip == "" {
-			ip = "0.0.0.0"
-		}
-	} else {
-		ip = listener.IPv6IP
-		if ip == "" {
-			ip = "::"
-		}
-	}
+func (gcv *GlobalConfigurationValidator) updatePortProtocolCombinations(combinations map[string]map[int]string, ipType ipType, listener conf_v1.Listener) {
+	ip := getIP(ipType, listener)
 
 	if combinations[ip] == nil {
 		combinations[ip] = make(map[int]string)
 	}
 	combinations[ip][listener.Port] = listener.Protocol
+}
+
+// getIP returns the appropriate IP address for the given ipType and listener.
+func getIP(ipType ipType, listener conf_v1.Listener) string {
+	if ipType == ipv4 {
+		if listener.IPv4IP == "" {
+			return "0.0.0.0"
+		}
+		return listener.IPv4IP
+	}
+	if listener.IPv6IP == "" {
+		return "::"
+	}
+	return listener.IPv6IP
 }
 
 func generatePortProtocolKey(port int, protocol string) string {

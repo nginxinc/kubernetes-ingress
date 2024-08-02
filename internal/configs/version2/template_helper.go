@@ -16,11 +16,10 @@ const (
 	https
 )
 
-// IPType is the type of IP, either IPv4 or IPv6 used for printing out listener.
-type IPType int
+type ipType int
 
 const (
-	ipv4 IPType = iota
+	ipv4 ipType = iota
 	ipv6
 )
 
@@ -54,8 +53,21 @@ func makeListener(listenerType protocol, s Server) string {
 }
 
 func buildDefaultListenerDirectives(listenerType protocol, s Server) string {
-	var directives string
 	port := getDefaultPort(listenerType)
+	return buildListenerDirectives(listenerType, s, port)
+}
+
+func buildCustomListenerDirectives(listenerType protocol, s Server) string {
+	if (listenerType == http && s.HTTPPort > 0) || (listenerType == https && s.HTTPSPort > 0) {
+		port := getCustomPort(listenerType, s)
+		return buildListenerDirectives(listenerType, s, port)
+	}
+	return ""
+}
+
+func buildListenerDirectives(listenerType protocol, s Server, port string) string {
+	var directives string
+
 	if listenerType == http {
 		directives += buildListenDirective(s.HTTPIPv4, port, s.ProxyProtocol, ipv4)
 		if !s.DisableIPV6 {
@@ -67,29 +79,6 @@ func buildDefaultListenerDirectives(listenerType protocol, s Server) string {
 		if !s.DisableIPV6 {
 			directives += spacing
 			directives += buildListenDirective(s.HTTPSIPv6, port, s.ProxyProtocol, ipv6)
-		}
-	}
-
-	return directives
-}
-
-func buildCustomListenerDirectives(listenerType protocol, s Server) string {
-	var directives string
-
-	if (listenerType == http && s.HTTPPort > 0) || (listenerType == https && s.HTTPSPort > 0) {
-		port := getCustomPort(listenerType, s)
-		if listenerType == http {
-			directives += buildListenDirective(s.HTTPIPv4, port, s.ProxyProtocol, ipv4)
-			if !s.DisableIPV6 {
-				directives += spacing
-				directives += buildListenDirective(s.HTTPIPv6, port, s.ProxyProtocol, ipv6)
-			}
-		} else {
-			directives += buildListenDirective(s.HTTPSIPv4, port, s.ProxyProtocol, ipv4)
-			if !s.DisableIPV6 {
-				directives += spacing
-				directives += buildListenDirective(s.HTTPSIPv6, port, s.ProxyProtocol, ipv6)
-			}
 		}
 	}
 
@@ -110,15 +99,13 @@ func getCustomPort(listenerType protocol, s Server) string {
 	return strconv.Itoa(s.HTTPSPort) + " ssl"
 }
 
-func buildListenDirective(ip string, port string, proxyProtocol bool, ipType IPType) string {
+func buildListenDirective(ip string, port string, proxyProtocol bool, ipType ipType) string {
 	base := "listen"
 	var directive string
 
 	if ipType == ipv6 {
-		if strings.Contains(ip, ":") {
-			if ip != "" {
-				directive = fmt.Sprintf("%s [%s]:%s", base, ip, port)
-			}
+		if ip != "" {
+			directive = fmt.Sprintf("%s [%s]:%s", base, ip, port)
 		} else {
 			directive = fmt.Sprintf("%s [::]:%s", base, port)
 		}
