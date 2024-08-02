@@ -361,9 +361,9 @@ spec:
                     type: string
                   clientSecret:
                     type: string
-                  jwksURI:
+                  endSessionEndpoint:
                     type: string
-                  logoutEndpoint:
+                  jwksURI:
                     type: string
                   logoutRedirect:
                     type: string

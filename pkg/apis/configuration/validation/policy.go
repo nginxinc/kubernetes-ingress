@@ -260,8 +260,8 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	if oidc.ClientSecret == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("clientSecret"), "")}
 	}
-	if oidc.LogoutEndpoint == "" && oidc.LogoutRedirect != "" {
-		msg := "logoutRedirect can only be set when logoutEndpoint is set"
+	if oidc.EndSessionEndpoint == "" && oidc.LogoutRedirect != "" {
+		msg := "logoutRedirect can only be set when endSessionEndpoint is set"
 		return field.ErrorList{field.Forbidden(fieldPath.Child("logoutRedirect"), msg)}
 	}
 
@@ -272,8 +272,8 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	if oidc.RedirectURI != "" {
 		allErrs = append(allErrs, validatePath(oidc.RedirectURI, fieldPath.Child("redirectURI"))...)
 	}
-	if oidc.LogoutEndpoint != "" {
-		allErrs = append(allErrs, validateURL(oidc.LogoutEndpoint, fieldPath.Child("logoutEndpoint"))...)
+	if oidc.EndSessionEndpoint != "" {
+		allErrs = append(allErrs, validateURL(oidc.EndSessionEndpoint, fieldPath.Child("endSessionEndpoint"))...)
 	}
 	if oidc.LogoutRedirect != "" {
 		allErrs = append(allErrs, validatePath(oidc.LogoutRedirect, fieldPath.Child("logoutRedirect"))...)

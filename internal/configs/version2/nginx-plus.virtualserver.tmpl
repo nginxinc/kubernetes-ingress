@@ -97,7 +97,7 @@ server {
     set $oidc_authz_endpoint "{{ $oidc.AuthEndpoint }}";
     set $oidc_authz_extra_args "{{ $oidc.AuthExtraArgs }}";
     set $oidc_token_endpoint "{{ $oidc.TokenEndpoint }}";
-    set $oidc_end_session_endpoint "{{ $oidc.LogoutEndpoint }}";
+    set $oidc_end_session_endpoint "{{ $oidc.EndSessionEndpoint }}";
     set $oidc_jwt_keyfile "{{ $oidc.JwksURI }}";
     set $oidc_scopes "{{ $oidc.Scope }}";
     set $oidc_client "{{ $oidc.ClientID }}";
