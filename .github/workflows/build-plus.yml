@@ -80,9 +80,11 @@ jobs:
         id: nap_modules
         run: |
           [[ "${{ inputs.nap-modules }}" == "waf,dos" ]] && modules="waf-dos" || name="${{ inputs.nap-modules }}"
+          echo "name=${name}" >> $GITHUB_OUTPUT
           [[ "${{ inputs.nap-modules }}" == "waf,dos" ]] && modules="both" || modules="${{ inputs.nap-modules }}"
           echo "modules=${modules}" >> $GITHUB_OUTPUT
-          echo "name=${name}" >> $GITHUB_OUTPUT
+          [[ "${{ inputs.nap-modules }}" =~ waf ]] && agent="true" || agent="false"
+          echo "agent=${agent}" >> $GITHUB_OUTPUT
         if: ${{ inputs.nap-modules != '' }}
 
       - name: Docker meta
@@ -124,7 +126,7 @@ jobs:
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@aa33708b10e362ff993539393ff100fa93ed6a27 # v3.5.0
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
         if: ${{ steps.images_exist.outputs.base_exists != 'true' || steps.images_exist.outputs.target_exists != 'true' }}
 
       - name: Build Base Container
@@ -143,6 +145,7 @@ jobs:
             BUILD_OS=${{ inputs.image }}
             IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
             ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
+            ${{ contains(inputs.nap-modules,'waf') && format('NGINX_AGENT={0}', steps.nap_modules.outputs.agent) || '' }}
           secrets: |
             "nginx-repo.crt=${{ inputs.nap-modules != '' && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ inputs.nap-modules != '' && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
@@ -187,6 +190,7 @@ jobs:
             ${{ inputs.authenticated && format('PREBUILT_BASE_IMG={0}', steps.base_name.outputs.image ) }}
             IC_VERSION=${{ inputs.ic-version && inputs.ic-version || steps.meta.outputs.version }}
             ${{ inputs.nap-modules != '' && format('NAP_MODULES={0}', steps.nap_modules.outputs.name) || '' }}
+            ${{ contains(inputs.nap-modules,'waf') && format('NGINX_AGENT={0}', steps.nap_modules.outputs.agent) || '' }}
             ${{ (contains(inputs.target, 'aws') && inputs.nap-modules != '') && format('NAP_MODULES_AWS={0}', steps.nap_modules.outputs.modules) || '' }}
             ${{ contains(inputs.image, 'v5') && 'WAF_VERSION=v5' || '' }}
           secrets: |
@@ -218,7 +222,7 @@ jobs:
 
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
-        uses: docker/scout-action@c854600180d9e84cfe65ef4d63e623a0a38b570c # v1.11.0
+        uses: docker/scout-action@d4597e4b360bad9160fdaf18274b495ac38abefb # v1.12.0
         with:
           command: cves,recommendations
           image: ${{ steps.meta.outputs.tags }}

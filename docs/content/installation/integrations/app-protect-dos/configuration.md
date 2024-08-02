@@ -9,7 +9,7 @@ weight: 200
 
 {{< tip >}}
 
- Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/app-protect-dos).
+Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/app-protect-dos).
 
 {{< /tip >}}
 
