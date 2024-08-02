@@ -365,7 +365,7 @@ spec:
                     type: string
                   jwksURI:
                     type: string
-                  logoutRedirect:
+                  postLogoutRedirectURI:
                     type: string
                   redirectURI:
                     type: string
