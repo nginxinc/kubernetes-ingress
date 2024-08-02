@@ -200,7 +200,10 @@ type VirtualServerConfiguration struct {
 	Warnings            []string
 	HTTPPort            int
 	HTTPSPort           int
-	IP                  string
+	HTTPIPv4            string
+	HTTPIPv6            string
+	HTTPSIPv4           string
+	HTTPSIPv6           string
 }
 
 // NewVirtualServerConfiguration creates a VirtualServerConfiguration.
@@ -818,8 +821,11 @@ func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfi
 		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTP]; ok {
 			if gcListener.Protocol == conf_v1.HTTPProtocol && !gcListener.Ssl {
 				vsc.HTTPPort = gcListener.Port
-				if gcListener.IP != "" {
-					vsc.IP = gcListener.IP
+				if gcListener.IPv4IP != "" {
+					vsc.HTTPIPv4 = gcListener.IPv4IP
+				}
+				if gcListener.IPv6IP != "" {
+					vsc.HTTPIPv6 = gcListener.IPv6IP
 				}
 			}
 		}
@@ -827,12 +833,19 @@ func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfi
 		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTPS]; ok {
 			if gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl {
 				vsc.HTTPSPort = gcListener.Port
-				if gcListener.IP != "" {
-					vsc.IP = gcListener.IP
+				if gcListener.IPv4IP != "" {
+					vsc.HTTPSIPv4 = gcListener.IPv4IP
+				}
+				if gcListener.IPv6IP != "" {
+					vsc.HTTPSIPv6 = gcListener.IPv6IP
 				}
 			}
 		}
 	}
+	// vsc.HTTPIPv4 = "0.0.0.1"
+	// vsc.HTTPSIPv4 = "0.0.0.2"
+	// vsc.HTTPIPv6 = "f7bd:fda1:366e:7043:e97d:2dba:47ec:1e41"
+	// vsc.HTTPSIPv6 = "cf8c:563f:c03f:c3bd:935a:fcd2:cfbd:4197"
 }
 
 // GetResources returns all configuration resources.
@@ -1791,7 +1804,11 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 			updatedHosts = append(updatedHosts, h)
 		}
 
-		if newVsc.IP != oldVsc.IP {
+		if newVsc.HTTPIPv4 != oldVsc.HTTPIPv4 {
+			updatedHosts = append(updatedHosts, h)
+		}
+
+		if newVsc.HTTPIPv6 != oldVsc.HTTPIPv6 {
 			updatedHosts = append(updatedHosts, h)
 		}
 

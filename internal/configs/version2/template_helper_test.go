@@ -280,19 +280,19 @@ func TestMakeHTTPListenerWithCustomIP(t *testing.T) {
 			DisableIPV6:     true,
 			ProxyProtocol:   false,
 			HTTPPort:        80,
-			IP:              "192.168.0.2",
+			HTTPIPv4:        "192.168.0.2",
 		}, expected: "listen 192.168.0.2:80;\n"},
 		{server: Server{
 			CustomListeners: true,
 			DisableIPV6:     false,
 			ProxyProtocol:   false,
 			HTTPPort:        80,
-			IP:              "192.168.1.2",
+			HTTPIPv4:        "192.168.1.2",
 		}, expected: "listen 192.168.1.2:80;\n    listen [::]:80;\n"},
 		{server: Server{
 			CustomListeners: true,
 			HTTPPort:        81,
-			IP:              "192.168.0.5",
+			HTTPIPv4:        "192.168.0.5",
 			DisableIPV6:     true,
 			ProxyProtocol:   false,
 		}, expected: "listen 192.168.0.5:81;\n"},
@@ -301,7 +301,7 @@ func TestMakeHTTPListenerWithCustomIP(t *testing.T) {
 			HTTPPort:        81,
 			DisableIPV6:     false,
 			ProxyProtocol:   false,
-			IP:              "192.168.1.5",
+			HTTPIPv4:        "192.168.1.5",
 		}, expected: "listen 192.168.1.5:81;\n    listen [::]:81;\n"},
 	}
 

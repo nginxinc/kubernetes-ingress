@@ -76,7 +76,7 @@ func TestValidateListeners(t *testing.T) {
 		},
 		{
 			Name:     "test-listener-ip",
-			IP:       "127.0.0.1",
+			IPv4IP:   "127.0.0.1",
 			Port:     8080,
 			Protocol: "HTTP",
 		},
@@ -100,20 +100,20 @@ func TestValidateListeners_FailsOnInvalidIP(t *testing.T) {
 		{
 			name: "Invalid IP",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-1", IP: "267.0.0.1", Port: 8082, Protocol: "UDP"},
+				{Name: "test-listener-1", IPv4IP: "267.0.0.1", Port: 8082, Protocol: "UDP"},
 			},
 		},
 		{
 			name: "Invalid IP with missing octet",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-2", IP: "127.0.0", Port: 8080, Protocol: "HTTP"},
+				{Name: "test-listener-2", IPv4IP: "127.0.0", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Valid and invalid IPs",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-3", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
-				{Name: "test-listener-4", IP: "256.256.256.256", Port: 8081, Protocol: "HTTP"},
+				{Name: "test-listener-3", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+				{Name: "test-listener-4", IPv4IP: "256.256.256.256", Port: 8081, Protocol: "HTTP"},
 			},
 		},
 	}
@@ -138,8 +138,8 @@ func TestValidateListeners_FailsOnDuplicateNamesDifferentIP(t *testing.T) {
 	t.Parallel()
 
 	listeners := []conf_v1.Listener{
-		{Name: "test-listener", IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
-		{Name: "test-listener", IP: "192.168.1.2", Port: 8081, Protocol: "HTTP"},
+		{Name: "test-listener", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+		{Name: "test-listener", IPv4IP: "192.168.1.2", Port: 8081, Protocol: "HTTP"},
 	}
 
 	gcv := createGlobalConfigurationValidator()
@@ -160,8 +160,8 @@ func TestValidateListeners_FailsOnPortProtocolConflictsSameIP(t *testing.T) {
 		{
 			name: "Same port used with the same protocol",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 	}
@@ -188,15 +188,15 @@ func TestValidateListeners_PassesOnValidIPListeners(t *testing.T) {
 		{
 			name: "Different Ports and IPs",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IP: "192.168.1.2", Port: 9090, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4IP: "192.168.1.2", Port: 9090, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Same IP, Same Protocol and Different Port",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IP: "192.168.1.1", Port: 9090, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4IP: "192.168.1.1", Port: 9090, Protocol: "HTTP"},
 			},
 		},
 	}
