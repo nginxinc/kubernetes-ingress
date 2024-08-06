@@ -181,6 +181,17 @@ func (l *LatencyMetricsCollector) RecordLatency(syslogMsg string) {
 		glog.V(3).Infof("could not parse syslog message: %v", err)
 		return
 	}
+
+	// Upstream for gRPC service is not implemented yet.
+	// This is a temp solution to avoid spamming error logs.
+	// Ref:
+	// https://github.com/nginxinc/kubernetes-ingress/issues/5010
+	// https://github.com/nginxinc/kubernetes-ingress/issues/6124
+	if lm.Upstream == "-" {
+		glog.V(3).Infof("latency metrics for gRPC upstreams: %v", lm)
+		return
+	}
+
 	labelValues, err := l.createLatencyLabelValues(lm)
 	if err != nil {
 		glog.Errorf("cannot record latency for upstream %s and server %s: %v", lm.Upstream, lm.Server, err)
