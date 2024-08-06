@@ -68,8 +68,7 @@ func main() {
 
 	buildOS := os.Getenv("BUILD_OS")
 
-	config, kubeClient := createConfigAndKubeClient()
-
+	config, kubeClient := mustCreateConfigAndKubeClient()
 	mustValidateKubernetesVersionInfo(kubeClient)
 	mustValidateIngressClass(kubeClient)
 
@@ -260,7 +259,7 @@ func main() {
 	}
 }
 
-func createConfigAndKubeClient() (*rest.Config, *kubernetes.Clientset) {
+func mustCreateConfigAndKubeClient() (*rest.Config, *kubernetes.Clientset) {
 	var config *rest.Config
 	var err error
 	if *proxyURL != "" {
