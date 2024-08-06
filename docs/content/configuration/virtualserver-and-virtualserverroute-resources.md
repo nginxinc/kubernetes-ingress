@@ -151,7 +151,7 @@ https: https-8443
 
 ### VirtualServer.ExternalDNS
 
-The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/v0.14.2/) for more information on deploying and configuring ExternalDNS and Providers. Example:
+The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/) for more information on deploying and configuring ExternalDNS and Providers. Example:
 
 ```yaml
 enable: true
