@@ -221,7 +221,7 @@ func parseFlags() {
 		os.Exit(0)
 	}
 
-	initialChecks()
+	mustValidateInitialChecks()
 
 	validateWatchedNamespaces()
 
@@ -295,7 +295,7 @@ func parseFlags() {
 	}
 }
 
-func initialChecks() {
+func mustValidateInitialChecks() {
 	err := flag.Lookup("logtostderr").Value.Set("true")
 	if err != nil {
 		glog.Fatalf("Error setting logtostderr to true: %v", err)
