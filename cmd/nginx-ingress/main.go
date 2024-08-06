@@ -70,9 +70,8 @@ func main() {
 
 	config, kubeClient := createConfigAndKubeClient()
 
-	kubernetesVersionInfo(kubeClient)
-
-	validateIngressClass(kubeClient)
+	mustValidateKubernetesVersionInfo(kubeClient)
+	mustValidateIngressClass(kubeClient)
 
 	checkNamespaces(kubeClient)
 
@@ -114,7 +113,7 @@ func main() {
 
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
-	processGlobalConfiguration()
+	mustProcessGlobalConfiguration()
 
 	cfgParams := configs.NewDefaultConfigParams(*nginxPlus)
 	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
@@ -148,7 +147,7 @@ func main() {
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
-	processNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
+	mustProcessNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
 
 	if *enableTLSPassthrough {
 		var emptyFile []byte
@@ -289,7 +288,9 @@ func createConfigAndKubeClient() (*rest.Config, *kubernetes.Clientset) {
 	return config, kubeClient
 }
 
-func kubernetesVersionInfo(kubeClient kubernetes.Interface) {
+// mustValidateKubernetesVersionInfo calls internally os.Exit if
+// the k8s version can not be retrieved or the version is not supported.
+func mustValidateKubernetesVersionInfo(kubeClient kubernetes.Interface) {
 	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
 	if err != nil {
 		glog.Fatalf("error retrieving k8s version: %v", err)
@@ -306,7 +307,9 @@ func kubernetesVersionInfo(kubeClient kubernetes.Interface) {
 	}
 }
 
-func validateIngressClass(kubeClient kubernetes.Interface) {
+// mustValidateIngressClass calls internally os.Exit
+// and terminates the program if the ingress class is not valid.
+func mustValidateIngressClass(kubeClient kubernetes.Interface) {
 	ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
 	if err != nil {
 		glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
@@ -573,7 +576,9 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
 }
 
-func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
+// mustProcessNginxConfig calls internally os.Exit
+// if can't generate a valid NGINX config.
+func mustProcessNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
 	if err != nil {
@@ -779,7 +784,9 @@ func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *cli
 	go healthcheck.RunHealthCheck(*serviceInsightListenPort, plusClient, cnf, serviceInsightSecret)
 }
 
-func processGlobalConfiguration() {
+// mustProcessGlobalConfiguration calls internally os.Exit
+// if unable to parse provided global configuration.
+func mustProcessGlobalConfiguration() {
 	if *globalConfiguration != "" {
 		_, _, err := k8s.ParseNamespaceName(*globalConfiguration)
 		if err != nil {
