@@ -3,14 +3,16 @@ description:
 docs: DOCS-1453
 doctypes:
 - installation
-title: Building NGINX Ingress Controller
+title: Build NGINX Ingress Controller
 toc: true
 weight: 200
 ---
 
-Learn how to build an NGINX Ingress Controller image from source code and upload it to a private Docker registry. You'll also find information on the Makefile targets and variables.
+This document describes how to build an F5 NGINX Ingress Controller image from source code and upload it to a private Docker registry. 
 
-{{<call-out "tip" "Pre-built image alternatives" >}}If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
+It also includes information on the Makefile targets and variables.
+
+{{<call-out "tip" "Pre-built image alternatives" >}} If you do not need to build a custom image, see the [pre-built image options](#pre-built-images) at the end of this guide. {{</call-out>}}
 
 ## Before you start
 
@@ -22,7 +24,7 @@ To get started, you need the following software installed on your machine:
 - [OpenSSL](https://www.openssl.org/), optionally, if you would like to generate a self-signed certificate and a key for the default server.
 - For NGINX Plus users, download the certificate (_nginx-repo.crt_) and key (_nginx-repo.key_) from [MyF5](https://my.f5.com).
 
-Although NGINX Ingress Controller is written in Golang, you don't need to have Golang installed. You can either download the precompiled binary file or build NGINX Ingress Controller in a Docker container.
+Although NGINX Ingress Controller is written in Golang, you don't need to have Golang installed. You can download the precompiled binary file or build NGINX Ingress Controller in a Docker container.
 
 ---
 
@@ -56,7 +58,7 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 
 After setting up your environment, follow these steps to build the NGINX Ingress Controller image.
 
-{{<note>}}If you have a local Golang environment and want to build the binary yourself, remove `TARGET=download` from the make commands. If you don't have Golang but still want to build the binary, use `TARGET=container`.{{</note>}}
+{{< note >}} If you have a local Golang environment and want to build the binary yourself, remove `TARGET=download` from the make commands. If you don't have Golang but still want to build the binary, use `TARGET=container`. {{< /note >}}
 
 ### For NGINX
 
@@ -100,7 +102,7 @@ After setting up your environment, follow these steps to build the NGINX Ingress
 
      **What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_](#makefile-details). This version number is used for tracking and deployment purposes.
 
-{{<note>}}In the event a patch version of NGINX Plus is released, make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the make command.{{</note>}}
+{{<note>}} If a patch for NGINX Plus is released, make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the make command. {{</note>}}
 
 ---
 
@@ -192,7 +194,7 @@ If you prefer not to build your own NGINX Ingress Controller image, you can use 
 
 **NGINX Ingress Controller**: Download the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress) or [GitHub](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress).
 
-**NGINX Plus Ingress Controller**: You have two options for this, both requiring an NGINX Ingress Controller subscription.
+**NGINX Plus Ingress Controller**: You have two options for this:
 
-- Download the image using your NGINX Ingress Controller subscription certificate and key. See the [Getting the F5 Registry NGINX Ingress Controller Image]({{< relref "installation/nic-images/pulling-ingress-controller-image.md" >}}) guide.
-- Use your NGINX Ingress Controller subscription JWT token to get the image: Instructions are in [Getting the NGINX Ingress Controller Image with JWT]({{< relref "installation/nic-images/using-the-jwt-token-docker-secret.md" >}}).
+- Download the image using your NGINX Ingress Controller subscription certificate and key. View the [Get NGINX Ingress Controller from the F5 Registry]({{< relref "installation/nic-images/get-registry-image" >}}) topic.
+- Use your NGINX Ingress Controller subscription JWT token to get the image. View the [Get the NGINX Ingress Controller image with JWT]({{< relref "installation/nic-images/get-image-using-jwt.md" >}}) topic.
