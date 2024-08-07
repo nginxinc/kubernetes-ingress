@@ -221,11 +221,9 @@ func parseFlags() {
 		os.Exit(0)
 	}
 
-	initialChecks()
-
-	validateWatchedNamespaces()
-
-	validationChecks()
+	mustValidateInitialChecks()
+	mustValidateWatchedNamespaces()
+	mustValidateFlags()
 
 	if *enableTLSPassthrough && !*enableCustomResources {
 		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
@@ -295,7 +293,7 @@ func parseFlags() {
 	}
 }
 
-func initialChecks() {
+func mustValidateInitialChecks() {
 	err := flag.Lookup("logtostderr").Value.Set("true")
 	if err != nil {
 		glog.Fatalf("Error setting logtostderr to true: %v", err)
@@ -322,7 +320,8 @@ func initialChecks() {
 	}
 }
 
-func validateWatchedNamespaces() {
+// mustValidateWatchedNamespaces calls internally os.Exit if it can't validate namespaces.
+func mustValidateWatchedNamespaces() {
 	if *watchNamespace != "" && *watchNamespaceLabel != "" {
 		glog.Fatal("watch-namespace and -watch-namespace-label are mutually exclusive")
 	}
@@ -358,8 +357,9 @@ func validateWatchedNamespaces() {
 	}
 }
 
-// validationChecks checks the values for various flags
-func validationChecks() {
+// mustValidateFlags checks the values for various flags
+// and calls os.Exit if any of the flags is invalid.
+func mustValidateFlags() {
 	healthStatusURIValidationError := validateLocation(*healthStatusURI)
 	if healthStatusURIValidationError != nil {
 		glog.Fatalf("Invalid value for health-status-uri: %v", healthStatusURIValidationError)
