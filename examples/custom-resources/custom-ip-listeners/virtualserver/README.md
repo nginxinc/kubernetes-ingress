@@ -170,33 +170,63 @@ that was deployed in Step 1. Below is the yaml of this example VirtualServer:
       Normal  Updated  14s   nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration was added or updated
     ```
 
-2. Since the deployed VirtualServer is using ports `8083` and `8443` in this example. you must explicitly specify these ports
-when sending requests to the endpoints of this VirtualServer:
+2. Since the deployed VirtualServer is using ports `8083` and `8443` in this example. you can see that the specific ips and ports
+are set and listening by using the below commands:
 
-   For `/coffee` on `8083`:
+   Access the NGINX Pod:
 
     ```console
-    curl -k http://cafe.example.com:8083/coffee
+    kubectl get pods -n nginx-ingress
     ```
 
     ```text
-    Server address: 10.32.0.40:8080
-    Server name: coffee-7dd75bc79b-qmhmv
-    ...
-    URI: /coffee
-    ...
+    NAME                             READY   STATUS    RESTARTS   AGE
+    nginx-ingress-65cd79bb8f-crst4   1/1     Running   0          97s
     ```
-
-   For `/coffee` on `8443`:
 
     ```console
-    curl -k https://cafe.example.com:8443/coffee
+    kubectl debug -it nginx-ingress-65cd79bb8f-crst4 --image=busybox:1.28 --target=nginx-ingress
     ```
 
-    ```text
-    Server address: 10.32.0.40:8080
-    Server name: coffee-7dd75bc79b-qmhmv
+    ```console
+    / # netstat -tulpn
+    Active Internet connections (only servers)
+    Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+    tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      -
+    tcp        0      0 127.0.0.1:8083          0.0.0.0:*               LISTEN      -
+    tcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN      -
+    tcp        0      0 127.0.0.2:8443          0.0.0.0:*               LISTEN      -
+    tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      -
+    tcp        0      0 :::8081                 :::*                    LISTEN      -
+    tcp        0      0 :::8080                 :::*                    LISTEN      -
+    tcp        0      0 :::8083                 :::*                    LISTEN      -
+    tcp        0      0 ::1:8443                :::*                    LISTEN      -
+    tcp        0      0 :::443                  :::*                    LISTEN      -
+    tcp        0      0 :::80                   :::*                    LISTEN      -
+    tcp        0      0 :::9113                 :::*                    LISTEN      -
+    ```
+
+    We can see here that the two IPv4s (`127.0.0.1:8083` and `127.0.0.2:8443`) and the one IPv6 (`::1:8443`) that are set and listening.
+
+3. Examine the NGINX config using the following command:
+
+    ```console
+    kubectl exec -it nginx-ingress-65cd79bb8f-crst4 -n nginx-ingress -- cat /etc/nginx/conf.d/vs_default_cafe.conf
+    ```
+
+    ```console
     ...
-    URI: /coffee
-    ...
+    server {
+        listen 127.0.0.1:8083;
+        listen [::]:8083;
+
+
+        server_name cafe.example.com;
+
+        set $resource_type "virtualserver";
+        set $resource_name "cafe";
+        set $resource_namespace "default";
+        listen 127.0.0.2:8443 ssl;
+        listen [::1]:8443 ssl;
+    ...   
     ```
