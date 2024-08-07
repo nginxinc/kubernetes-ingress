@@ -1306,6 +1306,10 @@ func (p *policiesCfg) addOIDCConfig(
 		if redirectURI == "" {
 			redirectURI = "/_codexch"
 		}
+		postLogoutRedirectURI := oidc.PostLogoutRedirectURI
+		if postLogoutRedirectURI == "" {
+			postLogoutRedirectURI = "/_logout"
+		}
 		scope := oidc.Scope
 		if scope == "" {
 			scope = "openid"
@@ -1316,16 +1320,18 @@ func (p *policiesCfg) addOIDCConfig(
 		}
 
 		oidcPolCfg.oidc = &version2.OIDC{
-			AuthEndpoint:      oidc.AuthEndpoint,
-			AuthExtraArgs:     authExtraArgs,
-			TokenEndpoint:     oidc.TokenEndpoint,
-			JwksURI:           oidc.JWKSURI,
-			ClientID:          oidc.ClientID,
-			ClientSecret:      string(clientSecret),
-			Scope:             scope,
-			RedirectURI:       redirectURI,
-			ZoneSyncLeeway:    generateIntFromPointer(oidc.ZoneSyncLeeway, 200),
-			AccessTokenEnable: oidc.AccessTokenEnable,
+			AuthEndpoint:          oidc.AuthEndpoint,
+			AuthExtraArgs:         authExtraArgs,
+			TokenEndpoint:         oidc.TokenEndpoint,
+			JwksURI:               oidc.JWKSURI,
+			EndSessionEndpoint:    oidc.EndSessionEndpoint,
+			ClientID:              oidc.ClientID,
+			ClientSecret:          string(clientSecret),
+			Scope:                 scope,
+			RedirectURI:           redirectURI,
+			PostLogoutRedirectURI: postLogoutRedirectURI,
+			ZoneSyncLeeway:        generateIntFromPointer(oidc.ZoneSyncLeeway, 200),
+			AccessTokenEnable:     oidc.AccessTokenEnable,
 		}
 		oidcPolCfg.key = polKey
 	}
