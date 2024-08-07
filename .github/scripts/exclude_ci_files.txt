@@ -46,5 +46,6 @@
 .github/workflows/stale.yml
 .github/workflows/update-docker-images.yml
 .github/workflows/update-docker-sha.yml
+.github/workflows/update-kubernetes-version.yml
 .github/workflows/updates-notification.yml
 .github/workflows/version-bump.yml
