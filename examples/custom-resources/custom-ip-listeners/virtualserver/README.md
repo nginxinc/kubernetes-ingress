@@ -1,7 +1,7 @@
-# Custom IP HTTP Listeners
+# Custom IPv4 and IPv6 IP Listeners
 
-In this example, we will configure a VirtualServer resource with a custom IP using HTTP listeners.
-This will allow HTTP and/or HTTPs based requests to be made on non-default ports using separate IPs.
+In this example, we will configure a VirtualServer resource with a custom IPv4 or IPv6 IP using HTTP/HTTPS listeners.
+This will allow IPv4 and/or IPv6 IPs using HTTP and/or HTTPS based requests to be made on non-default ports using separate IPs.
 
 ## Prerequisites
 
@@ -40,26 +40,27 @@ Example YAML for a LoadBalancer:
 
 ## Step 1 - Deploy the GlobalConfiguration resource
 
-Similar to how listeners are configured in our [custom-listeners](../../custom-resource/custom-listeners) examples,
+Similar to how listeners are configured in our [custom-listeners](../../custom-listeners) examples,
 here we deploy a GlobalConfiguration resource with the listeners we want to use in our VirtualServer.
 
    ```yaml
-  apiVersion: k8s.nginx.org/v1alpha1
-  kind: GlobalConfiguration
-  metadata:
-    name: nginx-configuration
-    namespace: nginx-ingress
-  spec:
-    listeners:
-    - name: ip-listener-1-http
-      port: 8083
-      protocol: HTTP
-      ip: 127.0.0.1
-    - name: ip-listener-2-https
-      port: 8443
-      protocol: HTTP
-      ip: 127.0.0.1
-      ssl: true
+apiVersion: k8s.nginx.org/v1
+kind: GlobalConfiguration
+metadata:
+  name: nginx-configuration
+  namespace: nginx-ingress
+spec:
+  listeners:
+  - name: ip-listener-1-http
+    port: 8083
+    protocol: HTTP
+    ipv4ip: 127.0.0.1
+  - name: ip-listener-2-https
+    port: 8443
+    protocol: HTTP
+    ipv4ip: 127.0.0.2
+    ipv6ip: ::1
+    ssl: true
    ```
 
    ```console
@@ -121,28 +122,52 @@ that was deployed in Step 1. Below is the yaml of this example VirtualServer:
 
 ## Step 4 - Test the Configuration
 
-1. Check that the configuration has been successfully applied by inspecting the events of the VirtualServer:
+1. Check that the configuration has been successfully applied by inspecting the events of the VirtualServer and the GlobalConfiguration:
 
     ```console
     kubectl describe virtualserver cafe
     ```
 
-   Below you will see the events as well as the new `Listeners` field
+    Below you will see the events as well as the new `Listeners` field
 
     ```console
-   . . .
-   Spec:
+    . . .
+    Spec:
       Host:  cafe.example.com
       Listener:
           Http:   ip-listener-1-http
           Https:  ip-listener-2-https
-   . . .
-   Routes:
+    . . .
+    Routes:
     . . .
     Events:
       Type    Reason          Age   From                      Message
       ----    ------          ----  ----                      -------
       Normal  AddedOrUpdated  2s    nginx-ingress-controller  Configuration for default/cafe was added or updated
+    ```
+
+    ```console
+    kubectl describe globalconfiguration nginx-configuration -n nginx-ingress
+    ```
+
+    ```console
+    . . .
+    Spec:
+      Listeners:
+        ipv4ip:    127.0.0.1
+        Name:      ip-listener-1-http
+        Port:      8083
+        Protocol:  HTTP
+        ipv4ip:    127.0.0.2
+        ipv6ip:    ::1
+        Name:      ip-listener-2-https
+        Port:      8443
+        Protocol:  HTTP
+        Ssl:       true
+    Events:
+      Type    Reason   Age   From                      Message
+      ----    ------   ----  ----                      -------
+      Normal  Updated  14s   nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration was added or updated
     ```
 
 2. Since the deployed VirtualServer is using ports `8083` and `8443` in this example. you must explicitly specify these ports
