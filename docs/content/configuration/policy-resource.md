@@ -583,6 +583,8 @@ spec:
     authEndpoint: https://idp.example.com/openid-connect/auth
     tokenEndpoint: https://idp.example.com/openid-connect/token
     jwksURI: https://idp.example.com/openid-connect/certs
+    endSessionEndpoint: https://idp.example.com/openid-connect/logout
+    postLogoutRedirectURI: /
     accessTokenEnable: true
 ```
 
@@ -607,7 +609,7 @@ The configuration in the example doesn't enable TLS and the synchronization betw
 
 #### Limitations
 
-The OIDC policy defines a few internal locations that can't be customized: `/_jwks_uri`, `/_token`, `/_refresh`, `/_id_token_validation`, `/logout`, `/_logout`. In addition, as explained below `/_codexch` is the default value for redirect URI, but can be customized. Specifying one of these locations as a route in the VirtualServer or  VirtualServerRoute will result in a collision and NGINX Plus will fail to reload.
+The OIDC policy defines a few internal locations that can't be customized: `/_jwks_uri`, `/_token`, `/_refresh`, `/_id_token_validation`, `/logout`. In addition, as explained below, `/_codexch` is the default value for redirect URI, and `/_logout` is the default value for post logout redirect URI, both of which can be customized. Specifying one of these locations as a route in the VirtualServer or VirtualServerRoute will result in a collision and NGINX Plus will fail to reload.
 
 {{% table %}}
 |Field | Description | Type | Required |
@@ -617,9 +619,11 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 |``authEndpoint`` | URL for the authorization endpoint provided by your OpenID Connect provider. | ``string`` | Yes |
 |``authExtraArgs`` | A list of extra URL arguments to pass to the authorization endpoint provided by your OpenID Connect provider. Arguments must be URL encoded, multiple arguments may be included in the list, for example ``[ arg1=value1, arg2=value2 ]`` | ``string[]`` | No |
 |``tokenEndpoint`` | URL for the token endpoint provided by your OpenID Connect provider. | ``string`` | Yes |
+|``endSessionEndpoint`` | URL provided by your OpenID Connect provider to request the end user be logged out. | ``string`` | No |
 |``jwksURI`` | URL for the JSON Web Key Set (JWK) document provided by your OpenID Connect provider. | ``string`` | Yes |
 |``scope`` | List of OpenID Connect scopes. The scope ``openid`` always needs to be present and others can be added concatenating them with a ``+`` sign, for example ``openid+profile+email``, ``openid+email+userDefinedScope``. The default is ``openid``. | ``string`` | No |
 |``redirectURI`` | Allows overriding the default redirect URI. The default is ``/_codexch``. | ``string`` | No |
+|``postLogoutRedirectURI`` | URI to redirect to after the logout has been performed. Requires ``endSessionEndpoint``. The default is ``/_logout``. | ``string`` | No |
 |``zoneSyncLeeway`` | Specifies the maximum timeout in milliseconds for synchronizing ID/access tokens and shared values between Ingress Controller pods. The default is ``200``. | ``int`` | No |
 |``accessTokenEnable`` | Option of whether Bearer token is used to authorize NGINX to access protected backend. | ``boolean`` | No |
 {{% /table %}}

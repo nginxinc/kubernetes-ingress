@@ -84,15 +84,7 @@ To set up Keycloak:
     kubectl apply -f client-secret.yaml
     ```
 
-## Step 6 - Deploy the OIDC Policy
-
-Create a policy with the name `oidc-policy` that references the secret from the previous step:
-
-```console
-kubectl apply -f oidc.yaml
-```
-
-## Step 7 - Configure NGINX Plus Zone Synchronization and Resolver
+## Step 6 - Configure NGINX Plus Zone Synchronization and Resolver
 
 In this step we configure:
 
@@ -110,23 +102,19 @@ Steps:
     kubectl apply -f nginx-ingress-headless.yaml
     ```
 
-1. Get the cluster IP of the KubeDNS service:
+1. Apply the ConfigMap `nginx-config.yaml`, which contains a stream snippet that enables zone synchronization and the resolver using the kube-dns service.
 
     ```console
-    kubectl -n kube-system get svc kube-dns
+    kubectl apply -f nginx-config.yaml
     ```
 
-    ```text
-    NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)         AGE
-    kube-dns   ClusterIP   10.4.0.10    <none>        53/UDP,53/TCP   9d
-    ```
+## Step 7 - Deploy the OIDC Policy
 
-1. Edit the ConfigMap `nginx-config.yaml`, replacing the `<kube-dns-ip>` with the IP obtained in the previous step.
-1. Apply the ConfigMap:
+Create a policy with the name `oidc-policy` that references the secret from the previous step:
 
-   ```console
-   kubectl apply -f nginx-config.yaml
-   ```
+```console
+kubectl apply -f oidc.yaml
+```
 
 ## Step 8 - Configure Load Balancing
 
@@ -146,3 +134,11 @@ Note that the VirtualServer references the policy `oidc-policy` created in Step 
 ![keycloak](./keycloak.png)
 1. Once logged in, you will be redirected to the web application and get a response from it. Notice the field `User ID`
 in the response, this will match the ID for your user in Keycloak. ![webapp](./webapp.png)
+
+## Step 10 - Log Out
+
+1. To log out, navigate to `https://webapp.example.com/logout`. Your session will be terminated, and you will be
+   redirected to the default post logout URI `https://webapp.example.com/_logout`.
+![logout](./logout.png)
+1. To confirm that you have been logged out, navigate to `https://webapp.example.com`. You will be redirected to
+   Keycloak to log in again.
