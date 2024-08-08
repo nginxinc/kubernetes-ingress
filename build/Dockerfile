@@ -15,7 +15,7 @@ FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.0-alpine@sha256:26e702694
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.0-alpine3.19@sha256:1744ae3a8e795daf771f3f7df33b83160981545abb1f1597338e2769d06aa1cc AS alpine-fips-3.19
 FROM redhat/ubi9-minimal@sha256:104cf11d890aeb7dd5728b7d7732e175a0e4018f1bb00d2faebcc8f6bf29bd52 AS ubi-minimal
-FROM golang:1.22-alpine@sha256:0d3653dd6f35159ec6e3d10263a42372f6f194c3dea0b35235d72aabde86486e AS golang-builder
+FROM golang:1.22-alpine@sha256:1a478681b671001b7f029f94b5016aed984a23ad99c707f6a0ab6563860ae2f3 AS golang-builder
 
 
 ############################################# Base image for Alpine #############################################
