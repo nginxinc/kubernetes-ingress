@@ -115,7 +115,7 @@ jobs:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
       - name: Build and push
-        uses: docker/build-push-action@4f7cdeb0f05278b464e71357394bf2c61f94138e # v6.6.0
+        uses: docker/build-push-action@16ebe778df0e7752d2cfcbd924afdbbd89c1a755 # v6.6.1
         with:
           file: ./build/dependencies/Dockerfile.ubi-ppc64le
           context: "."
