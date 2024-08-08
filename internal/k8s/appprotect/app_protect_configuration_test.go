@@ -854,7 +854,7 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 			expectedProblems: []Problem{
 				{
 					Object:  testUserSigDupTag,
-					Message: "Duplicate tag set",
+					Message: "duplicate tag set",
 					Reason:  "Rejected",
 				},
 			},

@@ -19,7 +19,7 @@ const timeLayout = time.RFC3339
 const (
 	failedValidationErrorMsg = "validation failed"
 	missingUserSigErrorMsg   = "policy has unsatisfied signature requirements"
-	duplicatedTagsErrorMsg   = "Duplicate tag set"
+	duplicatedTagsErrorMsg   = "duplicate tag set"
 	invalidTimestampErrorMsg = "invalid timestamp"
 )
 
