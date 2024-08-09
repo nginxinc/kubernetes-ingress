@@ -2039,6 +2039,7 @@ var (
 		},
 		AppProtectDosLogFormatEscaping: "json",
 		AppProtectDosArbFqdn:           "arb.test.server.com",
+		AccessLog:                      "/dev/stdout main",
 	}
 
 	mainCfgR31 = MainConfig{
@@ -2067,6 +2068,7 @@ var (
 		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 		AppProtectV5LoadModule:   true,
 		AppProtectV5EnforcerAddr: "enforcer.svc.local",
+		AccessLog:                "/dev/stdout main",
 	}
 
 	mainCfgHTTP2On = MainConfig{
@@ -2106,6 +2108,7 @@ var (
 		AppProtectDosLoadModule:            true,
 		AppProtectDosLogFormat:             []string{},
 		AppProtectDosArbFqdn:               "arb.test.server.com",
+		AccessLog:                          "/dev/stdout main",
 	}
 
 	mainCfgCustomTLSPassthroughPort = MainConfig{
@@ -2132,6 +2135,7 @@ var (
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      8443,
 		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgWithoutTLSPassthrough = MainConfig{
@@ -2158,6 +2162,7 @@ var (
 		TLSPassthrough:          false,
 		TLSPassthroughPort:      8443,
 		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgDefaultTLSPassthroughPort = MainConfig{
@@ -2184,6 +2189,7 @@ var (
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      443,
 		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPAndHTTPSListenerPorts = MainConfig{
@@ -2210,6 +2216,7 @@ var (
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
 		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:                "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPListenerPort = MainConfig{
@@ -2236,6 +2243,7 @@ var (
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
 		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:                "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPSListenerPort = MainConfig{
@@ -2262,6 +2270,7 @@ var (
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
 		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:                "/dev/stdout main",
 	}
 
 	// Vars for Mergable Ingress Master - Minion tests

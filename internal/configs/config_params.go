@@ -24,7 +24,7 @@ type ConfigParams struct {
 	Keepalive                              int
 	LBMethod                               string
 	LocationSnippets                       []string
-	MainAccessLogOff                       bool
+	MainAccessLog                          string
 	MainErrorLogLevel                      string
 	MainHTTPSnippets                       []string
 	MainKeepaliveRequests                  int64
@@ -188,6 +188,7 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		ProxySendTimeout:              "60s",
 		ClientMaxBodySize:             "1m",
 		SSLRedirect:                   true,
+		MainAccessLog:                 "/dev/stdout main",
 		MainServerNamesHashBucketSize: "256",
 		MainServerNamesHashMaxSize:    "1024",
 		MainMapHashBucketSize:         "256",
