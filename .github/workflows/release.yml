@@ -307,7 +307,7 @@ jobs:
               inputs: {
                 chart_version: '${{ inputs.chart_version }}',
                 operator_version: '${{ inputs.operator_version }}',
-                k8s_version: '${{ needs.variables.outputs.k8s_version }}'
+                k8s_version: '${{ needs.variables.outputs.k8s_version }}',
                 dry_run: '${{ inputs.dry_run }}'
               },
             })
