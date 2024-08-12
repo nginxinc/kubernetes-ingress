@@ -349,7 +349,7 @@ If you prefer not to build your own NGINX Ingress Controller image, you can use 
 
 ---
 
-## [NGINX App Protect WAFv5 version](https://docs.nginx.com/nginx-app-protect-waf/v5/releases/)
+## [NGINX App Protect WAF v5 version](https://docs.nginx.com/nginx-app-protect-waf/v5/releases/)
 
 {{< bootstrap-table "table table-bordered table-striped table-responsive" >}}
 | NIC Version | App Protect WAFv5 Version | Config Manager | Enforcer |
