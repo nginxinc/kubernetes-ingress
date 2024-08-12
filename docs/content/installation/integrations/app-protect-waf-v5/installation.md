@@ -357,4 +357,4 @@ If you prefer not to build your own NGINX Ingress Controller image, you can use 
 | 3.6.2 | 32_5.48 | 5.2.0 | 5.2.0 |
 {{% /bootstrap-table %}}
 
-{{< note >}} Recompilation of the WAF policies upon every NIC release is recommended in order to get updates to features like threat campaigns and signature updates etc.{{< /note >}}
+{{< note >}} F5 recommends to re-compile your NGINX AppProtect WAF Policy Bundles with each release of NGINX Ingress Controller. This will ensure your Policies remain compatible and are compiled with the latest Attack Signatures, Bot Signatures, and Threat Campaigns.{{< /note >}}
