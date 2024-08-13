@@ -20,6 +20,10 @@ on:
         description: "CNAB version for Azure Marketplace"
         required: false
         type: string
+      operator_version:
+        description: "Operator version to set"
+        required: false
+        type: string
       release_branch:
         description: "Branch to release from"
         required: true
@@ -52,6 +56,8 @@ jobs:
       short_tag: ${{ steps.vars.outputs.short_tag }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
       binary_cache_sign_hit: ${{ steps.binary-cache-sign.outputs.cache-hit }}
+      date: ${{ steps.vars.outputs.date }}
+      k8s_version: ${{ steps.vars.outputs.k8s_version }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -70,6 +76,10 @@ jobs:
           tag=${{ inputs.nic_version }}
           echo "short_tag=${tag%.*}" >> $GITHUB_OUTPUT
           ./.github/scripts/variables.sh go_code_md5 >> $GITHUB_OUTPUT
+          date=$(date "+%Y%m%d")
+          echo "date=${date}" >> $GITHUB_OUTPUT
+          k8s_version=$(grep kindest tests/Dockerfile | cut -d ':' -f 2 | cut -d '@' -f 1)
+          echo "k8s_version=${k8s_version}" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
       - name: Fetch Cached Signed Binary Artifacts
@@ -192,7 +202,7 @@ jobs:
     if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'operator') && !contains(inputs.skip_step, 'publish-helm-chart') }}
     name: Trigger PR for Operator
     runs-on: ubuntu-22.04
-    needs: [publish-helm-chart]
+    needs: [variables,publish-helm-chart]
     steps:
       - name:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -205,7 +215,10 @@ jobs:
               workflow_id: 'sync-chart.yml',
               ref: 'main',
               inputs: {
-                chart_version: '${{ inputs.chart_version }}'
+                chart_version: '${{ inputs.chart_version }}',
+                operator_version: '${{ inputs.operator_version }}',
+                k8s_version: '${{ needs.variables.outputs.k8s_version }}',
+                dry_run: '${{ inputs.dry_run }}'
               },
             })
 
