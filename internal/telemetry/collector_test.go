@@ -2277,10 +2277,6 @@ func createCafeIngressExWithCustomAnnotations(annotations map[string]string) con
 	return cafeIngressEx
 }
 
-func getResourceKey(namespace, name string) string {
-	return fmt.Sprintf("%s_%s", namespace, name)
-}
-
 func newConfiguratorWithIngress(t *testing.T) *configs.Configurator {
 	t.Helper()
 

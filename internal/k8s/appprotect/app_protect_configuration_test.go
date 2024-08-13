@@ -107,7 +107,7 @@ func TestCreateAppProtectPolicyEx(t *testing.T) {
 			expectedPolicyEx: &PolicyEx{
 				SignatureReqs: nil,
 				IsValid:       false,
-				ErrorMsg:      "Invalid timestamp",
+				ErrorMsg:      "invalid timestamp",
 			},
 			wantErr: true,
 			msg:     "policy with invalid min timestamp",
@@ -131,7 +131,7 @@ func TestCreateAppProtectPolicyEx(t *testing.T) {
 			expectedPolicyEx: &PolicyEx{
 				SignatureReqs: nil,
 				IsValid:       false,
-				ErrorMsg:      "Invalid timestamp",
+				ErrorMsg:      "invalid timestamp",
 			},
 			wantErr: true,
 			msg:     "policy with invalid max timestamp",
@@ -145,7 +145,7 @@ func TestCreateAppProtectPolicyEx(t *testing.T) {
 			expectedPolicyEx: &PolicyEx{
 				SignatureReqs: nil,
 				IsValid:       false,
-				ErrorMsg:      "Validation Failed",
+				ErrorMsg:      "validation failed",
 			},
 			wantErr: true,
 			msg:     "policy empty spec",
@@ -563,7 +563,7 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 					Resource: &PolicyEx{
 						Obj:      invalidTestPolicy,
 						IsValid:  false,
-						ErrorMsg: "Validation Failed",
+						ErrorMsg: "validation failed",
 					},
 					Op: Delete,
 				},
@@ -584,7 +584,7 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 					Resource: &PolicyEx{
 						Obj:      testPolicyUnsatisfied,
 						IsValid:  false,
-						ErrorMsg: "Policy has unsatisfied signature requirements",
+						ErrorMsg: "policy has unsatisfied signature requirements",
 						SignatureReqs: []SignatureReq{
 							{
 								Tag: "test",
@@ -601,7 +601,7 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 				{
 					Object:  testPolicyUnsatisfied,
 					Reason:  "Rejected",
-					Message: "Policy has unsatisfied signature requirements",
+					Message: "policy has unsatisfied signature requirements",
 				},
 			},
 			msg: "Missing sig reqs",
@@ -671,7 +671,7 @@ func TestAddOrUpdateLogConf(t *testing.T) {
 					Resource: &LogConfEx{
 						Obj:      invalidLogConf,
 						IsValid:  false,
-						ErrorMsg: "Validation Failed",
+						ErrorMsg: "validation failed",
 					},
 					Op: Delete,
 				},
@@ -802,7 +802,7 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 	appProtectConfiguration.Policies["testing/testpolicy"] = &PolicyEx{
 		Obj:      &unstructured.Unstructured{Object: map[string]interface{}{}},
 		IsValid:  false,
-		ErrorMsg: "Policy has unsatisfied signature requirements",
+		ErrorMsg: "policy has unsatisfied signature requirements",
 		SignatureReqs: []SignatureReq{
 			{
 				Tag: "test3",
@@ -839,7 +839,7 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 				{
 					Object:  invalidTestUserSig2,
 					Reason:  "Rejected",
-					Message: "Validation Failed",
+					Message: "validation failed",
 				},
 			},
 			msg: "validation failed",
@@ -854,7 +854,7 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 			expectedProblems: []Problem{
 				{
 					Object:  testUserSigDupTag,
-					Message: "Duplicate tag set",
+					Message: "duplicate tag set",
 					Reason:  "Rejected",
 				},
 			},
@@ -870,7 +870,7 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 			expectedProblems: []Problem{
 				{
 					Object:  testUserSig1Invalid,
-					Message: "Validation Failed",
+					Message: "validation failed",
 					Reason:  "Rejected",
 				},
 			},
@@ -1061,7 +1061,7 @@ func TestDeleteUserSig(t *testing.T) {
 			expectedProblems: []Problem{
 				{
 					Reason:  "Rejected",
-					Message: "Policy has unsatisfied signature requirements",
+					Message: "policy has unsatisfied signature requirements",
 					Object: &unstructured.Unstructured{
 						Object: map[string]interface{}{},
 					},
@@ -1107,14 +1107,14 @@ func TestGetAppProtectResource(t *testing.T) {
 			kind:    "APPolicy",
 			key:     "testing/test2",
 			wantErr: true,
-			errMsg:  "Validation Failed",
+			errMsg:  "validation failed",
 			msg:     "Policy, Negative, invalid object",
 		},
 		{
 			kind:    "APPolicy",
 			key:     "testing/test3",
 			wantErr: true,
-			errMsg:  "App Protect Policy testing/test3 not found",
+			errMsg:  "app protect Policy testing/test3 not found",
 			msg:     "Policy, Negative, Object Does not exist",
 		},
 		{
@@ -1127,14 +1127,14 @@ func TestGetAppProtectResource(t *testing.T) {
 			kind:    "APLogConf",
 			key:     "testing/test2",
 			wantErr: true,
-			errMsg:  "Validation Failed",
+			errMsg:  "validation failed",
 			msg:     "LogConf, Negative, invalid object",
 		},
 		{
 			kind:    "APLogConf",
 			key:     "testing/test3",
 			wantErr: true,
-			errMsg:  "App Protect LogConf testing/test3 not found",
+			errMsg:  "app protect LogConf testing/test3 not found",
 			msg:     "LogConf, Negative, Object Does not exist",
 		},
 		{
@@ -1147,31 +1147,31 @@ func TestGetAppProtectResource(t *testing.T) {
 			kind:    "APUserSig",
 			key:     "testing/test2",
 			wantErr: true,
-			errMsg:  "Validation Failed",
+			errMsg:  "validation failed",
 			msg:     "UserSig, Negative, invalid object",
 		},
 		{
 			kind:    "APUserSig",
 			key:     "testing/test3",
 			wantErr: true,
-			errMsg:  "App Protect UserSig testing/test3 not found",
+			errMsg:  "app protect UserSig testing/test3 not found",
 			msg:     "UserSig, Negative, Object Does not exist",
 		},
 		{
 			kind:    "Notreal",
 			key:     "testing/test3",
 			wantErr: true,
-			errMsg:  "Unknown App Protect resource kind Notreal",
+			errMsg:  "unknown app protect resource kind Notreal",
 			msg:     "Invalid kind, Negative",
 		},
 	}
 	appProtectConfiguration := newConfigurationImpl()
 	appProtectConfiguration.Policies["testing/test1"] = &PolicyEx{IsValid: true, Obj: &unstructured.Unstructured{}}
-	appProtectConfiguration.Policies["testing/test2"] = &PolicyEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "Validation Failed"}
+	appProtectConfiguration.Policies["testing/test2"] = &PolicyEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "validation failed"}
 	appProtectConfiguration.LogConfs["testing/test1"] = &LogConfEx{IsValid: true, Obj: &unstructured.Unstructured{}}
-	appProtectConfiguration.LogConfs["testing/test2"] = &LogConfEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "Validation Failed"}
+	appProtectConfiguration.LogConfs["testing/test2"] = &LogConfEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "validation failed"}
 	appProtectConfiguration.UserSigs["testing/test1"] = &UserSigEx{IsValid: true, Obj: &unstructured.Unstructured{}}
-	appProtectConfiguration.UserSigs["testing/test2"] = &UserSigEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "Validation Failed"}
+	appProtectConfiguration.UserSigs["testing/test2"] = &UserSigEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "validation failed"}
 
 	for _, test := range tests {
 		_, err := appProtectConfiguration.GetAppResource(test.kind, test.key)
