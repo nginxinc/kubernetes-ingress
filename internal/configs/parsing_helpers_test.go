@@ -42,7 +42,7 @@ func TestParseRewritesList_FailsOnBogusInputString(t *testing.T) {
 	}
 	for _, s := range invalidRewrites {
 		_, err := ParseRewriteList(s)
-		if err != nil {
+		if err == nil {
 			t.Errorf("want err on invalid input: %q, got nil", s)
 		}
 	}
