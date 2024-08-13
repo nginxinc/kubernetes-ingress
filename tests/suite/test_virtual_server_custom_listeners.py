@@ -68,6 +68,10 @@ class TestVirtualServerCustomListeners:
             "http_listener_in_config": bool,
             "https_listener_in_config": bool,
             "expected_response_codes": List[int],  # responses from requests to port 80, 433, 8085, 8445
+            "expected_http_listener_ipv4ip": str,
+            "expected_https_listener_ipv4ip": str,
+            "expected_http_listener_ipv6ip": str,
+            "expected_https_listener_ipv6ip": str,
             "expected_vs_error_msg": str,
             "expected_gc_error_msg": str,
         },
@@ -178,6 +182,72 @@ class TestVirtualServerCustomListeners:
                 "expected_vs_error_msg": "",
                 "expected_gc_error_msg": "Listener dns-udp: port 9113 is forbidden",
             },
+            {
+                "gc_yaml": "global-configuration-http-https-ipv4ip-http-https-ipv6ip",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": True,
+                "expected_http_listener_ipv4ip": "127.0.0.1",
+                "expected_https_listener_ipv4ip": "127.0.0.2",
+                "expected_http_listener_ipv6ip": "::2",
+                "expected_https_listener_ipv6ip": "::1",
+                "expected_response_codes": [404, 404, 200, 200],
+                "expected_vs_error_msg": "",
+                "expected_gc_error_msg": "",
+            },
+            {
+                "gc_yaml": "global-configuration-http-ipv4ip-https-ipv6ip",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": True,
+                "expected_http_listener_ipv4ip": "127.0.0.1",
+                "expected_https_listener_ipv6ip": "::1",
+                "expected_response_codes": [404, 404, 200, 200],
+                "expected_vs_error_msg": "",
+                "expected_gc_error_msg": "",
+            },
+            {
+                "gc_yaml": "global-configuration-http-ipv4ip",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": True,
+                "expected_http_listener_ipv4ip": "127.0.0.1",
+                "expected_http_listener_ipv6ip": "::",
+                "expected_https_listener_ipv6ip": "::1",
+                "expected_response_codes": [404, 404, 200, 200],
+                "expected_vs_error_msg": "",
+                "expected_gc_error_msg": "",
+            },
+            {
+                "gc_yaml": "global-configuration-https-ipv6ip",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": True,
+                "expected_https_listener_ipv6ip": "::1",
+                "expected_response_codes": [404, 404, 200, 200],
+                "expected_vs_error_msg": "",
+                "expected_gc_error_msg": "",
+            },
+            {
+                "gc_yaml": "global-configuration-http-https-ipv4ip-http-https-invalid-ipv6ip",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": False,
+                "expected_http_listener_ipv6ip": "::24124123",
+                "expected_response_codes": [404, 404, 200, 200],
+                "expected_vs_error_msg": "must be a valid IPv6 address",
+                "expected_gc_error_msg": "",
+            },
+            {
+                "gc_yaml": "global-configuration-http-https-invalid-ipv4ip-http-https-ipv6ip",
+                "vs_yaml": "virtual-server",
+                "http_listener_in_config": True,
+                "https_listener_in_config": False,
+                "expected_http_listener_ipv4ip": "567.0.0",
+                "expected_response_codes": [404, 404, 200, 200],
+                "expected_vs_error_msg": "must be a valid IPv4 address",
+                "expected_gc_error_msg": "",
+            },
         ],
         ids=[
             "valid_config",
@@ -191,6 +261,12 @@ class TestVirtualServerCustomListeners:
             "update_gc_http_listener_repeated_port",
             "update_gc_http_listener_forbidden_port",
             "update_gc_ts_listener_forbidden_port",
+            "http-https-ipv4ip-http-https-ipv6ip",
+            "http-ipv4ip-https-ipv6ip",
+            "http_listener_ipv4",
+            "https_listener_ipv6",
+            "http-https-ipv4ip-http-https-invalid-ipv6ip",
+            "http-https-invalid-ipv4ip-http-https-ipv6ip",
         ],
     )
     def test_custom_listeners(
@@ -231,17 +307,32 @@ class TestVirtualServerCustomListeners:
 
         print(vs_config)
 
-        if test_setup["http_listener_in_config"]:
-            assert "listen 8085;" in vs_config
-            assert "listen [::]:8085;" in vs_config
+        if test_setup.get("http_listener_in_config"):
+            if test_setup.get("expected_http_listener_ipv4ip"):
+                assert f"listen {test_setup['expected_http_listener_ipv4ip']}:8085;" in vs_config
+            else:
+                assert "listen 8085;" in vs_config
+
+            if test_setup.get("expected_http_listener_ipv6ip"):
+                assert f"listen [{test_setup['expected_http_listener_ipv6ip']}]:8085;" in vs_config
+            else:
+                assert "listen [::]:8085;" in vs_config
 
         else:
             assert "listen 8085;" not in vs_config
             assert "listen [::]:8085;" not in vs_config
 
-        if test_setup["https_listener_in_config"]:
-            assert "listen 8445 ssl;" in vs_config
-            assert "listen [::]:8445 ssl;" in vs_config
+        if test_setup.get("https_listener_in_config"):
+            if test_setup.get("expected_https_listener_ipv4ip"):
+                assert f"listen {test_setup['expected_https_listener_ipv4ip']}:8445 ssl;" in vs_config
+            else:
+                assert "listen 8445 ssl;" in vs_config
+
+            if test_setup.get("expected_https_listener_ipv6ip"):
+                assert f"listen [{test_setup['expected_https_listener_ipv6ip']}]:8445 ssl;" in vs_config
+            else:
+                assert "listen [::]:8445 ssl;" in vs_config
+
         else:
             assert "listen 8445 ssl;" not in vs_config
             assert "listen [::]:8445 ssl;" not in vs_config
