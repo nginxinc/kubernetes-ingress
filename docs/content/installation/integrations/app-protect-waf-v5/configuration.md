@@ -10,7 +10,7 @@ weight: 200
 
 This document explains how to use F5 NGINX Ingress Controller to configure [NGINX App Protect WAF v5](https://docs.nginx.com/nginx-app-protect-waf/v5/).
 
-{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5).{{< /note >}}
+{{< note >}} Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf-v5). F5 recommends to re-compile your NGINX AppProtect WAF Policy Bundles with each release of NGINX Ingress Controller. This will ensure your Policies remain compatible and are compiled with the latest Attack Signatures, Bot Signatures, and Threat Campaigns.{{< /note >}}
 
 
 ## Global Configuration
