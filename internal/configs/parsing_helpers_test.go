@@ -35,7 +35,7 @@ var ingress = networking.Ingress{
 func TestParsePortList_FailsOnBogusStrings(t *testing.T) {
 	t.Parallel()
 
-	invalidPortList := []string{"", ".", "abs", "34.", "3.4", ":2", "8080,", ",1024"}
+	invalidPortList := []string{"", ".", "abs", "34.", "3.4", ":2", "8080,", ",1024", "-90"}
 	for _, s := range invalidPortList {
 		_, err := ParsePortList(s)
 		if err == nil {
