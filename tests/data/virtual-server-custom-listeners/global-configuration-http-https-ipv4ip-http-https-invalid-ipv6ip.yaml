@@ -14,11 +14,5 @@ spec:
   - name: http-8085
     port: 8085
     protocol: HTTP
-    ipv4ip: 567.0.0.1
+    ipv4ip: 127.0.0.1
     ipv6ip: ::24124123
-  - name: https-8445
-    port: 8445
-    protocol: HTTP
-    ipv4ip: 456.0.0.2
-    ipv6ip: ::1123123
-    ssl: true
