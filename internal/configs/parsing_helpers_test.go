@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +30,47 @@ var ingress = networking.Ingress{
 		Kind:       "Ingress",
 		APIVersion: "extensions/v1beta1",
 	},
+}
+
+func TestParsePortList_FailsOnBogusStrings(t *testing.T) {
+	t.Parallel()
+
+	invalidPortList := []string{"", ".", "abs", "34.", "3.4", ":2", "8080,", ",1024"}
+	for _, s := range invalidPortList {
+		_, err := ParsePortList(s)
+		if err == nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestParsePortList_ParsesPortsFromValidString(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		input string
+		want  []int
+	}{
+		{
+			input: "22,23,80",
+			want:  []int{22, 23, 80},
+		},
+		{
+			input: "8080",
+			want:  []int{8080},
+		},
+	}
+
+	for _, tc := range tt {
+		got, err := ParsePortList(tc.input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !cmp.Equal(tc.want, got) {
+			t.Error(cmp.Diff(tc.want, got))
+		}
+	}
+
 }
 
 func TestGetMapKeyAsBool(t *testing.T) {
