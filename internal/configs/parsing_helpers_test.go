@@ -32,6 +32,22 @@ var ingress = networking.Ingress{
 	},
 }
 
+func TestParseRewritesList_FailsOnBogusInputString(t *testing.T) {
+	t.Parallel()
+
+	invalidRewrites := []string{
+		"; ",
+		";abc",
+		"abc;def",
+	}
+	for _, s := range invalidRewrites {
+		_, err := ParseRewriteList(s)
+		if err != nil {
+			t.Errorf("want err on invalid input: %q, got nil", s)
+		}
+	}
+}
+
 func TestParseServicesFromString(t *testing.T) {
 	t.Parallel()
 
@@ -102,7 +118,6 @@ func TestParsePortList_ParsesPortsFromValidString(t *testing.T) {
 			t.Error(cmp.Diff(tc.want, got))
 		}
 	}
-
 }
 
 func TestGetMapKeyAsBool(t *testing.T) {
