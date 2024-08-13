@@ -207,11 +207,21 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.MainErrorLogLevel = errorLogLevel
 	}
 
+	if accessLog, exists := cfgm.Data["access-log"]; exists {
+		if !strings.HasPrefix(accessLog, "syslog:") {
+			glog.Warningf("Configmap %s/%s: Invalid value for key access-log: %q", cfgm.GetNamespace(), cfgm.GetName(), accessLog)
+		} else {
+			cfgParams.MainAccessLog = accessLog
+		}
+	}
+
 	if accessLogOff, exists, err := GetMapKeyAsBool(cfgm.Data, "access-log-off", cfgm); exists {
 		if err != nil {
 			glog.Error(err)
 		} else {
-			cfgParams.MainAccessLogOff = accessLogOff
+			if accessLogOff {
+				cfgParams.MainAccessLog = "off"
+			}
 		}
 	}
 
@@ -514,7 +524,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 // GenerateNginxMainConfig generates MainConfig.
 func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams) *version1.MainConfig {
 	nginxCfg := &version1.MainConfig{
-		AccessLogOff:                       config.MainAccessLogOff,
+		AccessLog:                          config.MainAccessLog,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
 		DefaultServerReturn:                config.DefaultServerReturn,
 		DisableIPV6:                        staticCfgParams.DisableIPV6,

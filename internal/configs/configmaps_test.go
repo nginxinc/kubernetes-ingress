@@ -203,3 +203,82 @@ func TestParseConfigMapWithoutTLSPassthroughProxyProtocol(t *testing.T) {
 		})
 	}
 }
+
+func TestParseConfigMapAccessLog(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		accessLog    string
+		accessLogOff string
+		want         string
+		msg          string
+	}{
+		{
+			accessLogOff: "False",
+			accessLog:    "syslog:server=localhost:514",
+			want:         "syslog:server=localhost:514",
+			msg:          "Non default access_log",
+		},
+		{
+			accessLogOff: "False",
+			accessLog:    "/tmp/nginx main",
+			want:         "/dev/stdout main",
+			msg:          "access_log to file is not allowed",
+		},
+		{
+			accessLogOff: "True",
+			accessLog:    "/dev/stdout main",
+			want:         "off",
+			msg:          "Disabled access_log",
+		},
+	}
+	nginxPlus := true
+	hasAppProtect := false
+	hasAppProtectDos := false
+	hasTLSPassthrough := false
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			cm := &v1.ConfigMap{
+				Data: map[string]string{
+					"access-log":     test.accessLog,
+					"access-log-off": test.accessLogOff,
+				},
+			}
+			result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+			if result.MainAccessLog != test.want {
+				t.Errorf("want %q, got %q", test.want, result.MainAccessLog)
+			}
+		})
+	}
+}
+
+func TestParseConfigMapAccessLogDefault(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		accessLog    string
+		accessLogOff string
+		want         string
+		msg          string
+	}{
+		{
+			want: "/dev/stdout main",
+			msg:  "Default access_log",
+		},
+	}
+	nginxPlus := true
+	hasAppProtect := false
+	hasAppProtectDos := false
+	hasTLSPassthrough := false
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			cm := &v1.ConfigMap{
+				Data: map[string]string{
+					"access-log-off": "False",
+				},
+			}
+			result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+			if result.MainAccessLog != test.want {
+				t.Errorf("want %q, got %q", test.want, result.MainAccessLog)
+			}
+		})
+	}
+}

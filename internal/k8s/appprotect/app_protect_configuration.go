@@ -17,10 +17,10 @@ const timeLayout = time.RFC3339
 
 // reasons for invalidity
 const (
-	failedValidationErrorMsg = "Validation Failed"
-	missingUserSigErrorMsg   = "Policy has unsatisfied signature requirements"
-	duplicatedTagsErrorMsg   = "Duplicate tag set"
-	invalidTimestampErrorMsg = "Invalid timestamp"
+	failedValidationErrorMsg = "validation failed"
+	missingUserSigErrorMsg   = "policy has unsatisfied signature requirements"
+	duplicatedTagsErrorMsg   = "duplicate tag set"
+	invalidTimestampErrorMsg = "invalid timestamp"
 )
 
 var (
@@ -399,7 +399,7 @@ func (ci *ConfigurationImpl) GetAppResource(kind, key string) (*unstructured.Uns
 			}
 			return nil, fmt.Errorf(obj.ErrorMsg)
 		}
-		return nil, fmt.Errorf("App Protect Policy %s not found", key)
+		return nil, fmt.Errorf("app protect Policy %s not found", key)
 	case LogConfGVK.Kind:
 		if obj, ok := ci.LogConfs[key]; ok {
 			if obj.IsValid {
@@ -407,7 +407,7 @@ func (ci *ConfigurationImpl) GetAppResource(kind, key string) (*unstructured.Uns
 			}
 			return nil, fmt.Errorf(obj.ErrorMsg)
 		}
-		return nil, fmt.Errorf("App Protect LogConf %s not found", key)
+		return nil, fmt.Errorf("app protect LogConf %s not found", key)
 	case UserSigGVK.Kind:
 		if obj, ok := ci.UserSigs[key]; ok {
 			if obj.IsValid {
@@ -415,9 +415,9 @@ func (ci *ConfigurationImpl) GetAppResource(kind, key string) (*unstructured.Uns
 			}
 			return nil, fmt.Errorf(obj.ErrorMsg)
 		}
-		return nil, fmt.Errorf("App Protect UserSig %s not found", key)
+		return nil, fmt.Errorf("app protect UserSig %s not found", key)
 	}
-	return nil, fmt.Errorf("Unknown App Protect resource kind %s", kind)
+	return nil, fmt.Errorf("unknown app protect resource kind %s", kind)
 }
 
 // DeletePolicy deletes an App Protect Policy from App Protect Configuration
@@ -599,14 +599,14 @@ func (fc *FakeConfiguration) GetAppResource(kind, key string) (*unstructured.Uns
 		if obj, ok := fc.Policies[key]; ok {
 			return obj.Obj, nil
 		}
-		return nil, fmt.Errorf("App Protect Policy %s not found", key)
+		return nil, fmt.Errorf("app protect Policy %s not found", key)
 	case LogConfGVK.Kind:
 		if obj, ok := fc.LogConfs[key]; ok {
 			return obj.Obj, nil
 		}
-		return nil, fmt.Errorf("App Protect LogConf %s not found", key)
+		return nil, fmt.Errorf("app protect LogConf %s not found", key)
 	}
-	return nil, fmt.Errorf("Unknown App Protect resource kind %s", kind)
+	return nil, fmt.Errorf("unknown app protect resource kind %s", kind)
 }
 
 // DeletePolicy deletes an App Protect Policy from App Protect Configuration
