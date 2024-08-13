@@ -32,6 +32,38 @@ var ingress = networking.Ingress{
 	},
 }
 
+func TestParseServicesFromString(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		input string
+		want  map[string]bool
+	}{
+		{
+			input: "",
+			want:  map[string]bool{"": true},
+		},
+		{
+			input: "serviceA",
+			want:  map[string]bool{"serviceA": true},
+		},
+		{
+			input: "serviceA,serviceB",
+			want: map[string]bool{
+				"serviceA": true,
+				"serviceB": true,
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		got := ParseServiceList(tc.input)
+		if !cmp.Equal(tc.want, got) {
+			t.Errorf(cmp.Diff(tc.want, got))
+		}
+	}
+}
+
 func TestParsePortList_FailsOnBogusStrings(t *testing.T) {
 	t.Parallel()
 
