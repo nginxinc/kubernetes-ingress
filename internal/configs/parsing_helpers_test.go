@@ -32,6 +32,24 @@ var ingress = networking.Ingress{
 	},
 }
 
+func TestParseStickyServicesLists_FailsOnBogusInputString(t *testing.T) {
+	t.Parallel()
+
+	invalidInputs := []string{
+		"",
+		",",
+		"a,b",
+		";abc",
+		"abc;def",
+	}
+	for _, s := range invalidInputs {
+		_, err := ParseStickyServiceList(s)
+		if err == nil {
+			t.Errorf("want err on invalid input %q, got nil", s)
+		}
+	}
+}
+
 func TestParseRewritesList_FailsOnBogusInputString(t *testing.T) {
 	t.Parallel()
 
