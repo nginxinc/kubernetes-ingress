@@ -38,10 +38,6 @@ type ExporterCfg struct {
 func NewExporter(cfg ExporterCfg) (Exporter, error) {
 	providerOptions := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(cfg.Endpoint),
-		// This header option will be removed when https://github.com/nginxinc/telemetry-exporter/issues/41 is resolved.
-		otlptracegrpc.WithHeaders(map[string]string{
-			"X-F5-OTEL": "GRPC",
-		}),
 	}
 
 	exporter, err := tel.NewExporter(
