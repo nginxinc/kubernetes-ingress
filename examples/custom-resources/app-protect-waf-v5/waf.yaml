@@ -5,8 +5,8 @@ metadata:
 spec:
   waf:
     enable: true
-    apPolicy: "<your_policy_bundle_name.tgz>"
+    apBundle: "<policy_bundle_name>.tgz"
     securityLogs:
     - enable: true
-      apLogConf: "<your_bundle_name>.tgz"
+      apLogBundle: "<log_bundle_name>.tgz"
       logDest: "syslog:server=syslog-svc.default:514"
