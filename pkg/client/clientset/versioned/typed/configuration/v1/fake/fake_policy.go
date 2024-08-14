@@ -25,22 +25,24 @@ var policiesKind = v1.SchemeGroupVersion.WithKind("Policy")
 
 // Get takes name of the policy, and returns the corresponding policy object, and an error if there is any.
 func (c *FakePolicies) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.Policy, err error) {
+	emptyResult := &v1.Policy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(policiesResource, c.ns, name), &v1.Policy{})
+		Invokes(testing.NewGetActionWithOptions(policiesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Policy), err
 }
 
 // List takes label and field selectors, and returns the list of Policies that match those selectors.
 func (c *FakePolicies) List(ctx context.Context, opts metav1.ListOptions) (result *v1.PolicyList, err error) {
+	emptyResult := &v1.PolicyList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(policiesResource, policiesKind, c.ns, opts), &v1.PolicyList{})
+		Invokes(testing.NewListActionWithOptions(policiesResource, policiesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -59,40 +61,43 @@ func (c *FakePolicies) List(ctx context.Context, opts metav1.ListOptions) (resul
 // Watch returns a watch.Interface that watches the requested policies.
 func (c *FakePolicies) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(policiesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(policiesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a policy and creates it.  Returns the server's representation of the policy, and an error, if there is any.
 func (c *FakePolicies) Create(ctx context.Context, policy *v1.Policy, opts metav1.CreateOptions) (result *v1.Policy, err error) {
+	emptyResult := &v1.Policy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(policiesResource, c.ns, policy), &v1.Policy{})
+		Invokes(testing.NewCreateActionWithOptions(policiesResource, c.ns, policy, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Policy), err
 }
 
 // Update takes the representation of a policy and updates it. Returns the server's representation of the policy, and an error, if there is any.
 func (c *FakePolicies) Update(ctx context.Context, policy *v1.Policy, opts metav1.UpdateOptions) (result *v1.Policy, err error) {
+	emptyResult := &v1.Policy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(policiesResource, c.ns, policy), &v1.Policy{})
+		Invokes(testing.NewUpdateActionWithOptions(policiesResource, c.ns, policy, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Policy), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakePolicies) UpdateStatus(ctx context.Context, policy *v1.Policy, opts metav1.UpdateOptions) (*v1.Policy, error) {
+func (c *FakePolicies) UpdateStatus(ctx context.Context, policy *v1.Policy, opts metav1.UpdateOptions) (result *v1.Policy, err error) {
+	emptyResult := &v1.Policy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(policiesResource, "status", c.ns, policy), &v1.Policy{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(policiesResource, "status", c.ns, policy, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Policy), err
 }
@@ -107,7 +112,7 @@ func (c *FakePolicies) Delete(ctx context.Context, name string, opts metav1.Dele
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakePolicies) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(policiesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(policiesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.PolicyList{})
 	return err
@@ -115,11 +120,12 @@ func (c *FakePolicies) DeleteCollection(ctx context.Context, opts metav1.DeleteO
 
 // Patch applies the patch and returns the patched policy.
 func (c *FakePolicies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Policy, err error) {
+	emptyResult := &v1.Policy{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(policiesResource, c.ns, name, pt, data, subresources...), &v1.Policy{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(policiesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.Policy), err
 }
