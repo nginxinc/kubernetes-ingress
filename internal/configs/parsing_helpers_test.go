@@ -182,11 +182,11 @@ func TestGetMapKeyAsBool(t *testing.T) {
 	}
 
 	b, exists, err := GetMapKeyAsBool(configMap.Data, "key", &configMap)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
 	if !exists {
 		t.Error("The key 'key' must exist in the configMap")
-	}
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
 	}
 	if b != true {
 		t.Error("Result should be true")
@@ -214,7 +214,7 @@ func TestGetMapKeyAsBoolErrorMessage(t *testing.T) {
 	// Test with configmap
 	_, _, err := GetMapKeyAsBool(cfgm.Data, "key", &cfgm)
 	if err == nil {
-		t.Error("An error was expected")
+		t.Fatal("An error was expected")
 	}
 	expected := `ConfigMap default/test 'key' contains invalid bool: strconv.ParseBool: parsing "string": invalid syntax, ignoring`
 	if err.Error() != expected {
@@ -229,7 +229,7 @@ func TestGetMapKeyAsBoolErrorMessage(t *testing.T) {
 
 	_, _, err = GetMapKeyAsBool(ingress.Annotations, "key", &ingress)
 	if err == nil {
-		t.Error("An error was expected")
+		t.Fatal("An error was expected")
 	}
 	expected = `Ingress kube-system/test 'key' contains invalid bool: strconv.ParseBool: parsing "other_string": invalid syntax, ignoring`
 	if err.Error() != expected {
@@ -246,7 +246,7 @@ func TestGetMapKeyAsInt(t *testing.T) {
 
 	i, exists, err := GetMapKeyAsInt(configMap.Data, "key", &configMap)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Fatalf("Unexpected error: %v", err)
 	}
 	if !exists {
 		t.Error("The key 'key' must exist in the configMap")
@@ -278,7 +278,7 @@ func TestGetMapKeyAsIntErrorMessage(t *testing.T) {
 	// Test with configmap
 	_, _, err := GetMapKeyAsInt(cfgm.Data, "key", &cfgm)
 	if err == nil {
-		t.Error("An error was expected")
+		t.Fatal("An error was expected")
 	}
 	expected := `ConfigMap default/test 'key' contains invalid integer: strconv.Atoi: parsing "string": invalid syntax, ignoring`
 	if err.Error() != expected {
@@ -293,7 +293,7 @@ func TestGetMapKeyAsIntErrorMessage(t *testing.T) {
 
 	_, _, err = GetMapKeyAsInt(ingress.Annotations, "key", &ingress)
 	if err == nil {
-		t.Error("An error was expected")
+		t.Fatal("An error was expected")
 	}
 	expected = `Ingress kube-system/test 'key' contains invalid integer: strconv.Atoi: parsing "other_string": invalid syntax, ignoring`
 	if err.Error() != expected {
@@ -310,7 +310,7 @@ func TestGetMapKeyAsInt64(t *testing.T) {
 
 	i, exists, err := GetMapKeyAsInt64(configMap.Data, "key", &configMap)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Fatalf("Unexpected error: %v", err)
 	}
 	if !exists {
 		t.Error("The key 'key' must exist in the configMap")
@@ -342,7 +342,7 @@ func TestGetMapKeyAsInt64ErrorMessage(t *testing.T) {
 	// Test with configmap
 	_, _, err := GetMapKeyAsInt64(cfgm.Data, "key", &cfgm)
 	if err == nil {
-		t.Error("An error was expected")
+		t.Fatal("An error was expected")
 	}
 	expected := `ConfigMap default/test 'key' contains invalid integer: strconv.ParseInt: parsing "string": invalid syntax, ignoring`
 	if err.Error() != expected {
@@ -357,7 +357,7 @@ func TestGetMapKeyAsInt64ErrorMessage(t *testing.T) {
 
 	_, _, err = GetMapKeyAsInt64(ingress.Annotations, "key", &ingress)
 	if err == nil {
-		t.Error("An error was expected")
+		t.Fatal("An error was expected")
 	}
 	expected = `Ingress kube-system/test 'key' contains invalid integer: strconv.ParseInt: parsing "other_string": invalid syntax, ignoring`
 	if err.Error() != expected {
@@ -446,7 +446,7 @@ func TestParseLBMethod(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseLBMethod(test.input)
 		if err != nil {
-			t.Errorf("TestParseLBMethod(%q) returned an error for valid input", test.input)
+			t.Fatalf("TestParseLBMethod(%q) returned an error for valid input", test.input)
 		}
 
 		if result != test.expected {
@@ -457,7 +457,7 @@ func TestParseLBMethod(t *testing.T) {
 	for _, input := range invalidInput {
 		_, err := ParseLBMethod(input)
 		if err == nil {
-			t.Errorf("TestParseLBMethod(%q) does not return an error for invalid input", input)
+			t.Fatalf("TestParseLBMethod(%q) does not return an error for invalid input", input)
 		}
 	}
 }
@@ -498,7 +498,7 @@ func TestParseLBMethodForPlus(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseLBMethodForPlus(test.input)
 		if err != nil {
-			t.Errorf("TestParseLBMethod(%q) returned an error for valid input", test.input)
+			t.Fatalf("TestParseLBMethod(%q) returned an error for valid input", test.input)
 		}
 
 		if result != test.expected {
@@ -538,7 +538,7 @@ func TestParseTime(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseTime(test.input)
 		if err != nil {
-			t.Errorf("TestparseTime(%q) returned an error for valid input", test.input)
+			t.Fatalf("TestparseTime(%q) returned an error for valid input", test.input)
 		}
 
 		if result != test.expected {
@@ -561,7 +561,7 @@ func TestParseOffset(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseOffset(test)
 		if err != nil {
-			t.Errorf("TestParseOffset(%q) returned an error for valid input", test)
+			t.Fatalf("TestParseOffset(%q) returned an error for valid input", test)
 		}
 		if test != result {
 			t.Errorf("TestParseOffset(%q) returned %q expected %q", test, result, test)
@@ -582,7 +582,7 @@ func TestParseSize(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseSize(test)
 		if err != nil {
-			t.Errorf("TestParseSize(%q) returned an error for valid input", test)
+			t.Fatalf("TestParseSize(%q) returned an error for valid input", test)
 		}
 		if test != result {
 			t.Errorf("TestParseSize(%q) returned %q expected %q", test, result, test)
@@ -603,7 +603,7 @@ func TestParseProxyBuffersSpec(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseProxyBuffersSpec(test)
 		if err != nil {
-			t.Errorf("ParseProxyBuffersSpec(%q) returned an error for valid input", test)
+			t.Fatalf("ParseProxyBuffersSpec(%q) returned an error for valid input", test)
 		}
 		if test != result {
 			t.Errorf("TestParseProxyBuffersSpec(%q) returned %q expected %q", test, result, test)
@@ -674,7 +674,7 @@ func TestParseBool(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseBool(test.input)
 		if err != nil {
-			t.Errorf("TestParseBool(%q) returned an error for valid input", test.input)
+			t.Fatalf("TestParseBool(%q) returned an error for valid input", test.input)
 		}
 
 		if result != test.expected {
@@ -712,7 +712,7 @@ func TestParseInt(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseInt(test.input)
 		if err != nil {
-			t.Errorf("TestParseInt(%q) returned an error for valid input", test.input)
+			t.Fatalf("TestParseInt(%q) returned an error for valid input", test.input)
 		}
 
 		if result != test.expected {
@@ -750,7 +750,7 @@ func TestParseInt64(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseInt64(test.input)
 		if err != nil {
-			t.Errorf("TestParseInt64(%q) returned an error for valid input", test.input)
+			t.Fatalf("TestParseInt64(%q) returned an error for valid input", test.input)
 		}
 
 		if result != test.expected {
@@ -789,7 +789,7 @@ func TestParseUint64(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseUint64(test.input)
 		if err != nil {
-			t.Errorf("TestParseUint64(%q) returned an error for valid input", test.input)
+			t.Fatalf("TestParseUint64(%q) returned an error for valid input", test.input)
 		}
 
 		if result != test.expected {
@@ -832,7 +832,7 @@ func TestParseFloat64(t *testing.T) {
 	for _, test := range testsWithValidInput {
 		result, err := ParseFloat64(test.input)
 		if err != nil {
-			t.Errorf("TestParseFloat64(%q) returned an error for valid input", test.input)
+			t.Fatalf("TestParseFloat64(%q) returned an error for valid input", test.input)
 		}
 
 		if result != test.expected {
