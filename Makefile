@@ -78,7 +78,7 @@ test-update-snaps:
 	UPDATE_SNAPS=true go test -tags=aws -shuffle=on -race ./...
 
 cover: ## Generate coverage report
-	@./hack/test-cover.sh
+	go test -tags=aws -shuffle=on -race -coverprofile=coverage.txt -covermode=atomic  ./...
 
 cover-html: ## Generate and show coverage report in HTML format
 	go test -tags=aws -shuffle=on -race ./... -count=1 -cover -covermode=atomic -coverprofile=coverage.out
