@@ -7,7 +7,7 @@ toc: true
 weight: 200
 ---
 
-This guide explains how to use Manifests to install NGINX Ingress Controller, then create both common and custom resources and set up role-based access control.
+This guide explains how to use Manifests to install F5 NGINX Ingress Controller, then create both common and custom resources and set up role-based access control.
 
 ## Before you start
 
