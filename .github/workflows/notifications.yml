@@ -12,6 +12,7 @@ on:
       - "OpenSSF Scorecards"
       - "Build OSS"
       - "Build Plus"
+      - "Release NIC"
     types:
       - completed
 

@@ -3,7 +3,7 @@
 NGINX and NGINX Plus support regular expression modifiers for [location](https://nginx.org/en/docs/http/ngx_http_core_module.html#location)
  directive.
 
-The NGINX Ingress Controller provides the following annotations for configuring regular expression support:
+NGINX Ingress Controller provides the following annotations for configuring regular expression support:
 
 - Optional: ```nginx.org/path-regex: "case_sensitive"``` - specifies a preceding regex modifier to be case sensitive (`~*`).
 - Optional: ```nginx.org/path-regex: "case_insensitive"``` - specifies a preceding regex modifier to be case sensitive (`~`).

@@ -1,12 +1,14 @@
 ---
-title: "Ingresses Path Matching Using Path-Regex Annotation"
-docs: "DOCS-1451"
-description: |
-  How to customize Ingress and Mergeable Ingress types with path-regex annotations.
-weight: 1800
-doctypes: ["concept"]
+docs: DOCS-1451
+doctypes:
+- concept
+title: Ingresses Path Matching Using Path-Regex Annotation
 toc: true
+weight: 1800
 ---
+
+This document describes how to customize Ingress and Mergeable Ingress types with path-regex annotations.
+
 ## Customizing NGINX Ingress Controller with Path-Regex Annotations
 
 We suggest reading the NGINX [documentation on resolve location priority](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/#nginx-location-priority)

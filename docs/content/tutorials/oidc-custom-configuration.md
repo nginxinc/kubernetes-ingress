@@ -1,13 +1,10 @@
 ---
-title: "Customize OIDC Configuration with NGINX Ingress Controller"
-description: |
-  How to Customize the default OIDC Configuration with NGINX Ingress Controller
-weight: 1800
-doctypes: ["concept"]
+doctypes:
+- concept
+title: Customize OIDC Configuration with NGINX Ingress Controller
 toc: true
+weight: 1800
 ---
-
-# Overview
 
 The F5 NGINX Ingress Controller implements OpenID Connect (OIDC) using the NGINX OpenID Connect Reference implementation: [nginx-openid-connect](https://github.com/nginxinc/nginx-openid-connect).
 
@@ -30,12 +27,12 @@ Run the below command to generate a ConfigMap with the contents of the `oidc.con
 **NOTE** The ConfigMap must be deployed in the same `namespace` as the F5 NGINX Ingress Controller.
 
 ```console
-kubectl create configmap oidc-config-map --from-literal=oidc.conf="$(curl -k https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/internal/configs/oidc/oidc.conf)"
+kubectl create configmap oidc-config-map --from-literal=oidc.conf="$(curl -k https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/internal/configs/oidc/oidc.conf)"
 ```
 
 Use the `kubectl describe` command to confirm the contents of the ConfigMap are correct.
 
-```console
+```shell
 kubectl describe configmap oidc-config-map
 ```
 
@@ -68,7 +65,7 @@ Once the contents of the `oidc.conf` file has been added to the ConfigMap, you a
 This example demonstrates adding a comment to the top of the file. The comment will be shown at the top of the `oidc.conf` file.
 This comment will be `# >> Custom Comment for my OIDC file <<`
 
-```console
+```shell
 kubectl edit configmap oidc-config-map
 ```
 
@@ -95,9 +92,15 @@ data:
         # Rest of configuration file truncated
 ```
 
-> **IMPORTANT**
->
-> In Step 3 an NGINX Ingress Controller will be deployed/updated that will use this ConfigMap. Any changes made to this ConfigMap must be made **before** deploying/updating the NGINX Ingress Controller. If an update is applied to the ConfigMap after the NGINX Ingress Controller is deployed, it will not get applied. Applying any updates to the data in this ConfigMap will require the NGINX Ingress Controller to be re-deployed.
+{{< important >}} 
+
+In the next step, NGINX Ingress Controller will be deployed using this ConfigMap. 
+
+Any changes made to this ConfigMap must be made **before** deploying or updating NGINX Ingress Controller. If an update is applied to the ConfigMap after NGINX Ingress Controller is deployed, it will not be applied. 
+
+Applying any updates to the data in this ConfigMap will require NGINX Ingress Controller to be re-deployed.
+
+{{< /important >}}
 
 ## Step 3 - Add Volume and VolumeMount to the Ingress Controller deployment
 
@@ -147,7 +150,7 @@ Once the `Volume` and `VolumeMount` has been added the manifest file, apply the 
 
 Confirm the `oidc.conf` file has been updated:
 
-```console
+```shell
 kubectl exec -it -n <ic-namespace> <ingess-controller-pod> -- cat /etc/nginx/oidc/oidc.conf
 ```
 
@@ -162,13 +165,13 @@ The `VolumeMount`must be added the `spec.template.spec.containers` section.
 
 For Deployments:
 
-```console
+```shell
 kubectl edit deployments <name-of-deployment> -n <ic-namespace>
 ```
 
 For Daemonsets:
 
-```console
+```shell
 kubectl edit daemonset <name-of-daemonset> -n <ic-namespace>
 ```
 
@@ -205,6 +208,6 @@ Once the Deployment/Daemonset has been edited, save the file and exit.
 
 Confirm the `oidc.conf` file has been updated:
 
-```console
+```shell
 kubectl exec -it -n <ic-namespace> <ingess-controller-pod> -- cat /etc/nginx/oidc/oidc.conf
 ```

@@ -17,7 +17,7 @@ the DNS name frequently, so will update automatically when new pods are deployed
 ## Prerequisites
 
 - We use `dig` for testing. Make sure it is installed on your machine.
-- We use native NGINX configuration to configure TCP/UDP load balancing. If you'd like to better understand the example
+- We use built-in NGINX configuration to configure TCP/UDP load balancing. If you'd like to better understand the example
   configuration, read about [TCP/UDP load
   balancing](https://docs.nginx.com/nginx/admin-guide/load-balancer/tcp-udp-load-balancer/) and [DNS service
   discovery](https://www.nginx.com/blog/dns-service-discovery-nginx-plus/) in NGINX/NGINX Plus.

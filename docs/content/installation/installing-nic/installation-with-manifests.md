@@ -1,31 +1,27 @@
 ---
+docs: DOCS-603
+doctypes:
+- ''
 title: Installation with Manifests
-description: "This guide explains how to install NGINX Ingress Controller in a Kubernetes cluster using manifests. In addition, it provides instructions on how to set up role-based access control, create both common and custom resources, and uninstall NGINX Ingress Controller."
-weight: 200
-doctypes: [""]
-aliases:
-    - /installation/
 toc: true
-docs: "DOCS-603"
+weight: 200
 ---
 
-{{<custom-styles>}}
+This guide explains how to use Manifests to install NGINX Ingress Controller, then create both common and custom resources and set up role-based access control.
 
 ## Before you start
 
 ### Get the NGINX Controller Image
 
-{{<note>}}Always use the most up-to-date stable release listed on the [releases page]({{< relref "releases.md" >}}).{{</note>}}
+{{< note >}} Always use the latest stable release listed on the [releases page]({{< relref "releases.md" >}}). {{< /note >}}
 
 Choose one of the following methods to get the NGINX Ingress Controller image:
 
 - **NGINX Ingress Controller**: Download the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
 - **NGINX Plus Ingress Controller**: You have two options for this, both requiring an NGINX Ingress Controller subscription.
-
-  - Download the image using your NGINX Ingress Controller subscription certificate and key. See the [Getting the F5 Registry NGINX Ingress Controller Image]({{< relref "installation/nic-images/pulling-ingress-controller-image.md" >}}) guide.
-  - Use your NGINX Ingress Controller subscription JWT token to get the image: Instructions are in [Getting the NGINX Ingress Controller Image with JWT]({{< relref "installation/nic-images/using-the-jwt-token-docker-secret.md" >}}).
-
-- **Build your own image**: To build your own image, follow the [Building NGINX Ingress Controller]({{< relref "installation/building-nginx-ingress-controller.md" >}}) guide.
+  - Download the image using your NGINX Ingress Controller subscription certificate and key. View the [Get NGINX Ingress Controller from the F5 Registry]({{< relref "installation/nic-images/get-registry-image.md" >}}) topic.
+  - The [Get the NGINX Ingress Controller image with JWT]({{< relref "installation/nic-images/get-image-using-jwt.md" >}}) topic describes how to use your subscription JWT token to get the image.
+- **Build your own image**: To build your own image, follow the [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md" >}}) topic.
 
 ### Clone the repository
 
@@ -35,9 +31,19 @@ Clone the NGINX Ingress Controller repository using the command shown below, and
 git clone https://github.com/nginxinc/kubernetes-ingress.git --branch <version_number>
 ```
 
-For example, if you want to use version 3.4.3, the command would be `git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.4.3`.
+For example, if you want to use version {{< nic-version >}}, the command would be `git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v{{< nic-version >}}`.
 
 This guide assumes you are using the latest release.
+
+Change the active directory.
+
+```shell
+cd kubernetes-ingress
+```
+
+### App Protect DoS
+
+To use App Protect DoS, install the App Protect DoS Arbitrator using the provided manifests in the same namespace as the NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
 
 ---
 
@@ -66,7 +72,7 @@ This guide assumes you are using the latest release.
 1. Create CRDs for [VirtualServer and VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md" >}}), [TransportServer]({{< relref "configuration/transportserver-resource.md" >}}), [Policy]({{< relref "configuration/policy-resource.md" >}}) and [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}):
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/deploy/crds.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
     ```
 
 ### Optional custom resource definitions
@@ -74,13 +80,13 @@ This guide assumes you are using the latest release.
 1. For the NGINX App Protect WAF module, create CRDs for `APPolicy`, `APLogConf` and `APUserSig`:
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/deploy/crds-nap-waf.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-waf.yaml
     ```
 
 2. For the NGINX App Protect DoS module, create CRDs for `APDosPolicy`, `APDosLogConf` and `DosProtectedResource`:
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/deploy/crds-nap-dos.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-dos.yaml
     ```
 
 {{%/tab%}}
@@ -244,52 +250,52 @@ Connect to ports 80 and 443 using the IP address of any node in the cluster wher
     kubectl delete namespace nginx-ingress
     ```
 
-2. **Remove the cluster role and cluster role binding**:
+1. **Remove the cluster role and cluster role binding**:
 
     ```shell
     kubectl delete clusterrole nginx-ingress
     kubectl delete clusterrolebinding nginx-ingress
     ```
 
-3. **Delete the Custom Resource Definitions**:
+1. **Delete the Custom Resource Definitions**:
 
-   {{<tabs name="delete-crds">}}
+{{<tabs name="delete-crds">}}
 
-   {{%tab name="Deleting CRDs from single YAML"%}}
+{{%tab name="Deleting CRDs from single YAML"%}}
 
    1. Delete core custom resource definitions:
     ```shell
-    kubectl delete -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/deploy/crds.yaml
+    kubectl delete -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
     ```
    2. Delete custom resource definitions for the NGINX App Protect WAF module:
 
    ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/deploy/crds-nap-waf.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-waf.yaml
     ```
 
    3. Delete custom resource definitions for the NGINX App Protect DoS module:
    ```shell
-    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.4.3/deploy/crds-nap-dos.yaml
+    kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-dos.yaml
     ```
    {{%/tab%}}
 
-   {{%tab name="Deleting CRDs after cloning the repo"%}}
+{{%tab name="Deleting CRDs after cloning the repo"%}}
 
-   1. Delete core custom resource definitions:
-    ```shell
-    kubectl delete -f config/crd/bases/crds.yaml
-    ```
-   2. Delete custom resource definitions for the NGINX App Protect WAF module:
+1. Delete core custom resource definitions:
+```shell
+kubectl delete -f config/crd/bases/crds.yaml
+```
+2. Delete custom resource definitions for the NGINX App Protect WAF module:
 
-   ```shell
-    kubectl apply -f config/crd/bases/crds-nap-waf.yaml
-    ```
+```shell
+kubectl apply -f config/crd/bases/crds-nap-waf.yaml
+```
 
-   3. Delete custom resource definitions for the NGINX App Protect DoS module:
-   ```shell
-    kubectl apply -f config/crd/bases/crds-nap-dos.yaml
-    ```
+3. Delete custom resource definitions for the NGINX App Protect DoS module:
+```shell
+kubectl apply -f config/crd/bases/crds-nap-dos.yaml
+```
 
-   {{%/tab%}}
+{{%/tab%}}
 
-   {{</tabs>}}
+{{</tabs>}}

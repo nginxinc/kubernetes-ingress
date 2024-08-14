@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "docs/go.mod"
+  merge_group:
 
 permissions:
   contents: read
@@ -22,17 +23,17 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: dependabot-metadata
-        uses: dependabot/fetch-metadata@c9c4182bf1b97f5224aee3906fd373f6b61b4526 # v1.6.0
+        uses: dependabot/fetch-metadata@dbb049abf0d677abbd7f7eee0375145b417fdd34 # v2.2.0
 
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'go_modules' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.NGINX_PAT }}
 
       - name: Setup Hugo
-        uses: peaceiris/actions-hugo@16361eb4acea8698b220b76c0d4e84e1fd22c61d # v2.6.0
+        uses: peaceiris/actions-hugo@75d2e84710de30f6ff7268e08f310b60ef14033f # v3.0.0
         if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'go_modules' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
 
       - name: Run build
@@ -45,6 +46,6 @@ jobs:
       - name: Commit changes
         if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'go_modules' && contains(steps.dependabot-metadata.outputs.dependency-names, 'hugo') }}
         id: commit
-        uses: stefanzweifel/git-auto-commit-action@8756aa072ef5b4a080af5dc8fef36c5d586e521d # v5.0.0
+        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1
         with:
           commit_message: "Update docs go.mod"

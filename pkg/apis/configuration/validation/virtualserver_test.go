@@ -4323,32 +4323,32 @@ func TestValidateErrorPageReturn(t *testing.T) {
 	tests := []v1.ErrorPageReturn{
 		{
 			ActionReturn: v1.ActionReturn{
-				Code: 200,
-				Type: "",
-				Body: "Could not process request, try again",
+				Code:    200,
+				Type:    "",
+				Body:    "Could not process request, try again",
+				Headers: nil,
 			},
-			Headers: nil,
 		},
 		{
 			ActionReturn: v1.ActionReturn{
 				Code: 0,
 				Type: "",
 				Body: "Could not process request, try again. Upstream status ${upstream_status}",
-			},
-			Headers: []v1.Header{
-				{
-					Name:  "Set-Cookie",
-					Value: "mycookie=true",
+				Headers: []v1.Header{
+					{
+						Name:  "Set-Cookie",
+						Value: "mycookie=true",
+					},
 				},
 			},
 		},
 		{
 			ActionReturn: v1.ActionReturn{
-				Code: 200,
-				Type: "application/json",
-				Body: `{\"message\": \"Could not process request, try again\", \"upstream_status\": \"${upstream_status}\"}`,
+				Code:    200,
+				Type:    "application/json",
+				Body:    `{\"message\": \"Could not process request, try again\", \"upstream_status\": \"${upstream_status}\"}`,
+				Headers: nil,
 			},
-			Headers: nil,
 		},
 	}
 
@@ -4406,11 +4406,11 @@ func TestValidateErrorPageReturnFails(t *testing.T) {
 					Code: 200,
 					Type: "application/json",
 					Body: `{\"message\": \"Could not process request, try again\", \"status\": \"${status}\"}`,
-				},
-				Headers: []v1.Header{
-					{
-						Name:  "Set-Cookie$_%^$  -",
-						Value: "mycookie=true",
+					Headers: []v1.Header{
+						{
+							Name:  "Set-Cookie$_%^$  -",
+							Value: "mycookie=true",
+						},
 					},
 				},
 			},

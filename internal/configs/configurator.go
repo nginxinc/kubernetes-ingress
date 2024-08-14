@@ -31,13 +31,13 @@ import (
 
 const (
 	pemFileNameForWildcardTLSSecret = "/etc/nginx/secrets/wildcard" // #nosec G101
-	appProtectBundleFolder          = "/etc/nginx/waf/bundles/"
 	appProtectPolicyFolder          = "/etc/nginx/waf/nac-policies/"
 	appProtectLogConfFolder         = "/etc/nginx/waf/nac-logconfs/"
 	appProtectUserSigFolder         = "/etc/nginx/waf/nac-usersigs/"
 	appProtectUserSigIndex          = "/etc/nginx/waf/nac-usersigs/index.conf"
 	appProtectDosPolicyFolder       = "/etc/nginx/dos/policies/"
 	appProtectDosLogConfFolder      = "/etc/nginx/dos/logconfs/"
+	appProtectDosAllowListFolder    = "/etc/nginx/dos/allowlist/"
 )
 
 // DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server. #nosec G101
@@ -84,6 +84,13 @@ type ExtendedResources struct {
 	TransportServerExes []*TransportServerEx
 }
 
+// WeightUpdate holds the information about the weight updates for weight changes without reloading.
+type WeightUpdate struct {
+	Zone  string
+	Key   string
+	Value string
+}
+
 type tlsPassthroughPair struct {
 	Host       string
 	UnixSocket string
@@ -116,6 +123,7 @@ type Configurator struct {
 	templateExecutorV2        *version2.TemplateExecutor
 	ingresses                 map[string]*IngressEx
 	minions                   map[string]map[string]bool
+	mergeableIngresses        map[string]*MergeableIngresses
 	virtualServers            map[string]*VirtualServerEx
 	transportServers          map[string]*TransportServerEx
 	tlsPassthroughPairs       map[string]tlsPassthroughPair
@@ -128,24 +136,26 @@ type Configurator struct {
 	isLatencyMetricsEnabled   bool
 	isReloadsEnabled          bool
 	isDynamicSSLReloadEnabled bool
+	ingressControllerReplicas int
 }
 
 // ConfiguratorParams is a collection of parameters used for the
 // NewConfigurator() function
 type ConfiguratorParams struct {
-	NginxManager              nginx.Manager
-	StaticCfgParams           *StaticConfigParams
-	Config                    *ConfigParams
-	TemplateExecutor          *version1.TemplateExecutor
-	TemplateExecutorV2        *version2.TemplateExecutor
-	LabelUpdater              collector.LabelUpdater
-	LatencyCollector          latCollector.LatencyCollector
-	IsPlus                    bool
-	IsPrometheusEnabled       bool
-	IsWildcardEnabled         bool
-	IsLatencyMetricsEnabled   bool
-	IsDynamicSSLReloadEnabled bool
-	NginxVersion              nginx.Version
+	NginxManager                        nginx.Manager
+	StaticCfgParams                     *StaticConfigParams
+	Config                              *ConfigParams
+	TemplateExecutor                    *version1.TemplateExecutor
+	TemplateExecutorV2                  *version2.TemplateExecutor
+	LabelUpdater                        collector.LabelUpdater
+	LatencyCollector                    latCollector.LatencyCollector
+	IsPlus                              bool
+	IsPrometheusEnabled                 bool
+	IsWildcardEnabled                   bool
+	IsLatencyMetricsEnabled             bool
+	IsDynamicSSLReloadEnabled           bool
+	IsDynamicWeightChangesReloadEnabled bool
+	NginxVersion                        nginx.Version
 }
 
 // NewConfigurator creates a new Configurator.
@@ -172,6 +182,7 @@ func NewConfigurator(p ConfiguratorParams) *Configurator {
 		templateExecutor:          p.TemplateExecutor,
 		templateExecutorV2:        p.TemplateExecutorV2,
 		minions:                   make(map[string]map[string]bool),
+		mergeableIngresses:        make(map[string]*MergeableIngresses),
 		tlsPassthroughPairs:       make(map[string]tlsPassthroughPair),
 		isPlus:                    p.IsPlus,
 		isWildcardEnabled:         p.IsWildcardEnabled,
@@ -381,15 +392,16 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (bool, Warnings, e
 
 	isMinion := false
 	nginxCfg, warnings := generateNginxCfg(NginxCfgParams{
-		staticParams:         cnf.staticCfgParams,
-		ingEx:                ingEx,
-		apResources:          apResources,
-		dosResource:          dosResource,
-		isMinion:             isMinion,
-		isPlus:               cnf.isPlus,
-		baseCfgParams:        cnf.cfgParams,
-		isResolverConfigured: cnf.IsResolverConfigured(),
-		isWildcardEnabled:    cnf.isWildcardEnabled,
+		staticParams:              cnf.staticCfgParams,
+		ingEx:                     ingEx,
+		apResources:               apResources,
+		dosResource:               dosResource,
+		isMinion:                  isMinion,
+		isPlus:                    cnf.isPlus,
+		baseCfgParams:             cnf.cfgParams,
+		isResolverConfigured:      cnf.IsResolverConfigured(),
+		isWildcardEnabled:         cnf.isWildcardEnabled,
+		ingressControllerReplicas: cnf.ingressControllerReplicas,
 	})
 
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
@@ -444,14 +456,15 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	}
 
 	nginxCfg, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
-		mergeableIngs:        mergeableIngs,
-		apResources:          apResources,
-		dosResource:          dosResource,
-		baseCfgParams:        cnf.cfgParams,
-		isPlus:               cnf.isPlus,
-		isResolverConfigured: cnf.IsResolverConfigured(),
-		staticParams:         cnf.staticCfgParams,
-		isWildcardEnabled:    cnf.isWildcardEnabled,
+		mergeableIngs:             mergeableIngs,
+		apResources:               apResources,
+		dosResource:               dosResource,
+		baseCfgParams:             cnf.cfgParams,
+		isPlus:                    cnf.isPlus,
+		isResolverConfigured:      cnf.IsResolverConfigured(),
+		staticParams:              cnf.staticCfgParams,
+		isWildcardEnabled:         cnf.isWildcardEnabled,
+		ingressControllerReplicas: cnf.ingressControllerReplicas,
 	})
 
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
@@ -467,6 +480,9 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		minionName := objectMetaToFileName(&minion.Ingress.ObjectMeta)
 		cnf.minions[name][minionName] = true
 	}
+
+	cnf.mergeableIngresses[name] = mergeableIngs
+
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateIngressMetricsLabels(mergeableIngs.Master, nginxCfg.Upstreams)
 	}
@@ -555,13 +571,21 @@ func (cnf *Configurator) deleteVirtualServerMetricsLabels(key string) {
 
 // AddOrUpdateVirtualServer adds or updates NGINX configuration for the VirtualServer resource.
 func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
-	_, warnings, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
+	_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
 	if err != nil {
 		return warnings, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
 	}
 
+	if len(weightUpdates) > 0 {
+		cnf.EnableReloads()
+	}
+
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		return warnings, fmt.Errorf("error reloading NGINX for VirtualServer %v/%v: %w", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
+	}
+
+	for _, weightUpdate := range weightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return warnings, nil
@@ -571,7 +595,8 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 	return cnf.nginxManager.CreateOpenTracingTracerConfig(content)
 }
 
-func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (bool, Warnings, error) {
+func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (bool, Warnings, []WeightUpdate, error) {
+	var weightUpdates []WeightUpdate
 	apResources := cnf.updateApResourcesForVs(virtualServerEx)
 	dosResources := map[string]*appProtectDosResource{}
 	for k, v := range virtualServerEx.DosProtectedEx {
@@ -584,11 +609,12 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
-	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled)
+	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled, nil)
+	vsc.IngressControllerReplicas = cnf.ingressControllerReplicas
 	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, apResources, dosResources)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
-		return false, warnings, fmt.Errorf("error generating VirtualServer config: %v: %w", name, err)
+		return false, warnings, weightUpdates, fmt.Errorf("error generating VirtualServer config: %v: %w", name, err)
 	}
 	changed := cnf.nginxManager.CreateConfig(name, content)
 
@@ -597,23 +623,40 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateVirtualServerMetricsLabels(virtualServerEx, vsCfg.Upstreams)
 	}
-	return changed, warnings, nil
+
+	if cnf.staticCfgParams.DynamicWeightChangesReload && len(vsCfg.TwoWaySplitClients) > 0 {
+		for _, splitClient := range vsCfg.TwoWaySplitClients {
+			if len(splitClient.Weights) != 2 {
+				continue
+			}
+			variableNamer := *NewVSVariableNamer(virtualServerEx.VirtualServer)
+			value := variableNamer.GetNameOfKeyOfMapForWeights(splitClient.SplitClientsIndex, splitClient.Weights[0], splitClient.Weights[1])
+			weightUpdates = append(weightUpdates, WeightUpdate{Zone: splitClient.ZoneName, Key: splitClient.Key, Value: value})
+		}
+	}
+	return changed, warnings, weightUpdates, nil
 }
 
 // AddOrUpdateVirtualServers adds or updates NGINX configuration for multiple VirtualServer resources.
 func (cnf *Configurator) AddOrUpdateVirtualServers(virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	for _, vsEx := range virtualServerExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return allWarnings, err
 		}
 		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		return allWarnings, fmt.Errorf("error when reloading NGINX when updating Policy: %w", err)
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return allWarnings, nil
@@ -733,7 +776,7 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 		if err != nil {
 			return false, nil, err
 		}
-		return (changed || ptChanged), warnings, nil
+		return changed || ptChanged, warnings, nil
 	}
 	return changed, warnings, nil
 }
@@ -794,6 +837,7 @@ func (cnf *Configurator) addOrUpdateHtpasswdSecret(secret *api_v1.Secret) string
 // AddOrUpdateResources adds or updates configuration for resources.
 func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloadIfUnchanged bool) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 	configsChanged := false
 
 	updateResource := func(updateFunc func() (bool, Warnings, error), namespace, name string) error {
@@ -802,6 +846,20 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 			return fmt.Errorf("error adding or updating resource %v/%v: %w", namespace, name, err)
 		}
 		allWarnings.Add(warnings)
+		if changed {
+			configsChanged = true
+		}
+		return nil
+	}
+
+	updateVSResource := func(updateFunc func() (bool, Warnings, []WeightUpdate, error), namespace, name string) error {
+		changed, warnings, weightUpdates, err := updateFunc()
+		if err != nil {
+			return fmt.Errorf("error adding or updating resource %v/%v: %w", namespace, name, err)
+		}
+		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
+
 		if changed {
 			configsChanged = true
 		}
@@ -827,7 +885,7 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 	}
 
 	for _, vsEx := range resources.VirtualServerExes {
-		err := updateResource(func() (bool, Warnings, error) {
+		err := updateVSResource(func() (bool, Warnings, []WeightUpdate, error) {
 			return cnf.addOrUpdateVirtualServer(vsEx)
 		}, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name)
 		if err != nil {
@@ -906,6 +964,7 @@ func (cnf *Configurator) DeleteIngress(key string, skipReload bool) error {
 
 	delete(cnf.ingresses, name)
 	delete(cnf.minions, name)
+	delete(cnf.mergeableIngresses, name)
 
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.deleteIngressMetricsLabels(key)
@@ -924,6 +983,10 @@ func (cnf *Configurator) DeleteIngress(key string, skipReload bool) error {
 func (cnf *Configurator) DeleteVirtualServer(key string, skipReload bool) error {
 	name := getFileNameForVirtualServerFromKey(key)
 	cnf.nginxManager.DeleteConfig(name)
+
+	if cnf.isPlus {
+		cnf.nginxManager.DeleteKeyValStateFiles(name)
+	}
 
 	delete(cnf.virtualServers, name)
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
@@ -1045,7 +1108,7 @@ func (cnf *Configurator) UpdateEndpointsForVirtualServers(virtualServerExes []*V
 
 	for _, vs := range virtualServerExes {
 		// It is safe to ignore warnings here as no new warnings should appear when updating Endpoints for VirtualServers
-		_, _, err := cnf.addOrUpdateVirtualServer(vs)
+		_, _, _, err := cnf.addOrUpdateVirtualServer(vs)
 		if err != nil {
 			return fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
 		}
@@ -1226,6 +1289,7 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources ExtendedResources) (Warnings, error) {
 	cnf.cfgParams = cfgParams
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	if cnf.cfgParams.MainServerSSLDHParamFileContent != nil {
 		fileName, err := cnf.nginxManager.CreateDHParam(*cnf.cfgParams.MainServerSSLDHParamFileContent)
@@ -1256,6 +1320,13 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		}
 	}
 
+	if cfgParams.TransportServerTemplate != nil {
+		err := cnf.templateExecutorV2.UpdateTransportServerTemplate(cfgParams.TransportServerTemplate)
+		if err != nil {
+			return allWarnings, fmt.Errorf("error when parsing the TransportServer template: %w", err)
+		}
+	}
+
 	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
@@ -1278,11 +1349,12 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		allWarnings.Add(warnings)
 	}
 	for _, vsEx := range resources.VirtualServerExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return allWarnings, err
 		}
 		allWarnings.Add(warnings)
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	for _, tsEx := range resources.TransportServerExes {
@@ -1304,6 +1376,10 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		return allWarnings, fmt.Errorf("error when updating config from ConfigMap: %w", err)
 	}
 
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
+	}
+
 	return allWarnings, nil
 }
 
@@ -1321,11 +1397,13 @@ func (cnf *Configurator) ReloadForBatchUpdates(batchReloadsEnabled bool) error {
 // UpdateVirtualServers updates VirtualServers.
 func (cnf *Configurator) UpdateVirtualServers(updatedVSExes []*VirtualServerEx, deletedKeys []string) []error {
 	var errList []error
+	var allWeightUpdates []WeightUpdate
 	for _, vsEx := range updatedVSExes {
-		_, _, err := cnf.addOrUpdateVirtualServer(vsEx)
+		_, _, weightUpdates, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			errList = append(errList, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err))
 		}
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 	}
 
 	for _, key := range deletedKeys {
@@ -1337,6 +1415,10 @@ func (cnf *Configurator) UpdateVirtualServers(updatedVSExes []*VirtualServerEx, 
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		errList = append(errList, fmt.Errorf("error when updating VirtualServer: %w", err))
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return errList
@@ -1477,10 +1559,63 @@ func (cnf *Configurator) GetIngressCounts() map[string]int {
 	return counters
 }
 
+// GetIngressAnnotations returns a list of annotation keys set across all Ingress resources
+func (cnf *Configurator) GetIngressAnnotations() []string {
+	if cnf == nil || cnf.ingresses == nil {
+		return nil
+	}
+
+	annotationSet := make(map[string]bool)
+	annotationSet = cnf.getMinionIngressAnnotations(annotationSet)
+	annotationSet = cnf.getStandardIngressAnnotations(annotationSet)
+
+	var annotations []string
+	for key := range annotationSet {
+		annotations = append(annotations, key)
+	}
+
+	return annotations
+}
+
+// getStandardIngressAnnotations returns a map of allowedAnnotations detected in Standard or Master Ingresses
+func (cnf *Configurator) getStandardIngressAnnotations(annotationSet map[string]bool) map[string]bool {
+	for _, ing := range cnf.ingresses {
+		if ing != nil && ing.Ingress != nil && ing.Ingress.Annotations != nil {
+			for key := range ing.Ingress.Annotations {
+				for _, allowedAnnotationKey := range allowedAnnotationKeys {
+					if strings.Contains(key, allowedAnnotationKey) {
+						annotationSet[key] = true
+					}
+				}
+			}
+		}
+	}
+	return annotationSet
+}
+
+// getMinionIngressAnnotations returns a map of allowedAnnotations detected in Minion Ingresses
+func (cnf *Configurator) getMinionIngressAnnotations(annotationSet map[string]bool) map[string]bool {
+	for _, ing := range cnf.mergeableIngresses {
+		for _, minionIng := range ing.Minions {
+			if minionIng != nil && minionIng.Ingress.Annotations != nil {
+				for key := range minionIng.Ingress.Annotations {
+					for _, allowedAnnotationKey := range allowedAnnotationKeys {
+						if strings.Contains(key, allowedAnnotationKey) {
+							annotationSet[key] = true
+						}
+					}
+				}
+			}
+		}
+	}
+	return annotationSet
+}
+
 // GetVirtualServerCounts returns the total count of
 // VirtualServer and VirtualServerRoute resources that are handled by the Ingress Controller
-func (cnf *Configurator) GetVirtualServerCounts() (vsCount int, vsrCount int) {
-	vsCount = len(cnf.virtualServers)
+func (cnf *Configurator) GetVirtualServerCounts() (int, int) {
+	vsCount := len(cnf.virtualServers)
+	vsrCount := 0
 	for _, vs := range cnf.virtualServers {
 		vsrCount += len(vs.VirtualServerRoutes)
 	}
@@ -1545,6 +1680,11 @@ func (cnf *Configurator) updateApResources(ingEx *IngressEx) *AppProtectResource
 
 func (cnf *Configurator) updateDosResource(dosEx *DosEx) {
 	if dosEx != nil {
+		if dosEx.DosProtected != nil {
+			allowListFileName := appProtectDosAllowListFileName(dosEx.DosProtected.GetNamespace(), dosEx.DosProtected.GetName())
+			allowListContent := generateApDosAllowListFileContent(dosEx.DosProtected.Spec.AllowList)
+			cnf.nginxManager.CreateAppProtectResourceFile(allowListFileName, allowListContent)
+		}
 		if dosEx.DosPolicy != nil {
 			policyFileName := appProtectDosPolicyFileName(dosEx.DosPolicy.GetNamespace(), dosEx.DosPolicy.GetName())
 			policyContent := generateApResourceFileContent(dosEx.DosPolicy)
@@ -1604,6 +1744,48 @@ func generateApResourceFileContent(apResource *unstructured.Unstructured) []byte
 	return data
 }
 
+func generateApDosAllowListFileContent(allowList []v1beta1.AllowListEntry) []byte {
+	type IPAddress struct {
+		IPAddress string `json:"ipAddress"`
+	}
+
+	type IPAddressList struct {
+		IPAddresses   []IPAddress `json:"ipAddresses"`
+		BlockRequests string      `json:"blockRequests"`
+	}
+
+	type Policy struct {
+		IPAddressLists []IPAddressList `json:"ip-address-lists"`
+	}
+
+	type AllowListPolicy struct {
+		Policy Policy `json:"policy"`
+	}
+
+	ipAddresses := make([]IPAddress, len(allowList))
+	for i, entry := range allowList {
+		ipAddresses[i] = IPAddress{IPAddress: entry.IPWithMask}
+	}
+
+	allowListPolicy := AllowListPolicy{
+		Policy: Policy{
+			IPAddressLists: []IPAddressList{
+				{
+					IPAddresses:   ipAddresses,
+					BlockRequests: "transparent",
+				},
+			},
+		},
+	}
+
+	data, err := json.Marshal(allowListPolicy)
+	if err != nil {
+		return nil
+	}
+
+	return data
+}
+
 // ResourceOperation represents a function that changes configuration in relation to an unstructured resource.
 type ResourceOperation func(resource *v1beta1.DosProtectedResource, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error)
 
@@ -1639,6 +1821,7 @@ func (cnf *Configurator) AddOrUpdateResourcesThatUseDosProtected(ingExes []*Ingr
 
 func (cnf *Configurator) addOrUpdateIngressesAndVirtualServers(ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
+	allWeightUpdates := []WeightUpdate{}
 
 	for _, ingEx := range ingExes {
 		_, warnings, err := cnf.addOrUpdateIngress(ingEx)
@@ -1657,11 +1840,16 @@ func (cnf *Configurator) addOrUpdateIngressesAndVirtualServers(ingExes []*Ingres
 	}
 
 	for _, vs := range vsExes {
-		_, warnings, err := cnf.addOrUpdateVirtualServer(vs)
+		_, warnings, weightUpdates, err := cnf.addOrUpdateVirtualServer(vs)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error adding or updating VirtualServer %v/%v: %w", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
 		}
+		allWeightUpdates = append(allWeightUpdates, weightUpdates...)
 		allWarnings.Add(warnings)
+	}
+
+	for _, weightUpdate := range allWeightUpdates {
+		cnf.nginxManager.UpsertSplitClientsKeyVal(weightUpdate.Zone, weightUpdate.Key, weightUpdate.Value)
 	}
 
 	return allWarnings, nil
@@ -1722,6 +1910,10 @@ func appProtectDosLogConfFileName(namespace string, name string) string {
 	return fmt.Sprintf("%s%s_%s.json", appProtectDosLogConfFolder, namespace, name)
 }
 
+func appProtectDosAllowListFileName(namespace string, name string) string {
+	return fmt.Sprintf("%s%s_%s.json", appProtectDosAllowListFolder, namespace, name)
+}
+
 // DeleteAppProtectDosPolicy updates Ingresses and VirtualServers that use AP Dos Policy after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectDosPolicy(resource *unstructured.Unstructured) {
 	cnf.nginxManager.DeleteAppProtectResourceFile(appProtectDosPolicyFileName(resource.GetNamespace(), resource.GetName()))
@@ -1730,6 +1922,11 @@ func (cnf *Configurator) DeleteAppProtectDosPolicy(resource *unstructured.Unstru
 // DeleteAppProtectDosLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectDosLogConf(resource *unstructured.Unstructured) {
 	cnf.nginxManager.DeleteAppProtectResourceFile(appProtectDosLogConfFileName(resource.GetNamespace(), resource.GetName()))
+}
+
+// DeleteAppProtectDosAllowList updates Ingresses and VirtualServers that use AP Allow List Configuration after that policy is deleted
+func (cnf *Configurator) DeleteAppProtectDosAllowList(obj *v1beta1.DosProtectedResource) {
+	cnf.nginxManager.DeleteAppProtectResourceFile(appProtectDosAllowListFileName(obj.Namespace, obj.Name))
 }
 
 // AddInternalRouteConfig adds internal route server to NGINX Configuration and reloads NGINX
@@ -1760,6 +1957,9 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 	case secrets.SecretTypeOIDC:
 		// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
 		return ""
+	case secrets.SecretTypeAPIKey:
+		// APIKey ClientSecret is not required on the filesystem, it is written directly to the config file.
+		return ""
 	default:
 		return cnf.addOrUpdateTLSSecret(secret)
 	}
@@ -1773,4 +1973,20 @@ func (cnf *Configurator) DeleteSecret(key string) {
 // DynamicSSLReloadEnabled is used to check if dynamic reloading of SSL certificates is enabled
 func (cnf *Configurator) DynamicSSLReloadEnabled() bool {
 	return cnf.isDynamicSSLReloadEnabled
+}
+
+// UpsertSplitClientsKeyVal upserts a key-value pair in a keyzal zone for weight changes without reloads.
+func (cnf *Configurator) UpsertSplitClientsKeyVal(zoneName, key, value string) {
+	cnf.nginxManager.UpsertSplitClientsKeyVal(zoneName, key, value)
+}
+
+// GetIngressControllerReplicas returns the number of ingresscontroller-replicas (previously stored via SetIngressControllerReplicas)
+func (cnf *Configurator) GetIngressControllerReplicas() int {
+	return cnf.ingressControllerReplicas
+}
+
+// SetIngressControllerReplicas sets the number of ingresscontroller-replicas
+// Is used for calculating ratelimits
+func (cnf *Configurator) SetIngressControllerReplicas(replicas int) {
+	cnf.ingressControllerReplicas = replicas
 }

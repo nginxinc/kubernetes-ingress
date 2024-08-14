@@ -78,16 +78,17 @@ type MergeableIngresses struct {
 // NginxCfgParams is a collection of parameters
 // used by generateNginxCfg() and generateNginxCfgForMergeableIngresses()
 type NginxCfgParams struct {
-	staticParams         *StaticConfigParams
-	ingEx                *IngressEx
-	mergeableIngs        *MergeableIngresses
-	apResources          *AppProtectResources
-	dosResource          *appProtectDosResource
-	baseCfgParams        *ConfigParams
-	isMinion             bool
-	isPlus               bool
-	isResolverConfigured bool
-	isWildcardEnabled    bool
+	staticParams              *StaticConfigParams
+	ingEx                     *IngressEx
+	mergeableIngs             *MergeableIngresses
+	apResources               *AppProtectResources
+	dosResource               *appProtectDosResource
+	baseCfgParams             *ConfigParams
+	isMinion                  bool
+	isPlus                    bool
+	isResolverConfigured      bool
+	isWildcardEnabled         bool
+	ingressControllerReplicas int
 }
 
 //nolint:gocyclo
@@ -189,6 +190,7 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 			server.AppProtectDosMonitorProtocol = p.dosResource.AppProtectDosMonitorProtocol
 			server.AppProtectDosMonitorTimeout = p.dosResource.AppProtectDosMonitorTimeout
 			server.AppProtectDosName = p.dosResource.AppProtectDosName
+			server.AppProtectDosAllowListPath = p.dosResource.AppProtectDosAllowListPath
 			server.AppProtectDosAccessLogDst = p.dosResource.AppProtectDosAccessLogDst
 			server.AppProtectDosPolicyFile = p.dosResource.AppProtectDosPolicyFile
 			server.AppProtectDosLogConfFile = p.dosResource.AppProtectDosLogConfFile
@@ -278,11 +280,15 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 					RejectCode: cfgParams.LimitReqRejectCode,
 				}
 				if !limitReqZoneExists(limitReqZones, zoneName) {
+					rate := cfgParams.LimitReqRate
+					if cfgParams.LimitReqScale && p.ingressControllerReplicas > 0 {
+						rate = scaleRatelimit(rate, p.ingressControllerReplicas)
+					}
 					limitReqZones = append(limitReqZones, version1.LimitReqZone{
 						Name: zoneName,
 						Key:  cfgParams.LimitReqKey,
 						Size: cfgParams.LimitReqZoneSize,
-						Rate: cfgParams.LimitReqRate,
+						Rate: rate,
 					})
 				}
 			}
@@ -475,6 +481,7 @@ func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, 
 		ProxyConnectTimeout:  cfg.ProxyConnectTimeout,
 		ProxyReadTimeout:     cfg.ProxyReadTimeout,
 		ProxySendTimeout:     cfg.ProxySendTimeout,
+		ProxySetHeaders:      cfg.ProxySetHeaders,
 		ClientMaxBodySize:    cfg.ClientMaxBodySize,
 		Websocket:            websocket,
 		Rewrite:              rewrite,
@@ -534,34 +541,21 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 			endps = []string{}
 		}
 
-		if cfg.UseClusterIP {
-			fqdn := fmt.Sprintf("%s.%s.svc.cluster.local:%d", backend.Service.Name, ingEx.Ingress.Namespace, backend.Service.Port.Number)
+		for _, endp := range endps {
 			upsServers = append(upsServers, version1.UpstreamServer{
-				Address:     fqdn,
+				Address:     endp,
 				MaxFails:    cfg.MaxFails,
 				MaxConns:    cfg.MaxConns,
 				FailTimeout: cfg.FailTimeout,
 				SlowStart:   cfg.SlowStart,
 				Resolve:     isExternalNameSvc,
 			})
+		}
+		if len(upsServers) > 0 {
+			sort.Slice(upsServers, func(i, j int) bool {
+				return upsServers[i].Address < upsServers[j].Address
+			})
 			ups.UpstreamServers = upsServers
-		} else {
-			for _, endp := range endps {
-				upsServers = append(upsServers, version1.UpstreamServer{
-					Address:     endp,
-					MaxFails:    cfg.MaxFails,
-					MaxConns:    cfg.MaxConns,
-					FailTimeout: cfg.FailTimeout,
-					SlowStart:   cfg.SlowStart,
-					Resolve:     isExternalNameSvc,
-				})
-			}
-			if len(upsServers) > 0 {
-				sort.Slice(upsServers, func(i, j int) bool {
-					return upsServers[i].Address < upsServers[j].Address
-				})
-				ups.UpstreamServers = upsServers
-			}
 		}
 	}
 
@@ -647,15 +641,16 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 	isMinion := false
 
 	masterNginxCfg, warnings := generateNginxCfg(NginxCfgParams{
-		staticParams:         p.staticParams,
-		ingEx:                p.mergeableIngs.Master,
-		apResources:          p.apResources,
-		dosResource:          p.dosResource,
-		isMinion:             isMinion,
-		isPlus:               p.isPlus,
-		baseCfgParams:        p.baseCfgParams,
-		isResolverConfigured: p.isResolverConfigured,
-		isWildcardEnabled:    p.isWildcardEnabled,
+		staticParams:              p.staticParams,
+		ingEx:                     p.mergeableIngs.Master,
+		apResources:               p.apResources,
+		dosResource:               p.dosResource,
+		isMinion:                  isMinion,
+		isPlus:                    p.isPlus,
+		baseCfgParams:             p.baseCfgParams,
+		isResolverConfigured:      p.isResolverConfigured,
+		isWildcardEnabled:         p.isWildcardEnabled,
+		ingressControllerReplicas: p.ingressControllerReplicas,
 	})
 
 	// because p.mergeableIngs.Master.Ingress is a deepcopy of the original master
@@ -697,15 +692,16 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 		dummyApResources := &AppProtectResources{}
 		dummyDosResource := &appProtectDosResource{}
 		nginxCfg, minionWarnings := generateNginxCfg(NginxCfgParams{
-			staticParams:         p.staticParams,
-			ingEx:                minion,
-			apResources:          dummyApResources,
-			dosResource:          dummyDosResource,
-			isMinion:             isMinion,
-			isPlus:               p.isPlus,
-			baseCfgParams:        p.baseCfgParams,
-			isResolverConfigured: p.isResolverConfigured,
-			isWildcardEnabled:    p.isWildcardEnabled,
+			staticParams:              p.staticParams,
+			ingEx:                     minion,
+			apResources:               dummyApResources,
+			dosResource:               dummyDosResource,
+			isMinion:                  isMinion,
+			isPlus:                    p.isPlus,
+			baseCfgParams:             p.baseCfgParams,
+			isResolverConfigured:      p.isResolverConfigured,
+			isWildcardEnabled:         p.isWildcardEnabled,
+			ingressControllerReplicas: p.ingressControllerReplicas,
 		})
 		warnings.Add(minionWarnings)
 
@@ -765,4 +761,31 @@ func GetBackendPortAsString(port networking.ServiceBackendPort) string {
 		return port.Name
 	}
 	return strconv.Itoa(int(port.Number))
+}
+
+// scaleRatelimit divides a given ratelimit by the given number of replicas, adjusting the unit and flooring the result as needed
+func scaleRatelimit(ratelimit string, replicas int) string {
+	if replicas < 1 {
+		return ratelimit
+	}
+
+	match := rateRegexp.FindStringSubmatch(ratelimit)
+	if match == nil {
+		return ratelimit
+	}
+
+	number, err := strconv.Atoi(match[1])
+	if err != nil {
+		return ratelimit
+	}
+
+	numberf := float64(number) / float64(replicas)
+
+	unit := match[2]
+	if unit == "r/s" && numberf < 1 {
+		numberf = numberf * 60
+		unit = "r/m"
+	}
+
+	return strconv.Itoa(int(numberf)) + unit
 }

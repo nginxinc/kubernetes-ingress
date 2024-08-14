@@ -7,9 +7,15 @@ import (
 	"runtime"
 	"time"
 
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+
+	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
@@ -42,20 +48,44 @@ type Collector struct {
 
 // CollectorConfig contains configuration options for a Collector
 type CollectorConfig struct {
-	// K8sClientReader is a kubernetes client.
-	K8sClientReader kubernetes.Interface
-
-	// CustomK8sClientReader is a kubernetes client for our CRDs.
-	// Note: May not need this client.
-	CustomK8sClientReader k8s_nginx.Interface
-
 	// Period to collect telemetry
 	Period time.Duration
 
-	Configurator *configs.Configurator
+	// K8sClientReader is a kubernetes client.
+	K8sClientReader kubernetes.Interface
 
 	// Version represents NIC version.
 	Version string
+
+	// GlobalConfiguration represents the use of a GlobalConfiguration resource.
+	GlobalConfiguration bool
+
+	// Configurator is a struct for configuring NGINX.
+	Configurator *configs.Configurator
+
+	// SecretStore for access to secrets managed by NIC.
+	SecretStore secrets.SecretStore
+
+	// PodNSName represents NIC Pod's NamespacedName.
+	PodNSName types.NamespacedName
+
+	// Policies gets all policies
+	Policies func() []*conf_v1.Policy
+
+	// AppProtectVersion represents the version of App Protect.
+	AppProtectVersion string
+
+	// BuildOS represents the base operating system image
+	BuildOS string
+
+	// IsPlus represents whether NGINX is Plus or OSS
+	IsPlus bool
+
+	// InstallationFlags represents the list of set flags managed by NIC
+	InstallationFlags []string
+
+	// Indicates if using of Custom Resources is enabled.
+	CustomResourcesEnabled bool
 }
 
 // NewCollector takes 0 or more options and creates a new TraceReporter.
@@ -83,46 +113,232 @@ func (c *Collector) Start(ctx context.Context) {
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
 	glog.V(3).Info("Collecting telemetry data")
-	data, err := c.BuildReport(ctx)
+	report, err := c.BuildReport(ctx)
 	if err != nil {
 		glog.Errorf("Error collecting telemetry data: %v", err)
 	}
-	err = c.Exporter.Export(ctx, data)
+
+	nicData := Data{
+		tel.Data{
+			ProjectName:         report.Name,
+			ProjectVersion:      c.Config.Version,
+			ProjectArchitecture: runtime.GOARCH,
+			ClusterID:           report.ClusterID,
+			ClusterVersion:      report.ClusterVersion,
+			ClusterPlatform:     report.ClusterPlatform,
+			InstallationID:      report.InstallationID,
+			ClusterNodeCount:    int64(report.ClusterNodeCount),
+		},
+		NICResourceCounts{
+			VirtualServers:        int64(report.VirtualServers),
+			VirtualServerRoutes:   int64(report.VirtualServerRoutes),
+			TransportServers:      int64(report.TransportServers),
+			Replicas:              int64(report.NICReplicaCount),
+			Secrets:               int64(report.Secrets),
+			ClusterIPServices:     int64(report.ClusterIPServices),
+			NodePortServices:      int64(report.NodePortServices),
+			LoadBalancerServices:  int64(report.LoadBalancerServices),
+			ExternalNameServices:  int64(report.ExternalNameServices),
+			RegularIngressCount:   int64(report.RegularIngressCount),
+			MasterIngressCount:    int64(report.MasterIngressCount),
+			MinionIngressCount:    int64(report.MinionIngressCount),
+			IngressClasses:        int64(report.IngressClassCount),
+			AccessControlPolicies: int64(report.AccessControlCount),
+			RateLimitPolicies:     int64(report.RateLimitCount),
+			APIKeyPolicies:        int64(report.APIKeyAuthCount),
+			JWTAuthPolicies:       int64(report.JWTAuthCount),
+			BasicAuthPolicies:     int64(report.BasicAuthCount),
+			IngressMTLSPolicies:   int64(report.IngressMTLSCount),
+			EgressMTLSPolicies:    int64(report.EgressMTLSCount),
+			OIDCPolicies:          int64(report.OIDCCount),
+			WAFPolicies:           int64(report.WAFCount),
+			GlobalConfiguration:   report.GlobalConfiguration,
+			IngressAnnotations:    report.IngressAnnotations,
+			AppProtectVersion:     report.AppProtectVersion,
+			IsPlus:                report.IsPlus,
+			InstallationFlags:     report.InstallationFlags,
+			BuildOS:               report.BuildOS,
+		},
+	}
+
+	err = c.Exporter.Export(ctx, &nicData)
 	if err != nil {
 		glog.Errorf("Error exporting telemetry data: %v", err)
 	}
-	glog.V(3).Infof("Exported telemetry data: %+v", data)
+	glog.V(3).Infof("Telemetry data collected: %+v", nicData)
 }
 
-// BuildReport takes context and builds report from gathered telemetry data.
-func (c *Collector) BuildReport(ctx context.Context) (Data, error) {
-	pm := ProjectMeta{
-		Name:    "NIC",
-		Version: c.Config.Version,
-	}
-	d := Data{
-		ProjectMeta: pm,
-		Arch:        runtime.GOARCH,
+// Report holds collected NIC telemetry data. It is the package internal
+// data structure used for decoupling types between the NIC `telemetry`
+// package and the imported `telemetry` exporter.
+type Report struct {
+	Name                 string
+	Version              string
+	Architecture         string
+	ClusterID            string
+	ClusterVersion       string
+	ClusterPlatform      string
+	ClusterNodeCount     int
+	InstallationID       string
+	NICReplicaCount      int
+	VirtualServers       int
+	VirtualServerRoutes  int
+	ClusterIPServices    int
+	NodePortServices     int
+	LoadBalancerServices int
+	ExternalNameServices int
+	TransportServers     int
+	Secrets              int
+	RegularIngressCount  int
+	MasterIngressCount   int
+	MinionIngressCount   int
+	IngressClassCount    int
+	AccessControlCount   int
+	RateLimitCount       int
+	JWTAuthCount         int
+	APIKeyAuthCount      int
+	BasicAuthCount       int
+	IngressMTLSCount     int
+	EgressMTLSCount      int
+	OIDCCount            int
+	WAFCount             int
+	GlobalConfiguration  bool
+	IngressAnnotations   []string
+	AppProtectVersion    string
+	IsPlus               bool
+	InstallationFlags    []string
+	BuildOS              string
+}
+
+// BuildReport takes context, collects telemetry data and builds the report.
+func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
+	vsCount := 0
+	vsrCount := 0
+	tsCount := 0
+
+	// Collect Custom Resources only if CR enabled at startup.
+	if c.Config.Configurator != nil && c.Config.CustomResourcesEnabled {
+		vsCount, vsrCount = c.Config.Configurator.GetVirtualServerCounts()
+		tsCount = c.Config.Configurator.GetTransportServerCounts()
 	}
 
-	var err error
-
-	if c.Config.Configurator != nil {
-		vsCount, vsrCount := c.Config.Configurator.GetVirtualServerCounts()
-		d.VirtualServers, d.VirtualServerRoutes = int64(vsCount), int64(vsrCount)
-		d.TransportServers = int64(c.Config.Configurator.GetTransportServerCounts())
+	clusterID, err := c.ClusterID(ctx)
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: ClusterID: %v", err)
 	}
 
-	if d.NodeCount, err = c.NodeCount(ctx); err != nil {
-		glog.Errorf("Error collecting telemetry data: Nodes: %v", err)
+	nodes, err := c.NodeCount(ctx)
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: Nodes: %v", err)
 	}
 
-	if d.ClusterID, err = c.ClusterID(ctx); err != nil {
-		glog.Errorf("Error collecting telemetry data: ClusterID: %v", err)
+	version, err := c.ClusterVersion()
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: K8s Version: %v", err)
 	}
 
-	if d.K8sVersion, err = c.K8sVersion(); err != nil {
-		glog.Errorf("Error collecting telemetry data: K8s Version: %v", err)
+	platform, err := c.Platform(ctx)
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: Platform: %v", err)
 	}
-	return d, err
+
+	replicas, err := c.ReplicaCount(ctx)
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: Replicas: %v", err)
+	}
+
+	installationID, err := c.InstallationID(ctx)
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: InstallationID: %v", err)
+	}
+
+	secretCount, err := c.Secrets()
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: Secrets: %v", err)
+	}
+
+	regularIngressCount := c.RegularIngressCount()
+	masterIngressCount := c.MasterIngressCount()
+	minionIngressCount := c.MinionIngressCount()
+	ingressClassCount, err := c.IngressClassCount(ctx)
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
+	}
+
+	var (
+		accessControlCount int
+		rateLimitCount     int
+		apiKeyCount        int
+		jwtAuthCount       int
+		basicAuthCount     int
+		ingressMTLSCount   int
+		egressMTLSCount    int
+		oidcCount          int
+		wafCount           int
+	)
+	// Collect Custom Resources (Policies) only if CR enabled at startup.
+	if c.Config.CustomResourcesEnabled {
+		policies := c.PolicyCount()
+		accessControlCount = policies["AccessControl"]
+		rateLimitCount = policies["RateLimit"]
+		apiKeyCount = policies["APIKey"]
+		jwtAuthCount = policies["JWTAuth"]
+		basicAuthCount = policies["BasicAuth"]
+		ingressMTLSCount = policies["IngressMTLS"]
+		egressMTLSCount = policies["EgressMTLS"]
+		oidcCount = policies["OIDC"]
+		wafCount = policies["WAF"]
+	}
+
+	ingressAnnotations := c.IngressAnnotations()
+	appProtectVersion := c.AppProtectVersion()
+	isPlus := c.IsPlusEnabled()
+	installationFlags := c.InstallationFlags()
+	serviceCounts, err := c.ServiceCounts()
+	if err != nil {
+		glog.V(3).Infof("Unable to collect telemetry data: Service Counts: %v", err)
+	}
+	clusterIPServices := serviceCounts["ClusterIP"]
+	nodePortServices := serviceCounts["NodePort"]
+	loadBalancerServices := serviceCounts["LoadBalancer"]
+	externalNameServices := serviceCounts["ExternalName"]
+
+	return Report{
+		Name:                 "NIC",
+		Version:              c.Config.Version,
+		Architecture:         runtime.GOARCH,
+		ClusterID:            clusterID,
+		ClusterVersion:       version,
+		ClusterPlatform:      platform,
+		ClusterNodeCount:     nodes,
+		InstallationID:       installationID,
+		NICReplicaCount:      replicas,
+		VirtualServers:       vsCount,
+		VirtualServerRoutes:  vsrCount,
+		ClusterIPServices:    clusterIPServices,
+		NodePortServices:     nodePortServices,
+		LoadBalancerServices: loadBalancerServices,
+		ExternalNameServices: externalNameServices,
+		TransportServers:     tsCount,
+		Secrets:              secretCount,
+		RegularIngressCount:  regularIngressCount,
+		MasterIngressCount:   masterIngressCount,
+		MinionIngressCount:   minionIngressCount,
+		IngressClassCount:    ingressClassCount,
+		AccessControlCount:   accessControlCount,
+		RateLimitCount:       rateLimitCount,
+		APIKeyAuthCount:      apiKeyCount,
+		JWTAuthCount:         jwtAuthCount,
+		BasicAuthCount:       basicAuthCount,
+		IngressMTLSCount:     ingressMTLSCount,
+		EgressMTLSCount:      egressMTLSCount,
+		OIDCCount:            oidcCount,
+		WAFCount:             wafCount,
+		GlobalConfiguration:  c.Config.GlobalConfiguration,
+		IngressAnnotations:   ingressAnnotations,
+		AppProtectVersion:    appProtectVersion,
+		IsPlus:               isPlus,
+		InstallationFlags:    installationFlags,
+		BuildOS:              c.BuildOS(),
+	}, err
 }

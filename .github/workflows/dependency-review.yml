@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - release-*
+  merge_group:
 
 concurrency:
   group: ${{ github.ref_name }}-deps-review
@@ -20,9 +21,11 @@ jobs:
       pull-requests: write # for actions/dependency-review-action to post comments
     steps:
       - name: "Checkout Repository"
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: "Dependency Review"
-        uses: actions/dependency-review-action@9129d7d40b8c12c1ed0f60400d00c92d437adcce # v4.1.3
+        uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb1541a4984c76d921601d7c # v4.3.4
         with:
           config-file: "nginxinc/k8s-common/dependency-review-config.yml@main"
+          base-ref: ${{ github.event.pull_request.base.sha || github.event.repository.default_branch }}
+          head-ref: ${{ github.event.pull_request.base.sha || github.ref }}

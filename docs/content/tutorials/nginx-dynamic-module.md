@@ -1,16 +1,17 @@
 ---
+docs: DOCS-1231
+doctypes:
+- concept
 title: Using NGINX Ingress Controller with NGINX Dynamic Modules
-description: |
-  How to use the F5 NGINX Ingress Controller with NGINX dynamic modules.
-weight: 1800
-doctypes: ["concept"]
 toc: true
-docs: "DOCS-1231"
+weight: 1800
 ---
 
-## Using NGINX Ingress Controller with NGINX Dynamic Modules
+This document describes how to use NGINX Ingress Controller with NGINX dynamic modules.
 
-NGINX Plus has several Dynamic Modules that can add additional features and capabilities to NGINX, which NGINX Ingress Controller can also use. To do this, you must modifiy your NGINX Ingress Controller image to add a module, then load the updated image.
+## Overview
+
+NGINX Plus has several Dynamic Modules that can add additional features and capabilities to NGINX, which NGINX Ingress Controller can also use. To do this, you must modify your NGINX Ingress Controller image to add a module, then load the updated image.
 
 For more information about Dynamic Modules, you can read [the documentation for NGINX Plus](https://docs.nginx.com/nginx/admin-guide/dynamic-modules/dynamic-modules/).
 
@@ -34,7 +35,7 @@ Once you have cloned the repository, edit the `Dockerfile` located in the `build
 In this example, we add the `Headers-more` dynamic module to the NGINX Ingress Controller image. We choose the `debian-plus` operating system: modify the entry for the system you are using.
 
 ```docker
-FROM debian:11-slim AS debian-plus
+FROM debian:12-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 ARG BUILD_OS

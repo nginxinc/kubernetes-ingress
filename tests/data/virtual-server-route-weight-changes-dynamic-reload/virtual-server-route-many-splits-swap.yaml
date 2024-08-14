@@ -1,0 +1,270 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: backendsmany
+spec:
+  host: virtual-server-route.example.com
+  upstreams:
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  subroutes: # /backends/backends32 is swapped
+  - path: "/backends/backends1"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends2"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends3"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends4"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends5"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends6"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends7"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends8"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends9"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends10"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends11"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends12"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends13"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends14"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends15"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends16"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends17"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends18"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends19"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends20"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends21"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends22"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends23"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends24"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends25"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends26"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends27"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends28"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends29"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends30"
+    splits:
+      - weight: 100
+        action:
+          pass: backend1
+      - weight: 0
+        action:
+          pass: backend2
+  - path: "/backends/backends31"
+    splits:
+    - weight: 100
+      action:
+        pass: backend1
+    - weight: 0
+      action:
+        pass: backend2
+  - path: "/backends/backends32"
+    splits:
+      - weight: 0
+        action:
+          pass: backend1
+      - weight: 100
+        action:
+          pass: backend2

@@ -3,8 +3,20 @@ package version2
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"testing"
+
+	"github.com/gkampitakis/go-snaps/snaps"
 )
+
+func TestMain(m *testing.M) {
+	v := m.Run()
+
+	// After all tests have run `go-snaps` will sort snapshots
+	snaps.Clean(m, snaps.CleanOpts{Sort: true})
+
+	os.Exit(v)
+}
 
 func createPointerFromInt(n int) *int {
 	return &n
@@ -35,6 +47,7 @@ func TestVirtualServerForNginxPlus(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -48,6 +61,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOn(t *testi
 	if !bytes.Contains(got, []byte("gunzip on;")) {
 		t.Error("want `gunzip on` directive, got no directive")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -61,6 +75,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipOff(t *test
 	if bytes.Contains(got, []byte("gunzip on;")) {
 		t.Error("want no directive, got `gunzip on`")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -74,6 +89,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithServerGunzipNotSet(t *t
 	if bytes.Contains(got, []byte("gunzip on;")) {
 		t.Error("want no directive, got `gunzip on` directive")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -87,6 +103,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithSessionCookieSameSite(t
 	if !bytes.Contains(got, []byte("samesite=strict")) {
 		t.Error("want `samesite=strict` in generated template")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -108,6 +125,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithCustomListener(t *testi
 			t.Errorf("want `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -136,6 +154,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithCustomListenerHTTPOnly(
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -164,6 +183,7 @@ func TestExecuteVirtualServerTemplate_RendersTemplateWithCustomListenerHTTPSOnly
 			t.Errorf("want no `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -195,6 +215,7 @@ func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2On(t *testing.
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 
 	t.Log(string(got))
 }
@@ -225,6 +246,7 @@ func TestExecuteVirtualServerTemplate_RendersPlusTemplateWithHTTP2Off(t *testing
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 
 	t.Log(string(got))
 }
@@ -257,6 +279,7 @@ func TestExecuteVirtualServerTemplate_RendersOSSTemplateWithHTTP2On(t *testing.T
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 
 	t.Log(string(got))
 }
@@ -287,6 +310,7 @@ func TestExecuteVirtualServerTemplate_RendersOSSTemplateWithHTTP2Off(t *testing.
 			t.Errorf("unwant  `%s` in generated template", want)
 		}
 	}
+	snaps.MatchSnapshot(t, string(got))
 
 	t.Log(string(got))
 }
@@ -308,6 +332,7 @@ func TestVirtualServerForNginx(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -324,10 +349,11 @@ func TestTransportServerForNginxPlus(t *testing.T) {
 func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINXPlus(t)
-	_, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
+	got, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(got))
 }
 
 func TestTransportServerForNginx(t *testing.T) {
@@ -337,6 +363,7 @@ func TestTransportServerForNginx(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -403,6 +430,7 @@ func TestExecuteTemplateForTransportServerWithBackupServerForNGINXPlus(t *testin
 	if !bytes.Contains(got, []byte(want)) {
 		t.Errorf("want backup %q in the transport server config", want)
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -413,6 +441,7 @@ func TestTransportServerWithSSL(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -428,6 +457,7 @@ func TestTLSPassthroughHosts(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute template: %v", err)
 	}
+	snaps.MatchSnapshot(t, string(data))
 	t.Log(string(data))
 }
 
@@ -447,6 +477,7 @@ func TestExecuteVirtualServerTemplateWithJWKSWithToken(t *testing.T) {
 	if !bytes.Contains(got, []byte("proxy_cache_valid 200 12h;")) {
 		t.Error("want `proxy_cache_valid 200 12h;` in generated template")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -466,6 +497,7 @@ func TestExecuteVirtualServerTemplateWithJWKSWithoutToken(t *testing.T) {
 	if !bytes.Contains(got, []byte("proxy_cache_valid 200 12h;")) {
 		t.Error("want `proxy_cache_valid 200 12h;` in generated template")
 	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -490,6 +522,32 @@ func TestExecuteVirtualServerTemplateWithBackupServerNGINXPlus(t *testing.T) {
 	if !bytes.Contains(got, []byte(want)) {
 		t.Errorf("want %q in generated template", want)
 	}
+	snaps.MatchSnapshot(t, string(got))
+	t.Log(string(got))
+}
+
+func TestExecuteVirtualServerTemplateWithAPIKeyPolicyNGINXPlus(t *testing.T) {
+	t.Parallel()
+
+	vscfg := vsConfig()
+	vscfg.Server.APIKey = &APIKey{
+		Header:  []string{"X-header-name", "other-header"},
+		Query:   []string{"myQuery", "myOtherQuery"},
+		MapName: "vs-default-cafe-apikey-policy",
+	}
+
+	e := newTmplExecutorNGINXPlus(t)
+	got, err := e.ExecuteVirtualServerTemplate(&vscfg)
+	if err != nil {
+		t.Error(err)
+	}
+
+	want := "js_var $header_query_value \"${http_x_header_name}${http_other_header}${arg_myQuery}${arg_myOtherQuery}\";"
+
+	if !bytes.Contains(got, []byte(want)) {
+		t.Errorf("want %q in generated template", want)
+	}
+	snaps.MatchSnapshot(t, string(got))
 	t.Log(string(got))
 }
 
@@ -633,7 +691,20 @@ func vsConfig() VirtualServerConfig {
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
+			},
+			Dos: &Dos{
+				Enable:                 "on",
+				Name:                   "my-dos-coffee",
+				ApDosMonitorURI:        "test.example.com",
+				ApDosMonitorProtocol:   "http",
+				ApDosAccessLogDest:     "svc.dns.com:123",
+				ApDosPolicy:            "/test/policy.json",
+				ApDosSecurityLogEnable: true,
+				ApDosLogConf:           "/test/log.json",
+				ApDosMonitorTimeout:    30,
+				AllowListPath:          "/etc/nginx/dos/allowlist/default_test.example.com",
 			},
 			Snippets: []string{"# server snippet"},
 			InternalRedirectLocations: []InternalRedirectLocation{
@@ -648,16 +719,18 @@ func vsConfig() VirtualServerConfig {
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -670,6 +743,7 @@ func vsConfig() VirtualServerConfig {
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -980,6 +1054,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -995,16 +1070,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -1017,6 +1094,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -1325,7 +1403,11 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
+			},
+			Dos: &Dos{
+				Enable: "on",
 			},
 			Snippets: []string{"# server snippet"},
 			InternalRedirectLocations: []InternalRedirectLocation{
@@ -1340,16 +1422,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -1362,6 +1446,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -1670,6 +1755,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -1685,16 +1771,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -1707,6 +1795,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -2016,6 +2105,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2031,16 +2121,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -2053,6 +2145,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -2362,6 +2455,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2377,16 +2471,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -2399,6 +2495,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -2705,8 +2802,9 @@ var (
 				VerifyDepth:  2,
 			},
 			WAF: &WAF{
-				ApBundle:            "/etc/nginx/waf/bundles/NginxDefaultPolicy.tgz",
+				ApBundle:            "/fake/bundle/path/NginxDefaultPolicy.tgz",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -2722,16 +2820,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -2744,6 +2844,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -3059,6 +3160,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -3074,16 +3176,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -3096,6 +3200,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -3682,6 +3787,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -3697,16 +3803,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -3719,6 +3827,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -4030,6 +4139,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -4045,16 +4155,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -4067,6 +4179,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{
@@ -4378,6 +4491,7 @@ var (
 			WAF: &WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
+				Enable:              "on",
 				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			Snippets: []string{"# server snippet"},
@@ -4393,16 +4507,18 @@ var (
 			},
 			HealthChecks: []HealthCheck{
 				{
-					Name:       "coffee",
-					URI:        "/",
-					Interval:   "5s",
-					Jitter:     "0s",
-					Fails:      1,
-					Passes:     1,
-					Port:       50,
-					ProxyPass:  "http://coffee-v2",
-					Mandatory:  true,
-					Persistent: true,
+					Name:          "coffee",
+					URI:           "/",
+					Interval:      "5s",
+					Jitter:        "0s",
+					Fails:         1,
+					Passes:        1,
+					Port:          50,
+					ProxyPass:     "http://coffee-v2",
+					Mandatory:     true,
+					Persistent:    true,
+					KeepaliveTime: "60s",
+					IsGRPC:        false,
 				},
 				{
 					Name:        "tea",
@@ -4415,6 +4531,7 @@ var (
 					GRPCPass:    "grpc://tea-v3",
 					GRPCStatus:  createPointerFromInt(12),
 					GRPCService: "tea-servicev2",
+					IsGRPC:      true,
 				},
 			},
 			Locations: []Location{

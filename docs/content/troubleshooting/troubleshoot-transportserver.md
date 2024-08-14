@@ -1,9 +1,9 @@
 ---
-title: Troubleshooting TransportServer Resources
-description: "."
-weight: 400
-doctypes: [""]
+doctypes:
+- ''
 draft: true
+title: Troubleshooting TransportServer Resources
+weight: 400
 ---
 
 # Troubleshooting TransportServer Resources

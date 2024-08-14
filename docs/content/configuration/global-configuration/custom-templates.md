@@ -1,12 +1,11 @@
 ---
-title: Custom Templates
-
-description:
-weight: 1800
-doctypes: [""]
+docs: DOCS-587
+doctypes:
+- ''
+title: Custom templates
 toc: true
-docs: "DOCS-587"
+weight: 500
 ---
 
 
-The Ingress Controller uses templates to generate NGINX configuration for Ingress resources, VirtualServer resources and the main NGINX configuration file. You can customize the templates and apply them via the ConfigMap. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/shared-examples/custom-templates).
+F5 NGINX Ingress Controller uses templates to generate NGINX configuration for Ingress resources, VirtualServer resources and the main NGINX configuration file. You can customize the templates and apply them via the ConfigMap. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/shared-examples/custom-templates).

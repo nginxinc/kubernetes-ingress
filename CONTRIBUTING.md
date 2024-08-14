@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-The following is a set of guidelines for contributing to the NGINX Ingress Controller. We really appreciate that you are
+The following is a set of guidelines for contributing to NGINX Ingress Controller. We really appreciate that you are
 considering contributing!
 
 ## Table Of Contents
@@ -29,7 +29,7 @@ Please reserve GitHub issues for feature requests and bugs rather than general q
 ## Getting Started
 
 Follow our [Installation Guide](https://github.com/nginxinc/kubernetes-ingress/blob/main/docs/content/installation) to
-get the NGINX Ingress Controller up and running.
+get NGINX Ingress Controller up and running.
 
 Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/main/docs) and
 [configuration](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples) examples

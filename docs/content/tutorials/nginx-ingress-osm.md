@@ -1,14 +1,14 @@
 ---
+docs: DOCS-1181
+doctypes:
+- concept
 title: NGINX Ingress Controller and Open Service Mesh
-description: |
-  Use NGINX Ingress Controller with Open Service Mesh.
-weight: 1800
-doctypes: ["concept"]
 toc: true
-docs: "DOCS-1181"
+weight: 1800
 ---
 
-## This document outlines how to integrate F5 NGINX Ingress Controller with Open Service Mesh (OSM)
+
+This document outlines how to integrate F5 NGINX Ingress Controller with Open Service Mesh (OSM)
 
 Open Service Mesh will work with both versions of [F5 NGINX Ingress controller](https://github.com/nginxinc/kubernetes-ingress): the free as well as the NGINX Plus versions.
 
@@ -17,7 +17,7 @@ Below is a link to the official F5 NGINX Ingress Controller documentation.
 
 # Integrating NGINX Ingress Controller with Open Service Mesh
 
-There are two ways to integrate the NGINX Ingress Controller with Open Service Mesh (OSM):
+There are two ways to integrate NGINX Ingress Controller with Open Service Mesh (OSM):
 
 1. Injecting an envoy sidecar directly with NGINX Ingress Controller.
 2. Using the Open Service Mesh `ingressBackend` "proxy" feature.
@@ -26,7 +26,7 @@ There are two ways to integrate the NGINX Ingress Controller with Open Service M
 
 Install OSM in the cluster
 
-```console
+```shell
 osm install --mesh-name osm-nginx --osm-namespace osm-system
 ```
 
@@ -37,13 +37,13 @@ osm install --mesh-name osm-nginx --osm-namespace osm-system
 Next thing we need to do is install OSM into the `NGINX Ingress controller` namespace so that the `envoy` sidecar will be injected into NGINX Ingress controller.
 First, create the `nginx-ingress` namespace:
 
-```console
+```shell
 kubectl create ns nginx-ingress
 ```
 
 Then "mark" the `nginx-ingress` namespace for OSM to deploy a sidecar.
 
-```console
+```shell
 osm namespace add nginx-ingress --mesh-name osm-nginx
 ```
 
@@ -73,7 +73,7 @@ pod:
 
 You can also use the `set` command available with `helm` to set these at install time.
 
-```console
+```shell
 helm install nic01 nginx-stable/nginx-ingress -n nginx-ingress --create-namespace --set controller.pod.annotations.'openservicemesh\.io/inbound\-port\-exclusion\-list=\{ "80"\, "443"\ }'
 ```
 
@@ -118,7 +118,7 @@ To test the integration, we will use the `httpbin` sample application from the [
 
 The following three commands will create the namespace for the application, add the namespace to OSM for monitoring, then install the application.
 
-```console
+```shell
 kubectl create ns httpbin
 osm namespace add httpbin --mesh-name osm-nginx
 kubectl apply -f https://raw.githubusercontent.com/openservicemesh/osm-docs/release-v1.2/manifests/samples/httpbin/httpbin.yaml -n httpbin
@@ -126,7 +126,7 @@ kubectl apply -f https://raw.githubusercontent.com/openservicemesh/osm-docs/rele
 
 ### Verify that the envoy sidecar has been *injected* into NGINX Ingress Controller
 
-```console
+```shell
 kubectl get pods -n nginx-ingress
 NAME                             READY   STATUS    RESTARTS       AGE
 nginx-ingress-7b9557ddc6-zw7l5   2/2     Running   1 (5m8s ago)   5m19s
@@ -164,7 +164,7 @@ spec:
 
 Test your configuration:
 
-```console
+```shell
  curl  http://httpbin.example.com/get -v
 *   Trying 172.19.0.2:80...
 * TCP_NODELAY set
@@ -209,14 +209,14 @@ Test your configuration:
 Install OSM into the cluster.
 By running the following command, you will install OSM into the cluster with the mesh name `osm-nginx` using the `osm-system` namespace.
 
-```console
+```shell
 osm install --mesh-name osm-nginx --osm-namespace osm-system
 ```
 
-Once OSM has been installed, this next command will mark the NGINX Ingress Controller as part of the OSM mesh, while also disabling sidecar injection.
+Once OSM has been installed, this next command will mark NGINX Ingress Controller as part of the OSM mesh, while also disabling sidecar injection.
 *NOTE*: The nginx-ingress name can be created as part of the NGINX Ingress install process, or manually. If you are creating it manually, the namespace must created before you "add" the namespace to Open Service Mesh.
 
-```console
+```shell
 osm namespace add nginx-ingress --mesh-name osm-nginx --disable-sidecar-injection
 ```
 
@@ -235,7 +235,7 @@ To test the integration, we will use the `httpbin` sample application from the [
 
 The following three commands will create the namespace for the application, add the namespace to OSM for monitoring, then install the application.
 
-```console
+```shell
 kubectl create ns httpbin
 osm namespace add httpbin --mesh-name osm-nginx
 kubectl apply -f https://raw.githubusercontent.com/openservicemesh/osm-docs/release-v1.2/manifests/samples/httpbin/httpbin.yaml -n httpbin
@@ -247,7 +247,7 @@ To enable mTLS for NGINX Ingress Controller and OSM, you need to configure the `
 
 To begin, edit the `osm-mesh-config` resource:
 
-```console
+```shell
 kubectl edit meshconfig osm-mesh-config -n osm-system
 ```
 
@@ -268,14 +268,14 @@ spec:
 This will generate a new client certificate (osm-nginx-client-cert) that NGINX Ingress controller will use for mTLS.
 The *SAN*, `subjectAltNames`, is the following form:
 
-```console
+```shell
 <service_account>.<namespace>.cluster.local
 ```
 
 With the above OSM mesh config changed, that secret will be created in the `osm-system` namespace.
 There will also be the `osm-ca-bundle` secret as well, which is autogenerated by OSM.
 
-```console
+```shell
 kubectl get secrets -n osm-system
 NAME                              TYPE                 DATA   AGE
 osm-ca-bundle                     Opaque               2      37m
@@ -284,7 +284,7 @@ osm-nginx-client-cert             kubernetes.io/tls    3      17m
 
 Now, we need to "export" out these certificates in order to use them with NGINX Ingress Controller.
 
-```console
+```shell
 kubectl get secret osm-ca-bundle -n osm-system -o yaml > osm-ca-bundle-secret.yaml
 kubectl get secret osm-nginx-client-cert -n osm-system -o yaml > osm-nginx-client-cert.yaml
 ```
@@ -329,15 +329,14 @@ data:
 
 Then apply these two secrets to the cluster.
 
-```console
+```shell
 kubectl apply -f osm-ca-bundle-secret.yaml
 kubectl apply -f osm-nginx-client-cert.yaml
-
 ```
 
 Ensure the secrets exist in the `nginx-ingress` namespace:
 
-```console
+```shell
 kubectl get secrets -n nginx-ingress
 NAME                    TYPE                DATA   AGE
 osm-nginx-client-cert   kubernetes.io/tls   2      23m
@@ -412,7 +411,7 @@ spec:
 
 Once these are applied, verify they are valid (virtualServer) and committed (ingressBackend):
 
-```console
+```shell
 kubectl get vs,ingressbackend -A
 NAMESPACE   NAME                                  STATE   HOST                  IP    PORTS   AGE
 httpbin     virtualserver.k8s.nginx.org/httpbin   Valid   httpbin.example.com                 26m
@@ -423,7 +422,7 @@ httpbin     ingressbackend.policy.openservicemesh.io/httpbin   committed
 
 You can now send traffic through NGINX Ingress Controller with open service mesh.
 
-```console
+```shell
 curl http://httpbin.example.com/get -v
 *   Trying 172.18.0.2:80...
 * TCP_NODELAY set

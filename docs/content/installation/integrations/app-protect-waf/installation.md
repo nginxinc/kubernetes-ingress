@@ -1,14 +1,13 @@
 ---
-title: Building NGINX Ingress Controller with NGINX App Protect WAF
-description: "This document explains how to build a F5 NGINX Ingress Controller image with F5 NGINX App Protect WAF from source code."
-weight: 1800
-doctypes: [""]
+docs: DOCS-579
+doctypes:
+- ''
+title: Build NGINX Ingress Controller with NGINX App Protect WAF
 toc: true
-docs: "DOCS-579"
-aliases: ["/app-protect/installation/"]
+weight: 100
 ---
 
-{{< custom-styles >}}
+This document explains how to build a F5 NGINX Ingress Controller image with F5 NGINX App Protect WAF from source code.
 
 {{<call-out "tip" "Pre-built image alternatives" >}} If you'd rather not build your own NGINX Ingress Controller image, see the [pre-built image options](#pre-built-images) at the end of this guide.{{</call-out>}}
 
@@ -29,7 +28,7 @@ Get your system ready for building and pushing the NGINX Ingress Controller imag
 1. Clone the NGINX Ingress Controller repository:
 
     ```console
-    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v3.4.3
+    git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v{{< nic-version >}}
     cd kubernetes-ingress
     ```
 
@@ -63,13 +62,13 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
     make debian-image-dos-plus PREFIX=<my-docker-registry>/nginx-plus-ingress TARGET=download
     ```
 
-     **What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_]({{< relref "installation/building-nginx-ingress-controller.md#makefile-details" >}}). This version number is used for tracking and deployment purposes.
+     **What to expect**: The image is built and tagged with a version number, which is derived from the `VERSION` variable in the [_Makefile_]({{< relref "installation/build-nginx-ingress-controller.md#makefile-details" >}}). This version number is used for tracking and deployment purposes.
 
 {{<note>}} In the event a patch of NGINX Plus is released, make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the make command. {{</note>}}
 
 ### Makefile targets {#makefile-targets}
 
-{{<bootstrap-table "table table-striped table-bordered">}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 | Makefile Target           | Description                                                       | Compatible Systems  |
 |---------------------------|-------------------------------------------------------------------|---------------------|
 | **debian-image-nap-plus** | Builds a Debian-based image with NGINX Plus and the [NGINX App Protect WAF](/nginx-app-protect-waf/) module. | Debian  |
@@ -80,14 +79,7 @@ Follow these steps to build the NGINX Controller Image with NGINX App Protect WA
 
 <br>
 
-{{<see-also>}} For the complete list of _Makefile_ targets and customizable variables, see the [Building NGINX Ingress Controller]({{< relref "installation/building-nginx-ingress-controller.md#makefile-details" >}}) guide. {{</see-also>}}
-
-If you intend to use [external references](/nginx-app-protect-waf/configuration/#external-references) in NGINX App Protect WAF policies, you may want to provide a custom CA certificate to authenticate with the hosting server.
-
-To do so, place the `*.crt` file in the build folder and uncomment the lines following this comment:
-`#Uncomment the lines below if you want to install a custom CA certificate`
-
-{{<warning>}} External references are deprecated in NGINX Ingress Controller and will not be supported in future releases. {{</warning>}}
+{{< see-also >}} For the complete list of _Makefile_ targets and customizable variables, see the [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md#makefile-details" >}}) topic. {{</ see-also >}}
 
 ---
 
@@ -139,7 +131,7 @@ This single YAML file creates CRDs for the following resources:
 - `APUserSig`
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.3.2/deploy/crds-nap-waf.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds-nap-waf.yaml
 ```
 
 {{%/tab%}}
@@ -217,7 +209,7 @@ To enable the NGINX App Protect DoS Module:
 
 {{< include "installation/manifests/verify-pods-are-running.md" >}}
 
-For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/app-protect-waf" >}}).
+For more information, see the [Configuration guide]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/app-protect-waf" >}}).
 
 ---
 
@@ -225,5 +217,5 @@ For more information, see the [Configuration guide]({{< relref "installation/int
 
 If you prefer not to build your own NGINX Ingress Controller image, you can use pre-built images. Here are your options:
 
-- Download the image using your NGINX Ingress Controller subscription certificate and key. See the [Getting the F5 Registry NGINX Ingress Controller Image]({{< relref "installation/nic-images/pulling-ingress-controller-image.md" >}}) guide.
-- Use your NGINX Ingress Controller subscription JWT token to get the image: Instructions are in [Getting the NGINX Ingress Controller Image with JWT]({{< relref "installation/nic-images/using-the-jwt-token-docker-secret.md" >}}).
+- Download the image using your NGINX Ingress Controller subscription certificate and key. View the [Get NGINX Ingress Controller from the F5 Registry]({{< relref "installation/nic-images/get-registry-image.md" >}}) topic.
+- The [Get the NGINX Ingress Controller image with JWT]({{< relref "installation/nic-images/get-image-using-jwt.md" >}}) topic describes how to use your subscription JWT token to get the image.

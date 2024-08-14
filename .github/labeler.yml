@@ -8,22 +8,43 @@ bug:
   - head-branch: ['^fix/', '^bug/']
 
 chore:
-  - head-branch: ['^chore/']
+  - all:
+    - changed-files:
+      - any-glob-to-any-file: ['.github/**/*', 'hack/**/*', '*']
+      - all-globs-to-all-files: ['!*.md', '!go.mod', '!go.sum', '!*.go']
+
+github_actions:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/**/*.yml', '.github/**/*.yaml', '.github/**/*.md']
+
+go:
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.go', 'go.mod', 'go.sum']
+
+python:
+  - changed-files:
+    - any-glob-to-any-file: ['tests/**/*.py', 'tests/**/requirements.txt', 'tests/**/*.yaml', 'perf-tests/**/*.py', 'perf-tests/**/*.yaml']
 
 tests:
-  - any:
-      - head-branch: ['^tests/', '^test/']
-      - changed-files: ['tests/**/*', 'perf-tests/**/*']
   - all:
-      - changed-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
+    - changed-files:
+      - any-glob-to-any-file: ['tests/**/*', 'perf-tests/**/*']
+      - all-globs-to-all-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
 
 documentation:
   - head-branch: ['^docs/', '^doc/']
-  - changed-files: '**/*.md'
+  - changed-files:
+    - any-glob-to-any-file: '**/*.md'
 
 dependencies:
   - head-branch: ['^deps/', '^dep/', '^dependabot/', 'pre-commit-ci-update-config']
-  - changed-files: ['go.mod', 'go.sum']
+  - changed-files:
+    - any-glob-to-any-file: ['go.mod', 'go.sum']
 
 helm_chart:
-  - changed-files: ['charts/nginx-ingress/**/*']
+  - changed-files:
+    - any-glob-to-any-file: 'charts/nginx-ingress/**/*'
+
+docker:
+  - changed-files:
+    - any-glob-to-any-file: '**/Dockerfile'

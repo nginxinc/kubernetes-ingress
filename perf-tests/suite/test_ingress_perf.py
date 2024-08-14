@@ -13,6 +13,7 @@ from suite.utils.resources_utils import (
     delete_secret,
     ensure_connection,
     ensure_connection_to_public_endpoint,
+    get_resource_metrics,
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
@@ -34,7 +35,7 @@ class Setup:
 
 
 @pytest.fixture(scope="class")
-def setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> Setup:
+def setup(request, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, test_namespace) -> Setup:
     print("------------------------- Deploy prerequisites -----------------------------------")
     secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml")
 
@@ -49,6 +50,16 @@ def setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> Se
 
     def fin():
         print("Clean up simple app")
+        print("Collect resource usage metrics")
+        pod_metrics = get_resource_metrics(kube_apis.custom_objects, "pods", ingress_controller_prerequisites.namespace)
+        with open("ingress_pod_metrics.json", "w+") as f:
+            json.dump(pod_metrics, f, ensure_ascii=False, indent=4)
+        node_metrics = get_resource_metrics(
+            kube_apis.custom_objects, "nodes", ingress_controller_prerequisites.namespace
+        )
+        with open("ingress_node_metrics.json", "w+") as f:
+            json.dump(node_metrics, f, ensure_ascii=False, indent=4)
+
         delete_common_app(kube_apis, "simple", test_namespace)
         delete_secret(kube_apis.v1, secret_name, test_namespace)
         with open("reload_ing.json", "w+") as f:

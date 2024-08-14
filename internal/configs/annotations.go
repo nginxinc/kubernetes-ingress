@@ -34,7 +34,7 @@ const AppProtectDosProtectedAnnotation = "appprotectdos.f5.com/app-protect-dos-r
 // nginxMeshInternalRoute specifies if the ingress resource is an internal route.
 const nginxMeshInternalRouteAnnotation = "nsm.nginx.com/internal-route"
 
-var masterBlacklist = map[string]bool{
+var masterDenylist = map[string]bool{
 	"nginx.org/rewrites":                      true,
 	"nginx.org/ssl-services":                  true,
 	"nginx.org/grpc-services":                 true,
@@ -46,7 +46,7 @@ var masterBlacklist = map[string]bool{
 	UseClusterIPAnnotation:                    true,
 }
 
-var minionBlacklist = map[string]bool{
+var minionDenylist = map[string]bool{
 	"nginx.org/proxy-hide-headers":                      true,
 	"nginx.org/proxy-pass-headers":                      true,
 	"nginx.org/redirect-to-https":                       true,
@@ -90,12 +90,21 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/limit-req-dry-run":        true,
 	"nginx.org/limit-req-log-level":      true,
 	"nginx.org/limit-req-reject-code":    true,
+	"nginx.org/limit-req-scale":          true,
 }
 
 var validPathRegex = map[string]bool{
 	"case_sensitive":   true,
 	"case_insensitive": true,
 	"exact":            true,
+}
+
+// List of Ingress Annotation Keys used by the Ingress Controller
+var allowedAnnotationKeys = []string{
+	"nginx.org",
+	"nginx.com",
+	"f5.com",
+	"ingress.kubernetes.io/ssl-redirect",
 }
 
 func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, hasAppProtectDos bool, enableInternalRoutes bool) ConfigParams {
@@ -211,6 +220,11 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 
 	if proxyPassHeaders, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-pass-headers", ingEx.Ingress, ","); exists {
 		cfgParams.ProxyPassHeaders = proxyPassHeaders
+	}
+
+	if proxySetHeaders, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-set-headers", ingEx.Ingress, ","); exists {
+		parsedHeaders := parseProxySetHeaders(proxySetHeaders)
+		cfgParams.ProxySetHeaders = parsedHeaders
 	}
 
 	if clientMaxBodySize, exists := ingEx.Ingress.Annotations["nginx.org/client-max-body-size"]; exists {
@@ -440,7 +454,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	errors := make([]error, 0)
 	if requestRateLimit, exists := annotations["nginx.org/limit-req-rate"]; exists {
 		if rate, err := ParseRequestRate(requestRateLimit); err != nil {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-rate: got %s: %w", context.GetNamespace(), context.GetName(), requestRateLimit, err))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-rate: got %s: %w", context.GetNamespace(), context.GetName(), requestRateLimit, err))
 		} else {
 			cfgParams.LimitReqRate = rate
 		}
@@ -450,7 +464,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	}
 	if requestRateZoneSize, exists := annotations["nginx.org/limit-req-zone-size"]; exists {
 		if size, err := ParseSize(requestRateZoneSize); err != nil {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-zone-size: got %s: %w", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-zone-size: got %s: %w", context.GetNamespace(), context.GetName(), requestRateZoneSize, err))
 		} else {
 			cfgParams.LimitReqZoneSize = size
 		}
@@ -485,7 +499,7 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 	}
 	if requestRateLogLevel, exists := annotations["nginx.org/limit-req-log-level"]; exists {
 		if !slices.Contains([]string{"info", "notice", "warn", "error"}, requestRateLogLevel) {
-			errors = append(errors, fmt.Errorf("Ingress %s/%s: Invalid value for nginx.org/limit-req-log-level: got %s", context.GetNamespace(), context.GetName(), requestRateLogLevel))
+			errors = append(errors, fmt.Errorf("ingress %s/%s: invalid value for nginx.org/limit-req-log-level: got %s", context.GetNamespace(), context.GetName(), requestRateLogLevel))
 		} else {
 			cfgParams.LimitReqLogLevel = requestRateLogLevel
 		}
@@ -495,6 +509,13 @@ func parseRateLimitAnnotations(annotations map[string]string, cfgParams *ConfigP
 			errors = append(errors, err)
 		} else {
 			cfgParams.LimitReqRejectCode = requestRateRejectCode
+		}
+	}
+	if requestRateScale, exists, err := GetMapKeyAsBool(annotations, "nginx.org/limit-req-scale", context); exists {
+		if err != nil {
+			errors = append(errors, err)
+		} else {
+			cfgParams.LimitReqScale = requestRateScale
 		}
 	}
 	return errors
@@ -547,7 +568,7 @@ func filterMasterAnnotations(annotations map[string]string) []string {
 	var removedAnnotations []string
 
 	for key := range annotations {
-		if _, notAllowed := masterBlacklist[key]; notAllowed {
+		if _, notAllowed := masterDenylist[key]; notAllowed {
 			removedAnnotations = append(removedAnnotations, key)
 			delete(annotations, key)
 		}
@@ -560,7 +581,7 @@ func filterMinionAnnotations(annotations map[string]string) []string {
 	var removedAnnotations []string
 
 	for key := range annotations {
-		if _, notAllowed := minionBlacklist[key]; notAllowed {
+		if _, notAllowed := minionDenylist[key]; notAllowed {
 			removedAnnotations = append(removedAnnotations, key)
 			delete(annotations, key)
 		}

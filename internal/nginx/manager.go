@@ -39,6 +39,8 @@ const (
 	appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
 	appProtectLogLevelCmd    = "/opt/app_protect/bin/set_log_level"
 
+	agentPath = "/usr/bin/nginx-agent"
+
 	// appPluginParams is the configuration of App-Protect plugin
 	appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 471859200 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
 
@@ -90,7 +92,12 @@ type Manager interface {
 	AppProtectPluginQuit()
 	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
 	AppProtectDosAgentQuit()
+	AgentStart(agentDone chan error, logLevel string)
+	AgentQuit()
+	AgentVersion() string
 	GetSecretsDir() string
+	UpsertSplitClientsKeyVal(zoneName string, key string, value string)
+	DeleteKeyValStateFiles(virtualServerName string)
 }
 
 // LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
@@ -99,6 +106,7 @@ type LocalManager struct {
 	confdPath                    string
 	streamConfdPath              string
 	secretsPath                  string
+	stateFilesPath               string
 	mainConfFilename             string
 	configVersionFilename        string
 	debug                        bool
@@ -113,6 +121,7 @@ type LocalManager struct {
 	OpenTracing                  bool
 	appProtectPluginPid          int
 	appProtectDosAgentPid        int
+	agentPid                     int
 }
 
 // NewLocalManager creates a LocalManager.
@@ -126,6 +135,7 @@ func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector
 		confdPath:                   path.Join(confPath, "conf.d"),
 		streamConfdPath:             path.Join(confPath, "stream-conf.d"),
 		secretsPath:                 path.Join(confPath, "secrets"),
+		stateFilesPath:              path.Join(confPath, "state_files"),
 		dhparamFilename:             path.Join(confPath, "secrets", "dhparam.pem"),
 		mainConfFilename:            path.Join(confPath, "nginx.conf"),
 		configVersionFilename:       path.Join(confPath, "config-version.conf"),
@@ -561,6 +571,46 @@ func (lm *LocalManager) AppProtectDosAgentStart(apdaDone chan error, debug bool,
 	}()
 }
 
+// AgentStart starts the AppProtect plugin and sets AppProtect log level.
+func (lm *LocalManager) AgentStart(agentDone chan error, instanceGroup string) {
+	glog.V(3).Info("Starting Agent")
+	args := []string{}
+	if len(instanceGroup) > 0 {
+		args = append(args, "--instance-group", instanceGroup)
+	}
+	cmd := exec.Command(agentPath, args...) // #nosec G204
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
+	cmd.Env = os.Environ()
+
+	if err := cmd.Start(); err != nil {
+		glog.Fatalf("Failed to start Agent: %v", err)
+	}
+	lm.agentPid = cmd.Process.Pid
+	go func() {
+		agentDone <- cmd.Wait()
+	}()
+}
+
+// AgentQuit gracefully ends AppProtect Agent.
+func (lm *LocalManager) AgentQuit() {
+	glog.V(3).Info("Quitting Agent")
+	killcmd := fmt.Sprintf("kill %d", lm.agentPid)
+	if err := shellOut(killcmd); err != nil {
+		glog.Fatalf("Failed to quit Agent: %v", err)
+	}
+}
+
+// AgentVersion returns NGINX Agent version
+func (lm *LocalManager) AgentVersion() string {
+	out, err := exec.Command(agentPath, "-v").CombinedOutput()
+	if err != nil {
+		glog.Fatalf("Failed to get nginx-agent version: %v", err)
+	}
+	return strings.TrimSpace(strings.TrimPrefix(string(out), "nginx-agent version "))
+}
+
 func getBinaryFileName(debug bool) string {
 	if debug {
 		return nginxBinaryPathDebug
@@ -581,4 +631,55 @@ func configContentsChanged(filename string, content []byte) bool {
 		}
 	}
 	return true
+}
+
+// UpsertSplitClientsKeyVal upserts a key value pair in the split clients zone.
+func (lm *LocalManager) UpsertSplitClientsKeyVal(zoneName, key, value string) {
+	key = strings.Trim(key, "\"")
+	value = strings.Trim(value, "\"")
+
+	keyValPairs, err := lm.plusClient.GetKeyValPairs(zoneName)
+	if err != nil {
+		lm.tryAddKeyValPair(zoneName, key, value)
+		return
+	}
+
+	if _, ok := keyValPairs[key]; ok {
+		lm.tryModifyKeyValPair(zoneName, key, value)
+	} else {
+		lm.tryAddKeyValPair(zoneName, key, value)
+	}
+}
+
+func (lm *LocalManager) tryAddKeyValPair(zoneName, key, value string) {
+	err := lm.plusClient.AddKeyValPair(zoneName, key, value)
+	if err != nil {
+		glog.Warningf("Failed to add key value pair: %v", err)
+	} else {
+		glog.Infof("Added key value pair for key: %v", key)
+	}
+}
+
+func (lm *LocalManager) tryModifyKeyValPair(zoneName, key, value string) {
+	err := lm.plusClient.ModifyKeyValPair(zoneName, key, value)
+	if err != nil {
+		glog.Warningf("Failed to modify key value pair: %v", err)
+	} else {
+		glog.Infof("Modified key value pair for key: %v", key)
+	}
+}
+
+// DeleteKeyValStateFiles deletes the state files in the /etc/nginx/state_files folder for the given virtual server.
+func (lm *LocalManager) DeleteKeyValStateFiles(virtualServerName string) {
+	files, err := os.ReadDir(lm.stateFilesPath)
+	if err != nil {
+		glog.Warningf("Failed to read the state files directory %s: %v", lm.stateFilesPath, err)
+	}
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), virtualServerName+"_keyval_zone_split_clients") {
+			if err := os.Remove(path.Join(lm.stateFilesPath, file.Name())); err != nil {
+				glog.Warningf("Failed to delete the state file %s: %v", file.Name(), err)
+			}
+		}
+	}
 }

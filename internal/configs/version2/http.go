@@ -13,6 +13,9 @@ type UpstreamLabels struct {
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
 	HTTPSnippets            []string
+	TwoWaySplitClients      []TwoWaySplitClients
+	KeyValZones             []KeyValZone
+	KeyVals                 []KeyVal
 	LimitReqZones           []LimitReqZone
 	Maps                    []Map
 	Server                  Server
@@ -81,6 +84,8 @@ type Server struct {
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
+	APIKey                    *APIKey
+	APIKeyEnabled             bool
 	WAF                       *WAF
 	Dos                       *Dos
 	PoliciesErrorReturn       *Return
@@ -122,16 +127,25 @@ type EgressMTLS struct {
 
 // OIDC holds OIDC configuration data.
 type OIDC struct {
-	AuthEndpoint      string
-	ClientID          string
-	ClientSecret      string
-	JwksURI           string
-	Scope             string
-	TokenEndpoint     string
-	RedirectURI       string
-	ZoneSyncLeeway    int
-	AuthExtraArgs     string
-	AccessTokenEnable bool
+	AuthEndpoint          string
+	ClientID              string
+	ClientSecret          string
+	JwksURI               string
+	Scope                 string
+	TokenEndpoint         string
+	EndSessionEndpoint    string
+	RedirectURI           string
+	PostLogoutRedirectURI string
+	ZoneSyncLeeway        int
+	AuthExtraArgs         string
+	AccessTokenEnable     bool
+}
+
+// APIKey holds API key configuration.
+type APIKey struct {
+	Header  []string
+	Query   []string
+	MapName string
 }
 
 // WAF defines WAF configuration.
@@ -147,6 +161,7 @@ type WAF struct {
 type Dos struct {
 	Enable                 string
 	Name                   string
+	AllowListPath          string
 	ApDosPolicy            string
 	ApDosSecurityLogEnable bool
 	ApDosLogConf           string
@@ -194,6 +209,7 @@ type Location struct {
 	BasicAuth                *BasicAuth
 	EgressMTLS               *EgressMTLS
 	OIDC                     bool
+	APIKey                   *APIKey
 	WAF                      *WAF
 	Dos                      *Dos
 	PoliciesErrorReturn      *Return
@@ -209,6 +225,7 @@ type ReturnLocation struct {
 	Name        string
 	DefaultType string
 	Return      Return
+	Headers     []Header
 }
 
 // SplitClient defines a split_clients.
@@ -272,6 +289,7 @@ type HealthCheck struct {
 	Mandatory           bool
 	Persistent          bool
 	KeepaliveTime       string
+	IsGRPC              bool
 }
 
 // TLSRedirect defines a redirect in a Server.
@@ -386,4 +404,33 @@ type JwksURI struct {
 type BasicAuth struct {
 	Secret string
 	Realm  string
+}
+
+// KeyValZone defines a keyval zone.
+type KeyValZone struct {
+	Name  string
+	Size  string
+	State string
+}
+
+// KeyVal defines a keyval.
+type KeyVal struct {
+	Key      string
+	Variable string
+	ZoneName string
+}
+
+// TwoWaySplitClients defines split clients for two way split
+type TwoWaySplitClients struct {
+	Key               string
+	Variable          string
+	ZoneName          string
+	Weights           []int
+	SplitClientsIndex int
+}
+
+// Variable defines an nginx variable.
+type Variable struct {
+	Name  string
+	Value string
 }

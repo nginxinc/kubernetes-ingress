@@ -1,17 +1,17 @@
 ---
+docs: DOCS-613
+doctypes:
+- ''
 title: Logging
-
-description: "This document gives an overview of logging provided by NGINX Ingress Controller."
-weight: 1800
-doctypes: [""]
 toc: true
-docs: "DOCS-613"
+weight: 1800
 ---
 
+This document gives an overview of logging provided by NGINX Ingress Controller.
 
-The NGINX Ingress Controller exposes the logs of the Ingress Controller process (the process that generates NGINX configuration and reloads NGINX to apply it) and NGINX access and error logs. All logs are sent to the standard output and error of the Ingress Controller process. To view the logs, you can execute the `kubectl logs` command for an Ingress Controller pod. For example:
+NGINX Ingress Controller exposes the logs of the Ingress Controller process (the process that generates NGINX configuration and reloads NGINX to apply it) and NGINX access and error logs. All logs are sent to the standard output and error of the Ingress Controller process. To view the logs, you can execute the `kubectl logs` command for an Ingress Controller pod. For example:
 
-```
+```shell
 kubectl logs <nginx-ingress-pod> -n nginx-ingress
 ```
 

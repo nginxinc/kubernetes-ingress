@@ -1236,6 +1236,98 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "header-1",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/proxy-set-headers annotation, single-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "header-1,header-2,header-3",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/proxy-set-headers annotation, multi-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "header-1, header-2, header-3",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/proxy-set-headers annotation, multi-value with spaces",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "$header1",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/proxy-set-headers: Invalid value: "$header1": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
+			},
+			msg: "invalid nginx.org/proxy-set-headers annotation, single-value containing '$'",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "{header1",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/proxy-set-headers: Invalid value: "{header1": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
+			},
+			msg: "invalid nginx.org/proxy-set-headers annotation, single-value containing '{'",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "$header1,header2",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/proxy-set-headers: Invalid value: "$header1": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
+			},
+			msg: "invalid nginx.org/proxy-set-headers annotation, multi-value containing '$'",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-set-headers": "header1,$header2",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/proxy-set-headers: Invalid value: "$header2": a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')`,
+			},
+			msg: "invalid nginx.org/proxy-set-headers annotation, multi-value containing '$' after valid header",
+		},
+		{
+			annotations: map[string]string{
 				"nginx.org/client-max-body-size": "16M",
 			},
 			specServices:          map[string]bool{},

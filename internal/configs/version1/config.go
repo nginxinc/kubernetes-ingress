@@ -1,6 +1,9 @@
 package version1
 
-import "github.com/nginxinc/kubernetes-ingress/internal/nginx"
+import (
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+)
 
 // UpstreamLabels describes the Prometheus labels for an NGINX upstream.
 type UpstreamLabels struct {
@@ -120,6 +123,7 @@ type Server struct {
 	AppProtectDosMonitorProtocol string
 	AppProtectDosMonitorTimeout  uint64
 	AppProtectDosName            string
+	AppProtectDosAllowListPath   string
 	AppProtectDosAccessLogDst    string
 
 	SpiffeCerts bool
@@ -166,6 +170,7 @@ type Location struct {
 	ProxyConnectTimeout  string
 	ProxyReadTimeout     string
 	ProxySendTimeout     string
+	ProxySetHeaders      []version2.Header
 	ClientMaxBodySize    string
 	Websocket            bool
 	Rewrite              string
@@ -186,7 +191,7 @@ type Location struct {
 
 // MainConfig describe the main NGINX configuration file.
 type MainConfig struct {
-	AccessLogOff                       bool
+	AccessLog                          string
 	DefaultServerAccessLogOff          bool
 	DefaultServerReturn                string
 	DisableIPV6                        bool
@@ -241,6 +246,8 @@ type MainConfig struct {
 	WorkerRlimitNofile                 string
 	WorkerShutdownTimeout              string
 	AppProtectLoadModule               bool
+	AppProtectV5LoadModule             bool
+	AppProtectV5EnforcerAddr           string
 	AppProtectFailureModeAction        string
 	AppProtectCompressedRequestsAction string
 	AppProtectCookieSeed               string

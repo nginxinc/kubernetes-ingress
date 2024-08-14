@@ -1,40 +1,27 @@
 ---
-title: Installation with the NGINX Ingress Operator
-description: "This document explains how to install NGINX Ingress Controller in your Kubernetes cluster using NGINX Ingress Operator."
-weight: 300
-doctypes: [""]
+docs: DOCS-604
+doctypes:
+- ''
+title: Installation with NGINX Ingress Operator
 toc: true
-docs: "DOCS-604"
+weight: 300
 ---
 
-{{<custom-styles>}}
-
-<style>
-h2 {
-  border-top: 1px solid #ccc;
-  padding-top:20px;
-}
-</style>
-
-{{< note >}}
-NGINX Ingress Operator isn't compatible with NGINX Ingress Controller 3.4.3 at this time.  We'll update this guide and remove this note when we release a compatible version.
-{{< /note >}}
+This document explains how to use NGINX Ingress Operator to install NGINX Ingress Controller.
 
 ## Before you start
 
-{{<note>}} We recommend the most recent stable version of NGINX Ingress Controller, available on the GitHub repository's [releases page]({{< relref "releases.md" >}}). {{</note>}}
+{{< note >}} We recommend the most recent stable version of NGINX Ingress Controller, available on the GitHub repository's [releases page]({{< relref "releases.md" >}}). {{< /note >}}
 
 1. Make sure you have access to the NGINX Ingress Controller image:
-
     - For NGINX Ingress Controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
-    - For NGINX Plus Ingress Controller, see [here]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}) for details on how to pull the image from the F5 Docker registry.
-    - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here]({{< relref "installation/nic-images/using-the-jwt-token-docker-secret" >}}).
-    - It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here]({{< relref "installation/building-nginx-ingress-controller.md" >}})).
+    - For NGINX Plus Ingress Controller, view the [Get the F5 Registry NGINX Ingress Controller image]({{< relref "installation/nic-images/get-registry-image.md" >}}) topic for details on how to pull the image from the F5 Docker registry.
+    - The [Get the NGINX Ingress Controller image with JWT]({{< relref "installation/nic-images/get-image-using-jwt.md" >}}) topic describes how to use your subscription JWT token to get the image.
+    - The [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md" >}}) topic explains how to push an image to a private Docker registry.
+1. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/docs/installation.md).
+1. Create the SecurityContextConstraint as outlined in the ["Getting Started" instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/README.md#getting-started).
 
-2. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/docs/installation.md).
-3. Create the SecurityContextConstraint as outlined in the ["Getting Started" instructions](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/README.md#getting-started).
-
-{{<note>}} If you're upgrading your operator installation to a later release, navigate [here](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/helm-charts/nginx-ingress) and run `kubectl apply -f crds/` or `oc apply -f crds/` as a prerequisite{{</note>}}
+{{< note >}} If you're upgrading your operator installation to a later release, navigate [here](https://github.com/nginxinc/nginx-ingress-helm-operator/blob/main/helm-charts/nginx-ingress) and run `kubectl apply -f crds/` or `oc apply -f crds/` as a prerequisite {{< /note >}}
 
 ## Create the NGINX Ingress Controller manifest
 
@@ -51,7 +38,7 @@ spec:
     image:
       pullPolicy: IfNotPresent
       repository: nginx/nginx-ingress
-      tag: 3.4.3-ubi
+      tag: {{< nic-version >}}-ubi
     ingressClass:
       name: nginx
     kind: deployment
@@ -61,7 +48,7 @@ spec:
       imagePullSecretName: ""
 ```
 
-{{<note>}}For NGINX Plus, change the `image.repository` and `image.tag` values and change `nginxPlus` to `True`. If required, set the `serviceAccount.imagePullSecretName` or `serviceAccount.imagePullSecretsNames` to the name of the pre-created docker config secret that should be associated with the ServiceAccount.{{</note>}}
+{{< note >}} For NGINX Plus, change the `image.repository` and `image.tag` values and change `nginxPlus` to `True`. If required, set the `serviceAccount.imagePullSecretName` or `serviceAccount.imagePullSecretsNames` to the name of the pre-created docker config secret that should be associated with the ServiceAccount. {{< /note >}}
 
 ## Deploy NGINX Ingress Controller
 

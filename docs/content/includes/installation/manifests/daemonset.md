@@ -1,5 +1,5 @@
 ---
-docs: "DOCS-1465"
+docs: DOCS-1465
 ---
 
 For additional context on managing containers using Kubernetes DaemonSets, refer to the official Kubernetes [DaemonSets](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) documentation.

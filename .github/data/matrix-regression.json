@@ -5,12 +5,22 @@
       "label": "regression",
       "image": "debian",
       "type": "oss",
+      "marker": "'not upgrade'",
       "platforms": "linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
     },
     {
       "label": "regression",
       "image": "debian-plus",
       "type": "plus",
+      "marker": "'not upgrade and not agent'",
+      "platforms": "linux/arm64, linux/amd64"
+    },
+    {
+      "label": "regression",
+      "image": "debian-plus-nap",
+      "type": "plus",
+      "nap_modules": "waf",
+      "marker": "'appprotect or agent'",
       "platforms": "linux/arm64, linux/amd64"
     }
   ]

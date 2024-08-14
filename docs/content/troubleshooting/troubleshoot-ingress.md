@@ -1,18 +1,22 @@
 ---
-title: "Troubleshooting Ingress Resources"
-description: "This page describes how to troubleshoot NGINX Ingress Controller Policy Resources."
-weight: 300
-doctypes: [""]
+docs: DOCS-1458
+doctypes:
+- ''
+title: Troubleshooting Ingress resources
 toc: true
-docs: "DOCS-1458"
+weight: 300
 ---
 
-## Ingress Resources
+This page describes how to troubleshoot NGINX Ingress Controller Policy Resources.
+
+## Ingress resources
 
 After you create or update an Ingress resource, you can immediately check if the NGINX configuration for that Ingress resource was successfully applied by NGINX:
 
 ```shell
 kubectl describe ing cafe-ingress
+```
+```shell
 Name:             cafe-ingress
 Namespace:        default
 

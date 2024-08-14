@@ -1,14 +1,11 @@
 ---
-title: "NGINX Ingress Controller and Linkerd"
-description: |
- Using Linkerd with the F5 NGINX Ingress Controller.
-weight: 1800
-docs: "DOCS-1450"
-doctypes: ["concept"]
+docs: DOCS-1450
+doctypes:
+- concept
+title: NGINX Ingress Controller and Linkerd
 toc: true
+weight: 1800
 ---
-
-## Overview
 
 This document explains how to integrate NGINX Ingress Controller with Linkerd using Linkerd's sidecar proxy. Linkerd works with both NGINX Ingress Controller open source and NGINX Ingress Controller using NGINX Plus.
 
@@ -137,7 +134,7 @@ NAME                       READY   STATUS    RESTARTS   AGE
 httpbin-66df5bfbc9-ffhdp   2/2     Running   0          67s
 ```
 
-Next, we are going to create `virtualserver` resource for the NGINX Ingress controller.
+Next, we are going to create `virtualserver` resource for NGINX Ingress controller.
 
 ```yaml
 apiVersion: k8s.nginx.org/v1

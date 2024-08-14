@@ -207,11 +207,21 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.MainErrorLogLevel = errorLogLevel
 	}
 
+	if accessLog, exists := cfgm.Data["access-log"]; exists {
+		if !strings.HasPrefix(accessLog, "syslog:") {
+			glog.Warningf("Configmap %s/%s: Invalid value for key access-log: %q", cfgm.GetNamespace(), cfgm.GetName(), accessLog)
+		} else {
+			cfgParams.MainAccessLog = accessLog
+		}
+	}
+
 	if accessLogOff, exists, err := GetMapKeyAsBool(cfgm.Data, "access-log-off", cfgm); exists {
 		if err != nil {
 			glog.Error(err)
 		} else {
-			cfgParams.MainAccessLogOff = accessLogOff
+			if accessLogOff {
+				cfgParams.MainAccessLog = "off"
+			}
 		}
 	}
 
@@ -343,6 +353,10 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if virtualServerTemplate, exists := cfgm.Data["virtualserver-template"]; exists {
 		cfgParams.VirtualServerTemplate = &virtualServerTemplate
+	}
+
+	if transportServerTemplate, exists := cfgm.Data["transportserver-template"]; exists {
+		cfgParams.TransportServerTemplate = &transportServerTemplate
 	}
 
 	if mainStreamSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "stream-snippets", cfgm, "\n"); exists {
@@ -510,7 +524,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 // GenerateNginxMainConfig generates MainConfig.
 func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams) *version1.MainConfig {
 	nginxCfg := &version1.MainConfig{
-		AccessLogOff:                       config.MainAccessLogOff,
+		AccessLog:                          config.MainAccessLog,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
 		DefaultServerReturn:                config.DefaultServerReturn,
 		DisableIPV6:                        staticCfgParams.DisableIPV6,
@@ -565,7 +579,9 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		VariablesHashBucketSize:            config.VariablesHashBucketSize,
 		VariablesHashMaxSize:               config.VariablesHashMaxSize,
 		AppProtectLoadModule:               staticCfgParams.MainAppProtectLoadModule,
+		AppProtectV5LoadModule:             staticCfgParams.MainAppProtectV5LoadModule,
 		AppProtectDosLoadModule:            staticCfgParams.MainAppProtectDosLoadModule,
+		AppProtectV5EnforcerAddr:           staticCfgParams.MainAppProtectV5EnforcerAddr,
 		AppProtectFailureModeAction:        config.MainAppProtectFailureModeAction,
 		AppProtectCompressedRequestsAction: config.MainAppProtectCompressedRequestsAction,
 		AppProtectCookieSeed:               config.MainAppProtectCookieSeed,

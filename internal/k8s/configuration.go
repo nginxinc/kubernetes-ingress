@@ -601,15 +601,12 @@ func (c *Configuration) AddOrUpdateGlobalConfiguration(gc *conf_v1.GlobalConfigu
 	var problems []ConfigurationProblem
 
 	validationErr := c.globalConfigurationValidator.ValidateGlobalConfiguration(gc)
-	if validationErr != nil {
-		c.globalConfiguration = nil
-	} else {
-		c.globalConfiguration = gc
-	}
 
+	c.globalConfiguration = gc
 	c.setGlobalConfigListenerMap()
 
 	listenerChanges, listenerProblems := c.rebuildListeners()
+
 	changes = append(changes, listenerChanges...)
 	problems = append(problems, listenerProblems...)
 
@@ -918,6 +915,11 @@ func (c *Configuration) FindResourcesForAppProtectLogConfAnnotation(logConfNames
 // FindResourcesForAppProtectDosProtected finds resources that reference the specified AppProtectDos DosLogConf.
 func (c *Configuration) FindResourcesForAppProtectDosProtected(namespace string, name string) []Resource {
 	return c.findResourcesForResourceReference(namespace, name, c.appDosProtectedChecker)
+}
+
+// FindIngressesWithRatelimitScaling finds ingresses that use rate limit scaling
+func (c *Configuration) FindIngressesWithRatelimitScaling(svcNamespace string) []Resource {
+	return c.findResourcesForResourceReference(svcNamespace, "", &ratelimitScalingAnnotationChecker{})
 }
 
 func (c *Configuration) findResourcesForResourceReference(namespace string, name string, checker resourceReferenceChecker) []Resource {

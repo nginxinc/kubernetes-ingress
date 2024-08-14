@@ -1,14 +1,17 @@
 ---
+docs: DOCS-580
+doctypes:
+- ''
 title: Configuration
-
-description: "This document describes how to configure the NGINX App Protect Dos module."
-weight: 200
-doctypes: [""]
 toc: true
-docs: "DOCS-580"
+weight: 200
 ---
 
-> Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v3.4.3/examples/ingress-resources/app-protect-dos).
+{{< tip >}}
+
+Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/ingress-resources/app-protect-dos).
+
+{{< /tip >}}
 
 ## App Protect DoS Configuration
 
@@ -31,7 +34,7 @@ spec:
       timeout: 5
   ```
 
-2. Enable App Protect DoS on an Ingress by adding an annotation on the Ingress. Set the value of the annotation to the qualified identifier(`namespace/name`) of a DosProtectedResource:
+2. Enable App Protect DoS for an Ingress resource by adding an annotation to the Ingress. Set the value of the annotation to the qualified identifier(`namespace/name`) of a DosProtectedResource:
 
   ```yaml
    apiVersion: networking.k8s.io/v1
@@ -42,7 +45,7 @@ spec:
          appprotectdos.f5.com/app-protect-dos-resource: "default/dos-protected"
   ```
 
-3. Enable App Protect DoS on a VirtualServer by setting the `dos` field value to the qualified identifier(`namespace/name`) of a DosProtectedResource:
+3. Enable App Protect DoS on a VirtualServer resource by setting the `dos` field value to the qualified identifier(`namespace/name`) of a DosProtectedResource:
 
   ```yaml
 apiVersion: k8s.nginx.org/v1
@@ -75,10 +78,10 @@ For example, say you want to use DoS Policy as shown below:
    bad_actors: "on",
    automation_tools_detection: "on",
    tls_fingerprint: "on",
-}
+   }
   ```
 
-You would create an `APDosPolicy` resource with the policy defined in the `spec`, as shown below:
+Create an `APDosPolicy` resource with the policy defined in the `spec`, as shown below:
 
   ```yaml
    apiVersion: appprotectdos.f5.com/v1beta1
@@ -158,4 +161,4 @@ Then add a reference in the `DosProtectedResource` to the `APDosLogConf`:
 
 ## Global Configuration
 
-The NGINX Ingress Controller has a set of global configuration parameters that align with those available in the NGINX App Protect DoS module. See [ConfigMap keys]({{< relref "configuration/global-configuration/configmap-resource.md#modules" >}}) for the complete list. The App Protect parameters use the `app-protect-dos*` prefix.
+NGINX Ingress Controller has a set of global configuration parameters that align with those available in the NGINX App Protect DoS module. See [ConfigMap keys]({{< relref "configuration/global-configuration/configmap-resource.md#modules" >}}) for the complete list. The App Protect parameters use the `app-protect-dos*` prefix.

@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-ingress
+  annotations:
+    appprotect.f5.com/app-protect-policy: "default/dataguard-alarm"
+    appprotect.f5.com/app-protect-enable: "True"
+    appprotect.f5.com/app-protect-security-log-enable: "True"
+    appprotect.f5.com/app-protect-security-log: "default/secops-logconf"
+    appprotect.f5.com/app-protect-security-log-destination: "syslog:server=127.0.0.1:1514"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - cafe.example.com
+      secretName: cafe-secret
+  rules:
+    - host: cafe.example.com
+      http:
+        paths:
+          - path: /tea
+            pathType: Prefix
+            backend:
+              service:
+                name: tea-svc
+                port:
+                  number: 80
+          - path: /coffee
+            pathType: Prefix
+            backend:
+              service:
+                name: coffee-svc
+                port:
+                  number: 80

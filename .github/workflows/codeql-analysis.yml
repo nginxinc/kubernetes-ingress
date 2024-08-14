@@ -9,6 +9,7 @@ on:
     # The branches below must be a subset of the branches above
     branches:
       - main
+  merge_group:
   schedule:
     - cron: "36 6 * * 4" # run every Thursday at 06:36 UTC
 
@@ -20,7 +21,33 @@ permissions:
   contents: read
 
 jobs:
+  checks:
+    name: Checks and variables
+    runs-on: ubuntu-22.04
+    outputs:
+      docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - name: Filter only docs changes
+        id: docs
+        run: |
+          files=$(git diff --name-only HEAD^ | egrep -v "^docs/" | egrep -v "^examples/" | egrep -v "^README.md")
+          if [ -z "$files" ]; then
+            echo "docs_only=true" >> $GITHUB_OUTPUT
+          else
+            echo "docs_only=false" >> $GITHUB_OUTPUT
+          fi
+          echo $files
+          cat $GITHUB_OUTPUT
+        shell: bash --noprofile --norc -o pipefail {0}
+
   analyze:
+    if: ${{ needs.checks.outputs.docs_only != 'true' }}
+    needs: [checks]
     permissions:
       actions: read # for github/codeql-action/init to get workflow details
       contents: read # for actions/checkout to fetch code
@@ -39,11 +66,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/init@eb055d739abdc2e8de2e5f4ba1a8b246daa779aa # v3.26.0
         with:
           languages: ${{ matrix.language }}
           # If you wish to specify custom queries, you can do so here or in a config file.
@@ -54,7 +81,7 @@ jobs:
           # queries: security-extended,security-and-quality
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           go-version-file: go.mod
         if: matrix.language == 'go'
@@ -62,7 +89,7 @@ jobs:
       # Autobuild attempts to build any compiled languages (C/C++, C#, Go, Java, or Swift).
       # If this step fails, then you should remove it and run the build manually (see below)
       - name: Autobuild
-        uses: github/codeql-action/autobuild@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/autobuild@eb055d739abdc2e8de2e5f4ba1a8b246daa779aa # v3.26.0
 
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
@@ -75,6 +102,6 @@ jobs:
       #     ./location_of_script_within_repo/buildscript.sh
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/analyze@eb055d739abdc2e8de2e5f4ba1a8b246daa779aa # v3.26.0
         with:
           category: "/language:${{matrix.language}}"

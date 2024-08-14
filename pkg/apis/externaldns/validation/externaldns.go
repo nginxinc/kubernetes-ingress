@@ -9,6 +9,7 @@ import (
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidateDNSEndpoint validates if all DNSEndpoint fields are valid.
@@ -52,7 +53,7 @@ func validateTargets(targets v1.Targets) error {
 	for _, target := range targets {
 		switch {
 		case strings.Contains(target, ":"):
-			if errMsg := validation.IsValidIP(target); len(errMsg) > 0 {
+			if errMsg := validation.IsValidIP(field.NewPath(""), target); len(errMsg) > 0 {
 				return fmt.Errorf("%w: target %q is invalid: %s", ErrTypeInvalid, target, errMsg[0])
 			}
 		default:

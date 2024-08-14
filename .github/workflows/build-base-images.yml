@@ -16,7 +16,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   checks:
@@ -25,54 +24,57 @@ jobs:
     outputs:
       docker_md5: ${{ steps.vars.outputs.docker_md5 }}
       ic_version: ${{ steps.vars.outputs.ic_version }}
+      image_matrix_oss: ${{ steps.vars.outputs.image_matrix_oss }}
+      image_matrix_plus: ${{ steps.vars.outputs.image_matrix_plus }}
+      image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Output Variables
         id: vars
         run: |
-          docker_md5=$(find . -type f \( -name "build/Dockerfile" -o -name .github/data/version.txt \) -not -path "./docs*"  -exec md5sum {} + | LC_ALL=C sort  | md5sum | awk '{ print $1 }' )
-          echo "docker_md5=${docker_md5:0:8}" >> $GITHUB_OUTPUT
+          ./.github/scripts/variables.sh docker_md5 >> $GITHUB_OUTPUT
           source .github/data/version.txt
           echo "ic_version=${IC_VERSION}" >> $GITHUB_OUTPUT
+          echo "image_matrix_oss=$(cat .github/data/matrix-images-oss.json | jq -c)" >> $GITHUB_OUTPUT
+          echo "image_matrix_plus=$(cat .github/data/matrix-images-plus.json | jq -c)" >> $GITHUB_OUTPUT
+          echo "image_matrix_nap=$(cat .github/data/matrix-images-nap.json | jq -c)" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   build-oss:
     name: Build OSS base images
     runs-on: ubuntu-22.04
     needs: checks
+    permissions:
+      contents: read
+      pull-requests: write # for scout report
+      id-token: write
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian, alpine]
-        platforms:
-          ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
-        include:
-          - image: ubi
-            platforms: "linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_oss ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
         with:
           platforms: arm,arm64,ppc64le,s390x
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        uses: google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2 # v2.1.4
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -90,7 +92,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
         with:
           file: build/Dockerfile
           context: "."
@@ -109,36 +111,35 @@ jobs:
     name: Build Plus base images
     runs-on: ubuntu-22.04
     needs: checks
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write # for scout report
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian-plus, alpine-plus, alpine-plus-fips]
-        platforms: ["linux/arm64, linux/amd64"]
-        include:
-          - image: ubi-plus
-            platforms: "linux/arm64, linux/amd64, linux/s390x"
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
         with:
           platforms: arm64,s390x
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        uses: google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2 # v2.1.4
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -156,7 +157,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
         with:
           file: build/Dockerfile
           context: "."
@@ -178,42 +179,30 @@ jobs:
     name: Build Plus NAP base images
     runs-on: ubuntu-22.04
     needs: checks
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write # for scout report
     strategy:
       fail-fast: false
-      matrix:
-        image: [debian-plus-nap]
-        platforms: ["linux/amd64"]
-        nap_modules: [dos, waf, "waf,dos"]
-        include:
-          - image: ubi-9-plus-nap
-            platforms: "linux/amd64"
-            nap_modules: waf
-          - image: ubi-8-plus-nap
-            platforms: "linux/amd64"
-            nap_modules: dos
-          - image: ubi-8-plus-nap
-            platforms: "linux/amd64"
-            nap_modules: "waf,dos"
-          - image: alpine-plus-nap-fips
-            platforms: "linux/amd64"
-            nap_modules: waf
+      matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_nap ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
+        uses: google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2 # v2.1.4
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
           service_account: ${{ secrets.GCR_SERVICE_ACCOUNT }}
 
       - name: Login to GCR
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: gcr.io
           username: oauth2accesstoken
@@ -224,6 +213,8 @@ jobs:
         run: |
           [[ "${{ matrix.nap_modules }}" == "waf,dos" ]] && modules="waf-dos" || modules="${{ matrix.nap_modules }}"
           echo "modules=${modules}" >> $GITHUB_OUTPUT
+          [[ "${{ matrix.nap_modules }}" =~ waf ]] && agent="true" || agent="false"
+          echo "agent=${agent}" >> $GITHUB_OUTPUT
         if: ${{ matrix.nap_modules != '' }}
 
       - name: Docker meta
@@ -238,7 +229,7 @@ jobs:
             type=raw,value=${{ needs.checks.outputs.docker_md5 }},enable=${{ needs.checks.outputs.docker_md5 != '' }}
 
       - name: Build Base Container
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
         with:
           file: build/Dockerfile
           context: "."
@@ -253,6 +244,7 @@ jobs:
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ needs.checks.outputs.ic_version }}
             NAP_MODULES=${{ matrix.nap_modules }}
+            ${{ contains(matrix.nap_modules,'waf') && format('NGINX_AGENT={0}', steps.nap_modules.outputs.agent) || '' }}
           secrets: |
             "nginx-repo.crt=${{ secrets.NGINX_AP_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_AP_KEY }}"

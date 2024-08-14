@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
@@ -23,7 +24,7 @@ type ConfigParams struct {
 	Keepalive                              int
 	LBMethod                               string
 	LocationSnippets                       []string
-	MainAccessLogOff                       bool
+	MainAccessLog                          string
 	MainErrorLogLevel                      string
 	MainHTTPSnippets                       []string
 	MainKeepaliveRequests                  int64
@@ -70,6 +71,7 @@ type ConfigParams struct {
 	ProxyHideHeaders                       []string
 	ProxyMaxTempFileSize                   string
 	ProxyPassHeaders                       []string
+	ProxySetHeaders                        []version2.Header
 	ProxyProtocol                          bool
 	ProxyReadTimeout                       string
 	ProxySendTimeout                       string
@@ -97,9 +99,10 @@ type ConfigParams struct {
 	MainServerSSLPreferServerCiphers bool
 	MainServerSSLProtocols           string
 
-	IngressTemplate       *string
-	VirtualServerTemplate *string
-	MainTemplate          *string
+	IngressTemplate         *string
+	VirtualServerTemplate   *string
+	MainTemplate            *string
+	TransportServerTemplate *string
 
 	JWTKey      string
 	JWTLoginURL string
@@ -123,6 +126,7 @@ type ConfigParams struct {
 	LimitReqDryRun     bool
 	LimitReqLogLevel   string
 	LimitReqRejectCode int
+	LimitReqScale      bool
 }
 
 // StaticConfigParams holds immutable NGINX configuration parameters that affect the main NGINX config.
@@ -142,7 +146,9 @@ type StaticConfigParams struct {
 	NginxServiceMesh               bool
 	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool
+	MainAppProtectV5LoadModule     bool
 	MainAppProtectDosLoadModule    bool
+	MainAppProtectV5EnforcerAddr   string
 	InternalRouteServerName        string
 	EnableLatencyMetrics           bool
 	EnableOIDC                     bool
@@ -150,7 +156,9 @@ type StaticConfigParams struct {
 	EnableCertManager              bool
 	DynamicSSLReload               bool
 	StaticSSLPath                  string
+	DynamicWeightChangesReload     bool
 	NginxVersion                   nginx.Version
+	AppProtectBundlePath           string
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.
@@ -180,6 +188,7 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		ProxySendTimeout:              "60s",
 		ClientMaxBodySize:             "1m",
 		SSLRedirect:                   true,
+		MainAccessLog:                 "/dev/stdout main",
 		MainServerNamesHashBucketSize: "256",
 		MainServerNamesHashMaxSize:    "1024",
 		MainMapHashBucketSize:         "256",

@@ -72,13 +72,18 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 		fieldCount++
 	}
 
+	if spec.APIKey != nil {
+		allErrs = append(allErrs, validateAPIKey(spec.APIKey, fieldPath.Child("apiKey"))...)
+		fieldCount++
+	}
+
 	if spec.WAF != nil {
 		if !isPlus {
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"), "WAF is only supported in NGINX Plus"))
 		}
 		if !enableAppProtect {
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"),
-				"App Protect must be enabled via cli argument -enable-appprotect to use WAF policy"))
+				"App Protect must be enabled via cli argument -enable-app-protect to use WAF policy"))
 		}
 
 		allErrs = append(allErrs, validateWAF(spec.WAF, fieldPath.Child("waf"))...)
@@ -86,7 +91,7 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 	}
 
 	if fieldCount != 1 {
-		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`"
+		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`, `apiKey`"
 		if isPlus {
 			msg = fmt.Sprint(msg, ", `jwt`, `oidc`, `waf`")
 		}
@@ -255,6 +260,10 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	if oidc.ClientSecret == "" {
 		return field.ErrorList{field.Required(fieldPath.Child("clientSecret"), "")}
 	}
+	if oidc.EndSessionEndpoint == "" && oidc.PostLogoutRedirectURI != "" {
+		msg := "postLogoutRedirectURI can only be set when endSessionEndpoint is set"
+		return field.ErrorList{field.Forbidden(fieldPath.Child("postLogoutRedirectURI"), msg)}
+	}
 
 	allErrs := field.ErrorList{}
 	if oidc.Scope != "" {
@@ -262,6 +271,12 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	}
 	if oidc.RedirectURI != "" {
 		allErrs = append(allErrs, validatePath(oidc.RedirectURI, fieldPath.Child("redirectURI"))...)
+	}
+	if oidc.EndSessionEndpoint != "" {
+		allErrs = append(allErrs, validateURL(oidc.EndSessionEndpoint, fieldPath.Child("endSessionEndpoint"))...)
+	}
+	if oidc.PostLogoutRedirectURI != "" {
+		allErrs = append(allErrs, validatePath(oidc.PostLogoutRedirectURI, fieldPath.Child("postLogoutRedirectURI"))...)
 	}
 	if oidc.ZoneSyncLeeway != nil {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*oidc.ZoneSyncLeeway, fieldPath.Child("zoneSyncLeeway"))...)
@@ -277,8 +292,41 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	return append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
 }
 
+func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if apiKey.SuppliedIn.Query == nil && apiKey.SuppliedIn.Header == nil {
+		msg := "at least one query or header name must be provided"
+		allErrs = append(allErrs, field.Required(fieldPath.Child("SuppliedIn"), msg))
+	}
+
+	if apiKey.SuppliedIn.Header != nil {
+		for _, header := range apiKey.SuppliedIn.Header {
+			for _, msg := range validation.IsHTTPHeaderName(header) {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("suppliedIn.header"), header, msg))
+			}
+		}
+	}
+
+	if apiKey.SuppliedIn.Query != nil {
+		for _, query := range apiKey.SuppliedIn.Query {
+			if err := ValidateEscapedString(query); err != nil {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("suppliedIn.query"), query, err.Error()))
+			}
+		}
+	}
+
+	if apiKey.ClientSecret == "" {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("clientSecret"), ""))
+	}
+
+	allErrs = append(allErrs, validateSecretName(apiKey.ClientSecret, fieldPath.Child("clientSecret"))...)
+
+	return allErrs
+}
+
 func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	bundleMode := waf.ApBundle != ""
 
 	// WAF Policy references either apPolicy or apBundle.
 	if waf.ApPolicy != "" && waf.ApBundle != "" {
@@ -295,30 +343,64 @@ func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
 		}
 	}
 
-	if waf.ApBundle != "" {
+	if bundleMode {
 		for _, msg := range validation.IsQualifiedName(waf.ApBundle) {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apBundle"), waf.ApBundle, msg))
 		}
 	}
 
 	if waf.SecurityLog != nil {
-		allErrs = append(allErrs, validateLogConf(waf.SecurityLog.ApLogConf, waf.SecurityLog.LogDest, fieldPath.Child("securityLog"))...)
+		allErrs = append(allErrs, validateLogConf(waf.SecurityLog, fieldPath.Child("securityLog"), bundleMode)...)
+	}
+
+	if waf.SecurityLogs != nil {
+		allErrs = append(allErrs, validateLogConfs(waf.SecurityLogs, fieldPath.Child("securityLogs"), bundleMode)...)
 	}
 	return allErrs
 }
 
-func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.ErrorList {
+func validateLogConfs(logs []*v1.SecurityLog, fieldPath *field.Path, bundleMode bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if logConf != "" {
-		for _, msg := range validation.IsQualifiedName(logConf) {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apLogConf"), logConf, msg))
+	for i := range logs {
+		allErrs = append(allErrs, validateLogConf(logs[i], fieldPath.Index(i), bundleMode)...)
+	}
+
+	return allErrs
+}
+
+func validateLogConf(logConf *v1.SecurityLog, fieldPath *field.Path, bundleMode bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if logConf.ApLogConf != "" && logConf.ApLogBundle != "" {
+		msg := "apLogConf and apLogBundle fields in the securityLog are mutually exclusive"
+		allErrs = append(allErrs,
+			field.Invalid(fieldPath.Child("apLogConf"), logConf.ApLogConf, msg),
+			field.Invalid(fieldPath.Child("apLogBundle"), logConf.ApLogBundle, msg),
+		)
+	}
+
+	if logConf.ApLogConf != "" {
+		if bundleMode {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apLogConf"), logConf.ApLogConf, "apLogConf is not supported with apBundle"))
+		}
+		for _, msg := range validation.IsQualifiedName(logConf.ApLogConf) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apLogConf"), logConf.ApLogConf, msg))
 		}
 	}
 
-	err := ValidateAppProtectLogDestination(logDest)
+	if logConf.ApLogBundle != "" {
+		if !bundleMode {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apLogConf"), logConf.ApLogConf, "apLogBundle is not supported with apPolicy"))
+		}
+		for _, msg := range validation.IsQualifiedName(logConf.ApLogBundle) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apBundle"), logConf.ApLogBundle, msg))
+		}
+	}
+
+	err := ValidateAppProtectLogDestination(logConf.LogDest)
 	if err != nil {
-		allErrs = append(allErrs, field.Invalid(fieldPath.Child("logDest"), logDest, err.Error()))
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("logDest"), logConf.LogDest, err.Error()))
 	}
 	return allErrs
 }

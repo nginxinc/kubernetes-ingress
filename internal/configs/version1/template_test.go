@@ -2,13 +2,24 @@ package version1
 
 import (
 	"bytes"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"text/template"
 
+	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 )
+
+func TestMain(m *testing.M) {
+	v := m.Run()
+
+	// After all tests have run `go-snaps` will sort snapshots
+	snaps.Clean(m, snaps.CleanOpts{Sort: true})
+
+	os.Exit(v)
+}
 
 func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
 	t.Parallel()
@@ -20,6 +31,7 @@ func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 	t.Log(buf.String())
 }
 
@@ -33,6 +45,7 @@ func TestExecuteMainTemplateForNGINXPlusR31(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 	t.Log(buf.String())
 }
 
@@ -46,6 +59,7 @@ func TestExecuteMainTemplateForNGINX(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 	t.Log(buf.String())
 }
 
@@ -60,6 +74,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINX(t *testing.T) {
@@ -73,6 +88,7 @@ func TestExecuteTemplate_ForIngressForNGINX(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseSensitiveModifier(t *testing.T) {
@@ -91,6 +107,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseSensitiveM
 	if !strings.Contains(buf.String(), wantLocation) {
 		t.Errorf("want %q in generated config", wantLocation)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseInsensitiveModifier(t *testing.T) {
@@ -109,6 +126,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationCaseInsensitiv
 	if !strings.Contains(buf.String(), wantLocation) {
 		t.Errorf("want %q in generated config", wantLocation)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationExactMatchModifier(t *testing.T) {
@@ -127,6 +145,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationExactMatchModi
 	if !strings.Contains(buf.String(), wantLocation) {
 		t.Errorf("want %q in generated config", wantLocation)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationEmpty(t *testing.T) {
@@ -145,6 +164,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRegexAnnotationEmpty(t *testi
 	if !strings.Contains(buf.String(), wantLocation) {
 		t.Errorf("want %q in generated config", wantLocation)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlus(t *testing.T) {
@@ -166,6 +186,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlus(t *testing.T) {
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithMasterPathRegex(t *testing.T) {
@@ -187,6 +208,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithMasterPathRegex(t *t
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressWithOneMinionWithPathRegexAnnotation(t *testing.T) {
@@ -210,6 +232,7 @@ func TestExecuteTemplate_ForMergeableIngressWithOneMinionWithPathRegexAnnotation
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressWithSecondMinionWithPathRegexAnnotation(t *testing.T) {
@@ -233,6 +256,7 @@ func TestExecuteTemplate_ForMergeableIngressWithSecondMinionWithPathRegexAnnotat
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMaster(t *testing.T) {
@@ -255,6 +279,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationO
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMasterAndMinions(t *testing.T) {
@@ -277,6 +302,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationO
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("did not get %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationOnMinionsNotOnMaster(t *testing.T) {
@@ -299,6 +325,7 @@ func TestExecuteTemplate_ForMergeableIngressForNGINXPlusWithPathRegexAnnotationO
 	if !strings.Contains(buf.String(), want) {
 		t.Errorf("want %q in generated config", want)
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithCustomTLSPassthroughPort(t *testing.T) {
@@ -325,6 +352,7 @@ func TestExecuteTemplate_ForMainForNGINXWithCustomTLSPassthroughPort(t *testing.
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithCustomTLSPassthroughPort(t *testing.T) {
@@ -351,6 +379,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomTLSPassthroughPort(t *test
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithoutCustomTLSPassthroughPort(t *testing.T) {
@@ -377,6 +406,7 @@ func TestExecuteTemplate_ForMainForNGINXWithoutCustomTLSPassthroughPort(t *testi
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomTLSPassthroughPort(t *testing.T) {
@@ -403,6 +433,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomTLSPassthroughPort(t *t
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXTLSPassthroughDisabled(t *testing.T) {
@@ -429,6 +460,7 @@ func TestExecuteTemplate_ForMainForNGINXTLSPassthroughDisabled(t *testing.T) {
 			t.Errorf("unwant %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusTLSPassthroughPortDisabled(t *testing.T) {
@@ -455,6 +487,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusTLSPassthroughPortDisabled(t *testin
 			t.Errorf("unwant %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPAndHTTPSListenerPorts(t *testing.T) {
@@ -483,6 +516,7 @@ func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPAndHTTPSListenerPor
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPAndHTTPSListenerPorts(t *testing.T) {
@@ -511,6 +545,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPAndHTTPSListene
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithoutCustomDefaultHTTPAndHTTPSListenerPorts(t *testing.T) {
@@ -539,6 +574,7 @@ func TestExecuteTemplate_ForMainForNGINXWithoutCustomDefaultHTTPAndHTTPSListener
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomDefaultHTTPAndHTTPSListenerPorts(t *testing.T) {
@@ -567,6 +603,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomDefaultHTTPAndHTTPSList
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPListenerPort(t *testing.T) {
@@ -595,6 +632,7 @@ func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPListenerPort(t *tes
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPSListenerPort(t *testing.T) {
@@ -623,6 +661,7 @@ func TestExecuteTemplate_ForMainForNGINXWithCustomDefaultHTTPSListenerPort(t *te
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPListenerPort(t *testing.T) {
@@ -651,6 +690,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPListenerPort(t 
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPSListenerPort(t *testing.T) {
@@ -679,6 +719,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithCustomDefaultHTTPSListenerPort(t
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithHTTP2On(t *testing.T) {
@@ -717,6 +758,7 @@ func TestExecuteTemplate_ForMainForNGINXWithHTTP2On(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2On(t *testing.T) {
@@ -755,6 +797,7 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2On(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXWithHTTP2Off(t *testing.T) {
@@ -791,6 +834,7 @@ func TestExecuteTemplate_ForMainForNGINXWithHTTP2Off(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
@@ -826,6 +870,521 @@ func TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2Off(t *testing.T) {
 		if strings.Contains(mainConf, want) {
 			t.Errorf("want %q in generated config", want)
 		}
+	}
+	snaps.MatchSnapshot(t, buf.String())
+}
+
+func TestExecuteTemplate_ForIngressForNGINXWithProxySetHeadersAnnotationWithDefaultValue(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;`,
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
+	}
+}
+
+func TestExecuteTemplate_ForIngressForNGINXMasterWithProxySetHeadersAnnotationWithCustomValue(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/proxy-set-headers": "X-Forwarded-ABC: valueABC",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC "valueABC";`,
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC "valueABC";`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithoutAnnotationMinionsWithDefaultValuesWithProxySetHeadersAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Coffee",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-Coffee $http_x_forwarded_coffee;`,
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Tea",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-Tea $http_x_forwarded_tea;`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForProxySetHeaderAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXPlusIngressTmpl(t)
+	buf := &bytes.Buffer{}
+
+	err := tmpl.Execute(buf, ingressCfgMasterMinionNGINXPlusMasterWithProxySetHeaderAnnotation)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantHeader := `proxy_set_header X-Forwarded-ABC "coffee";`
+
+	if !strings.Contains(buf.String(), wantHeader) {
+		t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+	}
+	snaps.MatchSnapshot(t, buf.String())
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithoutAnnotationMinionsWithCustomValuesProxySetHeadersAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Minion: coffee",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-Minion "coffee";`,
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Minion: tea",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-Minion "tea";`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithoutAnnotationMinionsWithDifferentHeadersForProxySetHeadersAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Coffee: mocha",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-Coffee "mocha";`,
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Tea: green",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-Tea "green";`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterWithAnnotationForProxySetHeadersAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;`,
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterMinionsWithDifferentHeadersForProxySetHeadersAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Coffee: espresso",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-Coffee "espresso"`,
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Tea: chai",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-Tea "chai"`,
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXWithProxySetHeadersAnnotationForMinionOverrideMaster(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC: coffee",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-ABC "coffee"`,
+			},
+			wantTeaHeaders: []string{
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
+	}
+}
+
+func TestExecuteTemplate_ForMergeableIngressForNGINXMasterMinionsWithMultipleDifferentHeadersForProxySetHeadersAnnotation(t *testing.T) {
+	t.Parallel()
+
+	tmpl := newNGINXIngressTmpl(t)
+	testCases := []struct {
+		masterAnnotations map[string]string
+		coffeeAnnotations map[string]string
+		teaAnnotations    map[string]string
+		wantCoffeeHeaders []string
+		wantTeaHeaders    []string
+	}{
+		{
+			masterAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-ABC,BVC,Location: master",
+			},
+			coffeeAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Coffee: espresso,X-Forwarded-Minion: coffee, Location: minion",
+			},
+			wantCoffeeHeaders: []string{
+				`proxy_set_header X-Forwarded-Coffee "espresso"`,
+				`proxy_set_header X-Forwarded-Minion "coffee"`,
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				"proxy_set_header BVC $http_bvc;",
+				`proxy_set_header Location "minion"`,
+			},
+			teaAnnotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "minion",
+				"nginx.org/proxy-set-headers":      "X-Forwarded-Tea: chai",
+			},
+			wantTeaHeaders: []string{
+				`proxy_set_header X-Forwarded-Tea "chai"`,
+				"proxy_set_header X-Forwarded-ABC $http_x_forwarded_abc;",
+				"proxy_set_header BVC $http_bvc;",
+				`proxy_set_header Location "master"`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		buf := &bytes.Buffer{}
+		ingressCfg := createProxySetHeaderIngressConfig(tc.masterAnnotations, tc.coffeeAnnotations, tc.teaAnnotations)
+
+		err := tmpl.Execute(buf, ingressCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, wantHeader := range tc.wantCoffeeHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated coffee config", wantHeader)
+			}
+		}
+
+		for _, wantHeader := range tc.wantTeaHeaders {
+			if !strings.Contains(buf.String(), wantHeader) {
+				t.Errorf("expected header %q not found in generated tea config", wantHeader)
+			}
+		}
+		snaps.MatchSnapshot(t, buf.String())
 	}
 }
 
@@ -864,6 +1423,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2On(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithHTTP2On(t *testing.T) {
@@ -901,6 +1461,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithHTTP2On(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2Off(t *testing.T) {
@@ -936,6 +1497,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithHTTP2Off(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithHTTP2Off(t *testing.T) {
@@ -971,6 +1533,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithHTTP2Off(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimit(t *testing.T) {
@@ -1001,6 +1564,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimit(t *testing.T) {
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimitMinions(t *testing.T) {
@@ -1036,6 +1600,7 @@ func TestExecuteTemplate_ForIngressForNGINXWithRequestRateLimitMinions(t *testin
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimit(t *testing.T) {
@@ -1066,6 +1631,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimit(t *testing.T
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimitMinions(t *testing.T) {
@@ -1101,6 +1667,7 @@ func TestExecuteTemplate_ForIngressForNGINXPlusWithRequestRateLimitMinions(t *te
 			t.Errorf("want %q in generated config", want)
 		}
 	}
+	snaps.MatchSnapshot(t, buf.String())
 }
 
 func newNGINXPlusIngressTmpl(t *testing.T) *template.Template {
@@ -1184,6 +1751,23 @@ var (
 						LoginURL: "https://test.example.com/login",
 					},
 				},
+				AppProtectEnable: "on",
+				AppProtectPolicy: "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				AppProtectLogConfs: []string{
+					"/etc/nginx/waf/nac-logconfs/test_logconf syslog:server=127.0.0.1:514",
+					"/etc/nginx/waf/nac-logconfs/test_logconf2",
+				},
+				AppProtectLogEnable:          "on",
+				AppProtectDosEnable:          "on",
+				AppProtectDosPolicyFile:      "/test/policy.json",
+				AppProtectDosLogConfFile:     "/test/logConf.json",
+				AppProtectDosLogEnable:       true,
+				AppProtectDosMonitorURI:      "/path/to/monitor",
+				AppProtectDosMonitorProtocol: "http1",
+				AppProtectDosMonitorTimeout:  30,
+				AppProtectDosName:            "testdos",
+				AppProtectDosAccessLogDst:    "/var/log/dos",
+				AppProtectDosAllowListPath:   "/etc/nginx/dos/allowlist/default_test.example.com",
 			},
 		},
 		Upstreams: []Upstream{testUpstream},
@@ -1415,29 +1999,47 @@ var (
 	}
 
 	mainCfg = MainConfig{
-		DefaultHTTPListenerPort:  80,
-		DefaultHTTPSListenerPort: 443,
-		ServerNamesHashMaxSize:   "512",
-		ServerTokens:             "off",
-		WorkerProcesses:          "auto",
-		WorkerCPUAffinity:        "auto",
-		WorkerShutdownTimeout:    "1m",
-		WorkerConnections:        "1024",
-		WorkerRlimitNofile:       "65536",
-		LogFormat:                []string{"$remote_addr", "$remote_user"},
-		LogFormatEscaping:        "default",
-		StreamSnippets:           []string{"# comment"},
-		StreamLogFormat:          []string{"$remote_addr", "$remote_user"},
-		StreamLogFormatEscaping:  "none",
-		ResolverAddresses:        []string{"example.com", "127.0.0.1"},
-		ResolverIPV6:             false,
-		ResolverValid:            "10s",
-		ResolverTimeout:          "15s",
-		KeepaliveTimeout:         "65s",
-		KeepaliveRequests:        100,
-		VariablesHashBucketSize:  256,
-		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		DefaultHTTPListenerPort:            80,
+		DefaultHTTPSListenerPort:           443,
+		ServerNamesHashMaxSize:             "512",
+		ServerTokens:                       "off",
+		WorkerProcesses:                    "auto",
+		WorkerCPUAffinity:                  "auto",
+		WorkerShutdownTimeout:              "1m",
+		WorkerConnections:                  "1024",
+		WorkerRlimitNofile:                 "65536",
+		LogFormat:                          []string{"$remote_addr", "$remote_user"},
+		LogFormatEscaping:                  "default",
+		StreamSnippets:                     []string{"# comment"},
+		StreamLogFormat:                    []string{"$remote_addr", "$remote_user"},
+		StreamLogFormatEscaping:            "none",
+		ResolverAddresses:                  []string{"example.com", "127.0.0.1"},
+		ResolverIPV6:                       false,
+		ResolverValid:                      "10s",
+		ResolverTimeout:                    "15s",
+		KeepaliveTimeout:                   "65s",
+		KeepaliveRequests:                  100,
+		VariablesHashBucketSize:            256,
+		VariablesHashMaxSize:               1024,
+		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r30)"),
+		AppProtectLoadModule:               true,
+		AppProtectV5LoadModule:             false,
+		AppProtectV5EnforcerAddr:           "",
+		AppProtectFailureModeAction:        "pass",
+		AppProtectCompressedRequestsAction: "pass",
+		AppProtectCookieSeed:               "ABCDEFGHIJKLMNOP",
+		AppProtectCPUThresholds:            "high=low=100",
+		AppProtectPhysicalMemoryThresholds: "high=low=100",
+		AppProtectReconnectPeriod:          "10",
+		AppProtectDosLoadModule:            true,
+		AppProtectDosLogFormat: []string{
+			"$remote_addr - $remote_user [$time_local]",
+			"\"$request\" $status $body_bytes_sent ",
+			"\"$http_referer\" \"$http_user_agent\"",
+		},
+		AppProtectDosLogFormatEscaping: "json",
+		AppProtectDosArbFqdn:           "arb.test.server.com",
+		AccessLog:                      "/dev/stdout main",
 	}
 
 	mainCfgR31 = MainConfig{
@@ -1464,33 +2066,49 @@ var (
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
 		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AppProtectV5LoadModule:   true,
+		AppProtectV5EnforcerAddr: "enforcer.svc.local",
+		AccessLog:                "/dev/stdout main",
 	}
 
 	mainCfgHTTP2On = MainConfig{
-		DefaultHTTPListenerPort:  80,
-		DefaultHTTPSListenerPort: 443,
-		HTTP2:                    true,
-		ServerNamesHashMaxSize:   "512",
-		ServerTokens:             "off",
-		WorkerProcesses:          "auto",
-		WorkerCPUAffinity:        "auto",
-		WorkerShutdownTimeout:    "1m",
-		WorkerConnections:        "1024",
-		WorkerRlimitNofile:       "65536",
-		LogFormat:                []string{"$remote_addr", "$remote_user"},
-		LogFormatEscaping:        "default",
-		StreamSnippets:           []string{"# comment"},
-		StreamLogFormat:          []string{"$remote_addr", "$remote_user"},
-		StreamLogFormatEscaping:  "none",
-		ResolverAddresses:        []string{"example.com", "127.0.0.1"},
-		ResolverIPV6:             false,
-		ResolverValid:            "10s",
-		ResolverTimeout:          "15s",
-		KeepaliveTimeout:         "65s",
-		KeepaliveRequests:        100,
-		VariablesHashBucketSize:  256,
-		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		DefaultHTTPListenerPort:            80,
+		DefaultHTTPSListenerPort:           443,
+		HTTP2:                              true,
+		ServerNamesHashMaxSize:             "512",
+		ServerTokens:                       "off",
+		WorkerProcesses:                    "auto",
+		WorkerCPUAffinity:                  "auto",
+		WorkerShutdownTimeout:              "1m",
+		WorkerConnections:                  "1024",
+		WorkerRlimitNofile:                 "65536",
+		LogFormat:                          []string{"$remote_addr", "$remote_user"},
+		LogFormatEscaping:                  "default",
+		StreamSnippets:                     []string{"# comment"},
+		StreamLogFormat:                    []string{"$remote_addr", "$remote_user"},
+		StreamLogFormatEscaping:            "none",
+		ResolverAddresses:                  []string{"example.com", "127.0.0.1"},
+		ResolverIPV6:                       false,
+		ResolverValid:                      "10s",
+		ResolverTimeout:                    "15s",
+		KeepaliveTimeout:                   "65s",
+		KeepaliveRequests:                  100,
+		VariablesHashBucketSize:            256,
+		VariablesHashMaxSize:               1024,
+		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AppProtectLoadModule:               true,
+		AppProtectV5LoadModule:             false,
+		AppProtectV5EnforcerAddr:           "",
+		AppProtectFailureModeAction:        "pass",
+		AppProtectCompressedRequestsAction: "pass",
+		AppProtectCookieSeed:               "ABCDEFGHIJKLMNOP",
+		AppProtectCPUThresholds:            "high=low=100",
+		AppProtectPhysicalMemoryThresholds: "high=low=100",
+		AppProtectReconnectPeriod:          "10",
+		AppProtectDosLoadModule:            true,
+		AppProtectDosLogFormat:             []string{},
+		AppProtectDosArbFqdn:               "arb.test.server.com",
+		AccessLog:                          "/dev/stdout main",
 	}
 
 	mainCfgCustomTLSPassthroughPort = MainConfig{
@@ -1517,6 +2135,7 @@ var (
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      8443,
 		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgWithoutTLSPassthrough = MainConfig{
@@ -1543,6 +2162,7 @@ var (
 		TLSPassthrough:          false,
 		TLSPassthroughPort:      8443,
 		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgDefaultTLSPassthroughPort = MainConfig{
@@ -1569,6 +2189,7 @@ var (
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      443,
 		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:               "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPAndHTTPSListenerPorts = MainConfig{
@@ -1595,6 +2216,7 @@ var (
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
 		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:                "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPListenerPort = MainConfig{
@@ -1621,6 +2243,7 @@ var (
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
 		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:                "/dev/stdout main",
 	}
 
 	mainCfgCustomDefaultHTTPSListenerPort = MainConfig{
@@ -1647,6 +2270,7 @@ var (
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
 		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		AccessLog:                "/dev/stdout main",
 	}
 
 	// Vars for Mergable Ingress Master - Minion tests
@@ -2207,6 +2831,82 @@ var (
 		},
 	}
 
+	// ingressCfgMasterMinionNGINXPlusMasterWithProxySetHeaderAnnotation holds data to test the following scenario:
+	//
+	// Ingress Master - Minion
+	//
+	//  - Master: without `proxy-set-headers` annotation
+	//  - Minion 1 (cafe-ingress-coffee-minion): with `proxy-set-headers annotation
+	//  - Minion 2 (cafe-ingress-tea-minion): with `proxy-set-headers` annotation
+	ingressCfgMasterMinionNGINXPlusMasterWithProxySetHeaderAnnotation = IngressNginxConfig{
+		Upstreams: []Upstream{
+			coffeeUpstreamNginxPlus,
+			teaUpstreamNGINXPlus,
+		},
+		Servers: []Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []Location{
+					{
+						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
+						Upstream:            coffeeUpstreamNginxPlus,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-coffee-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"nginx.org/mergeable-ingress-type": "minion",
+								"nginx.org/proxy-set-headers":      "X-Forwarded-ABC: coffee",
+							},
+						},
+						ProxySSLName: "coffee-svc.default.svc",
+					},
+					{
+						Path:                "/tea",
+						ServiceName:         "tea-svc",
+						Upstream:            teaUpstreamNGINXPlus,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-tea-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"nginx.org/mergeable-ingress-type": "minion",
+								"nginx.org/proxy-set-headers":      "X-Forwarded-ABC: tea",
+							},
+						},
+						ProxySSLName: "tea-svc.default.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]HealthCheck),
+			},
+		},
+		Ingress: Ingress{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
+	}
+
 	// Ingress Config example without added annotations
 	ingressCfgHTTP2On = IngressNginxConfig{
 		Servers: []Server{
@@ -2458,3 +3158,34 @@ var (
 		Headers:      headers,
 	}
 )
+
+func createProxySetHeaderIngressConfig(masterAnnotations map[string]string, coffeeAnnotations map[string]string, teamAnnotations map[string]string) IngressNginxConfig {
+	return IngressNginxConfig{
+		Servers: []Server{
+			{
+				Name: "cafe.example.com",
+				Locations: []Location{
+					{
+						MinionIngress: &Ingress{
+							Name:        "cafe-ingress-coffee-minion",
+							Namespace:   "default",
+							Annotations: coffeeAnnotations,
+						},
+					},
+					{
+						MinionIngress: &Ingress{
+							Name:        "cafe-ingress-tea-minion",
+							Namespace:   "default",
+							Annotations: teamAnnotations,
+						},
+					},
+				},
+			},
+		},
+		Ingress: Ingress{
+			Name:        "cafe-ingress-master",
+			Namespace:   "default",
+			Annotations: masterAnnotations,
+		},
+	}
+}

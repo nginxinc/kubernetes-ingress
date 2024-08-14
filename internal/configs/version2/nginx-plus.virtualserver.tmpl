@@ -32,6 +32,14 @@ upstream {{ $u.Name }} {
 }
 {{ end }}
 
+{{- range $kvz := .KeyValZones }}
+keyval_zone zone={{ $kvz.Name }}:{{ $kvz.Size}} state={{ $kvz.State }};
+{{- end }}
+
+{{- range $kv := .KeyVals }}
+keyval {{ $kv.Key}} {{ $kv.Variable}} zone={{ $kv.ZoneName }};
+{{- end }}
+
 {{- range $sc := .SplitClients }}
 split_clients {{ $sc.Source }} {{ $sc.Variable }} {
     {{- range $d := $sc.Distributions }}
@@ -82,13 +90,14 @@ server {
     include oidc/oidc.conf;
 
     set $oidc_pkce_enable 0;
-    set $oidc_logout_redirect "/_logout";
+    set $oidc_logout_redirect "{{ $oidc.PostLogoutRedirectURI }}";
     set $oidc_hmac_key "{{ $s.VSName }}";
     set $zone_sync_leeway {{ $oidc.ZoneSyncLeeway }};
 
     set $oidc_authz_endpoint "{{ $oidc.AuthEndpoint }}";
     set $oidc_authz_extra_args "{{ $oidc.AuthExtraArgs }}";
     set $oidc_token_endpoint "{{ $oidc.TokenEndpoint }}";
+    set $oidc_end_session_endpoint "{{ $oidc.EndSessionEndpoint }}";
     set $oidc_jwt_keyfile "{{ $oidc.JwksURI }}";
     set $oidc_scopes "{{ $oidc.Scope }}";
     set $oidc_client "{{ $oidc.ClientID }}";
@@ -214,6 +223,13 @@ server {
     }
     {{- end }}
 
+    {{- if $s.APIKeyEnabled}}
+    location = /_validate_apikey_njs {
+            internal;
+            js_content apikey_auth.validate;
+    }
+    {{- end }}
+
     {{- with $s.BasicAuth }}
     auth_basic {{ printf "%q" .Realm }};
     auth_basic_user_file {{ .Secret }};
@@ -235,6 +251,13 @@ server {
     proxy_ssl_session_reuse {{ if .SessionReuse }}on{{else}}off{{end}};
     proxy_ssl_server_name {{ if .ServerName }}on{{else}}off{{end}};
     proxy_ssl_name {{ .SSLName }};
+    {{- end }}
+
+    {{- with $s.APIKey}}
+    js_var $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
+    js_var $apikey_auth_local_map "{{ .MapName}}";
+    js_var $apikey_auth_token $apikey_auth_hash;
+    auth_request /_validate_apikey_njs;
     {{- end }}
 
     {{- with $s.WAF }}
@@ -259,6 +282,10 @@ server {
     app_protect_dos_enable {{ .Enable }};
         {{- if .Name }}
     app_protect_dos_name "{{ .Name }}";
+        {{- end }}
+
+        {{- if .AllowListPath }}
+    app_protect_dos_access_file "{{ .AllowListPath }}";
         {{- end }}
 
         {{- if .ApDosPolicy }}
@@ -310,12 +337,17 @@ server {
             {{- else }}
         proxy_pass {{ $hc.ProxyPass }};
             {{- end }}
-        health_check {{ if $hc.URI }}uri={{ $hc.URI }} {{ end }}{{ if $hc.Port }}port={{ $hc.Port }} {{ end }}interval={{ $hc.Interval }} jitter={{ $hc.Jitter }}
-            fails={{ $hc.Fails }} passes={{ $hc.Passes }}{{ if $hc.Match }} match={{ $hc.Match }}{{ end }}
-            {{ if $hc.Mandatory }} mandatory{{ if $hc.Persistent }} persistent{{ end }}{{ end }}
-            {{ if $hc.GRPCPass }} type=grpc{{ if $hc.GRPCStatus }} grpc_status={{ $hc.GRPCStatus }}{{ end }}
-            {{ if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{ end }}{{ end }} keepalive_time={{ $hc.KeepaliveTime }};
-    }
+        health_check{{- if $hc.URI }} uri={{ $hc.URI }} {{ end -}}
+        {{- if $hc.Port }} port={{ $hc.Port }} {{ end -}}
+        interval={{ $hc.Interval }} jitter={{ $hc.Jitter }} fails={{ $hc.Fails }} passes={{ $hc.Passes }}
+        {{- if $hc.Match }} match={{ $hc.Match }}{{- end -}}
+        {{- if $hc.Mandatory }} mandatory {{ end -}}
+        {{- if $hc.Persistent }} persistent {{ end -}}
+        {{- if not $hc.IsGRPC }} keepalive_time={{ $hc.KeepaliveTime }}{{ end -}}
+        {{- if $hc.GRPCPass }} type=grpc{{- if $hc.GRPCStatus }} grpc_status={{ $hc.GRPCStatus }}{{- end -}}
+        {{- if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{- end -}}{{ end -}};
+
+   }
     {{- end }}
 
     {{- range $e := $s.ErrorPageLocations }}
@@ -334,6 +366,9 @@ server {
     {{ range $l := $s.ReturnLocations }}
     location {{ $l.Name }} {
         default_type "{{ $l.DefaultType }}";
+        {{ range $h := $l.Headers }}
+        add_header {{ $h.Name }} "{{ $h.Value }}" always;
+        {{ end }}
         # status code is ignored here, using 0
         return 0 "{{ $l.Return.Text }}";
     }
@@ -433,6 +468,19 @@ server {
             {{- end }}
         {{- end }}
 
+
+        {{- with $l.APIKey}}
+        set $apikey_auth_local_map  "{{ .MapName }}";
+        set $header_query_value {{ makeHeaderQueryValue $l.APIKey | printf }};
+        set $apikey_auth_token $apikey_auth_hash;
+        auth_request /_validate_apikey_njs;
+        {{- else }}
+        {{- with $s.APIKey }}
+        set $header_query_value {{ makeHeaderQueryValue $s.APIKey | printf }};
+        {{- end }}
+
+        {{- end }}
+
         {{- with $l.WAF }}
         app_protect_enable {{ .Enable }};
             {{- if .ApPolicy }}
@@ -480,6 +528,10 @@ server {
         app_protect_dos_name "{{ .Name }}";
             {{- end }}
 
+            {{- if .AllowListPath }}
+        app_protect_dos_access_file "{{ .AllowListPath }}";
+            {{- end }}
+
             {{- if .ApDosPolicy }}
         app_protect_dos_policy_file {{ .ApDosPolicy }};
             {{- end }}
@@ -514,7 +566,7 @@ server {
         {{- if $l.InternalProxyPass }}
         proxy_pass {{ $l.InternalProxyPass }};
         {{- end }}
-
+        set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
         {{- if or $l.ProxyPass $l.GRPCPass }}
             {{- range $r := $l.Rewrites }}
         rewrite {{ $r }};
@@ -537,7 +589,6 @@ server {
             {{- end }}
             {{- if not $l.GRPCPass }}
         proxy_http_version 1.1;
-        set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $vs_connection_header;
         proxy_pass_request_headers {{ if $l.ProxyPassRequestHeaders }}on{{ else }}off{{ end }};

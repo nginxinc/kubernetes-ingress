@@ -6,6 +6,7 @@ ROOTDIR=$(git rev-parse --show-toplevel || echo ".")
 TMPDIR=/tmp
 HELM_CHART_PATH="${ROOTDIR}/charts/nginx-ingress"
 DEPLOYMENT_PATH="${ROOTDIR}/deployments"
+EXAMPLES_PATH="${ROOTDIR}/examples"
 DEBUG=${DEBUG:-"false"}
 
 DOCS_TO_UPDATE_FOLDER=${ROOTDIR}/docs/content
@@ -28,40 +29,57 @@ FILE_TO_UPDATE_HELM_CHART_VERSION=(
 )
 
  usage() {
-    echo "Usage: $0 <ic_version> <helm_chart_version>"
+    echo "Usage: $0 <current_ic_version> <current_helm_chart_version> <current_operator_version> <new_ic_version> <new_helm_chart_version> <new_operator_version>"
     exit 1
  }
 
-if ! command -v yq > /dev/null 2>&1; then
-    echo "ERROR: yq command not found in \$PATH, cannot continue, exiting..."
-    exit 2
-fi
+current_ic_version=$1
+current_helm_chart_version=$2
+current_operator_version=$3
+new_ic_version=$4
+new_helm_chart_version=$5
+new_operator_version=$6
 
-ic_version=$1
-helm_chart_version=$2
-
-if [ -z "${ic_version}" ]; then
+if [ -z "${current_ic_version}" ]; then
     usage
 fi
 
-if [ -z "${helm_chart_version}" ]; then
+if [ -z "${current_helm_chart_version}" ]; then
     usage
 fi
 
-current_ic_version=$(yq '.appVersion' <"${HELM_CHART_PATH}/Chart.yaml")
+if [ -z "${current_operator_version}" ]; then
+    usage
+fi
+
+if [ -z "${new_ic_version}" ]; then
+    usage
+fi
+
+if [ -z "${new_helm_chart_version}" ]; then
+    usage
+fi
+
+if [ -z "${new_operator_version}" ]; then
+    usage
+fi
+
+
 escaped_current_ic_version=$(printf '%s' "$current_ic_version" | sed -e 's/\./\\./g');
-current_helm_chart_version=$(yq '.version' <"${HELM_CHART_PATH}/Chart.yaml")
 escaped_current_helm_chart_version=$(printf '%s' "$current_helm_chart_version" | sed -e 's/\./\\./g');
+escaped_current_operator_version=$(printf '%s' "$current_operator_version" | sed -e 's/\./\\./g');
 
 echo "Updating versions: "
-echo "ic_version: ${current_ic_version} -> ${ic_version}"
-echo "helm_chart_version: ${current_helm_chart_version} -> ${helm_chart_version}"
+echo "ic_version: ${current_ic_version} -> ${new_ic_version}"
+echo "helm_chart_version: ${current_helm_chart_version} -> ${new_helm_chart_version}"
+echo "operator_version: ${current_operator_version} -> ${new_operator_version}"
 
-regex_ic="s#$escaped_current_ic_version#$ic_version#g"
-regex_helm="s#$escaped_current_helm_chart_version#$helm_chart_version#g"
+regex_ic="s#$escaped_current_ic_version#$new_ic_version#g"
+regex_helm="s#$escaped_current_helm_chart_version#$new_helm_chart_version#g"
+regex_operator="s#$escaped_current_operator_version#$new_operator_version#g"
 
 mv "${HELM_CHART_PATH}/values.schema.json" "${TMPDIR}/"
-jq --arg version "${ic_version}" \
+jq --arg version "${new_ic_version}" \
     '.properties.controller.properties.image.properties.tag.default = $version | .properties.controller.properties.image.properties.tag.examples[0] = $version | .properties.controller.examples[0].image.tag = $version | .properties.controller.properties.image.examples[0].tag = $version | .examples[0].controller.image.tag = $version' \
     ${TMPDIR}/values.schema.json \
     > "${HELM_CHART_PATH}/values.schema.json"
@@ -103,14 +121,19 @@ for i in "${FILE_TO_UPDATE_HELM_CHART_VERSION[@]}"; do
 done
 
 # update docs with new versions
-docs_files=$(find "${DOCS_TO_UPDATE_FOLDER}" -type f -name "*.md" ! -name releases.md ! -name CHANGELOG.md)
-for i in ${docs_files}; do
+echo -n "${new_ic_version}" > ./docs/layouts/shortcodes/nic-version.html
+echo -n "${new_helm_chart_version}" > ./docs/layouts/shortcodes/nic-helm-version.html
+echo -n "${new_operator_version}" > ./docs/layouts/shortcodes/nic-operator-version.html
+
+# update examples with new versions
+example_files=$(find "${EXAMPLES_PATH}" -type f -name "*.md")
+for i in ${example_files}; do
     if [ "${DEBUG}" != "false" ]; then
         echo "Processing ${i}"
     fi
     file_name=$(basename "${i}")
     mv "${i}" "${TMPDIR}/${file_name}"
-    cat "${TMPDIR}/${file_name}" | sed -e "$regex_ic" | sed -e "$regex_helm" > "${i}"
+    cat "${TMPDIR}/${file_name}" | sed -e "$regex_ic" | sed -e "$regex_helm" | sed -e "$regex_operator" > "${i}"
     if [ $? -ne 0 ]; then
         echo "ERROR: failed processing ${i}"
         mv "${TMPDIR}/${file_name}" "${i}"

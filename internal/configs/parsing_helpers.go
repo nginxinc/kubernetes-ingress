@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -248,16 +250,16 @@ func ParseRequestRate(s string) (string, error) {
 	match := rateRegexp.FindStringSubmatch(s)
 
 	if match == nil {
-		return "", errors.New("String does not match rate-pattern: ^(\\d+)(r/s|r/m)$")
+		return "", errors.New("string does not match rate-pattern: ^(\\d+)(r/s|r/m)$")
 	}
 
 	number, err := strconv.Atoi(match[1])
 	if err != nil {
-		return "", errors.New("String does not match rate-pattern")
+		return "", errors.New("string does not match rate-pattern")
 	}
 
 	if number <= 0 {
-		return "", errors.New("Rate must be >0")
+		return "", errors.New("rate must be >0")
 	}
 
 	return s, nil
@@ -274,6 +276,20 @@ func ParseProxyBuffersSpec(s string) (string, error) {
 		return s, nil
 	}
 	return "", errors.New("invalid proxy buffers string")
+}
+
+// parseProxySetHeaders ensures that the string colon-separated list of headers and values
+func parseProxySetHeaders(proxySetHeaders []string) []version2.Header {
+	var headers []version2.Header
+	for _, header := range proxySetHeaders {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 1 {
+			headers = append(headers, version2.Header{Name: parts[0], Value: ""})
+		} else {
+			headers = append(headers, version2.Header{Name: parts[0], Value: parts[1]})
+		}
+	}
+	return headers
 }
 
 // ParsePortList ensures that the string is a comma-separated list of port numbers
