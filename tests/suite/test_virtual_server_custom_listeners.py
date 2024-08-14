@@ -238,9 +238,6 @@ class TestVirtualServerCustomListeners:
         if test_setup["http_listener_in_config"]:
             assert "listen 8085;" in vs_config
             assert "listen [::]:8085;" in vs_config
-            assert "listen [::]:8085;" in vs_config
-
-            assert "listen [::]:8085;" in vs_config
 
         else:
             assert "listen 8085;" not in vs_config
@@ -248,9 +245,6 @@ class TestVirtualServerCustomListeners:
 
         if test_setup["https_listener_in_config"]:
             assert "listen 8445 ssl;" in vs_config
-            assert "listen [::]:8445 ssl;" in vs_config
-            assert "listen [::]:8445 ssl;" in vs_config
-
             assert "listen [::]:8445 ssl;" in vs_config
 
         else:
@@ -550,7 +544,6 @@ class TestVirtualServerCustomListeners:
             assert "listen 8445 ssl;" not in vs_config
             assert "listen [::]:8445 ssl;" not in vs_config
 
-        # Ensure default listeners are not present
         assert "listen 80;" not in vs_config
         assert "listen [::]:80;" not in vs_config
         assert "listen 443 ssl;" not in vs_config
