@@ -179,12 +179,12 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 
 	err := su.UpdateTransportServerStatus(ts, "after status", "after reason", "after message")
 	if err != nil {
-		t.Errorf("unexpected error: %v, result should be empty as no matching TransportServer is present", err)
+		t.Fatalf("unexpected error: %v, result should be empty as no matching TransportServer is present", err)
 	}
 
-	updatedTs, _ := fakeClient.K8sV1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
-	if updatedTs != nil {
-		t.Errorf("expected TransportServer Store would be empty as provided TransportServer was not found. Unexpected updated TransportServer: %v", updatedTs)
+	_, err = fakeClient.K8sV1().TransportServers(ts.Namespace).Get(context.TODO(), ts.Name, meta_v1.GetOptions{})
+	if err == nil {
+		t.Fatalf("expected TransportServer Store would be empty as provided TransportServer was not found.")
 	}
 }
 
