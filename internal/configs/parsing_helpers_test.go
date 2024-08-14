@@ -129,7 +129,7 @@ func TestParseServicesFromString(t *testing.T) {
 	for _, tc := range tt {
 		got := ParseServiceList(tc.input)
 		if !cmp.Equal(tc.want, got) {
-			t.Errorf(cmp.Diff(tc.want, got))
+			t.Error(cmp.Diff(tc.want, got))
 		}
 	}
 }
@@ -183,13 +183,13 @@ func TestGetMapKeyAsBool(t *testing.T) {
 
 	b, exists, err := GetMapKeyAsBool(configMap.Data, "key", &configMap)
 	if !exists {
-		t.Errorf("The key 'key' must exist in the configMap")
+		t.Error("The key 'key' must exist in the configMap")
 	}
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	if b != true {
-		t.Errorf("Result should be true")
+		t.Error("Result should be true")
 	}
 }
 
@@ -200,7 +200,7 @@ func TestGetMapKeyAsBoolNotFound(t *testing.T) {
 
 	_, exists, _ := GetMapKeyAsBool(configMap.Data, "key", &configMap)
 	if exists {
-		t.Errorf("The key 'key' must not exist in the configMap")
+		t.Error("The key 'key' must not exist in the configMap")
 	}
 }
 
@@ -249,7 +249,7 @@ func TestGetMapKeyAsInt(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	if !exists {
-		t.Errorf("The key 'key' must exist in the configMap")
+		t.Error("The key 'key' must exist in the configMap")
 	}
 	expected := 123456789
 	if i != expected {
@@ -264,7 +264,7 @@ func TestGetMapKeyAsIntNotFound(t *testing.T) {
 
 	_, exists, _ := GetMapKeyAsInt(configMap.Data, "key", &configMap)
 	if exists {
-		t.Errorf("The key 'key' must not exist in the configMap")
+		t.Error("The key 'key' must not exist in the configMap")
 	}
 }
 
@@ -313,7 +313,7 @@ func TestGetMapKeyAsInt64(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	if !exists {
-		t.Errorf("The key 'key' must exist in the configMap")
+		t.Error("The key 'key' must exist in the configMap")
 	}
 	var expected int64 = 123456789
 	if i != expected {
@@ -328,7 +328,7 @@ func TestGetMapKeyAsInt64NotFound(t *testing.T) {
 
 	_, exists, _ := GetMapKeyAsInt64(configMap.Data, "key", &configMap)
 	if exists {
-		t.Errorf("The key 'key' must not exist in the configMap")
+		t.Error("The key 'key' must not exist in the configMap")
 	}
 }
 
@@ -411,7 +411,7 @@ func TestGetMapKeyAsStringSliceNotFound(t *testing.T) {
 
 	_, exists := GetMapKeyAsStringSlice(configMap.Data, "key", &configMap, ",")
 	if exists {
-		t.Errorf("The key 'key' must not exist in the configMap")
+		t.Error("The key 'key' must not exist in the configMap")
 	}
 }
 
