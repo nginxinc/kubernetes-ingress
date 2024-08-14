@@ -4,8 +4,8 @@ package v1
 
 import (
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -22,25 +22,17 @@ type TransportServerLister interface {
 
 // transportServerLister implements the TransportServerLister interface.
 type transportServerLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1.TransportServer]
 }
 
 // NewTransportServerLister returns a new TransportServerLister.
 func NewTransportServerLister(indexer cache.Indexer) TransportServerLister {
-	return &transportServerLister{indexer: indexer}
-}
-
-// List lists all TransportServers in the indexer.
-func (s *transportServerLister) List(selector labels.Selector) (ret []*v1.TransportServer, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.TransportServer))
-	})
-	return ret, err
+	return &transportServerLister{listers.New[*v1.TransportServer](indexer, v1.Resource("transportserver"))}
 }
 
 // TransportServers returns an object that can list and get TransportServers.
 func (s *transportServerLister) TransportServers(namespace string) TransportServerNamespaceLister {
-	return transportServerNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return transportServerNamespaceLister{listers.NewNamespaced[*v1.TransportServer](s.ResourceIndexer, namespace)}
 }
 
 // TransportServerNamespaceLister helps list and get TransportServers.
@@ -58,26 +50,5 @@ type TransportServerNamespaceLister interface {
 // transportServerNamespaceLister implements the TransportServerNamespaceLister
 // interface.
 type transportServerNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all TransportServers in the indexer for a given namespace.
-func (s transportServerNamespaceLister) List(selector labels.Selector) (ret []*v1.TransportServer, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.TransportServer))
-	})
-	return ret, err
-}
-
-// Get retrieves the TransportServer from the indexer for a given namespace and name.
-func (s transportServerNamespaceLister) Get(name string) (*v1.TransportServer, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("transportserver"), name)
-	}
-	return obj.(*v1.TransportServer), nil
+	listers.ResourceIndexer[*v1.TransportServer]
 }
