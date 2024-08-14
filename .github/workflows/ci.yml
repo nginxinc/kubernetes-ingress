@@ -202,10 +202,6 @@ jobs:
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
           files: ./coverage.txt
-          name: kubernetes-ingress
-          fail_ci_if_error: true
-          verbose: true
-          plugin: gcov
           token: ${{ secrets.CODECOV_TOKEN }} # required
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
