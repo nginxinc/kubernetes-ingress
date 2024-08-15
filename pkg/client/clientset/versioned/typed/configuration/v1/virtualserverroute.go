@@ -4,14 +4,13 @@ package v1
 
 import (
 	"context"
-	"time"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // VirtualServerRoutesGetter has a method to return a VirtualServerRouteInterface.
@@ -24,6 +23,7 @@ type VirtualServerRoutesGetter interface {
 type VirtualServerRouteInterface interface {
 	Create(ctx context.Context, virtualServerRoute *v1.VirtualServerRoute, opts metav1.CreateOptions) (*v1.VirtualServerRoute, error)
 	Update(ctx context.Context, virtualServerRoute *v1.VirtualServerRoute, opts metav1.UpdateOptions) (*v1.VirtualServerRoute, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 	UpdateStatus(ctx context.Context, virtualServerRoute *v1.VirtualServerRoute, opts metav1.UpdateOptions) (*v1.VirtualServerRoute, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
@@ -36,144 +36,18 @@ type VirtualServerRouteInterface interface {
 
 // virtualServerRoutes implements VirtualServerRouteInterface
 type virtualServerRoutes struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*v1.VirtualServerRoute, *v1.VirtualServerRouteList]
 }
 
 // newVirtualServerRoutes returns a VirtualServerRoutes
 func newVirtualServerRoutes(c *K8sV1Client, namespace string) *virtualServerRoutes {
 	return &virtualServerRoutes{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*v1.VirtualServerRoute, *v1.VirtualServerRouteList](
+			"virtualserverroutes",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *v1.VirtualServerRoute { return &v1.VirtualServerRoute{} },
+			func() *v1.VirtualServerRouteList { return &v1.VirtualServerRouteList{} }),
 	}
-}
-
-// Get takes name of the virtualServerRoute, and returns the corresponding virtualServerRoute object, and an error if there is any.
-func (c *virtualServerRoutes) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.VirtualServerRoute, err error) {
-	result = &v1.VirtualServerRoute{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of VirtualServerRoutes that match those selectors.
-func (c *virtualServerRoutes) List(ctx context.Context, opts metav1.ListOptions) (result *v1.VirtualServerRouteList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1.VirtualServerRouteList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested virtualServerRoutes.
-func (c *virtualServerRoutes) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a virtualServerRoute and creates it.  Returns the server's representation of the virtualServerRoute, and an error, if there is any.
-func (c *virtualServerRoutes) Create(ctx context.Context, virtualServerRoute *v1.VirtualServerRoute, opts metav1.CreateOptions) (result *v1.VirtualServerRoute, err error) {
-	result = &v1.VirtualServerRoute{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(virtualServerRoute).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a virtualServerRoute and updates it. Returns the server's representation of the virtualServerRoute, and an error, if there is any.
-func (c *virtualServerRoutes) Update(ctx context.Context, virtualServerRoute *v1.VirtualServerRoute, opts metav1.UpdateOptions) (result *v1.VirtualServerRoute, err error) {
-	result = &v1.VirtualServerRoute{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		Name(virtualServerRoute.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(virtualServerRoute).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *virtualServerRoutes) UpdateStatus(ctx context.Context, virtualServerRoute *v1.VirtualServerRoute, opts metav1.UpdateOptions) (result *v1.VirtualServerRoute, err error) {
-	result = &v1.VirtualServerRoute{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		Name(virtualServerRoute.Name).
-		SubResource("status").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(virtualServerRoute).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the virtualServerRoute and deletes it. Returns an error if one occurs.
-func (c *virtualServerRoutes) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *virtualServerRoutes) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched virtualServerRoute.
-func (c *virtualServerRoutes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.VirtualServerRoute, err error) {
-	result = &v1.VirtualServerRoute{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("virtualserverroutes").
-		Name(name).
-		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

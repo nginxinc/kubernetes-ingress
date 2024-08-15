@@ -25,22 +25,24 @@ var transportserversKind = v1.SchemeGroupVersion.WithKind("TransportServer")
 
 // Get takes name of the transportServer, and returns the corresponding transportServer object, and an error if there is any.
 func (c *FakeTransportServers) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.TransportServer, err error) {
+	emptyResult := &v1.TransportServer{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(transportserversResource, c.ns, name), &v1.TransportServer{})
+		Invokes(testing.NewGetActionWithOptions(transportserversResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.TransportServer), err
 }
 
 // List takes label and field selectors, and returns the list of TransportServers that match those selectors.
 func (c *FakeTransportServers) List(ctx context.Context, opts metav1.ListOptions) (result *v1.TransportServerList, err error) {
+	emptyResult := &v1.TransportServerList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(transportserversResource, transportserversKind, c.ns, opts), &v1.TransportServerList{})
+		Invokes(testing.NewListActionWithOptions(transportserversResource, transportserversKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -59,40 +61,43 @@ func (c *FakeTransportServers) List(ctx context.Context, opts metav1.ListOptions
 // Watch returns a watch.Interface that watches the requested transportServers.
 func (c *FakeTransportServers) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(transportserversResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(transportserversResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a transportServer and creates it.  Returns the server's representation of the transportServer, and an error, if there is any.
 func (c *FakeTransportServers) Create(ctx context.Context, transportServer *v1.TransportServer, opts metav1.CreateOptions) (result *v1.TransportServer, err error) {
+	emptyResult := &v1.TransportServer{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(transportserversResource, c.ns, transportServer), &v1.TransportServer{})
+		Invokes(testing.NewCreateActionWithOptions(transportserversResource, c.ns, transportServer, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.TransportServer), err
 }
 
 // Update takes the representation of a transportServer and updates it. Returns the server's representation of the transportServer, and an error, if there is any.
 func (c *FakeTransportServers) Update(ctx context.Context, transportServer *v1.TransportServer, opts metav1.UpdateOptions) (result *v1.TransportServer, err error) {
+	emptyResult := &v1.TransportServer{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(transportserversResource, c.ns, transportServer), &v1.TransportServer{})
+		Invokes(testing.NewUpdateActionWithOptions(transportserversResource, c.ns, transportServer, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.TransportServer), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeTransportServers) UpdateStatus(ctx context.Context, transportServer *v1.TransportServer, opts metav1.UpdateOptions) (*v1.TransportServer, error) {
+func (c *FakeTransportServers) UpdateStatus(ctx context.Context, transportServer *v1.TransportServer, opts metav1.UpdateOptions) (result *v1.TransportServer, err error) {
+	emptyResult := &v1.TransportServer{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(transportserversResource, "status", c.ns, transportServer), &v1.TransportServer{})
+		Invokes(testing.NewUpdateSubresourceActionWithOptions(transportserversResource, "status", c.ns, transportServer, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.TransportServer), err
 }
@@ -107,7 +112,7 @@ func (c *FakeTransportServers) Delete(ctx context.Context, name string, opts met
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeTransportServers) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(transportserversResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(transportserversResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.TransportServerList{})
 	return err
@@ -115,11 +120,12 @@ func (c *FakeTransportServers) DeleteCollection(ctx context.Context, opts metav1
 
 // Patch applies the patch and returns the patched transportServer.
 func (c *FakeTransportServers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.TransportServer, err error) {
+	emptyResult := &v1.TransportServer{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(transportserversResource, c.ns, name, pt, data, subresources...), &v1.TransportServer{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(transportserversResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.TransportServer), err
 }
