@@ -4,14 +4,13 @@ package v1
 
 import (
 	"context"
-	"time"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // DNSEndpointsGetter has a method to return a DNSEndpointInterface.
@@ -24,6 +23,7 @@ type DNSEndpointsGetter interface {
 type DNSEndpointInterface interface {
 	Create(ctx context.Context, dNSEndpoint *v1.DNSEndpoint, opts metav1.CreateOptions) (*v1.DNSEndpoint, error)
 	Update(ctx context.Context, dNSEndpoint *v1.DNSEndpoint, opts metav1.UpdateOptions) (*v1.DNSEndpoint, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 	UpdateStatus(ctx context.Context, dNSEndpoint *v1.DNSEndpoint, opts metav1.UpdateOptions) (*v1.DNSEndpoint, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
@@ -36,144 +36,18 @@ type DNSEndpointInterface interface {
 
 // dNSEndpoints implements DNSEndpointInterface
 type dNSEndpoints struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*v1.DNSEndpoint, *v1.DNSEndpointList]
 }
 
 // newDNSEndpoints returns a DNSEndpoints
 func newDNSEndpoints(c *ExternaldnsV1Client, namespace string) *dNSEndpoints {
 	return &dNSEndpoints{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*v1.DNSEndpoint, *v1.DNSEndpointList](
+			"dnsendpoints",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *v1.DNSEndpoint { return &v1.DNSEndpoint{} },
+			func() *v1.DNSEndpointList { return &v1.DNSEndpointList{} }),
 	}
-}
-
-// Get takes name of the dNSEndpoint, and returns the corresponding dNSEndpoint object, and an error if there is any.
-func (c *dNSEndpoints) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.DNSEndpoint, err error) {
-	result = &v1.DNSEndpoint{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of DNSEndpoints that match those selectors.
-func (c *dNSEndpoints) List(ctx context.Context, opts metav1.ListOptions) (result *v1.DNSEndpointList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1.DNSEndpointList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested dNSEndpoints.
-func (c *dNSEndpoints) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a dNSEndpoint and creates it.  Returns the server's representation of the dNSEndpoint, and an error, if there is any.
-func (c *dNSEndpoints) Create(ctx context.Context, dNSEndpoint *v1.DNSEndpoint, opts metav1.CreateOptions) (result *v1.DNSEndpoint, err error) {
-	result = &v1.DNSEndpoint{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(dNSEndpoint).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a dNSEndpoint and updates it. Returns the server's representation of the dNSEndpoint, and an error, if there is any.
-func (c *dNSEndpoints) Update(ctx context.Context, dNSEndpoint *v1.DNSEndpoint, opts metav1.UpdateOptions) (result *v1.DNSEndpoint, err error) {
-	result = &v1.DNSEndpoint{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		Name(dNSEndpoint.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(dNSEndpoint).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *dNSEndpoints) UpdateStatus(ctx context.Context, dNSEndpoint *v1.DNSEndpoint, opts metav1.UpdateOptions) (result *v1.DNSEndpoint, err error) {
-	result = &v1.DNSEndpoint{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		Name(dNSEndpoint.Name).
-		SubResource("status").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(dNSEndpoint).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the dNSEndpoint and deletes it. Returns an error if one occurs.
-func (c *dNSEndpoints) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *dNSEndpoints) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched dNSEndpoint.
-func (c *dNSEndpoints) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.DNSEndpoint, err error) {
-	result = &v1.DNSEndpoint{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("dnsendpoints").
-		Name(name).
-		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }
