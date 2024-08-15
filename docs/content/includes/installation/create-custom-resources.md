@@ -11,16 +11,16 @@ There are two ways you can install the custom resource definitions:
 1. Using a URL to apply a single CRD yaml file, which we recommend.
 1. Applying your local copy of the CRD yaml files, which requires you to clone the repository.
 
-{{<tabs name="install-crds">}}
-
-{{%tab name="Install CRDs from single YAML"%}}
-
-This single YAML file creates CRDs for the following resources:
+The core custom CRDs are the following:
 
 - [VirtualServer and VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md" >}})
 - [TransportServer]({{< relref "configuration/transportserver-resource.md" >}})
 - [Policy]({{< relref "configuration/policy-resource.md" >}})
 - [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}})
+
+{{<tabs name="install-crds">}}
+
+{{%tab name="Install CRDs from single YAML"%}}
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
@@ -31,13 +31,6 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 {{%tab name="Install CRDs after cloning the repo"%}}
 
 {{< note >}} If you are installing the CRDs this way, ensure you have first cloned the repository. {{< /note >}}
-
-These YAML files create CRDs for the following resources:
-
-- [VirtualServer and VirtualServerRoute]({{< relref "configuration/virtualserver-and-virtualserverroute-resources.md" >}})
-- [TransportServer]({{< relref "configuration/transportserver-resource.md" >}})
-- [Policy]({{< relref "configuration/policy-resource.md" >}})
-- [GlobalConfiguration]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}})
 
 ```shell
 kubectl apply -f config/crd/bases/k8s.nginx.org_virtualservers.yaml
