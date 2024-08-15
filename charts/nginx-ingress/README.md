@@ -15,15 +15,15 @@ This chart deploys NGINX Ingress Controller in your Kubernetes cluster.
 - If you’d like to use NGINX Plus:
   - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal
     by following the instructions from
-    [here](https://docs.nginx.com/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
+    [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/using-the-jwt-token-docker-secret).
     Make sure to specify the secret using one of the following parameters:
     `controller.serviceAccount.imagePullSecretName` or `controller.serviceAccount.imagePullSecretsNames`.
   - Alternatively, pull an Ingress Controller image with NGINX Plus and push it to your private registry by following
     the instructions from
-    [here](https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image).
+    [here](https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/pulling-ingress-controller-image).
   - Alternatively, you can build an Ingress Controller image with NGINX Plus and push it to your private registry by
     following the instructions from
-    [here](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image).
+    [here](https://docs.nginx.com/nginx-ingress-controller/installation/building-nginx-ingress-controller/).
   - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
 - If you’d like to use App Protect DoS, please install App Protect DoS Arbitrator [helm
   chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart). Make sure to install in the same namespace as the
@@ -523,7 +523,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 
 ## Notes
 
-- The values-icp.yaml file is used for deploying the Ingress Controller on IBM Cloud Private. See the [blog
-  post](https://www.nginx.com/blog/nginx-ingress-controller-ibm-cloud-private/) for more details.
+<!-- I'm waiting for an updated link, 16Aug2024 - The values-icp.yaml file is used for deploying the Ingress Controller on IBM Cloud Private. See the [blog
+  post](https://www.nginx.com/blog/nginx-ingress-controller-ibm-cloud-private/) for more details. -->
 - The values-nsm.yaml file is used for deploying the Ingress Controller with NGINX Service Mesh. See the NGINX Service
   Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details.
