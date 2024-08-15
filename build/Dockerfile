@@ -383,12 +383,10 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
 	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
 	--mount=type=bind,from=nginx-files,src=nap-dos.sh,target=/usr/local/bin/nap-dos.sh \
-	--mount=type=bind,from=nginx-files,src=ubi-setup.sh,target=/usr/local/bin/ubi-setup.sh \
 	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
 	source /tmp/rhel_license \
 	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
-	&& microdnf --nodocs install -y ca-certificates \
-	&& ubi-setup.sh \
+	&& microdnf --nodocs install -y ca-certificates shadow-utils subscription-manager \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then microdnf --nodocs install -y nginx-agent; fi \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
@@ -398,19 +396,17 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& microdnf --enablerepo=codeready-builder-for-rhel-9-x86_64-rpms --nodocs install -y \
 	app-protect app-protect-attack-signatures app-protect-threat-campaigns \
 	&& rm -f /etc/yum.repos.d/app-protect-9.repo \
-	&& nap-waf.sh \
-	; fi \
+	&& nap-waf.sh; \
+	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
-	cp /tmp/app-protect-dos-9.repo /etc/yum.repos.d/app-protect-dos-9.repo; \
-	&& microdnf --nodocs install -y app-protect-dos; \
+	cp /tmp/app-protect-dos-9.repo /etc/yum.repos.d/app-protect-dos-9.repo \
+	&& microdnf --nodocs install -y app-protect-dos \
 	&& rm -f /etc/yum.repos.d/app-protect-dos-9.repo \
 	&& nap-dos.sh; \
 	fi \
 	&& subscription-manager unregister \
 	&& ubi-clean.sh \
-	&& if [ "${NGINX_AGENT}" = "true" ]; then \
-	agent.sh \
-	; fi
+	&& if [ "${NGINX_AGENT}" = "true" ]; then agent.sh; fi
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAFv5 #############################################
@@ -426,27 +422,19 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=nginx-files,src=app-protect-v5-9.repo,target=/tmp/app-protect-9.repo \
 	--mount=type=bind,from=nginx-files,src=agent.sh,target=/usr/local/bin/agent.sh \
 	--mount=type=bind,from=nginx-files,src=nap-waf.sh,target=/usr/local/bin/nap-waf.sh \
-	--mount=type=bind,from=nginx-files,src=ubi-setup.sh,target=/usr/local/bin/ubi-setup.sh \
 	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
 	source /tmp/rhel_license \
 	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
-	&& microdnf --nodocs install -y ca-certificates \
-	&& ubi-setup.sh \
+	&& microdnf --nodocs install -y ca-certificates shadow-utils subscription-manager \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then microdnf --nodocs install -y nginx-agent; fi \
-	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
-	&& subscription-manager attach \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	cp /tmp/app-protect-9.repo /etc/yum.repos.d/app-protect-9.repo \
-	&& microdnf --enablerepo=codeready-builder-for-rhel-9-x86_64-rpms --nodocs install -y app-protect-module-plus-32+5.48* \
-	&& rm -f /etc/yum.repos.d/app-protect-9.repo \
+	&& microdnf --nodocs install -y app-protect-module-plus-32+5.48* \
 	&& nap-waf.sh \
 	&& rm -f /etc/yum.repos.d/app-protect-9.repo; \
 	fi \
-	&& subscription-manager unregister \
 	&& ubi-clean.sh \
-	&& if [ "${NGINX_AGENT}" = "true" ]; then \
-	agent.sh; \
-	fi
+	&& if [ "${NGINX_AGENT}" = "true" ]; then agent.sh; fi
 
 
 ############################################# Base image for UBI8 with NGINX Plus and App Protect WAF #############################################
@@ -490,9 +478,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	rm -f /etc/yum.repos.d/app-protect-8.repo \
 	&& nap-waf.sh; \
 	fi \
-	&& if [ "${NGINX_AGENT}" = "true" ]; then \
-	agent.sh; \
-	fi \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then agent.sh; fi \
 	&& dnf clean all
 
 
@@ -537,9 +523,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	rm -f /etc/yum.repos.d/app-protect-8.repo \
 	&& nap-waf.sh; \
 	fi \
-	&& if [ "${NGINX_AGENT}" = "true" ]; then \
-	agent.sh; \
-	fi \
+	&& if [ "${NGINX_AGENT}" = "true" ]; then agent.sh; fi \
 	&& dnf clean all
 
 
