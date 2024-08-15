@@ -18,7 +18,7 @@ require (
 	github.com/nginxinc/nginx-plus-go-client v1.2.2
 	github.com/nginxinc/nginx-prometheus-exporter v1.3.0
 	github.com/nginxinc/nginx-service-mesh v1.7.0
-	github.com/nginxinc/telemetry-exporter v0.1.0
+	github.com/nginxinc/telemetry-exporter v0.1.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/spiffe/go-spiffe/v2 v2.3.0
 	github.com/stretchr/testify v1.9.0
