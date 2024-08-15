@@ -13,7 +13,6 @@ import (
 func (d *Data) Attributes() []attribute.KeyValue {
 	var attrs []attribute.KeyValue
 	attrs = append(attrs, attribute.String("dataType", "nic-product-telemetry"))
-
 	attrs = append(attrs, d.Data.Attributes()...)
 	attrs = append(attrs, d.NICResourceCounts.Attributes()...)
 

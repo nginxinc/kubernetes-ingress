@@ -4,8 +4,8 @@ package v1beta1
 
 import (
 	v1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -22,25 +22,17 @@ type DosProtectedResourceLister interface {
 
 // dosProtectedResourceLister implements the DosProtectedResourceLister interface.
 type dosProtectedResourceLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1beta1.DosProtectedResource]
 }
 
 // NewDosProtectedResourceLister returns a new DosProtectedResourceLister.
 func NewDosProtectedResourceLister(indexer cache.Indexer) DosProtectedResourceLister {
-	return &dosProtectedResourceLister{indexer: indexer}
-}
-
-// List lists all DosProtectedResources in the indexer.
-func (s *dosProtectedResourceLister) List(selector labels.Selector) (ret []*v1beta1.DosProtectedResource, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.DosProtectedResource))
-	})
-	return ret, err
+	return &dosProtectedResourceLister{listers.New[*v1beta1.DosProtectedResource](indexer, v1beta1.Resource("dosprotectedresource"))}
 }
 
 // DosProtectedResources returns an object that can list and get DosProtectedResources.
 func (s *dosProtectedResourceLister) DosProtectedResources(namespace string) DosProtectedResourceNamespaceLister {
-	return dosProtectedResourceNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return dosProtectedResourceNamespaceLister{listers.NewNamespaced[*v1beta1.DosProtectedResource](s.ResourceIndexer, namespace)}
 }
 
 // DosProtectedResourceNamespaceLister helps list and get DosProtectedResources.
@@ -58,26 +50,5 @@ type DosProtectedResourceNamespaceLister interface {
 // dosProtectedResourceNamespaceLister implements the DosProtectedResourceNamespaceLister
 // interface.
 type dosProtectedResourceNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all DosProtectedResources in the indexer for a given namespace.
-func (s dosProtectedResourceNamespaceLister) List(selector labels.Selector) (ret []*v1beta1.DosProtectedResource, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.DosProtectedResource))
-	})
-	return ret, err
-}
-
-// Get retrieves the DosProtectedResource from the indexer for a given namespace and name.
-func (s dosProtectedResourceNamespaceLister) Get(name string) (*v1beta1.DosProtectedResource, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("dosprotectedresource"), name)
-	}
-	return obj.(*v1beta1.DosProtectedResource), nil
+	listers.ResourceIndexer[*v1beta1.DosProtectedResource]
 }
