@@ -12,7 +12,6 @@ import (
 
 func (d *NICResourceCounts) Attributes() []attribute.KeyValue {
 	var attrs []attribute.KeyValue
-
 	attrs = append(attrs, attribute.Int64("VirtualServers", d.VirtualServers))
 	attrs = append(attrs, attribute.Int64("VirtualServerRoutes", d.VirtualServerRoutes))
 	attrs = append(attrs, attribute.Int64("TransportServers", d.TransportServers))

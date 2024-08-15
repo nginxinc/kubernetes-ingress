@@ -205,43 +205,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }} # required
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
-  release-notes:
-    name: Release Notes
-    runs-on: ubuntu-22.04
-    needs: [checks, unit-tests, verify-codegen]
-    outputs:
-      release-url: ${{ steps.release-notes.outputs.release-url }}
-    permissions:
-      contents: write # for lucacome/draft-release
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 0
-
-      - name: Create/Update Draft
-        uses: lucacome/draft-release@5d29432a46bff6c122cd4b07a1fb94e1bb158d34 # v1.1.1
-        id: release-notes
-        with:
-          minor-label: "enhancement"
-          major-label: "change"
-          publish: ${{ github.ref_type == 'tag' && vars.OLD_RELEASE_FLOW == 'true' }}
-          collapse-after: 50
-          variables: |
-            helm-chart=${{ needs.checks.outputs.chart_version }}
-          notes-footer: |
-            ## Upgrade
-            - For NGINX, use the {{version}} images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name={{version-number}}), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
-            - For NGINX Plus, use the {{version}} images from the F5 Container registry, the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE), the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking) or build your own image using the {{version}} source code.
-            - For Helm, use version {{helm-chart}} of the chart.
-
-            ## Resources
-            - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
-            - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/examples
-            - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/{{version}}/charts/nginx-ingress
-            - Operator -- https://github.com/nginxinc/nginx-ingress-helm-operator
-        if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
-
   binaries:
     name: Build Binaries
     runs-on: ubuntu-22.04
