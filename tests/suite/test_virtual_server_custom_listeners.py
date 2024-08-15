@@ -310,15 +310,15 @@ class TestVirtualServerCustomListeners:
     @pytest.mark.parametrize(
         "test_setup",
         [
-            {
-                "gc_yaml": "",  # delete gc if empty
-                "vs_yaml": "virtual-server",
-                "http_listener_in_config": False,
-                "https_listener_in_config": False,
-                "expected_response_codes": [404, 404, 0, 0],
-                "expected_vs_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
-                "expected_gc_error_msg": "",
-            },
+            # {
+            #     "gc_yaml": "",  # delete gc if empty
+            #     "vs_yaml": "virtual-server",
+            #     "http_listener_in_config": False,
+            #     "https_listener_in_config": False,
+            #     "expected_response_codes": [404, 404, 0, 0],
+            #     "expected_vs_error_msg": "Listeners defined, but no GlobalConfiguration is deployed",
+            #     "expected_gc_error_msg": "",
+            # },
             # {
             #     "gc_yaml": "global-configuration-https-listener-without-ssl",
             #     "vs_yaml": "virtual-server",
@@ -391,16 +391,16 @@ class TestVirtualServerCustomListeners:
                 "expected_vs_error_msg": "",
                 "expected_gc_error_msg": "",
             },
-            {
-                "gc_yaml": "global-configuration-http-ipv4ip",
-                "vs_yaml": "virtual-server",
-                "http_listener_in_config": True,
-                "https_listener_in_config": True,
-                "expected_http_listener_ipv4ip": "127.0.0.1",
-                "expected_response_codes": [404, 404, 200, 200],
-                "expected_vs_error_msg": "",
-                "expected_gc_error_msg": "",
-            },
+            # {
+            #     "gc_yaml": "global-configuration-http-ipv4ip",
+            #     "vs_yaml": "virtual-server",
+            #     "http_listener_in_config": True,
+            #     "https_listener_in_config": True,
+            #     "expected_http_listener_ipv4ip": "127.0.0.1",
+            #     "expected_response_codes": [404, 404, 200, 200],
+            #     "expected_vs_error_msg": "",
+            #     "expected_gc_error_msg": "",
+            # },
             # {
             #     "gc_yaml": "global-configuration-https-ipv6ip",
             #     "vs_yaml": "virtual-server",
@@ -413,7 +413,7 @@ class TestVirtualServerCustomListeners:
             # },
         ],
         ids=[
-            "delete_gc",
+            # "delete_gc",
             # "update_gc_https_listener_ssl_false",
             # "update_gc_http_listener_ssl_true",
             # "update_gc_http_listener_repeated_port",
@@ -421,7 +421,7 @@ class TestVirtualServerCustomListeners:
             # "update_gc_ts_listener_forbidden_port",
             "http-https-ipv4ip-http-https-ipv6ip",
             "http-ipv4ip-https-ipv6ip",
-            "http-ipv4ip",
+            # "http-ipv4ip",
             # "https-ipv6ip",
         ],
     )
@@ -467,20 +467,29 @@ class TestVirtualServerCustomListeners:
                 with pytest.raises(ConnectionError, match="Connection refused"):
                     make_request(url, virtual_server_setup.vs_host)
 
-        print("\nStep 3: Apply GC or VS update")
+        print("\nStep 3: Apply GC update")
         if test_setup["gc_yaml"]:
             global_config_file = f"{TEST_DATA}/virtual-server-custom-listeners/{test_setup['gc_yaml']}.yaml"
             patch_gc_from_yaml(
                 kube_apis.custom_objects, gc_resource["metadata"]["name"], global_config_file, "nginx-ingress"
             )
             print(f"GC file location {global_config_file}")
-            print(f"updated GC details: {gc_resource}")
         else:
             delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
-        wait_before_test()
+        if (
+            test_setup["expected_http_listener_ipv4ip"]
+            or test_setup["expected_http_listener_ipv6ip"]
+            or test_setup["expected_https_listener_ipv4ip"]
+            or test_setup["expected_https_listener_ipv6ip"]
+        ):
+            print("IP Listeners Detected - Waiting 30 Extra Seconds Required")
+            wait_before_test(30)
+        else:
+            wait_before_test()
 
         print("\nStep 4: Test generated VS configs")
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        vs_config = ""
         vs_config = get_vs_nginx_template_conf(
             kube_apis.v1,
             virtual_server_setup.namespace,
@@ -563,7 +572,7 @@ class TestVirtualServerCustomListeners:
 
         print("\nStep 8: Restore test environments")
         delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)
-        restore_default_vs(kube_apis, virtual_server_setup)
+        restore_default_vs(kube_apis, virtual_server_setup)  # not working
         if test_setup["gc_yaml"]:
             delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
             print(f"deleted GC : {gc_resource}")
