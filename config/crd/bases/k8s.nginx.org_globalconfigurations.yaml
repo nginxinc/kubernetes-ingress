@@ -46,15 +46,15 @@ spec:
                 items:
                   description: Listener defines a listener.
                   properties:
+                    ipv4ip:
+                      type: string
+                    ipv6ip:
+                      type: string
                     name:
                       type: string
                     port:
                       type: integer
                     protocol:
-                      type: string
-                    ipv4ip:
-                      type: string
-                    ipv6ip:
                       type: string
                     ssl:
                       type: boolean
