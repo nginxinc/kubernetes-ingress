@@ -110,6 +110,42 @@ jobs:
           echo stable_tag: ${{ steps.vars.outputs.stable_tag }}
           echo stable_image_exists: ${{ steps.stable_exists.outputs.exists }}
 
+  govulncheck:
+    name: Run govulncheck
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: go.mod
+
+      - name: govulncheck
+        uses: golang/govulncheck-action@dd0578b371c987f96d1185abb54344b44352bd58 # v1.0.3
+        with:
+          output-format: sarif
+          output-file: govulncheck.sarif
+
+      - name: Check SARIF file
+        id: check-sarif
+        run: |
+          if [ -s govulncheck.sarif ] && grep -q '"results":' govulncheck.sarif; then
+            echo "sarif_has_results=true" >> $GITHUB_OUTPUT
+          else
+            echo "sarif_has_results=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@429e1977040da7a23b6822b13c129cd1ba93dbb2 # v3.26.2
+        if: steps.check-sarif.outputs.sarif_has_results == 'true'
+        with:
+          sarif_file: govulncheck.sarif
+
   binaries:
     name: Build Binaries
     runs-on: ubuntu-22.04
@@ -428,7 +464,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@afb54ba388a7dca6ecae48f608c4ff05ff4cc77a # v3.25.15
+        uses: github/codeql-action/upload-sarif@429e1977040da7a23b6822b13c129cd1ba93dbb2 # v3.26.2
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -518,7 +554,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@afb54ba388a7dca6ecae48f608c4ff05ff4cc77a # v3.25.15
+        uses: github/codeql-action/upload-sarif@429e1977040da7a23b6822b13c129cd1ba93dbb2 # v3.26.2
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -608,7 +644,7 @@ jobs:
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@afb54ba388a7dca6ecae48f608c4ff05ff4cc77a # v3.25.15
+        uses: github/codeql-action/upload-sarif@429e1977040da7a23b6822b13c129cd1ba93dbb2 # v3.26.2
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
