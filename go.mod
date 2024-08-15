@@ -15,7 +15,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/kr/pretty v0.3.1
-	github.com/nginxinc/nginx-plus-go-client v1.2.2
+	github.com/nginxinc/nginx-plus-go-client v1.3.0
 	github.com/nginxinc/nginx-prometheus-exporter v1.3.0
 	github.com/nginxinc/nginx-service-mesh v1.7.0
 	github.com/nginxinc/telemetry-exporter v0.1.1
