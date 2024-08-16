@@ -21,6 +21,24 @@ func TestMain(m *testing.M) {
 	os.Exit(v)
 }
 
+func TestExecuteTemplate_FailsOnBogusMainTemplatePath(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewTemplateExecutor("bogus-tmpl-path", "nginx.ingress.tmpl")
+	if err == nil {
+		t.Fatal(err)
+	}
+}
+
+func TestExecuteTemplate_FailsOnBogusIngressTemplatePath(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewTemplateExecutor("nginx-plus.tmpl", "bogus-tmpl-path")
+	if err == nil {
+		t.Fatal(err)
+	}
+}
+
 func TestExecuteMainTemplateForNGINXPlus(t *testing.T) {
 	t.Parallel()
 
