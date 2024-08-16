@@ -9,7 +9,7 @@ spec:
     port: 8083
     protocol: HTTP
     ipv4ip: 127.0.0.1
-    ipv6ip: fe80
+    ipv6ip: ::1
   - name: ip-listener-2-https
     port: 8443
     protocol: HTTP
