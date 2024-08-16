@@ -17,6 +17,9 @@ concurrency:
   group: ${{ github.ref_name }}-ot-build
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build-docker:
     name: Build Docker Image
