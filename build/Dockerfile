@@ -10,9 +10,9 @@ ARG WAF_VERSION=v4
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.0@sha256:1a77df60fd641db9e6a9323c8a484f642eb0e276df06104b592ecfd515bc1aef AS opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.0-alpine@sha256:8e582e8cac837ad71372fbe1d80ab4d9894fa9dd9d3ad61163ebe87403b6b9db AS alpine-opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.0@sha256:760ed8cff8e0ae835b1873400673d95642e39420e42a02379e0619545008bc07 AS ubi-ppc64le
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.1@sha256:68d5e10f4aeca7fcd4ceea163f57c6d43a7de8c83bfd75436ab07cf6073df886 AS opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.1-alpine@sha256:e78f115f9031f2dd5b1d93ec67174d7e37b4d5a4e225657a04622df443db6d38 AS alpine-opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.1@sha256:0bab61e2bd639b269ec54343ea66b7acbdb0eb67bed44383e1be937c483c451d AS ubi-ppc64le
 FROM ghcr.io/nginxinc/alpine-fips:0.1.0-alpine3.17@sha256:f00b3f266422feaaac7b733b46903bd19eb1cd1caa6991131576f5f767db76f8 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.0-alpine3.19@sha256:1744ae3a8e795daf771f3f7df33b83160981545abb1f1597338e2769d06aa1cc AS alpine-fips-3.19
 FROM redhat/ubi9-minimal@sha256:104cf11d890aeb7dd5728b7d7732e175a0e4018f1bb00d2faebcc8f6bf29bd52 AS ubi-minimal
