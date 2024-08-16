@@ -78,6 +78,8 @@ ADD --link --chown=101:0 --chmod=0755 build/scripts/common.sh common.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/nap-waf.sh nap-waf.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/nap-dos.sh nap-dos.sh
 ADD --link --chown=101:0 --chmod=0755 build/scripts/agent.sh agent.sh
+ADD --link --chown=101:0 --chmod=0755 build/scripts/ubi-setup.sh ubi-setup.sh
+ADD --link --chown=101:0 --chmod=0755 build/scripts/ubi-clean.sh ubi-clean.sh
 
 
 ############################################# Patch Image #############################################
