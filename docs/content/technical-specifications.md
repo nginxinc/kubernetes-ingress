@@ -28,7 +28,7 @@ We test NGINX Ingress Controller on a range of Kubernetes platforms for each rel
 {{< bootstrap-table "table table-bordered table-striped table-responsive" >}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| {{< nic-version >}} | 1.25 - 1.30 | {{< nic-helm-version >}} | {{< nic-operator-version >}} | 1.27.0 / R32 |
+| {{< nic-version >}} | 1.25 - 1.30 | {{< nic-helm-version >}} | {{< nic-operator-version >}} | 1.27.1 / R32 |
 | 3.5.2 | 1.23 - 1.30 | 1.2.2 | 2.2.2 | 1.27.0 / R32 |
 | 3.4.3 | 1.23 - 1.29 | 1.1.3 | 2.1.2 | 1.25.4 / R31 P1 |
 | 3.3.2 | 1.22 - 1.28 | 1.0.2 | 2.0.2 | 1.25.3 / R30 |
@@ -54,13 +54,13 @@ We provide the following Docker images, which include NGINX or NGINX Plus bundle
 
 ### Images with NGINX
 
-_All images include NGINX 1.27.0._
+_All images include NGINX 1.27.1._
 
 {{< bootstrap-table "table table-bordered table-responsive" >}}
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | DockerHub image | Architectures |
 | ---| --- | --- | --- | --- |
-|Alpine-based image | ``nginx:1.27.0-alpine``,<br>based on on ``alpine:3.20`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:{{< nic-version >}}-alpine`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
-|Debian-based image | ``nginx:1.27.0``,<br>based on on ``debian:12-slim`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:{{< nic-version >}}`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
+|Alpine-based image | ``nginx:1.27.1-alpine``,<br>based on on ``alpine:3.20`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:{{< nic-version >}}-alpine`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
+|Debian-based image | ``nginx:1.27.1``,<br>based on on ``debian:12-slim`` | NGINX OpenTracing module<br><br>OpenTracing library<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | ``nginx/nginx-ingress:{{< nic-version >}}`` | arm/v7<br>arm64<br>amd64<br>ppc64le<br>s390x |
 |Ubi-based image | ``redhat/ubi9-minimal`` | | ``nginx/nginx-ingress:{{< nic-version >}}-ubi`` | arm64<br>amd64<br>ppc64le<br>s390x |
 {{% /bootstrap-table %}}
 
