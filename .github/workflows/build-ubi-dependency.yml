@@ -25,6 +25,9 @@ concurrency:
   group: ${{ github.ref_name }}-ubi-ppc64le-build
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   checks:
     name: Check versions
