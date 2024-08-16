@@ -1,8 +1,8 @@
 apiVersion: k8s.nginx.org/v1
 kind: GlobalConfiguration
 metadata:
-  name: my-release-nginx-ingress-controller
-  namespace: default
+  name: nginx-configuration
+  namespace: nginx-ingress
 spec:
   listeners:
   - name: ip-listener-1-http
