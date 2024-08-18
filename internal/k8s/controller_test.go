@@ -2005,7 +2005,7 @@ func TestGetStatusFromEventTitle(t *testing.T) {
 	}
 }
 
-func TestGetPolicies(t *testing.T) {
+func TestGetPoliciesGlobalWatch(t *testing.T) {
 	t.Parallel()
 	validPolicy := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -2093,6 +2093,102 @@ func TestGetPolicies(t *testing.T) {
 		errors.New("policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`, `apiKey`, `jwt`, `oidc`, `waf`"),
 		errors.New("policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("failed to get policy nginx-ingress/some-policy: GetByKey error"),
+		errors.New("referenced policy default/valid-policy-ingress-class has incorrect ingress class: test-class (controller ingress class: )"),
+	}
+
+	result, errors := lbc.getPolicies(policyRefs, "default")
+	if !reflect.DeepEqual(result, expectedPolicies) {
+		t.Errorf("lbc.getPolicies() returned \n%v but \nexpected %v", result, expectedPolicies)
+	}
+	if diff := cmp.Diff(expectedErrors, errors, cmp.Comparer(errorComparer)); diff != "" {
+		t.Errorf("lbc.getPolicies() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestGetPoliciesNamespacedWatch(t *testing.T) {
+	t.Parallel()
+	validPolicy := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			AccessControl: &conf_v1.AccessControl{
+				Allow: []string{"127.0.0.1"},
+			},
+		},
+	}
+
+	validPolicyIngressClass := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-policy-ingress-class",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			IngressClass: "test-class",
+			AccessControl: &conf_v1.AccessControl{
+				Allow: []string{"127.0.0.1"},
+			},
+		},
+	}
+
+	invalidPolicy := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "invalid-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{},
+	}
+
+	policyLister := &cache.FakeCustomStore{
+		GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
+			switch key {
+			case "default/valid-policy":
+				return validPolicy, true, nil
+			case "default/valid-policy-ingress-class":
+				return validPolicyIngressClass, true, nil
+			case "default/invalid-policy":
+				return invalidPolicy, true, nil
+			case "nginx-ingress/valid-policy":
+				return nil, false, nil
+			default:
+				return nil, false, errors.New("GetByKey error")
+			}
+		},
+	}
+
+	nsi := make(map[string]*namespacedInformer)
+	// simulate a watch of the default namespace
+	nsi["default"] = &namespacedInformer{policyLister: policyLister}
+
+	lbc := LoadBalancerController{
+		isNginxPlus:         true,
+		namespacedInformers: nsi,
+	}
+
+	policyRefs := []conf_v1.PolicyReference{
+		{
+			Name: "valid-policy",
+			// Namespace is implicit here
+		},
+		{
+			Name:      "invalid-policy",
+			Namespace: "default",
+		},
+		{
+			Name:      "valid-policy",  // doesn't exist
+			Namespace: "nginx-ingress", // not watched
+		},
+		{
+			Name:      "valid-policy-ingress-class",
+			Namespace: "default",
+		},
+	}
+
+	expectedPolicies := []*conf_v1.Policy{validPolicy}
+	expectedErrors := []error{
+		errors.New("policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`, `apiKey`, `jwt`, `oidc`, `waf`"),
+		errors.New("failed to get namespace nginx-ingress"),
 		errors.New("referenced policy default/valid-policy-ingress-class has incorrect ingress class: test-class (controller ingress class: )"),
 	}
 
