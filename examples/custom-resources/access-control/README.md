@@ -63,7 +63,6 @@ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.com
 <head><title>403 Forbidden</title></head>
 <body>
 <center><h1>403 Forbidden</h1></center>
-<hr><center>nginx/1.17.9</center>
 </body>
 </html>
 ```
