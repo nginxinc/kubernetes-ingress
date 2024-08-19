@@ -7,6 +7,37 @@ title: Releases
 toc: true
 weight: 2100
 ---
+## 3.6.2
+
+19 Aug 2024
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [6125](https://github.com/nginxinc/kubernetes-ingress/pull/6125) Don't log errors for not implemented grpc metrics
+- [6223](https://github.com/nginxinc/kubernetes-ingress/pull/6223) Re-order mounting debian apt source file
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+- [5974](https://github.com/nginxinc/kubernetes-ingress/pull/5974), [6021](https://github.com/nginxinc/kubernetes-ingress/pull/6021), [5998](https://github.com/nginxinc/kubernetes-ingress/pull/5998), [6081](https://github.com/nginxinc/kubernetes-ingress/pull/6081), [6120](https://github.com/nginxinc/kubernetes-ingress/pull/6120), [6141](https://github.com/nginxinc/kubernetes-ingress/pull/6141), [6196](https://github.com/nginxinc/kubernetes-ingress/pull/6196), [6204](https://github.com/nginxinc/kubernetes-ingress/pull/6204), [6211](https://github.com/nginxinc/kubernetes-ingress/pull/6211), [6222](https://github.com/nginxinc/kubernetes-ingress/pull/6204) & [6234](https://github.com/nginxinc/kubernetes-ingress/pull/6234) Go dependencies
+- [5967](https://github.com/nginxinc/kubernetes-ingress/pull/5967), [6013](https://github.com/nginxinc/kubernetes-ingress/pull/6013), [6070](https://github.com/nginxinc/kubernetes-ingress/pull/6070), [6098](https://github.com/nginxinc/kubernetes-ingress/pull/6098), [6126](https://github.com/nginxinc/kubernetes-ingress/pull/6126), [6158](https://github.com/nginxinc/kubernetes-ingress/pull/6158), [6179](https://github.com/nginxinc/kubernetes-ingress/pull/6179), [6191](https://github.com/nginxinc/kubernetes-ingress/pull/6191), [6226](https://github.com/nginxinc/kubernetes-ingress/pull/6226) & [6233](https://github.com/nginxinc/kubernetes-ingress/pull/6233) Docker base image updates
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.6.2 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.6.2),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.6.2 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.6.2 source code
+- For Helm, use version 1.3.2 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.26-1.31.
+
+---
 {{< note >}} 
 FIPS compliant images are currently impacted by compatibility issues with a dependent library.
 
