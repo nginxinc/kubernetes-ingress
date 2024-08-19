@@ -28,7 +28,7 @@ We test NGINX Ingress Controller on a range of Kubernetes platforms for each rel
 {{< bootstrap-table "table table-bordered table-striped table-responsive" >}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| {{< nic-version >}} | 1.25 - 1.30 | {{< nic-helm-version >}} | {{< nic-operator-version >}} | 1.27.1 / R32 |
+| {{< nic-version >}} | 1.26 - 1.31 | {{< nic-helm-version >}} | {{< nic-operator-version >}} | 1.27.1 / R32 |
 | 3.5.2 | 1.23 - 1.30 | 1.2.2 | 2.2.2 | 1.27.0 / R32 |
 | 3.4.3 | 1.23 - 1.29 | 1.1.3 | 2.1.2 | 1.25.4 / R31 P1 |
 | 3.3.2 | 1.22 - 1.28 | 1.0.2 | 2.0.2 | 1.25.3 / R30 |
@@ -133,6 +133,7 @@ NGINX Plus images are available through the Microsoft Azure Marketplace.
 |<div style="width:200px">Name</div> | <div style="width:100px">Base image</div> | <div style="width:200px">Third-party modules</div> | Azure Marketplace Link | Architectures |
 | ---| ---| --- | --- | --- |
 |Debian-based image | ``debian:12-slim`` | NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/nginxinc.nginx_ingress_premium) | amd64 |
+|Debian-based image with NGINX App Protect WAF | ``debian:12-slim`` | NGINX App Protect WAF<br><br>NGINX Plus JavaScript and OpenTracing modules<br><br>OpenTracing tracers for Jaeger<br><br>Zipkin and Datadog | [F5 NGINX Ingress Controller w/ F5 NGINX App Protect WAF](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/nginxinc.nginx_ingress_premium_waf) | amd64 |
 {{% /bootstrap-table %}}
 
 ---
