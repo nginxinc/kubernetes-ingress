@@ -69,7 +69,6 @@ curl -k --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.co
 <head><title>401 Authorization Required</title></head>
 <body>
 <center><h1>401 Authorization Required</h1></center>
-<hr><center>nginx/1.21.5</center>
 </body>
 </html>
 ```
@@ -85,7 +84,6 @@ curl -k --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP -H "X-header-name: wron
 <head><title>403 Forbidden</title></head>
 <body>
 <center><h1>403 Forbidden</h1></center>
-<hr><center>nginx/1.27.1</center>
 </body>
 </html>
 ```
