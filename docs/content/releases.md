@@ -13,6 +13,7 @@ weight: 2100
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
 - [6125](https://github.com/nginxinc/kubernetes-ingress/pull/6125) Don't log errors for not implemented grpc metrics
+- [6223](https://github.com/nginxinc/kubernetes-ingress/pull/6223) Re-order mounting debian apt source file
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
 - [5974](https://github.com/nginxinc/kubernetes-ingress/pull/5974), [6021](https://github.com/nginxinc/kubernetes-ingress/pull/6021), [5998](https://github.com/nginxinc/kubernetes-ingress/pull/5998), [6081](https://github.com/nginxinc/kubernetes-ingress/pull/6081), [6120](https://github.com/nginxinc/kubernetes-ingress/pull/6120), [6141](https://github.com/nginxinc/kubernetes-ingress/pull/6141), [6196](https://github.com/nginxinc/kubernetes-ingress/pull/6196), [6204](https://github.com/nginxinc/kubernetes-ingress/pull/6204), [6211](https://github.com/nginxinc/kubernetes-ingress/pull/6211), [6222](https://github.com/nginxinc/kubernetes-ingress/pull/6204) & [6234](https://github.com/nginxinc/kubernetes-ingress/pull/6234) Go dependencies
