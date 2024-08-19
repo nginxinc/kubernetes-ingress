@@ -17,7 +17,6 @@ FILES_TO_UPDATE_IC_VERSION=(
     "${DEPLOYMENT_PATH}/deployment/nginx-ingress.yaml"
     "${DEPLOYMENT_PATH}/deployment/nginx-plus-ingress.yaml"
     "${HELM_CHART_PATH}/Chart.yaml"
-    "${HELM_CHART_PATH}/README.md"
     "${HELM_CHART_PATH}/values-icp.yaml"
     "${HELM_CHART_PATH}/values-nsm.yaml"
     "${HELM_CHART_PATH}/values-plus.yaml"
