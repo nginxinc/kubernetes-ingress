@@ -398,6 +398,21 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.pod.annotations** | The annotations of the Ingress Controller pod. | {} |
 | **controller.pod.extraLabels** | The additional extra labels of the Ingress Controller pod. | {} |
 | **controller.appprotect.enable** | Enables the App Protect WAF module in the Ingress Controller. | false |
+| **controller.appprotect.v5** | Enables App Protect WAF v5. | false |
+| **controller.appprotect.volumes** | Volumes for App Protect WAF v5. | [{"name": "app-protect-bd-config", "emptyDir": {}},{"name": "app-protect-config", "emptyDir": {}},{"name": "app-protect-bundles", "emptyDir": {}}] |
+| **controller.appprotect.enforcer.host** | Host that the App Protect WAF v5 Enforcer runs on. | "127.0.0.1" |
+| **controller.appprotect.enforcer.port** | Port that the App Protect WAF v5 Enforcer runs on. | 50000 |
+| **controller.appprotect.enforcer.image** | The image repository of the App Protect WAF v5 Enforcer. | private-registry.nginx.com/nap/waf-enforcer |
+| **controller.appprotect.enforcer.tag** | The tag of the App Protect WAF v5 Enforcer. | "5.2.0" |
+| **controller.appprotect.enforcer.digest** | The digest of the App Protect WAF v5 Enforcer. Takes precedence over tag if set. | "5.2.0" |
+| **controller.appprotect.enforcer.pullPolicy** | The pull policy for the App Protect WAF v5 Enforcer image. | "5.2.0" |
+| **controller.appprotect.enforcer.securityContext** | The security context for App Protect WAF v5 Enforcer container. | {} |
+| **controller.appprotect.configManager.image** | The image repository of the App Protect WAF v5 Configuration Manager. | private-registry.nginx.com/nap/waf-config-mgr |
+| **controller.appprotect.configManager.tag** | The tag of the App Protect WAF v5 Configuration Manager. | "5.2.0" |
+| **controller.appprotect.configManager.digest** | The digest of the App Protect WAF v5 Configuration Manager. Takes precedence over tag if set. | "5.2.0" |
+| **controller.appprotect.configManager.pullPolicy** | The pull policy for the App Protect WAF v5 Configuration Manager image. | "5.2.0" |
+| **controller.appprotect.configManager.securityContext** | The security context for App Protect WAF v5 Configuration Manager container. | {"allowPrivilegeEscalation":false,"runAsUser":101,"runAsNonRoot":true,"capabilities":{"drop":["all"]}} |
+| **controller.appprotectdos.enable** | Enables the App Protect DoS module in the Ingress Controller. | false |
 | **controller.appprotectdos.enable** | Enables the App Protect DoS module in the Ingress Controller. | false |
 | **controller.appprotectdos.debug** | Enable debugging for App Protect DoS. | false |
 | **controller.appprotectdos.maxDaemons** | Max number of ADMD instances. | 1 |
