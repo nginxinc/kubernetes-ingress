@@ -6,19 +6,17 @@ doctypes:
 title: Releases
 toc: true
 weight: 2100
+---
 ## 3.6.2
 
 19 Aug 2024
 
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
-### <i class="fa-solid fa-rocket"></i> Features
-
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
-
-### <i class="fa-solid fa-box"></i> Helm Chart
+- [6125](https://github.com/nginxinc/kubernetes-ingress/pull/6125) Don't log errors for not implemented grpc metrics
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+- [5974](https://github.com/nginxinc/kubernetes-ingress/pull/5974), [6021](https://github.com/nginxinc/kubernetes-ingress/pull/6021), [5998](https://github.com/nginxinc/kubernetes-ingress/pull/5998), [6081](https://github.com/nginxinc/kubernetes-ingress/pull/6081), [6120](https://github.com/nginxinc/kubernetes-ingress/pull/6120), [6141](https://github.com/nginxinc/kubernetes-ingress/pull/6141), [6196](https://github.com/nginxinc/kubernetes-ingress/pull/6196), [6204](https://github.com/nginxinc/kubernetes-ingress/pull/6204), [6211](https://github.com/nginxinc/kubernetes-ingress/pull/6211), [6222](https://github.com/nginxinc/kubernetes-ingress/pull/6204) & [6234](https://github.com/nginxinc/kubernetes-ingress/pull/6234) Go dependencies
+- [5967](https://github.com/nginxinc/kubernetes-ingress/pull/5967), [6013](https://github.com/nginxinc/kubernetes-ingress/pull/6013), [6070](https://github.com/nginxinc/kubernetes-ingress/pull/6070), [6098](https://github.com/nginxinc/kubernetes-ingress/pull/6098), [6126](https://github.com/nginxinc/kubernetes-ingress/pull/6126), [6158](https://github.com/nginxinc/kubernetes-ingress/pull/6158), [6179](https://github.com/nginxinc/kubernetes-ingress/pull/6179), [6191](https://github.com/nginxinc/kubernetes-ingress/pull/6191), [6226](https://github.com/nginxinc/kubernetes-ingress/pull/6226) & [6233](https://github.com/nginxinc/kubernetes-ingress/pull/6233) Docker base image updates
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
