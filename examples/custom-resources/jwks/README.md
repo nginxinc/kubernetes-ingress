@@ -206,7 +206,6 @@ curl -H 'Accept: application/json' webapp.example.com
 <head><title>401 Authorization Required</title></head>
 <body>
 <center><h1>401 Authorization Required</h1></center>
-<hr><center>nginx/1.23.2</center>
 </body>
 </html>
 ```
