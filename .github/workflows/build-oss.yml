@@ -192,7 +192,7 @@ jobs:
           ignore-unfixed: "true"
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
-      - name: DockerHub Login for Docker Scount
+      - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
