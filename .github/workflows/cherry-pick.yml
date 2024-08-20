@@ -36,7 +36,5 @@ jobs:
         with:
           branch: ${{ steps.branch.outputs.branch }}
           token: ${{ secrets.NGINX_PAT }}
-          author: nginx-bot <integrations@nginx.com>
-          labels: |
-            dependencies
+          author: ${{ github.event.pull_request.user.login }}
           title: "[cherry-pick] {old_title}"

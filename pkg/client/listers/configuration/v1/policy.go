@@ -4,8 +4,8 @@ package v1
 
 import (
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -22,25 +22,17 @@ type PolicyLister interface {
 
 // policyLister implements the PolicyLister interface.
 type policyLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1.Policy]
 }
 
 // NewPolicyLister returns a new PolicyLister.
 func NewPolicyLister(indexer cache.Indexer) PolicyLister {
-	return &policyLister{indexer: indexer}
-}
-
-// List lists all Policies in the indexer.
-func (s *policyLister) List(selector labels.Selector) (ret []*v1.Policy, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.Policy))
-	})
-	return ret, err
+	return &policyLister{listers.New[*v1.Policy](indexer, v1.Resource("policy"))}
 }
 
 // Policies returns an object that can list and get Policies.
 func (s *policyLister) Policies(namespace string) PolicyNamespaceLister {
-	return policyNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return policyNamespaceLister{listers.NewNamespaced[*v1.Policy](s.ResourceIndexer, namespace)}
 }
 
 // PolicyNamespaceLister helps list and get Policies.
@@ -58,26 +50,5 @@ type PolicyNamespaceLister interface {
 // policyNamespaceLister implements the PolicyNamespaceLister
 // interface.
 type policyNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Policies in the indexer for a given namespace.
-func (s policyNamespaceLister) List(selector labels.Selector) (ret []*v1.Policy, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.Policy))
-	})
-	return ret, err
-}
-
-// Get retrieves the Policy from the indexer for a given namespace and name.
-func (s policyNamespaceLister) Get(name string) (*v1.Policy, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("policy"), name)
-	}
-	return obj.(*v1.Policy), nil
+	listers.ResourceIndexer[*v1.Policy]
 }

@@ -4,8 +4,8 @@ package v1alpha1
 
 import (
 	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -22,25 +22,17 @@ type GlobalConfigurationLister interface {
 
 // globalConfigurationLister implements the GlobalConfigurationLister interface.
 type globalConfigurationLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v1alpha1.GlobalConfiguration]
 }
 
 // NewGlobalConfigurationLister returns a new GlobalConfigurationLister.
 func NewGlobalConfigurationLister(indexer cache.Indexer) GlobalConfigurationLister {
-	return &globalConfigurationLister{indexer: indexer}
-}
-
-// List lists all GlobalConfigurations in the indexer.
-func (s *globalConfigurationLister) List(selector labels.Selector) (ret []*v1alpha1.GlobalConfiguration, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.GlobalConfiguration))
-	})
-	return ret, err
+	return &globalConfigurationLister{listers.New[*v1alpha1.GlobalConfiguration](indexer, v1alpha1.Resource("globalconfiguration"))}
 }
 
 // GlobalConfigurations returns an object that can list and get GlobalConfigurations.
 func (s *globalConfigurationLister) GlobalConfigurations(namespace string) GlobalConfigurationNamespaceLister {
-	return globalConfigurationNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return globalConfigurationNamespaceLister{listers.NewNamespaced[*v1alpha1.GlobalConfiguration](s.ResourceIndexer, namespace)}
 }
 
 // GlobalConfigurationNamespaceLister helps list and get GlobalConfigurations.
@@ -58,26 +50,5 @@ type GlobalConfigurationNamespaceLister interface {
 // globalConfigurationNamespaceLister implements the GlobalConfigurationNamespaceLister
 // interface.
 type globalConfigurationNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all GlobalConfigurations in the indexer for a given namespace.
-func (s globalConfigurationNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.GlobalConfiguration, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.GlobalConfiguration))
-	})
-	return ret, err
-}
-
-// Get retrieves the GlobalConfiguration from the indexer for a given namespace and name.
-func (s globalConfigurationNamespaceLister) Get(name string) (*v1alpha1.GlobalConfiguration, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("globalconfiguration"), name)
-	}
-	return obj.(*v1alpha1.GlobalConfiguration), nil
+	listers.ResourceIndexer[*v1alpha1.GlobalConfiguration]
 }
