@@ -76,6 +76,7 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
+        id: pr
         with:
           token: ${{ secrets.NGINX_PAT }}
           commit-message: Update docker images ${{ steps.update_images.outputs.docker_md5 }}
@@ -88,4 +89,11 @@ jobs:
             needs cherry pick
           body: |
             This automated PR updates pinned container image SHAs to latest.
+        if: ${{ !inputs.dry_run && steps.update_images.outputs.change_detected == 'true' }}
+
+      - name: Enable auto-merge for Docker update PRs
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ steps.pr.outputs.pull-request-url }}
+          GITHUB_TOKEN: ${{ secrets.NGINX_PAT }}
         if: ${{ !inputs.dry_run && steps.update_images.outputs.change_detected == 'true' }}
