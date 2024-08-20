@@ -49,7 +49,7 @@ var (
 	telemetryEndpoint string
 )
 
-// Dummy comment to change go code
+// Dummy comment to change go code2
 const (
 	nginxVersionLabel        = "app.nginx.org/version"
 	versionLabel             = "app.kubernetes.io/version"
