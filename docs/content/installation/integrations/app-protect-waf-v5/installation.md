@@ -85,17 +85,17 @@ Create Docker image for NGINX Ingress Controller (Alpine with NGINX Plus, NGINX 
 {{<bootstrap-table "table table-striped table-bordered">}}
 | Makefile Target           | Description                                                       | Compatible Systems  |
 |---------------------------|-------------------------------------------------------------------|---------------------|
-| **alpine-image-nap-v5-plus-fips** | Builds a Alpine-based image with NGINX Plus and the [NGINX App Protect WAF v5](/nginx-app-protect-waf-v5/) module with FIPS. | Alpine  |
-| **debian-image-nap-v5-plus** | Builds a Debian-based image with NGINX Plus and the [NGINX App Protect WAF v5](/nginx-app-protect-waf-v5/) module. | Debian  |
-| **ubi-image-nap-v5-plus**    | Builds a UBI-based image with NGINX Plus and the [NGINX App Protect WAF v5](/nginx-app-protect-waf-v5/) module. | OpenShift |
-| **ubi-image-nap-dos-v5-plus** | Builds a UBI-based image with NGINX Plus, [NGINX App Protect WAF v5](/nginx-app-protect-waf-v5/), and [NGINX App Protect DoS](/nginx-app-protect-dos/). | OpenShift |
+| **alpine-image-nap-v5-plus-fips** | Builds a Alpine-based image with NGINX Plus and the [NGINX App Protect WAF v5](/nginx-app-protect-waf/v5/) module with FIPS. | Alpine  |
+| **debian-image-nap-v5-plus** | Builds a Debian-based image with NGINX Plus and the [NGINX App Protect WAF v5](/nginx-app-protect-waf/v5/) module. | Debian  |
+| **ubi-image-nap-v5-plus**    | Builds a UBI-based image with NGINX Plus and the [NGINX App Protect WAF v5](/nginx-app-protect-waf/v5/) module. | OpenShift |
+| **ubi-image-nap-dos-v5-plus** | Builds a UBI-based image with NGINX Plus, [NGINX App Protect WAF v5](/nginx-app-protect-waf/v5/), and [NGINX App Protect DoS](/nginx-app-protect-dos/). | OpenShift |
 {{</bootstrap-table>}}
 
 <br>
 
 {{<see-also>}} For the complete list of _Makefile_ targets and customizable variables, see the [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md#makefile-details" >}}) guide. {{</see-also>}}
 
-If you intend to use [external references](/nginx-app-protect-waf/v5/configuration/#external-references) in NGINX App Protect WAF policies, you may want to provide a custom CA certificate to authenticate with the hosting server.
+If you intend to use [external references](/nginx-app-protect-waf/v5/configuration-guide/configuration/#external-references) in NGINX App Protect WAF policies, you may want to provide a custom CA certificate to authenticate with the hosting server.
 
 To do so, place the `*.crt` file in the build folder and uncomment the lines following this comment:
 `#Uncomment the lines below if you want to install a custom CA certificate`
