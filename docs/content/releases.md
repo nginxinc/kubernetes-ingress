@@ -7,6 +7,14 @@ title: Releases
 toc: true
 weight: 2100
 ---
+{{< note >}} 
+FIPS compliant images are currently impacted by compatibility issues with a dependent library.
+
+We recommend against:
+1. Patching older FIPS images, which could re-introduce the incompatible dependency.
+2. Building new custom FIPS images.
+{{< /note >}}
+
 ## 3.6.2
 
 19 Aug 2024
@@ -38,14 +46,6 @@ its provider and that passes the Kubernetes conformance tests. This release was 
 versions: 1.26-1.31.
 
 ---
-{{< note >}} 
-FIPS compliant images are currently impacted by compatibility issues with a dependent library.
-
-We recommend against:
-1. Patching older FIPS images, which could re-introduce the incompatible dependency.
-2. Building new custom FIPS images.
-{{< /note >}}
-
 ## 3.6.1
 
 04 Jul 2024
