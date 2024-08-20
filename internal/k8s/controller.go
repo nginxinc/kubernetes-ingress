@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"golang.org/x/exp/maps"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
@@ -532,33 +531,6 @@ func (nsi *namespacedInformer) addAppProtectUserSigHandler(handlers cache.Resour
 	informer := nsi.dynInformerFactory.ForResource(appprotect.UserSigGVR).Informer()
 	informer.AddEventHandler(handlers)
 	nsi.appProtectUserSigLister = informer.GetStore()
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
-// addAppProtectDosPolicyHandler creates dynamic informers for custom appprotectdos policy resource
-func (nsi *namespacedInformer) addAppProtectDosPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.dynInformerFactory.ForResource(appprotectdos.DosPolicyGVR).Informer()
-	informer.AddEventHandler(handlers)
-	nsi.appProtectDosPolicyLister = informer.GetStore()
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
-// addAppProtectDosLogConfHandler creates dynamic informer for custom appprotectdos logging config resource
-func (nsi *namespacedInformer) addAppProtectDosLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.dynInformerFactory.ForResource(appprotectdos.DosLogConfGVR).Informer()
-	informer.AddEventHandler(handlers)
-	nsi.appProtectDosLogConfLister = informer.GetStore()
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
-// addAppProtectDosLogConfHandler creates dynamic informers for custom appprotectdos logging config resource
-func (nsi *namespacedInformer) addAppProtectDosProtectedResourceHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.confSharedInformerFactory.Appprotectdos().V1beta1().DosProtectedResources().Informer()
-	informer.AddEventHandler(handlers)
-	nsi.appProtectDosProtectedLister = informer.GetStore()
 
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
@@ -1450,36 +1422,6 @@ func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespac
 	}
 }
 
-func (lbc *LoadBalancerController) cleanupUnwatchedAppDosResources(nsi *namespacedInformer) {
-	for _, obj := range nsi.appProtectDosPolicyLister.List() {
-		dosPol := obj.((*unstructured.Unstructured))
-		namespace := dosPol.GetNamespace()
-		name := dosPol.GetName()
-
-		changes, problems := lbc.dosConfiguration.DeletePolicy(namespace + "/" + name)
-		lbc.processAppProtectDosChanges(changes)
-		lbc.processAppProtectDosProblems(problems)
-	}
-	for _, obj := range nsi.appProtectDosProtectedLister.List() {
-		dosPol := obj.((*unstructured.Unstructured))
-		namespace := dosPol.GetNamespace()
-		name := dosPol.GetName()
-
-		changes, problems := lbc.dosConfiguration.DeleteProtectedResource(namespace + "/" + name)
-		lbc.processAppProtectDosChanges(changes)
-		lbc.processAppProtectDosProblems(problems)
-	}
-	for _, obj := range nsi.appProtectDosLogConfLister.List() {
-		dosPol := obj.((*unstructured.Unstructured))
-		namespace := dosPol.GetNamespace()
-		name := dosPol.GetName()
-
-		changes, problems := lbc.dosConfiguration.DeleteLogConf(namespace + "/" + name)
-		lbc.processAppProtectDosChanges(changes)
-		lbc.processAppProtectDosProblems(problems)
-	}
-}
-
 func (lbc *LoadBalancerController) syncIngressLink(task task) {
 	key := task.Key
 	glog.V(2).Infof("Adding, Updating or Deleting IngressLink: %v", key)
@@ -2020,63 +1962,6 @@ func (lbc *LoadBalancerController) processAppProtectUserSigChange(change appprot
 
 func (lbc *LoadBalancerController) processAppProtectProblems(problems []appprotect.Problem) {
 	glog.V(3).Infof("Processing %v App Protect problems", len(problems))
-
-	for _, p := range problems {
-		eventType := api_v1.EventTypeWarning
-		lbc.recorder.Event(p.Object, eventType, p.Reason, p.Message)
-	}
-}
-
-func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprotectdos.Change) {
-	glog.V(3).Infof("Processing %v App Protect Dos changes", len(changes))
-
-	for _, c := range changes {
-		if c.Op == appprotectdos.AddOrUpdate {
-			switch impl := c.Resource.(type) {
-			case *appprotectdos.DosProtectedResourceEx:
-				glog.V(3).Infof("handling change UPDATE OR ADD for DOS protected %s/%s", impl.Obj.Namespace, impl.Obj.Name)
-				resources := lbc.configuration.FindResourcesForAppProtectDosProtected(impl.Obj.Namespace, impl.Obj.Name)
-				resourceExes := lbc.createExtendedResources(resources)
-				warnings, err := lbc.configurator.AddOrUpdateResourcesThatUseDosProtected(resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
-				lbc.updateResourcesStatusAndEvents(resources, warnings, err)
-				msg := fmt.Sprintf("Configuration for %s/%s was added or updated", impl.Obj.Namespace, impl.Obj.Name)
-				lbc.recorder.Event(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", msg)
-			case *appprotectdos.DosPolicyEx:
-				msg := "Configuration was added or updated"
-				lbc.recorder.Event(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", msg)
-			case *appprotectdos.DosLogConfEx:
-				eventType := api_v1.EventTypeNormal
-				eventTitle := "AddedOrUpdated"
-				msg := "Configuration was added or updated"
-				if impl.ErrorMsg != "" {
-					msg += fmt.Sprintf(" ; with warning(s): %s", impl.ErrorMsg)
-					eventTitle = "AddedOrUpdatedWithWarning"
-					eventType = api_v1.EventTypeWarning
-				}
-				lbc.recorder.Event(impl.Obj, eventType, eventTitle, msg)
-			}
-		} else if c.Op == appprotectdos.Delete {
-			switch impl := c.Resource.(type) {
-			case *appprotectdos.DosPolicyEx:
-				lbc.configurator.DeleteAppProtectDosPolicy(impl.Obj)
-
-			case *appprotectdos.DosLogConfEx:
-				lbc.configurator.DeleteAppProtectDosLogConf(impl.Obj)
-
-			case *appprotectdos.DosProtectedResourceEx:
-				glog.V(3).Infof("handling change DELETE for DOS protected %s/%s", impl.Obj.Namespace, impl.Obj.Name)
-				lbc.configurator.DeleteAppProtectDosAllowList(impl.Obj)
-				resources := lbc.configuration.FindResourcesForAppProtectDosProtected(impl.Obj.Namespace, impl.Obj.Name)
-				resourceExes := lbc.createExtendedResources(resources)
-				warnings, err := lbc.configurator.AddOrUpdateResourcesThatUseDosProtected(resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
-				lbc.updateResourcesStatusAndEvents(resources, warnings, err)
-			}
-		}
-	}
-}
-
-func (lbc *LoadBalancerController) processAppProtectDosProblems(problems []appprotectdos.Problem) {
-	glog.V(3).Infof("Processing %v App Protect Dos problems", len(problems))
 
 	for _, p := range problems {
 		eventType := api_v1.EventTypeWarning
@@ -4406,93 +4291,6 @@ func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {
 
 	lbc.processAppProtectUserSigChange(change)
 	lbc.processAppProtectProblems(problems)
-}
-
-func (lbc *LoadBalancerController) syncAppProtectDosPolicy(task task) {
-	key := task.Key
-	glog.V(3).Infof("Syncing AppProtectDosPolicy %v", key)
-	var obj interface{}
-	var polExists bool
-	var err error
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, polExists, err = lbc.getNamespacedInformer(ns).appProtectDosPolicyLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	var changes []appprotectdos.Change
-	var problems []appprotectdos.Problem
-
-	if !polExists {
-		glog.V(2).Infof("Deleting APDosPolicy: %v\n", key)
-		changes, problems = lbc.dosConfiguration.DeletePolicy(key)
-	} else {
-		glog.V(2).Infof("Adding or Updating APDosPolicy: %v\n", key)
-		changes, problems = lbc.dosConfiguration.AddOrUpdatePolicy(obj.(*unstructured.Unstructured))
-	}
-
-	lbc.processAppProtectDosChanges(changes)
-	lbc.processAppProtectDosProblems(problems)
-}
-
-func (lbc *LoadBalancerController) syncAppProtectDosLogConf(task task) {
-	key := task.Key
-	glog.V(3).Infof("Syncing APDosLogConf %v", key)
-	var obj interface{}
-	var confExists bool
-	var err error
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, confExists, err = lbc.getNamespacedInformer(ns).appProtectDosLogConfLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	var changes []appprotectdos.Change
-	var problems []appprotectdos.Problem
-
-	if !confExists {
-		glog.V(2).Infof("Deleting APDosLogConf: %v\n", key)
-		changes, problems = lbc.dosConfiguration.DeleteLogConf(key)
-	} else {
-		glog.V(2).Infof("Adding or Updating APDosLogConf: %v\n", key)
-		changes, problems = lbc.dosConfiguration.AddOrUpdateLogConf(obj.(*unstructured.Unstructured))
-	}
-
-	lbc.processAppProtectDosChanges(changes)
-	lbc.processAppProtectDosProblems(problems)
-}
-
-func (lbc *LoadBalancerController) syncDosProtectedResource(task task) {
-	key := task.Key
-	glog.V(3).Infof("Syncing DosProtectedResource %v", key)
-	var obj interface{}
-	var confExists bool
-	var err error
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, confExists, err = lbc.getNamespacedInformer(ns).appProtectDosProtectedLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	var changes []appprotectdos.Change
-	var problems []appprotectdos.Problem
-
-	if confExists {
-		glog.V(2).Infof("Adding or Updating DosProtectedResource: %v\n", key)
-		changes, problems = lbc.dosConfiguration.AddOrUpdateDosProtectedResource(obj.(*v1beta1.DosProtectedResource))
-	} else {
-		glog.V(2).Infof("Deleting DosProtectedResource: %v\n", key)
-		changes, problems = lbc.dosConfiguration.DeleteProtectedResource(key)
-	}
-
-	lbc.processAppProtectDosChanges(changes)
-	lbc.processAppProtectDosProblems(problems)
 }
 
 // IsNginxReady returns ready status of NGINX
