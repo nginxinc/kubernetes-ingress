@@ -56,7 +56,7 @@ spec:
 
 ### Listener
 
-The `listeners:` key defines a listener (a combination of a protocol and a port) that NGINX will use to accept traffic for a [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and a [VirtualServer](nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources):
+The `listeners:` key defines a listener (a combination of a protocol and a port) that NGINX will use to accept traffic for a [TransportServer]({{< relref "/configuration/transportserver-resource.md" >}})  and a [VirtualServer]({{< relref "/configuration/virtualserver-and-virtualserverroute-resources.md" >}}):
 
 ```yaml
 - name: dns-tcp
