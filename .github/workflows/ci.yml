@@ -275,6 +275,7 @@ jobs:
       packages: write
       pull-requests: write # for scout report
     secrets: inherit
+    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false') || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
 
   build-docker-plus:
     name: Build Docker Plus
@@ -299,6 +300,7 @@ jobs:
       id-token: write
       pull-requests: write # for scout report
     secrets: inherit
+    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false') || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
 
   build-docker-nap:
     name: Build Docker NAP
@@ -324,6 +326,7 @@ jobs:
       id-token: write # gcr login
       pull-requests: write # for scout report
     secrets: inherit
+    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false') || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
 
   tag-target:
     name: Tag untested image with PR number
@@ -337,7 +340,7 @@ jobs:
       target_tag: ${{ needs.checks.outputs.additional_tag }}
       dry_run: false
     secrets: inherit
-    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
+    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false') || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
 
   helm-tests:
     if: ${{ needs.checks.outputs.docs_only != 'true' }}
@@ -627,9 +630,9 @@ jobs:
       target_tag: ${{ needs.checks.outputs.stable_tag }}
       dry_run: false
     secrets: inherit
-    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
+    if: ${{ inputs.force || (needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false') || (needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.stable_image_exists != 'true' && needs.checks.outputs.docs_only == 'false') }}
 
-  tag-results:
+  final-results:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     name: Final CI Results
@@ -659,7 +662,7 @@ jobs:
       - build-docker
       - build-docker-plus
       - build-docker-nap
-      - tag-results
+      - final-results
     permissions:
       contents: write # for pushing to Helm Charts repository
       id-token: write # To sign into Google Container Registry
