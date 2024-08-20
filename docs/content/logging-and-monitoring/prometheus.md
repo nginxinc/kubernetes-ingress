@@ -34,7 +34,7 @@ If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the 
 
 ### Using Helm
 
-If you're using *Helm* to install the Ingress Controller, to enable Prometheus metrics, configure the `prometheus.*` parameters of the Helm chart. See the [Installation with Helm]({{< relref "installation/installing-nic/installation-with-helm.md">}}) doc.
+If you're using *Helm* to install the Ingress Controller, to enable Prometheus metrics, configure the `prometheus.*` parameters of the Helm chart. See the [Installation with Helm]({{< relref "/installation/installing-nic/installation-with-helm.md" >}}) doc.
 
 ### Using ServiceMonitor
 
