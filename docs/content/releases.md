@@ -15,6 +15,37 @@ We recommend against:
 2. Building new custom FIPS images.
 {{< /note >}}
 
+## 3.6.2
+
+19 Aug 2024
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [6125](https://github.com/nginxinc/kubernetes-ingress/pull/6125) Don't log errors for not implemented grpc metrics
+- [6223](https://github.com/nginxinc/kubernetes-ingress/pull/6223) Re-order mounting debian apt source file
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+- [5974](https://github.com/nginxinc/kubernetes-ingress/pull/5974), [6021](https://github.com/nginxinc/kubernetes-ingress/pull/6021), [5998](https://github.com/nginxinc/kubernetes-ingress/pull/5998), [6081](https://github.com/nginxinc/kubernetes-ingress/pull/6081), [6120](https://github.com/nginxinc/kubernetes-ingress/pull/6120), [6141](https://github.com/nginxinc/kubernetes-ingress/pull/6141), [6196](https://github.com/nginxinc/kubernetes-ingress/pull/6196), [6204](https://github.com/nginxinc/kubernetes-ingress/pull/6204), [6211](https://github.com/nginxinc/kubernetes-ingress/pull/6211), [6222](https://github.com/nginxinc/kubernetes-ingress/pull/6204) & [6234](https://github.com/nginxinc/kubernetes-ingress/pull/6234) Go dependencies
+- [5967](https://github.com/nginxinc/kubernetes-ingress/pull/5967), [6013](https://github.com/nginxinc/kubernetes-ingress/pull/6013), [6070](https://github.com/nginxinc/kubernetes-ingress/pull/6070), [6098](https://github.com/nginxinc/kubernetes-ingress/pull/6098), [6126](https://github.com/nginxinc/kubernetes-ingress/pull/6126), [6158](https://github.com/nginxinc/kubernetes-ingress/pull/6158), [6179](https://github.com/nginxinc/kubernetes-ingress/pull/6179), [6191](https://github.com/nginxinc/kubernetes-ingress/pull/6191), [6226](https://github.com/nginxinc/kubernetes-ingress/pull/6226) & [6233](https://github.com/nginxinc/kubernetes-ingress/pull/6233) Docker base image updates
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.6.2 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.6.2),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.6.2 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.6.2 source code
+- For Helm, use version 1.3.2 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.26-1.31.
+
+---
 ## 3.6.1
 
 04 Jul 2024
@@ -1535,7 +1566,7 @@ You will find the complete changelog for release 1.11.0, including bug fixes, im
 - For NGINX, use the 1.11.0 image from our DockerHub: `nginx/nginx-ingress:1.11.0`, `nginx/nginx-ingress:1.11.0-alpine` or `nginx-ingress:1.11.0-ubi`
 - For NGINX Plus, please build your own image using the 1.11.0 source code.
 - For Helm, use version 0.9.0 of the chart.
-- [1241](https://github.com/nginxinc/kubernetes-ingress/pull/1241) improved the Makefile. As a result, the commands for building the Ingress Controller image were changed. See the updated commands [here](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image/#building-the-image-and-pushing-it-to-the-private-registry).
+- [1241](https://github.com/nginxinc/kubernetes-ingress/pull/1241) improved the Makefile. As a result, the commands for building the Ingress Controller image were changed. See the updated commands [here]({{< relref "/installation/build-nginx-ingress-controller.md" >}}).
 - [1241](https://github.com/nginxinc/kubernetes-ingress/pull/1241) also consolidated all Dockerfiles into a single Dockerfile. If you customized any of the Dockerfiles, make sure to port the changes to the new Dockerfile.
 - [1288](https://github.com/nginxinc/kubernetes-ingress/pull/1288) further improved validation of Ingress annotations. See this [document](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#validation) to learn more about which annotations are validated. Note that the Ingress Controller will reject resources with invalid annotations, which means clients will see `404` responses from NGINX.  Before upgrading, ensure the Ingress resources don't have annotations with invalid values. Otherwise, after the upgrade, the Ingress Controller will reject such resources.
 - [1457](https://github.com/nginxinc/kubernetes-ingress/pull/1457) fixed the bug when an Ingress Controller pod could become ready before it generated the configuration for all relevant resources in the cluster. The fix also requires that the Ingress Controller can successfully list the relevant resources from the Kubernetes API. For example, if the `-enable-custom-resources` cli argument is `true` (which is the default), the VirtualServer, VirtualServerRoute, TransportServer, and Policy CRDs must be created in the cluster, so that the Ingress Controller can list them. This is similar to other custom resources -- see the list [here](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/#create-custom-resources). Thus, before upgrading, make sure that the CRDs are created in the cluster. Otherwise, the Ingress Controller pods will not become ready.
