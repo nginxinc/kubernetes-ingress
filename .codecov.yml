@@ -13,4 +13,4 @@ coverage:
     changes: false
 ignore:
   - "pkg/client"
-  - "zz_generated.deepcopy.go"
+  - "**/zz_generated"
