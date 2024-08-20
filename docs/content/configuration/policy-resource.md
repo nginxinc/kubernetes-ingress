@@ -43,7 +43,7 @@ spec:
 |``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | [jwt](#jwt) | No |
 |``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No |
 |``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | [egressMTLS](#egressmtls) | No |
-|``waf`` | The WAF policy configures WAF and log configuration policies for [NGINX AppProtect](/nginx-ingress-controller/app-protect/installation/) | [WAF](#waf) | No |
+|``waf`` | The WAF policy configures WAF and log configuration policies for [NGINX AppProtect]({{< relref "installation/integrations/app-protect-waf/configuration.md" >}}) | [WAF](#waf) | No |
 {{% /table %}}
 
 \* A policy must include exactly one policy.
