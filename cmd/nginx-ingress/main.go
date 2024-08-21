@@ -49,7 +49,6 @@ var (
 	telemetryEndpoint string
 )
 
-// Dummy comment to change go code3
 const (
 	nginxVersionLabel        = "app.nginx.org/version"
 	versionLabel             = "app.kubernetes.io/version"
