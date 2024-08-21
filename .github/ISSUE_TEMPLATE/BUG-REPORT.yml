@@ -1,0 +1,73 @@
+name: Bug Report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug", "ready for refinement"]
+projects: ["octo-org/1", "octo-org/44"]
+assignees:
+  - octocat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details (optional)
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Add as much details about the bug as you can.
+      placeholder: Tell us what happend!
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of our F5 NGINX Ingress Controller are you running?
+      options:
+        - edge
+        - 3.6.2
+        - 3.6.1
+        - 3.6.0
+        - 3.5.2
+      default: 0
+    validations:
+      required: true
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: What Kubernetes platforms are you running on?
+      options:
+        - Kind
+        - Rancher
+        - EKS Amazon
+        - AKS Azure
+        - GKE Google Cloud
+        - Openshift
+        - Other
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Contributing Guidelines
+      description: By submitting this issue, you agree that you have read the [Report a Bug](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md#report-a-bug) section of our [Contributing Guidelines](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md)
+      options:
+        - label: I confirm that I have read the Report a Bug section of the Contributing Guidelines
+          required: true
