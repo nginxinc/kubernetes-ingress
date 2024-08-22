@@ -50,7 +50,7 @@
     },
     {
       "label": "AP_DOS 3/3",
-      "image": "ubi-8-plus-nap",
+      "image": "ubi-9-plus-nap",
       "type": "plus",
       "nap_modules": "dos",
       "marker": "dos_learning",
