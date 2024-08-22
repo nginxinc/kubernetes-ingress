@@ -3420,7 +3420,13 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 		var exists bool
 		var err error
 
-		policyObj, exists, err = lbc.getNamespacedInformer(polNamespace).policyLister.GetByKey(policyKey)
+		nsi := lbc.getNamespacedInformer(polNamespace)
+		if nsi == nil {
+			errors = append(errors, fmt.Errorf("failed to get namespace %s", polNamespace))
+			continue
+		}
+
+		policyObj, exists, err = nsi.policyLister.GetByKey(policyKey)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("failed to get policy %s: %w", policyKey, err))
 			continue
