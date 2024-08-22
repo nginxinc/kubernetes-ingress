@@ -2,7 +2,7 @@
   "images": [
     {
       "label": "AP_WAF 1/4",
-      "image": "ubi-9-plus-nap",
+      "image": "ubi-8-plus-nap",
       "type": "plus",
       "nap_modules": "waf",
       "marker": "appprotect_waf_policies_allow",
