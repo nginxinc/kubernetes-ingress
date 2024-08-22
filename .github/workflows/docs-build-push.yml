@@ -43,7 +43,7 @@ jobs:
           echo forked_workflow: ${{ steps.vars.outputs.forked_workflow }}
 
   call-docs-build-push:
-    uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@03a9a3808fcb77cd0c19d7fa5d59b25565dd1d6d # v1.0.2
+    uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@a733e84a262f8d5d885bfc8eac80bc85928da322 # v1.0.3
     permissions:
       pull-requests: write # needed to write preview url comment to PR
       contents: read
