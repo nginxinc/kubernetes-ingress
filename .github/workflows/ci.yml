@@ -180,6 +180,14 @@ jobs:
           make update-codegen && git diff --name-only --exit-code pkg/**
           cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
 
+      - name: Install gofumpt
+        run: go install mvdan.cc/gofumpt@latest
+
+      - name: Check if telemetry schema changed
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          make telemetry-schema && git diff --name-only --exit-code internal/telemetry
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-22.04
