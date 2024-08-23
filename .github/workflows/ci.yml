@@ -181,12 +181,12 @@ jobs:
           cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
 
       - name: Install gofumpt
-        run: |
-          go install mvdan.cc/gofumpt@latest
-          export PATH=$PATH:$(go env GOPATH)/bin
+        run: go install mvdan.cc/gofumpt@latest
 
       - name: Check if telemetry schema changed
-        run: make telemetry-schema && git diff --name-only --exit-code internal/telemetry
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          make telemetry-schema && git diff --name-only --exit-code internal/telemetry
 
   unit-tests:
     name: Unit Tests
