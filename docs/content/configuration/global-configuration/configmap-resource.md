@@ -1,20 +1,14 @@
 ---
-docs: DOCS-586
-doctypes:
-- ''
-title: ConfigMap resources
 title: ConfigMap resources
 toc: true
 weight: 300
-weight: 300
+docs: DOCS-586
 ---
 
-When using F5 NGINX Ingress Controller, you can customize or fine tune NGINX behavior using ConfigMap resources. Examples include setting the number of worker processes or customizing the access log format.
 When using F5 NGINX Ingress Controller, you can customize or fine tune NGINX behavior using ConfigMap resources. Examples include setting the number of worker processes or customizing the access log format.
 
 ## Using ConfigMap
 
-1. The [Installation with Manifests]({{< relref "installation/installing-nic/installation-with-manifests.md" >}}) documentation deploy an empty ConfigMap while the default installation manifests specify it in the command-line arguments of the Ingress Controller. However, if you customized the manifests, to use ConfigMap, make sure to specify the ConfigMap resource to use the [command-line arguments]({{< relref "configuration/global-configuration/command-line-arguments" >}}) of NGINX Ingress Controller.
 1. The [Installation with Manifests]({{< relref "installation/installing-nic/installation-with-manifests.md" >}}) documentation deploy an empty ConfigMap while the default installation manifests specify it in the command-line arguments of the Ingress Controller. However, if you customized the manifests, to use ConfigMap, make sure to specify the ConfigMap resource to use the [command-line arguments]({{< relref "configuration/global-configuration/command-line-arguments" >}}) of NGINX Ingress Controller.
 
 1. Create a ConfigMap file with the name *nginx-config.yaml* and set the values
@@ -46,20 +40,13 @@ that make sense for your setup:
 ---
 
 ## ConfigMap and Ingress annotations
----
 
-## ConfigMap and Ingress annotations
-
-ConfigMap applies globally, meaning that it affects every Ingress resource. In contrast, annotations always apply to their Ingress resource. Annotations can override some ConfigMap keys: an example is that the `nginx.org/proxy-connect-timeout` annotations overrides the `proxy-connect-timeout` ConfigMap key.
 ConfigMap applies globally, meaning that it affects every Ingress resource. In contrast, annotations always apply to their Ingress resource. Annotations can override some ConfigMap keys: an example is that the `nginx.org/proxy-connect-timeout` annotations overrides the `proxy-connect-timeout` ConfigMap key.
 
 For more information, view the [Advanced configuration with annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations" >}}) topic.
-For more information, view the [Advanced configuration with annotations]({{< relref "configuration/ingress-resources/advanced-configuration-with-annotations" >}}) topic.
 
 ---
----
 
-## ConfigMap and VirtualServer/VirtualServerRoute resources
 ## ConfigMap and VirtualServer/VirtualServerRoute resources
 
 The ConfigMap affects every VirtualServer and VirtualServerRoute resources. However, the fields of those resources allow overriding some ConfigMap keys. For example, the `connect-timeout` field of the `upstream` overrides the `proxy-connect-timeout` ConfigMap key.
@@ -67,17 +54,11 @@ The ConfigMap affects every VirtualServer and VirtualServerRoute resources. Howe
 For more information, view the [VirtualServer and VirtualServerRoute resources]({{< relref "configuration/virtualserver-and-virtualserverroute-resources" >}}) topic.
 
 ---
-For more information, view the [VirtualServer and VirtualServerRoute resources]({{< relref "configuration/virtualserver-and-virtualserverroute-resources" >}}) topic.
 
----
-
-## ConfigMap keys
 ## ConfigMap keys
 
 ### Ingress Controller (Unrelated to NGINX Configuration)
-### Ingress Controller (Unrelated to NGINX Configuration)
 
-{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
@@ -85,15 +66,9 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 {{</bootstrap-table>}}
 
 ---
-|*external-status-address* | Sets the address to be reported in the status of Ingress resources. Requires the *-report-status* command-line argument. Overrides the *-external-service* argument. | N/A | [Reporting resource status]({{< relref "configuration/global-configuration/reporting-resources-status" >}}) |
-{{</bootstrap-table>}}
-
----
 
 ### General customization
-### General customization
 
-{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
@@ -134,7 +109,6 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 ### Logging
 
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
-{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
 |*error-log-level* | Sets the global [error log level](https://nginx.org/en/docs/ngx_core_module.html#error_log) for NGINX. | *notice* |  |
@@ -149,17 +123,10 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 ---
 
 ### Request URI/Header manipulation
-### Request URI/Header manipulation
 
-{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
-|*proxy-hide-headers* | Sets the value of one or more  [proxy_hide_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header) directives. Example: *"nginx.org/proxy-hide-headers": "header-a,header-b"* | N/A |  |
-|*proxy-pass-headers* | Sets the value of one or more   [proxy_pass_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header) directives. Example: *"nginx.org/proxy-pass-headers": "header-a,header-b"* | N/A |  |
-{{</bootstrap-table>}}
-
----
 |*proxy-hide-headers* | Sets the value of one or more  [proxy_hide_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header) directives. Example: *"nginx.org/proxy-hide-headers": "header-a,header-b"* | N/A |  |
 |*proxy-pass-headers* | Sets the value of one or more   [proxy_pass_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header) directives. Example: *"nginx.org/proxy-pass-headers": "header-a,header-b"* | N/A |  |
 {{</bootstrap-table>}}
@@ -169,22 +136,8 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 ### Auth and SSL/TLS
 
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
-{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
-|*redirect-to-https* | Sets the 301 redirect rule based on the value of the *http_x_forwarded_proto* header on the server block to force incoming traffic to be over HTTPS. Useful when terminating SSL in a load balancer in front of the Ingress Controller — see [115](https://github.com/nginxinc/kubernetes-ingress/issues/115) | *False* |  |
-|*ssl-redirect* | Sets an unconditional 301 redirect rule for all incoming HTTP traffic to force incoming traffic over HTTPS. | *True* |  |
-|*hsts* | Enables [HTTP Strict Transport Security (HSTS)](https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/) : the HSTS header is added to the responses from backends. The *preload* directive is included in the header. | *False* |  |
-|*hsts-max-age* | Sets the value of the *max-age* directive of the HSTS header. | *2592000* (1 month) |  |
-|*hsts-include-subdomains* | Adds the *includeSubDomains* directive to the HSTS header. | *False* |  |
-|*hsts-behind-proxy* | Enables HSTS based on the value of the *http_x_forwarded_proto* request header. Should only be used when TLS termination is configured in a load balancer (proxy) in front of the Ingress Controller. Note: to control redirection from HTTP to HTTPS configure the *nginx.org/redirect-to-https* annotation. | *False* |  |
-|*ssl-protocols* | Sets the value of the [ssl_protocols](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_protocols) directive. | *TLSv1 TLSv1.1 TLSv1.2* |  |
-|*ssl-prefer-server-ciphers* | Enables or disables the [ssl_prefer_server_ciphers](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_prefer_server_ciphers) directive. | *False* |  |
-|*ssl-ciphers* | Sets the value of the [ssl_ciphers](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_ciphers) directive. | *HIGH:!aNULL:!MD5* |  |
-|*ssl-dhparam-file* | Sets the content of the dhparam file. The controller will create the file and set the value of the [ssl_dhparam](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_dhparam) directive with the path of the file. | N/A |  |
-{{</bootstrap-table>}}
-
----
 |*redirect-to-https* | Sets the 301 redirect rule based on the value of the *http_x_forwarded_proto* header on the server block to force incoming traffic to be over HTTPS. Useful when terminating SSL in a load balancer in front of the Ingress Controller — see [115](https://github.com/nginxinc/kubernetes-ingress/issues/115) | *False* |  |
 |*ssl-redirect* | Sets an unconditional 301 redirect rule for all incoming HTTP traffic to force incoming traffic over HTTPS. | *True* |  |
 |*hsts* | Enables [HTTP Strict Transport Security (HSTS)](https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/) : the HSTS header is added to the responses from backends. The *preload* directive is included in the header. | *False* |  |
@@ -202,7 +155,6 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 ### Listeners
 
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
-{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
 |*http2* | Enables HTTP/2 in servers with SSL enabled. | *False* |  |
@@ -212,9 +164,7 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 ---
 
 ### Backend services (Upstreams)
-### Backend services (Upstreams)
 
-{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
@@ -226,19 +176,9 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 {{</bootstrap-table>}}
 
 ---
-|*lb-method* | Sets the [load balancing method](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method). To use the round-robin method, specify *"round_robin"*. | *"random two least_conn"* |  |
-|*max-fails* | Sets the value of the [max_fails](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails) parameter of the *server* directive. | *1* |  |
-|*upstream-zone-size* | Sets the size of the shared memory [zone](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#zone) for upstreams. For NGINX, the special value 0 disables the shared memory zones. For NGINX Plus, shared memory zones are required and cannot be disabled. The special value 0 will be ignored. | *256k* for NGINX, *512k* for NGINX Plus  |  |
-|*fail-timeout* | Sets the value of the [fail_timeout](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#fail_timeout) parameter of the *server* directive. | *10s* |  |
-|*keepalive* | Sets the value of the [keepalive](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive) directive. Note that *proxy_set_header Connection "";* is added to the generated configuration when the value > 0. | *0* |  |
-{{</bootstrap-table>}}
-
----
 
 ### Snippets and custom templates
-### Snippets and custom templates
 
-{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
@@ -268,10 +208,6 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 |*app-protect-cpu-thresholds* | Sets the *app_protect_cpu_thresholds* [global directive](/nginx-app-protect/configuration/#global-directives). | *high=100 low=100* |  |
 |*app-protect-physical-memory-util-thresholds* | Sets the *app_protect_physical_memory_util_thresholds* [global directive](/nginx-app-protect/configuration/#global-directives). | *high=100 low=100* |  |
 |`app-protect-reconnect-period-seconds` | Sets the `app_protect_reconnect_period_seconds` [global directive](/nginx-app-protect/configuration/#global-directives). | `5` |  |
-|*app-protect-dos-log-format* | Sets the custom [log format](https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format) for Dos Access log traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by *\n*). In that case, the Ingress Controller will replace every *\n* character with a space character. All *'* characters must be escaped. | `, vs_name_al=$app_protect_dos_vs_name, ip=$remote_addr, tls_fp=$app_protect_dos_tls_fp, outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, policy_name=$app_protect_dos_policy_name, dos_version=$app_protect_dos_version, ip_tls=$remote_addr:$app_protect_dos_tls_fp,` | |
-|*app-protect-dos-log-format-escaping* | Sets the characters escaping for the variables of the stream log format. Supported values: *json* (JSON escaping), *default* (the default escaping) *none* (disables escaping). | *default* |  |
-|*app-protect-dos-arb-fqdn* | Sets the *app-protect-dos-arb-fqdn* [directive](/nginx-app-protect-dos/directives-and-policy/learn-about-directives-and-policy/#arbitrator-fqdn-directive-app_protect_dos_arb_fqdn). | *svc-appprotect-dos-arb* |  |
-{{</bootstrap-table>}}
 |*app-protect-dos-log-format* | Sets the custom [log format](https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format) for Dos Access log traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by *\n*). In that case, the Ingress Controller will replace every *\n* character with a space character. All *'* characters must be escaped. | `, vs_name_al=$app_protect_dos_vs_name, ip=$remote_addr, tls_fp=$app_protect_dos_tls_fp, outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, policy_name=$app_protect_dos_policy_name, dos_version=$app_protect_dos_version, ip_tls=$remote_addr:$app_protect_dos_tls_fp,` | |
 |*app-protect-dos-log-format-escaping* | Sets the characters escaping for the variables of the stream log format. Supported values: *json* (JSON escaping), *default* (the default escaping) *none* (disables escaping). | *default* |  |
 |*app-protect-dos-arb-fqdn* | Sets the *app-protect-dos-arb-fqdn* [directive](/nginx-app-protect-dos/directives-and-policy/learn-about-directives-and-policy/#arbitrator-fqdn-directive-app_protect_dos_arb_fqdn). | *svc-appprotect-dos-arb* |  |
