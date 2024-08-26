@@ -37,6 +37,37 @@ body:
         - 3.6.1
         - 3.6.0
         - 3.5.2
+        - 3.5.1
+        - 3.5.0
+        - 3.4.3
+        - 3.4.2
+        - 3.4.1
+        - 3.4.0
+        - 3.3.2
+        - 3.3.1
+        - 3.3.0
+        - 3.2.1
+        - 3.2.0
+        - 3.1.1
+        - 3.1.0
+        - 3.0.2
+        - 3.0.1
+        - 3.0.0
+        - 2.4.2
+        - 2.4.1
+        - 2.4.0
+        - 2.3.1
+        - 2.3.0
+        - 2.2.2
+        - 2.2.1
+        - 2.2.0
+        - 2.1.2
+        - 2.1.1
+        - 2.1.0
+        - 2.0.3
+        - 2.0.2
+        - 2.0.1
+        - 2.0.0
       default: 0
     validations:
       required: true
@@ -56,13 +87,21 @@ body:
     validations:
       required: true
   - type: textarea
+    id: kubernetes-describe-output
+    attributes:
+      label: Kubectl Describe output
+      description: Please run `kubectl describe` on any relevant Kubernetes resources. e.g. `kubectl describe deployment my-nginx-ingress-controller-deployment`. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
     id: logs
     attributes:
       label: Log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: shell
     validations:
-      required: true
+      required: false
   - type: checkboxes
     id: terms
     attributes:
