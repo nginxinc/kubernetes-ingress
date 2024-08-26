@@ -31,7 +31,6 @@ that make sense for your setup:
 1. Create a new (or update the existing) ConfigMap resource:
 
     ```shell
-    ```shell
     kubectl apply -f nginx-config.yaml
     ```
 
