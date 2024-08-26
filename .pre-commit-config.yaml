@@ -6,7 +6,7 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: '(\.md|\.snap)$'
+        exclude: '(\.md|\.snap|\.avdl)$'
       - id: end-of-file-fixer
         exclude: docs/layouts/shortcodes/nic-.*.html
       - id: check-yaml
