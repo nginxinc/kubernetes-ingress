@@ -44,7 +44,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.60.1
+    rev: v1.60.3
     hooks:
       - id: golangci-lint
         args: [--new-from-patch=/tmp/diff.patch]
@@ -77,7 +77,7 @@ repos:
           ]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.1
+    rev: 0.29.2
     hooks:
       - id: check-jsonschema
         name: "Check Helm Chart JSON Schema"
