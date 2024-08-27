@@ -1,7 +1,5 @@
 ---
 docs: DOCS-602
-doctypes:
-- ''
 title: Installation with Helm
 toc: true
 weight: 100
@@ -9,7 +7,7 @@ weight: 100
 
 This document explains how to install F5 NGINX Ingress Controller using [Helm](https://helm.sh/).
 
-## Before you start
+## Before you begin
 
 {{< note >}} All documentation should only be used with the latest stable release, indicated on [the releases page]({{< relref "releases.md" >}}) of the GitHub repository. {{< /note >}}
 
@@ -20,17 +18,20 @@ This document explains how to install F5 NGINX Ingress Controller using [Helm](h
   - The [Get the NGINX Ingress Controller image with JWT]({{< relref "installation/nic-images/get-image-using-jwt.md" >}}) topic describes how to use your subscription JWT token to get the image.
   - The [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md" >}}) topic explains how to push an image to a private Docker registry.
   - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
-- To use App Protect DoS, install the App Protect DoS Arbitrator [Helm Chart](https://github.com/nginxinc/nap-dos-arbitrator-helm-chart) in the same namespace as NGINX Ingress Controller. If you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because there can only be one Arbitrator in a single namespace.
 
-## CRDs
+---
 
-By default, the Ingress Controller requires a number of custom resource definitions (CRDs) installed in the cluster. The Helm client will install those CRDs. If the CRDs are not installed, the Ingress Controller pods will not become `Ready`.
+## Custom Resource Definitions
+
+NGINX Ingress Controller requires custom resource definitions (CRDs) installed in the cluster, which Helm will install. If the CRDs are not installed, NGINX Ingress Controller pods will not become `Ready`.
 
 If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false` and `controller.appprotectdos.enable` set to `false`), the installation of the CRDs can be skipped by specifying `--skip-crds` for the helm install command.
 
-### Upgrading the CRDs
+--- 
 
-To upgrade the CRDs, pull the chart sources as described in [Pulling the Chart](#pulling-the-chart) and then run:
+### Upgrade the CRDs
+
+To upgrade the CRDs, pull the chart sources as described in [Pull the Chart](#pull-the-chart) and then run:
 
 ```shell
 kubectl apply -f crds/
@@ -38,32 +39,32 @@ kubectl apply -f crds/
 
 Alternatively, CRDs can be upgraded without pulling the chart by running:
 
-```console
+```shell
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/deploy/crds.yaml
 ```
 
 In the above command, `v{{< nic-version >}}` represents the version of NGINX Ingress Controller release rather than the Helm chart version.
 
-{{<note>}}The following warning is expected and can be ignored: `Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply`.
+{{< note >}} The following warning is expected and can be ignored: `Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply`.
 
-Make sure to check the [release notes](https://www.github.com/nginxinc/kubernetes-ingress/releases) for a new release for any special upgrade procedures.
-{{</note>}}
+Check the [release notes](https://www.github.com/nginxinc/kubernetes-ingress/releases) for a new release for any special upgrade procedures.
+{{< /note >}}
 
-### Uninstalling the CRDs
+### Uninstall the CRDs
 
-To remove the CRDs, pull the chart sources as described in [Pulling the Chart](#pulling-the-chart) and then run:
+To remove the CRDs, pull the chart sources as described in [Pull the Chart](#pull-the-chart) and then run:
 
 ```shell
 kubectl delete -f crds/
 ```
 
-{{<warning>}}This command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.{{</warning>}}
+{{< warning >}} This command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other NGINX Ingress Controller instances running in the cluster. {{< /warning >}}
 
-## Managing the Chart via OCI Registry
+## Manage the chart with OCI Registry
 
-### Installing the Chart
+### Install the chart
 
-To install the chart with the release name my-release (my-release is the name that you choose):
+Run the following commands to install the chart with the release name my-release (my-release is the name that you choose):
 
 - For NGINX:
 
@@ -71,17 +72,17 @@ To install the chart with the release name my-release (my-release is the name th
     helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}}
     ```
 
-- For NGINX Plus: (assuming you have pushed the Ingress Controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
+- For NGINX Plus: (This assumes you have pushed NGINX Ingress Controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
 
     ```shell
     helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}} --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
     ```
 
-This will install the latest `edge` version of the Ingress Controller from GitHub Container Registry. If you prefer to use Docker Hub, you can replace `ghcr.io/nginxinc/charts/nginx-ingress` with `registry-1.docker.io/nginxcharts/nginx-ingress`.
+These commands install the latest `edge` version of NGINX Ingress Controller from GitHub Container Registry. If you prefer using Docker Hub, you can replace `ghcr.io/nginxinc/charts/nginx-ingress` with `registry-1.docker.io/nginxcharts/nginx-ingress`.
 
-### Upgrading the Chart
+### Upgrade the chart
 
-Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, see [Upgrading the CRDs](#upgrading-the-crds).
+Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, see [Upgrade the CRDs](#upgrade-the-crds).
 
 To upgrade the release `my-release`:
 
@@ -89,7 +90,7 @@ To upgrade the release `my-release`:
 helm upgrade my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version {{< nic-helm-version >}}
 ```
 
-### Uninstalling the Chart
+### Uninstall the chart
 
 To uninstall/delete the release `my-release`:
 
@@ -99,9 +100,9 @@ helm uninstall my-release
 
 The command removes all the Kubernetes components associated with the release and deletes the release.
 
-Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Uninstalling the CRDs](#uninstalling-the-crds).
+Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Uninstall the CRDs](#uninstall-the-crds).
 
-### Edge Version
+### Edge version
 
 To test the latest changes in NGINX Ingress Controller before a new release, you can install the `edge` version. This version is built from the `main` branch of the NGINX Ingress Controller repository.
 You can install the `edge` version by specifying the `--version` flag with the value `0.0.0-edge`:
@@ -112,11 +113,11 @@ helm install my-release oci://ghcr.io/nginxinc/charts/nginx-ingress --version 0.
 
 {{< warning >}} The `edge` version is not intended for production use. It is intended for testing and development purposes only. {{< /warning >}}
 
-## Managing the Chart via Sources
+## Manage the chart with Sources
 
-### Pulling the Chart
+### Pull the chart
 
-This step is required if you're installing the chart using its sources. Additionally, the step is also required for managing the custom resource definitions (CRDs), which the Ingress Controller requires by default, or for upgrading/deleting the CRDs.
+This step is required if you're installing the chart using its sources. It also manages the custom resource definitions (CRDs) which NGINX Ingress Controller requires, and for upgrading or deleting the CRDs.
 
 1. Pull the chart sources:
 
@@ -130,7 +131,7 @@ This step is required if you're installing the chart using its sources. Addition
     cd nginx-ingress
     ```
 
-### Installing the Chart
+### Install the chart
 
 To install the chart with the release name my-release (my-release is the name that you choose):
 
@@ -148,9 +149,9 @@ To install the chart with the release name my-release (my-release is the name th
 
 The command deploys the Ingress Controller in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
 
-### Upgrading the Chart
+### Upgrade the chart
 
-Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, see [Upgrading the CRDs](#upgrading-the-crds).
+Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, see [Upgrade the CRDs](#upgrade-the-crds).
 
 To upgrade the release `my-release`:
 
@@ -158,7 +159,7 @@ To upgrade the release `my-release`:
 helm upgrade my-release .
 ```
 
-### Uninstalling the Chart
+### Uninstall the chart
 
 To uninstall/delete the release `my-release`:
 
@@ -168,21 +169,20 @@ helm uninstall my-release
 
 The command removes all the Kubernetes components associated with the release and deletes the release.
 
-Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Uninstalling the CRDs](#uninstalling-the-crds).
+Uninstalling the release does not remove the CRDs. To remove the CRDs, see [Uninstall the CRDs](#uninstall-the-crds).
 
-
-## Upgrading without downtime
+## Upgrade without downtime
 
 ### Background
 
 In NGINX Ingress Controller version 3.1.0, [changes were introduced](https://github.com/nginxinc/kubernetes-ingress/pull/3606) to Helm resource names, labels and annotations to fit with Helm best practices.
 When using Helm to upgrade from a version prior to 3.1.0, certain resources like Deployment, DaemonSet and Service will be recreated due to the aforementioned changes, which will result in downtime.
 
-Although the advisory is to update all resources in accordance with new naming convention, to avoid the downtime please follow the steps listed in this page.
+Although the advisory is to update all resources in accordance with new naming convention, to avoid downtime follow the steps listed below.
 
-### Upgrade Steps
+### Upgrade steps
 
-{{<note>}} The following steps apply to both 2.x and 3.0.x releases.{{</note>}}
+{{< note >}} The following steps apply to both 2.x and 3.0.x releases.  {{</ note >}}
 
 The steps you should follow depend on the Helm release name:
 
@@ -285,9 +285,11 @@ The steps you should follow depend on the Helm release name:
 {{</tabs>}}
 
 
-## Run multiple Ingress Controllers
+## Run multiple NGINX Ingress Controllers
 
-If you are running multiple Ingress Controller releases in your cluster with enabled custom resources, the releases will share a single version of the CRDs. Ensure the Ingress Controller versions match the version of the CRDs. When uninstalling a release, ensure that you don’t remove the CRDs until there are no other Ingress Controller releases running in the cluster.
+If you are running NGINX Ingress Controller releases in your cluster with custom resources enabled, the releases will share a single version of the CRDs. 
+
+Ensure the NGINX Ingress Controller versions match the version of the CRDs. When uninstalling a release, ensure that you don’t remove the CRDs until there are no other NGINX Ingress Controller releases running in the cluster.
 
 The [Run multiple NGINX Ingress Controllers]({{< relref "installation/run-multiple-ingress-controllers.md" >}}) topic has more details.
 
@@ -296,7 +298,7 @@ The [Run multiple NGINX Ingress Controllers]({{< relref "installation/run-multip
 The following tables lists the configurable parameters of the NGINX Ingress Controller chart and their default values.
 
 {{< table >}}
-{{<bootstrap-table "table table-striped table-bordered">}}
+{{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Parameter | Description | Default |
 | --- | --- | --- |
 | **controller.name** | The name of the Ingress Controller daemonset or deployment. | Autogenerated |
@@ -478,8 +480,3 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |**nginxAgent.customConfigMap** | The name of a custom ConfigMap to use instead of the one provided by default. | "" |
 {{</bootstrap-table>}}
 {{< /table >}}
-
-## Notes
-
-- The values-icp.yaml file is used for deploying the Ingress Controller on IBM Cloud Private. See the [blog post](https://www.nginx.com/blog/nginx-ingress-controller-ibm-cloud-private/) for more details.
-- The values-nsm.yaml file is used for deploying the Ingress Controller with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details.
