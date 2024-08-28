@@ -124,6 +124,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.NGINX_PAT }}
 
+  mend:
+    if: ${{ ! cancelled() && ! failure() && ! inputs.dry_run && ! contains(inputs.skip_step, 'mend') }}
+    name: Run Mend workflow
+    uses: ./.github/workflows/mend.yml
+    needs: [tag]
+    with:
+      branch: "v${{ inputs.nic_version }}"
+    secrets: inherit
+
   release-oss:
     if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-oss') }}
     name: Release Docker OSS
