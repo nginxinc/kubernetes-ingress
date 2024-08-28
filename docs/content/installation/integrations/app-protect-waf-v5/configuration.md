@@ -60,7 +60,7 @@ spec:
       logDest: "syslog:server=syslog-svc.default:514"
 ```
 
-## Configurate NGINX Plus Ingress Controller using Virtual Server resources
+## Configure NGINX Plus Ingress Controller using Virtual Server resources
 
 This example shows how to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF v5, deploy a simple web application, and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
