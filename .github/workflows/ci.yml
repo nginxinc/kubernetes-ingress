@@ -29,7 +29,7 @@ permissions:
 jobs:
   checks:
     name: Checks and variables
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
@@ -161,7 +161,7 @@ jobs:
 
   verify-codegen:
     name: Verify generated code
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -190,7 +190,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: checks
     steps:
       - name: Checkout Repository
@@ -215,7 +215,7 @@ jobs:
 
   binaries:
     name: Build Binaries
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [checks, unit-tests, verify-codegen]
     permissions:
       contents: write # for goreleaser/goreleaser-action to manage releases
@@ -353,7 +353,7 @@ jobs:
   helm-tests:
     if: ${{ needs.checks.outputs.docs_only != 'true' }}
     name: Helm Tests ${{ matrix.base-os }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [checks, binaries, build-docker, build-docker-plus]
     strategy:
       fail-fast: false
@@ -486,7 +486,7 @@ jobs:
   setup-matrix:
     if: ${{ inputs.force || needs.checks.outputs.docs_only != 'true' }}
     name: Setup Matrix for Smoke Tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [binaries, checks]
     permissions:
       contents: read
@@ -642,7 +642,7 @@ jobs:
 
   final-results:
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Final CI Results
     needs: [tag-stable, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
     steps:

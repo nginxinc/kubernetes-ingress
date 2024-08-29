@@ -64,7 +64,7 @@ permissions:
 jobs:
   release-to-gcr-release-registry:
     name: Push images to the GCR Release Registry
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
@@ -151,7 +151,7 @@ jobs:
 
   release-plus-to-gcr-marketplace-registry:
     name: Push Plus images to the GCR Marketplace Registry
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
@@ -190,7 +190,7 @@ jobs:
 
   release-plus-to-ecr-marketplace-registry:
     name: Push Plus images to the AWS Marketplace Registry
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
@@ -237,7 +237,7 @@ jobs:
 
   release-plus-to-azure-marketplace-registry:
     name: Push Plus images to the Azure Marketplace Registry
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
