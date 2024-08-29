@@ -268,9 +268,6 @@ stream {
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
-mgmt {
-}
-
 ---
 
 [TestExecuteMainTemplateForNGINXPlusR31 - 1]
@@ -406,7 +403,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-
 mgmt {
     usage_report interval=0s;
 }
@@ -1813,7 +1809,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-
 mgmt {
     usage_report interval=0s;
 }
@@ -1952,7 +1947,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-
 mgmt {
     usage_report interval=0s;
 }
@@ -2091,7 +2085,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-
 mgmt {
     usage_report interval=0s;
 }
@@ -2230,7 +2223,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-
 mgmt {
     usage_report interval=0s;
 }
@@ -2387,7 +2379,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-
 mgmt {
     usage_report interval=0s;
 }
@@ -2542,9 +2533,6 @@ stream {
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
-mgmt {
-}
-
 ---
 
 [TestExecuteTemplate_ForMainForNGINXPlusWithHTTP2On - 1]
@@ -2693,7 +2681,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-
 mgmt {
     usage_report interval=0s;
 }
@@ -2848,9 +2835,6 @@ stream {
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
-mgmt {
-}
-
 ---
 
 [TestExecuteTemplate_ForMainForNGINXPlusWithoutCustomTLSPassthroughPort - 1]
@@ -3003,7 +2987,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-
 mgmt {
     usage_report interval=0s;
 }
