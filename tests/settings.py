@@ -4,6 +4,7 @@ import os
 
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEPLOYMENTS = f"{BASEDIR}/deployments"
+HELM_CHARTS = f"{BASEDIR}/charts/nginx-ingress"
 CRDS = f"{BASEDIR}/config/crd/bases"
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA = f"{PROJECT_ROOT}/data"
