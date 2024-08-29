@@ -14,7 +14,7 @@ class TestBuildVersion:
         """
         Test Version tag of build i.e. 'Version=<VERSION>' is same as the version in the chart.yaml file
         """
-        with open(f"{HELM_CHARTS}/chart.yaml") as f:
+        with open(f"{HELM_CHARTS}/Chart.yaml") as f:
             chart = yaml.safe_load(f)
             ic_ver = chart["appVersion"]
             print(f"NIC version from chart: {ic_ver}")
