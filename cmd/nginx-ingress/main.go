@@ -20,6 +20,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	license_reporting "github.com/nginxinc/kubernetes-ingress/internal/license_reporting"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
@@ -31,6 +32,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	util_version "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -40,6 +42,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	kitlog "github.com/go-kit/log"
+
 	"github.com/go-kit/log/level"
 )
 
@@ -80,7 +83,16 @@ func main() {
 
 	managerCollector, controllerCollector, registry := createManagerAndControllerCollectors(constLabels)
 
-	nginxManager, useFakeNginxManager := createNginxManager(managerCollector)
+	var licenseReporter *license_reporting.LicenseReporter
+	if *nginxPlus {
+		licenseReporter = license_reporting.NewLicenseReporter(license_reporting.LicenseReporterConfig{
+			Period:          24 * time.Hour,
+			K8sClientReader: kubeClient,
+			PodNSName:       types.NamespacedName{Namespace: os.Getenv("POD_NAMESPACE"), Name: os.Getenv("POD_NAME")},
+		})
+	}
+
+	nginxManager, useFakeNginxManager := createNginxManager(managerCollector, licenseReporter)
 
 	nginxVersion := getNginxVersionInfo(nginxManager)
 
@@ -427,14 +439,15 @@ func createTemplateExecutors() (*version1.TemplateExecutor, *version2.TemplateEx
 	return templateExecutor, templateExecutorV2
 }
 
-func createNginxManager(managerCollector collectors.ManagerCollector) (nginx.Manager, bool) {
+func createNginxManager(managerCollector collectors.ManagerCollector, licenseReporter *license_reporting.LicenseReporter) (nginx.Manager, bool) {
 	useFakeNginxManager := *proxyURL != ""
 	var nginxManager nginx.Manager
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
 		timeout := time.Duration(*nginxReloadTimeout) * time.Millisecond
-		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, timeout)
+
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, licenseReporter, timeout, *nginxPlus)
 	}
 	return nginxManager, useFakeNginxManager
 }

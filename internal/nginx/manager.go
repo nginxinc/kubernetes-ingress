@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	license_reporting "github.com/nginxinc/kubernetes-ingress/internal/license_reporting"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
 	"github.com/golang/glog"
@@ -100,7 +101,7 @@ type Manager interface {
 	DeleteKeyValStateFiles(virtualServerName string)
 }
 
-// LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
+// LocalManager updates NGINX configuration, starts, reloads and quits NGINX, updates License Reporting file
 // updates NGINX Plus upstream servers. It assumes that NGINX is running in the same container.
 type LocalManager struct {
 	confdPath                    string
@@ -118,14 +119,17 @@ type LocalManager struct {
 	plusClient                   *client.NginxClient
 	plusConfigVersionCheckClient *http.Client
 	metricsCollector             collectors.ManagerCollector
+	licenseReporter              *license_reporting.LicenseReporter
+	licenseReporterCancel        context.CancelFunc
 	OpenTracing                  bool
 	appProtectPluginPid          int
 	appProtectDosAgentPid        int
 	agentPid                     int
+	nginxPlus                    bool
 }
 
 // NewLocalManager creates a LocalManager.
-func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector, timeout time.Duration) *LocalManager {
+func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector, lr *license_reporting.LicenseReporter, timeout time.Duration, nginxPlus bool) *LocalManager {
 	verifyConfigGenerator, err := newVerifyConfigGenerator()
 	if err != nil {
 		glog.Fatalf("error instantiating a verifyConfigGenerator: %v", err)
@@ -145,6 +149,8 @@ func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector
 		configVersion:               0,
 		verifyClient:                newVerifyClient(timeout),
 		metricsCollector:            mc,
+		licenseReporter:             lr,
+		nginxPlus:                   nginxPlus,
 	}
 
 	return &manager
@@ -292,6 +298,13 @@ func (lm *LocalManager) ClearAppProtectFolder(name string) {
 
 // Start starts NGINX.
 func (lm *LocalManager) Start(done chan error) {
+	if lm.nginxPlus {
+		ctx, cancel := context.WithCancel(context.Background())
+		go lm.licenseReporter.Start(ctx)
+
+		lm.licenseReporterCancel = cancel
+	}
+
 	glog.V(3).Info("Starting nginx")
 
 	binaryFilename := getBinaryFileName(lm.debug)
@@ -342,6 +355,10 @@ func (lm *LocalManager) Reload(isEndpointsUpdate bool) error {
 // Quit shutdowns NGINX gracefully.
 func (lm *LocalManager) Quit() {
 	glog.V(3).Info("Quitting nginx")
+
+	if lm.licenseReporterCancel != nil {
+		lm.licenseReporterCancel()
+	}
 
 	binaryFilename := getBinaryFileName(lm.debug)
 	if err := shellOut(fmt.Sprintf("%v -s %v", binaryFilename, "quit")); err != nil {
