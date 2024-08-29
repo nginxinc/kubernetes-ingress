@@ -358,13 +358,15 @@ stream {
     include /etc/nginx/stream-conf.d/*.conf;
 }
 
+{{- if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r33" }}
 mgmt {
-    {{- if (.NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r33") }}
     usage_report endpoint=product.connect.nginx.com interval=30m;
     uuid_file /var/lib/nginx/nginx.id;
     license_token conf/license.jwt;
     deployment_ctx /etc/nginx/reporting/tracking.info;
-    {{- else if (.NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r31") }}
-    usage_report interval=0s;
-    {{- end }}
 }
+{{- else if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r31" }}
+mgmt {
+    usage_report interval=0s;
+}
+{{- end }}
