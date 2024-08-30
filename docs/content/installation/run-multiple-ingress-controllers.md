@@ -12,7 +12,7 @@ This document describes how to run multiple F5 NGINX Ingress Controller instance
 It explains the following topics:
 
 - Ingress class concept.
-- How to run NGINX Ingress Controller in the same cluster with another Ingress Controller and prevent conflicts between them
+- How to run NGINX Ingress Controller in the same cluster with another Ingress Controller and prevent conflicts between them.
 - How to run multiple NGINX Ingress Controllers.
 
 {{< note >}} This document refers to [Ingress]({{< relref "/configuration/ingress-resources/basic-configuration.md" >}}), [VirtualServer]({{< relref "/configuration/virtualserver-and-virtualserverroute-resources.md#virtualserver-specification" >}}), [VirtualServerRoute]({{< relref "/configuration/virtualserver-and-virtualserverroute-resources.md#virtualserverroute-specification" >}}), and [TransportServer]({{< relref "/configuration/transportserver-resource.md" >}}) resources as "configuration resources".{{< /note >}}
