@@ -75,12 +75,6 @@ echo -n 'foo' | base64
 echo -n 'bar' | base64
 # YmFy
 ```
-```shell
-echo -n 'foo' | base64
-# Zm9v
-echo -n 'bar' | base64
-# YmFy
-```
 
 Add the following content to a text editor, and insert the base64 representations of the username and password (Obtained in the previous step) to the `data` parameter:
 
@@ -109,9 +103,6 @@ If you are using a different namespace, change the namespace in the `metadata` s
 ```shell
 kubectl apply -f nms-basic-auth.yaml
 ```
-```shell
-kubectl apply -f nms-basic-auth.yaml
-```
 
 If you need to update the basic-auth credentials for NGINX Management Suite in the future, update the `username` and `password` fields, and apply the changes by running the command again. Usage Reporting will automatically detect the changes, using the new username and password without redeployment.
 
@@ -132,11 +123,6 @@ It can be created with the command `oc create -f scc.yaml`, using the file found
 
 For more information, read the [Command-line arguments](#command-line-arguments) section of this page.
 
----
-
-### Finish deployment
-
-To deploy Usage Reporting, run the following command to deploy it to your Kubernetes cluster:
 ---
 
 ### Finish deployment
