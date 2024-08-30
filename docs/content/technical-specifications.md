@@ -72,8 +72,6 @@ _NGINX Plus images include NGINX Plus R32._
 
 ---
 
----
-
 #### **F5 Container registry**
 
 NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com`, explained in the [Get the NGINX Ingress Controller image with JWT]({{<relref "/installation/nic-images/get-image-using-jwt.md">}}) and [Get the F5 Registry NGINX Ingress Controller image]({{<relref "/installation/nic-images/get-registry-image.md">}}) topics.

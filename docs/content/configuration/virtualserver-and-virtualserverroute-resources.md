@@ -1041,7 +1041,6 @@ You can check if NGINX Ingress Controller successfully applied the configuration
 ```shell
 kubectl describe vs cafe
 ```
-```
 ```text
 ...
 Events:

@@ -1,6 +1,5 @@
 ---
 title: Product telemetry
-title: Product telemetry
 toc: true
 weight: 500
 ---
@@ -8,13 +7,9 @@ weight: 500
 Learn why, what and how F5 NGINX Ingress Controller collects telemetry.
 
 ---
-Learn why, what and how F5 NGINX Ingress Controller collects telemetry.
-
----
 
 ## Overview
 
-NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users. This data is used to triage development work, prioritizing features and functionality that will benefit the most people.
 NGINX Ingress Controller collects product telemetry data to allow its developers to understand how it's deployed and configured by users. This data is used to triage development work, prioritizing features and functionality that will benefit the most people.
 
 Product telemetry is enabled by default, collected once every 24 hours. It's then sent to a service managed by F5 over HTTPS.
@@ -22,11 +17,7 @@ Product telemetry is enabled by default, collected once every 24 hours. It's the
 {{< note >}} If you would prefer not to send any telemetry data, you can [opt-out](#opt-out) when installing NGINX Ingress Controller. {{< /note >}}
 
 ---
-{{< note >}} If you would prefer not to send any telemetry data, you can [opt-out](#opt-out) when installing NGINX Ingress Controller. {{< /note >}}
 
----
-
-## Data collected
 ## Data collected
 
 These are the data points collected and reported by NGINX Ingress Controller:
@@ -69,8 +60,6 @@ These are the data points collected and reported by NGINX Ingress Controller:
 
 ---
 
----
-
 ## Opt out
 
 Product telemetry can be disabled when installing NGINX Ingress Controller.
@@ -84,8 +73,6 @@ This can be set directly in the `values.yaml` file, or using the `--set` option
 ```shell
 helm upgrade --install ... --set controller.telemetryReporting.enable=false
 ```
-
----
 
 ---
 
