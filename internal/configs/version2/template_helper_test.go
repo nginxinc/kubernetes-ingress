@@ -268,6 +268,72 @@ func TestMakeHTTPSListener(t *testing.T) {
 	}
 }
 
+func TestMakeTransportListener(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		server   StreamServer
+		expected string
+	}{
+		{server: StreamServer{
+			UDP: false,
+			SSL: &StreamSSL{
+				Enabled: false,
+			},
+			DisableIPV6: true,
+			Port:        5353,
+		}, expected: "listen 5353;\n"},
+		{server: StreamServer{
+			UDP: true,
+			SSL: &StreamSSL{
+				Enabled: false,
+			},
+			DisableIPV6: true,
+			Port:        5353,
+		}, expected: "listen 5353 udp;\n"},
+		{server: StreamServer{
+			UDP: true,
+			SSL: &StreamSSL{
+				Enabled: true,
+			},
+			DisableIPV6: true,
+			Port:        5353,
+		}, expected: "listen 5353 ssl udp;\n"},
+
+		{server: StreamServer{
+			UDP: false,
+			SSL: &StreamSSL{
+				Enabled: false,
+			},
+			DisableIPV6: false,
+			Port:        5353,
+		}, expected: "listen 5353;\n    listen [::]:5353;\n"},
+		{server: StreamServer{
+			UDP: true,
+			SSL: &StreamSSL{
+				Enabled: false,
+			},
+			DisableIPV6: false,
+			Port:        5353,
+		}, expected: "listen 5353 udp;\n    listen [::]:5353 udp;\n"},
+		{server: StreamServer{
+			UDP: true,
+			SSL: &StreamSSL{
+				Enabled: true,
+			},
+			DisableIPV6: false,
+			Port:        5353,
+		}, expected: "listen 5353 ssl udp;\n    listen [::]:5353 ssl udp;\n"},
+	}
+
+	for _, tc := range testCases {
+		got := makeTransportListener(tc.server)
+		if got != tc.expected {
+			t.Errorf("Function generated wrong config, got %q but expected %q.", got, tc.expected)
+		}
+	}
+}
+
 func newContainsTemplate(t *testing.T) *template.Template {
 	t.Helper()
 	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(`{{contains .InputString .Substring}}`)

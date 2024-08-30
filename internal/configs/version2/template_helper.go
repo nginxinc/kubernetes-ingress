@@ -114,12 +114,48 @@ func buildListenDirective(port string, proxyProtocol bool, listenType listenerTy
 	return directive
 }
 
+func buildTransportListenDirective(listenType listenerType, port string, ssl *StreamSSL, udp bool) string {
+	base := "listen"
+	var directive string
+
+	if listenType == ipv6 {
+		directive = base + " [::]:" + port
+	} else {
+		directive = base + " " + port
+	}
+
+	if ssl.Enabled {
+		directive += " ssl"
+	}
+
+	if udp {
+		directive += " udp"
+	}
+
+	directive += ";\n"
+	return directive
+}
+
 func makeHTTPListener(s Server) string {
 	return makeListener(http, s)
 }
 
 func makeHTTPSListener(s Server) string {
 	return makeListener(https, s)
+}
+
+func makeTransportListener(s StreamServer) string {
+	var directives string
+	port := strconv.Itoa(s.Port)
+
+	directives += buildTransportListenDirective(ipv4, port, s.SSL, s.UDP)
+
+	if !s.DisableIPV6 {
+		directives += spacing
+		directives += buildTransportListenDirective(ipv6, port, s.SSL, s.UDP)
+	}
+
+	return directives
 }
 
 func makeHeaderQueryValue(apiKey APIKey) string {
@@ -140,16 +176,17 @@ func makeHeaderQueryValue(apiKey APIKey) string {
 }
 
 var helperFunctions = template.FuncMap{
-	"headerListToCIMap":    headerListToCIMap,
-	"hasCIKey":             hasCIKey,
-	"contains":             strings.Contains,
-	"hasPrefix":            strings.HasPrefix,
-	"hasSuffix":            strings.HasSuffix,
-	"toLower":              strings.ToLower,
-	"toUpper":              strings.ToUpper,
-	"replaceAll":           strings.ReplaceAll,
-	"makeHTTPListener":     makeHTTPListener,
-	"makeHTTPSListener":    makeHTTPSListener,
-	"makeSecretPath":       commonhelpers.MakeSecretPath,
-	"makeHeaderQueryValue": makeHeaderQueryValue,
+	"headerListToCIMap":     headerListToCIMap,
+	"hasCIKey":              hasCIKey,
+	"contains":              strings.Contains,
+	"hasPrefix":             strings.HasPrefix,
+	"hasSuffix":             strings.HasSuffix,
+	"toLower":               strings.ToLower,
+	"toUpper":               strings.ToUpper,
+	"replaceAll":            strings.ReplaceAll,
+	"makeHTTPListener":      makeHTTPListener,
+	"makeHTTPSListener":     makeHTTPSListener,
+	"makeSecretPath":        commonhelpers.MakeSecretPath,
+	"makeHeaderQueryValue":  makeHeaderQueryValue,
+	"makeTransportListener": makeTransportListener,
 }
