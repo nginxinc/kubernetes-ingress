@@ -545,21 +545,6 @@ func (nsi *namespacedInformer) addEndpointSliceHandler(handlers cache.ResourceEv
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-// addConfigMapHandler adds the handler for config maps to the controller
-func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
-	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformer(
-		cache.NewListWatchFromClient(
-			lbc.client.CoreV1().RESTClient(),
-			"configmaps",
-			namespace,
-			fields.Everything()),
-		&api_v1.ConfigMap{},
-		lbc.resync,
-		handlers,
-	)
-	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.configMapController.HasSynced)
-}
-
 func (nsi *namespacedInformer) addPodHandler() {
 	informer := nsi.sharedInformerFactory.Core().V1().Pods().Informer()
 	nsi.podLister = indexerToPodLister{Indexer: informer.GetIndexer()}
@@ -1016,38 +1001,6 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 	}
 
 	return result
-}
-
-func (lbc *LoadBalancerController) syncConfigMap(task task) {
-	key := task.Key
-	glog.V(3).Infof("Syncing configmap %v", key)
-
-	obj, configExists, err := lbc.configMapLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-	if configExists {
-		lbc.configMap = obj.(*api_v1.ConfigMap)
-		externalStatusAddress, exists := lbc.configMap.Data["external-status-address"]
-		if exists {
-			lbc.statusUpdater.SaveStatusFromExternalStatus(externalStatusAddress)
-		}
-	} else {
-		lbc.configMap = nil
-	}
-
-	if !lbc.isNginxReady {
-		glog.V(3).Infof("Skipping ConfigMap update because the pod is not ready yet")
-		return
-	}
-
-	if lbc.batchSyncEnabled {
-		glog.V(3).Infof("Skipping ConfigMap update because batch sync is on")
-		return
-	}
-
-	lbc.updateAllConfigs()
 }
 
 func (lbc *LoadBalancerController) updateAllConfigs() {

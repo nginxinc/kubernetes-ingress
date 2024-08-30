@@ -19,47 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-// createConfigMapHandlers builds the handler funcs for config maps
-func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			configMap := obj.(*v1.ConfigMap)
-			if configMap.Name == name {
-				glog.V(3).Infof("Adding ConfigMap: %v", configMap.Name)
-				lbc.AddSyncQueue(obj)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			configMap, isConfigMap := obj.(*v1.ConfigMap)
-			if !isConfigMap {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				configMap, ok = deletedState.Obj.(*v1.ConfigMap)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-ConfigMap object: %v", deletedState.Obj)
-					return
-				}
-			}
-			if configMap.Name == name {
-				glog.V(3).Infof("Removing ConfigMap: %v", configMap.Name)
-				lbc.AddSyncQueue(obj)
-			}
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				configMap := cur.(*v1.ConfigMap)
-				if configMap.Name == name {
-					glog.V(3).Infof("ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
-					lbc.AddSyncQueue(cur)
-				}
-			}
-		},
-	}
-}
-
 // createEndpointSliceHandlers builds the handler funcs for EndpointSlices
 func createEndpointSliceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
