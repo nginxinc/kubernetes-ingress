@@ -534,17 +534,6 @@ func (nsi *namespacedInformer) addIngressHandler(handlers cache.ResourceEventHan
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-// addEndpointSliceHandler adds the handler for EndpointSlices to the controller
-func (nsi *namespacedInformer) addEndpointSliceHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.sharedInformerFactory.Discovery().V1().EndpointSlices().Informer()
-	informer.AddEventHandler(handlers)
-	var el storeToEndpointSliceLister
-	el.Store = informer.GetStore()
-	nsi.endpointSliceLister = el
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
 func (nsi *namespacedInformer) addPodHandler() {
 	informer := nsi.sharedInformerFactory.Core().V1().Pods().Informer()
 	nsi.podLister = indexerToPodLister{Indexer: informer.GetIndexer()}
@@ -765,90 +754,6 @@ func (lbc *LoadBalancerController) getNamespacedInformer(ns string) *namespacedI
 		}
 	}
 	return nsi
-}
-
-func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
-	key := task.Key
-	var obj interface{}
-	var endpointSliceExists bool
-	var err error
-	var resourcesFound bool
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, endpointSliceExists, err = lbc.getNamespacedInformer(ns).endpointSliceLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return false
-	}
-
-	if !endpointSliceExists {
-		return false
-	}
-
-	endpointSlice := obj.(*discovery_v1.EndpointSlice)
-	svcName := endpointSlice.Labels["kubernetes.io/service-name"]
-	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, svcName)
-
-	// check if this is the endpointslice for the controller's own service
-	if lbc.statusUpdater.namespace == endpointSlice.Namespace && lbc.statusUpdater.externalServiceName == svcName {
-		return lbc.updateNumberOfIngressControllerReplicas(*endpointSlice)
-	}
-
-	resourceExes := lbc.createExtendedResources(svcResource)
-
-	if len(resourceExes.IngressExes) > 0 {
-		for _, ingEx := range resourceExes.IngressExes {
-			if lbc.ingressRequiresEndpointsUpdate(ingEx, svcName) {
-				resourcesFound = true
-				glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
-				err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
-				if err != nil {
-					glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.IngressExes, err)
-				}
-				break
-			}
-		}
-	}
-
-	if len(resourceExes.MergeableIngresses) > 0 {
-		for _, mergeableIngresses := range resourceExes.MergeableIngresses {
-			if lbc.mergeableIngressRequiresEndpointsUpdate(mergeableIngresses, svcName) {
-				resourcesFound = true
-				glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
-				err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
-				if err != nil {
-					glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.MergeableIngresses, err)
-				}
-				break
-			}
-		}
-	}
-
-	if lbc.areCustomResourcesEnabled {
-		if len(resourceExes.VirtualServerExes) > 0 {
-			for _, vsEx := range resourceExes.VirtualServerExes {
-				if lbc.virtualServerRequiresEndpointsUpdate(vsEx, svcName) {
-					resourcesFound = true
-					glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.VirtualServerExes)
-					err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
-					if err != nil {
-						glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.VirtualServerExes, err)
-					}
-					break
-				}
-			}
-		}
-
-		if len(resourceExes.TransportServerExes) > 0 {
-			resourcesFound = true
-			glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.TransportServerExes)
-			err := lbc.configurator.UpdateEndpointsForTransportServers(resourceExes.TransportServerExes)
-			if err != nil {
-				glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.TransportServerExes, err)
-			}
-		}
-	}
-	return resourcesFound
 }
 
 // finds the number of currently active endpoints for the service pointing at the ingresscontroller and updates all configs that depend on that number
