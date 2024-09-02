@@ -547,33 +547,6 @@ func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventH
 	}
 }
 
-func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			pol := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding AppProtectPolicy: %v", pol.GetName())
-			lbc.AddSyncQueue(pol)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldPol := oldObj.(*unstructured.Unstructured)
-			newPol := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldPol, newPol)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing policy %v", err)
-				lbc.AddSyncQueue(newPol)
-			}
-			if different {
-				glog.V(3).Infof("ApPolicy %v changed, syncing", oldPol.GetName())
-				lbc.AddSyncQueue(newPol)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
-}
-
 // areResourcesDifferent returns true if the resources are different based on their spec.
 func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bool, error) {
 	oldSpec, found, err := unstructured.NestedMap(oldresource.Object, "spec")
@@ -595,60 +568,6 @@ func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bo
 		glog.V(3).Infof("New spec of %v same as old spec", oldresource.GetName())
 	}
 	return !eq, nil
-}
-
-func createAppProtectLogConfHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			conf := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding AppProtectLogConf: %v", conf.GetName())
-			lbc.AddSyncQueue(conf)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldConf := oldObj.(*unstructured.Unstructured)
-			newConf := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldConf, newConf)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing LogConfs %v", err)
-				lbc.AddSyncQueue(newConf)
-			}
-			if different {
-				glog.V(3).Infof("ApLogConf %v changed, syncing", oldConf.GetName())
-				lbc.AddSyncQueue(newConf)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
-}
-
-func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			sig := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding AppProtectUserSig: %v", sig.GetName())
-			lbc.AddSyncQueue(sig)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldSig := oldObj.(*unstructured.Unstructured)
-			newSig := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldSig, newSig)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing UserSigs %v", err)
-				lbc.AddSyncQueue(newSig)
-			}
-			if different {
-				glog.V(3).Infof("ApUserSig %v changed, syncing", oldSig.GetName())
-				lbc.AddSyncQueue(newSig)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
 }
 
 // createNamespaceHandlers builds the handler funcs for namespaces
