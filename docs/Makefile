@@ -4,7 +4,7 @@ HUGO_IMG?=hugomods/hugo:0.115.3
 
 THEME_MODULE = github.com/nginxinc/nginx-hugo-theme
 ## Pulls the current theme version from the Netlify settings
-THEME_VERSION = $(NGINX_THEME_VERSION)
+THEME_VERSION = 0.41.14
 NETLIFY_DEPLOY_URL = ${DEPLOY_PRIME_URL}
 
 # if there's no local hugo, fallback to docker
@@ -74,6 +74,9 @@ lint-markdown:
 # Commands used by Netlify CI
 hugo-mod:
 	hugo mod get $(THEME_MODULE)@v$(THEME_VERSION)
+
+hugo-tidy:
+	hugo mod tidy
 
 build-production:
 	hugo --gc -e production
