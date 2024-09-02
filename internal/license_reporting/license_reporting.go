@@ -39,8 +39,8 @@ func writeLicenseInfo(info *licenseInfo) {
 	jsonData, err := json.Marshal(info)
 	if err != nil {
 		glog.Errorf("failed to marshal LicenseInfo to JSON: %v", err)
+		return
 	}
-
 	filePath := filepath.Join(reportingDir, reportingFile)
 	if err := os.WriteFile(filePath, jsonData, 0o600); err != nil {
 		glog.Errorf("failed to write license reporting info to file: %v", err)
@@ -76,17 +76,14 @@ func (lr *LicenseReporter) collectAndWrite(ctx context.Context) {
 	if err != nil {
 		glog.Errorf("Error collecting ClusterIDS: %v", err)
 	}
-
 	nodeCount, err := clusterInfo.GetNodeCount(ctx, lr.config.K8sClientReader)
 	if err != nil {
 		glog.Errorf("Error collecting ClusterNodeCount: %v", err)
 	}
-
 	installationID, err := clusterInfo.GetInstallationID(ctx, lr.config.K8sClientReader, lr.config.PodNSName)
 	if err != nil {
 		glog.Errorf("Error collecting InstallationID: %v", err)
 	}
-
 	info := newLicenseInfo(clusterID, installationID, nodeCount)
 	writeLicenseInfo(info)
 }
