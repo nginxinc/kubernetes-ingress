@@ -50,7 +50,7 @@ drafts:
 	${HUGO} --bind 0.0.0.0 -p 1313 server -D --disableFastRender
 
 clean:
-	[ -d "public" ] && rm -rf "public" 
+	[ -d "public" ] && rm -rf "public"
 
 hugo-get:
 	hugo mod get $(THEME_MODULE)@v$(THEME_VERSION)
