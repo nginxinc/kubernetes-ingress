@@ -43,16 +43,16 @@ jobs:
         run: |
           tag="$(git tag --sort=-version:refname | head -n1)"
           if [ -n "${{ inputs.tag }}" ]; then
-            echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+            tag=${{ inputs.tag }}
           else
             tag=${tag//v}
-            echo "tag=${tag//v}" >> $GITHUB_OUTPUT
           fi
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
           date=$(date "+%Y%m%d")
           echo "date=${date}" >> $GITHUB_OUTPUT
           short="${tag%.*}"
           echo "short=$short" >> $GITHUB_OUTPUT
-          echo "matrix=$(cat .github/data/patch-images.json" >> $GITHUB_OUTPUT
+          echo "matrix=$(cat .github/data/patch-images.json | jq -c)" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   patch-images:
