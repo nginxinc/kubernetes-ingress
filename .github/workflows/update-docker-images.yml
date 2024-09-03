@@ -43,7 +43,8 @@ jobs:
         run: |
           tag="$(git tag --sort=-version:refname | head -n1)"
           if [ -n "${{ inputs.tag }}" ]; then
-            echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+            tag=${{ inputs.tag }}
+            echo "tag=${tag}" >> $GITHUB_OUTPUT
           else
             tag=${tag//v}
             echo "tag=${tag//v}" >> $GITHUB_OUTPUT
