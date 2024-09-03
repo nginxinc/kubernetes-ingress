@@ -52,7 +52,7 @@ jobs:
           echo "date=${date}" >> $GITHUB_OUTPUT
           short="${tag%.*}"
           echo "short=$short" >> $GITHUB_OUTPUT
-          echo "matrix=$(cat .github/data/patch-images.json)" >> $GITHUB_OUTPUT
+          echo "matrix=$(cat .github/data/patch-images.json | jq -c)" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   patch-images:
