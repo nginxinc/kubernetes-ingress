@@ -66,13 +66,13 @@ The default template -- task -- should be used for most documentation. To create
 hugo new tutorials/deploy.md --kind tutorial
 ```
 
-The available content types (`kind`) are:
+The available content templates (`kind`) are:
 
-- concept: Helps a customer learn about a specific feature or feature set.
-- tutorial: Walks a customer through an example use case scenario; results in a functional PoC environment.
+- concept: Help a user learn about a specific feature or feature set.
+- tutorial: Walk a user through an example use case scenario; results in a functional PoC environment.
 - reference: Describes an API, command line tool, config options, etc.; should be generated automatically from source code. 
-- troubleshooting: Helps a customer solve a specific problem.
-- openapi: Contains front-matter and shortcode for rendering an openapi.yaml spec
+- troubleshooting: Help a user solve a specific problem.
+- openapi: A template with the requirements to render an openapi.yaml specification
 
 ## Documentation formatting
 
