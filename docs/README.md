@@ -69,10 +69,10 @@ hugo new tutorials/deploy.md --kind tutorial
 The available content templates (`kind`) are:
 
 - concept: Help a user learn about a specific feature or feature set.
-- tutorial: Walk a user through an example use case scenario; results in a functional PoC environment.
-- reference: Describes an API, command line tool, config options, etc.; should be generated automatically from source code. 
-- troubleshooting: Help a user solve a specific problem.
-- openapi: A template with the requirements to render an openapi.yaml specification
+- tutorial: Walk a user through an example use case scenario.
+- reference: Describes an API, command line tool, configuration options, etc.
+- troubleshooting: Guide a user towards solving a specific problem.
+- openapi: A template with the requirements to render an openapi.yaml specification.
 
 ## Documentation formatting
 
