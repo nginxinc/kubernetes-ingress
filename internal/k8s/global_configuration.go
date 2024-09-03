@@ -57,7 +57,7 @@ func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.
 		ResyncPeriod: lbc.resync,
 		Handler:      handlers,
 	}
-	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformerWithOptions(options)
+	lbc.globalConfigurationLister, lbc.globalConfigurationController = cache.NewInformerWithOptions(options)
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.globalConfigurationController.HasSynced)
 }
 
