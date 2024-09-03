@@ -162,6 +162,7 @@ jobs:
   verify-codegen:
     name: Verify generated code
     runs-on: ubuntu-24.04
+    needs: checks
     permissions:
       contents: read
     steps:
