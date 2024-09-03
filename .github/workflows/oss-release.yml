@@ -24,6 +24,10 @@ on:
       target_tag:
         required: true
         type: string
+      branch:
+        required: false
+        type: string
+        default: "main"
       dry_run:
         type: boolean
         default: false
@@ -50,6 +54,10 @@ on:
       target_tag:
         required: true
         type: string
+      branch:
+        required: false
+        type: string
+        default: "main"
       dry_run:
         type: boolean
         default: false
@@ -72,6 +80,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -108,6 +118,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -155,6 +167,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -197,6 +211,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
@@ -241,6 +257,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Authenticate to Google Cloud
         id: gcr-auth
