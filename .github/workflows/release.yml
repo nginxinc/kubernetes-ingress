@@ -154,6 +154,7 @@ jobs:
       github_public_registry: true
       source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ matrix.tag }}
+      branch: ${{ inputs.release_branch }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read
@@ -182,6 +183,7 @@ jobs:
       az_mktpl_registry: false
       source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ inputs.nic_version }}
+      branch: ${{ inputs.release_branch }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read
@@ -208,6 +210,7 @@ jobs:
       az_mktpl_registry: false
       source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ inputs.nic_version }}
+      branch: ${{ inputs.release_branch }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read
@@ -233,6 +236,7 @@ jobs:
       az_mktpl_registry: false
       source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ inputs.nic_version }}
+      branch: ${{ inputs.release_branch }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read
@@ -258,6 +262,7 @@ jobs:
       az_mktpl_registry: true
       source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ inputs.nic_version }}
+      branch: ${{ inputs.release_branch }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read

@@ -83,9 +83,12 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-24.04
+    needs: [checks]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ref: ${{ needs.checks.outputs.branch }}
 
       - name: Setup Golang Environment
         uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
@@ -302,6 +305,7 @@ jobs:
       quay_public_registry: true
       github_public_registry: true
       source_tag: ${{ needs.checks.outputs.stable_tag }}
+      branch: ${{ needs.checks.outputs.branch }}
       target_tag: "nightly"
       dry_run: false
     permissions:
@@ -323,6 +327,7 @@ jobs:
       az_mktpl_registry: false
       source_tag: ${{ needs.checks.outputs.stable_tag }}
       target_tag: "nightly"
+      branch: ${{ needs.checks.outputs.branch }}
       dry_run: false
     permissions:
       contents: read
