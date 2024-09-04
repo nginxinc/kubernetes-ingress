@@ -395,48 +395,6 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 	}
 }
 
-func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			link := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding IngressLink: %v", link.GetName())
-			lbc.AddSyncQueue(link)
-		},
-		DeleteFunc: func(obj interface{}) {
-			link, isUnstructured := obj.(*unstructured.Unstructured)
-
-			if !isUnstructured {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				link, ok = deletedState.Obj.(*unstructured.Unstructured)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Unstructured object: %v", deletedState.Obj)
-					return
-				}
-			}
-
-			glog.V(3).Infof("Removing IngressLink: %v", link.GetName())
-			lbc.AddSyncQueue(link)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			oldLink := old.(*unstructured.Unstructured)
-			curLink := cur.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldLink, curLink)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing IngressLinks: %v", err)
-				lbc.AddSyncQueue(curLink)
-			}
-			if different {
-				glog.V(3).Infof("IngressLink %v changed, syncing", oldLink.GetName())
-				lbc.AddSyncQueue(curLink)
-			}
-		},
-	}
-}
-
 // areResourcesDifferent returns true if the resources are different based on their spec.
 func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bool, error) {
 	oldSpec, found, err := unstructured.NestedMap(oldresource.Object, "spec")
