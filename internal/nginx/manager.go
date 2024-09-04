@@ -299,10 +299,15 @@ func (lm *LocalManager) ClearAppProtectFolder(name string) {
 // Start starts NGINX.
 func (lm *LocalManager) Start(done chan error) {
 	if lm.nginxPlus {
-		ctx, cancel := context.WithCancel(context.Background())
-		go lm.licenseReporter.Start(ctx)
-
-		lm.licenseReporterCancel = cancel
+		isR33OrGreater, versionErr := lm.Version().PlusGreaterThanOrEqualTo("nginx-plus-r33")
+		if versionErr != nil {
+			glog.Errorf("Error determining whether nginx version is >= r33: %v", versionErr)
+		}
+		if isR33OrGreater {
+			ctx, cancel := context.WithCancel(context.Background())
+			go lm.licenseReporter.Start(ctx)
+			lm.licenseReporterCancel = cancel
+		}
 	}
 
 	glog.V(3).Info("Starting nginx")
@@ -356,8 +361,14 @@ func (lm *LocalManager) Reload(isEndpointsUpdate bool) error {
 func (lm *LocalManager) Quit() {
 	glog.V(3).Info("Quitting nginx")
 
-	if lm.licenseReporterCancel != nil {
-		lm.licenseReporterCancel()
+	if lm.nginxPlus {
+		isR33OrGreater, err := lm.Version().PlusGreaterThanOrEqualTo("nginx-plus-r33")
+		if err != nil {
+			glog.Errorf("Error determining whether nginx version is >= r33: %v", err)
+		}
+		if isR33OrGreater && lm.licenseReporterCancel != nil {
+			lm.licenseReporterCancel()
+		}
 	}
 
 	binaryFilename := getBinaryFileName(lm.debug)

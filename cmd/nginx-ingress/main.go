@@ -32,7 +32,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	util_version "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -84,12 +83,9 @@ func main() {
 	managerCollector, controllerCollector, registry := createManagerAndControllerCollectors(constLabels)
 
 	var licenseReporter *license_reporting.LicenseReporter
+
 	if *nginxPlus {
-		licenseReporter = license_reporting.NewLicenseReporter(license_reporting.LicenseReporterConfig{
-			Period:          24 * time.Hour,
-			K8sClientReader: kubeClient,
-			PodNSName:       types.NamespacedName{Namespace: os.Getenv("POD_NAMESPACE"), Name: os.Getenv("POD_NAME")},
-		})
+		licenseReporter = license_reporting.NewLicenseReporter(kubeClient)
 	}
 
 	nginxManager, useFakeNginxManager := createNginxManager(managerCollector, licenseReporter)

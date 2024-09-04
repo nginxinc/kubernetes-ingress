@@ -5,9 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
@@ -60,17 +58,8 @@ func TestWriteLicenseInfo(t *testing.T) {
 }
 
 func TestNewLicenseReporter(t *testing.T) {
-	cfg := LicenseReporterConfig{
-		Period:          time.Minute,
-		K8sClientReader: fake.NewSimpleClientset(),
-		PodNSName:       types.NamespacedName{Namespace: "default", Name: "test-pod"},
-	}
-
-	reporter := NewLicenseReporter(cfg)
+	reporter := NewLicenseReporter(fake.NewSimpleClientset())
 	if reporter == nil {
 		t.Fatal("NewLicenseReporter() returned nil")
-	}
-	if reporter.config != cfg {
-		t.Errorf("NewLicenseReporter() config = %v, want %v", reporter.config, cfg)
 	}
 }

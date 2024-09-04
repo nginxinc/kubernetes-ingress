@@ -60,9 +60,13 @@ type LicenseReporterConfig struct {
 }
 
 // NewLicenseReporter creates a new LicenseReporter
-func NewLicenseReporter(cfg LicenseReporterConfig) *LicenseReporter {
+func NewLicenseReporter(client kubernetes.Interface) *LicenseReporter {
 	return &LicenseReporter{
-		config: cfg,
+		config: LicenseReporterConfig{
+			Period:          24 * time.Hour,
+			K8sClientReader: client,
+			PodNSName:       types.NamespacedName{Namespace: os.Getenv("POD_NAMESPACE"), Name: os.Getenv("POD_NAME")},
+		},
 	}
 }
 
