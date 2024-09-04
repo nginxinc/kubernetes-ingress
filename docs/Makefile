@@ -22,7 +22,6 @@ endif
 else
     MARKDOWNLINT=docker run --rm -i -v ${CURDIR}:/src --workdir /src ${MARKDOWNLINT_IMG}
 endif
-endif
 
 MARKDOWNLINKCHECK?=markdown-link-check
 MARKDOWNLINKCHECK_IMG?=ghcr.io/tcort/markdown-link-check:stable
@@ -33,7 +32,6 @@ ifeq (, $(shell docker version 2> /dev/null))
 endif
 else
     MARKDOWNLINKCHECK=docker run --rm -it -v ${CURDIR}:/site --workdir /site ${MARKDOWNLINKCHECK_IMG}
-endif
 endif
 
 .PHONY: docs docs-draft docs-local clean hugo-get hugo-tidy lint-markdown link-check
