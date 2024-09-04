@@ -203,7 +203,7 @@ For more information, view the [VirtualServer and VirtualServerRoute resources](
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
-|*opentracing* | Enables [OpenTracing](https://opentracing.io) globally (for all Ingress, VirtualServer and VirtualServerRoute resources). Note: requires the Ingress Controller image with OpenTracing module and a tracer. See the [docs](/nginx-ingress-controller/third-party-modules/opentracing) for more information. | *False* |  |
+|*opentracing* | Enables [OpenTracing](https://opentracing.io) globally (for all Ingress, VirtualServer and VirtualServerRoute resources). Note: requires the Ingress Controller image with OpenTracing module and a tracer. See the [docs]({{< relref "/installation/integrations/opentracing.md" >}}) for more information. | *False* |  |
 |*opentracing-tracer* | Sets the path to the vendor tracer binary plugin. | N/A |  |
 |*opentracing-tracer-config* | Sets the tracer configuration in JSON format. | N/A |  |
 |*app-protect-compressed-requests-action* | Sets the *app_protect_compressed_requests_action* [global directive](/nginx-app-protect/configuration/#global-directives). | *drop* |  |

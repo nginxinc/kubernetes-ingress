@@ -5,10 +5,7 @@ import (
 	"reflect"
 	"sort"
 
-	discovery_v1 "k8s.io/api/discovery/v1"
-
 	"github.com/jinzhu/copier"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
@@ -19,80 +16,6 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-// createConfigMapHandlers builds the handler funcs for config maps
-func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			configMap := obj.(*v1.ConfigMap)
-			if configMap.Name == name {
-				glog.V(3).Infof("Adding ConfigMap: %v", configMap.Name)
-				lbc.AddSyncQueue(obj)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			configMap, isConfigMap := obj.(*v1.ConfigMap)
-			if !isConfigMap {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				configMap, ok = deletedState.Obj.(*v1.ConfigMap)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-ConfigMap object: %v", deletedState.Obj)
-					return
-				}
-			}
-			if configMap.Name == name {
-				glog.V(3).Infof("Removing ConfigMap: %v", configMap.Name)
-				lbc.AddSyncQueue(obj)
-			}
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				configMap := cur.(*v1.ConfigMap)
-				if configMap.Name == name {
-					glog.V(3).Infof("ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
-					lbc.AddSyncQueue(cur)
-				}
-			}
-		},
-	}
-}
-
-// createEndpointSliceHandlers builds the handler funcs for EndpointSlices
-func createEndpointSliceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			endpointSlice := obj.(*discovery_v1.EndpointSlice)
-			glog.V(3).Infof("Adding EndpointSlice: %v", endpointSlice.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			endpointSlice, isEndpointSlice := obj.(*discovery_v1.EndpointSlice)
-			if !isEndpointSlice {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				endpointSlice, ok = deletedState.Obj.(*discovery_v1.EndpointSlice)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-EndpointSlice object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing EndpointSlice: %v", endpointSlice.Name)
-			lbc.AddSyncQueue(obj)
-		}, UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("EndpointSlice %v changed, syncing", cur.(*discovery_v1.EndpointSlice).Name)
-				lbc.AddSyncQueue(cur)
-			}
-		},
-	}
-}
 
 // createIngressHandlers builds the handler funcs for ingresses
 func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
@@ -403,40 +326,6 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	}
 }
 
-func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			gc := obj.(*conf_v1.GlobalConfiguration)
-			glog.V(3).Infof("Adding GlobalConfiguration: %v", gc.Name)
-			lbc.AddSyncQueue(gc)
-		},
-		DeleteFunc: func(obj interface{}) {
-			gc, isGc := obj.(*conf_v1.GlobalConfiguration)
-			if !isGc {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				gc, ok = deletedState.Obj.(*conf_v1.GlobalConfiguration)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing GlobalConfiguration: %v", gc.Name)
-			lbc.AddSyncQueue(gc)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			curGc := cur.(*conf_v1.GlobalConfiguration)
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("GlobalConfiguration %v changed, syncing", curGc.Name)
-				lbc.AddSyncQueue(curGc)
-			}
-		},
-	}
-}
-
 func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -548,33 +437,6 @@ func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventH
 	}
 }
 
-func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			pol := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding AppProtectPolicy: %v", pol.GetName())
-			lbc.AddSyncQueue(pol)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldPol := oldObj.(*unstructured.Unstructured)
-			newPol := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldPol, newPol)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing policy %v", err)
-				lbc.AddSyncQueue(newPol)
-			}
-			if different {
-				glog.V(3).Infof("ApPolicy %v changed, syncing", oldPol.GetName())
-				lbc.AddSyncQueue(newPol)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
-}
-
 // areResourcesDifferent returns true if the resources are different based on their spec.
 func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bool, error) {
 	oldSpec, found, err := unstructured.NestedMap(oldresource.Object, "spec")
@@ -596,137 +458,6 @@ func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bo
 		glog.V(3).Infof("New spec of %v same as old spec", oldresource.GetName())
 	}
 	return !eq, nil
-}
-
-func createAppProtectLogConfHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			conf := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding AppProtectLogConf: %v", conf.GetName())
-			lbc.AddSyncQueue(conf)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldConf := oldObj.(*unstructured.Unstructured)
-			newConf := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldConf, newConf)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing LogConfs %v", err)
-				lbc.AddSyncQueue(newConf)
-			}
-			if different {
-				glog.V(3).Infof("ApLogConf %v changed, syncing", oldConf.GetName())
-				lbc.AddSyncQueue(newConf)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
-}
-
-func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			sig := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding AppProtectUserSig: %v", sig.GetName())
-			lbc.AddSyncQueue(sig)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldSig := oldObj.(*unstructured.Unstructured)
-			newSig := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldSig, newSig)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing UserSigs %v", err)
-				lbc.AddSyncQueue(newSig)
-			}
-			if different {
-				glog.V(3).Infof("ApUserSig %v changed, syncing", oldSig.GetName())
-				lbc.AddSyncQueue(newSig)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
-}
-
-func createAppProtectDosPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			pol := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding AppProtectDosPolicy: %v", pol.GetName())
-			lbc.AddSyncQueue(pol)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldPol := oldObj.(*unstructured.Unstructured)
-			newPol := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldPol, newPol)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing policy %v", err)
-				lbc.AddSyncQueue(newPol)
-			}
-			if different {
-				glog.V(3).Infof("ApDosPolicy %v changed, syncing", oldPol.GetName())
-				lbc.AddSyncQueue(newPol)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
-}
-
-func createAppProtectDosLogConfHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			conf := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding AppProtectDosLogConf: %v", conf.GetName())
-			lbc.AddSyncQueue(conf)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldConf := oldObj.(*unstructured.Unstructured)
-			newConf := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldConf, newConf)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing DosLogConfs %v", err)
-				lbc.AddSyncQueue(newConf)
-			}
-			if different {
-				glog.V(3).Infof("ApDosLogConf %v changed, syncing", oldConf.GetName())
-				lbc.AddSyncQueue(newConf)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
-}
-
-func createAppProtectDosProtectedResourceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			conf := obj.(*v1beta1.DosProtectedResource)
-			glog.V(3).Infof("Adding DosProtectedResource: %v", conf.GetName())
-			lbc.AddSyncQueue(conf)
-		},
-		UpdateFunc: func(oldObj, obj interface{}) {
-			oldConf := oldObj.(*v1beta1.DosProtectedResource)
-			newConf := obj.(*v1beta1.DosProtectedResource)
-
-			if !reflect.DeepEqual(oldConf.Spec, newConf.Spec) {
-				glog.V(3).Infof("DosProtectedResource %v changed, syncing", oldConf.GetName())
-				lbc.AddSyncQueue(newConf)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
-		},
-	}
-	return handlers
 }
 
 // createNamespaceHandlers builds the handler funcs for namespaces

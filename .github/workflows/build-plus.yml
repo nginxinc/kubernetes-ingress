@@ -51,7 +51,7 @@ jobs:
       contents: read # for docker/build-push-action to read repo content
       id-token: write # for OIDC login to AWS
       pull-requests: write # for scout report
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -61,7 +61,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2 # v2.1.4
+        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -94,7 +94,7 @@ jobs:
           images: |
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap-modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap-modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}/nginx-plus-ingress
           flavor: |
-            suffix=${{ contains(inputs.image, 'ubi') && '-ubi' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}
+            suffix=${{ contains(inputs.image, 'ubi-9') && '-ubi' || '' }}${{ contains(inputs.image, 'ubi-8') && '-ubi8' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}
           tags: |
             type=raw,value=${{ inputs.tag }}
           labels: |
@@ -213,7 +213,7 @@ jobs:
           ignore-unfixed: "true"
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
-      - name: DockerHub Login for Docker Scount
+      - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}

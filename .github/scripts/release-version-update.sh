@@ -11,21 +11,21 @@ DEBUG=${DEBUG:-"false"}
 
 DOCS_TO_UPDATE_FOLDER=${ROOTDIR}/docs/content
 FILES_TO_UPDATE_IC_VERSION=(
+    "${ROOTDIR}/.github/data/version.txt"
     "${ROOTDIR}/README.md"
     "${DEPLOYMENT_PATH}/daemon-set/nginx-ingress.yaml"
     "${DEPLOYMENT_PATH}/daemon-set/nginx-plus-ingress.yaml"
     "${DEPLOYMENT_PATH}/deployment/nginx-ingress.yaml"
     "${DEPLOYMENT_PATH}/deployment/nginx-plus-ingress.yaml"
     "${HELM_CHART_PATH}/Chart.yaml"
-    "${HELM_CHART_PATH}/README.md"
     "${HELM_CHART_PATH}/values-icp.yaml"
     "${HELM_CHART_PATH}/values-nsm.yaml"
     "${HELM_CHART_PATH}/values-plus.yaml"
     "${HELM_CHART_PATH}/values.yaml"
 )
 FILE_TO_UPDATE_HELM_CHART_VERSION=(
+    "${ROOTDIR}/.github/data/version.txt"
     "${HELM_CHART_PATH}/Chart.yaml"
-    "${HELM_CHART_PATH}/README.md"
 )
 
  usage() {

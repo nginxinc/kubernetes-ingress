@@ -1,0 +1,121 @@
+name: Bug Report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug", "ready for refinement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of our F5 NGINX Ingress Controller are you running?
+      options:
+        - edge
+        - 3.6.2
+        - 3.6.1
+        - 3.6.0
+        - 3.5.2
+        - 3.5.1
+        - 3.5.0
+        - 3.4.3
+        - 3.4.2
+        - 3.4.1
+        - 3.4.0
+        - 3.3.2
+        - 3.3.1
+        - 3.3.0
+        - 3.2.1
+        - 3.2.0
+        - 3.1.1
+        - 3.1.0
+        - 3.0.2
+        - 3.0.1
+        - 3.0.0
+        - 2.4.2
+        - 2.4.1
+        - 2.4.0
+        - 2.3.1
+        - 2.3.0
+        - 2.2.2
+        - 2.2.1
+        - 2.2.0
+        - 2.1.2
+        - 2.1.1
+        - 2.1.0
+        - 2.0.3
+        - 2.0.2
+        - 2.0.1
+        - 2.0.0
+      default: 0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What Kubernetes platforms are you running on?
+      options:
+        - Kind
+        - Minikube
+        - Rancher
+        - EKS Amazon
+        - AKS Azure
+        - GKE Google Cloud
+        - Openshift
+        - Other
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: describe-bug
+    attributes:
+      label: What happened?
+      description: Add as much details about the bug as you can.
+      placeholder: Tell is what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: These steps will help us best reproduce the issue and come to a resolution.
+      placeholder: |
+        1. Deploy x to '...' using some.yaml
+        2. View logs on '....'
+        3. See error
+    validations:
+      required: false
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: Expected behaviour
+      description: How did you expect the product/feature to behave?
+      placeholder: What way did you expect this to behave?
+    validations:
+      required: false
+  - type: textarea
+    id: kubernetes-describe-output
+    attributes:
+      label: Kubectl Describe output
+      description: Please run `kubectl describe` on any relevant Kubernetes resources. e.g. `kubectl describe deployment my-nginx-ingress-controller-deployment`. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Contributing Guidelines
+      description: By submitting this issue, you agree that you have read the [Report a Bug](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md#report-a-bug) section of our [Contributing Guidelines](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md)
+      options:
+        - label: I confirm that I have read the Report a Bug section of the Contributing Guidelines
+          required: true

@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: Cherry pick into release branch
     if: ${{ (contains(github.event.pull_request.labels.*.name, 'dependencies') || contains(github.event.pull_request.labels.*.name, 'needs cherry pick')) && github.event.pull_request.merged == true }}
     steps:
@@ -37,6 +37,4 @@ jobs:
           branch: ${{ steps.branch.outputs.branch }}
           token: ${{ secrets.NGINX_PAT }}
           author: nginx-bot <integrations@nginx.com>
-          labels: |
-            dependencies
           title: "[cherry-pick] {old_title}"
