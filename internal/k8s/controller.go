@@ -564,22 +564,6 @@ func (nsi *namespacedInformer) addTransportServerHandler(handlers cache.Resource
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.ResourceEventHandlerFuncs, name string) {
-	optionsModifier := func(options *meta_v1.ListOptions) {
-		options.FieldSelector = fields.Set{"metadata.name": name}.String()
-	}
-
-	informer := dynamicinformer.NewFilteredDynamicInformer(lbc.dynClient, ingressLinkGVR, lbc.controllerNamespace, lbc.resync,
-		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, optionsModifier)
-
-	informer.Informer().AddEventHandlerWithResyncPeriod(handlers, lbc.resync)
-
-	lbc.ingressLinkInformer = informer.Informer()
-	lbc.ingressLinkLister = informer.Informer().GetStore()
-
-	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.ingressLinkInformer.HasSynced)
-}
-
 func (lbc *LoadBalancerController) addNamespaceHandler(handlers cache.ResourceEventHandlerFuncs, nsLabel string) {
 	optionsModifier := func(options *meta_v1.ListOptions) {
 		options.LabelSelector = nsLabel
@@ -1194,62 +1178,6 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 	}
 	glog.V(3).Infof("Finished cleaning up configuration for unwatched resources in namespace: %v", nsi.namespace)
 	nsi.stop()
-}
-
-func (lbc *LoadBalancerController) syncIngressLink(task task) {
-	key := task.Key
-	glog.V(2).Infof("Adding, Updating or Deleting IngressLink: %v", key)
-
-	obj, exists, err := lbc.ingressLinkLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	if !exists {
-		// IngressLink got removed
-		lbc.statusUpdater.ClearStatusFromIngressLink()
-	} else {
-		// IngressLink is added or updated
-		link := obj.(*unstructured.Unstructured)
-
-		// spec.virtualServerAddress contains the IP of the BIG-IP device
-		ip, found, err := unstructured.NestedString(link.Object, "spec", "virtualServerAddress")
-		if err != nil {
-			glog.Errorf("Failed to get virtualServerAddress from IngressLink %s: %v", key, err)
-			lbc.statusUpdater.ClearStatusFromIngressLink()
-		} else if !found {
-			glog.Errorf("virtualServerAddress is not found in IngressLink %s", key)
-			lbc.statusUpdater.ClearStatusFromIngressLink()
-		} else if ip == "" {
-			glog.Warningf("IngressLink %s has the empty virtualServerAddress field", key)
-			lbc.statusUpdater.ClearStatusFromIngressLink()
-		} else {
-			lbc.statusUpdater.SaveStatusFromIngressLink(ip)
-		}
-	}
-
-	if lbc.reportStatusEnabled() {
-		ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
-
-		glog.V(3).Infof("Updating status for %v Ingresses", len(ingresses))
-
-		err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
-		if err != nil {
-			glog.Errorf("Error updating ingress status in syncIngressLink: %v", err)
-		}
-	}
-
-	if lbc.areCustomResourcesEnabled && lbc.reportCustomResourceStatusEnabled() {
-		virtualServers := lbc.configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
-
-		glog.V(3).Infof("Updating status for %v VirtualServers", len(virtualServers))
-
-		err := lbc.statusUpdater.UpdateExternalEndpointsForResources(virtualServers)
-		if err != nil {
-			glog.V(3).Infof("Error updating VirtualServer/VirtualServerRoute status in syncIngressLink: %v", err)
-		}
-	}
 }
 
 func (lbc *LoadBalancerController) syncPolicy(task task) {
