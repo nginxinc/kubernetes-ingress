@@ -277,6 +277,7 @@ Skip TLS verification for the NGINX Management Suite server.
 
 ---
 
+
 ### -min-update-interval `<string>`
 
 The minimum interval between updates to the NGINX Management Suite.

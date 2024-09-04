@@ -1,10 +1,8 @@
 ---
-docs: DOCS-591
-doctypes:
-- ''
 title: Advanced configuration with Annotations
 toc: true
 weight: 200
+docs: DOCS-591
 ---
 
 This topic explains how to enable advanced features in F5 NGINX Ingress Controller with Annotations.
@@ -200,7 +198,7 @@ The table below summarizes the available annotations.
 | *nginx.org/server-snippets* | *server-snippets* | Sets a custom snippet in server context. | N/A |  |
 {{</bootstrap-table>}}
 
-### App Protect WAF {#app-protect}
+### App Protect WAF
 
 {{< note >}} The App Protect annotations only work if the App Protect WAF module is [installed]({{< relref "installation/integrations/app-protect-waf/installation.md" >}}). {{< /note >}}
 
