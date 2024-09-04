@@ -30,30 +30,29 @@ To work on documentation, create a feature branch in a forked repository then ta
 
 The documentation is published from the latest public release branch. If your changes require immediate publication, create a pull request to cherry-pick changes from `main` to the public release branch.
 
-## Developing documentation locally
+## Develop documentation locally
 
-To build the documentation locally, run the `make` command inside this `/site/` directory:
+To build the documentation locally, use the `make` command in the documentation folder with these targets:
 
 ```text
-make docs            - Builds the documentation set with the output as the '/public' directory
-make clean           - Removes the local '/public/' directory
-make watch           - Starts a local Hugo server for live previews
-make watch-drafts    - Starts a local Hugo server for live previews, including documentation marked with 'draft: true'
-make link-check      - Check for any broken links in the documentation
-make lint-markdown   - Runs markdownlint to identify possible markdown formatting issues
+make docs           - Builds the documentation
+make watch          - Runs a local Hugo server to automatically preview changes
+make drafts         - Runs a local Hugo server, and displays documentation marked as drafts
+make clean          - Removes the output 'public' directory created by Hugo
+make hugo-get       - Updates the go module file with the latest version of the theme
+make hugo-tidy      - Removes unnecessary dependencies from the go module file
+make hugo-update    - Runs the hugo-get and hugo-tidy targets in sequence
+make lint-markdown  - Runs markdownlint on the content folder
+make link-check     - Runs markdown-link-check on all Markdown files
 ```
-
-The `watch` options automatically reload the Hugo server, allowing you to view updates as you work.
-
-> **Note**: The documentation uses build environments to control the baseURL used for things like internal references and static resources. The configuration for each environment can be found in the `config` directory. When running Hugo you can specify the environment and baseURL, but it's unnecessary.
 
 ## Adding new documentation
 
-### Using Hugo to generate a new documentation file
+### Generate a new documentation file using Hugo
 
-To create a new documentation file with the pre-configured Hugo front-matter for the task template, run the following command inside this `/site` directory:
+To create a new documentation file containing the pre-configured Hugo front-matter with the task template, **run the following command in the documentation directory**:
 
-`hugo new <SECTIONNAME>/<FILENAME>.md`
+`hugo new <SECTIONNAME>/<FILENAME>.<FORMAT>`
 
 For example:
 
@@ -61,7 +60,7 @@ For example:
 hugo new getting-started/install.md
 ```
 
-The default template (task) should be used for most pages. For other content templates, you can use the `--kind` flag:
+The default template -- task -- should be used for most documentation. To create documentation using the other content templates, you can use the `--kind` flag:
 
 ```shell
 hugo new tutorials/deploy.md --kind tutorial
@@ -119,7 +118,7 @@ Use the `img` [shortcode](#using-hugo-shortcodes) to add images into your docume
 
 ### Using Hugo shortcodes
 
-[Hugo shortcodes](/docs/themes/f5-hugo/layouts/shortcodes/) are used to format callouts, add images, and reuse content across different pages.
+[Hugo shortcodes](https://github.com/nginxinc/nginx-hugo-theme/tree/main/layouts/shortcodes) are used to format callouts, add images, and reuse content across different pages.
 
 For example, to use the `note` callout:
 
