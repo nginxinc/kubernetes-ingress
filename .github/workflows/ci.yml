@@ -162,7 +162,6 @@ jobs:
   verify-codegen:
     name: Verify generated code
     runs-on: ubuntu-24.04
-    needs: checks
     permissions:
       contents: read
     steps:
@@ -173,7 +172,6 @@ jobs:
         uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           go-version-file: go.mod
-        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Check if go.mod and go.sum are up to date
         run: go mod tidy && git diff --exit-code -- go.mod go.sum
