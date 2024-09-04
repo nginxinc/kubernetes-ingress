@@ -125,7 +125,7 @@ func buildListenDirective(ip string, port string, proxyProtocol bool, ipType ipT
 	return directive
 }
 
-func buildTransportListenDirective(listenType listenerType, port string, ssl *StreamSSL, udp bool) string {
+func buildTransportListenDirective(listenType ipType, port string, ssl *StreamSSL, udp bool) string {
 	base := "listen"
 	var directive string
 
