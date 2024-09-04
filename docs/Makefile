@@ -28,7 +28,6 @@ endif
 else
     MARKDOWNLINT=docker run --rm -i -v ${CURDIR}:/src --workdir /src ${MARKDOWNLINT_IMG}
 endif
-endif
 
 MARKDOWNLINKCHECK?=markdown-link-check
 MARKDOWNLINKCHECK_IMG?=ghcr.io/tcort/markdown-link-check:stable
@@ -40,7 +39,6 @@ ifneq (, $(shell $(NETLIFY) "true"))
 endif
 else
     MARKDOWNLINKCHECK=docker run --rm -it -v ${CURDIR}:/site --workdir /site ${MARKDOWNLINKCHECK_IMG}
-endif
 endif
 
 .PHONY: all all-staging all-dev all-local clean hugo-mod build-production build-staging build-dev docs-drafts docs deploy-preview
