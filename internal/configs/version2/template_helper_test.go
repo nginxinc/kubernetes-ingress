@@ -469,7 +469,7 @@ func TestMakeHTTPSListenerWithCustomIPV6(t *testing.T) {
 		got := makeHTTPSListener(tc.server)
 		if got != tc.expected {
 			t.Errorf("Function generated wrong config, got %v but expected %v.", got, tc.expected)
-      
+
 func TestMakeTransportListener(t *testing.T) {
 	t.Parallel()
 
