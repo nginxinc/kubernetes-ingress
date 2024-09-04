@@ -319,6 +319,7 @@ jobs:
       github_public_registry: true
       source_tag: ${{ needs.checks.outputs.stable_tag }}
       target_tag: "edge"
+      branch: ${{ github.ref_name }}
       dry_run: false
     permissions:
       contents: read
@@ -340,6 +341,7 @@ jobs:
       az_mktpl_registry: false
       source_tag: ${{ needs.checks.outputs.stable_tag }}
       target_tag: "edge"
+      branch: ${{ github.ref_name }}
       dry_run: false
     permissions:
       contents: read

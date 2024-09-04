@@ -2,29 +2,34 @@
 docs: DOCS-1454
 doctypes:
 - ''
-title: Getting the NGINX Ingress Controller Image with JWT
+title: Get the NGINX Ingress Controller image with JWT
 toc: true
 weight: 150
 ---
 
-Follow the steps in this document to pull the NGINX Plus Ingress Controller image from the F5 Docker registry into your Kubernetes cluster using your JWT token.
+This document describes how to pull the F5 NGINX Plus Ingress Controller image from the F5 Docker registry into your Kubernetes cluster using your JWT token.
 
 ## Overview
 
-{{<important>}}
+{{< important >}}
+
 An NGINX Plus subscription certificate and key will not work with the F5 Docker registry.
 
 For NGINX Ingress Controller, you must have an NGINX Ingress Controller subscription -- download the NGINX Plus Ingress Controller (per instance) JWT access token from [MyF5](https://my.f5.com).
 
-To list the available image tags using the Docker registry API, you will also need to download the NGINX Plus Ingress Controller (per instance) certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) from [MyF5](https://my.f5.com).{{</important>}}
+To list the available image tags using the Docker registry API, you will also need to download the NGINX Plus Ingress Controller (per instance) certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) from [MyF5](https://my.f5.com).
+
+{{< /important >}}
 
 {{< note >}}
+
 You can also get the image using alternative methods:
 
-* You can use Docker to pull an NGINX Ingress Controller image with NGINX Plus and push it to your private registry by following the ["Pulling the Ingress Controller Image"]({{< relref "installation/nic-images/pulling-ingress-controller-image" >}}) documentation.
-* You can build an NGINX Ingress Controller image by following the ["Information on how to build an Ingress Controller image"]({{< relref "installation/building-nginx-ingress-controller" >}}) documentation.
+* You can use Docker to pull an NGINX Ingress Controller image with NGINX Plus and push it to your private registry by following the [Get NGINX Ingress Controller from the F5 Registry]({{< relref "installation/nic-images/get-registry-image.md" >}}) topic.
+* You can follow the [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md" >}}) topic.
 
-If you would like to use an NGINX Ingress Controller image using NGINX open source, we provide the image through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
+If you would like to use an NGINX Ingress Controller image with NGINX open source, we provide the image through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
+
 {{< /note >}}
 
 ## Before You Begin

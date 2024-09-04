@@ -136,8 +136,8 @@ jobs:
       quay_public_registry: true
       github_public_registry: true
       source_tag: ${{ needs.variables.outputs.source_tag }}
-      target_tag: ${{ inputs.nic_version }}
-      short_target_tag: ${{ needs.variables.outputs.short_tag }}
+      target_tag: ${{ matrix.tag }}
+      branch: ${{ inputs.release_branch }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read
@@ -153,12 +153,91 @@ jobs:
     with:
       gcr_release_registry: true
       nginx_registry: true
+      gcr_mktpl_registry: false
+      ecr_mktpl_registry: false
+      az_mktpl_registry: false
+      source_tag: ${{ needs.variables.outputs.source_tag }}
+      target_tag: ${{ inputs.nic_version }}
+      branch: ${{ inputs.release_branch }}
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  release-plus-gcr-mktpl:
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-plus') }}
+    name: Release Docker Plus
+    needs: [variables]
+    uses: ./.github/workflows/plus-release.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ inputs.nic_version }}"
+          - "${{ needs.variables.outputs.short_tag }}"
+          - "${{ inputs.nic_version }}-${{ needs.variables.outputs.date }}"
+    with:
+      gcr_release_registry: false
+      nginx_registry: false
       gcr_mktpl_registry: true
+      ecr_mktpl_registry: false
+      az_mktpl_registry: false
+      source_tag: ${{ needs.variables.outputs.source_tag }}
+      target_tag: ${{ inputs.nic_version }}
+      branch: ${{ inputs.release_branch }}
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  release-plus-aws-mktpl:
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-plus') }}
+    name: Release Docker Plus
+    needs: [variables]
+    uses: ./.github/workflows/plus-release.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ inputs.nic_version }}"
+          - "${{ inputs.nic_version }}-${{ needs.variables.outputs.date }}"
+    with:
+      gcr_release_registry: false
+      nginx_registry: false
+      gcr_mktpl_registry: false
       ecr_mktpl_registry: true
+      az_mktpl_registry: false
+      source_tag: ${{ needs.variables.outputs.source_tag }}
+      target_tag: ${{ inputs.nic_version }}
+      branch: ${{ inputs.release_branch }}
+      dry_run: ${{ inputs.dry_run }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  release-plus-azure-mktpl:
+    if: ${{ ! cancelled() && ! failure() && ! contains(inputs.skip_step, 'release-plus') }}
+    name: Release Docker Plus
+    needs: [variables]
+    uses: ./.github/workflows/plus-release.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        tag:
+          - "${{ inputs.nic_version }}"
+          - "${{ inputs.nic_version }}-${{ needs.variables.outputs.date }}"
+    with:
+      gcr_release_registry: false
+      nginx_registry: false
+      gcr_mktpl_registry: false
+      ecr_mktpl_registry: false
       az_mktpl_registry: true
       source_tag: ${{ needs.variables.outputs.source_tag }}
       target_tag: ${{ inputs.nic_version }}
-      short_target_tag: ${{ needs.variables.outputs.short_tag }}
+      branch: ${{ inputs.release_branch }}
       dry_run: ${{ inputs.dry_run }}
     permissions:
       contents: read
