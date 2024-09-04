@@ -493,15 +493,6 @@ func (lbc *LoadBalancerController) newNamespacedInformer(ns string) *namespacedI
 	return nsi
 }
 
-// addLeaderHandler adds the handler for leader election to the controller
-func (lbc *LoadBalancerController) addLeaderHandler(leaderHandler leaderelection.LeaderCallbacks) {
-	var err error
-	lbc.leaderElector, err = newLeaderElector(lbc.client, leaderHandler, lbc.controllerNamespace, lbc.leaderElectionLockName)
-	if err != nil {
-		glog.V(3).Infof("Error starting LeaderElection: %v", err)
-	}
-}
-
 // AddSyncQueue enqueues the provided item on the sync queue
 func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
@@ -2290,36 +2281,6 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() e
 
 	if len(allErrs) > 0 {
 		return fmt.Errorf("not all VirtualServerRoutes statuses were updated: %v", allErrs)
-	}
-
-	return nil
-}
-
-func (lbc *LoadBalancerController) updatePoliciesStatus() error {
-	var allErrs []error
-	for _, nsi := range lbc.namespacedInformers {
-		for _, obj := range nsi.policyLister.List() {
-			pol := obj.(*conf_v1.Policy)
-
-			err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
-			if err != nil {
-				msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
-				if err != nil {
-					allErrs = append(allErrs, err)
-				}
-			} else {
-				msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
-				if err != nil {
-					allErrs = append(allErrs, err)
-				}
-			}
-		}
-	}
-
-	if len(allErrs) != 0 {
-		return fmt.Errorf("not all Policies statuses were updated: %v", allErrs)
 	}
 
 	return nil
