@@ -7,9 +7,9 @@ toc: true
 weight: 400
 ---
 
-Learn how to use NGINX Ingress Controller with F5 IngressLink to configure your F5 BIG-IP device.
+Learn how to use F5 IngressLink with NGINX Ingress Controller to configure your F5 BIG-IP device.
 
-F5 IngressLink is the integration between NGINX Ingress Controller and [F5 BIG-IP Container Ingress Services](https://clouddocs.f5.com/containers/latest/) (CIS) that configures an F5 BIG-IP device as a load balancer for NGINX Ingress Controller pods.
+F5 IngressLink is an integration between NGINX Ingress Controller and [F5 BIG-IP Container Ingress Services](https://clouddocs.f5.com/containers/latest/) (CIS) that configures an F5 BIG-IP device as a load balancer for NGINX Ingress Controller pods.
 
 ## Install NGINX Ingress Controller with the integration enabled
 

@@ -7,16 +7,16 @@ toc: true
 weight: 500
 ---
 
-Learn how to use OpenTracing with NGINX Ingress Controller.
+Learn how to use OpenTracing with F5 NGINX Ingress Controller.
 
 NGINX Ingress Controller supports [OpenTracing](https://opentracing.io/) with the third-party module [opentracing-contrib/nginx-opentracing](https://github.com/opentracing-contrib/nginx-opentracing).
 
 ## Prerequisites
 
-1. Use an Ingress Controller image that contains OpenTracing.
+1. Use a NGINX Ingress Controller image that contains OpenTracing.
 
     - You can find the images that include OpenTracing listed [in the technical specs doc]({{< relref "technical-specifications.md#supported-docker-images" >}}).
-    - Alternatively, you can [build your own image]({{< relref "installation/building-nginx-ingress-controller.md" >}}) using `debian-image` (or `alpine-image`) for NGINX or `debian-image-plus` (or `alpine-image-plus`) for NGINX Plus.
+    - Alternatively, you follow [Build NGINX Ingress Controller]({{< relref "installation/build-nginx-ingress-controller.md" >}}) using `debian-image` (or `alpine-image`) for NGINX or `debian-image-plus` (or `alpine-image-plus`) for NGINX Plus.
     - [Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing) and [Datadog](https://github.com/DataDog/dd-opentracing-cpp/) tracers are installed by default.
 
 1. Enable snippets annotations by setting the [`enable-snippets`]({{< relref "configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets" >}}) command-line argument to true.

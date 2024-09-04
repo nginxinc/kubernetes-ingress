@@ -216,7 +216,6 @@ See the [match](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.h
 |``send`` | A string to send to an upstream server. | ``string`` | No |
 |``expect`` | A literal string or a regular expression that the data obtained from the server should match. The regular expression is specified with the preceding ``~*`` modifier (for case-insensitive matching), or the ``~`` modifier (for case-sensitive matching). NGINX Ingress Controller validates a regular expression using the RE2 syntax. | ``string`` | No |
 {{</bootstrap-table>}}
-
 ### UpstreamParameters
 
 The upstream parameters define various parameters for the upstreams:

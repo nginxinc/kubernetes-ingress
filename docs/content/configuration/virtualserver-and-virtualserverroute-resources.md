@@ -1,10 +1,8 @@
 ---
-docs: DOCS-599
-doctypes:
-- ''
 title: VirtualServer and VirtualServerRoute resources
 toc: true
 weight: 1600
+docs: DOCS-599
 ---
 
 This document is reference material for the VirtualServer and VirtualServerRoute resources used by F5 NGINX Ingress Controller. 
@@ -151,12 +149,11 @@ https: https-8443
 
 ### VirtualServer.ExternalDNS
 
-The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/v0.12.0/) for more information on deploying and configuring ExternalDNS and Providers. Example:
+The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/) for more information on deploying and configuring ExternalDNS and Providers. Example:
 
 ```yaml
 enable: true
 ```
-
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
