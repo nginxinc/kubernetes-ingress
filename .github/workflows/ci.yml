@@ -170,6 +170,40 @@ jobs:
           echo 'image_matrix_plus: ${{ steps.vars.outputs.image_matrix_plus }}'
           echo 'image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}'
 
+  verify-codegen:
+    name: Verify generated code
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: go.mod
+
+      - name: Check if go.mod and go.sum are up to date
+        run: go mod tidy && git diff --exit-code -- go.mod go.sum
+
+      - name: Check if CRDs changed
+        run: make update-crds && git diff --name-only --exit-code config/crd/bases
+
+      - name: Check if Codegen changed
+        run: |
+          cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
+          make update-codegen && git diff --name-only --exit-code pkg/**
+          cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
+
+      - name: Install gofumpt
+        run: go install mvdan.cc/gofumpt@latest
+
+      - name: Check if telemetry schema changed
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          make telemetry-schema && git diff --name-only --exit-code internal/telemetry
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-22.04
