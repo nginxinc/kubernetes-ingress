@@ -534,32 +534,6 @@ func (nsi *namespacedInformer) addIngressHandler(handlers cache.ResourceEventHan
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-// addEndpointSliceHandler adds the handler for EndpointSlices to the controller
-func (nsi *namespacedInformer) addEndpointSliceHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.sharedInformerFactory.Discovery().V1().EndpointSlices().Informer()
-	informer.AddEventHandler(handlers)
-	var el storeToEndpointSliceLister
-	el.Store = informer.GetStore()
-	nsi.endpointSliceLister = el
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
-// addConfigMapHandler adds the handler for config maps to the controller
-func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
-	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformer(
-		cache.NewListWatchFromClient(
-			lbc.client.CoreV1().RESTClient(),
-			"configmaps",
-			namespace,
-			fields.Everything()),
-		&api_v1.ConfigMap{},
-		lbc.resync,
-		handlers,
-	)
-	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.configMapController.HasSynced)
-}
-
 func (nsi *namespacedInformer) addPodHandler() {
 	informer := nsi.sharedInformerFactory.Core().V1().Pods().Informer()
 	nsi.podLister = indexerToPodLister{Indexer: informer.GetIndexer()}
@@ -589,20 +563,6 @@ func (nsi *namespacedInformer) addPolicyHandler(handlers cache.ResourceEventHand
 	nsi.policyLister = informer.GetStore()
 
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
-func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.ResourceEventHandlerFuncs, namespace string, name string) {
-	lbc.globalConfigurationLister, lbc.globalConfigurationController = cache.NewInformer(
-		cache.NewListWatchFromClient(
-			lbc.confClient.K8sV1().RESTClient(),
-			"globalconfigurations",
-			namespace,
-			fields.Set{"metadata.name": name}.AsSelector()),
-		&conf_v1.GlobalConfiguration{},
-		lbc.resync,
-		handlers,
-	)
-	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.globalConfigurationController.HasSynced)
 }
 
 func (nsi *namespacedInformer) addTransportServerHandler(handlers cache.ResourceEventHandlerFuncs) {
@@ -782,90 +742,6 @@ func (lbc *LoadBalancerController) getNamespacedInformer(ns string) *namespacedI
 	return nsi
 }
 
-func (lbc *LoadBalancerController) syncEndpointSlices(task task) bool {
-	key := task.Key
-	var obj interface{}
-	var endpointSliceExists bool
-	var err error
-	var resourcesFound bool
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, endpointSliceExists, err = lbc.getNamespacedInformer(ns).endpointSliceLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return false
-	}
-
-	if !endpointSliceExists {
-		return false
-	}
-
-	endpointSlice := obj.(*discovery_v1.EndpointSlice)
-	svcName := endpointSlice.Labels["kubernetes.io/service-name"]
-	svcResource := lbc.configuration.FindResourcesForService(endpointSlice.Namespace, svcName)
-
-	// check if this is the endpointslice for the controller's own service
-	if lbc.statusUpdater.namespace == endpointSlice.Namespace && lbc.statusUpdater.externalServiceName == svcName {
-		return lbc.updateNumberOfIngressControllerReplicas(*endpointSlice)
-	}
-
-	resourceExes := lbc.createExtendedResources(svcResource)
-
-	if len(resourceExes.IngressExes) > 0 {
-		for _, ingEx := range resourceExes.IngressExes {
-			if lbc.ingressRequiresEndpointsUpdate(ingEx, svcName) {
-				resourcesFound = true
-				glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.IngressExes)
-				err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
-				if err != nil {
-					glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.IngressExes, err)
-				}
-				break
-			}
-		}
-	}
-
-	if len(resourceExes.MergeableIngresses) > 0 {
-		for _, mergeableIngresses := range resourceExes.MergeableIngresses {
-			if lbc.mergeableIngressRequiresEndpointsUpdate(mergeableIngresses, svcName) {
-				resourcesFound = true
-				glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.MergeableIngresses)
-				err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
-				if err != nil {
-					glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.MergeableIngresses, err)
-				}
-				break
-			}
-		}
-	}
-
-	if lbc.areCustomResourcesEnabled {
-		if len(resourceExes.VirtualServerExes) > 0 {
-			for _, vsEx := range resourceExes.VirtualServerExes {
-				if lbc.virtualServerRequiresEndpointsUpdate(vsEx, svcName) {
-					resourcesFound = true
-					glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.VirtualServerExes)
-					err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
-					if err != nil {
-						glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.VirtualServerExes, err)
-					}
-					break
-				}
-			}
-		}
-
-		if len(resourceExes.TransportServerExes) > 0 {
-			resourcesFound = true
-			glog.V(3).Infof("Updating EndpointSlices for %v", resourceExes.TransportServerExes)
-			err := lbc.configurator.UpdateEndpointsForTransportServers(resourceExes.TransportServerExes)
-			if err != nil {
-				glog.Errorf("Error updating EndpointSlices for %v: %v", resourceExes.TransportServerExes, err)
-			}
-		}
-	}
-	return resourcesFound
-}
-
 // finds the number of currently active endpoints for the service pointing at the ingresscontroller and updates all configs that depend on that number
 func (lbc *LoadBalancerController) updateNumberOfIngressControllerReplicas(controllerEndpointSlice discovery_v1.EndpointSlice) bool {
 	previous := lbc.configurator.GetIngressControllerReplicas()
@@ -1016,38 +892,6 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 	}
 
 	return result
-}
-
-func (lbc *LoadBalancerController) syncConfigMap(task task) {
-	key := task.Key
-	glog.V(3).Infof("Syncing configmap %v", key)
-
-	obj, configExists, err := lbc.configMapLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-	if configExists {
-		lbc.configMap = obj.(*api_v1.ConfigMap)
-		externalStatusAddress, exists := lbc.configMap.Data["external-status-address"]
-		if exists {
-			lbc.statusUpdater.SaveStatusFromExternalStatus(externalStatusAddress)
-		}
-	} else {
-		lbc.configMap = nil
-	}
-
-	if !lbc.isNginxReady {
-		glog.V(3).Infof("Skipping ConfigMap update because the pod is not ready yet")
-		return
-	}
-
-	if lbc.batchSyncEnabled {
-		glog.V(3).Infof("Skipping ConfigMap update because batch sync is on")
-		return
-	}
-
-	lbc.updateAllConfigs()
 }
 
 func (lbc *LoadBalancerController) updateAllConfigs() {
@@ -1504,55 +1348,6 @@ func (lbc *LoadBalancerController) syncTransportServer(task task) {
 	lbc.processProblems(problems)
 }
 
-func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
-	key := task.Key
-	obj, gcExists, err := lbc.globalConfigurationLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	var changes []ResourceChange
-	var problems []ConfigurationProblem
-	var validationErr error
-
-	if !gcExists {
-		glog.V(2).Infof("Deleting GlobalConfiguration: %v\n", key)
-
-		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
-	} else {
-		glog.V(2).Infof("Adding or Updating GlobalConfiguration: %v\n", key)
-
-		gc := obj.(*conf_v1.GlobalConfiguration)
-		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
-	}
-
-	updateErr := lbc.processChangesFromGlobalConfiguration(changes)
-
-	if gcExists {
-		eventTitle := "Updated"
-		eventType := api_v1.EventTypeNormal
-		eventMessage := fmt.Sprintf("GlobalConfiguration %s was added or updated", key)
-
-		if validationErr != nil {
-			eventTitle = "AddedOrUpdatedWithError"
-			eventType = api_v1.EventTypeWarning
-			eventMessage = fmt.Sprintf("GlobalConfiguration %s is updated with errors: %v", key, validationErr)
-		}
-
-		if updateErr != nil {
-			eventTitle += "WithError"
-			eventType = api_v1.EventTypeWarning
-			eventMessage = fmt.Sprintf("%s; with reload error: %v", eventMessage, updateErr)
-		}
-
-		gc := obj.(*conf_v1.GlobalConfiguration)
-		lbc.recorder.Eventf(gc, eventType, eventTitle, eventMessage)
-	}
-
-	lbc.processProblems(problems)
-}
-
 func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	key := task.Key
 	var obj interface{}
@@ -1721,66 +1516,6 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 			}
 		}
 	}
-}
-
-// processChangesFromGlobalConfiguration processes changes that come from updates to the GlobalConfiguration resource.
-// Such changes need to be processed at once to prevent any inconsistencies in the generated NGINX config.
-func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes []ResourceChange) error {
-	var updatedTSExes []*configs.TransportServerEx
-	var updatedVSExes []*configs.VirtualServerEx
-	var deletedTSKeys []string
-	var deletedVSKeys []string
-
-	var updatedResources []Resource
-
-	for _, c := range changes {
-		switch impl := c.Resource.(type) {
-		case *VirtualServerConfiguration:
-			if c.Op == AddOrUpdate {
-				vsEx := lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes)
-
-				updatedVSExes = append(updatedVSExes, vsEx)
-				updatedResources = append(updatedResources, impl)
-			} else if c.Op == Delete {
-				key := getResourceKey(&impl.VirtualServer.ObjectMeta)
-
-				deletedVSKeys = append(deletedVSKeys, key)
-			}
-		case *TransportServerConfiguration:
-			if c.Op == AddOrUpdate {
-				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
-
-				updatedTSExes = append(updatedTSExes, tsEx)
-				updatedResources = append(updatedResources, impl)
-			} else if c.Op == Delete {
-				key := getResourceKey(&impl.TransportServer.ObjectMeta)
-
-				deletedTSKeys = append(deletedTSKeys, key)
-			}
-		}
-	}
-
-	var updateErr error
-
-	if len(updatedTSExes) > 0 || len(deletedTSKeys) > 0 {
-		tsUpdateErrs := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedTSKeys)
-
-		if len(tsUpdateErrs) > 0 {
-			updateErr = fmt.Errorf("errors received from updating TransportServers after GlobalConfiguration change: %v", tsUpdateErrs)
-		}
-	}
-
-	if len(updatedVSExes) > 0 || len(deletedVSKeys) > 0 {
-		vsUpdateErrs := lbc.configurator.UpdateVirtualServers(updatedVSExes, deletedVSKeys)
-
-		if len(vsUpdateErrs) > 0 {
-			updateErr = fmt.Errorf("errors received from updating VirtualSrvers after GlobalConfiguration change: %v", vsUpdateErrs)
-		}
-	}
-
-	lbc.updateResourcesStatusAndEvents(updatedResources, configs.Warnings{}, updateErr)
-
-	return updateErr
 }
 
 func (lbc *LoadBalancerController) updateTransportServerStatusAndEventsOnDelete(tsConfig *TransportServerConfiguration, changeError string, deleteErr error) {

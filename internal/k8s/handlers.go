@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"sort"
 
-	discovery_v1 "k8s.io/api/discovery/v1"
-
 	"github.com/jinzhu/copier"
 
 	"github.com/golang/glog"
@@ -18,80 +16,6 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-// createConfigMapHandlers builds the handler funcs for config maps
-func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			configMap := obj.(*v1.ConfigMap)
-			if configMap.Name == name {
-				glog.V(3).Infof("Adding ConfigMap: %v", configMap.Name)
-				lbc.AddSyncQueue(obj)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			configMap, isConfigMap := obj.(*v1.ConfigMap)
-			if !isConfigMap {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				configMap, ok = deletedState.Obj.(*v1.ConfigMap)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-ConfigMap object: %v", deletedState.Obj)
-					return
-				}
-			}
-			if configMap.Name == name {
-				glog.V(3).Infof("Removing ConfigMap: %v", configMap.Name)
-				lbc.AddSyncQueue(obj)
-			}
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				configMap := cur.(*v1.ConfigMap)
-				if configMap.Name == name {
-					glog.V(3).Infof("ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
-					lbc.AddSyncQueue(cur)
-				}
-			}
-		},
-	}
-}
-
-// createEndpointSliceHandlers builds the handler funcs for EndpointSlices
-func createEndpointSliceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			endpointSlice := obj.(*discovery_v1.EndpointSlice)
-			glog.V(3).Infof("Adding EndpointSlice: %v", endpointSlice.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			endpointSlice, isEndpointSlice := obj.(*discovery_v1.EndpointSlice)
-			if !isEndpointSlice {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				endpointSlice, ok = deletedState.Obj.(*discovery_v1.EndpointSlice)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-EndpointSlice object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing EndpointSlice: %v", endpointSlice.Name)
-			lbc.AddSyncQueue(obj)
-		}, UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("EndpointSlice %v changed, syncing", cur.(*discovery_v1.EndpointSlice).Name)
-				lbc.AddSyncQueue(cur)
-			}
-		},
-	}
-}
 
 // createIngressHandlers builds the handler funcs for ingresses
 func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
@@ -397,40 +321,6 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
-			}
-		},
-	}
-}
-
-func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			gc := obj.(*conf_v1.GlobalConfiguration)
-			glog.V(3).Infof("Adding GlobalConfiguration: %v", gc.Name)
-			lbc.AddSyncQueue(gc)
-		},
-		DeleteFunc: func(obj interface{}) {
-			gc, isGc := obj.(*conf_v1.GlobalConfiguration)
-			if !isGc {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				gc, ok = deletedState.Obj.(*conf_v1.GlobalConfiguration)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing GlobalConfiguration: %v", gc.Name)
-			lbc.AddSyncQueue(gc)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			curGc := cur.(*conf_v1.GlobalConfiguration)
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("GlobalConfiguration %v changed, syncing", curGc.Name)
-				lbc.AddSyncQueue(curGc)
 			}
 		},
 	}
