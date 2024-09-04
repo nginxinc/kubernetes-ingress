@@ -538,7 +538,7 @@ ARG NAP_MODULES=none
 
 ENV BUILD_OS=${BUILD_OS}
 
-RUN --mount=type=bind,target=/tmp \
+RUN --mount=type=bind,target=/code \
 	--mount=type=bind,from=nginx-files,src=common.sh,target=/usr/local/bin/common.sh \
 	--mount=type=bind,from=nginx-files,src=patch-os.sh,target=/usr/local/bin/patch-os.sh \
 	patch-os.sh \
