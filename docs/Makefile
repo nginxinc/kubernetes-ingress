@@ -22,7 +22,6 @@ endif
 else
     MARKDOWNLINT=docker run --rm -i -v ${CURDIR}:/src --workdir /src ${MARKDOWNLINT_IMG}
 endif
-endif
 
 MARKDOWNLINKCHECK?=markdown-link-check
 MARKDOWNLINKCHECK_IMG?=ghcr.io/tcort/markdown-link-check:stable
