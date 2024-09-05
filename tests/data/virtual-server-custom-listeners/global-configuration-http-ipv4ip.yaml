@@ -14,7 +14,7 @@ spec:
   - name: http-8085
     port: 8085
     protocol: HTTP
-    ipv4ip: 127.0.0.1
+    ipv4: 127.0.0.1
   - name: https-8445
     port: 8445
     protocol: HTTP

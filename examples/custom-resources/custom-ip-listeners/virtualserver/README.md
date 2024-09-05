@@ -1,7 +1,7 @@
-# Custom IPv4 and IPv6 IP Listeners
+# Custom IPv4 and IPv6 Address Listeners
 
-In this example, we will configure a VirtualServer resource with a custom IPv4 or IPv6 IP using HTTP/HTTPS listeners.
-This will allow IPv4 and/or IPv6 IPs using HTTP and/or HTTPS based requests to be made on non-default ports using separate IPs.
+In this example, we will configure a VirtualServer resource with custom IPv4 and IPv6 Address using HTTP/HTTPS listeners.
+This will allow IPv4 and/or IPv6 address using HTTP and/or HTTPS based requests to be made on non-default ports using separate IPs.
 
 ## Prerequisites
 
@@ -59,12 +59,12 @@ spec:
   - name: ip-listener-1-http
     port: 8083
     protocol: HTTP
-    ipv4ip: 127.0.0.1
+    ipv4: 127.0.0.1
   - name: ip-listener-2-https
     port: 8443
     protocol: HTTP
-    ipv4ip: 127.0.0.2
-    ipv6ip: ::1
+    ipv4: 127.0.0.2
+    ipv6: ::1
     ssl: true
    ```
 
@@ -159,12 +159,12 @@ that was deployed in Step 1. Below is the yaml of this example VirtualServer:
     . . .
     Spec:
       Listeners:
-        ipv4ip:    127.0.0.1
+        ipv4:      127.0.0.1
         Name:      ip-listener-1-http
         Port:      8083
         Protocol:  HTTP
-        ipv4ip:    127.0.0.2
-        ipv6ip:    ::1
+        ipv4:      127.0.0.2
+        ipv6:      ::1
         Name:      ip-listener-2-https
         Port:      8443
         Protocol:  HTTP
