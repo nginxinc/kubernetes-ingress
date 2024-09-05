@@ -22,6 +22,7 @@ endif
 else
     MARKDOWNLINT=docker run --rm -i -v ${CURDIR}:/src --workdir /src ${MARKDOWNLINT_IMG}
 endif
+endif
 
 MARKDOWNLINKCHECK?=markdown-link-check
 MARKDOWNLINKCHECK_IMG?=ghcr.io/tcort/markdown-link-check:stable
@@ -46,6 +47,7 @@ drafts:
 	${HUGO} --bind 0.0.0.0 -p 1313 server -D --disableFastRender
 
 clean:
+	hugo mod clean
 	[ -d "public" ] && rm -rf "public"
 
 hugo-get:
