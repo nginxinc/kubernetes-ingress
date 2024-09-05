@@ -142,9 +142,9 @@ spec:
                 items:
                   description: Listener defines a listener.
                   properties:
-                    ipv4ip:
+                    ipv4:
                       type: string
-                    ipv6ip:
+                    ipv6:
                       type: string
                     name:
                       type: string
