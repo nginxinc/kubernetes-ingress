@@ -194,7 +194,7 @@ jobs:
           make telemetry-schema && git diff --name-only --exit-code internal/telemetry
 
       - name: Check if make docs builds
-        run: cd docs && make docs
+        run: cd docs && make docs-ci
 
   unit-tests:
     name: Unit Tests
