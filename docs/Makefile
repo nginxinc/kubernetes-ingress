@@ -8,7 +8,7 @@ ifeq (, $(shell ${HUGO} version 2> /dev/null))
 ifeq (, $(shell docker version 2> /dev/null))
     $(error Docker and Hugo are not installed. Hugo (<0.91) or Docker are required to build the local preview.)
 else
-    HUGO=docker run --rm -it -v ${CURDIR}:/src -p 1313:1313 ${HUGO_IMG} hugo --bind 0.0.0.0 -p 1313
+    HUGO=docker run --rm -v ${CURDIR}:/src -p 1313:1313 ${HUGO_IMG} hugo --bind 0.0.0.0 -p 1313
 endif
 endif
 
