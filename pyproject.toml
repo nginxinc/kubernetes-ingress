@@ -90,7 +90,6 @@ markers =[
     "vsr_upstream",
     "watch_namespace",
     "wildcard_tls",
-    "alex",
 ]
 testpaths = [
     "tests",
