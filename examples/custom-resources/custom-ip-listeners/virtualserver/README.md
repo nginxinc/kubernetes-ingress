@@ -38,6 +38,11 @@ Example YAML for a LoadBalancer:
        app: nginx-ingress
    ```
 
+**Note:**
+
+- **No Updates for GC:** If a GlobalConfiguration resource already exists, delete the previous one before applying the new configuration.
+- **Single Replica:** Only one replica is allowed when using this configuration.
+
 ## Step 1 - Deploy the GlobalConfiguration resource
 
 Similar to how listeners are configured in our [custom-listeners](../../custom-listeners) examples,
