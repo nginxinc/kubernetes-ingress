@@ -443,7 +443,7 @@ func TestMakeHTTPSListenerWithCustomIPV6(t *testing.T) {
 			CustomListeners: true,
 			ProxyProtocol:   false,
 			HTTPSPort:       81,
-			HTTPSIPv6:       "::1",
+			HTTPSIPv6:       "::1 ",
 		}, expected: "listen 81 ssl;\n    listen [::1]:81 ssl;\n"},
 		{server: Server{
 			CustomListeners: true,
