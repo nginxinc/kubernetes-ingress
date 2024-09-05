@@ -493,15 +493,6 @@ func (lbc *LoadBalancerController) newNamespacedInformer(ns string) *namespacedI
 	return nsi
 }
 
-// addLeaderHandler adds the handler for leader election to the controller
-func (lbc *LoadBalancerController) addLeaderHandler(leaderHandler leaderelection.LeaderCallbacks) {
-	var err error
-	lbc.leaderElector, err = newLeaderElector(lbc.client, leaderHandler, lbc.controllerNamespace, lbc.leaderElectionLockName)
-	if err != nil {
-		glog.V(3).Infof("Error starting LeaderElection: %v", err)
-	}
-}
-
 // AddSyncQueue enqueues the provided item on the sync queue
 func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
@@ -571,22 +562,6 @@ func (nsi *namespacedInformer) addTransportServerHandler(handlers cache.Resource
 	nsi.transportServerLister = informer.GetStore()
 
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
-func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.ResourceEventHandlerFuncs, name string) {
-	optionsModifier := func(options *meta_v1.ListOptions) {
-		options.FieldSelector = fields.Set{"metadata.name": name}.String()
-	}
-
-	informer := dynamicinformer.NewFilteredDynamicInformer(lbc.dynClient, ingressLinkGVR, lbc.controllerNamespace, lbc.resync,
-		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, optionsModifier)
-
-	informer.Informer().AddEventHandlerWithResyncPeriod(handlers, lbc.resync)
-
-	lbc.ingressLinkInformer = informer.Informer()
-	lbc.ingressLinkLister = informer.Informer().GetStore()
-
-	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.ingressLinkInformer.HasSynced)
 }
 
 func (lbc *LoadBalancerController) addNamespaceHandler(handlers cache.ResourceEventHandlerFuncs, nsLabel string) {
@@ -1203,62 +1178,6 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 	}
 	glog.V(3).Infof("Finished cleaning up configuration for unwatched resources in namespace: %v", nsi.namespace)
 	nsi.stop()
-}
-
-func (lbc *LoadBalancerController) syncIngressLink(task task) {
-	key := task.Key
-	glog.V(2).Infof("Adding, Updating or Deleting IngressLink: %v", key)
-
-	obj, exists, err := lbc.ingressLinkLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	if !exists {
-		// IngressLink got removed
-		lbc.statusUpdater.ClearStatusFromIngressLink()
-	} else {
-		// IngressLink is added or updated
-		link := obj.(*unstructured.Unstructured)
-
-		// spec.virtualServerAddress contains the IP of the BIG-IP device
-		ip, found, err := unstructured.NestedString(link.Object, "spec", "virtualServerAddress")
-		if err != nil {
-			glog.Errorf("Failed to get virtualServerAddress from IngressLink %s: %v", key, err)
-			lbc.statusUpdater.ClearStatusFromIngressLink()
-		} else if !found {
-			glog.Errorf("virtualServerAddress is not found in IngressLink %s", key)
-			lbc.statusUpdater.ClearStatusFromIngressLink()
-		} else if ip == "" {
-			glog.Warningf("IngressLink %s has the empty virtualServerAddress field", key)
-			lbc.statusUpdater.ClearStatusFromIngressLink()
-		} else {
-			lbc.statusUpdater.SaveStatusFromIngressLink(ip)
-		}
-	}
-
-	if lbc.reportStatusEnabled() {
-		ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
-
-		glog.V(3).Infof("Updating status for %v Ingresses", len(ingresses))
-
-		err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
-		if err != nil {
-			glog.Errorf("Error updating ingress status in syncIngressLink: %v", err)
-		}
-	}
-
-	if lbc.areCustomResourcesEnabled && lbc.reportCustomResourceStatusEnabled() {
-		virtualServers := lbc.configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
-
-		glog.V(3).Infof("Updating status for %v VirtualServers", len(virtualServers))
-
-		err := lbc.statusUpdater.UpdateExternalEndpointsForResources(virtualServers)
-		if err != nil {
-			glog.V(3).Infof("Error updating VirtualServer/VirtualServerRoute status in syncIngressLink: %v", err)
-		}
-	}
 }
 
 func (lbc *LoadBalancerController) syncPolicy(task task) {
@@ -2290,36 +2209,6 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() e
 
 	if len(allErrs) > 0 {
 		return fmt.Errorf("not all VirtualServerRoutes statuses were updated: %v", allErrs)
-	}
-
-	return nil
-}
-
-func (lbc *LoadBalancerController) updatePoliciesStatus() error {
-	var allErrs []error
-	for _, nsi := range lbc.namespacedInformers {
-		for _, obj := range nsi.policyLister.List() {
-			pol := obj.(*conf_v1.Policy)
-
-			err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
-			if err != nil {
-				msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
-				if err != nil {
-					allErrs = append(allErrs, err)
-				}
-			} else {
-				msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
-				if err != nil {
-					allErrs = append(allErrs, err)
-				}
-			}
-		}
-	}
-
-	if len(allErrs) != 0 {
-		return fmt.Errorf("not all Policies statuses were updated: %v", allErrs)
 	}
 
 	return nil
