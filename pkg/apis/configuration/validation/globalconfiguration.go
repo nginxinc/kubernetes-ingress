@@ -53,7 +53,7 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 
 	listenerNames := sets.Set[string]{}
 	ipv4PortProtocolCombinations := make(map[string]map[int]string) // map[IP]map[Port]Protocol
-	ipv6PortProtocolCombinations := make(map[string]map[int]string) // map[IP]map[Port]Protocol
+	ipv6PortProtocolCombinations := make(map[string]map[int]string)
 	var validListeners []conf_v1.Listener
 
 	for i, l := range listeners {
