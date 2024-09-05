@@ -89,7 +89,7 @@ func getDefaultPort(listenerType protocol) string {
 	if listenerType == http {
 		return "80"
 	}
-	return "443 ssl"
+	return "443 ssl "
 }
 
 func getCustomPort(listenerType protocol, s Server) string {
