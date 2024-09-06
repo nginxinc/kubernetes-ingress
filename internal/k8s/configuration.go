@@ -264,6 +264,8 @@ func (vsc *VirtualServerConfiguration) IsEqual(resource Resource) bool {
 // TransportServerConfiguration holds a TransportServer resource.
 type TransportServerConfiguration struct {
 	ListenerPort    int
+	IPv4IP          string
+	IPv6IP          string
 	TransportServer *conf_v1.TransportServer
 	Warnings        []string
 }
@@ -795,6 +797,8 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 		}
 
 		tsc.ListenerPort = listener.Port
+		tsc.IPv4IP = listener.IPv4IP
+		tsc.IPv6IP = listener.IPv6IP
 
 		holder, exists := newListeners[listener.Name]
 		if !exists {

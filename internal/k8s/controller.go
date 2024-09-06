@@ -861,7 +861,7 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 				result.IngressExes = append(result.IngressExes, ingEx)
 			}
 		case *TransportServerConfiguration:
-			tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
+			tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort, impl.IPv4IP, impl.IPv6IP)
 			result.TransportServerExes = append(result.TransportServerExes, tsEx)
 		}
 	}
@@ -1363,8 +1363,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 					lbc.updateRegularIngressStatusAndEvents(impl, warnings, addOrUpdateErr)
 				}
 			case *TransportServerConfiguration:
-				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
-
+				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort, impl.IPv4IP, impl.IPv6IP)
 				warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
 				lbc.updateTransportServerStatusAndEvents(impl, warnings, addOrUpdateErr)
 			}
@@ -3015,7 +3014,7 @@ func findPoliciesForSecret(policies []*conf_v1.Policy, secretNamespace string, s
 	return res
 }
 
-func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1.TransportServer, listenerPort int) *configs.TransportServerEx {
+func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1.TransportServer, listenerPort int, ipv4 string, ipv6 string) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
 	externalNameSvcs := make(map[string]bool)
 	podsByIP := make(map[string]string)
@@ -3072,6 +3071,8 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 
 	return &configs.TransportServerEx{
 		ListenerPort:     listenerPort,
+		IPv4:             ipv4,
+		IPv6:             ipv6,
 		TransportServer:  transportServer,
 		Endpoints:        endpoints,
 		PodsByIP:         podsByIP,

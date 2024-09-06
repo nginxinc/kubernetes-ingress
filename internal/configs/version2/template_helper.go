@@ -125,14 +125,22 @@ func buildListenDirective(ip string, port string, proxyProtocol bool, ipType ipT
 	return directive
 }
 
-func buildTransportListenDirective(ipType ipType, port string, ssl *StreamSSL, udp bool) string {
+func buildTransportListenDirective(ipType ipType, port string, ssl *StreamSSL, udp bool, ip string) string {
 	base := "listen"
 	var directive string
 
 	if ipType == ipv6 {
-		directive = base + " [::]:" + port
+		if ip != "" {
+			directive = fmt.Sprintf("%s [%s]:%s", base, ip, port)
+		} else {
+			directive = fmt.Sprintf("%s [::]:%s", base, port)
+		}
 	} else {
-		directive = base + " " + port
+		if ip != "" {
+			directive = fmt.Sprintf("%s %s:%s", base, ip, port)
+		} else {
+			directive = fmt.Sprintf("%s %s", base, port)
+		}
 	}
 
 	if ssl.Enabled {
@@ -159,11 +167,11 @@ func makeTransportListener(s StreamServer) string {
 	var directives string
 	port := strconv.Itoa(s.Port)
 
-	directives += buildTransportListenDirective(ipv4, port, s.SSL, s.UDP)
+	directives += buildTransportListenDirective(ipv4, port, s.SSL, s.UDP, s.IPv4)
 
 	if !s.DisableIPV6 {
 		directives += spacing
-		directives += buildTransportListenDirective(ipv6, port, s.SSL, s.UDP)
+		directives += buildTransportListenDirective(ipv6, port, s.SSL, s.UDP, s.IPv6)
 	}
 
 	return directives
