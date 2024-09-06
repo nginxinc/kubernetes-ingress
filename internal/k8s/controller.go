@@ -3013,6 +3013,7 @@ func findPoliciesForSecret(policies []*conf_v1.Policy, secretNamespace string, s
 
 	return res
 }
+
 func (lbc *LoadBalancerController) getTransportServerBackupEndpointsAndKey(transportServer *conf_v1.TransportServer, u conf_v1.TransportServerUpstream, externalNameSvcs map[string]bool) ([]string, string) {
 	backupEndpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Backup, nil, *u.BackupPort)
 	backupEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Backup, *u.BackupPort)
