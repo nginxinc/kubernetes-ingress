@@ -142,6 +142,10 @@ spec:
                 items:
                   description: Listener defines a listener.
                   properties:
+                    ipv4:
+                      type: string
+                    ipv6:
+                      type: string
                     name:
                       type: string
                     port:

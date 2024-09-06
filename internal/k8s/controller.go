@@ -2499,6 +2499,10 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	if vsc, ok := resource.(*VirtualServerConfiguration); ok {
 		virtualServerEx.HTTPPort = vsc.HTTPPort
 		virtualServerEx.HTTPSPort = vsc.HTTPSPort
+		virtualServerEx.HTTPIPv4 = vsc.HTTPIPv4
+		virtualServerEx.HTTPIPv6 = vsc.HTTPIPv6
+		virtualServerEx.HTTPSIPv4 = vsc.HTTPSIPv4
+		virtualServerEx.HTTPSIPv6 = vsc.HTTPSIPv6
 	}
 
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {

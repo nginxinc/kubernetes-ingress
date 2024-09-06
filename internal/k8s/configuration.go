@@ -200,6 +200,10 @@ type VirtualServerConfiguration struct {
 	Warnings            []string
 	HTTPPort            int
 	HTTPSPort           int
+	HTTPIPv4            string
+	HTTPIPv6            string
+	HTTPSIPv4           string
+	HTTPSIPv6           string
 }
 
 // NewVirtualServerConfiguration creates a VirtualServerConfiguration.
@@ -813,19 +817,20 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 
 func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfiguration) {
 	vs := vsc.VirtualServer
-	if vs.Spec.Listener != nil && c.globalConfiguration != nil {
-		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTP]; ok {
-			if gcListener.Protocol == conf_v1.HTTPProtocol && !gcListener.Ssl {
-				vsc.HTTPPort = gcListener.Port
-			}
-		}
+	if vs.Spec.Listener == nil || c.globalConfiguration == nil {
+		return
+	}
 
-		if gcListener, ok := c.listenerMap[vs.Spec.Listener.HTTPS]; ok {
-			if gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl {
-				vsc.HTTPSPort = gcListener.Port
-			}
+	assignListener := func(listenerName string, isSSL bool, port *int, ipv4 *string, ipv6 *string) {
+		if gcListener, ok := c.listenerMap[listenerName]; ok && gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl == isSSL {
+			*port = gcListener.Port
+			*ipv4 = gcListener.IPv4IP
+			*ipv6 = gcListener.IPv6IP
 		}
 	}
+
+	assignListener(vs.Spec.Listener.HTTP, false, &vsc.HTTPPort, &vsc.HTTPIPv4, &vsc.HTTPIPv6)
+	assignListener(vs.Spec.Listener.HTTPS, true, &vsc.HTTPSPort, &vsc.HTTPSIPv4, &vsc.HTTPSIPv6)
 }
 
 // GetResources returns all configuration resources.
@@ -1783,6 +1788,15 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 		if newVsc.HTTPPort != oldVsc.HTTPPort || newVsc.HTTPSPort != oldVsc.HTTPSPort {
 			updatedHosts = append(updatedHosts, h)
 		}
+
+		if newVsc.HTTPIPv4 != oldVsc.HTTPIPv4 {
+			updatedHosts = append(updatedHosts, h)
+		}
+
+		if newVsc.HTTPIPv6 != oldVsc.HTTPIPv6 {
+			updatedHosts = append(updatedHosts, h)
+		}
+
 	}
 
 	return removedHosts, updatedHosts, addedHosts
