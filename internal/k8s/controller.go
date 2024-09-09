@@ -3054,7 +3054,6 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 			}
 		}
 
-		// If backup defined on Upstream retrieve its external name and port.
 		if u.Backup != "" && u.BackupPort != nil {
 			bendps, backupEndpointsKey := lbc.getTransportServerBackupEndpointsAndKey(transportServer, u, externalNameSvcs)
 			endpoints[backupEndpointsKey] = bendps
