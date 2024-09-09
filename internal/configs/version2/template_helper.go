@@ -106,17 +106,16 @@ func buildListenDirective(ip string, port string, tls bool, proxyProtocol bool, 
 	var directive string
 
 	if ipType == ipv6 {
-		if ip != "" {
-			directive = fmt.Sprintf("%s [%s]:%s", base, ip, port)
-		} else {
-			directive = fmt.Sprintf("%s [::]:%s", base, port)
+		if ip == "" {
+			ip = "::"
 		}
+		ip = fmt.Sprintf("[%s]", ip)
+	}
+
+	if ip != "" {
+		directive = fmt.Sprintf("%s %s:%s", base, ip, port)
 	} else {
-		if ip != "" {
-			directive = fmt.Sprintf("%s %s:%s", base, ip, port)
-		} else {
-			directive = fmt.Sprintf("%s %s", base, port)
-		}
+		directive = fmt.Sprintf("%s %s", base, port)
 	}
 
 	if tls {
