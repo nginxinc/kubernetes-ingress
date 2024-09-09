@@ -86,10 +86,12 @@ func buildListenerDirectives(listenerType protocol, s Server, port string) strin
 }
 
 func getDefaultPort(listenerType protocol) string {
-	if listenerType == http {
-		return "80"
+	s := Server{
+		HTTPPort:  80,
+		HTTPSPort: 443,
 	}
-	return "443 ssl"
+
+	return getCustomPort(listenerType, s)
 }
 
 func getCustomPort(listenerType protocol, s Server) string {
