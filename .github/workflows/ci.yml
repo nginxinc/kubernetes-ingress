@@ -208,7 +208,6 @@ jobs:
         if: ${{ needs.checks.outputs.some_docs == 'true' }}
         run: cd docs && make docs-ci
 
-
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-24.04
