@@ -42,6 +42,8 @@ rules:
   - coordination.k8s.io
   resources:
   - leases
+  resourceNames:
+  - {{ include "nginx-ingress.leaderElectionName" . }}
   verbs:
   - get
   - update
