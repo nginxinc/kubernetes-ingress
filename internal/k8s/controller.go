@@ -2499,6 +2499,10 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	if vsc, ok := resource.(*VirtualServerConfiguration); ok {
 		virtualServerEx.HTTPPort = vsc.HTTPPort
 		virtualServerEx.HTTPSPort = vsc.HTTPSPort
+		virtualServerEx.HTTPIPv4 = vsc.HTTPIPv4
+		virtualServerEx.HTTPIPv6 = vsc.HTTPIPv6
+		virtualServerEx.HTTPSIPv4 = vsc.HTTPSIPv4
+		virtualServerEx.HTTPSIPv6 = vsc.HTTPSIPv6
 	}
 
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
@@ -3011,6 +3015,19 @@ func findPoliciesForSecret(policies []*conf_v1.Policy, secretNamespace string, s
 	return res
 }
 
+func (lbc *LoadBalancerController) getTransportServerBackupEndpointsAndKey(transportServer *conf_v1.TransportServer, u conf_v1.TransportServerUpstream, externalNameSvcs map[string]bool) ([]string, string) {
+	backupEndpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Backup, nil, *u.BackupPort)
+	backupEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Backup, *u.BackupPort)
+	if err != nil {
+		glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+	}
+	if err == nil && external {
+		externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Backup)] = true
+	}
+	bendps := getIPAddressesFromEndpoints(backupEndps)
+	return bendps, backupEndpointsKey
+}
+
 func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1.TransportServer, listenerPort int) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
 	externalNameSvcs := make(map[string]bool)
@@ -3038,17 +3055,8 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 			}
 		}
 
-		// If backup defined on Upstream retrieve its external name and port.
 		if u.Backup != "" && u.BackupPort != nil {
-			backupEndpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Backup, nil, *u.BackupPort)
-			backupEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Backup, *u.BackupPort)
-			if err != nil {
-				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-			}
-			if err == nil && external {
-				externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Backup)] = true
-			}
-			bendps := getIPAddressesFromEndpoints(backupEndps)
+			bendps, backupEndpointsKey := lbc.getTransportServerBackupEndpointsAndKey(transportServer, u, externalNameSvcs)
 			endpoints[backupEndpointsKey] = bendps
 		}
 	}

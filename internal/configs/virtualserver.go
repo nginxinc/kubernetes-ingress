@@ -87,6 +87,10 @@ type VirtualServerEx struct {
 	VirtualServer       *conf_v1.VirtualServer
 	HTTPPort            int
 	HTTPSPort           int
+	HTTPIPv4            string
+	HTTPIPv6            string
+	HTTPSIPv4           string
+	HTTPSIPv6           string
 	Endpoints           map[string][]string
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
@@ -835,6 +839,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			StatusZone:                vsEx.VirtualServer.Spec.Host,
 			HTTPPort:                  vsEx.HTTPPort,
 			HTTPSPort:                 vsEx.HTTPSPort,
+			HTTPIPv4:                  vsEx.HTTPIPv4,
+			HTTPIPv6:                  vsEx.HTTPIPv6,
+			HTTPSIPv4:                 vsEx.HTTPSIPv4,
+			HTTPSIPv6:                 vsEx.HTTPSIPv6,
 			CustomListeners:           useCustomListeners,
 			ProxyProtocol:             vsc.cfgParams.ProxyProtocol,
 			SSL:                       sslConfig,
