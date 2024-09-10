@@ -548,14 +548,6 @@ func (nsi *namespacedInformer) addVirtualServerRouteHandler(handlers cache.Resou
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-func (nsi *namespacedInformer) addPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.confSharedInformerFactory.K8s().V1().Policies().Informer()
-	informer.AddEventHandler(handlers)
-	nsi.policyLister = informer.GetStore()
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
 func (lbc *LoadBalancerController) addNamespaceHandler(handlers cache.ResourceEventHandlerFuncs, nsLabel string) {
 	optionsModifier := func(options *meta_v1.ListOptions) {
 		options.LabelSelector = nsLabel
@@ -1170,64 +1162,6 @@ func (lbc *LoadBalancerController) cleanupUnwatchedNamespacedResources(nsi *name
 	}
 	glog.V(3).Infof("Finished cleaning up configuration for unwatched resources in namespace: %v", nsi.namespace)
 	nsi.stop()
-}
-
-func (lbc *LoadBalancerController) syncPolicy(task task) {
-	key := task.Key
-	var obj interface{}
-	var polExists bool
-	var err error
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, polExists, err = lbc.getNamespacedInformer(ns).policyLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	glog.V(2).Infof("Adding, Updating or Deleting Policy: %v\n", key)
-
-	if polExists && lbc.HasCorrectIngressClass(obj) {
-		pol := obj.(*conf_v1.Policy)
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
-		if err != nil {
-			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
-			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, "Rejected", msg)
-
-			if lbc.reportCustomResourceStatusEnabled() {
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
-				if err != nil {
-					glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
-				}
-			}
-		} else {
-			msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
-			lbc.recorder.Eventf(pol, api_v1.EventTypeNormal, "AddedOrUpdated", msg)
-
-			if lbc.reportCustomResourceStatusEnabled() {
-				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
-				if err != nil {
-					glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
-				}
-			}
-		}
-	}
-
-	// it is safe to ignore the error
-	namespace, name, _ := ParseNamespaceName(key)
-
-	resources := lbc.configuration.FindResourcesForPolicy(namespace, name)
-	resourceExes := lbc.createExtendedResources(resources)
-
-	// Only VirtualServers support policies
-	if len(resourceExes.VirtualServerExes) == 0 {
-		return
-	}
-
-	warnings, updateErr := lbc.configurator.AddOrUpdateVirtualServers(resourceExes.VirtualServerExes)
-	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
-
-	// Note: updating the status of a policy based on a reload is not needed.
 }
 
 func (lbc *LoadBalancerController) syncVirtualServer(task task) {
