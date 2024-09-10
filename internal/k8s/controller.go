@@ -861,7 +861,7 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 				result.IngressExes = append(result.IngressExes, ingEx)
 			}
 		case *TransportServerConfiguration:
-			tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort, impl.IPv4IP, impl.IPv6IP)
+			tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort, impl.IPv4, impl.IPv6)
 			result.TransportServerExes = append(result.TransportServerExes, tsEx)
 		}
 	}
@@ -1363,7 +1363,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 					lbc.updateRegularIngressStatusAndEvents(impl, warnings, addOrUpdateErr)
 				}
 			case *TransportServerConfiguration:
-				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort, impl.IPv4IP, impl.IPv6IP)
+				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort, impl.IPv4, impl.IPv6)
 				warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
 				lbc.updateTransportServerStatusAndEvents(impl, warnings, addOrUpdateErr)
 			}

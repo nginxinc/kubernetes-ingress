@@ -264,8 +264,8 @@ func (vsc *VirtualServerConfiguration) IsEqual(resource Resource) bool {
 // TransportServerConfiguration holds a TransportServer resource.
 type TransportServerConfiguration struct {
 	ListenerPort    int
-	IPv4IP          string
-	IPv6IP          string
+	IPv4            string
+	IPv6            string
 	TransportServer *conf_v1.TransportServer
 	Warnings        []string
 }
@@ -797,8 +797,8 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 		}
 
 		tsc.ListenerPort = listener.Port
-		tsc.IPv4IP = listener.IPv4IP
-		tsc.IPv6IP = listener.IPv6IP
+		tsc.IPv4 = listener.IPv4
+		tsc.IPv6 = listener.IPv6
 
 		holder, exists := newListeners[listener.Name]
 		if !exists {
@@ -828,8 +828,8 @@ func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfi
 	assignListener := func(listenerName string, isSSL bool, port *int, ipv4 *string, ipv6 *string) {
 		if gcListener, ok := c.listenerMap[listenerName]; ok && gcListener.Protocol == conf_v1.HTTPProtocol && gcListener.Ssl == isSSL {
 			*port = gcListener.Port
-			*ipv4 = gcListener.IPv4IP
-			*ipv6 = gcListener.IPv6IP
+			*ipv4 = gcListener.IPv4
+			*ipv6 = gcListener.IPv6
 		}
 	}
 
