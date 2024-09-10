@@ -326,41 +326,6 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	}
 }
 
-func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			pol := obj.(*conf_v1.Policy)
-			glog.V(3).Infof("Adding Policy: %v", pol.Name)
-			lbc.AddSyncQueue(pol)
-		},
-		DeleteFunc: func(obj interface{}) {
-			pol, isPol := obj.(*conf_v1.Policy)
-			if !isPol {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				pol, ok = deletedState.Obj.(*conf_v1.Policy)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Policy object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing Policy: %v", pol.Name)
-			lbc.AddSyncQueue(pol)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			curPol := cur.(*conf_v1.Policy)
-			oldPol := old.(*conf_v1.Policy)
-			if !reflect.DeepEqual(oldPol.Spec, curPol.Spec) {
-				glog.V(3).Infof("Policy %v changed, syncing", curPol.Name)
-				lbc.AddSyncQueue(curPol)
-			}
-		},
-	}
-}
-
 // areResourcesDifferent returns true if the resources are different based on their spec.
 func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bool, error) {
 	oldSpec, found, err := unstructured.NestedMap(oldresource.Object, "spec")
