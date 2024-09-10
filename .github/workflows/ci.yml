@@ -35,6 +35,7 @@ jobs:
       id-token: write
     outputs:
       docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
+      some_docs: ${{ github.event.pull_request && steps.docs.outputs.some_docs == 'true' }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
       go_path: ${{ steps.vars.outputs.go_path }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
@@ -60,12 +61,21 @@ jobs:
         id: docs
         run: |
           files=$(git diff --name-only HEAD^ | egrep -v "^docs/" | egrep -v "^examples/" | egrep -v "^README.md")
+          docs_files=$(git diff --name-only HEAD^ | grep "^docs/")
           if [ -z "$files" ]; then
             echo "docs_only=true" >> $GITHUB_OUTPUT
           else
             echo "docs_only=false" >> $GITHUB_OUTPUT
           fi
+
+          if [ -n "$docs_files" ]; then
+            echo "some_docs=true" >> $GITHUB_OUTPUT
+          else
+            echo "some_docs=false" >> $GITHUB_OUTPUT
+          fi
+
           echo $files
+          echo $docs_files
           cat $GITHUB_OUTPUT
         shell: bash --noprofile --norc -o pipefail {0}
 
@@ -164,6 +174,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    needs: checks
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -192,6 +203,10 @@ jobs:
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           make telemetry-schema && git diff --name-only --exit-code internal/telemetry
+
+      - name: Check if make docs builds
+        if: ${{ needs.checks.outputs.some_docs == 'true' }}
+        run: cd docs && make docs-ci
 
   unit-tests:
     name: Unit Tests
