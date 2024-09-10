@@ -23,6 +23,15 @@ const (
 	ipv6
 )
 
+type listen struct {
+	ipAddress     string
+	port          string
+	tls           bool
+	proxyProtocol bool
+	udp           bool
+	ipType        ipType
+}
+
 const spacing = "    "
 
 func headerListToCIMap(headers []Header) map[string]string {
@@ -69,16 +78,44 @@ func buildListenerDirectives(listenerType protocol, s Server, port string) strin
 	var directives string
 
 	if listenerType == http {
-		directives += buildListenDirective(s.HTTPIPv4, port, s.ProxyProtocol, ipv4)
+		directives += buildListenDirective(listen{
+			ipAddress:     s.HTTPIPv4,
+			port:          port,
+			tls:           false,
+			proxyProtocol: s.ProxyProtocol,
+			udp:           false,
+			ipType:        ipv4,
+		})
 		if !s.DisableIPV6 {
 			directives += spacing
-			directives += buildListenDirective(s.HTTPIPv6, port, s.ProxyProtocol, ipv6)
+			directives += buildListenDirective(listen{
+				ipAddress:     s.HTTPIPv6,
+				port:          port,
+				tls:           false,
+				proxyProtocol: s.ProxyProtocol,
+				udp:           false,
+				ipType:        ipv6,
+			})
 		}
 	} else {
-		directives += buildListenDirective(s.HTTPSIPv4, port, s.ProxyProtocol, ipv4)
+		directives += buildListenDirective(listen{
+			ipAddress:     s.HTTPSIPv4,
+			port:          port,
+			tls:           true,
+			proxyProtocol: s.ProxyProtocol,
+			udp:           false,
+			ipType:        ipv4,
+		})
 		if !s.DisableIPV6 {
 			directives += spacing
-			directives += buildListenDirective(s.HTTPSIPv6, port, s.ProxyProtocol, ipv6)
+			directives += buildListenDirective(listen{
+				ipAddress:     s.HTTPSIPv6,
+				port:          port,
+				tls:           true,
+				proxyProtocol: s.ProxyProtocol,
+				udp:           false,
+				ipType:        ipv6,
+			})
 		}
 	}
 
@@ -86,60 +123,47 @@ func buildListenerDirectives(listenerType protocol, s Server, port string) strin
 }
 
 func getDefaultPort(listenerType protocol) string {
-	if listenerType == http {
-		return "80"
+	s := Server{
+		HTTPPort:  80,
+		HTTPSPort: 443,
 	}
-	return "443 ssl"
+
+	return getCustomPort(listenerType, s)
 }
 
 func getCustomPort(listenerType protocol, s Server) string {
 	if listenerType == http {
 		return strconv.Itoa(s.HTTPPort)
 	}
-	return strconv.Itoa(s.HTTPSPort) + " ssl"
+	return strconv.Itoa(s.HTTPSPort)
 }
 
-func buildListenDirective(ip string, port string, proxyProtocol bool, ipType ipType) string {
+func buildListenDirective(l listen) string {
 	base := "listen"
 	var directive string
 
-	if ipType == ipv6 {
-		if ip != "" {
-			directive = fmt.Sprintf("%s [%s]:%s", base, ip, port)
-		} else {
-			directive = fmt.Sprintf("%s [::]:%s", base, port)
+	if l.ipType == ipv6 {
+		if l.ipAddress == "" {
+			l.ipAddress = "::"
 		}
+		l.ipAddress = fmt.Sprintf("[%s]", l.ipAddress)
+	}
+
+	if l.ipAddress != "" {
+		directive = fmt.Sprintf("%s %s:%s", base, l.ipAddress, l.port)
 	} else {
-		if ip != "" {
-			directive = fmt.Sprintf("%s %s:%s", base, ip, port)
-		} else {
-			directive = fmt.Sprintf("%s %s", base, port)
-		}
+		directive = fmt.Sprintf("%s %s", base, l.port)
 	}
 
-	if proxyProtocol {
-		directive += " proxy_protocol"
-	}
-
-	directive += ";\n"
-	return directive
-}
-
-func buildTransportListenDirective(ipType ipType, port string, ssl *StreamSSL, udp bool) string {
-	base := "listen"
-	var directive string
-
-	if ipType == ipv6 {
-		directive = base + " [::]:" + port
-	} else {
-		directive = base + " " + port
-	}
-
-	if ssl.Enabled {
+	if l.tls {
 		directive += " ssl"
 	}
 
-	if udp {
+	if l.proxyProtocol {
+		directive += " proxy_protocol"
+	}
+
+	if l.udp {
 		directive += " udp"
 	}
 
@@ -159,11 +183,25 @@ func makeTransportListener(s StreamServer) string {
 	var directives string
 	port := strconv.Itoa(s.Port)
 
-	directives += buildTransportListenDirective(ipv4, port, s.SSL, s.UDP)
+	directives += buildListenDirective(listen{
+		ipAddress:     "",
+		port:          port,
+		tls:           s.SSL.Enabled,
+		proxyProtocol: false,
+		udp:           s.UDP,
+		ipType:        ipv4,
+	})
 
 	if !s.DisableIPV6 {
 		directives += spacing
-		directives += buildTransportListenDirective(ipv6, port, s.SSL, s.UDP)
+		directives += buildListenDirective(listen{
+			ipAddress:     "",
+			port:          port,
+			tls:           s.SSL.Enabled,
+			proxyProtocol: false,
+			udp:           s.UDP,
+			ipType:        ipv6,
+		})
 	}
 
 	return directives
