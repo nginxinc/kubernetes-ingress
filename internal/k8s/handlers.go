@@ -326,40 +326,6 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	}
 }
 
-func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			ts := obj.(*conf_v1.TransportServer)
-			glog.V(3).Infof("Adding TransportServer: %v", ts.Name)
-			lbc.AddSyncQueue(ts)
-		},
-		DeleteFunc: func(obj interface{}) {
-			ts, isTs := obj.(*conf_v1.TransportServer)
-			if !isTs {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				ts, ok = deletedState.Obj.(*conf_v1.TransportServer)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-TransportServer object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing TransportServer: %v", ts.Name)
-			lbc.AddSyncQueue(ts)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			curTs := cur.(*conf_v1.TransportServer)
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("TransportServer %v changed, syncing", curTs.Name)
-				lbc.AddSyncQueue(curTs)
-			}
-		},
-	}
-}
-
 func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
