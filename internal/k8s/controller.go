@@ -548,18 +548,6 @@ func (nsi *namespacedInformer) addVirtualServerRouteHandler(handlers cache.Resou
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-func (lbc *LoadBalancerController) addNamespaceHandler(handlers cache.ResourceEventHandlerFuncs, nsLabel string) {
-	optionsModifier := func(options *meta_v1.ListOptions) {
-		options.LabelSelector = nsLabel
-	}
-	nsInformer := informers.NewSharedInformerFactoryWithOptions(lbc.client, lbc.resync, informers.WithTweakListOptions(optionsModifier)).Core().V1().Namespaces().Informer()
-	nsInformer.AddEventHandler(handlers)
-	lbc.namespaceLabeledLister = nsInformer.GetStore()
-	lbc.namespaceWatcherController = nsInformer
-
-	lbc.cacheSyncs = append(lbc.cacheSyncs, nsInformer.HasSynced)
-}
-
 // Run starts the loadbalancer controller
 func (lbc *LoadBalancerController) Run() {
 	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
@@ -1012,66 +1000,6 @@ func (lbc *LoadBalancerController) sync(task task) {
 		}
 
 		glog.V(3).Infof("Batch sync completed")
-	}
-}
-
-func (lbc *LoadBalancerController) syncNamespace(task task) {
-	key := task.Key
-	// process namespace and add to / remove from watched namespace list
-	_, exists, err := lbc.namespaceLabeledLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	if !exists {
-		// Check if change is because of a new label, or because of a deleted namespace
-		ns, _ := lbc.client.CoreV1().Namespaces().Get(context.TODO(), key, meta_v1.GetOptions{})
-
-		if ns != nil && ns.Status.Phase == api_v1.NamespaceActive {
-			// namespace still exists
-			glog.Infof("Removing Configuration for Unwatched Namespace: %v", key)
-			// Watched label for namespace was removed
-			// delete any now unwatched namespaced informer groups if required
-			nsi := lbc.getNamespacedInformer(key)
-			if nsi != nil {
-				lbc.cleanupUnwatchedNamespacedResources(nsi)
-				delete(lbc.namespacedInformers, key)
-			}
-		} else {
-			glog.Infof("Deleting Watchers for Deleted Namespace: %v", key)
-			nsi := lbc.getNamespacedInformer(key)
-			if nsi != nil {
-				lbc.removeNamespacedInformer(nsi, key)
-			}
-		}
-		if lbc.certManagerController != nil {
-			lbc.certManagerController.RemoveNamespacedInformer(key)
-		}
-		if lbc.externalDNSController != nil {
-			lbc.externalDNSController.RemoveNamespacedInformer(key)
-		}
-	} else {
-		// check if informer group already exists
-		// if not create new namespaced informer group
-		// update cert-manager informer group if required
-		// update external-dns informer group if required
-		glog.V(3).Infof("Adding or Updating Watched Namespace: %v", key)
-		nsi := lbc.getNamespacedInformer(key)
-		if nsi == nil {
-			glog.Infof("Adding New Watched Namespace: %v", key)
-			nsi = lbc.newNamespacedInformer(key)
-			nsi.start()
-		}
-		if lbc.certManagerController != nil {
-			lbc.certManagerController.AddNewNamespacedInformer(key)
-		}
-		if lbc.externalDNSController != nil {
-			lbc.externalDNSController.AddNewNamespacedInformer(key)
-		}
-		if !cache.WaitForCacheSync(nsi.stopCh, nsi.cacheSyncs...) {
-			return
-		}
 	}
 }
 
