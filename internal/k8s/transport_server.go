@@ -209,7 +209,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 	disableIPV6 := lbc.configuration.isIPV6Disabled
 
 	for _, u := range transportServer.Spec.Upstreams {
-		podEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
+		podEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port)) //nolint:gosec
 		if err == nil && external && lbc.isNginxPlus {
 			externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Service)] = true
 		}
@@ -218,7 +218,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		}
 
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
-		endpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Service, nil, uint16(u.Port))
+		endpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Service, nil, uint16(u.Port)) //nolint:gosec
 
 		endps := getIPAddressesFromEndpoints(podEndps)
 		endpoints[endpointsKey] = endps
