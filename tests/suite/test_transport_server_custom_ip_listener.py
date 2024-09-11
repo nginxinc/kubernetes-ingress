@@ -1,7 +1,7 @@
 import pytest
 from settings import TEST_DATA
 from suite.utils.custom_resources_utils import patch_gc_from_yaml, patch_ts_from_yaml
-from suite.utils.resources_utils import get_ts_nginx_template_conf, wait_before_test
+from suite.utils.resources_utils import get_events_for_object, get_ts_nginx_template_conf, wait_before_test
 
 
 @pytest.mark.ts
@@ -53,3 +53,13 @@ class TestTransportServerCustomIPListener:
         conf_lines = [line.strip() for line in conf.split("\n")]
         assert "listen 127.0.0.1:5353;" in conf_lines
         assert "listen [::1]:5353;" in conf_lines
+
+        gc_events = get_events_for_object(kube_apis.v1, "nginx-ingress", "nginx-configuration")
+        gc_event_latest = gc_events[-1]
+        print(gc_event_latest)
+
+        assert (
+            gc_event_latest.reason == "Updated"
+            and gc_event_latest.type == "Normal"
+            and "GlobalConfiguration nginx-ingress/nginx-configuration was added or updated" in gc_event_latest.message
+        )
