@@ -7,6 +7,6 @@ spec:
   listeners:
   - name: dns-tcp-ip
     port: 5353
-    protocol: TCP 
+    protocol: TCP
     ipv4: 127.0.0.1
     ipv6: ::1

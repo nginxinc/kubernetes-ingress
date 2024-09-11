@@ -4,7 +4,7 @@ metadata:
   name: transport-server
 spec:
   listener:
-    name: dns-tcp-ip 
+    name: dns-tcp-ip
     protocol: TCP
   upstreams:
   - name: dns-app

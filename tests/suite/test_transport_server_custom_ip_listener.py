@@ -1,7 +1,6 @@
-
 import pytest
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import patch_ts_from_yaml, patch_gc_from_yaml 
+from suite.utils.custom_resources_utils import patch_gc_from_yaml, patch_ts_from_yaml
 from suite.utils.resources_utils import get_ts_nginx_template_conf, wait_before_test
 
 
@@ -29,7 +28,6 @@ class TestTransportServerCustomIPListener:
         """
         Test transport server with custom IP listener
         """
-
 
         global_config_file = f"{TEST_DATA}/transport-server-custom-ip-listener/global-configuration.yaml"
         patch_gc_from_yaml(kube_apis.custom_objects, "nginx-configuration", global_config_file, "nginx-ingress")
