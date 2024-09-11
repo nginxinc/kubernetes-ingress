@@ -3,7 +3,6 @@ package k8s
 import (
 	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/jinzhu/copier"
 
@@ -101,109 +100,6 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			}
 		},
 	}
-}
-
-// createServiceHandlers builds the handler funcs for services.
-//
-// In the update handlers below we catch two cases:
-// (1) the service is the external service
-// (2) the service had a change like a change of the port field of a service port (for such a change Kubernetes doesn't
-// update the corresponding endpoints resource, that we monitor as well)
-// or a change of the externalName field of an ExternalName service.
-//
-// In both cases we enqueue the service to be processed by syncService
-func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			svc := obj.(*v1.Service)
-
-			glog.V(3).Infof("Adding service: %v", svc.Name)
-			lbc.AddSyncQueue(svc)
-		},
-		DeleteFunc: func(obj interface{}) {
-			svc, isSvc := obj.(*v1.Service)
-			if !isSvc {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				svc, ok = deletedState.Obj.(*v1.Service)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Service object: %v", deletedState.Obj)
-					return
-				}
-			}
-
-			glog.V(3).Infof("Removing service: %v", svc.Name)
-			lbc.AddSyncQueue(svc)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				curSvc := cur.(*v1.Service)
-				if lbc.IsExternalServiceForStatus(curSvc) {
-					lbc.AddSyncQueue(curSvc)
-					return
-				}
-				oldSvc := old.(*v1.Service)
-				if hasServiceChanges(oldSvc, curSvc) {
-					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
-					lbc.AddSyncQueue(curSvc)
-				}
-			}
-		},
-	}
-}
-
-type portSort []v1.ServicePort
-
-func (a portSort) Len() int {
-	return len(a)
-}
-
-func (a portSort) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-func (a portSort) Less(i, j int) bool {
-	if a[i].Name == a[j].Name {
-		return a[i].Port < a[j].Port
-	}
-	return a[i].Name < a[j].Name
-}
-
-// hasServicedChanged checks if the service has changed based on custom rules we define (eg. port).
-func hasServiceChanges(oldSvc, curSvc *v1.Service) bool {
-	if hasServicePortChanges(oldSvc.Spec.Ports, curSvc.Spec.Ports) {
-		return true
-	}
-	if hasServiceExternalNameChanges(oldSvc, curSvc) {
-		return true
-	}
-	return false
-}
-
-// hasServiceExternalNameChanges only compares Service.Spec.Externalname for Type ExternalName services.
-func hasServiceExternalNameChanges(oldSvc, curSvc *v1.Service) bool {
-	return curSvc.Spec.Type == v1.ServiceTypeExternalName && oldSvc.Spec.ExternalName != curSvc.Spec.ExternalName
-}
-
-// hasServicePortChanges only compares ServicePort.Name and .Port.
-func hasServicePortChanges(oldServicePorts []v1.ServicePort, curServicePorts []v1.ServicePort) bool {
-	if len(oldServicePorts) != len(curServicePorts) {
-		return true
-	}
-
-	sort.Sort(portSort(oldServicePorts))
-	sort.Sort(portSort(curServicePorts))
-
-	for i := range oldServicePorts {
-		if oldServicePorts[i].Port != curServicePorts[i].Port ||
-			oldServicePorts[i].Name != curServicePorts[i].Name {
-			return true
-		}
-	}
-	return false
 }
 
 func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
