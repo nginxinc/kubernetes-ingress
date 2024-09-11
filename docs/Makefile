@@ -12,6 +12,8 @@ else
 endif
 endif
 
+HUGO_CI=docker run --rm -v ${CURDIR}:/src ${HUGO_IMG} hugo
+
 MARKDOWNLINT?=markdownlint
 MARKDOWNLINT_IMG?=ghcr.io/igorshubovych/markdownlint-cli:latest
 
@@ -39,6 +41,9 @@ endif
 docs:
 	${HUGO}
 
+docs-ci:
+	${HUGO_CI}
+
 watch:
 	${HUGO} --bind 0.0.0.0 -p 1313 server --disableFastRender
 
@@ -46,6 +51,7 @@ drafts:
 	${HUGO} --bind 0.0.0.0 -p 1313 server -D --disableFastRender
 
 clean:
+	hugo mod clean
 	[ -d "public" ] && rm -rf "public"
 
 hugo-get:

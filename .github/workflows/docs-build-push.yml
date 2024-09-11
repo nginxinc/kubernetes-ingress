@@ -22,32 +22,11 @@ permissions:
   contents: read
 
 jobs:
-  checks:
-    name: Checks and variables
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    outputs:
-      forked_workflow: ${{ steps.vars.outputs.forked_workflow }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Set Variables
-        id: vars
-        run: |
-          echo "forked_workflow=${{ (github.event.pull_request && github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name) || github.repository != 'nginxinc/kubernetes-ingress' }}" >> $GITHUB_OUTPUT
-
-      - name: Output variables
-        run: |
-          echo forked_workflow: ${{ steps.vars.outputs.forked_workflow }}
-
   call-docs-build-push:
     uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@d20def4d420028a71f99863011c6de7325c4013e # v1.0.4
     permissions:
       pull-requests: write # needed to write preview url comment to PR
       contents: read
-    needs: [checks]
     with:
       production_url_path: "/nginx-ingress-controller"
       preview_url_path: "/previews/nginx-ingress-controller"
@@ -58,4 +37,3 @@ jobs:
     secrets:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS_DOCS }}
       AZURE_KEY_VAULT: ${{ secrets.AZURE_KEY_VAULT_DOCS }}
-    if: ${{ needs.checks.outputs.forked_workflow == 'false' }}
