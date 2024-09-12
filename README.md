@@ -1,6 +1,6 @@
 <!-- markdownlint-disable-next-line first-line-h1 -->
 [![OpenSSFScorecard](https://api.securityscorecards.dev/projects/github.com/nginxinc/kubernetes-ingress/badge)](https://api.securityscorecards.dev/projects/github.com/nginxinc/kubernetes-ingress)
-[![Regression](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml/badge.svg)](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml?query=event%3Aschedule)
+[![Regression](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml/badge.svg?event=schedule)](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml?query=event%3Aschedule)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B5618%2Fgithub.com%2Fnginxinc%2Fkubernetes-ingress.svg?type=shield)](https://app.fossa.com/projects/custom%2B5618%2Fgithub.com%2Fnginxinc%2Fkubernetes-ingress?ref=badge_shield)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nginxinc/kubernetes-ingress)](https://goreportcard.com/report/github.com/nginxinc/kubernetes-ingress)
