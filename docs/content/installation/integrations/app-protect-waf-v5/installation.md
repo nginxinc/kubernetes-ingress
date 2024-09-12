@@ -310,6 +310,25 @@ Add `waf-enforcer` image to the `containers` section:
 ...
 ```
 
+### Update NIC container in deployment or daemonset
+
+Add `volumeMounts` as below:
+
+```yaml
+...
+- image: <my_docker_registery>:<version_tag>
+  imagePullPolicy: IfNotPresent
+  name: nginx-plus-ingress
+  volumeMounts:
+    - name: app-protect-bd-config
+      mountPath: /opt/app_protect/bd_config
+    - name: app-protect-config
+      mountPath: /opt/app_protect/config
+    - name: app-protect-bundles
+      mountPath: /etc/app_protect/bundles
+...
+```
+
 ### Using a Deployment
 
 {{< include "installation/manifests/deployment.md" >}}
