@@ -58,7 +58,7 @@ jobs:
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
             | sort -rV \
             | awk -F. '!seen[$1"."$2]++' \
-            | head -n 5 \
+            | head -n 7 \
             | sort -V \
             | sed 's/v//g' \
             | sed 's/$//' \
