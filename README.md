@@ -1,6 +1,6 @@
 <!-- markdownlint-disable-next-line first-line-h1 -->
 [![OpenSSFScorecard](https://api.securityscorecards.dev/projects/github.com/nginxinc/kubernetes-ingress/badge)](https://api.securityscorecards.dev/projects/github.com/nginxinc/kubernetes-ingress)
-[![Regression](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml/badge.svg)](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml)
+[![Regression](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml/badge.svg?event=schedule)](https://github.com/nginxinc/kubernetes-ingress/actions/workflows/regression.yml?query=event%3Aschedule)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B5618%2Fgithub.com%2Fnginxinc%2Fkubernetes-ingress.svg?type=shield)](https://app.fossa.com/projects/custom%2B5618%2Fgithub.com%2Fnginxinc%2Fkubernetes-ingress?ref=badge_shield)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nginxinc/kubernetes-ingress)](https://goreportcard.com/report/github.com/nginxinc/kubernetes-ingress)
@@ -29,14 +29,13 @@ We value community input and would love to see you at the next community call. A
 **Slack**: Join our channel `#nginx-ingress-controller` on the [NGINX Community Slack](https://nginxcommunity.slack.com/channels/nginx-ingress-controller) for updates and discussions.  
 **When**: 15:00 GMT / [Convert to your timezone](https://dateful.com/convert/gmt?t=15), every other Monday.
 
-| **Community Call Dates** | Notes                        |
-| ------------------------ | ---------------------------- |
-| **2024-07-15**           |                              |
-| **2024-07-29**           |                              |
-| **2024-08-12**           |                              |
-| **2024-08-26**           |                              |
-| **2024-09-09**           |                              |
-| **2024-09-23**           |                              |
+| **Community Call Dates** |
+| ------------------------ |
+| **2024-09-23**           |
+| **2024-10-07**           |
+| **2024-10-21**           |
+| **2024-11-04**           |
+| **2024-11-18**           |
 ---
 
 NGINX Ingress Controller works with both NGINX and NGINX Plus and supports the standard Ingress features - content-based
