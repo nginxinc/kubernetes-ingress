@@ -182,15 +182,16 @@ type SessionCookie struct {
 
 // Route defines a route.
 type Route struct {
-	Path             string            `json:"path"`
-	Policies         []PolicyReference `json:"policies"`
-	Route            string            `json:"route"`
-	Action           *Action           `json:"action"`
-	Splits           []Split           `json:"splits"`
-	Matches          []Match           `json:"matches"`
-	ErrorPages       []ErrorPage       `json:"errorPages"`
-	LocationSnippets string            `json:"location-snippets"`
-	Dos              string            `json:"dos"`
+	Path             string                `json:"path"`
+	Policies         []PolicyReference     `json:"policies"`
+	Route            string                `json:"route"`
+	RouteSelector    *metav1.LabelSelector `json:"routeSelector"`
+	Action           *Action               `json:"action"`
+	Splits           []Split               `json:"splits"`
+	Matches          []Match               `json:"matches"`
+	ErrorPages       []ErrorPage           `json:"errorPages"`
+	LocationSnippets string                `json:"location-snippets"`
+	Dos              string                `json:"dos"`
 }
 
 // Action defines an action.

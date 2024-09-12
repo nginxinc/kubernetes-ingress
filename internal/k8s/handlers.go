@@ -318,7 +318,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 
 			}
 
-			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
+			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) || !reflect.DeepEqual(oldVsr.Labels, curVsr.Labels) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
 			}

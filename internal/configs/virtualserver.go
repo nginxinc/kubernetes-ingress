@@ -568,6 +568,12 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			}
 
 			continue
+		} else if r.RouteSelector != nil {
+			selector := r.RouteSelector
+			glog.Infof("RouteSelector: %v", selector)
+
+			// get vsr name
+			continue
 		}
 
 		vsLocSnippets := r.LocationSnippets
@@ -680,6 +686,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			}
 			errorPageLocations = append(errorPageLocations, generateErrorPageLocations(errorPages.index, errorPages.pages)...)
 			vsrNamespaceName := fmt.Sprintf("%v/%v", vsr.Namespace, vsr.Name)
+			glog.Infof("vsrNamespaceName: %v", vsrNamespaceName)
 			// use the VirtualServer error pages if the route does not define any
 			if r.ErrorPages == nil {
 				if vsErrorPages, ok := vsrErrorPagesFromVs[vsrNamespaceName]; ok {
