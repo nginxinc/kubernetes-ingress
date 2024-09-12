@@ -105,11 +105,18 @@ func (gcv *GlobalConfigurationValidator) checkIPPortProtocolConflicts(combinatio
 	}
 
 	existingProtocol, exists := combinations[ip][listener.Port]
-	if exists {
-		if existingProtocol == listener.Protocol {
-			return field.Duplicate(fieldPath, fmt.Sprintf("Listener %s: Duplicated port/protocol combination %d/%s", listener.Name, listener.Port, listener.Protocol))
-		} else if listener.Protocol == "HTTP" || existingProtocol == "HTTP" {
-			return field.Invalid(fieldPath.Child("port"), listener.Port, fmt.Sprintf("Listener %s: Port %d is used with a different protocol (current: %s, new: %s)", listener.Name, listener.Port, existingProtocol, listener.Protocol))
+	if !exists {
+		return nil
+	}
+
+	switch listener.Protocol {
+	case "HTTP", "TCP":
+		if existingProtocol == "HTTP" || existingProtocol == "TCP" {
+			return field.Invalid(fieldPath.Child("protocol"), listener.Protocol, fmt.Sprintf("Listener %s: Duplicated ip:port protocol combination %d/%s", listener.Name, listener.Port, listener.Protocol))
+		}
+	case "UDP":
+		if existingProtocol == "UDP" {
+			return field.Invalid(fieldPath.Child("protocol"), listener.Protocol, fmt.Sprintf("Listener %s: Duplicated ip:port protocol combination %d/%s", listener.Name, listener.Port, listener.Protocol))
 		}
 	}
 

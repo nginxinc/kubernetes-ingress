@@ -234,6 +234,20 @@ func TestValidateListeners_PassesOnValidIPListeners(t *testing.T) {
 				{Name: "listener-2", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
 			},
 		},
+		{
+			name: "UDP and HTTP Listeners with Same Port",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IPv4: "127.0.0.1", Port: 8080, Protocol: "UDP"},
+				{Name: "listener-2", IPv4: "127.0.0.1", Port: 8080, Protocol: "HTTP"},
+			},
+		},
+		{
+			name: "UDP and TCP Listeners with Same Port",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IPv4: "127.0.0.1", Port: 8080, Protocol: "UDP"},
+				{Name: "listener-2", IPv4: "127.0.0.1", Port: 8080, Protocol: "TCP"},
+			},
+		},
 	}
 
 	gcv := createGlobalConfigurationValidator()
