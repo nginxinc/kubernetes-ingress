@@ -242,6 +242,13 @@ func TestValidateListeners_PassesOnValidIPListeners(t *testing.T) {
 			},
 		},
 		{
+			name: "HTTP Listeners with Same Port but different IPv4 and IPv6 ip addresses",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IPv4IP: "127.0.0.2", IPv6IP: "::1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "HTTP"},
+			},
+		},
+		{
 			name: "UDP and TCP Listeners with Same Port",
 			listeners: []conf_v1.Listener{
 				{Name: "listener-1", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "UDP"},
