@@ -1479,7 +1479,7 @@ func TestGenerateVirtualServerConfigWithBackupForNGINXPlus(t *testing.T) {
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -1786,7 +1786,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupNameFor
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -2092,7 +2092,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortFor
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -2396,7 +2396,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortAnd
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -3013,6 +3013,165 @@ func TestGenerateVirtualServerConfigWithCustomHttpsListener(t *testing.T) {
 
 	result, warnings := vsc.GenerateVirtualServerConfig(
 		&virtualServerExWithCustomHTTPSListener,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpAndHttpsIPListeners(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPAndHTTPSIPListeners,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpIPListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPIPListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPIPListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPIPListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPIPListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPIPListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPIPListener.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPIPListener.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPIPListener.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPIPListener.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPIPListener.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPIPListener,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpsIPListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPSIPListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPSIPListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPSIPListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPSIPListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPSIPListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPSIPListener.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPSIPListener.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPSIPListener.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPSIPListener.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPSIPListener.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPSIPListener,
 		nil,
 		nil)
 
@@ -6188,19 +6347,19 @@ func TestGenerateVirtualServerConfigAPIKeyClientMaps(t *testing.T) {
 			})
 
 			if !cmp.Equal(tc.expectedSpecAPIKey, vsConf.Server.APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedSpecAPIKey, vsConf.Server.APIKey))
+				t.Error(cmp.Diff(tc.expectedSpecAPIKey, vsConf.Server.APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey))
+				t.Error(cmp.Diff(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey))
+				t.Error(cmp.Diff(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedMapList, vsConf.Maps) {
-				t.Errorf(cmp.Diff(tc.expectedMapList, vsConf.Maps))
+				t.Error(cmp.Diff(tc.expectedMapList, vsConf.Maps))
 			}
 
 			if len(warnings) != 0 {
@@ -7002,7 +7161,7 @@ func TestGeneratePolicies(t *testing.T) {
 			result.BundleValidator = nil
 
 			if !cmp.Equal(tc.expected, result) {
-				t.Errorf(cmp.Diff(tc.expected, result))
+				t.Error(cmp.Diff(tc.expected, result))
 			}
 			if len(vsc.warnings) > 0 {
 				t.Errorf("generatePolicies() returned unexpected warnings %v for the case of %s", vsc.warnings, tc.msg)
@@ -15543,6 +15702,66 @@ var (
 		},
 	}
 
+	virtualServerExWithCustomHTTPAndHTTPSIPListeners = VirtualServerEx{
+		HTTPPort:  8083,
+		HTTPSPort: 8443,
+		HTTPIPv4:  "192.168.0.2",
+		HTTPIPv6:  "::1",
+		HTTPSIPv4: "192.168.0.6",
+		HTTPSIPv6: "::2",
+
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTP:  "http-8083",
+					HTTPS: "https-8443",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPIPListener = VirtualServerEx{
+		HTTPPort: 8083,
+		HTTPIPv4: "192.168.0.2",
+		HTTPIPv6: "::1",
+
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTP: "http-8083",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPSIPListener = VirtualServerEx{
+		HTTPSPort: 8443,
+		HTTPSIPv4: "192.168.0.6",
+		HTTPSIPv6: "::2",
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTPS: "https-8443",
+				},
+			},
+		},
+	}
+
 	virtualServerExWithNilListener = VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -15584,7 +15803,7 @@ func TestRFC1123ToSnake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !cmp.Equal(rfc1123ToSnake(tt.input), tt.expected) {
-				t.Errorf(cmp.Diff(rfc1123ToSnake(tt.input), tt.expected))
+				t.Error(cmp.Diff(rfc1123ToSnake(tt.input), tt.expected))
 			}
 		})
 	}

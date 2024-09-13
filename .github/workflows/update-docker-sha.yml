@@ -30,7 +30,7 @@ jobs:
   vars:
     permissions:
       contents: read
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       source_branch: ${{ steps.vars.outputs.source_branch }}
     steps:
@@ -46,7 +46,7 @@ jobs:
   update-docker-sha:
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [vars]
     steps:
       - name: Checkout Repository
@@ -75,7 +75,7 @@ jobs:
           echo $GITHUB_OUTPUT
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
+        uses: peter-evans/create-pull-request@d121e62763d8cc35b5fb1710e887d6e69a52d3a4 # v7.0.2
         id: pr
         with:
           token: ${{ secrets.NGINX_PAT }}

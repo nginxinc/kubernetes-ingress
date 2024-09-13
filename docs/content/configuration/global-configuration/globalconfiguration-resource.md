@@ -74,6 +74,9 @@ The `listeners:` key defines a listener (a combination of a protocol and a port)
 | *port* | The port of the listener. The port must fall into the range ``1..65535`` with the following exceptions: ``80``, ``443``, the [status port](/nginx-ingress-controller/logging-and-monitoring/status-page), the [Prometheus metrics port](/nginx-ingress-controller/logging-and-monitoring/prometheus). Among all listeners, only a single combination of a port-protocol is allowed. | *int* | Yes |
 | *protocol* | The protocol of the listener. Supported values: ``TCP``, ``UDP`` and ``HTTP``. | *string* | Yes |
 | *ssl* | Configures the listener with SSL. This is currently only supported for ``HTTP`` listeners. Default value is ``false`` | *bool* | No |
+| *ipv4* | Specifies the IPv4 address to listen on. This is currently only supported for ``HTTP`` or ``HTTPS``  listeners. | *string* | No |
+| *ipv6* | Specifies the IPv6 address to listen on. This is currently only supported for ``HTTP`` or ``HTTPS``  listeners. | *string* | No |
+
 {{</bootstrap-table>}}
 
 ---
@@ -173,3 +176,8 @@ Events:
 ```
 
 The events section includes a Warning event with the AddedOrUpdatedWithError reason.
+
+
+## Using IPV4 and IPV6 Addresses with GlobalConfiguration
+
+You can customize the IPv4 and IPv6 Address listeners in the global configuration and apply them to your VirtualServer resources. See the corresponding example [here](https://github.com/nginxinc/kubernetes-ingress/tree/v{{< nic-version >}}/examples/custom-resources/custom-ip-listeners/virtualserver/)

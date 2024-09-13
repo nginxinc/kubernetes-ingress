@@ -411,6 +411,8 @@ type GlobalConfigurationSpec struct {
 type Listener struct {
 	Name     string `json:"name"`
 	Port     int    `json:"port"`
+	IPv4IP   string `json:"ipv4"`
+	IPv6IP   string `json:"ipv6"`
 	Protocol string `json:"protocol"`
 	Ssl      bool   `json:"ssl"`
 }

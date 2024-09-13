@@ -29,7 +29,7 @@ permissions:
 jobs:
   checks:
     name: Checks and variables
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
@@ -80,7 +80,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2 # v2.1.4
+        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -114,7 +114,7 @@ jobs:
 
   govulncheck:
     name: Run govulncheck
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write
@@ -143,14 +143,14 @@ jobs:
           fi
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@883d8588e56d1753a8a58c1c86e88976f0c23449 # v3.26.3
+        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
         if: steps.check-sarif.outputs.sarif_has_results == 'true'
         with:
           sarif_file: govulncheck.sarif
 
   binaries:
     name: Build Binaries
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [checks]
     permissions:
       contents: read
@@ -321,6 +321,7 @@ jobs:
       github_public_registry: true
       source_tag: ${{ needs.checks.outputs.stable_tag }}
       target_tag: "edge"
+      branch: ${{ github.ref_name }}
       dry_run: false
     permissions:
       contents: read
@@ -342,6 +343,7 @@ jobs:
       az_mktpl_registry: false
       source_tag: ${{ needs.checks.outputs.stable_tag }}
       target_tag: "edge"
+      branch: ${{ github.ref_name }}
       dry_run: false
     permissions:
       contents: read
@@ -366,7 +368,7 @@ jobs:
   certify-openshift-images:
     if: ${{ !cancelled() && !failure() && github.ref_name == github.event.repository.default_branch }}
     name: Certify OpenShift UBI images
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [release-oss]
     steps:
       - name: Checkout Repository
@@ -382,7 +384,7 @@ jobs:
 
   scan-docker-oss:
     name: Scan ${{ matrix.image }}-${{ matrix.target }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [checks]
     permissions:
       contents: read
@@ -417,7 +419,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2 # v2.1.4
+        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -447,7 +449,7 @@ jobs:
 
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
-        uses: docker/scout-action@e71a6e518e912cc9094cb8c89e29bb0dcef01668 # v1.13.0
+        uses: docker/scout-action@cc6bf8dd03587425ef920278b3e2726ba8d791e8 # v1.14.0
         with:
           command: cves,recommendations
           image: ${{ steps.meta.outputs.tags }}
@@ -459,20 +461,20 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to Github Artifacts
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@883d8588e56d1753a8a58c1c86e88976f0c23449 # v3.26.3
+        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
   scan-docker-plus:
     name: Scan ${{ matrix.image }}-${{ matrix.target }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [checks]
     permissions:
       contents: read
@@ -507,7 +509,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2 # v2.1.4
+        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -537,7 +539,7 @@ jobs:
 
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
-        uses: docker/scout-action@e71a6e518e912cc9094cb8c89e29bb0dcef01668 # v1.13.0
+        uses: docker/scout-action@cc6bf8dd03587425ef920278b3e2726ba8d791e8 # v1.14.0
         with:
           command: cves,recommendations
           image: ${{ steps.meta.outputs.tags }}
@@ -549,20 +551,20 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to Github Artifacts
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@883d8588e56d1753a8a58c1c86e88976f0c23449 # v3.26.3
+        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
   scan-docker-nap:
     name: Scan ${{ matrix.image }}-${{ matrix.target }}-${{ matrix.nap_modules }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [checks]
     permissions:
       contents: read
@@ -604,7 +606,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2 # v2.1.4
+        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -634,7 +636,7 @@ jobs:
 
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
-        uses: docker/scout-action@e71a6e518e912cc9094cb8c89e29bb0dcef01668 # v1.13.0
+        uses: docker/scout-action@cc6bf8dd03587425ef920278b3e2726ba8d791e8 # v1.14.0
         with:
           command: cves,recommendations
           image: ${{ steps.meta.outputs.tags }}
@@ -646,20 +648,20 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to Github Artifacts
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@883d8588e56d1753a8a58c1c86e88976f0c23449 # v3.26.3
+        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
   update-release-draft:
     name: Update Release Draft
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [checks]
     permissions:
       contents: write
