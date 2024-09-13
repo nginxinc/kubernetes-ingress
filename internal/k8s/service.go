@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/golang/glog"
-	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -147,7 +146,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 			lbc.statusUpdater.ClearStatusFromExternalService()
 		} else {
 			// service added or updated
-			lbc.statusUpdater.SaveStatusFromExternalService(obj.(*api_v1.Service))
+			lbc.statusUpdater.SaveStatusFromExternalService(obj.(*v1.Service))
 		}
 
 		if lbc.reportStatusEnabled() {
