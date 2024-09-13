@@ -90,7 +90,7 @@ The previous diagram depicts NGINX Ingress Controller using NGINX. NGINX Ingress
 
 - To configure NGINX Plus, NGINX Ingress Controller uses [configuration reloads](#reloading-nginx) and the [NGINX Plus API](http://nginx.org/en/docs/http/ngx_http_api_module.html#api). This allows NGINX Ingress Controller to dynamically change the upstream servers.
 - Instead of the stub status metrics, the extended metrics available from the NGINX Plus API are used.
-- In addition to TLS certs and keys, NGINX Ingress Controllerf writes JWKs from the secrets of the type `nginx.org/jwk`, and NGINX workers read them.
+- In addition to TLS certs and keys, NGINX Ingress Controller writes JWKs from the secrets of the type `nginx.org/jwk`, and NGINX workers read them.
 
 ---
 
