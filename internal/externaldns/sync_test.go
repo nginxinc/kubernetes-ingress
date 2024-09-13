@@ -82,10 +82,10 @@ func TestGetValidTargets(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !cmp.Equal(tc.wantTargets, targets) {
-				t.Errorf(cmp.Diff(tc.wantTargets, targets))
+				t.Error(cmp.Diff(tc.wantTargets, targets))
 			}
 			if recordType != tc.wantRecord {
-				t.Errorf(cmp.Diff(tc.wantRecord, recordType))
+				t.Error(cmp.Diff(tc.wantRecord, recordType))
 			}
 		})
 	}
