@@ -11,7 +11,3 @@ spec:
   - name: http-listener
     port: 5353
     protocol: HTTP
-  # - name: https-listener
-  #   port: 5354
-  #   protocol: HTTP
-  #   ssl: true
