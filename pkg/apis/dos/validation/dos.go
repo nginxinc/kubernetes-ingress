@@ -203,7 +203,7 @@ func ValidateAppProtectDosAllowList(allowList []v1beta1.AllowListEntry) error {
 	for _, entry := range allowList {
 		ipValid := isValidIPWithMask(entry.IPWithMask)
 		if !ipValid {
-			return fmt.Errorf("Invalid IP with subnet mask: %s", entry.IPWithMask)
+			return fmt.Errorf("invalid IP with subnet mask: %s", entry.IPWithMask)
 		}
 	}
 	return nil
