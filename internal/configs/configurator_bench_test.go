@@ -88,7 +88,6 @@ func BenchUpdateEndpoints(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
-
 }
 
 func BenchmarkUpdateEndpointsMergeableIngress(b *testing.B) {
