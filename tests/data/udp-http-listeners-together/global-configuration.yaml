@@ -6,8 +6,8 @@ metadata:
 spec:
   listeners:
   - name: udp-listener
-    port: 5353
+    port: 5454
     protocol: UDP
   - name: http-listener
-    port: 5353
+    port: 5454
     protocol: HTTP
