@@ -44,7 +44,6 @@ class TestUDPandHTTPListenersTogether:
 
         wait_before_test()
         existing_ts = read_ts(kube_apis.custom_objects, transport_server_setup.namespace, transport_server_setup.name)
-        # delete TS and VS first
         delete_ts(kube_apis.custom_objects, existing_ts, transport_server_setup.namespace)
 
         global_config_file = f"{TEST_DATA}/udp-http-listeners-together/global-configuration.yaml"
