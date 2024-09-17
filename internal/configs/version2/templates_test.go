@@ -497,6 +497,55 @@ func TestTransportServerForNginx(t *testing.T) {
 	t.Log(string(data))
 }
 
+func TestExecuteTemplateForTransportServerWithTCPIPListener(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINXPlus(t)
+	customIPListenerTransportServerCfg := transportServerCfgWithSSL
+	customIPListenerTransportServerCfg.Server.IPv4 = "127.0.0.1"
+	customIPListenerTransportServerCfg.Server.IPv6 = "::1"
+
+	got, err := executor.ExecuteTransportServerTemplate(&customIPListenerTransportServerCfg)
+	if err != nil {
+		t.Error(err)
+	}
+	wantStrings := []string{
+		"listen 127.0.0.1:1234 ssl udp;",
+		"listen [::1]:1234 ssl udp;",
+	}
+	for _, want := range wantStrings {
+		if !bytes.Contains(got, []byte(want)) {
+			t.Errorf("want `%s` in generated template", want)
+		}
+	}
+	snaps.MatchSnapshot(t, string(got))
+	t.Log(string(got))
+}
+
+func TestExecuteTemplateForTransportServerWithUDPIPListener(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINXPlus(t)
+	customIPListenerTransportServerCfg := transportServerCfgWithSSL
+	customIPListenerTransportServerCfg.Server.IPv4 = "127.0.0.1"
+	customIPListenerTransportServerCfg.Server.IPv6 = "::1"
+	customIPListenerTransportServerCfg.Server.UDP = false
+
+	got, err := executor.ExecuteTransportServerTemplate(&customIPListenerTransportServerCfg)
+	if err != nil {
+		t.Error(err)
+	}
+	wantStrings := []string{
+		"listen 127.0.0.1:1234 ssl;",
+		"listen [::1]:1234 ssl;",
+	}
+	for _, want := range wantStrings {
+		if !bytes.Contains(got, []byte(want)) {
+			t.Errorf("want `%s` in generated template", want)
+		}
+	}
+	snaps.MatchSnapshot(t, string(got))
+	t.Log(string(got))
+}
+
 func tsConfig() TransportServerConfig {
 	return TransportServerConfig{
 		Upstreams: []StreamUpstream{
