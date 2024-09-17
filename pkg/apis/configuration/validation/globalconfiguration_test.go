@@ -234,6 +234,27 @@ func TestValidateListeners_PassesOnValidIPListeners(t *testing.T) {
 				{Name: "listener-2", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
 			},
 		},
+		{
+			name: "UDP and HTTP Listeners with Same Port",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "UDP"},
+				{Name: "listener-2", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "HTTP"},
+			},
+		},
+		{
+			name: "HTTP Listeners with Same Port but different IPv4 and IPv6 ip addresses",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IPv4IP: "127.0.0.2", IPv6IP: "::1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "HTTP"},
+			},
+		},
+		{
+			name: "UDP and TCP Listeners with Same Port",
+			listeners: []conf_v1.Listener{
+				{Name: "listener-1", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "UDP"},
+				{Name: "listener-2", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "TCP"},
+			},
+		},
 	}
 
 	gcv := createGlobalConfigurationValidator()
@@ -587,7 +608,7 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPListener(
 	}
 }
 
-func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsUDPListener(t *testing.T) {
+func TestValidateListenerProtocol_PassesOnHttpListenerUsingSamePortAsUDPListener(t *testing.T) {
 	t.Parallel()
 	listeners := []conf_v1.Listener{
 		{
@@ -607,18 +628,23 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsUDPListener(
 			Port:     53,
 			Protocol: "UDP",
 		},
+		{
+			Name:     "http-listener",
+			Port:     53,
+			Protocol: "HTTP",
+		},
 	}
 	gcv := createGlobalConfigurationValidator()
 	listeners, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if diff := cmp.Diff(listeners, wantListeners); diff != "" {
 		t.Errorf("getValidListeners() returned unexpected result: (-want +got):\n%s", diff)
 	}
-	if len(allErrs) == 0 {
-		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+	if len(allErrs) != 0 {
+		t.Errorf("validateListeners() returned errors %v invalid input", allErrs)
 	}
 }
 
-func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPAndUDPListener(t *testing.T) {
+func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCP(t *testing.T) {
 	t.Parallel()
 	listeners := []conf_v1.Listener{
 		{
@@ -649,15 +675,13 @@ func TestValidateListenerProtocol_FailsOnHttpListenerUsingSamePortAsTCPAndUDPLis
 			Protocol: "UDP",
 		},
 	}
-
 	gcv := createGlobalConfigurationValidator()
-
 	listeners, allErrs := gcv.getValidListeners(listeners, field.NewPath("listeners"))
 	if diff := cmp.Diff(listeners, wantListeners); diff != "" {
 		t.Errorf("getValidListeners() returned unexpected result: (-want +got):\n%s", diff)
 	}
-	if len(allErrs) == 0 {
-		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+	if len(allErrs) != 1 {
+		t.Errorf("getValidListeners() returned unexpected number of errors. Got %d, want 1", len(allErrs))
 	}
 }
 
@@ -694,7 +718,7 @@ func TestValidateListenerProtocol_FailsOnTCPListenerUsingSamePortAsHTTPListener(
 	}
 }
 
-func TestValidateListenerProtocol_FailsOnUDPListenerUsingSamePortAsHTTPListener(t *testing.T) {
+func TestValidateListenerProtocol_PassesOnUDPListenerUsingSamePortAsHTTPListener(t *testing.T) {
 	t.Parallel()
 	listeners := []conf_v1.Listener{
 		{
@@ -714,6 +738,11 @@ func TestValidateListenerProtocol_FailsOnUDPListenerUsingSamePortAsHTTPListener(
 			Port:     53,
 			Protocol: "HTTP",
 		},
+		{
+			Name:     "udp-listener",
+			Port:     53,
+			Protocol: "UDP",
+		},
 	}
 
 	gcv := createGlobalConfigurationValidator()
@@ -722,7 +751,7 @@ func TestValidateListenerProtocol_FailsOnUDPListenerUsingSamePortAsHTTPListener(
 	if diff := cmp.Diff(listeners, wantListeners); diff != "" {
 		t.Errorf("getValidListeners() returned unexpected result: (-want +got):\n%s", diff)
 	}
-	if len(allErrs) == 0 {
-		t.Errorf("validateListeners() returned no errors %v for invalid input", allErrs)
+	if len(allErrs) != 0 {
+		t.Errorf("validateListeners() returned errors %v for valid input", allErrs)
 	}
 }
