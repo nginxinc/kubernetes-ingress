@@ -174,10 +174,10 @@ func (b *Builder) CheckAndFinish(args ...interface{}) {
 		b.T.Errorf("Not all expected reactors were called: %v", err)
 	}
 	if err := b.AllActionsExecuted(); err != nil {
-		b.T.Errorf(err.Error())
+		b.T.Error(err.Error())
 	}
 	if err := b.AllEventsCalled(); err != nil {
-		b.T.Errorf(err.Error())
+		b.T.Error(err.Error())
 	}
 
 	// resync listers before running checks

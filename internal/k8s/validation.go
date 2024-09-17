@@ -968,7 +968,7 @@ var escapedStringsFmtRegexp = regexp.MustCompile("^" + escapedStringsFmt + "$")
 func ValidateEscapedString(body string, examples ...string) error {
 	if !escapedStringsFmtRegexp.MatchString(body) {
 		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, examples...)
-		return fmt.Errorf(msg)
+		return errors.New(msg)
 	}
 	return nil
 }
