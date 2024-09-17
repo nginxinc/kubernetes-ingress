@@ -2,7 +2,7 @@ HUGO?=hugo
 HUGO_IMG?=hugomods/hugo:0.134.1
 
 THEME_MODULE = github.com/nginxinc/nginx-hugo-theme
-THEME_VERSION = $(shell curl -s https://api.github.com/repos/nginxinc/nginx-hugo-theme/releases/latest | jq -r ".tag_name")
+THEME_VERSION ?= $(shell curl -s https://api.github.com/repos/nginxinc/nginx-hugo-theme/releases/latest | jq -r ".tag_name")
 
 ifeq (, $(shell ${HUGO} version 2> /dev/null))
 ifeq (, $(shell docker version 2> /dev/null))
