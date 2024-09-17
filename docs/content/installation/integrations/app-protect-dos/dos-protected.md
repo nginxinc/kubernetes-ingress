@@ -32,14 +32,14 @@ spec:
 | ---| ---| ---| --- |
 |``enable`` | Enables NGINX App Protect DoS, Default value: false. | ``bool`` | No |
 |``name`` | Name of the protected object, max of 63 characters. | ``string`` | Yes |
-|``dosAccessLogDest`` | The log destination for the access log with dos log format. Accepted variables are ``syslog:server=<ip-address &#124; localhost &#124; dns-name>:<port>``, ``stderr``, ``<absolute path to file>``. | ``string`` | No |
+|``dosAccessLogDest`` | The log destination for the access log with dos log format. Accepted variables are ``<ip-address \| localhost \| fqdn>:<port>`` or ``stderr``. | ``string`` | No |
 |``apDosMonitor.uri`` | The destination to the desired protected object. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port. | ``string`` | No |
 |``apDosMonitor.protocol`` | Determines if the server listens on http1 / http2 / grpc / websocket. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: http1. | ``enum`` | No |
 |``apDosMonitor.timeout`` | Determines how long (in seconds) should NGINX App Protect DoS wait for a response. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: 10 seconds for http1/http2 and 5 seconds for grpc. | ``int64`` | No |
 |``apDosPolicy`` | The [App Protect DoS policy](#dosprotectedresourceapdospolicy) of the dos. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
 |``dosSecurityLog.apDosLogConf`` | The [App Protect DoS log conf]({{< relref "installation/integrations/app-protect-dos/configuration.md#app-protect-dos-logs" >}}) resource. Accepts an optional namespace. | ``string`` | No |
-|``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost &#124; dns-name>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
+|``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``<ip-address \| localhost \| fqdn>:<port>`` or ``stderr``. Default is ``127.0.0.1:514``. | ``string`` | No |
 |``allowList`` | List of allowed IP addresses and subnet masks. Each entry is represented by an `IPWithMask` string. | ``[]AllowListEntry`` | No |
 {{% /table %}}
 
