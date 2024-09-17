@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/golang/glog"
-	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
@@ -59,7 +58,7 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 			"configmaps",
 			namespace,
 			fields.Everything()),
-		ObjectType:   &api_v1.ConfigMap{},
+		ObjectType:   &v1.ConfigMap{},
 		ResyncPeriod: lbc.resync,
 		Handler:      handlers,
 	}
@@ -77,7 +76,7 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 		return
 	}
 	if configExists {
-		lbc.configMap = obj.(*api_v1.ConfigMap)
+		lbc.configMap = obj.(*v1.ConfigMap)
 		externalStatusAddress, exists := lbc.configMap.Data["external-status-address"]
 		if exists {
 			lbc.statusUpdater.SaveStatusFromExternalStatus(externalStatusAddress)

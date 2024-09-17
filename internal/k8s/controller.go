@@ -507,15 +507,6 @@ func (nsi *namespacedInformer) addSecretHandler(handlers cache.ResourceEventHand
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
 }
 
-// addServiceHandler adds the handler for services to the controller
-func (nsi *namespacedInformer) addServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := nsi.sharedInformerFactory.Core().V1().Services().Informer()
-	informer.AddEventHandler(handlers)
-	nsi.svcLister = informer.GetStore()
-
-	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
 // addIngressHandler adds the handler for ingresses to the controller
 func (nsi *namespacedInformer) addIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := nsi.sharedInformerFactory.Networking().V1().Ingresses().Informer()
@@ -546,18 +537,6 @@ func (nsi *namespacedInformer) addVirtualServerRouteHandler(handlers cache.Resou
 	nsi.virtualServerRouteLister = informer.GetStore()
 
 	nsi.cacheSyncs = append(nsi.cacheSyncs, informer.HasSynced)
-}
-
-func (lbc *LoadBalancerController) addNamespaceHandler(handlers cache.ResourceEventHandlerFuncs, nsLabel string) {
-	optionsModifier := func(options *meta_v1.ListOptions) {
-		options.LabelSelector = nsLabel
-	}
-	nsInformer := informers.NewSharedInformerFactoryWithOptions(lbc.client, lbc.resync, informers.WithTweakListOptions(optionsModifier)).Core().V1().Namespaces().Informer()
-	nsInformer.AddEventHandler(handlers)
-	lbc.namespaceLabeledLister = nsInformer.GetStore()
-	lbc.namespaceWatcherController = nsInformer
-
-	lbc.cacheSyncs = append(lbc.cacheSyncs, nsInformer.HasSynced)
 }
 
 // Run starts the loadbalancer controller
@@ -1012,66 +991,6 @@ func (lbc *LoadBalancerController) sync(task task) {
 		}
 
 		glog.V(3).Infof("Batch sync completed")
-	}
-}
-
-func (lbc *LoadBalancerController) syncNamespace(task task) {
-	key := task.Key
-	// process namespace and add to / remove from watched namespace list
-	_, exists, err := lbc.namespaceLabeledLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	if !exists {
-		// Check if change is because of a new label, or because of a deleted namespace
-		ns, _ := lbc.client.CoreV1().Namespaces().Get(context.TODO(), key, meta_v1.GetOptions{})
-
-		if ns != nil && ns.Status.Phase == api_v1.NamespaceActive {
-			// namespace still exists
-			glog.Infof("Removing Configuration for Unwatched Namespace: %v", key)
-			// Watched label for namespace was removed
-			// delete any now unwatched namespaced informer groups if required
-			nsi := lbc.getNamespacedInformer(key)
-			if nsi != nil {
-				lbc.cleanupUnwatchedNamespacedResources(nsi)
-				delete(lbc.namespacedInformers, key)
-			}
-		} else {
-			glog.Infof("Deleting Watchers for Deleted Namespace: %v", key)
-			nsi := lbc.getNamespacedInformer(key)
-			if nsi != nil {
-				lbc.removeNamespacedInformer(nsi, key)
-			}
-		}
-		if lbc.certManagerController != nil {
-			lbc.certManagerController.RemoveNamespacedInformer(key)
-		}
-		if lbc.externalDNSController != nil {
-			lbc.externalDNSController.RemoveNamespacedInformer(key)
-		}
-	} else {
-		// check if informer group already exists
-		// if not create new namespaced informer group
-		// update cert-manager informer group if required
-		// update external-dns informer group if required
-		glog.V(3).Infof("Adding or Updating Watched Namespace: %v", key)
-		nsi := lbc.getNamespacedInformer(key)
-		if nsi == nil {
-			glog.Infof("Adding New Watched Namespace: %v", key)
-			nsi = lbc.newNamespacedInformer(key)
-			nsi.start()
-		}
-		if lbc.certManagerController != nil {
-			lbc.certManagerController.AddNewNamespacedInformer(key)
-		}
-		if lbc.externalDNSController != nil {
-			lbc.externalDNSController.AddNewNamespacedInformer(key)
-		}
-		if !cache.WaitForCacheSync(nsi.stopCh, nsi.cacheSyncs...) {
-			return
-		}
 	}
 }
 
@@ -1687,79 +1606,6 @@ func (lbc *LoadBalancerController) updateVirtualServerMetrics() {
 	vsCount, vsrCount := lbc.configurator.GetVirtualServerCounts()
 	lbc.metricsCollector.SetVirtualServers(vsCount)
 	lbc.metricsCollector.SetVirtualServerRoutes(vsrCount)
-}
-
-func (lbc *LoadBalancerController) syncService(task task) {
-	key := task.Key
-
-	var obj interface{}
-	var exists bool
-	var err error
-
-	ns, _, _ := cache.SplitMetaNamespaceKey(key)
-	obj, exists, err = lbc.getNamespacedInformer(ns).svcLister.GetByKey(key)
-	if err != nil {
-		lbc.syncQueue.Requeue(task, err)
-		return
-	}
-
-	// First case: the service is the external service for the Ingress Controller
-	// In that case we need to update the statuses of all resources
-
-	if lbc.IsExternalServiceKeyForStatus(key) {
-		glog.V(3).Infof("Syncing service %v", key)
-
-		if !exists {
-			// service got removed
-			lbc.statusUpdater.ClearStatusFromExternalService()
-		} else {
-			// service added or updated
-			lbc.statusUpdater.SaveStatusFromExternalService(obj.(*api_v1.Service))
-		}
-
-		if lbc.reportStatusEnabled() {
-			ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
-
-			glog.V(3).Infof("Updating status for %v Ingresses", len(ingresses))
-
-			err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
-			if err != nil {
-				glog.Errorf("error updating ingress status in syncService: %v", err)
-			}
-		}
-
-		if lbc.areCustomResourcesEnabled && lbc.reportCustomResourceStatusEnabled() {
-			virtualServers := lbc.configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
-
-			glog.V(3).Infof("Updating status for %v VirtualServers", len(virtualServers))
-
-			err := lbc.statusUpdater.UpdateExternalEndpointsForResources(virtualServers)
-			if err != nil {
-				glog.V(3).Infof("error updating VirtualServer/VirtualServerRoute status in syncService: %v", err)
-			}
-		}
-
-		// we don't return here because technically the same service could be used in the second case
-	}
-
-	// Second case: the service is referenced by some resources in the cluster
-
-	// it is safe to ignore the error
-	namespace, name, _ := ParseNamespaceName(key)
-
-	resources := lbc.configuration.FindResourcesForService(namespace, name)
-
-	if len(resources) == 0 {
-		return
-	}
-	glog.V(3).Infof("Syncing service %v", key)
-
-	glog.V(3).Infof("Updating %v resources", len(resources))
-
-	resourceExes := lbc.createExtendedResources(resources)
-
-	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes, true)
-	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 }
 
 // IsExternalServiceForStatus matches the service specified by the external-service cli arg

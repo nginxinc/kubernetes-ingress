@@ -1479,7 +1479,7 @@ func TestGenerateVirtualServerConfigWithBackupForNGINXPlus(t *testing.T) {
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -1786,7 +1786,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupNameFor
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -2092,7 +2092,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortFor
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -2396,7 +2396,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortAnd
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -6347,19 +6347,19 @@ func TestGenerateVirtualServerConfigAPIKeyClientMaps(t *testing.T) {
 			})
 
 			if !cmp.Equal(tc.expectedSpecAPIKey, vsConf.Server.APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedSpecAPIKey, vsConf.Server.APIKey))
+				t.Error(cmp.Diff(tc.expectedSpecAPIKey, vsConf.Server.APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey))
+				t.Error(cmp.Diff(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey))
+				t.Error(cmp.Diff(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedMapList, vsConf.Maps) {
-				t.Errorf(cmp.Diff(tc.expectedMapList, vsConf.Maps))
+				t.Error(cmp.Diff(tc.expectedMapList, vsConf.Maps))
 			}
 
 			if len(warnings) != 0 {
@@ -7161,7 +7161,7 @@ func TestGeneratePolicies(t *testing.T) {
 			result.BundleValidator = nil
 
 			if !cmp.Equal(tc.expected, result) {
-				t.Errorf(cmp.Diff(tc.expected, result))
+				t.Error(cmp.Diff(tc.expected, result))
 			}
 			if len(vsc.warnings) > 0 {
 				t.Errorf("generatePolicies() returned unexpected warnings %v for the case of %s", vsc.warnings, tc.msg)
@@ -15803,7 +15803,7 @@ func TestRFC1123ToSnake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !cmp.Equal(rfc1123ToSnake(tt.input), tt.expected) {
-				t.Errorf(cmp.Diff(rfc1123ToSnake(tt.input), tt.expected))
+				t.Error(cmp.Diff(rfc1123ToSnake(tt.input), tt.expected))
 			}
 		})
 	}

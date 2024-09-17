@@ -50,12 +50,10 @@ func (gcv *GlobalConfigurationValidator) validateGlobalConfigurationSpec(spec *c
 
 func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.Listener, fieldPath *field.Path) ([]conf_v1.Listener, field.ErrorList) {
 	allErrs := field.ErrorList{}
-
 	listenerNames := sets.Set[string]{}
-	ipv4PortProtocolCombinations := make(map[string]map[int]string) // map[IP]map[Port]Protocol
-	ipv6PortProtocolCombinations := make(map[string]map[int]string)
+	ipv4PortProtocolCombinations := make(map[string]map[int][]string) // map[IP]map[Port][]Protocol
+	ipv6PortProtocolCombinations := make(map[string]map[int][]string)
 	var validListeners []conf_v1.Listener
-
 	for i, l := range listeners {
 		idxPath := fieldPath.Index(i)
 		listenerErrs := gcv.validateListener(l, idxPath)
@@ -63,25 +61,22 @@ func (gcv *GlobalConfigurationValidator) getValidListeners(listeners []conf_v1.L
 			allErrs = append(allErrs, listenerErrs...)
 			continue
 		}
-
 		if err := gcv.checkForDuplicateName(listenerNames, l, idxPath); err != nil {
 			allErrs = append(allErrs, err)
 			continue
 		}
-
 		if err := gcv.checkIPPortProtocolConflicts(ipv4PortProtocolCombinations, ipv4, l, fieldPath); err != nil {
 			allErrs = append(allErrs, err)
+			gcv.updatePortProtocolCombinations(ipv4PortProtocolCombinations, ipv4, l)
 			continue
 		}
-
 		if err := gcv.checkIPPortProtocolConflicts(ipv6PortProtocolCombinations, ipv6, l, fieldPath); err != nil {
 			allErrs = append(allErrs, err)
+			gcv.updatePortProtocolCombinations(ipv6PortProtocolCombinations, ipv6, l)
 			continue
 		}
-
 		gcv.updatePortProtocolCombinations(ipv4PortProtocolCombinations, ipv4, l)
 		gcv.updatePortProtocolCombinations(ipv6PortProtocolCombinations, ipv6, l)
-
 		validListeners = append(validListeners, l)
 	}
 	return validListeners, allErrs
@@ -97,33 +92,37 @@ func (gcv *GlobalConfigurationValidator) checkForDuplicateName(listenerNames set
 }
 
 // checkIPPortProtocolConflicts ensures no duplicate or conflicting port/protocol combinations exist.
-func (gcv *GlobalConfigurationValidator) checkIPPortProtocolConflicts(combinations map[string]map[int]string, ipType ipType, listener conf_v1.Listener, fieldPath *field.Path) *field.Error {
+func (gcv *GlobalConfigurationValidator) checkIPPortProtocolConflicts(combinations map[string]map[int][]string, ipType ipType, listener conf_v1.Listener, fieldPath *field.Path) *field.Error {
 	ip := getIP(ipType, listener)
-
 	if combinations[ip] == nil {
-		combinations[ip] = make(map[int]string) // map[ip]map[port]protocol
+		combinations[ip] = make(map[int][]string) // map[ip]map[port][]protocol
 	}
-
-	existingProtocol, exists := combinations[ip][listener.Port]
-	if exists {
-		if existingProtocol == listener.Protocol {
-			return field.Duplicate(fieldPath, fmt.Sprintf("Listener %s: Duplicated port/protocol combination %d/%s", listener.Name, listener.Port, listener.Protocol))
-		} else if listener.Protocol == "HTTP" || existingProtocol == "HTTP" {
-			return field.Invalid(fieldPath.Child("port"), listener.Port, fmt.Sprintf("Listener %s: Port %d is used with a different protocol (current: %s, new: %s)", listener.Name, listener.Port, existingProtocol, listener.Protocol))
+	existingProtocols, exists := combinations[ip][listener.Port]
+	if !exists {
+		return nil
+	}
+	for _, existingProtocol := range existingProtocols {
+		switch listener.Protocol {
+		case "HTTP", "TCP":
+			if existingProtocol == "HTTP" || existingProtocol == "TCP" {
+				return field.Invalid(fieldPath.Child("protocol"), listener.Protocol, fmt.Sprintf("Listener %s: Duplicated ip:port protocol combination %s:%d %s", listener.Name, ip, listener.Port, listener.Protocol))
+			}
+		case "UDP":
+			if existingProtocol == "UDP" {
+				return field.Invalid(fieldPath.Child("protocol"), listener.Protocol, fmt.Sprintf("Listener %s: Duplicated ip:port protocol combination %s:%d %s", listener.Name, ip, listener.Port, listener.Protocol))
+			}
 		}
 	}
-
 	return nil
 }
 
 // updatePortProtocolCombinations updates the port/protocol combinations map with the given listener's details for both IPv4 and IPv6.
-func (gcv *GlobalConfigurationValidator) updatePortProtocolCombinations(combinations map[string]map[int]string, ipType ipType, listener conf_v1.Listener) {
+func (gcv *GlobalConfigurationValidator) updatePortProtocolCombinations(combinations map[string]map[int][]string, ipType ipType, listener conf_v1.Listener) {
 	ip := getIP(ipType, listener)
-
 	if combinations[ip] == nil {
-		combinations[ip] = make(map[int]string)
+		combinations[ip] = make(map[int][]string)
 	}
-	combinations[ip][listener.Port] = listener.Protocol
+	combinations[ip][listener.Port] = append(combinations[ip][listener.Port], listener.Protocol)
 }
 
 // getIP returns the appropriate IP address for the given ipType and listener.
