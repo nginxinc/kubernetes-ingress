@@ -13,7 +13,7 @@ This guide walks you through the steps to set up NGINX Ingress Controller using 
 
 Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This involves some extra steps to make sure everything works as it should.
 
-{{< important >}}This guide focuses on EKS version 1.19. For EKS versions below 1.19, you'll need to adjust security settings in the NGINX Pod to ensure compatibility with marketplace images. Make sure you're using updated versions of `eksctl` and the AWS CLI.{{< /important >}}
+{{< important >}}This guide focuses on EKS version 1.30. For EKS versions below 1.30, you'll need to adjust security settings in the NGINX Pod to ensure compatibility with marketplace images. Make sure you're using updated versions of `eksctl` and the AWS CLI.{{< /important >}}
 
 {{< note >}}AWS Region US-West-1 doesn't support NGINX Ingress Controller.{{</note>}}
 
@@ -21,7 +21,7 @@ Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This
 
 1. First, make sure your AWS EKS cluster is operational. If not, set one up using the AWS console or the `eksctl` tool. For step-by-step instructions, follow [this guide](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html).
 
-2. Create a new IAM role that will link to the service zccount for NGINX Ingress Controller. This role should have a policy that lets you monitor AWS NGINX Ingress Controller usage. Skipping this step will cause AWS NGINX Ingress Controller not to work. For more information, consult [AWS EKS IAM documentation](https://docs.aws.amazon.com/eks/latest/userguide/create-service-account-iam-policy-and-role.html) and [AWS Marketplace policy details](https://docs.aws.amazon.com/marketplace/latest/userguide/iam-user-policy-for-aws-marketplace-actions.html).
+2. Create a new IAM role that will link to the service account for NGINX Ingress Controller. This role should have a policy that lets you monitor AWS NGINX Ingress Controller usage. Skipping this step will cause AWS NGINX Ingress Controller not to work. For more information, consult [AWS EKS IAM documentation](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html) and [AWS Marketplace policy details](https://docs.aws.amazon.com/marketplace/latest/userguide/iam-user-policy-for-aws-marketplace-actions.html).
 
 3. Link this IAM role to your EKS cluster service account. Doing this will annotate your service account Kubernetes object with the IAM role link.
 
@@ -34,13 +34,13 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
 1. Associate your EKS cluster with an OIDC IAM provider. Use your specific `--cluster <name`> and `--region <region>` values.
 
     ``` shell
-    eksctl utils associate-iam-oidc-provider --region=eu-west-1 --cluster=json-eu-east1 --approve
+    eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-cluster --approve
     ```
 
 2. Create an IAM role and a service account for your cluster. Replace `--name <name>`, `--namespace <name>`, and `--region <region>` with your values.
 
     ``` shell
-    eksctl create iamserviceaccount --name nginx-ingress --namespace nginx-ingress --cluster json-test01 --region us-east-2 --attach-policy-arn arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage --approve
+    eksctl create iamserviceaccount --name nginx-ingress --namespace nginx-ingress --cluster my-cluster --region us-east-1 --attach-policy-arn arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage --approve
     ```
 
     This step creates the IAM role with the required policy, creates the service account if it doesn't exist, and adds the annotations needed for your AWS cluster. For additional details, consult the [AWS documentation](https://docs.aws.amazon.com/eks/latest/userguide/create-service-account-iam-policy-and-role.html). You don't need to apply any service account YAML files because `eksctl` handles that for you.
@@ -50,13 +50,11 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
     kind: ServiceAccount
     metadata:
       annotations:
-        EKS.amazonaws.com/role-arn: arn:aws:iam::001234567890:role/eksctl-json-us-west2-addon-iamserviceaccount-Role1-IJJ6CF9Y8IPY
+        EKS.amazonaws.com/role-arn: arn:aws:iam::001234567890:role/eksctl-my-cluster-iamserviceaccount-Role1-IJJ6CF9Y8IPY
       labels:
         app.kubernetes.io/managed-by: eksctl
       name: nginx-ingress
       namespace: nginx-ingress
-    secrets:
-    - name: nginx-ingress-token-zm728
     ```
 
     <br>
