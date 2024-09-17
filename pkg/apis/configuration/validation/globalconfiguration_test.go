@@ -76,8 +76,8 @@ func TestValidateListeners(t *testing.T) {
 		},
 		{
 			Name:     "test-listener-ip",
-			IPv4IP:   "127.0.0.1",
-			IPv6IP:   "::1",
+			IPv4:     "127.0.0.1",
+			IPv6:     "::1",
 			Port:     8080,
 			Protocol: "HTTP",
 		},
@@ -101,38 +101,38 @@ func TestValidateListeners_FailsOnInvalidIP(t *testing.T) {
 		{
 			name: "Invalid IPv4 IP",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-1", IPv4IP: "267.0.0.1", Port: 8082, Protocol: "HTTP"},
+				{Name: "test-listener-1", IPv4: "267.0.0.1", Port: 8082, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Invalid IPv4 IP with missing octet",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-2", IPv4IP: "127.0.0", Port: 8080, Protocol: "HTTP"},
+				{Name: "test-listener-2", IPv4: "127.0.0", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Invalid IPv6 IP",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-3", IPv6IP: "1200::AB00::1234", Port: 8080, Protocol: "HTTP"},
+				{Name: "test-listener-3", IPv6: "1200::AB00::1234", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Valid and invalid IPs",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-4", IPv4IP: "192.168.1.1", IPv6IP: "2001:0db1234123123", Port: 8080, Protocol: "HTTP"},
-				{Name: "test-listener-5", IPv4IP: "256.256.256.256", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8081, Protocol: "HTTP"},
+				{Name: "test-listener-4", IPv4: "192.168.1.1", IPv6: "2001:0db1234123123", Port: 8080, Protocol: "HTTP"},
+				{Name: "test-listener-5", IPv4: "256.256.256.256", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8081, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Valid IPv4 and Invalid IPv6",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-6", IPv4IP: "192.168.1.1", IPv6IP: "2001::85a3::8a2e:370:7334", Port: 8080, Protocol: "HTTP"},
+				{Name: "test-listener-6", IPv4: "192.168.1.1", IPv6: "2001::85a3::8a2e:370:7334", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Invalid IPv4 and Valid IPv6",
 			listeners: []conf_v1.Listener{
-				{Name: "test-listener-8", IPv4IP: "300.168.1.1", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
+				{Name: "test-listener-8", IPv4: "300.168.1.1", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 	}
@@ -163,29 +163,29 @@ func TestValidateListeners_FailsOnPortProtocolConflictsSameIP(t *testing.T) {
 		{
 			name: "Same port used with the same protocol",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "192.168.1.1", IPv6IP: "::1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv4IP: "192.168.1.1", IPv6IP: "::1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4: "192.168.1.1", IPv6: "::1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4: "192.168.1.1", IPv6: "::1", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Same port used with different protocols",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "192.168.1.1", IPv6IP: "::1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "TCP"},
+				{Name: "listener-1", IPv4: "192.168.1.1", IPv6: "::1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4: "192.168.1.1", Port: 8080, Protocol: "TCP"},
 			},
 		},
 		{
 			name: "Same port used with the same protocol (IPv6)",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "192.168.1.1", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4: "192.168.1.1", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Same port used with different protocols (IPv6)",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv4IP: "192.168.1.1", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "TCP"},
+				{Name: "listener-1", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4: "192.168.1.1", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "TCP"},
 			},
 		},
 	}
@@ -216,43 +216,43 @@ func TestValidateListeners_PassesOnValidIPListeners(t *testing.T) {
 		{
 			name: "Different Ports and IPs",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "192.168.1.1", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv4IP: "192.168.1.2", IPv6IP: "::1", Port: 9090, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4: "192.168.1.1", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4: "192.168.1.2", IPv6: "::1", Port: 9090, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Same IPs, Same Protocol and Different Port",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "192.168.1.1", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv4IP: "192.168.1.1", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 9090, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4: "192.168.1.1", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4: "192.168.1.1", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 9090, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "Different Types of IPs",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "UDP and HTTP Listeners with Same Port",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "UDP"},
-				{Name: "listener-2", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4: "127.0.0.1", Port: 8080, Protocol: "UDP"},
+				{Name: "listener-2", IPv4: "127.0.0.1", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "HTTP Listeners with Same Port but different IPv4 and IPv6 ip addresses",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "127.0.0.2", IPv6IP: "::1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-1", IPv4: "127.0.0.2", IPv6: "::1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv4: "127.0.0.1", Port: 8080, Protocol: "HTTP"},
 			},
 		},
 		{
 			name: "UDP and TCP Listeners with Same Port",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "UDP"},
-				{Name: "listener-2", IPv4IP: "127.0.0.1", Port: 8080, Protocol: "TCP"},
+				{Name: "listener-1", IPv4: "127.0.0.1", Port: 8080, Protocol: "UDP"},
+				{Name: "listener-2", IPv4: "127.0.0.1", Port: 8080, Protocol: "TCP"},
 			},
 		},
 	}
@@ -279,15 +279,15 @@ func TestValidateListeners_FailsOnMixedInvalidIPs(t *testing.T) {
 		{
 			name: "Valid IPv4 and Invalid IPv6",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv6IP: "2001::85a3::8a2e:370:7334", Port: 9090, Protocol: "TCP"},
+				{Name: "listener-1", IPv4: "192.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv6: "2001::85a3::8a2e:370:7334", Port: 9090, Protocol: "TCP"},
 			},
 		},
 		{
 			name: "Invalid IPv4 and Valid IPv6",
 			listeners: []conf_v1.Listener{
-				{Name: "listener-1", IPv4IP: "300.168.1.1", Port: 8080, Protocol: "HTTP"},
-				{Name: "listener-2", IPv6IP: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 9090, Protocol: "TCP"},
+				{Name: "listener-1", IPv4: "300.168.1.1", Port: 8080, Protocol: "HTTP"},
+				{Name: "listener-2", IPv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", Port: 9090, Protocol: "TCP"},
 			},
 		},
 	}
