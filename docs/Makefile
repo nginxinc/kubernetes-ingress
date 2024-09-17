@@ -1,5 +1,5 @@
 HUGO?=hugo
-HUGO_IMG?=hugomods/hugo:0.134.0
+HUGO_IMG?=hugomods/hugo:0.134.1
 
 THEME_MODULE = github.com/nginxinc/nginx-hugo-theme
 THEME_VERSION = $(shell curl -s https://api.github.com/repos/nginxinc/nginx-hugo-theme/releases/latest | jq -r ".tag_name")
