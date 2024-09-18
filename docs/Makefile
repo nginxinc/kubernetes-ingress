@@ -1,8 +1,8 @@
 HUGO?=hugo
-HUGO_IMG?=hugomods/hugo:0.115.3
+HUGO_IMG?=hugomods/hugo:0.134.1
 
 THEME_MODULE = github.com/nginxinc/nginx-hugo-theme
-THEME_VERSION = 0.41.14
+THEME_VERSION ?= $(shell curl -s https://api.github.com/repos/nginxinc/nginx-hugo-theme/releases/latest | jq -r ".tag_name")
 
 ifeq (, $(shell ${HUGO} version 2> /dev/null))
 ifeq (, $(shell docker version 2> /dev/null))
@@ -55,7 +55,7 @@ clean:
 	[ -d "public" ] && rm -rf "public"
 
 hugo-get:
-	hugo mod get $(THEME_MODULE)@v$(THEME_VERSION)
+	hugo mod get $(THEME_MODULE)@$(THEME_VERSION)
 
 hugo-tidy:
 	hugo mod tidy

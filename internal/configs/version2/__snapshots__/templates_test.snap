@@ -80,6 +80,96 @@ server {
 
 ---
 
+[TestExecuteTemplateForTransportServerWithTCPIPListener - 1]
+
+upstream udp-upstream {
+    zone udp-upstream 512k;
+    server 10.0.0.20:5001 max_fails=0 fail_timeout= max_conns=0;
+}
+
+
+match match_udp-upstream {
+    
+    send "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
+    
+
+    
+    expect ~* "200 OK";
+    
+}
+server {
+    listen 127.0.0.1:1234 ssl udp;
+    listen [::1]:1234 ssl udp;
+
+    ssl_certificate cafe-secret.pem;
+    ssl_certificate_key cafe-secret.pem;
+
+    status_zone udp-app;
+    proxy_requests 1;
+    proxy_responses 2;
+
+    proxy_pass udp-upstream;
+
+    
+    health_check interval=5s  port=8080
+        passes=1 jitter=0 fails=1 udp match=match_udp-upstream;
+    health_check_timeout 5s;
+    
+
+    proxy_timeout 10s;
+    proxy_connect_timeout 10s;
+    proxy_next_upstream on;
+    proxy_next_upstream_timeout 10s;
+    proxy_next_upstream_tries 5;
+}
+
+---
+
+[TestExecuteTemplateForTransportServerWithUDPIPListener - 1]
+
+upstream udp-upstream {
+    zone udp-upstream 512k;
+    server 10.0.0.20:5001 max_fails=0 fail_timeout= max_conns=0;
+}
+
+
+match match_udp-upstream {
+    
+    send "GET / HTTP/1.0\r\nHost: localhost\r\n\r\n";
+    
+
+    
+    expect ~* "200 OK";
+    
+}
+server {
+    listen 127.0.0.1:1234 ssl;
+    listen [::1]:1234 ssl;
+
+    ssl_certificate cafe-secret.pem;
+    ssl_certificate_key cafe-secret.pem;
+
+    status_zone udp-app;
+    proxy_requests 1;
+    proxy_responses 2;
+
+    proxy_pass udp-upstream;
+
+    
+    health_check interval=5s  port=8080
+        passes=1 jitter=0 fails=1 match=match_udp-upstream;
+    health_check_timeout 5s;
+    
+
+    proxy_timeout 10s;
+    proxy_connect_timeout 10s;
+    proxy_next_upstream on;
+    proxy_next_upstream_timeout 10s;
+    proxy_next_upstream_tries 5;
+}
+
+---
+
 [TestExecuteVirtualServerTemplateWithAPIKeyPolicyNGINXPlus - 1]
 
 upstream test-upstream {

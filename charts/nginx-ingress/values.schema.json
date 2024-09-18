@@ -995,7 +995,7 @@
                           "dns-tcp"
                         ]
                       },
-                      "ipv4ip": {
+                      "ipv4": {
                         "type": "string",
                         "default": "",
                         "title": "The ipv4 ip",
@@ -1003,7 +1003,7 @@
                           "127.0.0.1"
                         ]
                       },
-                      "ipv6ip": {
+                      "ipv6": {
                         "type": "string",
                         "default": "",
                         "title": "The ipv6 ip",

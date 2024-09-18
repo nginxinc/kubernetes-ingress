@@ -184,7 +184,7 @@ func makeTransportListener(s StreamServer) string {
 	port := strconv.Itoa(s.Port)
 
 	directives += buildListenDirective(listen{
-		ipAddress:     "",
+		ipAddress:     s.IPv4,
 		port:          port,
 		tls:           s.SSL.Enabled,
 		proxyProtocol: false,
@@ -195,7 +195,7 @@ func makeTransportListener(s StreamServer) string {
 	if !s.DisableIPV6 {
 		directives += spacing
 		directives += buildListenDirective(listen{
-			ipAddress:     "",
+			ipAddress:     s.IPv6,
 			port:          port,
 			tls:           s.SSL.Enabled,
 			proxyProtocol: false,

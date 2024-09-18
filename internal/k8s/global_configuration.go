@@ -135,7 +135,7 @@ func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes
 			}
 		case *TransportServerConfiguration:
 			if c.Op == AddOrUpdate {
-				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
+				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort, impl.IPv4, impl.IPv6)
 
 				updatedTSExes = append(updatedTSExes, tsEx)
 				updatedResources = append(updatedResources, impl)
