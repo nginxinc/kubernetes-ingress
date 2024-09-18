@@ -128,15 +128,15 @@ func (gcv *GlobalConfigurationValidator) updatePortProtocolCombinations(combinat
 // getIP returns the appropriate IP address for the given ipType and listener.
 func getIP(ipType ipType, listener conf_v1.Listener) string {
 	if ipType == ipv4 {
-		if listener.IPv4IP == "" {
+		if listener.IPv4 == "" {
 			return "0.0.0.0"
 		}
-		return listener.IPv4IP
+		return listener.IPv4
 	}
-	if listener.IPv6IP == "" {
+	if listener.IPv6 == "" {
 		return "::"
 	}
-	return listener.IPv6IP
+	return listener.IPv6
 }
 
 func generatePortProtocolKey(port int, protocol string) string {
@@ -147,8 +147,8 @@ func (gcv *GlobalConfigurationValidator) validateListener(listener conf_v1.Liste
 	allErrs := validateGlobalConfigurationListenerName(listener.Name, fieldPath.Child("name"))
 	allErrs = append(allErrs, gcv.validateListenerPort(listener.Name, listener.Port, fieldPath.Child("port"))...)
 	allErrs = append(allErrs, validateListenerProtocol(listener.Protocol, fieldPath.Child("protocol"))...)
-	allErrs = append(allErrs, validateListenerIPv4IP(listener.IPv4IP, fieldPath.Child("ipv4ip"))...)
-	allErrs = append(allErrs, validateListenerIPv6IP(listener.IPv6IP, fieldPath.Child("ipv6ip"))...)
+	allErrs = append(allErrs, validateListenerIPv4(listener.IPv4, fieldPath.Child("ipv4"))...)
+	allErrs = append(allErrs, validateListenerIPv6(listener.IPv6, fieldPath.Child("ipv6"))...)
 
 	return allErrs
 }
@@ -184,16 +184,16 @@ func validateListenerProtocol(protocol string, fieldPath *field.Path) field.Erro
 	}
 }
 
-func validateListenerIPv4IP(ipv4ip string, fieldPath *field.Path) field.ErrorList {
-	if ipv4ip != "" {
-		return validation.IsValidIPv4Address(fieldPath, ipv4ip)
+func validateListenerIPv4(ipv4 string, fieldPath *field.Path) field.ErrorList {
+	if ipv4 != "" {
+		return validation.IsValidIPv4Address(fieldPath, ipv4)
 	}
 	return field.ErrorList{}
 }
 
-func validateListenerIPv6IP(ipv6ip string, fieldPath *field.Path) field.ErrorList {
-	if ipv6ip != "" {
-		return validation.IsValidIPv6Address(fieldPath, ipv6ip)
+func validateListenerIPv6(ipv6 string, fieldPath *field.Path) field.ErrorList {
+	if ipv6 != "" {
+		return validation.IsValidIPv6Address(fieldPath, ipv6)
 	}
 	return field.ErrorList{}
 }
