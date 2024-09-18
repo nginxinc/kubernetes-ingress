@@ -8,7 +8,7 @@ import pytest
 import yaml
 from kubernetes.client import ApiextensionsV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
-from suite.utils.resources_utils import ensure_item_removal
+from suite.utils.resources_utils import ensure_item_removal, wait_before_test
 
 
 def create_crd(api_extensions_v1: ApiextensionsV1Api, body) -> None:
@@ -81,6 +81,32 @@ def read_custom_resource(
     except ApiException:
         logging.exception(f"Exception occurred while reading CRD")
         raise
+
+
+def wait_for_valid_custom_resource(
+    custom_objects: CustomObjectsApi, namespace, plural, name, api_group="k8s.nginx.org"
+) -> None:
+    """
+    Wait for the custom resource to become valid (if the field status.state is present)
+    """
+    crd_info = read_custom_resource(
+        custom_objects,
+        namespace,
+        plural,
+        name,
+    )
+    count = 0
+    while crd_info["status"]["state"] != "Valid" and count < 5:
+        wait_before_test()
+        crd_info = read_custom_resource(
+            custom_objects,
+            namespace,
+            plural,
+            name,
+        )
+    assert (
+        crd_info["status"]["state"] == "Valid"
+    ), f"After several retries, the custom resource state is still not Valid"
 
 
 def is_dnsendpoint_present(custom_objects: CustomObjectsApi, name, namespace) -> bool:
