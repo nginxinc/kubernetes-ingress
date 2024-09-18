@@ -202,7 +202,7 @@ func (lbc *LoadBalancerController) updateTransportServersStatusFromEvents() erro
 	return nil
 }
 
-func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1.TransportServer, listenerPort int) *configs.TransportServerEx {
+func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1.TransportServer, listenerPort int, ipv4 string, ipv6 string) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
 	externalNameSvcs := make(map[string]bool)
 	podsByIP := make(map[string]string)
@@ -250,6 +250,8 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 
 	return &configs.TransportServerEx{
 		ListenerPort:     listenerPort,
+		IPv4:             ipv4,
+		IPv6:             ipv6,
 		TransportServer:  transportServer,
 		Endpoints:        endpoints,
 		PodsByIP:         podsByIP,

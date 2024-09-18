@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   call-docs-build-push:
-    uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@d20def4d420028a71f99863011c6de7325c4013e # v1.0.4
+    uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@f88844356d32c94be057b60033b3a933bebabf77 # v1.0.5
     permissions:
       pull-requests: write # needed to write preview url comment to PR
       contents: read

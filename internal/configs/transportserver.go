@@ -23,6 +23,8 @@ type TransportServerEx struct {
 	ExternalNameSvcs map[string]bool
 	DisableIPV6      bool
 	SecretRefs       map[string]*secrets.SecretReference
+	IPv4             string
+	IPv6             string
 }
 
 func (tsEx *TransportServerEx) String() string {
@@ -118,6 +120,8 @@ func generateTransportServerConfig(p transportServerConfigParams) (*version2.Tra
 			ServerSnippets:           serverSnippets,
 			DisableIPV6:              p.transportServerEx.DisableIPV6,
 			SSL:                      sslConfig,
+			IPv4:                     p.transportServerEx.IPv4,
+			IPv6:                     p.transportServerEx.IPv6,
 		},
 		Match:                   match,
 		Upstreams:               upstreams,
