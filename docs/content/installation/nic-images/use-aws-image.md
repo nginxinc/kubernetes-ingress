@@ -28,10 +28,10 @@ Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This
 {{< important >}}Associating your AWS EKS cluster with an OIDC provider is a prerequisite for creating your IAM service account.{{< /important >}}
 
 ## Use eksctl
+{{< note >}}Make sure you have an operational EKS cluster and that the namespace for your NGINX Ingress Controller is set up. If you don't have an EKS cluster yet, you'll need to create one.{{< /note >}}
+
 {{<tabs name="install-aws">}}
 {{%tab name="manifests"%}}
-
-Make sure you have an operational EKS cluster and that the namespace for your NGINX Ingress Controller is set up. If you don't have an EKS cluster yet, you'll need to create one.
 
 1. Associate your EKS cluster with an OIDC IAM provider. Use your specific `--cluster <name`> and `--region <region>` values.
 
@@ -89,8 +89,6 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
 {{%/tab%}}
 
 {{%tab name="helm"%}}
-
-Make sure you have an operational EKS cluster and that the namespace for your NGINX Ingress Controller is set up. If you don't have an EKS cluster yet, you'll need to create one.
 
 1. Associate your EKS cluster with an OIDC IAM provider. Use your specific `--cluster <name`> and `--region <region>` values.
 
