@@ -134,3 +134,5 @@ Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This
 {{</tabs>}}
 
 {{< tip >}}For help with credentials, AWS Labs offers a credential helper. Check out [their GitHub repository](https://github.com/awslabs/amazon-ecr-credential-helper) for setup instructions.{{< /tip >}}
+
+For options to customize your resources, see our [Configuration documentation]({{< relref "configuration/" >}}).
