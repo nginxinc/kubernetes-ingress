@@ -126,6 +126,18 @@ def pytest_addoption(parser) -> None:
         default="1",
         help="Number of resources to deploy for upgrade tests",
     )
+    parser.addoption(
+        "--docker-registry-user",
+        action="store",
+        default="",
+        help="Docker registry username",
+    )
+    parser.addoption(
+        "--docker-registry-token",
+        action="store",
+        default="",
+        help="Docker registry token",
+    )
 
 
 # import fixtures into pytest global namespace

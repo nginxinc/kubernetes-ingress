@@ -31,6 +31,6 @@ BATCH_RELOAD_NUMBER = 2
 # Number of namespaces to deploy to measure Pod performance, used in test_multiple_ns_perf.py
 NS_COUNT = 0
 # Nginx registry address to pull waf components from
-NGX_REG = "private-registry.nginx.com"
+NGX_REG = "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr"
 # WAF component version to pull from above registry
 WAF_V5_VERSION = "5.2.0"

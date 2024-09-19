@@ -1,6 +1,5 @@
 """Describe project shared pytest fixtures related to setup of ingress controller."""
 
-import os
 import subprocess
 import time
 
@@ -263,8 +262,8 @@ def crd_ingress_controller_with_waf_v5(
 
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
-    user = os.environ.get("DOCKER_REGISTRY_USER")
-    token = os.environ.get("DOCKER_REGISTRY_TOKEN")
+    user = request.config.getoption("--docker-registry-user")
+    token = request.config.getoption("--docker-registry-token")
     subprocess.run(
         [
             "kubectl",
