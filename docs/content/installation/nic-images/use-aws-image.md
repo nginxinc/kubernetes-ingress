@@ -15,7 +15,7 @@ Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This
 
 {{< important >}}This guide focuses on EKS version 1.30. For EKS versions below 1.30, you'll need to adjust security settings in the NGINX Pod to ensure compatibility with marketplace images. Make sure you're using updated versions of `eksctl` and the AWS CLI.{{< /important >}}
 
-{{< note >}}AWS Region US-West-1 doesn't support NGINX Ingress Controller.{{</note>}}
+{{< note >}}See the `AWS Marketplace Metering Service` section of the [AWS Marketplace documentation](https://docs.aws.amazon.com/general/latest/gr/aws-marketplace.html) for regions where NGINX Ingress Controller is supported.{{</note>}}
 
 ## Instructions
 
@@ -27,9 +27,11 @@ Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This
 
 {{< important >}}Associating your AWS EKS cluster with an OIDC provider is a prerequisite for creating your IAM service account.{{< /important >}}
 
-## Step-by-step instructions using eksctl
+## Use eksctl
+{{< note >}}Make sure you have an operational EKS cluster and that the namespace for your NGINX Ingress Controller is set up. If you don't have an EKS cluster yet, you'll need to create one.{{< /note >}}
 
-Make sure you have an operational EKS cluster and that the namespace for your NGINX Ingress Controller is set up. If you don't have an EKS cluster yet, you'll need to create one.
+{{<tabs name="install-aws">}}
+{{%tab name="manifests"%}}
 
 1. Associate your EKS cluster with an OIDC IAM provider. Use your specific `--cluster <name`> and `--region <region>` values.
 
@@ -37,7 +39,7 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
     eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-cluster --approve
     ```
 
-2. Create an IAM role and a service account for your cluster. Replace `--name <name>`, `--namespace <name>`, and `--region <region>` with your values.
+1. Create an IAM role and a service account for your cluster. Replace `--name <name>`, `--namespace <name>`, and `--region <region>` with your values.
 
     ``` shell
     eksctl create iamserviceaccount --name nginx-ingress --namespace nginx-ingress --cluster my-cluster --region us-east-1 --attach-policy-arn arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage --approve
@@ -78,12 +80,59 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
         apiGroup: rbac.authorization.k8s.io
     ```
 
-3. Sign in to the AWS ECR registry that specified in the instructions on the [AWS Marketplace portal](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau?sr=0-1&ref_=beagle&applicationId=AWSMPContessa).
+1. Sign in to the AWS ECR registry that specified in the instructions on the [AWS Marketplace portal](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau?sr=0-1&ref_=beagle&applicationId=AWSMPContessa).
 
     {{< img title="ECR pull instructions for NGINX Ingress Controller" src="./img/ecr-pull-instructions.png" >}}
 
+1. Update the image in the _nginx-plus-ingress.yaml_ manifest.
+
+{{%/tab%}}
+
+{{%tab name="helm"%}}
+
+1. Associate your EKS cluster with an OIDC IAM provider. Use your specific `--cluster <name`> and `--region <region>` values.
+
+    ``` shell
+    eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-cluster --approve
+    ```
+
+1. Create an IAM role and a service account for your cluster. Replace `--name <name>`, `--namespace <name>`, `--region <region>`, `--cluster <name>` and `--role-name <name>` with your values.
+
+    ``` shell
+    eksctl create iamserviceaccount --name nginx-ingress --namespace nginx-ingress --cluster my-cluster --region us-east-1 --attach-policy-arn arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage --role-only --role-name my-cluster-sa --approve
+    ```
+
+    This step creates the IAM role with the required policy, which we will later refer to in the helm values. For additional details, consult the [AWS documentation](https://docs.aws.amazon.com/eks/latest/userguide/create-service-account-iam-policy-and-role.html).
+
     <br>
 
-    {{< tip >}}For help with credentials, AWS Labs offers a credential helper. Check out [their GitHub repository](https://github.com/awslabs/amazon-ecr-credential-helper) for setup instructions.{{< /tip >}}
+    Ensure the service account name matches the one in your _values.yaml_ file for helm deployment.  
+    Ensure the EKS `role-arn` matches the service account annotation in your _values.yaml_ file for helm deployment.  You can use this command to retrieve the `role-arn`
+    ``` shell
+    aws iam list-roles | jq -r --arg role "my-cluster-sa" '.Roles[] | select(.RoleName==$role) | .Arn'
+    ```
 
-4. Update the image in the _nginx-plus-ingress.yaml_ manifest.
+    Here's what a sample _values.yaml_ file might look like:
+
+    ``` yaml
+    controller:
+      nginxplus: true
+      image:
+        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress
+        tag: "{{< nic-version >}}-mktpl"
+      serviceAccount:
+        annotations:
+          eks.amazonaws.com/role-arn: arn:aws:iam::0123456789:role/my-cluster-sa
+        name: nginx-ingress
+    ```
+
+1. Sign in to the AWS ECR registry that specified in the instructions on the [AWS Marketplace portal](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau?sr=0-1&ref_=beagle&applicationId=AWSMPContessa).
+
+    {{< img title="ECR pull instructions for NGINX Ingress Controller" src="./img/ecr-pull-instructions.png" >}}
+
+{{%/tab%}}
+{{</tabs>}}
+
+{{< tip >}}For help with credentials, AWS Labs offers a credential helper. Check out [their GitHub repository](https://github.com/awslabs/amazon-ecr-credential-helper) for setup instructions.{{< /tip >}}
+
+For options to customize your resources, see our [Configuration documentation]({{< relref "configuration/" >}}).
