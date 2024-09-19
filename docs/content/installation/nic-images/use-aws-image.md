@@ -15,7 +15,7 @@ Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This
 
 {{< important >}}This guide focuses on EKS version 1.30. For EKS versions below 1.30, you'll need to adjust security settings in the NGINX Pod to ensure compatibility with marketplace images. Make sure you're using updated versions of `eksctl` and the AWS CLI.{{< /important >}}
 
-{{< note >}}AWS Region US-West-1 doesn't support NGINX Ingress Controller.{{</note>}}
+{{< note >}}See the `AWS Marketplace Metering Service` section of the [AWS Marketplace documentation](https://docs.aws.amazon.com/general/latest/gr/aws-marketplace.html) for regions NGINX Ingress Controller is supported.{{</note>}}
 
 ## Instructions
 
