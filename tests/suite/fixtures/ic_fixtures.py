@@ -263,6 +263,7 @@ def crd_ingress_controller_with_waf_v5(
 
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
+    user = os.environ.get("DOCKER_REGISTRY_USER")
     token = os.environ.get("DOCKER_REGISTRY_TOKEN")
     subprocess.run(
         [
@@ -274,8 +275,8 @@ def crd_ingress_controller_with_waf_v5(
             "docker-registry",
             "regcred",
             f"--docker-server={NGX_REG}",
-            f"--docker-username={token}",
-            "--docker-password=none",
+            f"--docker-username={user}",
+            f"--docker-password={token}",
         ]
     )
 

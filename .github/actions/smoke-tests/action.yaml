@@ -31,6 +31,9 @@ inputs:
   azure-ad-secret:
     description: Azure Active Directory secret for JWKs
     required: false
+  registry-token:
+    description: JWT token for accessing container registry
+    required: false
 
 outputs:
   test-results-name:
@@ -83,6 +86,8 @@ runs:
         -v ${{ github.workspace }}/pyproject.toml:/workspace/pyproject.toml \
         -v ${{ steps.k8s.outputs.test_output_path }}:${{ steps.k8s.outputs.test_output_path }} \
         -v ~/.kube/kind/config:/root/.kube/config ${{ inputs.test-image }} \
+        -e DOCKER_REGISTRY_USER=oauth2accesstoken \
+        -e DOCKER_REGISTRY_TOKEN=${{ inputs.registry-token }} \
         --context=kind-${{ github.run_id }} \
         --image=${{ inputs.image-name }}:${{ inputs.tag }} \
         --image-pull-policy=Never \
