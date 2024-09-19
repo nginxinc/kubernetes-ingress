@@ -55,7 +55,7 @@ jobs:
           context: "."
           cache-from: type=gha,scope=test-runner
           tags: |
-            gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') }}
+            gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') }}
             gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:latest
           pull: true
           push: true
