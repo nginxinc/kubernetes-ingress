@@ -27,10 +27,7 @@ Follow this guide to set up NGINX Ingress Controller using AWS Marketplace. This
 
 {{< important >}}Associating your AWS EKS cluster with an OIDC provider is a prerequisite for creating your IAM service account.{{< /important >}}
 
-
-
-
-## Step-by-step instructions using eksctl
+## Use eksctl
 {{<tabs name="install-aws">}}
 {{%tab name="manifests"%}}
 
@@ -42,7 +39,7 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
     eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-cluster --approve
     ```
 
-2. Create an IAM role and a service account for your cluster. Replace `--name <name>`, `--namespace <name>`, and `--region <region>` with your values.
+1. Create an IAM role and a service account for your cluster. Replace `--name <name>`, `--namespace <name>`, and `--region <region>` with your values.
 
     ``` shell
     eksctl create iamserviceaccount --name nginx-ingress --namespace nginx-ingress --cluster my-cluster --region us-east-1 --attach-policy-arn arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage --approve
@@ -83,14 +80,12 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
         apiGroup: rbac.authorization.k8s.io
     ```
 
-3. Sign in to the AWS ECR registry that specified in the instructions on the [AWS Marketplace portal](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau?sr=0-1&ref_=beagle&applicationId=AWSMPContessa).
+1. Sign in to the AWS ECR registry that specified in the instructions on the [AWS Marketplace portal](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau?sr=0-1&ref_=beagle&applicationId=AWSMPContessa).
 
     {{< img title="ECR pull instructions for NGINX Ingress Controller" src="./img/ecr-pull-instructions.png" >}}
 
-    {{< tip >}}For help with credentials, AWS Labs offers a credential helper. Check out [their GitHub repository](https://github.com/awslabs/amazon-ecr-credential-helper) for setup instructions.{{< /tip >}}
 
-
-4. Update the image in the _nginx-plus-ingress.yaml_ manifest.
+1. Update the image in the _nginx-plus-ingress.yaml_ manifest.
 
 {{%/tab%}}
 
@@ -104,7 +99,7 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
     eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=my-cluster --approve
     ```
 
-2. Create an IAM role and a service account for your cluster. Replace `--name <name>`, `--namespace <name>`, `--region <region>`, `--cluster <name>` and `--role-name <name>` with your values.
+1. Create an IAM role and a service account for your cluster. Replace `--name <name>`, `--namespace <name>`, `--region <region>`, `--cluster <name>` and `--role-name <name>` with your values.
 
     ``` shell
     eksctl create iamserviceaccount --name nginx-ingress --namespace nginx-ingress --cluster my-cluster --region us-east-1 --attach-policy-arn arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage --role-only --role-name my-cluster-sa --approve
@@ -134,12 +129,14 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
         name: nginx-ingress
     ```
 
-3. Sign in to the AWS ECR registry that specified in the instructions on the [AWS Marketplace portal](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau?sr=0-1&ref_=beagle&applicationId=AWSMPContessa).
+1. Sign in to the AWS ECR registry that specified in the instructions on the [AWS Marketplace portal](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau?sr=0-1&ref_=beagle&applicationId=AWSMPContessa).
 
     {{< img title="ECR pull instructions for NGINX Ingress Controller" src="./img/ecr-pull-instructions.png" >}}
 
-    {{< tip >}}For help with credentials, AWS Labs offers a credential helper. Check out [their GitHub repository](https://github.com/awslabs/amazon-ecr-credential-helper) for setup instructions.{{< /tip >}}
+    <br>
+
 
 {{%/tab%}}
-
 {{</tabs>}}
+
+{{< tip >}}For help with credentials, AWS Labs offers a credential helper. Check out [their GitHub repository](https://github.com/awslabs/amazon-ecr-credential-helper) for setup instructions.{{< /tip >}}
