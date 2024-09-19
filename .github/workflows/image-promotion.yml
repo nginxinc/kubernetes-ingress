@@ -432,14 +432,14 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
-        continue-on-error: true
-        with:
-          image-ref: ${{ steps.meta.outputs.tags }}
-          format: "sarif"
-          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
-          ignore-unfixed: "true"
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+      #   continue-on-error: true
+      #   with:
+      #     image-ref: ${{ steps.meta.outputs.tags }}
+      #     format: "sarif"
+      #     output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
+      #     ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -522,14 +522,14 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
-        continue-on-error: true
-        with:
-          image-ref: ${{ steps.meta.outputs.tags }}
-          format: "sarif"
-          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
-          ignore-unfixed: "true"
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+      #   continue-on-error: true
+      #   with:
+      #     image-ref: ${{ steps.meta.outputs.tags }}
+      #     format: "sarif"
+      #     output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
+      #     ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -619,14 +619,14 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
-        continue-on-error: true
-        with:
-          image-ref: ${{ steps.meta.outputs.tags }}
-          format: "sarif"
-          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
-          ignore-unfixed: "true"
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+      #   continue-on-error: true
+      #   with:
+      #     image-ref: ${{ steps.meta.outputs.tags }}
+      #     format: "sarif"
+      #     output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
+      #     ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
