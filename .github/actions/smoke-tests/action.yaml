@@ -86,8 +86,8 @@ runs:
         -v ${{ github.workspace }}/pyproject.toml:/workspace/pyproject.toml \
         -v ${{ steps.k8s.outputs.test_output_path }}:${{ steps.k8s.outputs.test_output_path }} \
         -v ~/.kube/kind/config:/root/.kube/config ${{ inputs.test-image }} \
-        -e DOCKER_REGISTRY_USER=oauth2accesstoken \
-        -e DOCKER_REGISTRY_TOKEN=${{ inputs.registry-token }} \
+        --docker-registry-user=oauth2accesstoken \
+        --docker-registry-token=${{ inputs.registry-token }} \
         --context=kind-${{ github.run_id }} \
         --image=${{ inputs.image-name }}:${{ inputs.tag }} \
         --image-pull-policy=Never \
