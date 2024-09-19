@@ -994,6 +994,22 @@
                         "examples": [
                           "dns-tcp"
                         ]
+                      },
+                      "ipv4": {
+                        "type": "string",
+                        "default": "",
+                        "title": "The ipv4 ip",
+                        "examples": [
+                          "127.0.0.1"
+                        ]
+                      },
+                      "ipv6": {
+                        "type": "string",
+                        "default": "",
+                        "title": "The ipv6 ip",
+                        "examples": [
+                          "::1"
+                        ]
                       }
                     }
                   }
