@@ -7,7 +7,7 @@ import time
 import pytest
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-from settings import CRDS, DEPLOYMENTS, TEST_DATA
+from settings import CRDS, DEPLOYMENTS, NGX_REG, TEST_DATA
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.resources_utils import (
     cleanup_rbac,
@@ -272,8 +272,8 @@ def crd_ingress_controller_with_waf_v5(
             "-n",
             f"{namespace}",
             "docker-registry",
-            f"regcred",
-            "--docker-server=private-registry.nginx.com",
+            "regcred",
+            f"--docker-server={NGX_REG}",
             f"--docker-username={token}",
             "--docker-password=none",
         ]

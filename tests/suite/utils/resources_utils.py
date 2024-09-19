@@ -14,7 +14,7 @@ from kubernetes.client import AppsV1Api, CoreV1Api, NetworkingV1Api, RbacAuthori
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from more_itertools import first
-from settings import DEPLOYMENTS, PROJECT_ROOT, RECONFIGURATION_DELAY, TEST_DATA
+from settings import DEPLOYMENTS, NGX_REG, PROJECT_ROOT, RECONFIGURATION_DELAY, TEST_DATA, WAF_V5_VERSION
 from suite.utils.ssl_utils import create_sni_session
 
 
@@ -1279,7 +1279,7 @@ def create_ingress_controller_wafv5(
 
     waf_cfg_mgr = {
         "name": "waf-config-mgr",
-        "image": "private-registry.nginx.com/nap/waf-config-mgr:5.2.0",
+        "image": f"{NGX_REG}/nap/waf-config-mgr:{WAF_V5_VERSION}",
         "imagePullPolicy": "IfNotPresent",
         "securityContext": {"allowPrivilegeEscalation": False, "capabilities": {"drop": ["all"]}},
         "volumeMounts": [
@@ -1299,7 +1299,7 @@ def create_ingress_controller_wafv5(
     }
     waf_enforcer = {
         "name": "waf-enforcer",
-        "image": "private-registry.nginx.com/nap/waf-enforcer:5.2.0",
+        "image": f"{NGX_REG}/nap/waf-enforcer:{WAF_V5_VERSION}",
         "imagePullPolicy": "IfNotPresent",
         "env": [{"name": "ENFORCER_PORT", "value": "50000"}],
         "volumeMounts": [

@@ -1,7 +1,6 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.utils.custom_resources_utils import wait_for_valid_custom_resource
 from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.utils.resources_utils import wait_before_test
 from suite.utils.vs_vsr_resources_utils import (
@@ -19,7 +18,7 @@ def waf_setup(kube_apis, test_namespace) -> None:
     wait_before_test()
 
 
-@pytest.mark.test
+@pytest.mark.appprotect_waf_v5
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_waf_v5, virtual_server_setup",
     [
@@ -46,9 +45,7 @@ class TestAppProtectWAFv5IntegrationVS:
         std_vs_src = f"{TEST_DATA}/ap-waf-v5/standard/virtual-server.yaml"
         delete_virtual_server(kube_apis.custom_objects, virtual_server_setup.vs_name, virtual_server_setup.namespace)
         create_virtual_server_from_yaml(kube_apis.custom_objects, std_vs_src, virtual_server_setup.namespace)
-        wait_for_valid_custom_resource(
-            kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name
-        )
+        wait_before_test()
 
     @pytest.mark.parametrize(
         "vs_src",
@@ -89,7 +86,7 @@ class TestAppProtectWAFv5IntegrationVS:
         assert "The requested URL was rejected. Please consult with your administrator." in response.text
 
 
-@pytest.mark.test
+@pytest.mark.appprotect_waf_v5
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_waf_v5, v_s_route_setup",
     [
@@ -137,22 +134,16 @@ class TestAppProtectWAFv5IntegrationVSR:
             f"{TEST_DATA}/ap-waf-v5/policies/waf.yaml",
             v_s_route_setup.route_m.namespace,
         )
-        wait_for_valid_custom_resource(kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol)
+        wait_before_test()
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.name,
             waf_subroute_vsr_src,
             v_s_route_setup.route_m.namespace,
         )
-        wait_for_valid_custom_resource(
-            kube_apis.custom_objects,
-            v_s_route_setup.route_m.namespace,
-            "virtualserverroutes",
-            v_s_route_setup.route_m.name,
-        )
+        wait_before_test()
         print("----------------------- Send request with embedded malicious script----------------------")
         count = 0
-        input("Press Enter to continue...")
         response = requests.get(
             f'{req_url}{v_s_route_setup.route_m.paths[0]}+"</script>"',
             headers={"host": v_s_route_setup.vs_host},
