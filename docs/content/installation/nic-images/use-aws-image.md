@@ -84,7 +84,6 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
 
     {{< img title="ECR pull instructions for NGINX Ingress Controller" src="./img/ecr-pull-instructions.png" >}}
 
-
 1. Update the image in the _nginx-plus-ingress.yaml_ manifest.
 
 {{%/tab%}}
@@ -132,9 +131,6 @@ Make sure you have an operational EKS cluster and that the namespace for your NG
 1. Sign in to the AWS ECR registry that specified in the instructions on the [AWS Marketplace portal](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau?sr=0-1&ref_=beagle&applicationId=AWSMPContessa).
 
     {{< img title="ECR pull instructions for NGINX Ingress Controller" src="./img/ecr-pull-instructions.png" >}}
-
-    <br>
-
 
 {{%/tab%}}
 {{</tabs>}}
