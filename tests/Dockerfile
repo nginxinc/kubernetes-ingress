@@ -23,6 +23,9 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 	&& install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
 	&& apt-get update && apt-get install -y apache2-utils
 
+RUN apt update -y \
+	&& curl https://get.docker.com/builds/Linux/x86_64/docker-latest.tgz | tar xvz -C /tmp/ && mv /tmp/docker/docker /usr/bin/docker
+
 COPY --link tests /workspace/tests
 
 COPY --link pyproject.toml /workspace/
