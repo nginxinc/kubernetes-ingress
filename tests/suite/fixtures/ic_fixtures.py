@@ -262,9 +262,7 @@ def crd_ingress_controller_with_waf_v5(
         f"{dir}/wafv5.tgz",
     ]
     result = subprocess.run(docker_command, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise Exception(f"Docker command failed: {result.stderr}")
-    assert os.path.isfile(f"{dir}/wafv5.tgz")
+    assert os.path.isfile(f"{dir}/wafv5.tgz"), f"Failed to create WAFv5 bundle: {result.stdout}"
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
     user = request.config.getoption("--docker-registry-user")
