@@ -255,7 +255,11 @@ def crd_ingress_controller_with_waf_v5(
             "--privileged",
             "-v",
             f"{dir}:{dir}",
-            f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION} -p {dir}/wafv5.json -o {dir}/wafv5.tgz",
+            f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",
+            f"-p",
+            f"{dir}/wafv5.json",
+            f"-o",
+            f"{dir}/wafv5.tgz",
         ]
         result = subprocess.run(docker_command, capture_output=True, text=True)
         if result.returncode != 0:
