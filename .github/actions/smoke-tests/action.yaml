@@ -80,6 +80,7 @@ runs:
         --name test-runner-${{ github.run_id }} \
         --network=kind \
         -v "/var/run/docker.sock:/var/run/docker.sock" \
+        -v ~/.docker:/root/.docker \
         -v ${{ github.workspace }}/tests:/workspace/tests \
         -v ${{ github.workspace }}/deployments:/workspace/deployments \
         -v ${{ github.workspace }}/charts:/workspace/charts \

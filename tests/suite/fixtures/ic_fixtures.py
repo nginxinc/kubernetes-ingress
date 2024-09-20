@@ -253,17 +253,8 @@ def crd_ingress_controller_with_waf_v5(
             "-v",
             "/var/run/docker.sock:/var/run/docker.sock",
             "--privileged",
-            "--env",
-            f"DOCKER_USERNAME={request.config.getoption('--docker-registry-user')}",
-            "--env",
-            f"DOCKER_PASSWORD={request.config.getoption('--docker-registry-token')}",
-            "--env",
-            f"DOCKER_REGISTRY={NGX_REG}",
             "-v",
             f"{dir}:{dir}",
-            "bash",
-            "-c",
-            f"docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY && "
             f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION} -p {dir}/wafv5.json -o {dir}/wafv5.tgz",
         ]
         result = subprocess.run(docker_command, capture_output=True, text=True)
