@@ -20,7 +20,6 @@ from suite.utils.resources_utils import (
     delete_dos_arbitrator,
     delete_ingress_controller,
     delete_items_from_yaml,
-    docker_login,
     ensure_connection_to_public_endpoint,
     get_first_pod_name,
     patch_rbac,
@@ -247,23 +246,25 @@ def crd_ingress_controller_with_waf_v5(
     dir = f"{TEST_DATA}/ap-waf-v5"
     try:
         print(f"Generate tar file for WAFv5 test at {dir}")
-        docker_login(
-            request.config.getoption("--docker-registry-user"),
-            request.config.getoption("--docker-registry-token"),
-            NGX_REG,
-        )
-
         docker_command = [
             "docker",
             "run",
             "--rm",
             "-v",
+            "/var/run/docker.sock:/var/run/docker.sock",
+            "--privileged",
+            "--env",
+            f"DOCKER_USERNAME={request.config.getoption('--docker-registry-user')}",
+            "--env",
+            f"DOCKER_PASSWORD={request.config.getoption('--docker-registry-token')}",
+            "--env",
+            f"DOCKER_REGISTRY={NGX_REG}",
+            "-v",
             f"{dir}:{dir}",
-            f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",  # TODO:update to the repo address
-            "-p",
-            f"{dir}/wafv5.json",
-            "-o",
-            f"{dir}/wafv5.tgz",
+            "bash",
+            "-c",
+            f"docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY && "
+            f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION} -p {dir}/wafv5.json -o {dir}/wafv5.tgz",
         ]
         result = subprocess.run(docker_command, capture_output=True, text=True)
         if result.returncode != 0:
