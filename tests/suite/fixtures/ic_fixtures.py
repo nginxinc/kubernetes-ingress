@@ -246,6 +246,9 @@ def crd_ingress_controller_with_waf_v5(
     dir = f"{TEST_DATA}/ap-waf-v5"
 
     print(f"Generate tar file for WAFv5 test at {dir}")
+    if not os.path.isfile(f"{dir}/wafv5.json"):
+        raise FileNotFoundError(f"Input file not found: {dir}/wafv5.json")
+
     docker_command = [
         "docker",
         "run",
