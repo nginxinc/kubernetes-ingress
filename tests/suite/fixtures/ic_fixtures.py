@@ -1,12 +1,13 @@
 """Describe project shared pytest fixtures related to setup of ingress controller."""
 
+import os
 import subprocess
 import time
 
 import pytest
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-from settings import CRDS, DEPLOYMENTS, NGX_REG, TEST_DATA
+from settings import CRDS, DEPLOYMENTS, NGX_REG, TEST_DATA, WAF_V5_VERSION
 from suite.utils.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.utils.resources_utils import (
     cleanup_rbac,
@@ -244,13 +245,14 @@ def crd_ingress_controller_with_waf_v5(
     """
     dir = f"{TEST_DATA}/ap-waf-v5"
     try:
+        print(f"Generate tar file for WAFv5 test at {dir}")
         docker_command = [
             "docker",
             "run",
             "--rm",
             "-v",
             f"{dir}:{dir}",
-            "waf-compiler-5.2.0:vsp",  # TODO:update to the repo address
+            f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",  # TODO:update to the repo address
             "-p",
             f"{dir}/wafv5.json",
             "-o",
@@ -259,7 +261,7 @@ def crd_ingress_controller_with_waf_v5(
         subprocess.run(docker_command, capture_output=True, text=True)
     except Exception:
         pytest.fail("Failed to generate tar file for WAFv5 test, exiting...")
-
+    assert os.path.isfile(f"{dir}/wafv5.tgz")
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
     user = request.config.getoption("--docker-registry-user")
