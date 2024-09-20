@@ -243,47 +243,9 @@ def crd_ingress_controller_with_waf_v5(
         'extra_args' list of IC arguments
     :return:
     """
-    dir = f"{TEST_DATA}/ap-waf-v5"
-
-    # print(f"Generate tar file for WAFv5 test at {dir}")
-    # if not os.path.isfile(f"{dir}/wafv5.json"):
-    #     raise FileNotFoundError(f"Input file not found: {dir}/wafv5.json")
-
-    # # docker_command = [
-    # #     "docker",
-    # #     "run",
-    # #     "--rm",
-    # #     "-v",
-    # #     "/var/run/docker.sock:/var/run/docker.sock",
-    # #     "--privileged",
-    # #     "-v",
-    # #     f"{dir}:{dir}",
-    # #     f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",
-    # #     f"-p",
-    # #     f"{dir}/wafv5.json",
-    # #     f"-o",
-    # #     f"{dir}/wafv5.tgz",
-    # # ]
-    # # docker_command = ["ls" , "-l", f"{dir}"]
-    # docker_command = [
-    #     "docker",
-    #     "run",
-    #     "--rm",
-    #     "-v",
-    #     "/var/run/docker.sock:/var/run/docker.sock",
-    #     "--privileged",
-    #     "-v",
-    #     f"{dir}:{dir}",
-    #     "--entrypoint",
-    #     "ls",
-    #     f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",
-    #     "-al",
-    #     f"{dir}",
-    # ]
-    # result = subprocess.run(docker_command, capture_output=True, text=True)
-    # print(f"Result: {result.stdout}")
-    # print(f"Error: {result.stderr}")
+    dir = f"{TEST_DATA}/ap-waf-v5"  # directory with WAFv5 bundle generated in setup-smoke workflow
     assert os.path.isfile(f"{dir}/wafv5.tgz")
+
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
     user = request.config.getoption("--docker-registry-user")
