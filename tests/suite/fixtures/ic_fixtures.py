@@ -249,6 +249,22 @@ def crd_ingress_controller_with_waf_v5(
     if not os.path.isfile(f"{dir}/wafv5.json"):
         raise FileNotFoundError(f"Input file not found: {dir}/wafv5.json")
 
+    # docker_command = [
+    #     "docker",
+    #     "run",
+    #     "--rm",
+    #     "-v",
+    #     "/var/run/docker.sock:/var/run/docker.sock",
+    #     "--privileged",
+    #     "-v",
+    #     f"{dir}:{dir}",
+    #     f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",
+    #     f"-p",
+    #     f"{dir}/wafv5.json",
+    #     f"-o",
+    #     f"{dir}/wafv5.tgz",
+    # ]
+    # docker_command = ["ls" , "-l", f"{dir}"]
     docker_command = [
         "docker",
         "run",
@@ -258,13 +274,15 @@ def crd_ingress_controller_with_waf_v5(
         "--privileged",
         "-v",
         f"{dir}:{dir}",
+        "--entrypoint",
+        "ls",
         f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",
-        f"-p",
-        f"{dir}/wafv5.json",
-        f"-o",
-        f"{dir}/wafv5.tgz",
+        "-al",
+        f"{dir}",
     ]
     result = subprocess.run(docker_command, capture_output=True, text=True)
+    print(f"Result: {result.stdout}")
+    print(f"Error: {result.stderr}")
     assert os.path.isfile(f"{dir}/wafv5.tgz"), f"Failed to create WAFv5 bundle: {result.stdout}"
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
