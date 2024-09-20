@@ -244,9 +244,6 @@ def crd_ingress_controller_with_waf_v5(
     :return:
     """
     dir = f"{TEST_DATA}/ap-waf-v5"
-    result = subprocess.run(["systemctl", "start", "docker"], capture_output=True, text=True)
-    if result.returncode != 0:
-        raise Exception(f"Docker command failed: {result.stderr}")
     try:
         print(f"Generate tar file for WAFv5 test at {dir}")
         docker_command = [
