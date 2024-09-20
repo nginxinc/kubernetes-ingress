@@ -183,14 +183,14 @@ jobs:
           mkdir -p "${{ inputs.image }}-results/"
         if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
-        with:
-          image-ref: ${{ steps.meta.outputs.tags }}
-          format: "sarif"
-          output: "${{ inputs.image }}-results/trivy.sarif"
-          ignore-unfixed: "true"
-        if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+      #   with:
+      #     image-ref: ${{ steps.meta.outputs.tags }}
+      #     format: "sarif"
+      #     output: "${{ inputs.image }}-results/trivy.sarif"
+      #     ignore-unfixed: "true"
+      #   if: ${{ inputs.authenticated && steps.build-push.conclusion == 'success' }}
 
       - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0

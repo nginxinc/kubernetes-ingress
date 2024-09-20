@@ -59,7 +59,7 @@ spec:
 {{<bootstrap-table "table table-striped table-bordered table-responsive">}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
+|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/host-and-listener-collisions). | ``string`` | Yes |
 |``listener`` | Sets a custom HTTP and/or HTTPS listener. Valid fields are `listener.http` and `listener.https`. Each field must reference the name of a valid listener defined in a GlobalConfiguration resource | [listener](#virtualserverlistener) | No |
 |``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
 |``gunzip`` | Enables or disables [decompression](https://docs.nginx.com/nginx/admin-guide/web-server/compression/) of gzipped responses for clients. Allowed values “on”/“off”, “true”/“false” or “yes”/“no”. If the ``gunzip`` value is not set, it defaults to ``off``.   | ``boolean`` | No |
