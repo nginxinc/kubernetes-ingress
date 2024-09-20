@@ -4,6 +4,7 @@ import base64
 import json
 import os
 import re
+import subprocess
 import time
 from unittest import mock
 
@@ -1913,3 +1914,20 @@ def get_apikey_policy_details_from_yaml(yaml_manifest) -> dict:
                 details["queries"] = data["spec"]["apiKey"]["suppliedIn"]["query"]
 
     return details
+
+
+def docker_login(username, password, registry):
+    """
+    Perform Docker login using the provided credentials.
+    :param username: Docker registry username/token
+    :param password: Docker registry password (set password to none when using token)
+    :param registry: Docker registry URL
+    """
+    try:
+        login_command = ["docker", "login", "-u", username, "-p", password, registry]
+        result = subprocess.run(login_command, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise Exception(f"Docker login failed: {result.stderr}")
+        print("Docker login successful")
+    except Exception as e:
+        pytest.fail(f"Docker command failed: {str(e)}")

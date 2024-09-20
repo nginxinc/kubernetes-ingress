@@ -20,6 +20,7 @@ from suite.utils.resources_utils import (
     delete_dos_arbitrator,
     delete_ingress_controller,
     delete_items_from_yaml,
+    docker_login,
     ensure_connection_to_public_endpoint,
     get_first_pod_name,
     patch_rbac,
@@ -246,6 +247,12 @@ def crd_ingress_controller_with_waf_v5(
     dir = f"{TEST_DATA}/ap-waf-v5"
     try:
         print(f"Generate tar file for WAFv5 test at {dir}")
+        docker_login(
+            request.config.getoption("--docker-registry-user"),
+            request.config.getoption("--docker-registry-token"),
+            NGX_REG,
+        )
+
         docker_command = [
             "docker",
             "run",
@@ -258,7 +265,9 @@ def crd_ingress_controller_with_waf_v5(
             "-o",
             f"{dir}/wafv5.tgz",
         ]
-        subprocess.run(docker_command, capture_output=True, text=True)
+        result = subprocess.run(docker_command, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise Exception(f"Docker command failed: {result.stderr}")
     except Exception:
         pytest.fail("Failed to generate tar file for WAFv5 test, exiting...")
     assert os.path.isfile(f"{dir}/wafv5.tgz")
