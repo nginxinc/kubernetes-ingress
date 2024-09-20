@@ -244,28 +244,26 @@ def crd_ingress_controller_with_waf_v5(
     :return:
     """
     dir = f"{TEST_DATA}/ap-waf-v5"
-    try:
-        print(f"Generate tar file for WAFv5 test at {dir}")
-        docker_command = [
-            "docker",
-            "run",
-            "--rm",
-            "-v",
-            "/var/run/docker.sock:/var/run/docker.sock",
-            "--privileged",
-            "-v",
-            f"{dir}:{dir}",
-            f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",
-            f"-p",
-            f"{dir}/wafv5.json",
-            f"-o",
-            f"{dir}/wafv5.tgz",
-        ]
-        result = subprocess.run(docker_command, capture_output=True, text=True)
-        if result.returncode != 0:
-            raise Exception(f"Docker command failed: {result.stderr}")
-    except Exception:
-        pytest.fail("Failed to generate tar file for WAFv5 test, exiting...")
+
+    print(f"Generate tar file for WAFv5 test at {dir}")
+    docker_command = [
+        "docker",
+        "run",
+        "--rm",
+        "-v",
+        "/var/run/docker.sock:/var/run/docker.sock",
+        "--privileged",
+        "-v",
+        f"{dir}:{dir}",
+        f"{NGX_REG}/nap/waf-compiler:{WAF_V5_VERSION}",
+        f"-p",
+        f"{dir}/wafv5.json",
+        f"-o",
+        f"{dir}/wafv5.tgz",
+    ]
+    result = subprocess.run(docker_command, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise Exception(f"Docker command failed: {result.stderr}")
     assert os.path.isfile(f"{dir}/wafv5.tgz")
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
