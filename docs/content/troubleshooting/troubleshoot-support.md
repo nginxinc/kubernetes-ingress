@@ -14,7 +14,7 @@ F5 NGINX Ingress Controller adheres to the support policy detailed in the follow
 
 In order to open a support ticket, F5 would like additional information to better understand the problem.
 
-The [nginx-supportpkg-for-k8s](https://github.com/nginxinc/nginx-supportpkg-for-k8s) plugin is such a tool used to obtain additional information needed by F5 Technical Support when troubleshooting your issue.
+The [nginx-supportpkg-for-k8s](https://github.com/nginxinc/nginx-supportpkg-for-k8s) plugin collects the information needed by F5 Technical Support to assist with troubleshooting your issue.
 
 The plugin leverages [krew](https://krew.sigs.k8s.io), the plugin manager for [kubectl](https://kubernetes.io/docs/reference/kubectl/) command-line tool of kubernetes.
 
