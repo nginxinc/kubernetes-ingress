@@ -1,5 +1,5 @@
 ---
-docs: DOCS-1459
+docs: DOCS-1648
 doctypes:
 - troubleshooting
 draft: false
