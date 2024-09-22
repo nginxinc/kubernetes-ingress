@@ -9,7 +9,8 @@ title: Support
 toc: true
 weight: 100
 ---
-NGINX Ingress Controller adheres to the support policy detailed in the following knowledge base article: [K000140156](https://my.f5.com/manage/s/article/K000140156).
+
+F5 NGINX Ingress Controller adheres to the support policy detailed in the following knowledge base article: [K000140156](https://my.f5.com/manage/s/article/K000140156).
 
 In order to open a support ticket, F5 would like additional information to better understand the problem.
 
