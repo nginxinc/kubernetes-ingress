@@ -19,12 +19,13 @@ The [nginx-supportpkg-for-k8s](https://github.com/nginxinc/nginx-supportpkg-for-
 The plugin leverages [krew](https://krew.sigs.k8s.io), the plugin manager for the Kubernetes [kubectl](https://kubernetes.io/docs/reference/kubectl/) command-line tool.
 
 The plugin may collect some or all of the following global and namespace-specific information:
-* k8s version, nodes information and CRDs
-* pods logs
-* list of pods, events, configmaps, services, deployments, statefulsets, replicasets and leases
+
+* k8s version, nodes information, and CRDs
+* Pods' logs
+* list of Pods, events, ConfigMaps, Services, Deployments, StatefulSets, ReplicaSets, and Leases
 * k8s metrics
-* helm deployments
-* nginx -T output from NGINX related pods
+* helm Deployments
+* `nginx -T` output from NGINX-related pods
 
 This plugin **DOES NOT** collect secrets or coredumps.
 
