@@ -17,10 +17,10 @@ The plugin uses [krew](https://krew.sigs.k8s.io), the plugin manager for the Kub
 
 The plugin may collect some or all of the following global and namespace-specific information:
 
-* k8s version, nodes information, and Custom Resources (kubectl describe output)
+* K8s version, nodes information, and Custom Resources (kubectl describe output)
 * Pods' logs
-* list of Pods, events, ConfigMaps, Services, Deployments, Daemonsets, StatefulSets, ReplicaSets, and Leases
-* k8s metrics
+* List of Pods, events, ConfigMaps, Services, Deployments, Daemonsets, StatefulSets, ReplicaSets, and Leases
+* K8s metrics
 * Helm deployments
 * `nginx -T` output from NGINX-related pods
 
@@ -35,6 +35,6 @@ Visit the [project’s GitHub repository](https://github.com/nginxinc/nginx-supp
 
 - If you have any enhancement requests, please [open a feature request](https://github.com/nginxinc/kubernetes-ingress/issues/new?assignees=&labels=proposal&projects=&template=feature_request.md&title=) in GitHub.
 
-- If you have any ideas or suggestions to discuss, please [open an idea discussion](https://github.com/nginxinc/kubernetes-ingress/discussions/categories/ideas) in Github.
+- If you have any ideas or suggestions to discuss, please [open an idea discussion](https://github.com/nginxinc/kubernetes-ingress/discussions/categories/ideas) in GitHub.
 
-- You can contact us directly, by sending an email to [kubernetes@nginx.com](mailto:kubernetes@nginx.com) or on the [NGINX Community Slack channel of NGINX Ingress Controller](https://nginxcommunity.slack.com/channels/nginx-ingress-controller).
+- You can contact us directly, by sending an email to [kubernetes@nginx.com](mailto:kubernetes@nginx.com).
