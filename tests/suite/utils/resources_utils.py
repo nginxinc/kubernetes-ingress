@@ -14,7 +14,7 @@ from kubernetes.client import AppsV1Api, CoreV1Api, NetworkingV1Api, RbacAuthori
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from more_itertools import first
-from settings import DEPLOYMENTS, PROJECT_ROOT, RECONFIGURATION_DELAY, TEST_DATA
+from settings import DEPLOYMENTS, NGX_REG, PROJECT_ROOT, RECONFIGURATION_DELAY, TEST_DATA, WAF_V5_VERSION
 from suite.utils.ssl_utils import create_sni_session
 
 
@@ -1191,6 +1191,128 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
             f"-enable-telemetry-reporting=false",
         ]
     )
+    if args is not None:
+        dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(args)
+    if cli_arguments["deployment-type"] == "deployment":
+        name = create_deployment(apps_v1_api, namespace, dep)
+    else:
+        name = create_daemon_set(apps_v1_api, namespace, dep)
+    before = time.time()
+    wait_until_all_pods_are_ready(v1, namespace)
+    after = time.time()
+    print(f"All pods came up in {int(after - before)} seconds")
+    print(f"Ingress Controller was created with name '{name}'")
+    return name
+
+
+def create_ingress_controller_wafv5(
+    v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments, namespace, reg_secret, args=None
+) -> str:
+    """
+    Create an Ingress Controller according to the params.
+
+    :param v1: CoreV1Api
+    :param apps_v1_api: AppsV1Api
+    :param cli_arguments: context name as in kubeconfig
+    :param namespace: namespace name
+    :param args: a list of any extra cli arguments to start IC with
+    :return: str
+    """
+    print(f"Create an Ingress Controller as {cli_arguments['ic-type']}")
+    yaml_manifest = f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    dep["spec"]["replicas"] = int(cli_arguments["replicas"])
+    dep["spec"]["template"]["spec"]["containers"][0]["image"] = cli_arguments["image"]
+    dep["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = cli_arguments["image-pull-policy"]
+    template_spec = dep["spec"]["template"]["spec"]
+    if "imagePullSecrets" not in template_spec:
+        template_spec["imagePullSecrets"] = []
+
+    template_spec["imagePullSecrets"].append({"name": f"{reg_secret}"})
+    if "volumes" not in template_spec:
+        template_spec["volumes"] = []
+
+    template_spec["volumes"].extend(
+        [
+            {
+                "name": "app-protect-bd-config",
+                "emptyDir": {},
+            },
+            {
+                "name": "app-protect-config",
+                "emptyDir": {},
+            },
+            {
+                "name": "app-protect-bundles",
+                "emptyDir": {},
+            },
+        ]
+    )
+
+    container = dep["spec"]["template"]["spec"]["containers"][0]
+    if "volumeMounts" not in container:
+        container["volumeMounts"] = []
+
+    container["volumeMounts"].extend(
+        [
+            {
+                "name": "app-protect-bd-config",
+                "mountPath": "/opt/app_protect/bd_config",
+            },
+            {
+                "name": "app-protect-config",
+                "mountPath": "/opt/app_protect/config",
+            },
+            {
+                "name": "app-protect-bundles",
+                "mountPath": "/etc/app_protect/bundles",
+            },
+        ]
+    )
+    dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(
+        [
+            f"-default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret",
+            f"-enable-telemetry-reporting=false",
+        ]
+    )
+
+    waf_cfg_mgr = {
+        "name": "waf-config-mgr",
+        "image": f"{NGX_REG}/nap/waf-config-mgr:{WAF_V5_VERSION}",
+        "imagePullPolicy": "IfNotPresent",
+        "securityContext": {"allowPrivilegeEscalation": False, "capabilities": {"drop": ["all"]}},
+        "volumeMounts": [
+            {
+                "name": "app-protect-bd-config",
+                "mountPath": "/opt/app_protect/bd_config",
+            },
+            {
+                "name": "app-protect-config",
+                "mountPath": "/opt/app_protect/config",
+            },
+            {
+                "name": "app-protect-bundles",
+                "mountPath": "/etc/app_protect/bundles",
+            },
+        ],
+    }
+    waf_enforcer = {
+        "name": "waf-enforcer",
+        "image": f"{NGX_REG}/nap/waf-enforcer:{WAF_V5_VERSION}",
+        "imagePullPolicy": "IfNotPresent",
+        "env": [{"name": "ENFORCER_PORT", "value": "50000"}],
+        "volumeMounts": [
+            {
+                "name": "app-protect-bd-config",
+                "mountPath": "/opt/app_protect/bd_config",
+            }
+        ],
+    }
+
+    dep["spec"]["template"]["spec"]["containers"].append(waf_cfg_mgr)
+    dep["spec"]["template"]["spec"]["containers"].append(waf_enforcer)
+
     if args is not None:
         dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(args)
     if cli_arguments["deployment-type"] == "deployment":
