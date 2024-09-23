@@ -20,7 +20,7 @@ The plugin leverages [krew](https://krew.sigs.k8s.io), the plugin manager for th
 
 The plugin may collect some or all of the following global and namespace-specific information:
 
-* k8s version, nodes information, and CRDs
+* k8s version, nodes information, and Custom Resources (kubectl describe output)
 * Pods' logs
 * list of Pods, events, ConfigMaps, Services, Deployments, Daemonsets, StatefulSets, ReplicaSets, and Leases
 * k8s metrics
