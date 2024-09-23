@@ -271,7 +271,8 @@ jobs:
           k8s-version: ${{ matrix.k8s }}
           label: ${{ matrix.images.label }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
-          test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
+          registry-token: ${{ steps.auth.outputs.access_token }}
+          test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') || 'latest' }}"
 
       - name: Upload Test Results
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0

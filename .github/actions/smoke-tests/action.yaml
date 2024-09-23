@@ -31,6 +31,9 @@ inputs:
   azure-ad-secret:
     description: Azure Active Directory secret for JWKs
     required: false
+  registry-token:
+    description: JWT token for accessing container registry
+    required: false
 
 outputs:
   test-results-name:
@@ -76,6 +79,8 @@ runs:
         docker run --rm \
         --name test-runner-${{ github.run_id }} \
         --network=kind \
+        -v "/var/run/docker.sock:/var/run/docker.sock" \
+        -v ~/.docker:/root/.docker \
         -v ${{ github.workspace }}/tests:/workspace/tests \
         -v ${{ github.workspace }}/deployments:/workspace/deployments \
         -v ${{ github.workspace }}/charts:/workspace/charts \
@@ -83,6 +88,8 @@ runs:
         -v ${{ github.workspace }}/pyproject.toml:/workspace/pyproject.toml \
         -v ${{ steps.k8s.outputs.test_output_path }}:${{ steps.k8s.outputs.test_output_path }} \
         -v ~/.kube/kind/config:/root/.kube/config ${{ inputs.test-image }} \
+        --docker-registry-user=oauth2accesstoken \
+        --docker-registry-token=${{ inputs.registry-token }} \
         --context=kind-${{ github.run_id }} \
         --image=${{ inputs.image-name }}:${{ inputs.tag }} \
         --image-pull-policy=Never \
