@@ -22,7 +22,7 @@ The plugin may collect some or all of the following global and namespace-specifi
 
 * k8s version, nodes information, and CRDs
 * Pods' logs
-* list of Pods, events, ConfigMaps, Services, Deployments, StatefulSets, ReplicaSets, and Leases
+* list of Pods, events, ConfigMaps, Services, Deployments, Daemonsets, StatefulSets, ReplicaSets, and Leases
 * k8s metrics
 * helm Deployments
 * `nginx -T` output from NGINX-related pods
