@@ -1,13 +1,7 @@
 ---
-docs: DOCS-1648
-doctypes:
-- troubleshooting
-draft: false
-tags:
-- docs
-title: Support
-toc: true
+title: Commercial support
 weight: 100
+docs: DOCS-000
 ---
 
 F5 NGINX Ingress Controller adheres to the support policy detailed in the following knowledge base article: [K000140156](https://my.f5.com/manage/s/article/K000140156).
