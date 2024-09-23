@@ -23,7 +23,7 @@ The plugin may collect some or all of the following global and namespace-specifi
 
 This plugin **does not** collect secrets or coredumps.
 
-Please visit the [project’s GitHub repo](https://github.com/nginxinc/nginx-supportpkg-for-k8s) for further details.
+Visit the [project’s GitHub repository](https://github.com/nginxinc/nginx-supportpkg-for-k8s) for further details.
 
 When used, the plugin will generate a tarball of the collected information which can be shared via the support channels.
 
