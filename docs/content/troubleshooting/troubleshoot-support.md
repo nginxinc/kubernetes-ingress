@@ -29,7 +29,7 @@ This plugin **does not** collect secrets or coredumps.
 Visit the [project’s GitHub repository](https://github.com/nginxinc/nginx-supportpkg-for-k8s) for further details.
 
 
-**Support Channels:**
+## Support channels
 
 - If you experience issues with NGINX Ingress Controller, please [open an issue](https://github.com/nginxinc/kubernetes-ingress/issues/new?assignees=&labels=bug%2Cneeds+triage&projects=&template=BUG-REPORT.yml&title=%5BBug%5D%3A+) in GitHub.
 
