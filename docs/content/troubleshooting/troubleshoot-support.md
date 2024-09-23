@@ -18,7 +18,7 @@ The plugin may collect some or all of the following global and namespace-specifi
 * Pods' logs
 * list of Pods, events, ConfigMaps, Services, Deployments, Daemonsets, StatefulSets, ReplicaSets, and Leases
 * k8s metrics
-* helm Deployments
+* Helm deployments
 * `nginx -T` output from NGINX-related pods
 
 This plugin **does not** collect secrets or coredumps.
