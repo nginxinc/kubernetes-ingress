@@ -27,7 +27,7 @@ The plugin may collect some or all of the following global and namespace-specifi
 * helm Deployments
 * `nginx -T` output from NGINX-related pods
 
-This plugin **DOES NOT** collect secrets or coredumps.
+This plugin **does not** collect secrets or coredumps.
 
 Please visit the [project’s GitHub repo](https://github.com/nginxinc/nginx-supportpkg-for-k8s) for further details.
 
