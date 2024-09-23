@@ -916,6 +916,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 		defer lbc.syncLock.Unlock()
 	}
 	if lbc.batchSyncEnabled && task.Kind != endpointslice {
+		glog.V(3).Infof("Task is not endpointslice - enabling batch reload")
 		lbc.enableBatchReload = true
 	}
 	switch task.Kind {
@@ -931,6 +932,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 	case endpointslice:
 		resourcesFound := lbc.syncEndpointSlices(task)
 		if lbc.batchSyncEnabled && resourcesFound {
+			glog.V(3).Infof("Endpointslice %v is referenced - enabling batch reload", task.Key)
 			lbc.enableBatchReload = true
 		}
 	case secret:
@@ -990,7 +992,8 @@ func (lbc *LoadBalancerController) sync(task task) {
 			}
 		}
 
-		glog.V(3).Infof("Batch sync completed")
+		lbc.enableBatchReload = false
+		glog.V(3).Infof("Batch sync completed - disabling batch reload")
 	}
 }
 
