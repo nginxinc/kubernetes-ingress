@@ -12,7 +12,7 @@ weight: 100
 
 F5 NGINX Ingress Controller adheres to the support policy detailed in the following knowledge base article: [K000140156](https://my.f5.com/manage/s/article/K000140156).
 
-In order to open a support ticket, F5 would like additional information to better understand the problem.
+After opening a support ticket, F5 staff will request additional information to better understand the problem.
 
 The [nginx-supportpkg-for-k8s](https://github.com/nginxinc/nginx-supportpkg-for-k8s) plugin collects the information needed by F5 Technical Support to assist with troubleshooting your issue.
 
