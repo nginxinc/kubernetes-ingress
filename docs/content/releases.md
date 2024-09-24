@@ -16,9 +16,27 @@ We recommend against:
 2. Building new custom FIPS images.
 {{< /note >}}
 
+{{< important >}} 
+CRD version removal notice.
+In our next major release, v4.0.0, support for the following apiVersions for these listed CRDs will be dropped:
+1. `k8s.nginx.org/v1alpha` for `GlobalConfiguration`
+2. `k8s.nginx.org/v1alpha` for `Policy`
+3. `k8s.nginx.org/v1alpha` for `TransportServer`
+
+Prior to upgrading, **please ensure** that any of these resources deployed as `apiVersion: k8s.nginx.org/v1alpha1` are upgraded to `apiVersion: k8s.nginx.org/v1`
+If a resource of `kind: GlobalConfiguration`, `kind: Policy` or `kind: TransportServer` are deployed as `apiVersion: k8s.nginx.org/v1alpha1`, these resources will be **deleted** when upgrading from, at least, `v3.4.0` to `v4.0.0`
+
+When `v4.0.0` is released, the release notes will contain the required upgrade steps to go from `v3.X.X` to `v4.X.X`
+{{< /important >}}
+
 ## 3.7.0
 
 30 Sept 2024
+
+Added support for VirtualServer & TransportServer to listen on a specific IP when configuring a listener, allowing NGINX to bind to a specific interface. This is also useful in for scenarios where pods need to connect to multiple networks i.e. multi-homed.
+Allow an End Session Endpoint to be configured for OIDC providers via Policy. This allows a user to be fully logged out from their idp session. This change also adds support for configuring a post-logout redirect URI, allowing a users to be redirected to a custom logout page.
+The `access_log` directive can now be configured to point to a syslog log server. Perviously, access logs defaulted to standard out. This change allows for log parsers aggregators to ingest access logs from NGINX.
+When installing NGINX Ingress Controller via Helm, a uniquely named lease object will be created automatically. This allows for multiple deployments of NGINX Ingress Controller in the same namespace when leader election is enabled, without requiring a unique name to be specified manually for each deployment.
 
 ### <i class="fa-solid fa-rocket"></i> Features
 - [5968](https://github.com/nginxinc/kubernetes-ingress/pull/5968) Add BUILD_OS to Telemetry
