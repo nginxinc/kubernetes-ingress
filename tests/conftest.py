@@ -169,10 +169,10 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "skip_for_loadbalancer" in item.keywords:
                 item.add_marker(skip_for_loadbalancer)
-    if "-nap" not in config.getoption("--image"):
+    if ("-nap" or "-nap-v5") not in config.getoption("--image"):
         appprotect = pytest.mark.skip(reason="Skip AppProtect test in non-AP image")
         for item in items:
-            if "appprotect" in item.keywords:
+            if ("appprotect" or "appprotect_waf_v5") in item.keywords:
                 item.add_marker(appprotect)
     if "-dos" not in config.getoption("--image"):
         dos = pytest.mark.skip(reason="Skip DOS test in non-DOS image")
