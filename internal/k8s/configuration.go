@@ -101,6 +101,16 @@ type IngressConfiguration struct {
 	ChildWarnings map[string][]string
 }
 
+type listenerHostKey struct {
+	ListenerName string
+	Host         string
+}
+
+// used for sorting
+func (lhk listenerHostKey) String() string {
+	return fmt.Sprintf("%s|%s", lhk.ListenerName, lhk.Host)
+}
+
 // NewRegularIngressConfiguration creates an IngressConfiguration from an Ingress resource.
 func NewRegularIngressConfiguration(ing *networking.Ingress) *IngressConfiguration {
 	return &IngressConfiguration{
@@ -333,7 +343,7 @@ type TransportServerMetrics struct {
 // of the objects in the Configuration.
 type Configuration struct {
 	hosts       map[string]Resource
-	listeners   map[string]*TransportServerConfiguration
+	listeners   map[listenerHostKey]*TransportServerConfiguration
 	listenerMap map[string]conf_v1.Listener
 
 	// only valid resources with the matching IngressClass are stored
@@ -389,7 +399,7 @@ func NewConfiguration(
 ) *Configuration {
 	return &Configuration{
 		hosts:                        make(map[string]Resource),
-		listeners:                    make(map[string]*TransportServerConfiguration),
+		listeners:                    make(map[listenerHostKey]*TransportServerConfiguration),
 		ingresses:                    make(map[string]*networking.Ingress),
 		virtualServers:               make(map[string]*conf_v1.VirtualServer),
 		virtualServerRoutes:          make(map[string]*conf_v1.VirtualServerRoute),
@@ -766,15 +776,11 @@ func (c *Configuration) rebuildListeners() ([]ResourceChange, []ConfigurationPro
 	return changes, newOrUpdatedProblems
 }
 
-func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[string]*TransportServerConfiguration, newTSConfigs map[string]*TransportServerConfiguration) {
-	newListeners = make(map[string]*TransportServerConfiguration)
-	newTSConfigs = make(map[string]*TransportServerConfiguration)
+func (c *Configuration) buildListenersAndTSConfigurations() (map[listenerHostKey]*TransportServerConfiguration, map[string]*TransportServerConfiguration) {
+	newListeners := make(map[listenerHostKey]*TransportServerConfiguration)
+	newTSConfigs := make(map[string]*TransportServerConfiguration)
 
 	for key, ts := range c.transportServers {
-		if ts.Spec.Listener.Protocol == conf_v1.TLSPassthroughListenerProtocol {
-			continue
-		}
-
 		tsc := NewTransportServerConfiguration(ts)
 		newTSConfigs[key] = tsc
 
@@ -782,8 +788,8 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 			continue
 		}
 
-		found := false
 		var listener conf_v1.Listener
+		found := false
 		for _, l := range c.globalConfiguration.Spec.Listeners {
 			if ts.Spec.Listener.Name == l.Name && ts.Spec.Listener.Protocol == l.Protocol {
 				listener = l
@@ -800,17 +806,21 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 		tsc.IPv4 = listener.IPv4
 		tsc.IPv6 = listener.IPv6
 
-		holder, exists := newListeners[listener.Name]
+		host := ts.Spec.Host
+		listenerKey := listenerHostKey{ListenerName: listener.Name, Host: host}
+
+		holder, exists := newListeners[listenerKey]
 		if !exists {
-			newListeners[listener.Name] = tsc
+			newListeners[listenerKey] = tsc
 			continue
 		}
 
-		warning := fmt.Sprintf("listener %s is taken by another resource", listener.Name)
+		// another TransportServer exists with the same listener and host
+		warning := fmt.Sprintf("listener %s and host %s are taken by another resource", listener.Name, host)
 
 		if !holder.Wins(tsc) {
 			holder.AddWarning(warning)
-			newListeners[listener.Name] = tsc
+			newListeners[listenerKey] = tsc
 		} else {
 			tsc.AddWarning(warning)
 		}
@@ -973,7 +983,7 @@ func (c *Configuration) findResourcesForResourceReference(namespace string, name
 		}
 	}
 
-	for _, l := range getSortedTransportServerConfigurationKeys(c.listeners) {
+	for _, l := range getSortedListenerHostKeys(c.listeners) {
 		tsConfig := c.listeners[l]
 
 		if checker.IsReferencedByTransportServer(namespace, name, tsConfig.TransportServer) {
@@ -1061,15 +1071,21 @@ func detectChangesInProblems(newProblems map[string]ConfigurationProblem, oldPro
 	return result
 }
 
-func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(tsConfigs map[string]*TransportServerConfiguration, problems map[string]ConfigurationProblem) {
+func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(
+	tsConfigs map[string]*TransportServerConfiguration,
+	problems map[string]ConfigurationProblem,
+) {
 	for _, tsc := range tsConfigs {
-		holder, exists := c.listeners[tsc.TransportServer.Spec.Listener.Name]
+		listenerName := tsc.TransportServer.Spec.Listener.Name
+		host := tsc.TransportServer.Spec.Host
+		key := listenerHostKey{ListenerName: listenerName, Host: host}
+		holder, exists := c.listeners[key]
 		if !exists {
 			p := ConfigurationProblem{
 				Object:  tsc.TransportServer,
 				IsError: false,
 				Reason:  "Rejected",
-				Message: fmt.Sprintf("Listener %s doesn't exist", tsc.TransportServer.Spec.Listener.Name),
+				Message: fmt.Sprintf("Listener %s with host %s doesn't exist", listenerName, host), //TODO: rethink this error as the user doesnt define the listener with host struct
 			}
 			problems[tsc.GetKeyWithKind()] = p
 			continue
@@ -1080,7 +1096,7 @@ func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(tsConfigs m
 				Object:  tsc.TransportServer,
 				IsError: false,
 				Reason:  "Rejected",
-				Message: fmt.Sprintf("Listener %s is taken by another resource", tsc.TransportServer.Spec.Listener.Name),
+				Message: fmt.Sprintf("Listener %s with host %s is taken by another resource", listenerName, host),
 			}
 			problems[tsc.GetKeyWithKind()] = p
 		}
@@ -1301,8 +1317,12 @@ func createResourceChangesForHosts(removedHosts []string, updatedHosts []string,
 	return append(deleteChanges, changes...)
 }
 
-func createResourceChangesForListeners(removedListeners []string, updatedListeners []string, addedListeners []string, oldListeners map[string]*TransportServerConfiguration,
-	newListeners map[string]*TransportServerConfiguration,
+func createResourceChangesForListeners(
+	removedListeners []listenerHostKey,
+	updatedListeners []listenerHostKey,
+	addedListeners []listenerHostKey,
+	oldListeners map[listenerHostKey]*TransportServerConfiguration,
+	newListeners map[listenerHostKey]*TransportServerConfiguration,
 ) []ResourceChange {
 	var changes []ResourceChange
 	var deleteChanges []ResourceChange
@@ -1758,6 +1778,20 @@ func getSortedTransportServerConfigurationKeys(m map[string]*TransportServerConf
 	return keys
 }
 
+func getSortedListenerHostKeys(m map[listenerHostKey]*TransportServerConfiguration) []listenerHostKey {
+	var keys []listenerHostKey
+
+	for k := range m {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].String() < keys[j].String()
+	})
+
+	return keys
+}
+
 func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Resource) (removedHosts []string, updatedHosts []string, addedHosts []string) {
 	for _, h := range getSortedResourceKeys(oldHosts) {
 		_, exists := newHosts[h]
@@ -1806,31 +1840,29 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 	return removedHosts, updatedHosts, addedHosts
 }
 
-func detectChangesInListeners(oldListeners map[string]*TransportServerConfiguration, newListeners map[string]*TransportServerConfiguration) (removedListeners []string,
-	updatedListeners []string, addedListeners []string,
-) {
-	for _, l := range getSortedTransportServerConfigurationKeys(oldListeners) {
-		_, exists := newListeners[l]
-		if !exists {
+func detectChangesInListeners(
+	oldListeners map[listenerHostKey]*TransportServerConfiguration,
+	newListeners map[listenerHostKey]*TransportServerConfiguration,
+) (removedListeners []listenerHostKey, updatedListeners []listenerHostKey, addedListeners []listenerHostKey) {
+	oldKeys := getSortedListenerHostKeys(oldListeners)
+	newKeys := getSortedListenerHostKeys(newListeners)
+
+	oldKeysSet := make(map[listenerHostKey]struct{})
+	for _, l := range oldKeys {
+		oldKeysSet[l] = struct{}{}
+		if _, exists := newListeners[l]; !exists {
 			removedListeners = append(removedListeners, l)
 		}
 	}
 
-	for _, l := range getSortedTransportServerConfigurationKeys(newListeners) {
-		_, exists := oldListeners[l]
-		if !exists {
+	for _, l := range newKeys {
+		if _, exists := oldListeners[l]; !exists {
 			addedListeners = append(addedListeners, l)
-		}
-	}
-
-	for _, l := range getSortedTransportServerConfigurationKeys(newListeners) {
-		oldR, exists := oldListeners[l]
-		if !exists {
-			continue
-		}
-
-		if !oldR.IsEqual(newListeners[l]) {
-			updatedListeners = append(updatedListeners, l)
+		} else {
+			oldR := oldListeners[l]
+			if !oldR.IsEqual(newListeners[l]) {
+				updatedListeners = append(updatedListeners, l)
+			}
 		}
 	}
 

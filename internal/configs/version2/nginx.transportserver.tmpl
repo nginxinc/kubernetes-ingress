@@ -26,6 +26,8 @@ server {
     {{ makeTransportListener $s | printf }}
         {{- end }}
 
+    server_name {{ $s.ServerName }};
+
         {{- if $ssl.Enabled }}
     ssl_certificate {{ makeSecretPath $ssl.Certificate $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};
     ssl_certificate_key {{ makeSecretPath $ssl.CertificateKey $.StaticSSLPath "$secret_dir_path" $.DynamicSSLReloadEnabled }};

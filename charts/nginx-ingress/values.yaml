@@ -127,7 +127,10 @@ controller:
   logLevel: 1
 
   ## A list of custom ports to expose on the NGINX Ingress Controller pod. Follows the conventional Kubernetes yaml syntax for container ports.
-  customPorts: []
+  customPorts:
+    - name: port
+      containerPort: 7000
+      protocol: TCP
 
   image:
     ## The image repository of the Ingress Controller.
@@ -357,17 +360,20 @@ controller:
 
   globalConfiguration:
     ## Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.
-    create: false
+    create: true
 
     ## The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.
-    spec: {} ## Ensure both curly brackets are removed when adding listeners in YAML format.
-    # listeners:
-    # - name: dns-udp
-    #   port: 5353
-    #   protocol: UDP
-    # - name: dns-tcp
-    #   port: 5353
-    #   protocol: TCP
+    spec:  ## Ensure both curly brackets are removed when adding listeners in YAML format.
+     listeners:
+      - name: tcp-listener
+        port: 7000
+        protocol: TCP
+      - name: dns-udp
+        port: 5353
+        protocol: UDP
+      # - name: dns-tcp
+      #   port: 5353
+      #   protocol: TCP
 
   ## Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
   enableSnippets: false
@@ -456,7 +462,12 @@ controller:
       targetPort: 443
 
     ## A list of custom ports to expose through the Ingress Controller service. Follows the conventional Kubernetes yaml syntax for service ports.
-    customPorts: []
+    customPorts:
+      - name: tcp-port
+        port: 7000
+        protocol: TCP
+        targetPort: 7000
+
 
   serviceAccount:
     ## The annotations of the service account of the Ingress Controller pods.

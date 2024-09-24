@@ -101,6 +101,7 @@ func generateTransportServerConfig(p transportServerConfigParams) (*version2.Tra
 
 	tsConfig := &version2.TransportServerConfig{
 		Server: version2.StreamServer{
+			ServerName:               p.transportServerEx.TransportServer.Spec.Host,
 			TLSPassthrough:           p.transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName,
 			UnixSocket:               generateUnixSocket(p.transportServerEx),
 			Port:                     p.listenerPort,
