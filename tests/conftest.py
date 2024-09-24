@@ -172,7 +172,7 @@ def pytest_collection_modifyitems(config, items) -> None:
     if ("-nap" or "-nap-v5") not in config.getoption("--image"):
         appprotect = pytest.mark.skip(reason="Skip AppProtect test in non-AP image")
         for item in items:
-            if "appprotect" in item.keywords:
+            if ("appprotect" or "appprotect_waf_v5") in item.keywords:
                 item.add_marker(appprotect)
     if "-dos" not in config.getoption("--image"):
         dos = pytest.mark.skip(reason="Skip DOS test in non-DOS image")
