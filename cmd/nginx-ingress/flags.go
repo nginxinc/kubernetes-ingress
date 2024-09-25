@@ -220,77 +220,12 @@ func parseFlags() {
 	if *versionFlag {
 		os.Exit(0)
 	}
+}
 
+func initValidation() {
 	mustValidateInitialChecks()
 	mustValidateWatchedNamespaces()
 	mustValidateFlags()
-
-	if *enableTLSPassthrough && !*enableCustomResources {
-		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
-	}
-
-	if *appProtect && !*nginxPlus {
-		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
-	}
-
-	if *appProtectLogLevel != appProtectLogLevelDefault && !*appProtect && !*nginxPlus {
-		glog.Fatal("app-protect-log-level support is for NGINX Plus only and App Protect is enable")
-	}
-
-	if *appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos support is for NGINX Plus only")
-	}
-
-	if *appProtectDosDebug && !*appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos debug support is for NGINX Plus only and App Protect Dos is enable")
-	}
-
-	if *appProtectDosMaxDaemons != 0 && !*appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos max daemons support is for NGINX Plus only and App Protect Dos is enable")
-	}
-
-	if *appProtectDosMaxWorkers != 0 && !*appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos max workers support is for NGINX Plus and App Protect Dos is enable")
-	}
-
-	if *appProtectDosMemory != 0 && !*appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos memory support is for NGINX Plus and App Protect Dos is enable")
-	}
-
-	if *enableInternalRoutes && *spireAgentAddress == "" {
-		glog.Fatal("enable-internal-routes flag requires spire-agent-address")
-	}
-
-	if *enableLatencyMetrics && !*enablePrometheusMetrics {
-		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
-		*enableLatencyMetrics = false
-	}
-
-	if *enableServiceInsight && !*nginxPlus {
-		glog.Warning("enable-service-insight flag support is for NGINX Plus, service insight endpoint will not be exposed")
-		*enableServiceInsight = false
-	}
-
-	if *enableCertManager && !*enableCustomResources {
-		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
-	}
-
-	if *enableExternalDNS && !*enableCustomResources {
-		glog.Fatal("enable-external-dns flag requires -enable-custom-resources")
-	}
-
-	if *ingressLink != "" && *externalService != "" {
-		glog.Fatal("ingresslink and external-service cannot both be set")
-	}
-
-	if *enableDynamicWeightChangesReload && !*nginxPlus {
-		glog.Warning("weight-changes-dynamic-reload flag support is for NGINX Plus, Dynamic Weight Changes will not be enabled")
-		*enableDynamicWeightChangesReload = false
-	}
-
-	if *agent && !*appProtect {
-		glog.Fatal("NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
-	}
 }
 
 func mustValidateInitialChecks() {
@@ -401,6 +336,73 @@ func mustValidateFlags() {
 		if logLevelValidationError != nil {
 			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
 		}
+	}
+
+	if *enableTLSPassthrough && !*enableCustomResources {
+		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
+	}
+
+	if *appProtect && !*nginxPlus {
+		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
+	}
+
+	if *appProtectLogLevel != appProtectLogLevelDefault && !*appProtect && !*nginxPlus {
+		glog.Fatal("app-protect-log-level support is for NGINX Plus only and App Protect is enable")
+	}
+
+	if *appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos support is for NGINX Plus only")
+	}
+
+	if *appProtectDosDebug && !*appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos debug support is for NGINX Plus only and App Protect Dos is enable")
+	}
+
+	if *appProtectDosMaxDaemons != 0 && !*appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos max daemons support is for NGINX Plus only and App Protect Dos is enable")
+	}
+
+	if *appProtectDosMaxWorkers != 0 && !*appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos max workers support is for NGINX Plus and App Protect Dos is enable")
+	}
+
+	if *appProtectDosMemory != 0 && !*appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos memory support is for NGINX Plus and App Protect Dos is enable")
+	}
+
+	if *enableInternalRoutes && *spireAgentAddress == "" {
+		glog.Fatal("enable-internal-routes flag requires spire-agent-address")
+	}
+
+	if *enableLatencyMetrics && !*enablePrometheusMetrics {
+		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
+		*enableLatencyMetrics = false
+	}
+
+	if *enableServiceInsight && !*nginxPlus {
+		glog.Warning("enable-service-insight flag support is for NGINX Plus, service insight endpoint will not be exposed")
+		*enableServiceInsight = false
+	}
+
+	if *enableCertManager && !*enableCustomResources {
+		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
+	}
+
+	if *enableExternalDNS && !*enableCustomResources {
+		glog.Fatal("enable-external-dns flag requires -enable-custom-resources")
+	}
+
+	if *ingressLink != "" && *externalService != "" {
+		glog.Fatal("ingresslink and external-service cannot both be set")
+	}
+
+	if *enableDynamicWeightChangesReload && !*nginxPlus {
+		glog.Warning("weight-changes-dynamic-reload flag support is for NGINX Plus, Dynamic Weight Changes will not be enabled")
+		*enableDynamicWeightChangesReload = false
+	}
+
+	if *agent && !*appProtect {
+		glog.Fatal("NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
 	}
 }
 

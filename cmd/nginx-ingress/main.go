@@ -64,6 +64,7 @@ func main() {
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	parseFlags()
+	initValidation()
 	parsedFlags := os.Args[1:]
 
 	buildOS := os.Getenv("BUILD_OS")
