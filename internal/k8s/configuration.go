@@ -791,8 +791,8 @@ func (c *Configuration) buildListenersAndTSConfigurations() (map[listenerHostKey
 			continue
 		}
 
-		var listener conf_v1.Listener
 		found := false
+		var listener conf_v1.Listener
 		for _, l := range c.globalConfiguration.Spec.Listeners {
 			if ts.Spec.Listener.Name == l.Name && ts.Spec.Listener.Protocol == l.Protocol {
 				listener = l
