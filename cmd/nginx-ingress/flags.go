@@ -217,12 +217,28 @@ var (
 func parseFlags() {
 	flag.Parse()
 
-	if *versionFlag {
+	if *versionFlag { // printed in main
 		os.Exit(0)
 	}
 }
 
-func initValidation() {
+func initValidate() {
+
+	if *enableLatencyMetrics && !*enablePrometheusMetrics {
+		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
+		*enableLatencyMetrics = false
+	}
+
+	if *enableServiceInsight && !*nginxPlus {
+		glog.Warning("enable-service-insight flag support is for NGINX Plus, service insight endpoint will not be exposed")
+		*enableServiceInsight = false
+	}
+
+	if *enableDynamicWeightChangesReload && !*nginxPlus {
+		glog.Warning("weight-changes-dynamic-reload flag support is for NGINX Plus, Dynamic Weight Changes will not be enabled")
+		*enableDynamicWeightChangesReload = false
+	}
+
 	mustValidateInitialChecks()
 	mustValidateWatchedNamespaces()
 	mustValidateFlags()
@@ -374,16 +390,6 @@ func mustValidateFlags() {
 		glog.Fatal("enable-internal-routes flag requires spire-agent-address")
 	}
 
-	if *enableLatencyMetrics && !*enablePrometheusMetrics {
-		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
-		*enableLatencyMetrics = false
-	}
-
-	if *enableServiceInsight && !*nginxPlus {
-		glog.Warning("enable-service-insight flag support is for NGINX Plus, service insight endpoint will not be exposed")
-		*enableServiceInsight = false
-	}
-
 	if *enableCertManager && !*enableCustomResources {
 		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
 	}
@@ -394,11 +400,6 @@ func mustValidateFlags() {
 
 	if *ingressLink != "" && *externalService != "" {
 		glog.Fatal("ingresslink and external-service cannot both be set")
-	}
-
-	if *enableDynamicWeightChangesReload && !*nginxPlus {
-		glog.Warning("weight-changes-dynamic-reload flag support is for NGINX Plus, Dynamic Weight Changes will not be enabled")
-		*enableDynamicWeightChangesReload = false
 	}
 
 	if *agent && !*appProtect {
