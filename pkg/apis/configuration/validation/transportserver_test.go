@@ -282,19 +282,29 @@ func TestValidateTransportServerHost(t *testing.T) {
 	tests := []struct {
 		host                     string
 		isTLSPassthroughListener bool
+		protocol                 string
+		tls                      *conf_v1.TransportServerTLS
 	}{
 		{
 			host:                     "",
 			isTLSPassthroughListener: false,
+			protocol:                 "TCP",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
 		},
 		{
 			host:                     "nginx.org",
 			isTLSPassthroughListener: true,
+			protocol:                 "TCP",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateTransportServerHost(test.host, field.NewPath("host"), test.isTLSPassthroughListener)
+		allErrs := validateTransportServerHost(test.host, field.NewPath("host"), test.isTLSPassthroughListener, test.protocol, test.tls)
 		if len(allErrs) > 0 {
 			t.Errorf("validateTransportServerHost(%q, %v) returned errors %v for valid input", test.host, test.isTLSPassthroughListener, allErrs)
 		}
@@ -460,19 +470,35 @@ func TestValidateTransportServerHost_FailsOnInvalidInput(t *testing.T) {
 	tests := []struct {
 		host                     string
 		isTLSPassthroughListener bool
+		protocol                 string
+		tls                      *conf_v1.TransportServerTLS
 	}{
 		{
 			host:                     "nginx.org",
 			isTLSPassthroughListener: false,
+			protocol:                 "TCP",
+			tls:                      nil, // TLS and TLS.secret are required when not using tls passthrough and using a host
+		},
+		{
+			host:                     "nginx.org",
+			isTLSPassthroughListener: false,
+			protocol:                 "TCP",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "", // TLS and TLS.secret are required when not using tls passthrough and using a host
+			},
 		},
 		{
 			host:                     "",
 			isTLSPassthroughListener: true,
+			protocol:                 "TCP",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateTransportServerHost(test.host, field.NewPath("host"), test.isTLSPassthroughListener)
+		allErrs := validateTransportServerHost(test.host, field.NewPath("host"), test.isTLSPassthroughListener, test.protocol, test.tls)
 		if len(allErrs) == 0 {
 			t.Errorf("validateTransportServerHost(%q, %v) returned no errors for invalid input", test.host, test.isTLSPassthroughListener)
 		}
@@ -1041,17 +1067,29 @@ func TestValidateMatchExpect_FailsOnInvalidInput(t *testing.T) {
 
 func TestValidateTsTLS(t *testing.T) {
 	t.Parallel()
-	validTLSes := []*conf_v1.TransportServerTLS{
-		nil,
+
+	type testCase struct {
+		tls           *conf_v1.TransportServerTLS
+		hostSpecified bool
+	}
+
+	validTestCases := []testCase{
 		{
-			Secret: "my-secret",
+			tls:           nil,
+			hostSpecified: false,
+		},
+		{
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "my-secret",
+			},
+			hostSpecified: true,
 		},
 	}
 
-	for _, tls := range validTLSes {
-		allErrs := validateTLS(tls, false, field.NewPath("tls"))
+	for _, tc := range validTestCases {
+		allErrs := validateTLS(tc.tls, false, field.NewPath("tls"), tc.hostSpecified)
 		if len(allErrs) > 0 {
-			t.Errorf("validateTLS() returned errors %v for valid input %v", allErrs, tls)
+			t.Errorf("validateTLS() returned errors %v for valid input %+v", allErrs, tc)
 		}
 	}
 }
@@ -1061,35 +1099,40 @@ func TestValidateTsTLS_FailsOnInvalidInput(t *testing.T) {
 	invalidTLSes := []struct {
 		tls              *conf_v1.TransportServerTLS
 		isTLSPassthrough bool
+		hostSpecified    bool
 	}{
 		{
 			tls: &conf_v1.TransportServerTLS{
 				Secret: "-",
 			},
 			isTLSPassthrough: false,
+			hostSpecified:    true,
 		},
 		{
 			tls: &conf_v1.TransportServerTLS{
 				Secret: "a/b",
 			},
 			isTLSPassthrough: false,
+			hostSpecified:    true,
 		},
 		{
 			tls: &conf_v1.TransportServerTLS{
 				Secret: "my-secret",
 			},
 			isTLSPassthrough: true,
+			hostSpecified:    true,
 		},
 		{
 			tls: &conf_v1.TransportServerTLS{
 				Secret: "",
 			},
 			isTLSPassthrough: false,
+			hostSpecified:    true,
 		},
 	}
 
 	for _, test := range invalidTLSes {
-		allErrs := validateTLS(test.tls, test.isTLSPassthrough, field.NewPath("tls"))
+		allErrs := validateTLS(test.tls, test.isTLSPassthrough, field.NewPath("tls"), test.hostSpecified)
 		if len(allErrs) == 0 {
 			t.Errorf("validateTLS() returned no errors for invalid input %v", test)
 		}

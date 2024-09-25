@@ -781,6 +781,9 @@ func (c *Configuration) buildListenersAndTSConfigurations() (map[listenerHostKey
 	newTSConfigs := make(map[string]*TransportServerConfiguration)
 
 	for key, ts := range c.transportServers {
+		if ts.Spec.Listener.Protocol == conf_v1.TLSPassthroughListenerProtocol {
+			continue
+		}
 		tsc := NewTransportServerConfiguration(ts)
 		newTSConfigs[key] = tsc
 
@@ -1078,6 +1081,10 @@ func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(
 	for _, tsc := range tsConfigs {
 		listenerName := tsc.TransportServer.Spec.Listener.Name
 		host := tsc.TransportServer.Spec.Host
+		hostDescription := "empty host"
+		if host != "" {
+			hostDescription = host
+		}
 		key := listenerHostKey{ListenerName: listenerName, Host: host}
 		holder, exists := c.listeners[key]
 		if !exists {
@@ -1085,7 +1092,7 @@ func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(
 				Object:  tsc.TransportServer,
 				IsError: false,
 				Reason:  "Rejected",
-				Message: fmt.Sprintf("Listener %s with host %s doesn't exist", listenerName, host), //TODO: rethink this error as the user doesnt define the listener with host struct
+				Message: fmt.Sprintf("Listener %s doesn't exist", listenerName),
 			}
 			problems[tsc.GetKeyWithKind()] = p
 			continue
@@ -1096,7 +1103,7 @@ func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(
 				Object:  tsc.TransportServer,
 				IsError: false,
 				Reason:  "Rejected",
-				Message: fmt.Sprintf("Listener %s with host %s is taken by another resource", listenerName, host),
+				Message: fmt.Sprintf("Listener %s with host %s is taken by another resource", listenerName, hostDescription),
 			}
 			problems[tsc.GetKeyWithKind()] = p
 		}
