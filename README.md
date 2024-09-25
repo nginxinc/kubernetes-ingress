@@ -36,6 +36,7 @@ We value community input and would love to see you at the next community call. A
 | **2024-11-05**           |
 | **2024-11-18**           |
 | **2024-12-02**           |
+| **2024-12-16**           |
 ---
 
 NGINX Ingress Controller works with both NGINX and NGINX Plus and supports the standard Ingress features - content-based
