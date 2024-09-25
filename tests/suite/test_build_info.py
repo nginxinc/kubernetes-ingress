@@ -18,10 +18,14 @@ class TestBuildVersion:
             chart = yaml.safe_load(f)
             ic_ver = chart["appVersion"]
             print(f"NIC version from chart: {ic_ver}")
-
         _info = self.send_build_info(kube_apis, ingress_controller_prerequisites)
-        _version = _info[_info.find("Version=") + len("Version=") : _info.rfind("GitCommit=")]
+        count = 0
+        while "Version=" not in _info and count < 5:
+            _info = self.send_build_info(kube_apis, ingress_controller_prerequisites)
+            count += 1
+        _version = _info[_info.find("Version=") + len("Version=") : _info.rfind("Commit=")]
         logging.info(_version)
+        print(f"Version from pod logs: {_version}")
         assert _version != " "
         assert ic_ver in _version
 
