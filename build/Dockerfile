@@ -198,7 +198,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 	&& cp -av /tmp/fips/etc/ssl/openssl.cnf /etc/ssl/openssl.cnf \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/ \
-	&& apk add --no-cache app-protect-module-plus~=32.5.48 \
+	&& apk add --no-cache app-protect-module-plus~=32.5.144 \
 	&& sed -i -e '/nginx.com/d' /etc/apk/repositories \
 	&& nap-waf.sh \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then \
@@ -430,7 +430,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ "${NGINX_AGENT}" = "true" ]; then microdnf --nodocs install -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	cp /tmp/app-protect-9.repo /etc/yum.repos.d/app-protect-9.repo \
-	&& microdnf --nodocs install -y app-protect-module-plus-32+5.48* \
+	&& microdnf --nodocs install -y app-protect-module-plus-32+5.144* \
 	&& nap-waf.sh \
 	&& rm -f /etc/yum.repos.d/app-protect-9.repo; \
 	fi \
@@ -517,7 +517,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	dnf --nodocs install -y app-protect-module-plus-32+5.48*; \
+	dnf --nodocs install -y app-protect-module-plus-32+5.144*; \
 	fi \
 	&& subscription-manager unregister \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
