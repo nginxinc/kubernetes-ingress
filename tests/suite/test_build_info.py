@@ -1,5 +1,6 @@
 import io
 import logging
+import time
 
 import pytest
 import yaml
@@ -23,6 +24,7 @@ class TestBuildVersion:
         while "Version=" not in _info and count < 5:
             _info = self.send_build_info(kube_apis, ingress_controller_prerequisites)
             count += 1
+            time.sleep(1)
         _version = _info[_info.find("Version=") + len("Version=") : _info.rfind("Commit=")]
         logging.info(_version)
         print(f"Version from pod logs: {_version}")
