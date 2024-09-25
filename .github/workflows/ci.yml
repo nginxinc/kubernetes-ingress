@@ -648,7 +648,7 @@ jobs:
 
   tag-stable:
     name: Tag tested image as stable
-    needs: [checks, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
+    needs: [checks, build-docker, build-docker-plus, build-docker-nap, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
     permissions:
       contents: read # To checkout repository
       id-token: write # To sign into Google Container Registry
@@ -664,7 +664,7 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04
     name: Final CI Results
-    needs: [tag-stable, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
+    needs: [tag-stable, build-docker, build-docker-plus, build-docker-nap, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
     steps:
       - run: |
           tagResult="${{ needs.tag-stable.result }}"
