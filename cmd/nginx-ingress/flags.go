@@ -223,7 +223,6 @@ func parseFlags() {
 }
 
 func initValidate() {
-
 	if *enableLatencyMetrics && !*enablePrometheusMetrics {
 		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
 		*enableLatencyMetrics = false
