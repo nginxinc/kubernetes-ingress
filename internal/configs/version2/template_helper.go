@@ -225,7 +225,7 @@ func makeHeaderQueryValue(apiKey APIKey) string {
 }
 
 func makeServerName(s StreamServer) string {
-	if s.TLSPassthrough || s.ServerName == "" {
+	if s.TLSPassthrough || s.ServerName == "" || s.SSL == nil {
 		return ""
 	}
 	return fmt.Sprintf("server_name \"%s\";", s.ServerName)
