@@ -315,14 +315,14 @@ func mustValidateWatchedNamespaces() {
 // mustValidateFlags checks the values for various flags
 // and calls os.Exit if any of the flags is invalid.
 func mustValidateFlags() {
-	validLogFormats := map[string]bool{"glog": true, "text": true, "json": true}
-	if !validLogFormats[*logFormat] {
+	logFormatValidationError := validateLogFormat(*logFormat)
+	if logFormatValidationError != nil {
 		glog.Fatalf("Invalid log format: %s. Valid options are: glog, text, json", *logFormat)
 		os.Exit(1)
 	}
 
-	validLogLevel := map[string]bool{"info": true, "trace": true, "debug": true, "warning": true, "error": true, "fatal": true}
-	if !validLogLevel[*logLevel] {
+	logLevelValidationError := validateLogLevel(*logLevel)
+	if logLevelValidationError != nil {
 		glog.Fatalf("Invalid log level: %s. Valid options are: trace, debug, info, warning, error, fatal", *logFormat)
 		os.Exit(1)
 	}
@@ -364,8 +364,8 @@ func mustValidateFlags() {
 	}
 
 	if *appProtectLogLevel != appProtectLogLevelDefault && *appProtect && *nginxPlus {
-		logLevelValidationError := validateAppProtectLogLevel(*appProtectLogLevel)
-		if logLevelValidationError != nil {
+		appProtectlogLevelValidationError := validateLogLevel(*appProtectLogLevel)
+		if appProtectlogLevelValidationError != nil {
 			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
 		}
 	}
@@ -460,8 +460,8 @@ func validatePort(port int) error {
 	return nil
 }
 
-// validateAppProtectLogLevel makes sure a given logLevel is one of the allowed values
-func validateAppProtectLogLevel(logLevel string) error {
+// validateLogLevel makes sure a given logLevel is one of the allowed values
+func validateLogLevel(logLevel string) error {
 	switch strings.ToLower(logLevel) {
 	case
 		"fatal",
@@ -472,7 +472,16 @@ func validateAppProtectLogLevel(logLevel string) error {
 		"trace":
 		return nil
 	}
-	return fmt.Errorf("invalid App Protect log level: %v", logLevel)
+	return fmt.Errorf("invalid log level: %v", logLevel)
+}
+
+// validateLogFormat makes sure a given logFormat is one of the allowed values
+func validateLogFormat(logFormat string) error {
+	switch strings.ToLower(logFormat) {
+	case "glog", "json", "text":
+		return nil
+	}
+	return fmt.Errorf("invalid log format: %v", logFormat)
 }
 
 // parseNginxStatusAllowCIDRs converts a comma separated CIDR/IP address string into an array of CIDR/IP addresses.
