@@ -4,6 +4,8 @@ HUGO_IMG?=hugomods/hugo:std-go-git-0.134.3
 
 THEME_MODULE = github.com/nginxinc/nginx-hugo-theme
 
+HUGO_CI=docker run --rm -v ${CURDIR}:/src ${HUGO_IMG} hugo
+
 ifeq ($(shell [ $(HUGO_VERSION) -gt 133 2>/dev/null ] && echo true || echo false), true)
     $(info Hugo is available and has a version greater than 133. Proceeding with build.)
 else
@@ -39,6 +41,9 @@ endif
 
 docs:
 	${HUGO}
+
+docs-ci:
+	${HUGO_CI}
 
 watch:
 	${HUGO} --bind 0.0.0.0 -p 1313 server --disableFastRender
