@@ -486,7 +486,17 @@ func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 	snaps.MatchSnapshot(t, string(got))
 }
 
-func TestExecuteTemplateForTransportServerWithSNI(t *testing.T) {
+func TestExecuteTemplateForNGINXOSSTransportServerWithSNI(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINX(t)
+	got, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithSNI)
+	if err != nil {
+		t.Errorf("Failed to execute template: %v", err)
+	}
+	snaps.MatchSnapshot(t, string(got))
+}
+
+func TestExecuteTemplateForNGINXPlusTransportServerWithSNI(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINXPlus(t)
 	got, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithSNI)
