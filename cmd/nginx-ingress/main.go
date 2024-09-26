@@ -68,13 +68,32 @@ func main() {
 
 	buildOS := os.Getenv("BUILD_OS")
 
-	config, kubeClient := mustCreateConfigAndKubeClient()
-	mustValidateKubernetesVersionInfo(kubeClient)
-	mustValidateIngressClass(kubeClient)
+	config, err := mustGetClientConfig()
+	if err != nil {
+		glog.Fatalf("error creating client configuration: %v", err)
+	}
+
+	dynClient, err := mustCreateDynamicClient(config)
+	if err != nil {
+		glog.Fatal(err)
+	}
+	confClient, err := mustCreateConfigClient(config)
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	kubeClient, err := mustGetKubeClient(config)
+	if err != nil {
+		glog.Fatalf("Failed to create client: %v.", err)
+	}
+	if err := mustConfirmMinimumK8sVersionCriteria(kubeClient); err != nil {
+		glog.Fatal(err)
+	}
+	if err := mustValidateIngressClass(kubeClient); err != nil {
+		glog.Fatal(err)
+	}
 
 	checkNamespaces(kubeClient)
-
-	dynClient, confClient := createCustomClients(config)
 
 	constLabels := map[string]string{"class": *ingressClass}
 
@@ -259,9 +278,8 @@ func main() {
 	}
 }
 
-func mustCreateConfigAndKubeClient() (*rest.Config, *kubernetes.Clientset) {
-	var config *rest.Config
-	var err error
+// This function returns a k8s client object configuration
+func mustGetClientConfig() (config *rest.Config, err error) {
 	if *proxyURL != "" {
 		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 			&clientcmd.ClientConfigLoadingRules{},
@@ -270,53 +288,55 @@ func mustCreateConfigAndKubeClient() (*rest.Config, *kubernetes.Clientset) {
 					Server: *proxyURL,
 				},
 			}).ClientConfig()
-		if err != nil {
-			glog.Fatalf("error creating client configuration: %v", err)
-		}
 	} else {
-		if config, err = rest.InClusterConfig(); err != nil {
-			glog.Fatalf("error creating client configuration: %v", err)
-		}
+		config, err = rest.InClusterConfig()
 	}
 
-	kubeClient, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		glog.Fatalf("Failed to create client: %v.", err)
-	}
-
-	return config, kubeClient
+	return config, err
 }
 
-// mustValidateKubernetesVersionInfo calls internally os.Exit if
-// the k8s version can not be retrieved or the version is not supported.
-func mustValidateKubernetesVersionInfo(kubeClient kubernetes.Interface) {
+// This returns a k8s client with the provided client config for interacting with the k8s API
+func mustGetKubeClient(config *rest.Config) (kubeClient *kubernetes.Clientset, err error) {
+	kubeClient, err = kubernetes.NewForConfig(config)
+	return kubeClient, err
+}
+
+func mustConfirmMinimumK8sVersionCriteria(kubeClient kubernetes.Interface) (err error) {
 	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
 	if err != nil {
-		glog.Fatalf("error retrieving k8s version: %v", err)
+		return fmt.Errorf("error retrieving k8s version: %w", err)
 	}
 	glog.Infof("Kubernetes version: %v", k8sVersion)
 
 	minK8sVersion, err := util_version.ParseGeneric("1.22.0")
 	if err != nil {
-		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
+		return fmt.Errorf("unexpected error parsing minimum supported version: %w", err)
 	}
 
 	if !k8sVersion.AtLeast(minK8sVersion) {
-		glog.Fatalf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support.", minK8sVersion)
+		return fmt.Errorf("versions of kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support", minK8sVersion)
 	}
+	return err
 }
 
-// mustValidateIngressClass calls internally os.Exit
-// and terminates the program if the ingress class is not valid.
-func mustValidateIngressClass(kubeClient kubernetes.Interface) {
+// An Ingress resource can target a specific Ingress controller instance.
+// This is useful when running multiple ingress controllers in the same cluster.
+// Targeting an Ingress controller means only a specific controller should handle/implement the ingress resource.
+// This can be done using either the IngressClassName field or the ingress.class annotation
+// This function confirms that the Ingress resource is meant to be handled by NGINX Ingress Controller.
+// Otherwise an error is returned to the caller
+// This is defined in the const k8s.IngressControllerName
+func mustValidateIngressClass(kubeClient kubernetes.Interface) (err error) {
 	ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
 	if err != nil {
-		glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
+		return fmt.Errorf("error when getting IngressClass %v: %w", *ingressClass, err)
 	}
 
 	if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
-		glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v; expected %v", ingressClassRes.Name, ingressClassRes.Spec.Controller, k8s.IngressControllerName)
+		return fmt.Errorf("ingressClass with name %v has an invalid Spec.Controller %v; expected %v", ingressClassRes.Name, ingressClassRes.Spec.Controller, k8s.IngressControllerName)
 	}
+
+	return err
 }
 
 func checkNamespaces(kubeClient kubernetes.Interface) {
@@ -349,29 +369,31 @@ func checkNamespaceExists(kubeClient kubernetes.Interface, namespaces []string) 
 	}
 }
 
-func createCustomClients(config *rest.Config) (dynamic.Interface, k8s_nginx.Interface) {
-	var dynClient dynamic.Interface
-	var err error
-	if *appProtectDos || *appProtect || *ingressLink != "" {
-		dynClient, err = dynamic.NewForConfig(config)
-		if err != nil {
-			glog.Fatalf("Failed to create dynamic client: %v.", err)
-		}
-	}
-	var confClient k8s_nginx.Interface
+func mustCreateConfigClient(config *rest.Config) (configClient k8s_nginx.Interface, err error) {
 	if *enableCustomResources {
-		confClient, err = k8s_nginx.NewForConfig(config)
+		configClient, err = k8s_nginx.NewForConfig(config)
 		if err != nil {
-			glog.Fatalf("Failed to create a conf client: %v", err)
+			return configClient, fmt.Errorf("failed to create a conf client: %w", err)
 		}
 
 		// required for emitting Events for VirtualServer
 		err = conf_scheme.AddToScheme(scheme.Scheme)
 		if err != nil {
-			glog.Fatalf("Failed to add configuration types to the scheme: %v", err)
+			return configClient, fmt.Errorf("failed to add configuration types to the scheme: %w", err)
 		}
 	}
-	return dynClient, confClient
+	return configClient, err
+}
+
+// Creates a new dynamic client or returns an error
+func mustCreateDynamicClient(config *rest.Config) (dynClient dynamic.Interface, err error) {
+	if *appProtectDos || *appProtect || *ingressLink != "" {
+		dynClient, err = dynamic.NewForConfig(config)
+		if err != nil {
+			return dynClient, fmt.Errorf("failed to create dynamic client: %w", err)
+		}
+	}
+	return dynClient, err
 }
 
 func createPlusClient(nginxPlus bool, useFakeNginxManager bool, nginxManager nginx.Manager) *client.NginxClient {
