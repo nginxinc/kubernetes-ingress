@@ -124,7 +124,7 @@ controller:
   shareProcessNamespace: false
 
   ## The log level of the Ingress Controller.
-  logLevel: 1
+  logLevel: info
 
   ## A list of custom ports to expose on the NGINX Ingress Controller pod. Follows the conventional Kubernetes yaml syntax for container ports.
   customPorts: []
@@ -551,6 +551,9 @@ controller:
   ## May require increasing map_hash_bucket_size, map_hash_max_size,
   ## variable_hash_bucket_size, and variable_hash_max_size in the ConfigMap based on the number of two-way splits.
   enableWeightChangesDynamicReload: false
+
+  logFormat: glog
+
 
 rbac:
   ## Configures RBAC.

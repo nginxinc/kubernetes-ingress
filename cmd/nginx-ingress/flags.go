@@ -208,6 +208,11 @@ var (
 
 	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
 
+	logFormat = flag.String("log-format", "glog", "Set log format to either glog, text, or json.")
+
+	logLevel = flag.String("log-level", "info",
+		`Sets log level for Ingress Controller. Allowed values: fatal, error, warning, info, debug, trace.`)
+
 	enableDynamicWeightChangesReload = flag.Bool(dynamicWeightChangesParam, false, "Enable changing weights of split clients without reloading NGINX. Requires -nginx-plus")
 
 	startupCheckFn func() error
@@ -310,6 +315,18 @@ func mustValidateWatchedNamespaces() {
 // mustValidateFlags checks the values for various flags
 // and calls os.Exit if any of the flags is invalid.
 func mustValidateFlags() {
+	validLogFormats := map[string]bool{"glog": true, "text": true, "json": true}
+	if !validLogFormats[*logFormat] {
+		glog.Fatalf("Invalid log format: %s. Valid options are: glog, text, json", *logFormat)
+		os.Exit(1)
+	}
+
+	validLogLevel := map[string]bool{"info": true, "trace": true, "debug": true, "warning": true, "error": true, "fatal": true}
+	if !validLogLevel[*logLevel] {
+		glog.Fatalf("Invalid log level: %s. Valid options are: trace, debug, info, warning, error, fatal", *logFormat)
+		os.Exit(1)
+	}
+
 	healthStatusURIValidationError := validateLocation(*healthStatusURI)
 	if healthStatusURIValidationError != nil {
 		glog.Fatalf("Invalid value for health-status-uri: %v", healthStatusURIValidationError)
