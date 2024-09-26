@@ -4,7 +4,7 @@ doctypes:
 - ''
 title: Troubleshooting Policy resources
 toc: true
-weight: 200
+weight: 300
 ---
 
 This page describes how to troubleshoot NGINX Ingress Controller Policy Resources.
