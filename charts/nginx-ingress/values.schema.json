@@ -208,10 +208,10 @@
                     },
                     "tag": {
                       "type": "string",
-                      "default": "5.2.0",
+                      "default": "5.3.0",
                       "title": "The tag of the  App Protect WAF v5 Enforcer image",
                       "examples": [
-                        "5.2.0"
+                        "5.3.0"
                       ]
                     },
                     "digest": {
@@ -248,7 +248,7 @@
                   "examples": [
                     {
                       "repository": "private-registry.nginx.com/nap/waf-enforcer",
-                      "tag": "5.2.0",
+                      "tag": "5.3.0",
                       "pullPolicy": "IfNotPresent"
                     }
                   ]
@@ -282,10 +282,10 @@
                     },
                     "tag": {
                       "type": "string",
-                      "default": "5.2.0",
+                      "default": "5.3.0",
                       "title": "The tag of the  App Protect WAF v5 Config Manager image",
                       "examples": [
-                        "5.2.0"
+                        "5.3.0"
                       ]
                     },
                     "digest": {
@@ -322,7 +322,7 @@
                   "examples": [
                     {
                       "repository": "private-registry.nginx.com/nap/waf-config-mgr",
-                      "tag": "5.2.0",
+                      "tag": "5.3.0",
                       "pullPolicy": "IfNotPresent"
                     }
                   ]
