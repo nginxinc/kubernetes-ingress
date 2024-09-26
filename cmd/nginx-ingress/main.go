@@ -77,9 +77,7 @@ func main() {
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
 	parseFlags()
 	ctx := initLogger(*logFormat, logLevels[*logLevel], os.Stdout)
-	l := nic_logger.LoggerFromContext(ctx)
-	l.Debug(fmt.Sprintf("LOGFORMAT = %s", *logFormat))
-	l.Log(ctx, nic_glog.LevelTrace, fmt.Sprintf("LOGLEVEL = %s", *logLevel))
+	_ = nic_logger.LoggerFromContext(ctx)
 
 	initValidate()
 	parsedFlags := os.Args[1:]
