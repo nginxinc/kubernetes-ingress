@@ -555,7 +555,6 @@ controller:
   ## Sets the log format of Ingress Controller. Options include: glog, json, text
   logFormat: glog
 
-
 rbac:
   ## Configures RBAC.
   create: true
