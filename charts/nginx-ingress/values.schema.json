@@ -501,6 +501,19 @@
             "info"
           ]
         },
+        "logFormat": {
+          "type": "string",
+          "default": "glog",
+          "title": "The logFormat of the Ingress Controller",
+          "enum": [
+            "glog",
+            "json",
+            "text"
+          ],
+          "examples": [
+            "json"
+          ]
+        },
         "customPorts": {
           "type": "array",
           "default": [],
