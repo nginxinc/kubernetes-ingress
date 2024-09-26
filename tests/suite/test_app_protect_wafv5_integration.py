@@ -18,6 +18,7 @@ def waf_setup(kube_apis, test_namespace) -> None:
     wait_before_test()
 
 
+@pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect_waf_v5
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_waf_v5, virtual_server_setup",
@@ -86,6 +87,7 @@ class TestAppProtectWAFv5IntegrationVS:
         assert "The requested URL was rejected. Please consult with your administrator." in response.text
 
 
+@pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect_waf_v5
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_waf_v5, v_s_route_setup",

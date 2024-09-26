@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Run F5 Contributor License Agreement (CLA) assistant
         if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have hereby read the F5 CLA and agree to its terms') || github.event_name == 'pull_request_target'
-        uses: contributor-assistant/github-action@fdca7a016082d9130c3cd91a236ddf956ec35f1d # v2.5.2
+        uses: contributor-assistant/github-action@b1522fa982419e79591a92e1267de463a281cdb7 # v2.6.0
         with:
           # Any pull request targeting the following branch will trigger a CLA check.
           branch: "main"
