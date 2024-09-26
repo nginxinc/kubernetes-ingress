@@ -228,7 +228,7 @@ func makeServerName(s StreamServer) string {
 	if s.TLSPassthrough || s.ServerName == "" {
 		return ""
 	}
-	return fmt.Sprintf("server_name %s", s.ServerName)
+	return fmt.Sprintf("server_name \"%s\";", s.ServerName)
 }
 
 var helperFunctions = template.FuncMap{
