@@ -262,6 +262,7 @@ func main() {
 			s := http.NewServeMux()
 			s.HandleFunc("/nginx-ready", ready(lbc))
 			l.Log(ctx, levels.LevelFatal, fmt.Sprint(http.ListenAndServe(port, s))) // nolint:gosec
+			os.Exit(0)
 		}()
 	}
 
@@ -289,16 +290,19 @@ func mustCreateConfigAndKubeClient(ctx context.Context) (*rest.Config, *kubernet
 			}).ClientConfig()
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("error creating client configuration: %v", err))
+			os.Exit(1)
 		}
 	} else {
 		if config, err = rest.InClusterConfig(); err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("error creating client configuration: %v", err))
+			os.Exit(1)
 		}
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Failed to create client: %v.", err))
+		os.Exit(1)
 	}
 
 	return config, kubeClient
@@ -311,16 +315,19 @@ func mustValidateKubernetesVersionInfo(ctx context.Context, kubeClient kubernete
 	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
 	if err != nil {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("error retrieving k8s version: %v", err))
+		os.Exit(1)
 	}
 	l.Info(fmt.Sprintf("Kubernetes version: %v", k8sVersion))
 
 	minK8sVersion, err := util_version.ParseGeneric("1.22.0")
 	if err != nil {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("unexpected error parsing minimum supported version: %v", err))
+		os.Exit(1)
 	}
 
 	if !k8sVersion.AtLeast(minK8sVersion) {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support.", minK8sVersion))
+		os.Exit(1)
 	}
 }
 
@@ -331,10 +338,12 @@ func mustValidateIngressClass(ctx context.Context, kubeClient kubernetes.Interfa
 	ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
 	if err != nil {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error when getting IngressClass %v: %v", *ingressClass, err))
+		os.Exit(1)
 	}
 
 	if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("IngressClass with name %v has an invalid Spec.Controller %v; expected %v", ingressClassRes.Name, ingressClassRes.Spec.Controller, k8s.IngressControllerName))
+		os.Exit(1)
 	}
 }
 
@@ -378,6 +387,7 @@ func createCustomClients(ctx context.Context, config *rest.Config) (dynamic.Inte
 		dynClient, err = dynamic.NewForConfig(config)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Failed to create dynamic client: %v.", err))
+			os.Exit(1)
 		}
 	}
 	var confClient k8s_nginx.Interface
@@ -385,12 +395,14 @@ func createCustomClients(ctx context.Context, config *rest.Config) (dynamic.Inte
 		confClient, err = k8s_nginx.NewForConfig(config)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Failed to create a conf client: %v", err))
+			os.Exit(1)
 		}
 
 		// required for emitting Events for VirtualServer
 		err = conf_scheme.AddToScheme(scheme.Scheme)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Failed to add configuration types to the scheme: %v", err))
+			os.Exit(1)
 		}
 	}
 	return dynClient, confClient
@@ -406,6 +418,7 @@ func createPlusClient(ctx context.Context, nginxPlus bool, useFakeNginxManager b
 		plusClient, err = client.NewNginxClient("http://nginx-plus-api/api", client.WithHTTPClient(httpClient))
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Failed to create NginxClient for Plus: %v", err))
+			os.Exit(1)
 		}
 		nginxManager.SetPlusClients(plusClient, httpClient)
 	}
@@ -441,11 +454,13 @@ func createTemplateExecutors(ctx context.Context) (*version1.TemplateExecutor, *
 	templateExecutor, err := version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
 	if err != nil {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error creating TemplateExecutor: %v", err))
+		os.Exit(1)
 	}
 
 	templateExecutorV2, err := version2.NewTemplateExecutor(nginxVirtualServerTemplatePath, nginxTransportServerTemplatePath)
 	if err != nil {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error creating TemplateExecutorV2: %v", err))
+		os.Exit(1)
 	}
 
 	return templateExecutor, templateExecutorV2
@@ -470,8 +485,10 @@ func getNginxVersionInfo(ctx context.Context, nginxManager nginx.Manager) nginx.
 
 	if *nginxPlus && !nginxInfo.IsPlus {
 		l.Log(ctx, levels.LevelFatal, "NGINX Plus flag enabled (-nginx-plus) without NGINX Plus binary")
+		os.Exit(1)
 	} else if !*nginxPlus && nginxInfo.IsPlus {
 		l.Log(ctx, levels.LevelFatal, "NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
+		os.Exit(1)
 	}
 	return nginxInfo
 }
@@ -481,6 +498,7 @@ func getAppProtectVersionInfo(ctx context.Context) string {
 	v, err := os.ReadFile(appProtectVersionPath)
 	if err != nil {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Cannot detect the AppProtect version, %s", err.Error()))
+		os.Exit(1)
 	}
 	version := strings.TrimSpace(string(v))
 	l.Info(fmt.Sprintf("Using AppProtect Version %s", version))
@@ -547,6 +565,7 @@ func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clie
 		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error trying to get the default server TLS secret %v: %v", *defaultServerSecret, err))
+			os.Exit(1)
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
@@ -559,6 +578,7 @@ func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clie
 				sslRejectHandshake = true
 			} else {
 				l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error checking the default server TLS cert and key in %s: %v", configs.DefaultServerSecretPath, err))
+				os.Exit(1)
 			}
 		}
 	}
@@ -571,6 +591,7 @@ func processWildcardSecret(ctx context.Context, kubeClient *kubernetes.Clientset
 		secret, err := getAndValidateSecret(kubeClient, *wildcardTLSSecret)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error trying to get the wildcard TLS secret %v: %v", *wildcardTLSSecret, err))
+			os.Exit(1)
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
@@ -611,6 +632,7 @@ func mustProcessNginxConfig(ctx context.Context, staticCfgParams *configs.Static
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
 	if err != nil {
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error generating NGINX main config: %v", err))
+		os.Exit(1)
 	}
 	nginxManager.CreateMainConfig(content)
 
@@ -622,6 +644,7 @@ func mustProcessNginxConfig(ctx context.Context, staticCfgParams *configs.Static
 		err := nginxManager.CreateOpenTracingTracerConfig(cfgParams.MainOpenTracingTracerConfig)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error creating OpenTracing tracer config file: %v", err))
+			os.Exit(1)
 		}
 	}
 }
@@ -663,13 +686,16 @@ func handleTermination(ctx context.Context, lbc *k8s.LoadBalancerController, ngi
 	case err := <-cpcfg.nginxDone:
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("nginx command exited unexpectedly with status: %v", err))
+			os.Exit(1)
 		} else {
 			l.Info("nginx command exited successfully")
 		}
 	case err := <-cpcfg.aPPluginDone:
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("AppProtectPlugin command exited unexpectedly with status: %v", err))
+		os.Exit(1)
 	case err := <-cpcfg.aPDosDone:
 		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("AppProtectDosAgent command exited unexpectedly with status: %v", err))
+		os.Exit(1)
 	case <-signalChan:
 		l.Info("Received SIGTERM, shutting down")
 		lbc.Stop()
@@ -760,6 +786,7 @@ func createPlusAndLatencyCollectors(
 		prometheusSecret, err = getAndValidateSecret(kubeClient, *prometheusTLSSecretName)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error trying to get the prometheus TLS secret %v: %v", *prometheusTLSSecretName, err))
+			os.Exit(1)
 		}
 	}
 
@@ -812,6 +839,7 @@ func createHealthProbeEndpoint(ctx context.Context, kubeClient *kubernetes.Clien
 		serviceInsightSecret, err = getAndValidateSecret(kubeClient, *serviceInsightTLSSecretName)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error trying to get the service insight TLS secret %v: %v", *serviceInsightTLSSecretName, err))
+			os.Exit(1)
 		}
 	}
 	go healthcheck.RunHealthCheck(*serviceInsightListenPort, plusClient, cnf, serviceInsightSecret)
@@ -825,10 +853,12 @@ func mustProcessGlobalConfiguration(ctx context.Context) {
 		_, _, err := k8s.ParseNamespaceName(*globalConfiguration)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error parsing the global-configuration argument: %v", err))
+			os.Exit(1)
 		}
 
 		if !*enableCustomResources {
 			l.Log(ctx, levels.LevelFatal, "global-configuration flag requires -enable-custom-resources")
+			os.Exit(1)
 		}
 	}
 }
@@ -839,16 +869,19 @@ func processConfigMaps(ctx context.Context, kubeClient *kubernetes.Clientset, cf
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error parsing the nginx-configmaps argument: %v", err))
+			os.Exit(1)
 		}
 		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 		if err != nil {
 			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error when getting %v: %v", *nginxConfigMaps, err))
+			os.Exit(1)
 		}
 		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough)
 		if cfgParams.MainServerSSLDHParamFileContent != nil {
 			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
 			if err != nil {
 				l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Configmap %s/%s: Could not update dhparams: %v", ns, name, err))
+				os.Exit(1)
 			} else {
 				cfgParams.MainServerSSLDHParam = fileName
 			}
@@ -857,12 +890,14 @@ func processConfigMaps(ctx context.Context, kubeClient *kubernetes.Clientset, cf
 			err = templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
 			if err != nil {
 				l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error updating NGINX main template: %v", err))
+				os.Exit(1)
 			}
 		}
 		if cfgParams.IngressTemplate != nil {
 			err = templateExecutor.UpdateIngressTemplate(cfgParams.IngressTemplate)
 			if err != nil {
 				l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error updating ingress template: %v", err))
+				os.Exit(1)
 			}
 		}
 	}
