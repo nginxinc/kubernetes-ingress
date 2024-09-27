@@ -123,8 +123,11 @@ controller:
   ## Share process namespace between containers in the Ingress Controller pod.
   shareProcessNamespace: false
 
-  ## The log level of the Ingress Controller.
-  logLevel: 1
+  ## The log level of the Ingress Controller. Options include: trace, debug, info, warning, error, fatal
+  logLevel: info
+
+  ## Sets the log format of Ingress Controller. Options include: glog, json, text
+  logFormat: glog
 
   ## A list of custom ports to expose on the NGINX Ingress Controller pod. Follows the conventional Kubernetes yaml syntax for container ports.
   customPorts: []

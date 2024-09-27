@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -41,12 +43,23 @@ import (
 
 	kitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+
+	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
 )
 
 // Injected during build
 var (
 	version           string
 	telemetryEndpoint string
+	logLevels         = map[string]slog.Level{
+		"trace":   nic_glog.LevelTrace,
+		"debug":   nic_glog.LevelDebug,
+		"info":    nic_glog.LevelInfo,
+		"warning": nic_glog.LevelWarning,
+		"error":   nic_glog.LevelError,
+		"fatal":   nic_glog.LevelFatal,
+	}
 )
 
 const (
@@ -63,6 +76,9 @@ func main() {
 	commitHash, commitTime, dirtyBuild := getBuildInfo()
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
 	parseFlags()
+	ctx := initLogger(*logFormat, logLevels[*logLevel], os.Stdout)
+	_ = nic_logger.LoggerFromContext(ctx)
+
 	initValidate()
 	parsedFlags := os.Args[1:]
 
@@ -876,4 +892,26 @@ func updateSelfWithVersionInfo(kubeClient *kubernetes.Clientset, version, appPro
 	if !podUpdated {
 		glog.Errorf("Failed to update pod labels after %d attempts", maxRetries)
 	}
+}
+
+func initLogger(logFormat string, level slog.Level, out io.Writer) context.Context {
+	programLevel := new(slog.LevelVar) // Info by default
+	var h slog.Handler
+	switch {
+	case logFormat == "glog":
+		h = nic_glog.New(out, &nic_glog.Options{Level: programLevel})
+	case logFormat == "json":
+		h = slog.NewJSONHandler(out, &slog.HandlerOptions{Level: programLevel})
+	case logFormat == "text":
+		h = slog.NewTextHandler(out, &slog.HandlerOptions{Level: programLevel})
+	default:
+		h = nic_glog.New(out, &nic_glog.Options{Level: programLevel})
+	}
+	l := slog.New(h)
+	slog.SetDefault(l)
+	c := context.Background()
+
+	programLevel.Set(level)
+
+	return nic_logger.ContextWithLogger(c, l)
 }

@@ -486,17 +486,32 @@
           ]
         },
         "logLevel": {
-          "type": "integer",
-          "default": 1,
+          "type": "string",
+          "default": "info",
           "title": "The logLevel of the Ingress Controller",
           "enum": [
-            0,
-            1,
-            2,
-            3
+            "trace",
+            "debug",
+            "info",
+            "warning",
+            "error",
+            "fatal"
           ],
           "examples": [
-            1
+            "info"
+          ]
+        },
+        "logFormat": {
+          "type": "string",
+          "default": "glog",
+          "title": "The logFormat of the Ingress Controller",
+          "enum": [
+            "glog",
+            "json",
+            "text"
+          ],
+          "examples": [
+            "json"
           ]
         },
         "customPorts": {
@@ -1674,7 +1689,7 @@
           "hostNetwork": false,
           "nginxDebug": false,
           "shareProcessNamespace": false,
-          "logLevel": 1,
+          "logLevel": "info",
           "customPorts": [],
           "image": {
             "repository": "nginx/nginx-ingress",
@@ -2214,7 +2229,7 @@
         },
         "hostNetwork": false,
         "nginxDebug": false,
-        "logLevel": 1,
+        "logLevel": "info",
         "customPorts": [],
         "image": {
           "repository": "nginx/nginx-ingress",

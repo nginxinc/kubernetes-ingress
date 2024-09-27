@@ -19,6 +19,8 @@ const (
 	dynamicWeightChangesParam     = "weight-changes-dynamic-reload"
 	appProtectLogLevelDefault     = "fatal"
 	appProtectEnforcerAddrDefault = "127.0.0.1:50000"
+	logLevelDefault               = "info"
+	logFormatDefault              = "glog"
 )
 
 var (
@@ -208,6 +210,11 @@ var (
 
 	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
 
+	logFormat = flag.String("log-format", logFormatDefault, "Set log format to either glog, text, or json.")
+
+	logLevel = flag.String("log-level", logLevelDefault,
+		`Sets log level for Ingress Controller. Allowed values: fatal, error, warning, info, debug, trace.`)
+
 	enableDynamicWeightChangesReload = flag.Bool(dynamicWeightChangesParam, false, "Enable changing weights of split clients without reloading NGINX. Requires -nginx-plus")
 
 	startupCheckFn func() error
@@ -223,6 +230,16 @@ func parseFlags() {
 }
 
 func initValidate() {
+	logFormatValidationError := validateLogFormat(*logFormat)
+	if logFormatValidationError != nil {
+		glog.Warningf("Invalid log format: %s. Valid options are: glog, text, json. Falling back to default: %s", *logFormat, logFormatDefault)
+	}
+
+	logLevelValidationError := validateLogLevel(*logLevel)
+	if logLevelValidationError != nil {
+		glog.Warningf("Invalid log level: %s. Valid options are: trace, debug, info, warning, error, fatal. Falling back to default: %s", *logLevel, logLevelDefault)
+	}
+
 	if *enableLatencyMetrics && !*enablePrometheusMetrics {
 		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
 		*enableLatencyMetrics = false
@@ -347,8 +364,8 @@ func mustValidateFlags() {
 	}
 
 	if *appProtectLogLevel != appProtectLogLevelDefault && *appProtect && *nginxPlus {
-		logLevelValidationError := validateAppProtectLogLevel(*appProtectLogLevel)
-		if logLevelValidationError != nil {
+		appProtectlogLevelValidationError := validateLogLevel(*appProtectLogLevel)
+		if appProtectlogLevelValidationError != nil {
 			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
 		}
 	}
@@ -443,8 +460,8 @@ func validatePort(port int) error {
 	return nil
 }
 
-// validateAppProtectLogLevel makes sure a given logLevel is one of the allowed values
-func validateAppProtectLogLevel(logLevel string) error {
+// validateLogLevel makes sure a given logLevel is one of the allowed values
+func validateLogLevel(logLevel string) error {
 	switch strings.ToLower(logLevel) {
 	case
 		"fatal",
@@ -455,7 +472,16 @@ func validateAppProtectLogLevel(logLevel string) error {
 		"trace":
 		return nil
 	}
-	return fmt.Errorf("invalid App Protect log level: %v", logLevel)
+	return fmt.Errorf("invalid log level: %v", logLevel)
+}
+
+// validateLogFormat makes sure a given logFormat is one of the allowed values
+func validateLogFormat(logFormat string) error {
+	switch strings.ToLower(logFormat) {
+	case "glog", "json", "text":
+		return nil
+	}
+	return fmt.Errorf("invalid log format: %v", logFormat)
 }
 
 // parseNginxStatusAllowCIDRs converts a comma separated CIDR/IP address string into an array of CIDR/IP addresses.

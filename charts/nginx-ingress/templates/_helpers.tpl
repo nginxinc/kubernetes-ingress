@@ -244,7 +244,8 @@ Build the args for the service binary.
 - -health-status={{ .Values.controller.healthStatus }}
 - -health-status-uri={{ .Values.controller.healthStatusURI }}
 - -nginx-debug={{ .Values.controller.nginxDebug }}
-- -v={{ .Values.controller.logLevel }}
+- -log-level={{ .Values.controller.logLevel }}
+- -log-format={{ .Values.controller.logFormat }}
 - -nginx-status={{ .Values.controller.nginxStatus.enable }}
 {{- if .Values.controller.nginxStatus.enable }}
 - -nginx-status-port={{ .Values.controller.nginxStatus.port }}
