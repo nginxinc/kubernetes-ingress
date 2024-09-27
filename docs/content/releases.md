@@ -17,11 +17,11 @@ We recommend against:
 {{< /note >}}
 
 {{< note >}}
-For users who buid images of NGINX Ingress Controller.
+For users who build images of NGINX Ingress Controller.
 On October 29th, NGINX Plus R33 will be released.
-This release of NGINX Plus bring a **breaking** change.
-As a result, version `3.7.0` and earlier of NGINX Ingress Controller will not be compatabile with NGINX Plus R33 and later.
-In our next major release, `v4.0.0`, NGINX Ingress Controller will bring compatability with NGINX R33.
+This release of NGINX Plus will bring a **breaking** change.
+As a result, version `3.7.0` and earlier of NGINX Ingress Controller will not be compatible with NGINX Plus R33 and later.
+In our next major release, `v4.0.0`, NGINX Ingress Controller will bring compatibility with NGINX R33.
 {{< /note >}}
 
 {{< note >}}
