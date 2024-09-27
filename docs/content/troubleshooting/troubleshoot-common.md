@@ -85,7 +85,7 @@ There are two places to configure more verbose logging for NGINX Ingress Control
 
 When using `manifest` for deployment, use the command line argument `-nginx-debug` in your deployment or daemonset.
 
-You can add the `-v` parameter to increase the verbosity of the NGINX Ingress Controller process.
+You can add the `-log-level` parameter to increase the verbosity of the NGINX Ingress Controller process.
 
 Here is a small snippet of setting these command line arguments in the `args` section of a deployment:
 
@@ -94,7 +94,7 @@ args:
   - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
   - -enable-cert-manager
   - -nginx-debug
-  - -v=3
+  - -log-level=debug
 ```
 
 **ConfigMap settings**  
@@ -116,7 +116,7 @@ If you are using `helm`, you can adjust these two settings:
 
 ```none
 controller.nginxDebug = true or false
-controller.loglevel = 1 to 3 value
+controller.loglevel = fatal, error, warn, info, debug or trace
 ```
 
 For example, if using a `values.yaml` file:
@@ -126,7 +126,7 @@ For example, if using a `values.yaml` file:
   nginxDebug: true
 
   ## The log level of the Ingress Controller.
-  logLevel: 3
+  logLevel: debug
 ```
 
 This is a more complete example `values.yaml` file:
@@ -135,7 +135,7 @@ This is a more complete example `values.yaml` file:
 controller:
   kind: Deployment
   nginxDebug: true
-  logLevel: 3
+  logLevel: debug
   annotations:
     nginx: ingress-prod
   pod:

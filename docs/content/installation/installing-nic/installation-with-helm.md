@@ -309,7 +309,8 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 | **controller.hostNetwork** | Enables the Ingress Controller pods to use the host's network namespace. | false |
 | **controller.dnsPolicy** | DNS policy for the Ingress Controller pods. | ClusterFirst |
 | **controller.nginxDebug** | Enables debugging for NGINX. Uses the `nginx-debug` binary. Requires `error-log-level: debug` in the ConfigMap via `controller.config.entries`. | false |
-| **controller.logLevel** | The log level of the Ingress Controller. | 1 |
+| **controller.logLevel** | The log level of the Ingress Controller. | info |
+| **controller.logFormat** | The log format of the Ingress Controller. | glog |
 | **controller.image.digest** | The image digest of the Ingress Controller. | None |
 | **controller.image.repository** | The image repository of the Ingress Controller. | nginx/nginx-ingress |
 | **controller.image.tag** | The tag of the Ingress Controller image. | {{< nic-version >}} |

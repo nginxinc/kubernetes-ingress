@@ -324,6 +324,26 @@ Path to the TransportServer NGINX configuration template for a TransportServer r
 
 Log level for V logs.
 
+<a name="cmdoption-log-level"></a>
+
+---
+
+### -log-level `<string>`
+
+Log level for Ingress Controller logs. Allowed values: fatal, error, warn, info, debug, trace.
+
+- Default is `info`.
+
+<a name="cmdoption-log-format"></a>
+
+---
+
+### -log-format `<string>`
+
+Log format for Ingress Controller logs. Allowed values: glog, json, text.
+
+- Default is `glog`.
+
 <a name="cmdoption-version"></a>
 
 ---
