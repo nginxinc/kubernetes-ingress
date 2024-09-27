@@ -7,7 +7,7 @@ tags:
 - docs
 title: Troubleshooting common issues
 toc: true
-weight: 100
+weight: 200
 ---
 
 This page describes how to troubleshoot common issues with NGINX Ingress Controller. Instruction for specific resources is available in the [Troubleshooting]({{< relref "troubleshooting/" >}}) section.
