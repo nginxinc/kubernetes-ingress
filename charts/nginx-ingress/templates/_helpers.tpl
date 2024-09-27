@@ -212,7 +212,6 @@ Build the args for the service binary.
 - -nginx-plus={{ .Values.controller.nginxplus }}
 - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
 - -enable-app-protect={{ .Values.controller.appprotect.enable }}
-- -log-format={{ .Values.controller.logFormat }}
 {{- if and .Values.controller.appprotect.enable .Values.controller.appprotect.logLevel }}
 - -app-protect-log-level={{ .Values.controller.appprotect.logLevel }}
 {{ end }}
@@ -246,6 +245,7 @@ Build the args for the service binary.
 - -health-status-uri={{ .Values.controller.healthStatusURI }}
 - -nginx-debug={{ .Values.controller.nginxDebug }}
 - -log-level={{ .Values.controller.logLevel }}
+- -log-format={{ .Values.controller.logFormat }}
 - -nginx-status={{ .Values.controller.nginxStatus.enable }}
 {{- if .Values.controller.nginxStatus.enable }}
 - -nginx-status-port={{ .Values.controller.nginxStatus.port }}
