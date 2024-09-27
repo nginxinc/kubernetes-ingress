@@ -16,17 +16,17 @@ func TestLogFormats(t *testing.T) {
 		wantre string
 	}{
 		{
-			name:   "glog level format message",
+			name:   "glog format message",
 			format: "glog",
 			wantre: `^I\d{8}\s\d+:\d+:\d+.\d{6}\s+\d+\s\w+\.go:\d+\]\s.*\s$`,
 		},
 		{
-			name:   "json level format message",
+			name:   "json format message",
 			format: "json",
 			wantre: `^{"time":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+.*","level":"INFO","msg":".*}`,
 		},
 		{
-			name:   "text level format message",
+			name:   "text format message",
 			format: "text",
 			wantre: `^time=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+.*level=\w+\smsg=\w+`,
 		},
