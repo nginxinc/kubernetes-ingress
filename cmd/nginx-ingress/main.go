@@ -898,6 +898,8 @@ func initLogger(logFormat string, level slog.Level, out io.Writer) context.Conte
 	programLevel := new(slog.LevelVar) // Info by default
 	var h slog.Handler
 	switch {
+	case logFormat == "glog":
+		h = nic_glog.New(out, &nic_glog.Options{Level: programLevel})
 	case logFormat == "json":
 		h = slog.NewJSONHandler(out, &slog.HandlerOptions{Level: programLevel})
 	case logFormat == "text":

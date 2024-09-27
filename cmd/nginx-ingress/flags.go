@@ -19,6 +19,8 @@ const (
 	dynamicWeightChangesParam     = "weight-changes-dynamic-reload"
 	appProtectLogLevelDefault     = "fatal"
 	appProtectEnforcerAddrDefault = "127.0.0.1:50000"
+	logLevelDefault               = "info"
+	logFormatDefault              = "glog"
 )
 
 var (
@@ -208,9 +210,9 @@ var (
 
 	enableTelemetryReporting = flag.Bool("enable-telemetry-reporting", true, "Enable gathering and reporting of product related telemetry.")
 
-	logFormat = flag.String("log-format", "glog", "Set log format to either glog, text, or json.")
+	logFormat = flag.String("log-format", logFormatDefault, "Set log format to either glog, text, or json.")
 
-	logLevel = flag.String("log-level", "info",
+	logLevel = flag.String("log-level", logLevelDefault,
 		`Sets log level for Ingress Controller. Allowed values: fatal, error, warning, info, debug, trace.`)
 
 	enableDynamicWeightChangesReload = flag.Bool(dynamicWeightChangesParam, false, "Enable changing weights of split clients without reloading NGINX. Requires -nginx-plus")
@@ -228,6 +230,16 @@ func parseFlags() {
 }
 
 func initValidate() {
+	logFormatValidationError := validateLogFormat(*logFormat)
+	if logFormatValidationError != nil {
+		glog.Warningf("Invalid log format: %s. Valid options are: glog, text, json. Falling back to default: %s", *logFormat, logFormatDefault)
+	}
+
+	logLevelValidationError := validateLogLevel(*logLevel)
+	if logLevelValidationError != nil {
+		glog.Warningf("Invalid log level: %s. Valid options are: trace, debug, info, warning, error, fatal. Falling back to default: %s", *logLevel, logLevelDefault)
+	}
+
 	if *enableLatencyMetrics && !*enablePrometheusMetrics {
 		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
 		*enableLatencyMetrics = false
@@ -315,18 +327,6 @@ func mustValidateWatchedNamespaces() {
 // mustValidateFlags checks the values for various flags
 // and calls os.Exit if any of the flags is invalid.
 func mustValidateFlags() {
-	logFormatValidationError := validateLogFormat(*logFormat)
-	if logFormatValidationError != nil {
-		glog.Fatalf("Invalid log format: %s. Valid options are: glog, text, json", *logFormat)
-		os.Exit(1)
-	}
-
-	logLevelValidationError := validateLogLevel(*logLevel)
-	if logLevelValidationError != nil {
-		glog.Fatalf("Invalid log level: %s. Valid options are: trace, debug, info, warning, error, fatal", *logFormat)
-		os.Exit(1)
-	}
-
 	healthStatusURIValidationError := validateLocation(*healthStatusURI)
 	if healthStatusURIValidationError != nil {
 		glog.Fatalf("Invalid value for health-status-uri: %v", healthStatusURIValidationError)
