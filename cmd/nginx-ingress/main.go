@@ -719,22 +719,22 @@ func createManagerAndControllerCollectors(ctx context.Context, constLabels map[s
 
 		err = mc.Register(registry)
 		if err != nil {
-			l.Log(ctx, levels.LevelError, fmt.Sprintf("Error registering Manager Prometheus metrics: %v", err))
+			l.Error(fmt.Sprintf("Error registering Manager Prometheus metrics: %v", err))
 		}
 
 		err = cc.Register(registry)
 		if err != nil {
-			l.Log(ctx, levels.LevelError, fmt.Sprintf("Error registering Controller Prometheus metrics: %v", err))
+			l.Error(fmt.Sprintf("Error registering Controller Prometheus metrics: %v", err))
 		}
 
 		err = processCollector.Register(registry)
 		if err != nil {
-			l.Log(ctx, levels.LevelError, fmt.Sprintf("Error registering NginxProcess Prometheus metrics: %v", err))
+			l.Error(fmt.Sprintf("Error registering NginxProcess Prometheus metrics: %v", err))
 		}
 
 		err = workQueueCollector.Register(registry)
 		if err != nil {
-			l.Log(ctx, levels.LevelError, fmt.Sprintf("Error registering WorkQueue Prometheus metrics: %v", err))
+			l.Error(fmt.Sprintf("Error registering WorkQueue Prometheus metrics: %v", err))
 		}
 	}
 	return mc, cc, registry
@@ -790,7 +790,7 @@ func createPlusAndLatencyCollectors(
 		if *enableLatencyMetrics {
 			lc = collectors.NewLatencyMetricsCollector(constLabels, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
 			if err := lc.Register(registry); err != nil {
-				l.Log(ctx, levels.LevelError, fmt.Sprintf("Error registering Latency Prometheus metrics: %v", err))
+				l.Error(fmt.Sprintf("Error registering Latency Prometheus metrics: %v", err))
 			}
 			syslogListener = metrics.NewLatencyMetricsListener("/var/lib/nginx/nginx-syslog.sock", lc)
 			go syslogListener.Run()
@@ -879,7 +879,7 @@ func updateSelfWithVersionInfo(ctx context.Context, kubeClient *kubernetes.Clien
 		}
 		pod, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), os.Getenv("POD_NAME"), meta_v1.GetOptions{})
 		if err != nil {
-			l.Log(ctx, levels.LevelError, fmt.Sprintf("Error getting pod on attempt %d of %d: %v", i+1, maxRetries, err))
+			l.Error(fmt.Sprintf("Error getting pod on attempt %d of %d: %v", i+1, maxRetries, err))
 			continue
 		}
 
@@ -902,7 +902,7 @@ func updateSelfWithVersionInfo(ctx context.Context, kubeClient *kubernetes.Clien
 
 		_, err = kubeClient.CoreV1().Pods(newPod.ObjectMeta.Namespace).Update(context.TODO(), newPod, meta_v1.UpdateOptions{})
 		if err != nil {
-			l.Log(ctx, levels.LevelError, fmt.Sprintf("Error updating pod with labels on attempt %d of %d: %v", i+1, maxRetries, err))
+			l.Error(fmt.Sprintf("Error updating pod with labels on attempt %d of %d: %v", i+1, maxRetries, err))
 			continue
 		}
 
@@ -911,7 +911,7 @@ func updateSelfWithVersionInfo(ctx context.Context, kubeClient *kubernetes.Clien
 	}
 
 	if !podUpdated {
-		l.Log(ctx, levels.LevelError, fmt.Sprintf("Failed to update pod labels after %d attempts", maxRetries))
+		l.Error(fmt.Sprintf("Failed to update pod labels after %d attempts", maxRetries))
 	}
 }
 
