@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net"
@@ -8,10 +9,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/golang/glog"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/validation"
+
+	nlog "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 )
 
 const (
@@ -229,86 +232,95 @@ func parseFlags() {
 	}
 }
 
-func initValidate() {
+func initValidate(ctx context.Context) {
+	l := nlog.LoggerFromContext(ctx)
 	logFormatValidationError := validateLogFormat(*logFormat)
 	if logFormatValidationError != nil {
-		glog.Warningf("Invalid log format: %s. Valid options are: glog, text, json. Falling back to default: %s", *logFormat, logFormatDefault)
+		l.Warn(fmt.Sprintf("Invalid log format: %s. Valid options are: glog, text, json. Falling back to default: %s", *logFormat, logFormatDefault))
 	}
 
 	logLevelValidationError := validateLogLevel(*logLevel)
 	if logLevelValidationError != nil {
-		glog.Warningf("Invalid log level: %s. Valid options are: trace, debug, info, warning, error, fatal. Falling back to default: %s", *logLevel, logLevelDefault)
+		l.Warn(fmt.Sprintf("Invalid log level: %s. Valid options are: trace, debug, info, warning, error, fatal. Falling back to default: %s", *logLevel, logLevelDefault))
 	}
 
 	if *enableLatencyMetrics && !*enablePrometheusMetrics {
-		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
+		l.Warn("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
 		*enableLatencyMetrics = false
 	}
 
 	if *enableServiceInsight && !*nginxPlus {
-		glog.Warning("enable-service-insight flag support is for NGINX Plus, service insight endpoint will not be exposed")
+		l.Warn("enable-service-insight flag support is for NGINX Plus, service insight endpoint will not be exposed")
 		*enableServiceInsight = false
 	}
 
 	if *enableDynamicWeightChangesReload && !*nginxPlus {
-		glog.Warning("weight-changes-dynamic-reload flag support is for NGINX Plus, Dynamic Weight Changes will not be enabled")
+		l.Warn("weight-changes-dynamic-reload flag support is for NGINX Plus, Dynamic Weight Changes will not be enabled")
 		*enableDynamicWeightChangesReload = false
 	}
 
-	mustValidateInitialChecks()
-	mustValidateWatchedNamespaces()
-	mustValidateFlags()
+	mustValidateInitialChecks(ctx)
+	mustValidateWatchedNamespaces(ctx)
+	mustValidateFlags(ctx)
 }
 
-func mustValidateInitialChecks() {
+func mustValidateInitialChecks(ctx context.Context) {
+	l := nlog.LoggerFromContext(ctx)
 	err := flag.Lookup("logtostderr").Value.Set("true")
 	if err != nil {
-		glog.Fatalf("Error setting logtostderr to true: %v", err)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error setting logtostderr to true: %v", err))
+		os.Exit(1)
 	}
 
 	err = flag.Lookup("include_year").Value.Set("true")
 	if err != nil {
-		glog.Fatalf("Error setting include_year flag: %v", err)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Error setting include_year flag: %v", err))
+		os.Exit(1)
 	}
 
 	if startupCheckFn != nil {
 		err := startupCheckFn()
 		if err != nil {
-			glog.Fatalf("Failed startup check: %v", err)
+			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Failed startup check: %v", err))
+			os.Exit(1)
 		}
-		glog.Info("AWS startup check passed")
+		l.Info("AWS startup check passed")
 	}
 
-	glog.Infof("Starting with flags: %+q", os.Args[1:])
+	l.Info(fmt.Sprintf("Starting with flags: %+q", os.Args[1:]))
 
 	unparsed := flag.Args()
 	if len(unparsed) > 0 {
-		glog.Warningf("Ignoring unhandled arguments: %+q", unparsed)
+		l.Warn(fmt.Sprintf("Ignoring unhandled arguments: %+q", unparsed))
 	}
 }
 
 // mustValidateWatchedNamespaces calls internally os.Exit if it can't validate namespaces.
-func mustValidateWatchedNamespaces() {
+func mustValidateWatchedNamespaces(ctx context.Context) {
+	l := nlog.LoggerFromContext(ctx)
 	if *watchNamespace != "" && *watchNamespaceLabel != "" {
-		glog.Fatal("watch-namespace and -watch-namespace-label are mutually exclusive")
+		l.Log(ctx, levels.LevelFatal, "watch-namespace and -watch-namespace-label are mutually exclusive")
+		os.Exit(1)
 	}
 
 	watchNamespaces = strings.Split(*watchNamespace, ",")
 
 	if *watchNamespace != "" {
-		glog.Infof("Namespaces watched: %v", watchNamespaces)
+		l.Info(fmt.Sprintf("Namespaces watched: %v", watchNamespaces))
 		namespacesNameValidationError := validateNamespaceNames(watchNamespaces)
 		if namespacesNameValidationError != nil {
-			glog.Fatalf("Invalid values for namespaces: %v", namespacesNameValidationError)
+			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid values for namespaces: %v", namespacesNameValidationError))
+			os.Exit(1)
 		}
 	}
 
 	if len(*watchSecretNamespace) > 0 {
 		watchSecretNamespaces = strings.Split(*watchSecretNamespace, ",")
-		glog.Infof("Namespaces watched for secrets: %v", watchSecretNamespaces)
+		l.Debug(fmt.Sprintf("Namespaces watched for secrets: %v", watchSecretNamespaces))
 		namespacesNameValidationError := validateNamespaceNames(watchSecretNamespaces)
 		if namespacesNameValidationError != nil {
-			glog.Fatalf("Invalid values for secret namespaces: %v", namespacesNameValidationError)
+			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid values for secret namespaces: %v", namespacesNameValidationError))
+			os.Exit(1)
 		}
 	} else {
 		// empty => default to watched namespaces
@@ -319,107 +331,131 @@ func mustValidateWatchedNamespaces() {
 		var err error
 		_, err = labels.Parse(*watchNamespaceLabel)
 		if err != nil {
-			glog.Fatalf("Unable to parse label %v for watch namespace label: %v", *watchNamespaceLabel, err)
+			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Unable to parse label %v for watch namespace label: %v", *watchNamespaceLabel, err))
+			os.Exit(1)
 		}
 	}
 }
 
 // mustValidateFlags checks the values for various flags
 // and calls os.Exit if any of the flags is invalid.
-func mustValidateFlags() {
+// nolint:gocyclo
+func mustValidateFlags(ctx context.Context) {
+	l := nlog.LoggerFromContext(ctx)
 	healthStatusURIValidationError := validateLocation(*healthStatusURI)
 	if healthStatusURIValidationError != nil {
-		glog.Fatalf("Invalid value for health-status-uri: %v", healthStatusURIValidationError)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid value for health-status-uri: %v", healthStatusURIValidationError))
+		os.Exit(1)
 	}
 
 	statusLockNameValidationError := validateResourceName(*leaderElectionLockName)
 	if statusLockNameValidationError != nil {
-		glog.Fatalf("Invalid value for leader-election-lock-name: %v", statusLockNameValidationError)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid value for leader-election-lock-name: %v", statusLockNameValidationError))
+		os.Exit(1)
 	}
 
 	statusPortValidationError := validatePort(*nginxStatusPort)
 	if statusPortValidationError != nil {
-		glog.Fatalf("Invalid value for nginx-status-port: %v", statusPortValidationError)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid value for nginx-status-port: %v", statusPortValidationError))
+		os.Exit(1)
 	}
 
 	metricsPortValidationError := validatePort(*prometheusMetricsListenPort)
 	if metricsPortValidationError != nil {
-		glog.Fatalf("Invalid value for prometheus-metrics-listen-port: %v", metricsPortValidationError)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid value for prometheus-metrics-listen-port: %v", metricsPortValidationError))
+		os.Exit(1)
 	}
 
 	readyStatusPortValidationError := validatePort(*readyStatusPort)
 	if readyStatusPortValidationError != nil {
-		glog.Fatalf("Invalid value for ready-status-port: %v", readyStatusPortValidationError)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid value for ready-status-port: %v", readyStatusPortValidationError))
+		os.Exit(1)
 	}
 
 	healthProbePortValidationError := validatePort(*serviceInsightListenPort)
 	if healthProbePortValidationError != nil {
-		glog.Fatalf("Invalid value for service-insight-listen-port: %v", metricsPortValidationError)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid value for service-insight-listen-port: %v", metricsPortValidationError))
+		os.Exit(1)
 	}
 
 	var err error
 	allowedCIDRs, err = parseNginxStatusAllowCIDRs(*nginxStatusAllowCIDRs)
 	if err != nil {
-		glog.Fatalf(`Invalid value for nginx-status-allow-cidrs: %v`, err)
+		l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid value for nginx-status-allow-cidrs: %v", err))
+		os.Exit(1)
 	}
 
 	if *appProtectLogLevel != appProtectLogLevelDefault && *appProtect && *nginxPlus {
 		appProtectlogLevelValidationError := validateLogLevel(*appProtectLogLevel)
 		if appProtectlogLevelValidationError != nil {
-			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
+			l.Log(ctx, levels.LevelFatal, fmt.Sprintf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel))
+			os.Exit(1)
 		}
 	}
 
 	if *enableTLSPassthrough && !*enableCustomResources {
-		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
+		l.Log(ctx, levels.LevelFatal, "enable-tls-passthrough flag requires -enable-custom-resources")
+		os.Exit(1)
 	}
 
 	if *appProtect && !*nginxPlus {
-		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
+		l.Log(ctx, levels.LevelFatal, "NGINX App Protect support is for NGINX Plus only")
+		os.Exit(1)
 	}
 
 	if *appProtectLogLevel != appProtectLogLevelDefault && !*appProtect && !*nginxPlus {
-		glog.Fatal("app-protect-log-level support is for NGINX Plus only and App Protect is enable")
+		l.Log(ctx, levels.LevelFatal, "app-protect-log-level support is for NGINX Plus only and App Protect is enable")
+		os.Exit(1)
 	}
 
 	if *appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos support is for NGINX Plus only")
+		l.Log(ctx, levels.LevelFatal, "NGINX App Protect Dos support is for NGINX Plus only")
+		os.Exit(1)
 	}
 
 	if *appProtectDosDebug && !*appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos debug support is for NGINX Plus only and App Protect Dos is enable")
+		l.Log(ctx, levels.LevelFatal, "NGINX App Protect Dos debug support is for NGINX Plus only and App Protect Dos is enable")
+		os.Exit(1)
 	}
 
 	if *appProtectDosMaxDaemons != 0 && !*appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos max daemons support is for NGINX Plus only and App Protect Dos is enable")
+		l.Log(ctx, levels.LevelFatal, "NGINX App Protect Dos max daemons support is for NGINX Plus only and App Protect Dos is enable")
+		os.Exit(1)
 	}
 
 	if *appProtectDosMaxWorkers != 0 && !*appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos max workers support is for NGINX Plus and App Protect Dos is enable")
+		l.Log(ctx, levels.LevelFatal, "NGINX App Protect Dos max workers support is for NGINX Plus and App Protect Dos is enable")
+		os.Exit(1)
 	}
 
 	if *appProtectDosMemory != 0 && !*appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect Dos memory support is for NGINX Plus and App Protect Dos is enable")
+		l.Log(ctx, levels.LevelFatal, "NGINX App Protect Dos memory support is for NGINX Plus and App Protect Dos is enable")
+		os.Exit(1)
 	}
 
 	if *enableInternalRoutes && *spireAgentAddress == "" {
-		glog.Fatal("enable-internal-routes flag requires spire-agent-address")
+		l.Log(ctx, levels.LevelFatal, "enable-internal-routes flag requires spire-agent-address")
+		os.Exit(1)
 	}
 
 	if *enableCertManager && !*enableCustomResources {
-		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
+		l.Log(ctx, levels.LevelFatal, "enable-cert-manager flag requires -enable-custom-resources")
+		os.Exit(1)
 	}
 
 	if *enableExternalDNS && !*enableCustomResources {
-		glog.Fatal("enable-external-dns flag requires -enable-custom-resources")
+		l.Log(ctx, levels.LevelFatal, "enable-external-dns flag requires -enable-custom-resources")
+		os.Exit(1)
 	}
 
 	if *ingressLink != "" && *externalService != "" {
-		glog.Fatal("ingresslink and external-service cannot both be set")
+		l.Log(ctx, levels.LevelFatal, "ingresslink and external-service cannot both be set")
+		os.Exit(1)
 	}
 
 	if *agent && !*appProtect {
-		glog.Fatal("NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
+		l.Log(ctx, levels.LevelFatal, "NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
+		os.Exit(1)
 	}
 }
 

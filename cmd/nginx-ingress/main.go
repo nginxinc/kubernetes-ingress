@@ -46,6 +46,7 @@ import (
 
 	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 )
 
 // Injected during build
@@ -53,12 +54,12 @@ var (
 	version           string
 	telemetryEndpoint string
 	logLevels         = map[string]slog.Level{
-		"trace":   nic_glog.LevelTrace,
-		"debug":   nic_glog.LevelDebug,
-		"info":    nic_glog.LevelInfo,
-		"warning": nic_glog.LevelWarning,
-		"error":   nic_glog.LevelError,
-		"fatal":   nic_glog.LevelFatal,
+		"trace":   levels.LevelTrace,
+		"debug":   levels.LevelDebug,
+		"info":    levels.LevelInfo,
+		"warning": levels.LevelWarning,
+		"error":   levels.LevelError,
+		"fatal":   levels.LevelFatal,
 	}
 )
 
@@ -79,7 +80,7 @@ func main() {
 	ctx := initLogger(*logFormat, logLevels[*logLevel], os.Stdout)
 	_ = nic_logger.LoggerFromContext(ctx)
 
-	initValidate()
+	initValidate(ctx)
 	parsedFlags := os.Args[1:]
 
 	buildOS := os.Getenv("BUILD_OS")
