@@ -403,7 +403,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_MARKETPLACE }}
 
       - name: Publish to AWS Marketplace
-        uses: nginxinc/aws-marketplace-publish@382145428964759792dda8c5e856142cfb833d4e # v1.0.5
+        uses: nginxinc/aws-marketplace-publish@47db7444063941b7e5b509cd8cd0be6f25ecb35b # v1.0.6
         continue-on-error: true
         with:
           version: ${{ inputs.nic_version }}
