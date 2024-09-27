@@ -1,28 +1,29 @@
 HUGO?=hugo
-HUGO_IMG?=hugomods/hugo:0.134.1
+HUGO_VERSION?=$(shell hugo version 2>/dev/null | awk '{print $$2}' | cut -d '.' -f 2)
+HUGO_IMG?=hugomods/hugo:std-go-git-0.134.3
 
 THEME_MODULE = github.com/nginxinc/nginx-hugo-theme
-THEME_VERSION ?= $(shell curl -s https://api.github.com/repos/nginxinc/nginx-hugo-theme/releases/latest | jq -r ".tag_name")
-
-ifeq (, $(shell ${HUGO} version 2> /dev/null))
-ifeq (, $(shell docker version 2> /dev/null))
-    $(error Docker and Hugo are not installed. Hugo (<0.91) or Docker are required to build the local preview.)
-else
-    HUGO=docker run --rm -it -v ${CURDIR}:/src -p 1313:1313 ${HUGO_IMG} hugo --bind 0.0.0.0 -p 1313
-endif
-endif
 
 HUGO_CI=docker run --rm -v ${CURDIR}:/src ${HUGO_IMG} hugo
+
+ifeq ($(shell [ $(HUGO_VERSION) -gt 133 2>/dev/null ] && echo true || echo false), true)
+    $(info Hugo is available and has a version greater than 133. Proceeding with build.)
+else
+    $(warning Hugo is not available or using a version less than 134. Attempting to use docker. HUGO_VERSION=$(HUGO_VERSION))
+    HUGO=docker run --rm -it -v ${CURDIR}:/src -p 1313:1313 ${HUGO_IMG} /src/hugo-entrypoint.sh
+    ifeq (, $(shell docker version 2> /dev/null))
+        $(error Hugo (>0.134) or Docker are required to build the local previews.)
+    endif
+endif
 
 MARKDOWNLINT?=markdownlint
 MARKDOWNLINT_IMG?=ghcr.io/igorshubovych/markdownlint-cli:latest
 
 ifeq (, $(shell ${MARKDOWNLINT} version 2> /dev/null))
 ifeq (, $(shell docker version 2> /dev/null))
-    $(error Docker and markdownlint are not installed. markdownlint or Docker are required to lint.)
-endif
 else
     MARKDOWNLINT=docker run --rm -i -v ${CURDIR}:/src --workdir /src ${MARKDOWNLINT_IMG}
+endif
 endif
 
 MARKDOWNLINKCHECK?=markdown-link-check
@@ -30,11 +31,11 @@ MARKDOWNLINKCHECK_IMG?=ghcr.io/tcort/markdown-link-check:stable
 
 ifeq (, $(shell ${MARKDOWNLINKCHECK} --version 2> /dev/null))
 ifeq (, $(shell docker version 2> /dev/null))
-    $(error Docker and markdown-link-check are not installed. markdown-link-check or Docker are required to check links.)
-endif
 else
-    MARKDOWNLINKCHECK=docker run --rm -it -v ${CURDIR}:/site --workdir /site ${MARKDOWNLINKCHECK_IMG}
+    MARKDOWNLINKCHECK=docker run --rm -it -v ${CURDIR}:/docs --workdir /docs ${MARKDOWNLINKCHECK_IMG}
 endif
+endif
+
 
 .PHONY: docs docs-draft docs-local clean hugo-get hugo-tidy lint-markdown link-check
 
@@ -51,11 +52,10 @@ drafts:
 	${HUGO} --bind 0.0.0.0 -p 1313 server -D --disableFastRender
 
 clean:
-	hugo mod clean
 	[ -d "public" ] && rm -rf "public"
 
 hugo-get:
-	hugo mod get $(THEME_MODULE)@$(THEME_VERSION)
+	hugo mod get -u github.com/nginxinc/nginx-hugo-theme
 
 hugo-tidy:
 	hugo mod tidy

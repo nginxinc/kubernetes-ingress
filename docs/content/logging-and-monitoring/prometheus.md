@@ -47,7 +47,7 @@ To view metrics captured this way, the following is required:
 LATEST=$(curl -s https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest | jq -cr .tag_name)
 curl https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/$LATEST/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml | kubectl create -f -
 ```
-* A working [Prometheus resource and Prometheus Operator](https://prometheus-operator.dev/docs/user-guides/getting-started/)
+* A working [Prometheus resource and Prometheus Operator](https://prometheus-operator.dev/docs/getting-started/introduction/)
 
 ## Available Metrics
 

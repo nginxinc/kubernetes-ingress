@@ -15,7 +15,7 @@ This document explains how F5 NGINX Ingress Controller handles host and listener
 
 If multiple resources contend for the same host or listener, NGINX Ingress Controller will pick the winner based on the `creationTimestamp` of the resources: the oldest resource will win. In case there are more than one oldest resource (their `creationTimestamp` is the same),  NGINX Ingress Controller will choose the resource with the lexicographically smallest `uid`.
 
-{{< note >}} The `creationTimestamp` and `uid` fields are part of the [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta) resource. {{< /note >}}
+{{< note >}} The `creationTimestamp` and `uid` fields are part of the [ObjectMeta](https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/) resource. {{< /note >}}
 
 ---
 
