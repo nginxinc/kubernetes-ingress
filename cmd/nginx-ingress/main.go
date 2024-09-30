@@ -262,7 +262,7 @@ func main() {
 			s := http.NewServeMux()
 			s.HandleFunc("/nginx-ready", ready(lbc))
 			l.Log(ctx, levels.LevelFatal, fmt.Sprint(http.ListenAndServe(port, s))) // nolint:gosec
-			os.Exit(0)
+			os.Exit(1)
 		}()
 	}
 
@@ -354,7 +354,7 @@ func checkNamespaces(ctx context.Context, kubeClient kubernetes.Interface) {
 		var newWatchNamespaces []string
 		nsList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), meta_v1.ListOptions{LabelSelector: *watchNamespaceLabel})
 		if err != nil {
-			l.Log(ctx, levels.LevelError, fmt.Sprintf("error when getting Namespaces with the label selector %v: %v", watchNamespaceLabel, err))
+			l.Error(fmt.Sprintf("error when getting Namespaces with the label selector %v: %v", watchNamespaceLabel, err))
 		}
 		for _, ns := range nsList.Items {
 			newWatchNamespaces = append(newWatchNamespaces, ns.Name)
@@ -712,7 +712,7 @@ func handleTermination(ctx context.Context, lbc *k8s.LoadBalancerController, ngi
 		listener.Stop()
 	}
 	l.Info("Exiting successfully")
-	os.Exit(0)
+	os.Exit(1)
 }
 
 func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
