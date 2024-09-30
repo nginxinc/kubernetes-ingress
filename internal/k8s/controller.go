@@ -951,7 +951,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncVirtualServerRoute(task)
 		lbc.updateVirtualServerMetrics()
 	case globalConfiguration:
-		lbc.syncGlobalConfiguration(task)
+		lbc.syncGlobalConfiguration(ctx, task)
 		lbc.updateTransportServerMetrics()
 		lbc.updateVirtualServerMetrics()
 	case transportserver:

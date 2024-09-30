@@ -7,7 +7,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 	"reflect"
 
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
@@ -65,7 +64,8 @@ func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.globalConfigurationController.HasSynced)
 }
 
-func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
+func (lbc *LoadBalancerController) syncGlobalConfiguration(ctx context.Context, task task) {
+	l := nic_logger.LoggerFromContext(ctx)
 	key := task.Key
 	obj, gcExists, err := lbc.globalConfigurationLister.GetByKey(key)
 	if err != nil {
@@ -78,11 +78,11 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 	var validationErr error
 
 	if !gcExists {
-		glog.V(2).Infof("Deleting GlobalConfiguration: %v\n", key)
+		l.Log(ctx, levels.LevelDebug, fmt.Sprintf("Deleting GlobalConfiguration: %v\n", key))
 
 		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
 	} else {
-		glog.V(2).Infof("Adding or Updating GlobalConfiguration: %v\n", key)
+		l.Log(ctx, levels.LevelDebug, fmt.Sprintf("Adding or Updating GlobalConfiguration: %v\n", key))
 
 		gc := obj.(*conf_v1.GlobalConfiguration)
 		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
