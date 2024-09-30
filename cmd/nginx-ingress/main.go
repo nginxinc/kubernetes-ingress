@@ -712,7 +712,7 @@ func handleTermination(ctx context.Context, lbc *k8s.LoadBalancerController, ngi
 		listener.Stop()
 	}
 	l.Info("Exiting successfully")
-	os.Exit(1)
+	os.Exit(0)
 }
 
 func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
