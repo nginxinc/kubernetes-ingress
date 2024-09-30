@@ -50,7 +50,9 @@ When `v4.0.0` is released, the release notes will contain the required upgrade s
 
 Added support for VirtualServer & TransportServer to listen on a specific IP when configuring a listener, allowing NGINX to bind to a specific interface. This is also useful in for scenarios where pods need to connect to multiple networks i.e. multi-homed.
 Allow an End Session Endpoint to be configured for OIDC providers via Policy. This allows a user to be fully logged out from their idp session. This change also adds support for configuring a post-logout redirect URI, allowing a users to be redirected to a custom logout page.
-The `access_log` directive can now be configured to point to a syslog log server. Perviously, access logs defaulted to standard out. This change allows for log parsers aggregators to ingest access logs from NGINX.
+
+The `access_log` directive can now be configured to point to a syslog log server. Previously, access logs defaulted to standard out. This change allows for log parsers aggregators to ingest access logs from NGINX.
+
 When installing NGINX Ingress Controller via Helm, a uniquely named lease object will be created automatically. This allows for multiple deployments of NGINX Ingress Controller in the same namespace when leader election is enabled, without requiring a unique name to be specified manually for each deployment.
 
 ### <i class="fa-solid fa-rocket"></i> Features
