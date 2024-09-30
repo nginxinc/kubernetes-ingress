@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -3438,7 +3439,7 @@ func TestPreSyncSecrets(t *testing.T) {
 
 func TestNewTelemetryCollector(t *testing.T) {
 	t.Parallel()
-
+	ctx := context.Background()
 	testCases := []struct {
 		testCase          string
 		input             NewLoadBalancerControllerInput
@@ -3469,7 +3470,7 @@ func TestNewTelemetryCollector(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		lbc := NewLoadBalancerController(tc.input)
+		lbc := NewLoadBalancerController(ctx, tc.input)
 		if reflect.DeepEqual(tc.expectedCollector, lbc.telemetryCollector) {
 			t.Fatalf("Expected %v, but got %v", tc.expectedCollector, lbc.telemetryCollector)
 		}

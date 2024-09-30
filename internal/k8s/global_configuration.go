@@ -1,7 +1,10 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
+	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 	"reflect"
 
 	"github.com/golang/glog"
@@ -12,11 +15,12 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createGlobalConfigurationHandlers(ctx context.Context, lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	l := nic_logger.LoggerFromContext(ctx)
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			gc := obj.(*conf_v1.GlobalConfiguration)
-			glog.V(3).Infof("Adding GlobalConfiguration: %v", gc.Name)
+			l.Log(ctx, levels.LevelTrace, fmt.Sprintf("Adding GlobalConfiguration: %v", gc.Name))
 			lbc.AddSyncQueue(gc)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -24,22 +28,22 @@ func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.Resour
 			if !isGc {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					l.Log(ctx, levels.LevelTrace, fmt.Sprintf("Error received unexpected object: %v", obj))
 					return
 				}
 				gc, ok = deletedState.Obj.(*conf_v1.GlobalConfiguration)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj)
+					l.Log(ctx, levels.LevelTrace, fmt.Sprintf("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj))
 					return
 				}
 			}
-			glog.V(3).Infof("Removing GlobalConfiguration: %v", gc.Name)
+			l.Log(ctx, levels.LevelTrace, fmt.Sprintf("Removing GlobalConfiguration: %v", gc.Name))
 			lbc.AddSyncQueue(gc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curGc := cur.(*conf_v1.GlobalConfiguration)
 			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("GlobalConfiguration %v changed, syncing", curGc.Name)
+				l.Log(ctx, levels.LevelTrace, fmt.Sprintf("GlobalConfiguration %v changed, syncing", curGc.Name))
 				lbc.AddSyncQueue(curGc)
 			}
 		},

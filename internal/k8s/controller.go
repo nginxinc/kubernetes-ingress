@@ -221,7 +221,9 @@ type NewLoadBalancerControllerInput struct {
 }
 
 // NewLoadBalancerController creates a controller
-func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalancerController {
+//
+//gocyclo:ignore
+func NewLoadBalancerController(ctx context.Context, input NewLoadBalancerControllerInput) *LoadBalancerController {
 	lbc := &LoadBalancerController{
 		client:                       input.KubeClient,
 		confClient:                   input.ConfClient,
@@ -298,7 +300,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		if input.GlobalConfiguration != "" {
 			lbc.watchGlobalConfiguration = true
 			ns, name, _ := ParseNamespaceName(input.GlobalConfiguration)
-			lbc.addGlobalConfigurationHandler(createGlobalConfigurationHandlers(lbc), ns, name)
+			lbc.addGlobalConfigurationHandler(createGlobalConfigurationHandlers(ctx, lbc), ns, name)
 		}
 	}
 
