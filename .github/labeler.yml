@@ -32,7 +32,7 @@ tests:
       - all-globs-to-all-files: ['!tests/requirements.txt', '!perf-tests/requirements.txt']
 
 documentation:
-  - head-branch: ['^docs/', '^doc/']
+  - head-branch: ['^site/']
   - changed-files:
     - any-glob-to-any-file: '**/*.md'
 
