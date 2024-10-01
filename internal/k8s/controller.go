@@ -35,7 +35,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/rest"
 
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/nginx-service-mesh/pkg/spiffe"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
@@ -2010,7 +2009,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 		}
 
 		if err != nil {
-			glog.Warningf("Error retrieving endpoints for the service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error retrieving endpoints for the service %v: %v", ing.Spec.DefaultBackend.Service.Name, err))
 		}
 
 		if svc != nil && !external && hasUseClusterIP {
@@ -2049,7 +2048,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 
 	for _, rule := range ing.Spec.Rules {
 		if !validHosts[rule.Host] {
-			glog.V(3).Infof("Skipping host %s for Ingress %s", rule.Host, ing.Name)
+			lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Skipping host %s for Ingress %s", rule.Host, ing.Name))
 			continue
 		}
 
@@ -2062,14 +2061,14 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			path := path // address gosec G601
 			podEndps := []podEndpoint{}
 			if validMinionPaths != nil && !validMinionPaths[path.Path] {
-				glog.V(3).Infof("Skipping path %s for minion Ingress %s", path.Path, ing.Name)
+				lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Skipping path %s for minion Ingress %s", path.Path, ing.Name))
 				continue
 			}
 
 			var external bool
 			svc, err := lbc.getServiceForIngressBackend(&path.Backend, ing.Namespace)
 			if err != nil {
-				glog.V(3).Infof("Error getting service %v: %v", &path.Backend.Service.Name, err)
+				lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting service %v: %v", &path.Backend.Service.Name, err))
 			} else {
 				podEndps, external, err = lbc.getEndpointsForIngressBackend(&path.Backend, svc)
 				if err == nil && external && lbc.isNginxPlus {
@@ -2078,7 +2077,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			}
 
 			if err != nil {
-				glog.Warningf("Error retrieving endpoints for the service %v: %v", path.Backend.Service.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error retrieving endpoints for the service %v: %v", path.Backend.Service.Name, err))
 			}
 
 			if svc != nil && !external && hasUseClusterIP {
@@ -2144,7 +2143,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 
 		scrtRef := lbc.secretStore.GetSecret(scrtKey)
 		if scrtRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for VirtualServer %v: %v", scrtKey, virtualServer.Name, scrtRef.Error)
+			lbc.logger.Warn(fmt.Sprintf("Error trying to get the secret %v for VirtualServer %v: %v", scrtKey, virtualServer.Name, scrtRef.Error))
 		}
 
 		virtualServerEx.SecretRefs[scrtKey] = scrtRef
@@ -2152,43 +2151,43 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 
 	policies, policyErrors := lbc.getPolicies(virtualServer.Spec.Policies, virtualServer.Namespace)
 	for _, err := range policyErrors {
-		glog.Warningf("Error getting policy for VirtualServer %s/%s: %v", virtualServer.Namespace, virtualServer.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting policy for VirtualServer %s/%s: %v", virtualServer.Namespace, virtualServer.Name, err))
 	}
 
 	err := lbc.addJWTSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
-		glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 	}
 	err = lbc.addBasicSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
-		glog.Warningf("Error getting Basic Auth secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting Basic Auth secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 	}
 	err = lbc.addIngressMTLSSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
-		glog.Warningf("Error getting IngressMTLS secret for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting IngressMTLS secret for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 	}
 	err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
-		glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 	}
 	err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
-		glog.Warningf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 	}
 	err = lbc.addAPIKeySecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
-		glog.Warningf("Error getting APIKey secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting APIKey secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 	}
 
 	err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, policies)
 	if err != nil {
-		glog.Warningf("Error getting App Protect resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting App Protect resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 	}
 
 	if virtualServer.Spec.Dos != "" {
 		dosEx, err := lbc.dosConfiguration.GetValidDosEx(virtualServer.Namespace, virtualServer.Spec.Dos)
 		if err != nil {
-			glog.Warningf("Error getting App Protect Dos resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting App Protect Dos resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 		}
 		if dosEx != nil {
 			virtualServerEx.DosProtectedEx[""] = dosEx
@@ -2209,7 +2208,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		backupEndpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, u.Backup, u.Subselector, *u.BackupPort)
 		backupEndps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, u.Backup, *u.BackupPort)
 		if err != nil {
-			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting Endpoints for Upstream %v: %v", u.Name, err))
 		}
 		if err == nil && external {
 			externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, u.Backup)] = true
@@ -2225,7 +2224,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		if u.UseClusterIP {
 			s, err := lbc.getServiceForUpstream(virtualServer.Namespace, u.Service, u.Port)
 			if err != nil {
-				glog.Warningf("Error getting Service for Upstream %v: %v", u.Service, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting Service for Upstream %v: %v", u.Service, err))
 			} else {
 				endps = append(endps, ipv6SafeAddrPort(s.Spec.ClusterIP, int32(u.Port)))
 			}
@@ -2246,7 +2245,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			}
 
 			if err != nil {
-				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting Endpoints for Upstream %v: %v", u.Name, err))
 			}
 
 			endps = getIPAddressesFromEndpoints(podEndps)
@@ -2268,44 +2267,44 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	for _, r := range virtualServer.Spec.Routes {
 		vsRoutePolicies, policyErrors := lbc.getPolicies(r.Policies, virtualServer.Namespace)
 		for _, err := range policyErrors {
-			glog.Warningf("Error getting policy for VirtualServer %s/%s: %v", virtualServer.Namespace, virtualServer.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting policy for VirtualServer %s/%s: %v", virtualServer.Namespace, virtualServer.Name, err))
 		}
 		policies = append(policies, vsRoutePolicies...)
 
 		err = lbc.addJWTSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
-			glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 		}
 		err = lbc.addBasicSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
-			glog.Warningf("Error getting Basic Auth secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting Basic Auth secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 		}
 		err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
-			glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 		}
 
 		err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, vsRoutePolicies)
 		if err != nil {
-			glog.Warningf("Error getting WAF policies for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting WAF policies for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 		}
 
 		if r.Dos != "" {
 			routeDosEx, err := lbc.dosConfiguration.GetValidDosEx(virtualServer.Namespace, r.Dos)
 			if err != nil {
-				glog.Warningf("Error getting App Protect Dos resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting App Protect Dos resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 			}
 			virtualServerEx.DosProtectedEx[r.Path] = routeDosEx
 		}
 
 		err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
-			glog.Warningf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 		}
 
 		err = lbc.addAPIKeySecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
-			glog.Warningf("Error getting APIKey secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			lbc.logger.Warn(fmt.Sprintf("Error getting APIKey secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err))
 		}
 
 	}
@@ -2314,44 +2313,44 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		for _, sr := range vsr.Spec.Subroutes {
 			vsrSubroutePolicies, policyErrors := lbc.getPolicies(sr.Policies, vsr.Namespace)
 			for _, err := range policyErrors {
-				glog.Warningf("Error getting policy for VirtualServerRoute %s/%s: %v", vsr.Namespace, vsr.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting policy for VirtualServerRoute %s/%s: %v", vsr.Namespace, vsr.Name, err))
 			}
 			policies = append(policies, vsrSubroutePolicies...)
 
 			err = lbc.addJWTSecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
 			if err != nil {
-				glog.Warningf("Error getting JWT secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting JWT secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err))
 			}
 
 			err = lbc.addBasicSecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
 			if err != nil {
-				glog.Warningf("Error getting Basic Auth secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting Basic Auth secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err))
 			}
 
 			err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
 			if err != nil {
-				glog.Warningf("Error getting EgressMTLS secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting EgressMTLS secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err))
 			}
 
 			err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
 			if err != nil {
-				glog.Warningf("Error getting OIDC secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting OIDC secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err))
 			}
 
 			err = lbc.addAPIKeySecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
 			if err != nil {
-				glog.Warningf("Error getting APIKey secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting APIKey secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err))
 			}
 
 			err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, vsrSubroutePolicies)
 			if err != nil {
-				glog.Warningf("Error getting WAF policies for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				lbc.logger.Warn(fmt.Sprintf("Error getting WAF policies for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err))
 			}
 
 			if sr.Dos != "" {
 				routeDosEx, err := lbc.dosConfiguration.GetValidDosEx(vsr.Namespace, sr.Dos)
 				if err != nil {
-					glog.Warningf("Error getting App Protect Dos resource for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+					lbc.logger.Warn(fmt.Sprintf("Error getting App Protect Dos resource for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err))
 				}
 				virtualServerEx.DosProtectedEx[sr.Path] = routeDosEx
 			}
@@ -2364,7 +2363,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			if u.UseClusterIP {
 				s, err := lbc.getServiceForUpstream(vsr.Namespace, u.Service, u.Port)
 				if err != nil {
-					glog.Warningf("Error getting Service for Upstream %v: %v", u.Service, err)
+					lbc.logger.Warn(fmt.Sprintf("Error getting Service for Upstream %v: %v", u.Service, err))
 				} else {
 					endps = append(endps, fmt.Sprintf("%s:%d", s.Spec.ClusterIP, u.Port))
 				}
@@ -2383,7 +2382,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 					}
 				}
 				if err != nil {
-					glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+					lbc.logger.Warn(fmt.Sprintf("Error getting Endpoints for Upstream %v: %v", u.Name, err))
 				}
 
 				endps = getIPAddressesFromEndpoints(podEndps)
@@ -2432,7 +2431,7 @@ func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 
 			err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 			if err != nil {
-				glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
+				lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err))
 				continue
 			}
 
@@ -2653,7 +2652,7 @@ func (lbc *LoadBalancerController) getTransportServerBackupEndpointsAndKey(trans
 	backupEndpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Backup, nil, *u.BackupPort)
 	backupEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Backup, *u.BackupPort)
 	if err != nil {
-		glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+		lbc.logger.Warn(fmt.Sprintf("Error getting Endpoints for Upstream %v: %v", u.Name, err))
 	}
 	if err == nil && external {
 		externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Backup)] = true
@@ -2726,7 +2725,7 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 	var svcEndpointSlices []discovery_v1.EndpointSlice
 	svcEndpointSlices, err = nsi.endpointSliceLister.GetServiceEndpointSlices(svc)
 	if err != nil {
-		glog.V(3).Infof("Error getting endpointslices for service %s from the cache: %v", svc.Name, err)
+		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting endpointslices for service %s from the cache: %v", svc.Name, err))
 		return nil, err
 	}
 
@@ -2810,7 +2809,7 @@ func getPodName(pod *api_v1.ObjectReference) string {
 func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *networking.IngressBackend, namespace string) *api_v1.Probe {
 	svc, err := lbc.getServiceForIngressBackend(backend, namespace)
 	if err != nil {
-		glog.V(3).Infof("Error getting service %v: %v", backend.Service.Name, err)
+		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting service %v: %v", backend.Service.Name, err))
 		return nil
 	}
 	svcPort := lbc.getServicePortForIngressPort(backend.Service.Port, svc)
@@ -2821,7 +2820,7 @@ func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *net
 	nsi := lbc.getNamespacedInformer(svc.Namespace)
 	pods, err = nsi.podLister.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
 	if err != nil {
-		glog.V(3).Infof("Error fetching pods for namespace %v: %v", svc.Namespace, err)
+		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error fetching pods for namespace %v: %v", svc.Namespace, err))
 		return nil
 	}
 	return findProbeForPods(pods, svcPort)
@@ -2880,13 +2879,13 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 			result = lbc.getExternalEndpointsForIngressBackend(backend, svc)
 			return result, true, nil
 		}
-		glog.V(3).Infof("Error getting endpoints for service %s from the cache: %v", svc.Name, err)
+		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting endpoints for service %s from the cache: %v", svc.Name, err))
 		return nil, false, err
 	}
 
 	result, err = lbc.getEndpointsForPortFromEndpointSlices(endpointSlices, backend.Service.Port, svc)
 	if err != nil {
-		glog.V(3).Infof("Error getting endpointslices for service %s port %v: %v", svc.Name, configs.GetBackendPortAsString(backend.Service.Port), err)
+		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting endpointslices for service %s port %v: %v", svc.Name, configs.GetBackendPortAsString(backend.Service.Port), err))
 		return nil, false, err
 	}
 	return result, false, nil
@@ -2945,7 +2944,7 @@ func (lbc *LoadBalancerController) getPodOwnerTypeAndNameFromAddress(ns, name st
 
 	obj, exists, err = lbc.getNamespacedInformer(ns).podLister.GetByKey(fmt.Sprintf("%s/%s", ns, name))
 	if err != nil {
-		glog.Warningf("could not get pod by key %s/%s: %v", ns, name, err)
+		lbc.logger.Warn(fmt.Sprintf("could not get pod by key %s/%s: %v", ns, name, err))
 		return "", ""
 	}
 	if exists {
@@ -3058,7 +3057,7 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 			class = *obj.Spec.IngressClassName
 		} else if class != "" {
 			// the annotation takes precedence over the field
-			glog.Warningln("Using the DEPRECATED annotation 'kubernetes.io/ingress.class'. The 'ingressClassName' field will be ignored.")
+			lbc.logger.Warn(fmt.Sprintln("Using the DEPRECATED annotation 'kubernetes.io/ingress.class'. The 'ingressClassName' field will be ignored."))
 		}
 		return class == lbc.ingressClass
 
@@ -3073,7 +3072,7 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 func (lbc *LoadBalancerController) isHealthCheckEnabled(ing *networking.Ingress) bool {
 	if healthCheckEnabled, exists, err := configs.GetMapKeyAsBool(ing.Annotations, "nginx.com/health-checks", ing); exists {
 		if err != nil {
-			glog.Error(err)
+			lbc.logger.Error(fmt.Sprint(err))
 		}
 		return healthCheckEnabled
 	}
@@ -3087,10 +3086,10 @@ func formatWarningMessages(w []string) string {
 func (lbc *LoadBalancerController) syncSVIDRotation(svidResponse *workloadapi.X509Context) {
 	lbc.syncLock.Lock()
 	defer lbc.syncLock.Unlock()
-	glog.V(3).Info("Rotating SPIFFE Certificates")
+	lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprint("Rotating SPIFFE Certificates"))
 	err := lbc.configurator.AddOrUpdateSpiffeCerts(svidResponse)
 	if err != nil {
-		glog.Errorf("failed to rotate SPIFFE certificates: %v", err)
+		lbc.logger.Error(fmt.Sprintf("failed to rotate SPIFFE certificates: %v", err))
 	}
 }
 
@@ -3102,7 +3101,7 @@ func (lbc *LoadBalancerController) IsNginxReady() bool {
 func (lbc *LoadBalancerController) addInternalRouteServer() {
 	if lbc.internalRoutesEnabled {
 		if err := lbc.configurator.AddInternalRouteConfig(); err != nil {
-			glog.Warningf("failed to configure internal route server: %v", err)
+			lbc.logger.Warn(fmt.Sprintf("failed to configure internal route server: %v", err))
 		}
 	}
 }
@@ -3321,7 +3320,7 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 
 				deleteErr := lbc.configurator.DeleteVirtualServer(key, false)
 				if deleteErr != nil {
-					glog.Errorf("Error when deleting configuration for VirtualServer %v: %v", key, deleteErr)
+					lbc.logger.Error(fmt.Sprintf("Error when deleting configuration for VirtualServer %v: %v", key, deleteErr))
 				}
 
 				var vsExists bool
@@ -3330,7 +3329,7 @@ func (lbc *LoadBalancerController) haltIfVSConfigInvalid(vsNew *conf_v1.VirtualS
 				ns, _, _ := cache.SplitMetaNamespaceKey(key)
 				_, vsExists, err = lbc.getNamespacedInformer(ns).virtualServerLister.GetByKey(key)
 				if err != nil {
-					glog.Errorf("Error when getting VirtualServer for %v: %v", key, err)
+					lbc.logger.Error(fmt.Sprintf("Error when getting VirtualServer for %v: %v", key, err))
 				}
 
 				if vsExists {
@@ -3375,7 +3374,7 @@ func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.Virtua
 	}
 
 	if vsEx == nil {
-		glog.V(3).Infof("VirtualServerRoute %s does not have a corresponding VirtualServer", vsrNew.Name)
+		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("VirtualServerRoute %s does not have a corresponding VirtualServer", vsrNew.Name))
 		return true, nil
 	}
 
