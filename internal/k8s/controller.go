@@ -260,7 +260,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
-		lbc.logger.Info(fmt.Sprintf(format, args))
+		lbc.logger.Info(fmt.Sprintf(format, args...))
 	})
 	eventBroadcaster.StartRecordingToSink(&core_v1.EventSinkImpl{
 		Interface: core_v1.New(input.KubeClient.CoreV1().RESTClient()).Events(""),
