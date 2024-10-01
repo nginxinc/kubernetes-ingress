@@ -14,7 +14,6 @@ body:
       description: What version of our F5 NGINX Ingress Controller are you running?
       options:
         - edge
-        - 3.7.0
         - 3.6.2
         - 3.6.1
         - 3.6.0
@@ -79,4 +78,4 @@ body:
         2. View logs on '....'
         3. See error
     validations:
-      required: false
+      required: true
