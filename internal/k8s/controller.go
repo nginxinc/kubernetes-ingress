@@ -2048,7 +2048,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 
 	for _, rule := range ing.Spec.Rules {
 		if !validHosts[rule.Host] {
-			lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Skipping host %s for Ingress %s", rule.Host, ing.Name))
+			lbc.logger.Debug(fmt.Sprintf("Skipping host %s for Ingress %s", rule.Host, ing.Name))
 			continue
 		}
 
@@ -2061,14 +2061,14 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			path := path // address gosec G601
 			podEndps := []podEndpoint{}
 			if validMinionPaths != nil && !validMinionPaths[path.Path] {
-				lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Skipping path %s for minion Ingress %s", path.Path, ing.Name))
+				lbc.logger.Debug(fmt.Sprintf("Skipping path %s for minion Ingress %s", path.Path, ing.Name))
 				continue
 			}
 
 			var external bool
 			svc, err := lbc.getServiceForIngressBackend(&path.Backend, ing.Namespace)
 			if err != nil {
-				lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting service %v: %v", &path.Backend.Service.Name, err))
+				lbc.logger.Debug(fmt.Sprintf("Error getting service %v: %v", &path.Backend.Service.Name, err))
 			} else {
 				podEndps, external, err = lbc.getEndpointsForIngressBackend(&path.Backend, svc)
 				if err == nil && external && lbc.isNginxPlus {
@@ -2431,7 +2431,7 @@ func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 
 			err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 			if err != nil {
-				lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err))
+				lbc.logger.Debug(fmt.Sprintf("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err))
 				continue
 			}
 
@@ -2725,7 +2725,7 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 	var svcEndpointSlices []discovery_v1.EndpointSlice
 	svcEndpointSlices, err = nsi.endpointSliceLister.GetServiceEndpointSlices(svc)
 	if err != nil {
-		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting endpointslices for service %s from the cache: %v", svc.Name, err))
+		lbc.logger.Debug(fmt.Sprintf("Error getting endpointslices for service %s from the cache: %v", svc.Name, err))
 		return nil, err
 	}
 
@@ -2809,7 +2809,7 @@ func getPodName(pod *api_v1.ObjectReference) string {
 func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *networking.IngressBackend, namespace string) *api_v1.Probe {
 	svc, err := lbc.getServiceForIngressBackend(backend, namespace)
 	if err != nil {
-		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting service %v: %v", backend.Service.Name, err))
+		lbc.logger.Debug(fmt.Sprintf("Error getting service %v: %v", backend.Service.Name, err))
 		return nil
 	}
 	svcPort := lbc.getServicePortForIngressPort(backend.Service.Port, svc)
@@ -2820,7 +2820,7 @@ func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *net
 	nsi := lbc.getNamespacedInformer(svc.Namespace)
 	pods, err = nsi.podLister.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
 	if err != nil {
-		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error fetching pods for namespace %v: %v", svc.Namespace, err))
+		lbc.logger.Debug(fmt.Sprintf("Error fetching pods for namespace %v: %v", svc.Namespace, err))
 		return nil
 	}
 	return findProbeForPods(pods, svcPort)
@@ -2879,13 +2879,13 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 			result = lbc.getExternalEndpointsForIngressBackend(backend, svc)
 			return result, true, nil
 		}
-		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting endpoints for service %s from the cache: %v", svc.Name, err))
+		lbc.logger.Debug(fmt.Sprintf("Error getting endpoints for service %s from the cache: %v", svc.Name, err))
 		return nil, false, err
 	}
 
 	result, err = lbc.getEndpointsForPortFromEndpointSlices(endpointSlices, backend.Service.Port, svc)
 	if err != nil {
-		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("Error getting endpointslices for service %s port %v: %v", svc.Name, configs.GetBackendPortAsString(backend.Service.Port), err))
+		lbc.logger.Debug(fmt.Sprintf("Error getting endpointslices for service %s port %v: %v", svc.Name, configs.GetBackendPortAsString(backend.Service.Port), err))
 		return nil, false, err
 	}
 	return result, false, nil
@@ -3086,7 +3086,7 @@ func formatWarningMessages(w []string) string {
 func (lbc *LoadBalancerController) syncSVIDRotation(svidResponse *workloadapi.X509Context) {
 	lbc.syncLock.Lock()
 	defer lbc.syncLock.Unlock()
-	lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprint("Rotating SPIFFE Certificates"))
+	lbc.logger.Debug("Rotating SPIFFE Certificates")
 	err := lbc.configurator.AddOrUpdateSpiffeCerts(svidResponse)
 	if err != nil {
 		lbc.logger.Error(fmt.Sprintf("failed to rotate SPIFFE certificates: %v", err))
@@ -3374,7 +3374,7 @@ func (lbc *LoadBalancerController) haltIfVSRConfigInvalid(vsrNew *conf_v1.Virtua
 	}
 
 	if vsEx == nil {
-		lbc.logger.Log(lbc.ctx, levels.LevelTrace, fmt.Sprintf("VirtualServerRoute %s does not have a corresponding VirtualServer", vsrNew.Name))
+		lbc.logger.Debug(fmt.Sprintf("VirtualServerRoute %s does not have a corresponding VirtualServer", vsrNew.Name))
 		return true, nil
 	}
 
