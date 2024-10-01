@@ -1,10 +1,12 @@
 package k8s
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
@@ -14,6 +16,7 @@ import (
 func createTestConfiguration() *Configuration {
 	lbc := LoadBalancerController{
 		ingressClass: "nginx",
+		logger:       nic_logger.LoggerFromContext(context.Background()),
 	}
 	isPlus := false
 	appProtectEnabled := false

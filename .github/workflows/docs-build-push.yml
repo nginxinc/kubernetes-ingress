@@ -17,6 +17,9 @@ on:
       - "*"
     paths:
       - "docs/**"
+  push:
+    branches:
+      - "release-3.7"
 
 permissions:
   contents: read
@@ -34,6 +37,8 @@ jobs:
       docs_build_path: "./docs"
       doc_type: "hugo"
       environment: ${{ inputs.environment }}
+      auto_deploy_branch: "release-3.7"
+      auto_deploy_env: "prod"
     secrets:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS_DOCS }}
       AZURE_KEY_VAULT: ${{ secrets.AZURE_KEY_VAULT_DOCS }}
