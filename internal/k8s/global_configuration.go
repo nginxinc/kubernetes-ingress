@@ -14,12 +14,12 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func createGlobalConfigurationHandlers(ctx context.Context, lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	l := nic_logger.LoggerFromContext(ctx)
+func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	l := nic_logger.LoggerFromContext(lbc.ctx)
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			gc := obj.(*conf_v1.GlobalConfiguration)
-			l.Log(ctx, levels.LevelDebug, fmt.Sprintf("Adding GlobalConfiguration: %v", gc.Name))
+			l.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Adding GlobalConfiguration: %v", gc.Name))
 			lbc.AddSyncQueue(gc)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -27,22 +27,22 @@ func createGlobalConfigurationHandlers(ctx context.Context, lbc *LoadBalancerCon
 			if !isGc {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					l.Log(ctx, levels.LevelDebug, fmt.Sprintf("Error received unexpected object: %v", obj))
+					l.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Error received unexpected object: %v", obj))
 					return
 				}
 				gc, ok = deletedState.Obj.(*conf_v1.GlobalConfiguration)
 				if !ok {
-					l.Log(ctx, levels.LevelDebug, fmt.Sprintf("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj))
+					l.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj))
 					return
 				}
 			}
-			l.Log(ctx, levels.LevelDebug, fmt.Sprintf("Removing GlobalConfiguration: %v", gc.Name))
+			l.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Removing GlobalConfiguration: %v", gc.Name))
 			lbc.AddSyncQueue(gc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curGc := cur.(*conf_v1.GlobalConfiguration)
 			if !reflect.DeepEqual(old, cur) {
-				l.Log(ctx, levels.LevelDebug, fmt.Sprintf("GlobalConfiguration %v changed, syncing", curGc.Name))
+				l.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("GlobalConfiguration %v changed, syncing", curGc.Name))
 				lbc.AddSyncQueue(curGc)
 			}
 		},
