@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
-
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
@@ -17,7 +15,7 @@ func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.Resour
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			gc := obj.(*conf_v1.GlobalConfiguration)
-			lbc.logger.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Adding GlobalConfiguration: %v", gc.Name))
+			lbc.logger.Debug(fmt.Sprintf("Adding GlobalConfiguration: %v", gc.Name))
 			lbc.AddSyncQueue(gc)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -25,22 +23,22 @@ func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.Resour
 			if !isGc {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					lbc.logger.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Error received unexpected object: %v", obj))
+					lbc.logger.Debug(fmt.Sprintf("Error received unexpected object: %v", obj))
 					return
 				}
 				gc, ok = deletedState.Obj.(*conf_v1.GlobalConfiguration)
 				if !ok {
-					lbc.logger.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj))
+					lbc.logger.Debug(fmt.Sprintf("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj))
 					return
 				}
 			}
-			lbc.logger.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Removing GlobalConfiguration: %v", gc.Name))
+			lbc.logger.Debug(fmt.Sprintf("Removing GlobalConfiguration: %v", gc.Name))
 			lbc.AddSyncQueue(gc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curGc := cur.(*conf_v1.GlobalConfiguration)
 			if !reflect.DeepEqual(old, cur) {
-				lbc.logger.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("GlobalConfiguration %v changed, syncing", curGc.Name))
+				lbc.logger.Debug(fmt.Sprintf("GlobalConfiguration %v changed, syncing", curGc.Name))
 				lbc.AddSyncQueue(curGc)
 			}
 		},
@@ -75,11 +73,11 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 	var validationErr error
 
 	if !gcExists {
-		lbc.logger.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Deleting GlobalConfiguration: %v\n", key))
+		lbc.logger.Debug(fmt.Sprintf("Deleting GlobalConfiguration: %v\n", key))
 
 		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
 	} else {
-		lbc.logger.Log(lbc.ctx, levels.LevelDebug, fmt.Sprintf("Adding or Updating GlobalConfiguration: %v\n", key))
+		lbc.logger.Debug(fmt.Sprintf("Adding or Updating GlobalConfiguration: %v\n", key))
 
 		gc := obj.(*conf_v1.GlobalConfiguration)
 		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
