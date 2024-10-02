@@ -9,7 +9,7 @@ DEPLOYMENT_PATH="${ROOTDIR}/deployments"
 EXAMPLES_PATH="${ROOTDIR}/examples"
 DEBUG=${DEBUG:-"false"}
 
-DOCS_TO_UPDATE_FOLDER=${ROOTDIR}/docs/site
+DOCS_TO_UPDATE_FOLDER=${ROOTDIR}/site/content
 FILES_TO_UPDATE_IC_VERSION=(
     "${ROOTDIR}/.github/data/version.txt"
     "${ROOTDIR}/README.md"
