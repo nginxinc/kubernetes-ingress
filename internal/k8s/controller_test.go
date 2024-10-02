@@ -3466,6 +3466,7 @@ func TestPreSyncSecrets(t *testing.T) {
 
 func TestNewTelemetryCollector(t *testing.T) {
 	t.Parallel()
+
 	testCases := []struct {
 		testCase          string
 		input             NewLoadBalancerControllerInput

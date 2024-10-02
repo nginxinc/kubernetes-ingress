@@ -226,8 +226,6 @@ type NewLoadBalancerControllerInput struct {
 }
 
 // NewLoadBalancerController creates a controller
-//
-//gocyclo:ignore
 func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalancerController {
 	lbc := &LoadBalancerController{
 		client:                       input.KubeClient,
