@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 )
 
@@ -36,7 +36,7 @@ func TestLogFormats(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			ctx := initLogger(tc.format, levels.LevelInfo, &buf)
-			l := nic_logger.LoggerFromContext(ctx)
+			l := nl.LoggerFromContext(ctx)
 			l.Log(ctx, levels.LevelInfo, "test")
 			got := buf.String()
 			re := regexp.MustCompile(tc.wantre)

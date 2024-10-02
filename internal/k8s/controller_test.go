@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
 
 	discovery_v1 "k8s.io/api/discovery/v1"
@@ -46,7 +46,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -59,7 +59,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -72,7 +72,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -85,7 +85,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -98,7 +98,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -111,7 +111,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -124,7 +124,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -140,7 +140,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -153,7 +153,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:     ingressClass,
 				metricsCollector: collectors.NewControllerFakeCollector(),
-				logger:           nic_logger.LoggerFromContext(context.Background()),
+				logger:           nl.LoggerFromContext(context.Background()),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{},
@@ -197,7 +197,7 @@ func TestIngressClassForCustomResources(t *testing.T) {
 	t.Parallel()
 	ctrl := &LoadBalancerController{
 		ingressClass: "nginx",
-		logger:       nic_logger.LoggerFromContext(context.Background()),
+		logger:       nl.LoggerFromContext(context.Background()),
 	}
 
 	tests := []struct {
@@ -451,7 +451,7 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 		ingressClass:     "nginx",
 		configurator:     cnf,
 		metricsCollector: collectors.NewControllerFakeCollector(),
-		logger:           nic_logger.LoggerFromContext(context.Background()),
+		logger:           nl.LoggerFromContext(context.Background()),
 	}
 	svc := api_v1.Service{
 		TypeMeta: meta_v1.TypeMeta{},
@@ -520,7 +520,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsInOneEndpointSlice(t *
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
-		logger:      nic_logger.LoggerFromContext(context.Background()),
+		logger:      nl.LoggerFromContext(context.Background()),
 	}
 
 	backendServicePort := networking.ServiceBackendPort{
@@ -611,7 +611,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSlice(t
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
-		logger:      nic_logger.LoggerFromContext(context.Background()),
+		logger:      nl.LoggerFromContext(context.Background()),
 	}
 
 	backendServicePort := networking.ServiceBackendPort{
@@ -704,7 +704,7 @@ func TestGetEndpointsFromEndpointSlices_DuplicateEndpointsAcrossTwoEndpointSlice
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
-		logger:      nic_logger.LoggerFromContext(context.Background()),
+		logger:      nl.LoggerFromContext(context.Background()),
 	}
 
 	backendServicePort := networking.ServiceBackendPort{
@@ -826,7 +826,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsInOnEndpointSliceOn
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
-		logger:      nic_logger.LoggerFromContext(context.Background()),
+		logger:      nl.LoggerFromContext(context.Background()),
 	}
 
 	backendServicePort := networking.ServiceBackendPort{
@@ -917,7 +917,7 @@ func TestGetEndpointsFromEndpointSlices_TwoDifferentEndpointsAcrossTwoEndpointSl
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
-		logger:      nic_logger.LoggerFromContext(context.Background()),
+		logger:      nl.LoggerFromContext(context.Background()),
 	}
 
 	backendServicePort := networking.ServiceBackendPort{
@@ -1018,7 +1018,7 @@ func TestGetEndpointsFromEndpointSlices_ErrorsOnInvalidTargetPort(t *testing.T) 
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
-		logger:      nic_logger.LoggerFromContext(context.Background()),
+		logger:      nl.LoggerFromContext(context.Background()),
 	}
 
 	backendServicePort := networking.ServiceBackendPort{
@@ -1090,7 +1090,7 @@ func TestGetEndpointsFromEndpointSlices_ErrorsOnNoEndpointSlicesFound(t *testing
 	t.Parallel()
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
-		logger:      nic_logger.LoggerFromContext(context.Background()),
+		logger:      nl.LoggerFromContext(context.Background()),
 	}
 
 	backendServicePort := networking.ServiceBackendPort{
@@ -2081,7 +2081,7 @@ func TestGetPoliciesGlobalWatch(t *testing.T) {
 	lbc := LoadBalancerController{
 		isNginxPlus:         true,
 		namespacedInformers: nsi,
-		logger:              nic_logger.LoggerFromContext(context.Background()),
+		logger:              nl.LoggerFromContext(context.Background()),
 	}
 
 	policyRefs := []conf_v1.PolicyReference{
@@ -2183,7 +2183,7 @@ func TestGetPoliciesNamespacedWatch(t *testing.T) {
 	lbc := LoadBalancerController{
 		isNginxPlus:         true,
 		namespacedInformers: nsi,
-		logger:              nic_logger.LoggerFromContext(context.Background()),
+		logger:              nl.LoggerFromContext(context.Background()),
 	}
 
 	policyRefs := []conf_v1.PolicyReference{
@@ -2806,7 +2806,7 @@ func TestAddJWTSecrets(t *testing.T) {
 				Error:  invalidErr,
 			},
 		}),
-		logger: nic_logger.LoggerFromContext(context.Background()),
+		logger: nl.LoggerFromContext(context.Background()),
 	}
 
 	for _, test := range tests {
@@ -2932,7 +2932,7 @@ func TestAddBasicSecrets(t *testing.T) {
 				Error:  invalidErr,
 			},
 		}),
-		logger: nic_logger.LoggerFromContext(context.Background()),
+		logger: nl.LoggerFromContext(context.Background()),
 	}
 
 	for _, test := range tests {
@@ -3056,7 +3056,7 @@ func TestAddIngressMTLSSecret(t *testing.T) {
 				Error:  invalidErr,
 			},
 		}),
-		logger: nic_logger.LoggerFromContext(context.Background()),
+		logger: nl.LoggerFromContext(context.Background()),
 	}
 
 	for _, test := range tests {
@@ -3276,7 +3276,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 				Error:  invalidErr,
 			},
 		}),
-		logger: nic_logger.LoggerFromContext(context.Background()),
+		logger: nl.LoggerFromContext(context.Background()),
 	}
 
 	for _, test := range tests {
@@ -3400,7 +3400,7 @@ func TestAddOidcSecret(t *testing.T) {
 				Error:  invalidErr,
 			},
 		}),
-		logger: nic_logger.LoggerFromContext(context.Background()),
+		logger: nl.LoggerFromContext(context.Background()),
 	}
 
 	for _, test := range tests {
@@ -3446,7 +3446,7 @@ func TestPreSyncSecrets(t *testing.T) {
 		isNginxPlus:         true,
 		secretStore:         secrets.NewEmptyFakeSecretsStore(),
 		namespacedInformers: nsi,
-		logger:              nic_logger.LoggerFromContext(context.Background()),
+		logger:              nl.LoggerFromContext(context.Background()),
 	}
 
 	lbc.preSyncSecrets()
