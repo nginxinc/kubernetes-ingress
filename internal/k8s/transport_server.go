@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +19,7 @@ func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEv
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ts := obj.(*conf_v1.TransportServer)
-			glog.V(3).Infof("Adding TransportServer: %v", ts.Name)
+			nl.Debugf(lbc.logger, "Adding TransportServer: %v", ts.Name)
 			lbc.AddSyncQueue(ts)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -27,22 +27,22 @@ func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEv
 			if !isTs {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				ts, ok = deletedState.Obj.(*conf_v1.TransportServer)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-TransportServer object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-TransportServer object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing TransportServer: %v", ts.Name)
+			nl.Debugf(lbc.logger, "Removing TransportServer: %v", ts.Name)
 			lbc.AddSyncQueue(ts)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curTs := cur.(*conf_v1.TransportServer)
 			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("TransportServer %v changed, syncing", curTs.Name)
+				nl.Debugf(lbc.logger, "TransportServer %v changed, syncing", curTs.Name)
 				lbc.AddSyncQueue(curTs)
 			}
 		},
@@ -74,10 +74,10 @@ func (lbc *LoadBalancerController) syncTransportServer(task task) {
 	var problems []ConfigurationProblem
 
 	if !tsExists {
-		glog.V(2).Infof("Deleting TransportServer: %v\n", key)
+		nl.Debugf(lbc.logger, "Deleting TransportServer: %v\n", key)
 		changes, problems = lbc.configuration.DeleteTransportServer(key)
 	} else {
-		glog.V(2).Infof("Adding or Updating TransportServer: %v\n", key)
+		nl.Debugf(lbc.logger, "Adding or Updating TransportServer: %v\n", key)
 		ts := obj.(*conf_v1.TransportServer)
 		changes, problems = lbc.configuration.AddOrUpdateTransportServer(ts)
 	}
@@ -119,7 +119,7 @@ func (lbc *LoadBalancerController) updateTransportServerStatusAndEventsOnDelete(
 		if lbc.reportCustomResourceStatusEnabled() {
 			err := lbc.statusUpdater.UpdateTransportServerStatus(tsConfig.TransportServer, state, eventTitle, msg)
 			if err != nil {
-				glog.Errorf("Error when updating the status for TransportServer %v/%v: %v", tsConfig.TransportServer.Namespace, tsConfig.TransportServer.Name, err)
+				nl.Errorf(lbc.logger, "Error when updating the status for TransportServer %v/%v: %v", tsConfig.TransportServer.Namespace, tsConfig.TransportServer.Name, err)
 			}
 		}
 	}
@@ -158,7 +158,7 @@ func (lbc *LoadBalancerController) updateTransportServerStatusAndEvents(tsConfig
 	if lbc.reportCustomResourceStatusEnabled() {
 		err := lbc.statusUpdater.UpdateTransportServerStatus(tsConfig.TransportServer, state, eventTitle, msg)
 		if err != nil {
-			glog.Errorf("Error when updating the status for TransportServer %v/%v: %v", tsConfig.TransportServer.Namespace, tsConfig.TransportServer.Name, err)
+			nl.Errorf(lbc.logger, "Error when updating the status for TransportServer %v/%v: %v", tsConfig.TransportServer.Namespace, tsConfig.TransportServer.Name, err)
 		}
 	}
 }
@@ -214,7 +214,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 			externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Service)] = true
 		}
 		if err != nil {
-			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+			nl.Warnf(lbc.logger, "Error getting Endpoints for Upstream %v: %v", u.Name, err)
 		}
 
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
@@ -242,7 +242,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 
 		scrtRef := lbc.secretStore.GetSecret(scrtKey)
 		if scrtRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for TransportServer %v: %v", scrtKey, transportServer.Name, scrtRef.Error)
+			nl.Warnf(lbc.logger, "Error trying to get the secret %v for TransportServer %v: %v", scrtKey, transportServer.Name, scrtRef.Error)
 		}
 
 		scrtRefs[scrtKey] = scrtRef
