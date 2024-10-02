@@ -33,7 +33,7 @@ func Tracef(logger *slog.Logger, format string, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Tracef]
 	r := slog.NewRecord(time.Now(), levels.LevelTrace, fmt.Sprintf(format, args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -44,7 +44,7 @@ func Trace(logger *slog.Logger, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Trace]
 	r := slog.NewRecord(time.Now(), levels.LevelTrace, fmt.Sprint(args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -55,7 +55,7 @@ func Debugf(logger *slog.Logger, format string, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Debugf]
 	r := slog.NewRecord(time.Now(), levels.LevelDebug, fmt.Sprintf(format, args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -66,7 +66,7 @@ func Debug(logger *slog.Logger, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Debug]
 	r := slog.NewRecord(time.Now(), levels.LevelDebug, fmt.Sprint(args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -88,7 +88,7 @@ func Info(logger *slog.Logger, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Info]
 	r := slog.NewRecord(time.Now(), levels.LevelInfo, fmt.Sprint(args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -99,7 +99,7 @@ func Warnf(logger *slog.Logger, format string, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Warn]
 	r := slog.NewRecord(time.Now(), levels.LevelWarning, fmt.Sprintf(format, args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -110,7 +110,7 @@ func Warn(logger *slog.Logger, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Warn]
 	r := slog.NewRecord(time.Now(), levels.LevelWarning, fmt.Sprint(args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -121,7 +121,7 @@ func Errorf(logger *slog.Logger, format string, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Errorf]
 	r := slog.NewRecord(time.Now(), levels.LevelError, fmt.Sprintf(format, args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -132,7 +132,7 @@ func Error(logger *slog.Logger, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Error]
 	r := slog.NewRecord(time.Now(), levels.LevelError, fmt.Sprint(args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 }
@@ -143,7 +143,7 @@ func Fatalf(logger *slog.Logger, format string, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Errorf]
 	r := slog.NewRecord(time.Now(), levels.LevelFatal, fmt.Sprintf(format, args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 	os.Exit(1)
@@ -155,7 +155,7 @@ func Fatal(logger *slog.Logger, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) // skip [Callers, Error]
 	r := slog.NewRecord(time.Now(), levels.LevelFatal, fmt.Sprint(args...), pcs[0])
 	_ = logger.Handler().Handle(context.Background(), r)
 	os.Exit(1)
