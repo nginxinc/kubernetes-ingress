@@ -26,7 +26,7 @@ func LoggerFromContext(ctx context.Context) *slog.Logger {
 }
 
 // Tracef returns formatted trace log
-func Tracef(logger *slog.Logger, format string, args ...interface{}) {
+func Tracef(logger *slog.Logger, format string, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelTrace) {
 		return
 	}
@@ -34,7 +34,7 @@ func Tracef(logger *slog.Logger, format string, args ...interface{}) {
 }
 
 // Trace returns raw trace log
-func Trace(logger *slog.Logger, args ...interface{}) {
+func Trace(logger *slog.Logger, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelTrace) {
 		return
 	}
@@ -42,7 +42,7 @@ func Trace(logger *slog.Logger, args ...interface{}) {
 }
 
 // Debugf returns formatted trace log
-func Debugf(logger *slog.Logger, format string, args ...interface{}) {
+func Debugf(logger *slog.Logger, format string, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelDebug) {
 		return
 	}
@@ -50,7 +50,7 @@ func Debugf(logger *slog.Logger, format string, args ...interface{}) {
 }
 
 // Debug returns raw trace log
-func Debug(logger *slog.Logger, args ...interface{}) {
+func Debug(logger *slog.Logger, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelDebug) {
 		return
 	}
@@ -58,7 +58,7 @@ func Debug(logger *slog.Logger, args ...interface{}) {
 }
 
 // Infof returns formatted trace log
-func Infof(logger *slog.Logger, format string, args ...interface{}) {
+func Infof(logger *slog.Logger, format string, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelInfo) {
 		return
 	}
@@ -66,7 +66,7 @@ func Infof(logger *slog.Logger, format string, args ...interface{}) {
 }
 
 // Info returns raw trace log
-func Info(logger *slog.Logger, args ...interface{}) {
+func Info(logger *slog.Logger, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelInfo) {
 		return
 	}
@@ -74,7 +74,7 @@ func Info(logger *slog.Logger, args ...interface{}) {
 }
 
 // Warnf returns formatted trace log
-func Warnf(logger *slog.Logger, format string, args ...interface{}) {
+func Warnf(logger *slog.Logger, format string, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelWarning) {
 		return
 	}
@@ -82,7 +82,7 @@ func Warnf(logger *slog.Logger, format string, args ...interface{}) {
 }
 
 // Warn returns raw trace log
-func Warn(logger *slog.Logger, args ...interface{}) {
+func Warn(logger *slog.Logger, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelWarning) {
 		return
 	}
@@ -90,7 +90,7 @@ func Warn(logger *slog.Logger, args ...interface{}) {
 }
 
 // Errorf returns formatted trace log
-func Errorf(logger *slog.Logger, format string, args ...interface{}) {
+func Errorf(logger *slog.Logger, format string, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelError) {
 		return
 	}
@@ -98,7 +98,7 @@ func Errorf(logger *slog.Logger, format string, args ...interface{}) {
 }
 
 // Error returns raw trace log
-func Error(logger *slog.Logger, args ...interface{}) {
+func Error(logger *slog.Logger, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelError) {
 		return
 	}
@@ -106,7 +106,7 @@ func Error(logger *slog.Logger, args ...interface{}) {
 }
 
 // Fatalf returns formatted trace log
-func Fatalf(logger *slog.Logger, format string, args ...interface{}) {
+func Fatalf(logger *slog.Logger, format string, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelFatal) {
 		return
 	}
@@ -115,7 +115,7 @@ func Fatalf(logger *slog.Logger, format string, args ...interface{}) {
 }
 
 // Fatal returns raw trace log
-func Fatal(logger *slog.Logger, args ...interface{}) {
+func Fatal(logger *slog.Logger, args ...any) {
 	if !logger.Enabled(context.Background(), levels.LevelFatal) {
 		return
 	}
