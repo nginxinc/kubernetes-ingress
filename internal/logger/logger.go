@@ -2,10 +2,12 @@ package log
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 )
 
 type ctxLogger struct{}
@@ -21,4 +23,102 @@ func LoggerFromContext(ctx context.Context) *slog.Logger {
 		return l
 	}
 	return slog.New(glog.New(os.Stdout, nil))
+}
+
+// Tracef returns formatted trace log
+func Tracef(logger *slog.Logger, format string, args ...any) {
+	if !logger.Enabled(context.Background(), levels.LevelTrace) {
+		return
+	}
+	logger.Log(context.Background(), levels.LevelTrace, fmt.Sprintf(format, args...))
+}
+
+// Trace returns raw trace log
+func Trace(logger *slog.Logger, msg string) {
+	if !logger.Enabled(context.Background(), levels.LevelTrace) {
+		return
+	}
+	logger.Log(context.Background(), levels.LevelTrace, msg)
+}
+
+// Debugf returns formatted trace log
+func Debugf(logger *slog.Logger, format string, args ...any) {
+	if !logger.Enabled(context.Background(), levels.LevelDebug) {
+		return
+	}
+	logger.Debug(fmt.Sprintf(format, args...))
+}
+
+// Debug returns raw trace log
+func Debug(logger *slog.Logger, msg string) {
+	if !logger.Enabled(context.Background(), levels.LevelDebug) {
+		return
+	}
+	logger.Debug(msg)
+}
+
+// Infof returns formatted trace log
+func Infof(logger *slog.Logger, format string, args ...any) {
+	if !logger.Enabled(context.Background(), levels.LevelInfo) {
+		return
+	}
+	logger.Info(fmt.Sprintf(format, args...))
+}
+
+// Info returns raw trace log
+func Info(logger *slog.Logger, msg string) {
+	if !logger.Enabled(context.Background(), levels.LevelInfo) {
+		return
+	}
+	logger.Info(msg)
+}
+
+// Warnf returns formatted trace log
+func Warnf(logger *slog.Logger, format string, args ...any) {
+	if !logger.Enabled(context.Background(), levels.LevelWarning) {
+		return
+	}
+	logger.Warn(fmt.Sprintf(format, args...))
+}
+
+// Warn returns raw trace log
+func Warn(logger *slog.Logger, msg string) {
+	if !logger.Enabled(context.Background(), levels.LevelWarning) {
+		return
+	}
+	logger.Warn(msg)
+}
+
+// Errorf returns formatted trace log
+func Errorf(logger *slog.Logger, format string, args ...any) {
+	if !logger.Enabled(context.Background(), levels.LevelError) {
+		return
+	}
+	logger.Error(fmt.Sprintf(format, args...))
+}
+
+// Error returns raw trace log
+func Error(logger *slog.Logger, msg string) {
+	if !logger.Enabled(context.Background(), levels.LevelError) {
+		return
+	}
+	logger.Error(msg)
+}
+
+// Fatalf returns formatted trace log
+func Fatalf(logger *slog.Logger, format string, args ...any) {
+	if !logger.Enabled(context.Background(), levels.LevelFatal) {
+		return
+	}
+	logger.Log(context.Background(), levels.LevelFatal, fmt.Sprintf(format, args...))
+	os.Exit(1)
+}
+
+// Fatal returns raw trace log
+func Fatal(logger *slog.Logger, msg string) {
+	if !logger.Enabled(context.Background(), levels.LevelFatal) {
+		return
+	}
+	logger.Log(context.Background(), levels.LevelFatal, msg)
+	os.Exit(1)
 }
