@@ -2,9 +2,8 @@ package k8s
 
 import (
 	"errors"
+	"io"
 	"log/slog"
-	"os"
-	"syscall"
 	"testing"
 
 	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
@@ -118,7 +117,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 		},
 	}
 
-	l := slog.New(nic_glog.New(os.NewFile(uintptr(syscall.Stdout), os.DevNull), &nic_glog.Options{Level: levels.LevelInfo}))
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	for _, test := range tests {
 		result, err := areResourcesDifferent(l, test.oldR, test.newR)
 		if result != test.expected {
