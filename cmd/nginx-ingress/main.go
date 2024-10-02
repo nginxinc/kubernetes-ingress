@@ -211,6 +211,7 @@ func main() {
 		DynClient:                    dynClient,
 		RestConfig:                   config,
 		ResyncPeriod:                 30 * time.Second,
+		LoggerContext:                ctx,
 		Namespace:                    watchNamespaces,
 		SecretNamespace:              watchSecretNamespaces,
 		NginxConfigurator:            cnf,
