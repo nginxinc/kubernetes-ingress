@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -16,7 +16,7 @@ func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.Resour
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			gc := obj.(*conf_v1.GlobalConfiguration)
-			glog.V(3).Infof("Adding GlobalConfiguration: %v", gc.Name)
+			nl.Debugf(lbc.logger, "Adding GlobalConfiguration: %v", gc.Name)
 			lbc.AddSyncQueue(gc)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -24,22 +24,22 @@ func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.Resour
 			if !isGc {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				gc, ok = deletedState.Obj.(*conf_v1.GlobalConfiguration)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing GlobalConfiguration: %v", gc.Name)
+			lbc.logger.Debug(fmt.Sprintf("Removing GlobalConfiguration: %v", gc.Name))
 			lbc.AddSyncQueue(gc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curGc := cur.(*conf_v1.GlobalConfiguration)
 			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("GlobalConfiguration %v changed, syncing", curGc.Name)
+				nl.Debugf(lbc.logger, "GlobalConfiguration %v changed, syncing", curGc.Name)
 				lbc.AddSyncQueue(curGc)
 			}
 		},
@@ -74,11 +74,11 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 	var validationErr error
 
 	if !gcExists {
-		glog.V(2).Infof("Deleting GlobalConfiguration: %v\n", key)
+		nl.Debugf(lbc.logger, "Deleting GlobalConfiguration: %v\n", key)
 
 		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
 	} else {
-		glog.V(2).Infof("Adding or Updating GlobalConfiguration: %v\n", key)
+		nl.Debugf(lbc.logger, "Adding or Updating GlobalConfiguration: %v\n", key)
 
 		gc := obj.(*conf_v1.GlobalConfiguration)
 		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
