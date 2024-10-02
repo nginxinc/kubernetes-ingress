@@ -273,7 +273,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		lbc.spiffeCertFetcher, err = spiffe.NewX509CertFetcher(input.SpireAgentAddress, nil)
 		if err != nil {
 			nl.Fatalf(lbc.logger, "failed to initialize spiffe certfetcher: %v", err)
-			os.Exit(1)
 		}
 	}
 
@@ -372,7 +371,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		exporter, err := telemetry.NewExporter(exporterCfg)
 		if err != nil {
 			nl.Fatalf(lbc.logger, "failed to initialize telemetry exporter: %v", err)
-			os.Exit(1)
 		}
 		collectorConfig := telemetry.CollectorConfig{
 			Period:              24 * time.Hour,
@@ -398,7 +396,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		)
 		if err != nil {
 			nl.Fatalf(lbc.logger, "failed to initialize telemetry collector: %v", err)
-			os.Exit(1)
 		}
 		lbc.telemetryCollector = collector
 		lbc.telemetryChan = make(chan struct{})
@@ -562,7 +559,6 @@ func (lbc *LoadBalancerController) Run() {
 		lbc.addInternalRouteServer()
 		if err != nil {
 			nl.Fatal(lbc.logger, err)
-			os.Exit(1)
 		}
 
 		// wait for initial bundle
@@ -573,7 +569,6 @@ func (lbc *LoadBalancerController) Run() {
 			lbc.syncSVIDRotation(cert)
 		case <-timeoutch:
 			nl.Fatal(lbc.logger, "Failed to download initial spiffe trust bundle")
-			os.Exit(1)
 		}
 
 		go func() {
