@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang/glog"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 
@@ -60,7 +60,7 @@ func newLeaderElector(client kubernetes.Interface, callbacks leaderelection.Lead
 func createLeaderHandler(lbc *LoadBalancerController) leaderelection.LeaderCallbacks {
 	return leaderelection.LeaderCallbacks{
 		OnStartedLeading: func(ctx context.Context) {
-			glog.V(3).Info("started leading")
+			nl.Debug(lbc.logger, "started leading")
 			// Closing this channel allows the leader to start the telemetry reporting process
 			if lbc.telemetryChan != nil {
 				close(lbc.telemetryChan)
@@ -68,40 +68,40 @@ func createLeaderHandler(lbc *LoadBalancerController) leaderelection.LeaderCallb
 			if lbc.reportIngressStatus {
 				ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
 
-				glog.V(3).Infof("Updating status for %v Ingresses", len(ingresses))
+				nl.Debugf(lbc.logger, "Updating status for %v Ingresses", len(ingresses))
 
 				err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
 				if err != nil {
-					glog.V(3).Infof("error updating status when starting leading: %v", err)
+					nl.Debugf(lbc.logger, "error updating status when starting leading: %v", err)
 				}
 			}
 
 			if lbc.areCustomResourcesEnabled {
-				glog.V(3).Info("updating VirtualServer and VirtualServerRoutes status")
+				nl.Debug(lbc.logger, "updating VirtualServer and VirtualServerRoutes status")
 
 				err := lbc.updateVirtualServersStatusFromEvents()
 				if err != nil {
-					glog.V(3).Infof("error updating VirtualServers status when starting leading: %v", err)
+					nl.Debugf(lbc.logger, "error updating VirtualServers status when starting leading: %v", err)
 				}
 
 				err = lbc.updateVirtualServerRoutesStatusFromEvents()
 				if err != nil {
-					glog.V(3).Infof("error updating VirtualServerRoutes status when starting leading: %v", err)
+					nl.Debugf(lbc.logger, "error updating VirtualServerRoutes status when starting leading: %v", err)
 				}
 
 				err = lbc.updatePoliciesStatus()
 				if err != nil {
-					glog.V(3).Infof("error updating Policies status when starting leading: %v", err)
+					nl.Debugf(lbc.logger, "error updating Policies status when starting leading: %v", err)
 				}
 
 				err = lbc.updateTransportServersStatusFromEvents()
 				if err != nil {
-					glog.V(3).Infof("error updating TransportServers status when starting leading: %v", err)
+					nl.Debugf(lbc.logger, "error updating TransportServers status when starting leading: %v", err)
 				}
 			}
 		},
 		OnStoppedLeading: func() {
-			glog.V(3).Info("stopped leading")
+			nl.Debug(lbc.logger, "stopped leading")
 		},
 	}
 }
@@ -111,7 +111,7 @@ func (lbc *LoadBalancerController) addLeaderHandler(leaderHandler leaderelection
 	var err error
 	lbc.leaderElector, err = newLeaderElector(lbc.client, leaderHandler, lbc.controllerNamespace, lbc.leaderElectionLockName)
 	if err != nil {
-		glog.V(3).Infof("Error starting LeaderElection: %v", err)
+		nl.Debugf(lbc.logger, "Error starting LeaderElection: %v", err)
 	}
 }
 
