@@ -60,8 +60,8 @@ jobs:
       - name: Filter only docs changes
         id: docs
         run: |
-          files=$(git diff --name-only HEAD^ | egrep -v "^docs/" | egrep -v "^examples/" | egrep -v "^README.md")
-          docs_files=$(git diff --name-only HEAD^ | grep "^docs/")
+          files=$(git diff --name-only HEAD^ | egrep -v "^site/" | egrep -v "^examples/" | egrep -v "^README.md")
+          docs_files=$(git diff --name-only HEAD^ | grep "^site/")
           if [ -z "$files" ]; then
             echo "docs_only=true" >> $GITHUB_OUTPUT
           else
@@ -206,7 +206,7 @@ jobs:
 
       - name: Check if make docs builds
         if: ${{ needs.checks.outputs.some_docs == 'true' }}
-        run: cd docs && make docs-ci
+        run: cd site && make docs-ci
 
   unit-tests:
     name: Unit Tests

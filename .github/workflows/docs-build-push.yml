@@ -12,11 +12,16 @@ on:
           - dev
           - staging
           - prod
+      hugo_theme_override:
+        description: 'Override hugo theme (leave blank to use latest version)'
+        required: false
+        default: ''
+        type: string
   pull_request:
     branches:
       - "*"
     paths:
-      - "docs/**"
+      - "site/**"
   push:
     branches:
       - "release-3.7"
@@ -34,9 +39,10 @@ jobs:
       production_url_path: "/nginx-ingress-controller"
       preview_url_path: "/previews/nginx-ingress-controller"
       docs_source_path: "public/nginx-ingress-controller"
-      docs_build_path: "./docs"
+      docs_build_path: "./site"
       doc_type: "hugo"
       environment: ${{ inputs.environment }}
+      force_hugo_theme_version: ${{inputs.hugo_theme_override}}
       auto_deploy_branch: "release-3.7"
       auto_deploy_env: "prod"
     secrets:
