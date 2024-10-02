@@ -255,7 +255,7 @@ func main() {
 		InstallationFlags:            parsedFlags,
 	}
 
-	lbc := k8s.NewLoadBalancerController(ctx, lbcInput)
+	lbc := k8s.NewLoadBalancerController(lbcInput)
 
 	if *readyStatus {
 		go func() {
