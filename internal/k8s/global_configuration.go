@@ -3,9 +3,10 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	nic_logger "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
-	"reflect"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
