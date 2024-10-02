@@ -2,10 +2,16 @@ package k8s
 
 import (
 	"context"
+	"io"
+	"log/slog"
+	"os"
 	"reflect"
+	"syscall"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	fake_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
 	v1 "k8s.io/api/core/v1"
@@ -108,10 +114,12 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 	}
 	nsi := make(map[string]*namespacedInformer)
 	nsi["default"] = &namespacedInformer{transportServerLister: tsLister}
+	l := slog.New(nic_glog.New(os.NewFile(uintptr(syscall.Stdout), os.DevNull), &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		namespacedInformers: nsi,
 		confClient:          fakeClient,
 		keyFunc:             cache.DeletionHandlingMetaNamespaceKeyFunc,
+		logger:              l,
 	}
 
 	err = su.UpdateTransportServerStatus(ts, "same status", "same reason", "same message")
@@ -165,6 +173,7 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 	nsi := make(map[string]*namespacedInformer)
 	nsi[""] = &namespacedInformer{transportServerLister: tsLister}
 
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		namespacedInformers: nsi,
 		confClient:          fakeClient,
@@ -175,6 +184,7 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 				Ports: "1234",
 			},
 		},
+		logger: l,
 	}
 
 	err := su.UpdateTransportServerStatus(ts, "after status", "after reason", "after message")
@@ -223,6 +233,7 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 	nsi := make(map[string]*namespacedInformer)
 	nsi[""] = &namespacedInformer{ingressLister: ingLister}
 
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		client:                fakeClient,
 		namespace:             "namespace",
@@ -230,6 +241,7 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 		externalStatusAddress: "123.123.123.123",
 		namespacedInformers:   nsi,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		logger:                l,
 	}
 	err = su.ClearIngressStatus(ing)
 	if err != nil {
@@ -330,12 +342,14 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 	nsi := make(map[string]*namespacedInformer)
 	nsi[""] = &namespacedInformer{ingressLister: ingLister}
 
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		client:                fakeClient,
 		namespace:             "namespace",
 		externalStatusAddress: "",
 		namespacedInformers:   nsi,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		logger:                l,
 	}
 
 	su.SaveStatusFromIngressLink("3.3.3.3")

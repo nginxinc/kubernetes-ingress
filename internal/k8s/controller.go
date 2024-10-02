@@ -338,6 +338,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		keyFunc:                keyFunc,
 		confClient:             input.ConfClient,
 		hasCorrectIngressClass: lbc.HasCorrectIngressClass,
+		logger:                 lbc.logger,
 	}
 
 	lbc.configuration = NewConfiguration(
