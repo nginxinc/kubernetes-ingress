@@ -28,15 +28,15 @@ Please reserve GitHub issues for feature requests and bugs rather than general q
 
 ## Getting Started
 
-Follow our [Installation Guide](https://github.com/nginxinc/kubernetes-ingress/blob/main/docs/content/installation) to
+Follow our [Installation Guide](https://docs.nginx.com/nginx-ingress-controller/installation/) to
 get NGINX Ingress Controller up and running.
 
-Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/main/docs) and
+Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/main/site) and
 [configuration](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples) examples
 
 ### Project Structure
 
-- This Ingress Controller is written in Go and supports both the open source NGINX software and NGINX Plus.
+- NGINX Ingress Controller is written in Go and supports both the open source NGINX software and NGINX Plus.
 - The project follows a standard Go project layout
   - The main code is found at `cmd/nginx-ingress/`
   - The internal code is found at `internal/`
