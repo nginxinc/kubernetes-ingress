@@ -262,7 +262,7 @@ func main() {
 			port := fmt.Sprintf(":%v", *readyStatusPort)
 			s := http.NewServeMux()
 			s.HandleFunc("/nginx-ready", ready(lbc))
-			nic_logger.Fatalf(l, fmt.Sprint(http.ListenAndServe(port, s))) // nolint:gosec,govet
+			nic_logger.Fatal(l, http.ListenAndServe(port, s)) // nolint:gosec
 		}()
 	}
 
