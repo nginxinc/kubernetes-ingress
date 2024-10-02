@@ -2,8 +2,12 @@ package k8s
 
 import (
 	"errors"
+	"io"
+	"log/slog"
 	"testing"
 
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -113,8 +117,9 @@ func TestAreResourcesDifferent(t *testing.T) {
 		},
 	}
 
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	for _, test := range tests {
-		result, err := areResourcesDifferent(test.oldR, test.newR)
+		result, err := areResourcesDifferent(l, test.oldR, test.newR)
 		if result != test.expected {
 			t.Errorf("areResourcesDifferent() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
