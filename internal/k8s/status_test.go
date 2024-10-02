@@ -4,9 +4,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"os"
 	"reflect"
-	"syscall"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -114,7 +112,7 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 	}
 	nsi := make(map[string]*namespacedInformer)
 	nsi["default"] = &namespacedInformer{transportServerLister: tsLister}
-	l := slog.New(nic_glog.New(os.NewFile(uintptr(syscall.Stdout), os.DevNull), &nic_glog.Options{Level: levels.LevelInfo}))
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	su := statusUpdater{
 		namespacedInformers: nsi,
 		confClient:          fakeClient,
