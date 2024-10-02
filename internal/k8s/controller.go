@@ -268,7 +268,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.recorder = eventBroadcaster.NewRecorder(scheme.Scheme,
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
 
-	lbc.syncQueue = newTaskQueue(lbc.sync)
+	lbc.syncQueue = newTaskQueue(lbc.logger, lbc.sync)
 	var err error
 	if input.SpireAgentAddress != "" {
 		lbc.spiffeCertFetcher, err = spiffe.NewX509CertFetcher(input.SpireAgentAddress, nil)
