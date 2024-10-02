@@ -22,7 +22,7 @@ func createAppProtectDosPolicyHandlers(lbc *LoadBalancerController) cache.Resour
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldPol := oldObj.(*unstructured.Unstructured)
 			newPol := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldPol, newPol)
+			different, err := areResourcesDifferent(lbc.logger, oldPol, newPol)
 			if err != nil {
 				nl.Debugf(lbc.logger, "Error when comparing policy %v", err)
 				lbc.AddSyncQueue(newPol)
@@ -49,7 +49,7 @@ func createAppProtectDosLogConfHandlers(lbc *LoadBalancerController) cache.Resou
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldConf := oldObj.(*unstructured.Unstructured)
 			newConf := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldConf, newConf)
+			different, err := areResourcesDifferent(lbc.logger, oldConf, newConf)
 			if err != nil {
 				nl.Debugf(lbc.logger, "Error when comparing DosLogConfs %v", err)
 				lbc.AddSyncQueue(newConf)

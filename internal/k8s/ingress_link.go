@@ -38,7 +38,7 @@ func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventH
 		UpdateFunc: func(old, cur interface{}) {
 			oldLink := old.(*unstructured.Unstructured)
 			curLink := cur.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldLink, curLink)
+			different, err := areResourcesDifferent(lbc.logger, oldLink, curLink)
 			if err != nil {
 				nl.Debugf(lbc.logger, "Error when comparing IngressLinks: %v", err)
 				lbc.AddSyncQueue(curLink)

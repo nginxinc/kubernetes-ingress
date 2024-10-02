@@ -2,12 +2,13 @@ package k8s
 
 import (
 	"fmt"
+	"log/slog"
 	"reflect"
 
 	"github.com/jinzhu/copier"
 
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/client-go/tools/cache"
@@ -21,7 +22,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ingress := obj.(*networking.Ingress)
-			glog.V(3).Infof("Adding Ingress: %v", ingress.Name)
+			nl.Debugf(lbc.logger, "Adding Ingress: %v", ingress.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -29,23 +30,23 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			if !isIng {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				ingress, ok = deletedState.Obj.(*networking.Ingress)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing Ingress: %v", ingress.Name)
+			nl.Debugf(lbc.logger, "Removing Ingress: %v", ingress.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, current interface{}) {
 			c := current.(*networking.Ingress)
 			o := old.(*networking.Ingress)
 			if hasChanges(o, c) {
-				glog.V(3).Infof("Ingress %v changed, syncing", c.Name)
+				nl.Debugf(lbc.logger, "Ingress %v changed, syncing", c.Name)
 				lbc.AddSyncQueue(c)
 			}
 		},
@@ -58,10 +59,10 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 		AddFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
 			if !secrets.IsSupportedSecretType(secret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
+				nl.Debugf(lbc.logger, "Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
 				return
 			}
-			glog.V(3).Infof("Adding Secret: %v", secret.Name)
+			nl.Debugf(lbc.logger, "Adding Secret: %v", secret.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -69,33 +70,33 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			if !isSecr {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				secret, ok = deletedState.Obj.(*v1.Secret)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Secret object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-Secret object: %v", deletedState.Obj)
 					return
 				}
 			}
 			if !secrets.IsSupportedSecretType(secret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
+				nl.Debugf(lbc.logger, "Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
 				return
 			}
 
-			glog.V(3).Infof("Removing Secret: %v", secret.Name)
+			nl.Debugf(lbc.logger, "Removing Secret: %v", secret.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			// A secret cannot change its type. That's why we only need to check the type of the current secret.
 			curSecret := cur.(*v1.Secret)
 			if !secrets.IsSupportedSecretType(curSecret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", curSecret.Name, curSecret.Type)
+				nl.Debugf(lbc.logger, "Ignoring Secret %v of unsupported type %v", curSecret.Name, curSecret.Type)
 				return
 			}
 
 			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Secret %v changed, syncing", cur.(*v1.Secret).Name)
+				nl.Debugf(lbc.logger, "Secret %v changed, syncing", cur.(*v1.Secret).Name)
 				lbc.AddSyncQueue(cur)
 			}
 		},
@@ -106,7 +107,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
-			glog.V(3).Infof("Adding VirtualServer: %v", vs.Name)
+			nl.Debugf(lbc.logger, "Adding VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -114,16 +115,16 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			if !isVs {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				vs, ok = deletedState.Obj.(*conf_v1.VirtualServer)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-VirtualServer object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-VirtualServer object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing VirtualServer: %v", vs.Name)
+			nl.Debugf(lbc.logger, "Removing VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -134,13 +135,13 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 				var curVsCopy, oldVsCopy conf_v1.VirtualServer
 				err := copier.CopyWithOption(&curVsCopy, curVs, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServer %v: %v for Dynamic Weight Changes", curVs.Name, err)
+					nl.Debugf(lbc.logger, "Error copying VirtualServer %v: %v for Dynamic Weight Changes", curVs.Name, err)
 					return
 				}
 
 				err = copier.CopyWithOption(&oldVsCopy, oldVs, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServer %v: %v for Dynamic Weight Changes", oldVs.Name, err)
+					nl.Debugf(lbc.logger, "Error copying VirtualServer %v: %v for Dynamic Weight Changes", oldVs.Name, err)
 					return
 				}
 
@@ -155,7 +156,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			}
 
 			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
-				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
+				nl.Debugf(lbc.logger, "VirtualServer %v changed, syncing", curVs.Name)
 				lbc.AddSyncQueue(curVs)
 			}
 		},
@@ -166,7 +167,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
-			glog.V(3).Infof("Adding VirtualServerRoute: %v", vsr.Name)
+			nl.Debugf(lbc.logger, "Adding VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -174,16 +175,16 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			if !isVsr {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				vsr, ok = deletedState.Obj.(*conf_v1.VirtualServerRoute)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-VirtualServerRoute object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-VirtualServerRoute object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing VirtualServerRoute: %v", vsr.Name)
+			nl.Debugf(lbc.logger, "Removing VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -194,13 +195,13 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 				var curVsrCopy, oldVsrCopy conf_v1.VirtualServerRoute
 				err := copier.CopyWithOption(&curVsrCopy, curVsr, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", curVsr.Name, err)
+					nl.Debugf(lbc.logger, "Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", curVsr.Name, err)
 					return
 				}
 
 				err = copier.CopyWithOption(&oldVsrCopy, oldVsr, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", oldVsr.Name, err)
+					nl.Debugf(lbc.logger, "Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", oldVsr.Name, err)
 					return
 				}
 
@@ -215,7 +216,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			}
 
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
-				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
+				nl.Debugf(lbc.logger, "VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
 			}
 		},
@@ -223,10 +224,10 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 }
 
 // areResourcesDifferent returns true if the resources are different based on their spec.
-func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bool, error) {
+func areResourcesDifferent(l *slog.Logger, oldresource, resource *unstructured.Unstructured) (bool, error) {
 	oldSpec, found, err := unstructured.NestedMap(oldresource.Object, "spec")
 	if !found {
-		glog.V(3).Infof("Warning, oldspec has unexpected format")
+		nl.Debugf(l, "Warning, oldspec has unexpected format")
 	}
 	if err != nil {
 		return false, err
@@ -240,7 +241,7 @@ func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bo
 	}
 	eq := reflect.DeepEqual(oldSpec, spec)
 	if eq {
-		glog.V(3).Infof("New spec of %v same as old spec", oldresource.GetName())
+		nl.Debugf(l, "New spec of %v same as old spec", oldresource.GetName())
 	}
 	return !eq, nil
 }

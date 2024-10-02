@@ -25,7 +25,7 @@ func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceE
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldPol := oldObj.(*unstructured.Unstructured)
 			newPol := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldPol, newPol)
+			different, err := areResourcesDifferent(lbc.logger, oldPol, newPol)
 			if err != nil {
 				nl.Debugf(lbc.logger, "Error when comparing policy %v", err)
 				lbc.AddSyncQueue(newPol)
@@ -52,7 +52,7 @@ func createAppProtectLogConfHandlers(lbc *LoadBalancerController) cache.Resource
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldConf := oldObj.(*unstructured.Unstructured)
 			newConf := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldConf, newConf)
+			different, err := areResourcesDifferent(lbc.logger, oldConf, newConf)
 			if err != nil {
 				nl.Debugf(lbc.logger, "Error when comparing LogConfs %v", err)
 				lbc.AddSyncQueue(newConf)
@@ -79,7 +79,7 @@ func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.Resource
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldSig := oldObj.(*unstructured.Unstructured)
 			newSig := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldSig, newSig)
+			different, err := areResourcesDifferent(lbc.logger, oldSig, newSig)
 			if err != nil {
 				nl.Debugf(lbc.logger, "Error when comparing UserSigs %v", err)
 				lbc.AddSyncQueue(newSig)
