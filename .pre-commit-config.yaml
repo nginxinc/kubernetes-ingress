@@ -1,6 +1,6 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-exclude: (^docs/_vendor/|.*pb2.*)
+exclude: (^site/_vendor/|.*pb2.*)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
@@ -8,7 +8,7 @@ repos:
       - id: trailing-whitespace
         exclude: '(\.md|\.snap|\.avdl)$'
       - id: end-of-file-fixer
-        exclude: docs/layouts/shortcodes/nic-.*.html
+        exclude: site/layouts/shortcodes/nic-.*.html
       - id: check-yaml
         args: [--allow-multiple-documents]
         exclude: ^(charts/nginx-ingress/templates)
