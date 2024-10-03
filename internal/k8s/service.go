@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/golang/glog"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -23,7 +23,7 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 		AddFunc: func(obj interface{}) {
 			svc := obj.(*v1.Service)
 
-			glog.V(3).Infof("Adding service: %v", svc.Name)
+			nl.Infof(lbc.logger, "Adding service: %v", svc.Name)
 			lbc.AddSyncQueue(svc)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -31,17 +31,17 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			if !isSvc {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Infof(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				svc, ok = deletedState.Obj.(*v1.Service)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Service object: %v", deletedState.Obj)
+					nl.Infof(lbc.logger, "Error DeletedFinalStateUnknown contained non-Service object: %v", deletedState.Obj)
 					return
 				}
 			}
 
-			glog.V(3).Infof("Removing service: %v", svc.Name)
+			nl.Infof(lbc.logger, "Removing service: %v", svc.Name)
 			lbc.AddSyncQueue(svc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -53,7 +53,7 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 				}
 				oldSvc := old.(*v1.Service)
 				if hasServiceChanges(oldSvc, curSvc) {
-					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
+					nl.Infof(lbc.logger, "Service %v changed, syncing", curSvc.Name)
 					lbc.AddSyncQueue(curSvc)
 				}
 			}
@@ -139,7 +139,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	// In that case we need to update the statuses of all resources
 
 	if lbc.IsExternalServiceKeyForStatus(key) {
-		glog.V(3).Infof("Syncing service %v", key)
+		nl.Infof(lbc.logger, "Syncing service %v", key)
 
 		if !exists {
 			// service got removed
@@ -152,22 +152,22 @@ func (lbc *LoadBalancerController) syncService(task task) {
 		if lbc.reportStatusEnabled() {
 			ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
 
-			glog.V(3).Infof("Updating status for %v Ingresses", len(ingresses))
+			nl.Infof(lbc.logger, "Updating status for %v Ingresses", len(ingresses))
 
 			err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
 			if err != nil {
-				glog.Errorf("error updating ingress status in syncService: %v", err)
+				nl.Errorf(lbc.logger, "error updating ingress status in syncService: %v", err)
 			}
 		}
 
 		if lbc.areCustomResourcesEnabled && lbc.reportCustomResourceStatusEnabled() {
 			virtualServers := lbc.configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
 
-			glog.V(3).Infof("Updating status for %v VirtualServers", len(virtualServers))
+			nl.Infof(lbc.logger, "Updating status for %v VirtualServers", len(virtualServers))
 
 			err := lbc.statusUpdater.UpdateExternalEndpointsForResources(virtualServers)
 			if err != nil {
-				glog.V(3).Infof("error updating VirtualServer/VirtualServerRoute status in syncService: %v", err)
+				nl.Infof(lbc.logger, "error updating VirtualServer/VirtualServerRoute status in syncService: %v", err)
 			}
 		}
 
@@ -184,9 +184,9 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	if len(resources) == 0 {
 		return
 	}
-	glog.V(3).Infof("Syncing service %v", key)
+	nl.Infof(lbc.logger, "Syncing service %v", key)
 
-	glog.V(3).Infof("Updating %v resources", len(resources))
+	nl.Infof(lbc.logger, "Updating %v resources", len(resources))
 
 	resourceExes := lbc.createExtendedResources(resources)
 

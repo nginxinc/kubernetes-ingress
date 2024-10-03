@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/golang/glog"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	api_v1 "k8s.io/api/core/v1"
@@ -15,7 +15,7 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pol := obj.(*conf_v1.Policy)
-			glog.V(3).Infof("Adding Policy: %v", pol.Name)
+			nl.Debugf(lbc.logger, "Adding Policy: %v", pol.Name)
 			lbc.AddSyncQueue(pol)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -23,23 +23,23 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			if !isPol {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				pol, ok = deletedState.Obj.(*conf_v1.Policy)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Policy object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-Policy object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing Policy: %v", pol.Name)
+			nl.Debugf(lbc.logger, "Removing Policy: %v", pol.Name)
 			lbc.AddSyncQueue(pol)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curPol := cur.(*conf_v1.Policy)
 			oldPol := old.(*conf_v1.Policy)
 			if !reflect.DeepEqual(oldPol.Spec, curPol.Spec) {
-				glog.V(3).Infof("Policy %v changed, syncing", curPol.Name)
+				nl.Debugf(lbc.logger, "Policy %v changed, syncing", curPol.Name)
 				lbc.AddSyncQueue(curPol)
 			}
 		},
@@ -67,7 +67,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 		return
 	}
 
-	glog.V(2).Infof("Adding, Updating or Deleting Policy: %v\n", key)
+	nl.Debugf(lbc.logger, "Adding, Updating or Deleting Policy: %v\n", key)
 
 	if polExists && lbc.HasCorrectIngressClass(obj) {
 		pol := obj.(*conf_v1.Policy)
@@ -79,7 +79,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 			if lbc.reportCustomResourceStatusEnabled() {
 				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
 				if err != nil {
-					glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
+					nl.Debugf(lbc.logger, "Failed to update policy %s status: %v", key, err)
 				}
 			}
 		} else {
@@ -89,7 +89,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 			if lbc.reportCustomResourceStatusEnabled() {
 				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
 				if err != nil {
-					glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
+					nl.Debugf(lbc.logger, "Failed to update policy %s status: %v", key, err)
 				}
 			}
 		}

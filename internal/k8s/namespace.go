@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/golang/glog"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
@@ -16,7 +16,7 @@ func createNamespaceHandlers(lbc *LoadBalancerController) cache.ResourceEventHan
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ns := obj.(*api_v1.Namespace)
-			glog.V(3).Infof("Adding Namespace to list of watched Namespaces: %v", ns.Name)
+			nl.Debugf(lbc.logger, "Adding Namespace to list of watched Namespaces: %v", ns.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -24,21 +24,21 @@ func createNamespaceHandlers(lbc *LoadBalancerController) cache.ResourceEventHan
 			if !isNs {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				ns, ok = deletedState.Obj.(*api_v1.Namespace)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Namespace object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-Namespace object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing Namespace from list of watched Namespaces: %v", ns.Name)
+			nl.Debugf(lbc.logger, "Removing Namespace from list of watched Namespaces: %v", ns.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Namespace %v changed, syncing", cur.(*api_v1.Namespace).Name)
+				nl.Debugf(lbc.logger, "Namespace %v changed, syncing", cur.(*api_v1.Namespace).Name)
 				lbc.AddSyncQueue(cur)
 			}
 		},
@@ -72,7 +72,7 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 
 		if ns != nil && ns.Status.Phase == api_v1.NamespaceActive {
 			// namespace still exists
-			glog.Infof("Removing Configuration for Unwatched Namespace: %v", key)
+			nl.Infof(lbc.logger, "Removing Configuration for Unwatched Namespace: %v", key)
 			// Watched label for namespace was removed
 			// delete any now unwatched namespaced informer groups if required
 			nsi := lbc.getNamespacedInformer(key)
@@ -81,7 +81,7 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 				delete(lbc.namespacedInformers, key)
 			}
 		} else {
-			glog.Infof("Deleting Watchers for Deleted Namespace: %v", key)
+			nl.Infof(lbc.logger, "Deleting Watchers for Deleted Namespace: %v", key)
 			nsi := lbc.getNamespacedInformer(key)
 			if nsi != nil {
 				lbc.removeNamespacedInformer(nsi, key)
@@ -98,10 +98,10 @@ func (lbc *LoadBalancerController) syncNamespace(task task) {
 		// if not create new namespaced informer group
 		// update cert-manager informer group if required
 		// update external-dns informer group if required
-		glog.V(3).Infof("Adding or Updating Watched Namespace: %v", key)
+		nl.Debugf(lbc.logger, "Adding or Updating Watched Namespace: %v", key)
 		nsi := lbc.getNamespacedInformer(key)
 		if nsi == nil {
-			glog.Infof("Adding New Watched Namespace: %v", key)
+			nl.Infof(lbc.logger, "Adding New Watched Namespace: %v", key)
 			nsi = lbc.newNamespacedInformer(key)
 			nsi.start()
 		}
