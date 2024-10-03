@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
@@ -18,8 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/golang/glog"
 )
 
 // Option is a functional option used for configuring TraceReporter.
@@ -48,6 +47,9 @@ type Collector struct {
 
 // CollectorConfig contains configuration options for a Collector
 type CollectorConfig struct {
+	// Context to hold the logger
+	Context context.Context
+
 	// Period to collect telemetry
 	Period time.Duration
 
@@ -112,10 +114,11 @@ func (c *Collector) Start(ctx context.Context) {
 // Collect collects and exports telemetry data.
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
-	glog.V(3).Info("Collecting telemetry data")
+	l := nl.LoggerFromContext(c.Config.Context)
+	nl.Debug(l, "Collecting telemetry data")
 	report, err := c.BuildReport(ctx)
 	if err != nil {
-		glog.Errorf("Error collecting telemetry data: %v", err)
+		nl.Errorf(l, "Error collecting telemetry data: %v", err)
 	}
 
 	nicData := Data{
@@ -163,9 +166,9 @@ func (c *Collector) Collect(ctx context.Context) {
 
 	err = c.Exporter.Export(ctx, &nicData)
 	if err != nil {
-		glog.Errorf("Error exporting telemetry data: %v", err)
+		nl.Errorf(l, "Error exporting telemetry data: %v", err)
 	}
-	glog.V(3).Infof("Telemetry data collected: %+v", nicData)
+	nl.Debugf(l, "Telemetry data collected: %+v", nicData)
 }
 
 // Report holds collected NIC telemetry data. It is the package internal
@@ -212,6 +215,7 @@ type Report struct {
 
 // BuildReport takes context, collects telemetry data and builds the report.
 func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
+	l := nl.LoggerFromContext(c.Config.Context)
 	vsCount := 0
 	vsrCount := 0
 	tsCount := 0
@@ -224,37 +228,37 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 
 	clusterID, err := c.ClusterID(ctx)
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: ClusterID: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: ClusterID: %v", err)
 	}
 
 	nodes, err := c.NodeCount(ctx)
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: Nodes: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: Nodes: %v", err)
 	}
 
 	version, err := c.ClusterVersion()
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: K8s Version: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: K8s Version: %v", err)
 	}
 
 	platform, err := c.Platform(ctx)
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: Platform: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: Platform: %v", err)
 	}
 
 	replicas, err := c.ReplicaCount(ctx)
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: Replicas: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: Replicas: %v", err)
 	}
 
 	installationID, err := c.InstallationID(ctx)
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: InstallationID: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: InstallationID: %v", err)
 	}
 
 	secretCount, err := c.Secrets()
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: Secrets: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: Secrets: %v", err)
 	}
 
 	regularIngressCount := c.RegularIngressCount()
@@ -262,7 +266,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	minionIngressCount := c.MinionIngressCount()
 	ingressClassCount, err := c.IngressClassCount(ctx)
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: Ingress Classes: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: Ingress Classes: %v", err)
 	}
 
 	var (
@@ -296,7 +300,7 @@ func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
 	installationFlags := c.InstallationFlags()
 	serviceCounts, err := c.ServiceCounts()
 	if err != nil {
-		glog.V(3).Infof("Unable to collect telemetry data: Service Counts: %v", err)
+		nl.Debugf(l, "Unable to collect telemetry data: Service Counts: %v", err)
 	}
 	clusterIPServices := serviceCounts["ClusterIP"]
 	nodePortServices := serviceCounts["NodePort"]
