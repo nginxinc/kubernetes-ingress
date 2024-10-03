@@ -1,6 +1,8 @@
 package configs
 
 import (
+	"context"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
@@ -9,6 +11,7 @@ import (
 // ConfigParams holds NGINX configuration parameters that affect the main NGINX config
 // as well as configs for Ingress resources.
 type ConfigParams struct {
+	Context                                context.Context
 	ClientMaxBodySize                      string
 	DefaultServerAccessLogOff              bool
 	DefaultServerReturn                    string

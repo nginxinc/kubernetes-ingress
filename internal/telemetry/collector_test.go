@@ -2360,7 +2360,7 @@ func newConfigurator(t *testing.T) *configs.Configurator {
 		IsPrometheusEnabled:     false,
 		IsLatencyMetricsEnabled: false,
 	})
-
+	cnf.CfgParams.Context = context.Background()
 	return cnf
 }
 

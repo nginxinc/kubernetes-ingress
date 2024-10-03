@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"reflect"
@@ -59,6 +60,7 @@ func createTestConfigurator(t *testing.T) *Configurator {
 		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 	})
 	cnf.isReloadsEnabled = true
+	cnf.CfgParams.Context = context.Background()
 	return cnf
 }
 
@@ -89,6 +91,7 @@ func createTestConfiguratorInvalidIngressTemplate(t *testing.T) *Configurator {
 		IsLatencyMetricsEnabled: false,
 	})
 	cnf.isReloadsEnabled = true
+	cnf.CfgParams.Context = context.Background()
 	return cnf
 }
 

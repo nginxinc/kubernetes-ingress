@@ -1,18 +1,21 @@
 package configs
 
 import (
+	"context"
 	"strings"
 
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
 //
 //nolint:gocyclo
-func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool) *ConfigParams {
+func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool) *ConfigParams {
+	l := nl.LoggerFromContext(ctx)
 	cfgParams := NewDefaultConfigParams(nginxPlus)
 
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
@@ -20,7 +23,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			if nginxPlus {
 				cfgParams.ServerTokens = cfgm.Data["server-tokens"]
 			} else {
-				glog.Error(err)
+				nl.Error(l, err)
 			}
 		} else {
 			cfgParams.ServerTokens = "off"
@@ -33,13 +36,13 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 	if lbMethod, exists := cfgm.Data["lb-method"]; exists {
 		if nginxPlus {
 			if parsedMethod, err := ParseLBMethodForPlus(lbMethod); err != nil {
-				glog.Errorf("Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
+				nl.Errorf(l, "Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
 			} else {
 				cfgParams.LBMethod = parsedMethod
 			}
 		} else {
 			if parsedMethod, err := ParseLBMethod(lbMethod); err != nil {
-				glog.Errorf("Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
+				nl.Errorf(l, "Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
 			} else {
 				cfgParams.LBMethod = parsedMethod
 			}
@@ -88,7 +91,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if HTTP2, exists, err := GetMapKeyAsBool(cfgm.Data, "http2", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.HTTP2 = HTTP2
 		}
@@ -96,7 +99,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if redirectToHTTPS, exists, err := GetMapKeyAsBool(cfgm.Data, "redirect-to-https", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.RedirectToHTTPS = redirectToHTTPS
 		}
@@ -104,7 +107,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if sslRedirect, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-redirect", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.SSLRedirect = sslRedirect
 		}
@@ -112,28 +115,28 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if hsts, exists, err := GetMapKeyAsBool(cfgm.Data, "hsts", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			parsingErrors := false
 
 			hstsMaxAge, existsMA, err := GetMapKeyAsInt64(cfgm.Data, "hsts-max-age", cfgm)
 			if existsMA && err != nil {
-				glog.Error(err)
+				nl.Error(l, err)
 				parsingErrors = true
 			}
 			hstsIncludeSubdomains, existsIS, err := GetMapKeyAsBool(cfgm.Data, "hsts-include-subdomains", cfgm)
 			if existsIS && err != nil {
-				glog.Error(err)
+				nl.Error(l, err)
 				parsingErrors = true
 			}
 			hstsBehindProxy, existsBP, err := GetMapKeyAsBool(cfgm.Data, "hsts-behind-proxy", cfgm)
 			if existsBP && err != nil {
-				glog.Error(err)
+				nl.Error(l, err)
 				parsingErrors = true
 			}
 
 			if parsingErrors {
-				glog.Errorf("Configmap %s/%s: There are configuration issues with hsts annotations, skipping options for all hsts settings", cfgm.GetNamespace(), cfgm.GetName())
+				nl.Errorf(l, "Configmap %s/%s: There are configuration issues with hsts annotations, skipping options for all hsts settings", cfgm.GetNamespace(), cfgm.GetName())
 			} else {
 				cfgParams.HSTS = hsts
 				if existsMA {
@@ -151,7 +154,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if proxyProtocol, exists, err := GetMapKeyAsBool(cfgm.Data, "proxy-protocol", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.ProxyProtocol = proxyProtocol
 		}
@@ -163,7 +166,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			if realIPHeader == "proxy_protocol" {
 				glog.Infof(msg, cfgm.GetNamespace(), cfgm.GetName())
 			} else {
-				glog.Errorf(msg, cfgm.GetNamespace(), cfgm.GetName())
+				nl.Errorf(l, msg, cfgm.GetNamespace(), cfgm.GetName())
 			}
 		} else {
 			cfgParams.RealIPHeader = realIPHeader
@@ -176,7 +179,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if realIPRecursive, exists, err := GetMapKeyAsBool(cfgm.Data, "real-ip-recursive", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.RealIPRecursive = realIPRecursive
 		}
@@ -188,7 +191,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if sslPreferServerCiphers, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-prefer-server-ciphers", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.MainServerSSLPreferServerCiphers = sslPreferServerCiphers
 		}
@@ -217,7 +220,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if accessLogOff, exists, err := GetMapKeyAsBool(cfgm.Data, "access-log-off", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			if accessLogOff {
 				cfgParams.MainAccessLog = "off"
@@ -249,7 +252,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if defaultServerAccessLogOff, exists, err := GetMapKeyAsBool(cfgm.Data, "default-server-access-log-off", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.DefaultServerAccessLogOff = defaultServerAccessLogOff
 		}
@@ -261,7 +264,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if proxyBuffering, exists, err := GetMapKeyAsBool(cfgm.Data, "proxy-buffering", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.ProxyBuffering = proxyBuffering
 		}
@@ -297,7 +300,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if _, exists, err := GetMapKeyAsInt(cfgm.Data, "worker-processes", cfgm); exists {
 		if err != nil && cfgm.Data["worker-processes"] != "auto" {
-			glog.Errorf("Configmap %s/%s: Invalid value for worker-processes key: must be an integer or the string 'auto', got %q", cfgm.GetNamespace(), cfgm.GetName(), cfgm.Data["worker-processes"])
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for worker-processes key: must be an integer or the string 'auto', got %q", cfgm.GetNamespace(), cfgm.GetName(), cfgm.Data["worker-processes"])
 		} else {
 			cfgParams.MainWorkerProcesses = cfgm.Data["worker-processes"]
 		}
@@ -321,7 +324,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if keepalive, exists, err := GetMapKeyAsInt(cfgm.Data, "keepalive", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.Keepalive = keepalive
 		}
@@ -329,7 +332,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if maxFails, exists, err := GetMapKeyAsInt(cfgm.Data, "max-fails", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.MaxFails = maxFails
 		}
@@ -373,7 +376,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if resolverIpv6, exists, err := GetMapKeyAsBool(cfgm.Data, "resolver-ipv6", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			if nginxPlus {
 				cfgParams.ResolverIPV6 = resolverIpv6
@@ -405,7 +408,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if keepaliveRequests, exists, err := GetMapKeyAsInt64(cfgm.Data, "keepalive-requests", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.MainKeepaliveRequests = keepaliveRequests
 		}
@@ -413,7 +416,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if varHashBucketSize, exists, err := GetMapKeyAsUint64(cfgm.Data, "variables-hash-bucket-size", cfgm, true); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.VariablesHashBucketSize = varHashBucketSize
 		}
@@ -421,7 +424,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if varHashMaxSize, exists, err := GetMapKeyAsUint64(cfgm.Data, "variables-hash-max-size", cfgm, false); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			cfgParams.VariablesHashMaxSize = varHashMaxSize
 		}
@@ -441,12 +444,12 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if openTracing, exists, err := GetMapKeyAsBool(cfgm.Data, "opentracing", cfgm); exists {
 		if err != nil {
-			glog.Error(err)
+			nl.Error(l, err)
 		} else {
 			if cfgParams.MainOpenTracingLoadModule {
 				cfgParams.MainOpenTracingEnabled = openTracing
 			} else {
-				glog.Error("ConfigMap Key 'opentracing' requires both 'opentracing-tracer' and 'opentracing-tracer-config' Keys configured, Opentracing will be disabled")
+				nl.Error(l, "ConfigMap Key 'opentracing' requires both 'opentracing-tracer' and 'opentracing-tracer-config' Keys configured, Opentracing will be disabled")
 			}
 		}
 	}
@@ -456,7 +459,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			if appProtectFailureModeAction == "pass" || appProtectFailureModeAction == "drop" {
 				cfgParams.MainAppProtectFailureModeAction = appProtectFailureModeAction
 			} else {
-				glog.Error("ConfigMap Key 'app-protect-failure-mode-action' must have value 'pass' or 'drop'. Ignoring.")
+				nl.Error(l, "ConfigMap Key 'app-protect-failure-mode-action' must have value 'pass' or 'drop'. Ignoring.")
 			}
 		}
 
@@ -464,7 +467,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			if appProtectCompressedRequestsAction == "pass" || appProtectCompressedRequestsAction == "drop" {
 				cfgParams.MainAppProtectCompressedRequestsAction = appProtectCompressedRequestsAction
 			} else {
-				glog.Error("ConfigMap Key 'app-protect-compressed-requests-action' must have value 'pass' or 'drop'. Ignoring.")
+				nl.Error(l, "ConfigMap Key 'app-protect-compressed-requests-action' must have value 'pass' or 'drop'. Ignoring.")
 			}
 		}
 
@@ -476,7 +479,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			if VerifyAppProtectThresholds(appProtectCPUThresholds) {
 				cfgParams.MainAppProtectCPUThresholds = appProtectCPUThresholds
 			} else {
-				glog.Error("ConfigMap Key 'app-protect-cpu-thresholds' must follow pattern: 'high=<0 - 100> low=<0 - 100>'. Ignoring.")
+				nl.Error(l, "ConfigMap Key 'app-protect-cpu-thresholds' must follow pattern: 'high=<0 - 100> low=<0 - 100>'. Ignoring.")
 			}
 		}
 
@@ -485,7 +488,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			if VerifyAppProtectThresholds(appProtectPhysicalMemoryThresholds) {
 				cfgParams.MainAppProtectPhysicalMemoryThresholds = appProtectPhysicalMemoryThresholds
 			} else {
-				glog.Error("ConfigMap Key 'app-protect-physical-memory-thresholds' must follow pattern: 'high=<0 - 100> low=<0 - 100>'. Ignoring.")
+				nl.Error(l, "ConfigMap Key 'app-protect-physical-memory-thresholds' must follow pattern: 'high=<0 - 100> low=<0 - 100>'. Ignoring.")
 			}
 		}
 		if appProtectReconnectPeriod, exists := cfgm.Data["app-protect-reconnect-period-seconds"]; exists {
@@ -493,7 +496,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			if err == nil && period > 0 && period <= 60 {
 				cfgParams.MainAppProtectReconnectPeriod = appProtectReconnectPeriod
 			} else {
-				glog.Error("ConfigMap Key 'app-protect-reconnect-period-second' must have value between '0' and '60'. '0' is illegal. Ignoring.")
+				nl.Error(l, "ConfigMap Key 'app-protect-reconnect-period-second' must have value between '0' and '60'. '0' is illegal. Ignoring.")
 			}
 		}
 	}
