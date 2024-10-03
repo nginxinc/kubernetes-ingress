@@ -283,11 +283,11 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	if input.CertManagerEnabled {
-		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient, isDynamicNs))
+		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(input.LoggerContext, lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient, isDynamicNs))
 	}
 
 	if input.ExternalDNSEnabled {
-		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
+		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(input.LoggerContext, lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod, isDynamicNs))
 	}
 
 	nl.Debugf(lbc.logger, "Nginx Ingress Controller has class: %v", input.IngressClass)

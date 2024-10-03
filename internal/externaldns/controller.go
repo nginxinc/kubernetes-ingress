@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	extdns_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
@@ -113,7 +113,9 @@ func (c *ExtDNSController) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(c.ctx)
 	defer cancel()
 
-	glog.Infof("Starting external-dns control loop")
+	l := nl.LoggerFromContext(ctx)
+
+	nl.Info(l, "Starting external-dns control loop")
 
 	var mustSync []cache.InformerSynced
 	for _, ig := range c.informerGroup {
@@ -122,17 +124,17 @@ func (c *ExtDNSController) Run(stopCh <-chan struct{}) {
 	}
 
 	// wait for all informer caches to be synced
-	glog.V(3).Infof("Waiting for %d caches to sync", len(mustSync))
+	nl.Debugf(l, "Waiting for %d caches to sync", len(mustSync))
 	if !cache.WaitForNamedCacheSync(ControllerName, stopCh, mustSync...) {
-		glog.Fatal("error syncing extDNS queue")
+		nl.Fatal(l, "error syncing extDNS queue")
 	}
 
-	glog.V(3).Infof("Queue is %v", c.queue.Len())
+	nl.Debugf(l, "Queue is %v", c.queue.Len())
 
 	go c.runWorker(ctx)
 
 	<-stopCh
-	glog.V(3).Infof("shutting down queue as workqueue signaled shutdown")
+	nl.Debugf(l, "shutting down queue as workqueue signaled shutdown")
 	for _, ig := range c.informerGroup {
 		ig.stop()
 	}
@@ -150,7 +152,8 @@ func (nsi *namespacedInformer) stop() {
 // runWorker is a long-running function that will continually call the processItem
 // function in order to read and process a message on the workqueue.
 func (c *ExtDNSController) runWorker(ctx context.Context) {
-	glog.V(3).Infof("processing items on the workqueue")
+	l := nl.LoggerFromContext(ctx)
+	nl.Debugf(l, "processing items on the workqueue")
 	for {
 		obj, shutdown := c.queue.Get()
 		if shutdown {
@@ -165,11 +168,11 @@ func (c *ExtDNSController) runWorker(ctx context.Context) {
 			}
 
 			if err := c.processItem(ctx, key); err != nil {
-				glog.V(3).Infof("Re-queuing item due to error processing: %v", err)
+				nl.Debugf(l, "Re-queuing item due to error processing: %v", err)
 				c.queue.AddRateLimited(obj)
 				return
 			}
-			glog.V(3).Infof("finished processing work item")
+			nl.Debugf(l, "finished processing work item")
 			c.queue.Forget(obj)
 		}()
 	}
@@ -181,6 +184,7 @@ func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return err
 	}
+	l := nl.LoggerFromContext(ctx)
 	var vs *conf_v1.VirtualServer
 	nsi := getNamespacedInformer(namespace, c.informerGroup)
 	vs, err = nsi.vsLister.VirtualServers(namespace).Get(name)
@@ -193,7 +197,7 @@ func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
 	if err != nil {
 		return err
 	}
-	glog.V(3).Infof("processing virtual server resource")
+	nl.Debugf(l, "processing virtual server resource")
 	return c.sync(ctx, vs)
 }
 
@@ -255,7 +259,8 @@ func getNamespacedInformer(ns string, ig map[string]*namespacedInformer) *namesp
 
 // AddNewNamespacedInformer adds watchers for a new namespace
 func (c *ExtDNSController) AddNewNamespacedInformer(ns string) {
-	glog.V(3).Infof("Adding or Updating cert-manager Watchers for Namespace: %v", ns)
+	l := nl.LoggerFromContext(c.ctx)
+	nl.Debugf(l, "Adding or Updating cert-manager Watchers for Namespace: %v", ns)
 	nsi := getNamespacedInformer(ns, c.informerGroup)
 	if nsi == nil {
 		nsi = c.newNamespacedInformer(ns)
@@ -268,7 +273,8 @@ func (c *ExtDNSController) AddNewNamespacedInformer(ns string) {
 
 // RemoveNamespacedInformer removes watchers for a namespace we are no longer watching
 func (c *ExtDNSController) RemoveNamespacedInformer(ns string) {
-	glog.V(3).Infof("Deleting cert-manager Watchers for Deleted Namespace: %v", ns)
+	l := nl.LoggerFromContext(c.ctx)
+	nl.Debugf(l, "Deleting cert-manager Watchers for Deleted Namespace: %v", ns)
 	nsi := getNamespacedInformer(ns, c.informerGroup)
 	if nsi != nil {
 		nsi.lock.Lock()
