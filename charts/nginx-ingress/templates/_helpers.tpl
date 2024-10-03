@@ -333,7 +333,7 @@ List of volumes for controller.
   emptyDir: {}
 {{- end }}
 {{- if .Values.controller.appprotect.v5 }}
-{{- toYaml .Values.controller.appprotect.volumes }}
+{{ toYaml .Values.controller.appprotect.volumes }}
 {{- end }}
 {{- if .Values.controller.volumes }}
 {{ toYaml .Values.controller.volumes }}
