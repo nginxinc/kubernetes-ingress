@@ -3,7 +3,7 @@ package k8s
 import (
 	"reflect"
 
-	"github.com/golang/glog"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
@@ -15,7 +15,7 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 		AddFunc: func(obj interface{}) {
 			configMap := obj.(*v1.ConfigMap)
 			if configMap.Name == name {
-				glog.V(3).Infof("Adding ConfigMap: %v", configMap.Name)
+				nl.Debugf(lbc.logger, "Adding ConfigMap: %v", configMap.Name)
 				lbc.AddSyncQueue(obj)
 			}
 		},
@@ -24,17 +24,17 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 			if !isConfigMap {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				configMap, ok = deletedState.Obj.(*v1.ConfigMap)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-ConfigMap object: %v", deletedState.Obj)
+					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-ConfigMap object: %v", deletedState.Obj)
 					return
 				}
 			}
 			if configMap.Name == name {
-				glog.V(3).Infof("Removing ConfigMap: %v", configMap.Name)
+				nl.Debugf(lbc.logger, "Removing ConfigMap: %v", configMap.Name)
 				lbc.AddSyncQueue(obj)
 			}
 		},
@@ -42,7 +42,7 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 			if !reflect.DeepEqual(old, cur) {
 				configMap := cur.(*v1.ConfigMap)
 				if configMap.Name == name {
-					glog.V(3).Infof("ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
+					nl.Debugf(lbc.logger, "ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
 					lbc.AddSyncQueue(cur)
 				}
 			}
@@ -68,7 +68,7 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 
 func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	key := task.Key
-	glog.V(3).Infof("Syncing configmap %v", key)
+	nl.Debugf(lbc.logger, "Syncing configmap %v", key)
 
 	obj, configExists, err := lbc.configMapLister.GetByKey(key)
 	if err != nil {
@@ -86,12 +86,12 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	}
 
 	if !lbc.isNginxReady {
-		glog.V(3).Infof("Skipping ConfigMap update because the pod is not ready yet")
+		nl.Debugf(lbc.logger, "Skipping ConfigMap update because the pod is not ready yet")
 		return
 	}
 
 	if lbc.batchSyncEnabled {
-		glog.V(3).Infof("Skipping ConfigMap update because batch sync is on")
+		nl.Debugf(lbc.logger, "Skipping ConfigMap update because batch sync is on")
 		return
 	}
 
