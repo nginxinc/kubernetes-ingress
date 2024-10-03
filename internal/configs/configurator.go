@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"os"
 	"strings"
+
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
