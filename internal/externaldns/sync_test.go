@@ -77,7 +77,7 @@ func TestGetValidTargets(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			targets, recordType, err := getValidTargets(tc.endpoints)
+			targets, recordType, err := getValidTargets(context.Background(), tc.endpoints)
 			if err != nil {
 				t.Fatal(err)
 			}
