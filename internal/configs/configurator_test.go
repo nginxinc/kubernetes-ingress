@@ -48,7 +48,7 @@ func createTestConfigurator(t *testing.T) *Configurator {
 	cnf := NewConfigurator(ConfiguratorParams{
 		NginxManager:            manager,
 		StaticCfgParams:         createTestStaticConfigParams(),
-		Config:                  NewDefaultConfigParams(false),
+		Config:                  NewDefaultConfigParams(context.Background(), false),
 		TemplateExecutor:        templateExecutor,
 		TemplateExecutorV2:      templateExecutorV2,
 		LatencyCollector:        nil,
@@ -80,7 +80,7 @@ func createTestConfiguratorInvalidIngressTemplate(t *testing.T) *Configurator {
 	cnf := NewConfigurator(ConfiguratorParams{
 		NginxManager:            manager,
 		StaticCfgParams:         createTestStaticConfigParams(),
-		Config:                  NewDefaultConfigParams(false),
+		Config:                  NewDefaultConfigParams(context.Background(), false),
 		TemplateExecutor:        templateExecutor,
 		TemplateExecutorV2:      &version2.TemplateExecutor{},
 		LatencyCollector:        nil,

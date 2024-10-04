@@ -13,7 +13,7 @@ func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventH
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			link := obj.(*unstructured.Unstructured)
-			nl.Debugf(lbc.logger, "Adding IngressLink: %v", link.GetName())
+			nl.Debugf(lbc.Logger, "Adding IngressLink: %v", link.GetName())
 			lbc.AddSyncQueue(link)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -22,29 +22,29 @@ func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventH
 			if !isUnstructured {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				link, ok = deletedState.Obj.(*unstructured.Unstructured)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-Unstructured object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-Unstructured object: %v", deletedState.Obj)
 					return
 				}
 			}
 
-			nl.Debugf(lbc.logger, "Removing IngressLink: %v", link.GetName())
+			nl.Debugf(lbc.Logger, "Removing IngressLink: %v", link.GetName())
 			lbc.AddSyncQueue(link)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			oldLink := old.(*unstructured.Unstructured)
 			curLink := cur.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(lbc.logger, oldLink, curLink)
+			different, err := areResourcesDifferent(lbc.Logger, oldLink, curLink)
 			if err != nil {
-				nl.Debugf(lbc.logger, "Error when comparing IngressLinks: %v", err)
+				nl.Debugf(lbc.Logger, "Error when comparing IngressLinks: %v", err)
 				lbc.AddSyncQueue(curLink)
 			}
 			if different {
-				nl.Debugf(lbc.logger, "IngressLink %v changed, syncing", oldLink.GetName())
+				nl.Debugf(lbc.Logger, "IngressLink %v changed, syncing", oldLink.GetName())
 				lbc.AddSyncQueue(curLink)
 			}
 		},
@@ -69,7 +69,7 @@ func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.Resource
 
 func (lbc *LoadBalancerController) syncIngressLink(task task) {
 	key := task.Key
-	nl.Debugf(lbc.logger, "Adding, Updating or Deleting IngressLink: %v", key)
+	nl.Debugf(lbc.Logger, "Adding, Updating or Deleting IngressLink: %v", key)
 
 	obj, exists, err := lbc.ingressLinkLister.GetByKey(key)
 	if err != nil {
@@ -87,13 +87,13 @@ func (lbc *LoadBalancerController) syncIngressLink(task task) {
 		// spec.virtualServerAddress contains the IP of the BIG-IP device
 		ip, found, err := unstructured.NestedString(link.Object, "spec", "virtualServerAddress")
 		if err != nil {
-			nl.Errorf(lbc.logger, "Failed to get virtualServerAddress from IngressLink %s: %v", key, err)
+			nl.Errorf(lbc.Logger, "Failed to get virtualServerAddress from IngressLink %s: %v", key, err)
 			lbc.statusUpdater.ClearStatusFromIngressLink()
 		} else if !found {
-			nl.Errorf(lbc.logger, "virtualServerAddress is not found in IngressLink %s", key)
+			nl.Errorf(lbc.Logger, "virtualServerAddress is not found in IngressLink %s", key)
 			lbc.statusUpdater.ClearStatusFromIngressLink()
 		} else if ip == "" {
-			nl.Warnf(lbc.logger, "IngressLink %s has the empty virtualServerAddress field", key)
+			nl.Warnf(lbc.Logger, "IngressLink %s has the empty virtualServerAddress field", key)
 			lbc.statusUpdater.ClearStatusFromIngressLink()
 		} else {
 			lbc.statusUpdater.SaveStatusFromIngressLink(ip)
@@ -103,22 +103,22 @@ func (lbc *LoadBalancerController) syncIngressLink(task task) {
 	if lbc.reportStatusEnabled() {
 		ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
 
-		nl.Debugf(lbc.logger, "Updating status for %v Ingresses", len(ingresses))
+		nl.Debugf(lbc.Logger, "Updating status for %v Ingresses", len(ingresses))
 
 		err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
 		if err != nil {
-			nl.Errorf(lbc.logger, "Error updating ingress status in syncIngressLink: %v", err)
+			nl.Errorf(lbc.Logger, "Error updating ingress status in syncIngressLink: %v", err)
 		}
 	}
 
 	if lbc.areCustomResourcesEnabled && lbc.reportCustomResourceStatusEnabled() {
 		virtualServers := lbc.configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
 
-		nl.Debugf(lbc.logger, "Updating status for %v VirtualServers", len(virtualServers))
+		nl.Debugf(lbc.Logger, "Updating status for %v VirtualServers", len(virtualServers))
 
 		err := lbc.statusUpdater.UpdateExternalEndpointsForResources(virtualServers)
 		if err != nil {
-			nl.Debugf(lbc.logger, "Error updating VirtualServer/VirtualServerRoute status in syncIngressLink: %v", err)
+			nl.Debugf(lbc.Logger, "Error updating VirtualServer/VirtualServerRoute status in syncIngressLink: %v", err)
 		}
 	}
 }

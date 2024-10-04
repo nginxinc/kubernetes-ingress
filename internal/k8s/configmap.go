@@ -15,7 +15,7 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 		AddFunc: func(obj interface{}) {
 			configMap := obj.(*v1.ConfigMap)
 			if configMap.Name == name {
-				nl.Debugf(lbc.logger, "Adding ConfigMap: %v", configMap.Name)
+				nl.Debugf(lbc.Logger, "Adding ConfigMap: %v", configMap.Name)
 				lbc.AddSyncQueue(obj)
 			}
 		},
@@ -24,17 +24,17 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 			if !isConfigMap {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				configMap, ok = deletedState.Obj.(*v1.ConfigMap)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-ConfigMap object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-ConfigMap object: %v", deletedState.Obj)
 					return
 				}
 			}
 			if configMap.Name == name {
-				nl.Debugf(lbc.logger, "Removing ConfigMap: %v", configMap.Name)
+				nl.Debugf(lbc.Logger, "Removing ConfigMap: %v", configMap.Name)
 				lbc.AddSyncQueue(obj)
 			}
 		},
@@ -42,7 +42,7 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 			if !reflect.DeepEqual(old, cur) {
 				configMap := cur.(*v1.ConfigMap)
 				if configMap.Name == name {
-					nl.Debugf(lbc.logger, "ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
+					nl.Debugf(lbc.Logger, "ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
 					lbc.AddSyncQueue(cur)
 				}
 			}
@@ -68,7 +68,7 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 
 func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	key := task.Key
-	nl.Debugf(lbc.logger, "Syncing configmap %v", key)
+	nl.Debugf(lbc.Logger, "Syncing configmap %v", key)
 
 	obj, configExists, err := lbc.configMapLister.GetByKey(key)
 	if err != nil {
@@ -86,12 +86,12 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	}
 
 	if !lbc.isNginxReady {
-		nl.Debugf(lbc.logger, "Skipping ConfigMap update because the pod is not ready yet")
+		nl.Debugf(lbc.Logger, "Skipping ConfigMap update because the pod is not ready yet")
 		return
 	}
 
 	if lbc.batchSyncEnabled {
-		nl.Debugf(lbc.logger, "Skipping ConfigMap update because batch sync is on")
+		nl.Debugf(lbc.Logger, "Skipping ConfigMap update because batch sync is on")
 		return
 	}
 

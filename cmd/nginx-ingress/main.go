@@ -130,8 +130,7 @@ func main() {
 
 	mustProcessGlobalConfiguration(ctx)
 
-	cfgParams := configs.NewDefaultConfigParams(*nginxPlus)
-	cfgParams.Context = ctx
+	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
 	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
 
 	staticCfgParams := &configs.StaticConfigParams{
@@ -657,23 +656,22 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 }
 
 func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, cpcfg childProcesses) {
-	l := nl.LoggerFromContext(lbc.Context)
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
 	select {
 	case err := <-cpcfg.nginxDone:
 		if err != nil {
-			nl.Fatalf(l, "nginx command exited unexpectedly with status: %v", err)
+			nl.Fatalf(lbc.Logger, "nginx command exited unexpectedly with status: %v", err)
 		} else {
-			nl.Info(l, "nginx command exited successfully")
+			nl.Info(lbc.Logger, "nginx command exited successfully")
 		}
 	case err := <-cpcfg.aPPluginDone:
-		nl.Fatalf(l, "AppProtectPlugin command exited unexpectedly with status: %v", err)
+		nl.Fatalf(lbc.Logger, "AppProtectPlugin command exited unexpectedly with status: %v", err)
 	case err := <-cpcfg.aPDosDone:
-		nl.Fatalf(l, "AppProtectDosAgent command exited unexpectedly with status: %v", err)
+		nl.Fatalf(lbc.Logger, "AppProtectDosAgent command exited unexpectedly with status: %v", err)
 	case <-signalChan:
-		nl.Info(l, "Received SIGTERM, shutting down")
+		nl.Info(lbc.Logger, "Received SIGTERM, shutting down")
 		lbc.Stop()
 		nginxManager.Quit()
 		<-cpcfg.nginxDone
@@ -687,7 +685,7 @@ func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manag
 		}
 		listener.Stop()
 	}
-	nl.Info(l, "Exiting successfully")
+	nl.Info(lbc.Logger, "Exiting successfully")
 	os.Exit(0)
 }
 

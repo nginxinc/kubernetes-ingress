@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"context"
 	"testing"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +27,7 @@ func createTestConfiguratorBench() (*Configurator, error) {
 	cnf := NewConfigurator(ConfiguratorParams{
 		NginxManager:            manager,
 		StaticCfgParams:         createTestStaticConfigParams(),
-		Config:                  NewDefaultConfigParams(false),
+		Config:                  NewDefaultConfigParams(context.Background(), false),
 		TemplateExecutor:        templateExecutor,
 		TemplateExecutorV2:      templateExecutorV2,
 		LatencyCollector:        nil,

@@ -177,13 +177,14 @@ type Listener struct {
 }
 
 // NewDefaultConfigParams creates a ConfigParams with default values.
-func NewDefaultConfigParams(isPlus bool) *ConfigParams {
+func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 	upstreamZoneSize := "256k"
 	if isPlus {
 		upstreamZoneSize = "512k"
 	}
 
 	return &ConfigParams{
+		Context:                       ctx,
 		DefaultServerReturn:           "404",
 		ServerTokens:                  "on",
 		ProxyConnectTimeout:           "60s",

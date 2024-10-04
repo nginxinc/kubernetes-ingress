@@ -21,7 +21,7 @@ func TestGenerateNginxCfg(t *testing.T) {
 	t.Parallel()
 	cafeIngressEx := createCafeIngressEx()
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expected := createExpectedConfigForCafeIngressEx(isPlus)
@@ -60,7 +60,7 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 	}
 
 	isPlus := true
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expected := createExpectedConfigForCafeIngressEx(isPlus)
@@ -113,7 +113,7 @@ func TestGenerateNginxCfgForBasicAuth(t *testing.T) {
 	}
 
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expected := createExpectedConfigForCafeIngressEx(isPlus)
@@ -146,7 +146,7 @@ func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 	t.Parallel()
 	cafeIngressEx := createCafeIngressEx()
 	cafeIngressEx.SecretRefs["cafe-secret"].Error = errors.New("secret doesn't exist")
-	configParams := NewDefaultConfigParams(false)
+	configParams := NewDefaultConfigParams(context.Background(), false)
 	configParams.Context = context.Background()
 
 	result, resultWarnings := generateNginxCfg(NginxCfgParams{
@@ -181,7 +181,7 @@ func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
 	t.Parallel()
 	cafeIngressEx := createCafeIngressEx()
 	cafeIngressEx.Ingress.Spec.TLS[0].SecretName = ""
-	configParams := NewDefaultConfigParams(false)
+	configParams := NewDefaultConfigParams(context.Background(), false)
 	configParams.Context = context.Background()
 
 	result, warnings := generateNginxCfg(NginxCfgParams{
@@ -212,7 +212,7 @@ func TestGenerateNginxCfgWithIPV6Disabled(t *testing.T) {
 	t.Parallel()
 	cafeIngressEx := createCafeIngressEx()
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expected := createExpectedConfigForCafeIngressEx(isPlus)
@@ -479,7 +479,7 @@ func TestGenerateNginxCfgForMergeableIngresses(t *testing.T) {
 	isPlus := false
 	expected := createExpectedConfigForMergeableCafeIngress(isPlus)
 
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
@@ -514,7 +514,7 @@ func TestGenerateNginxConfigForCrossNamespaceMergeableIngresses(t *testing.T) {
 	}
 
 	expected := createExpectedConfigForCrossNamespaceMergeableCafeIngress()
-	configParams := NewDefaultConfigParams(false)
+	configParams := NewDefaultConfigParams(context.Background(), false)
 	configParams.Context = context.Background()
 
 	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
@@ -589,7 +589,7 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 
 	minionJwtKeyFileNames := make(map[string]string)
 	minionJwtKeyFileNames[objectMetaToFileName(&mergeableIngresses.Minions[0].Ingress.ObjectMeta)] = "/etc/nginx/secrets/default-coffee-jwk"
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
@@ -650,7 +650,7 @@ func TestGenerateNginxCfgForMergeableIngressesForBasicAuth(t *testing.T) {
 		Realm:  "Coffee",
 	}
 
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
@@ -683,7 +683,7 @@ func TestGenerateNginxCfgForMergeableIngressesWithUseClusterIP(t *testing.T) {
 	isPlus := false
 
 	expected := createExpectedConfigForMergeableCafeIngressWithUseClusterIP()
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
@@ -986,7 +986,7 @@ func TestGenerateNginxCfgWithUseClusterIP(t *testing.T) {
 	cafeIngressEx := createCafeIngressEx()
 	cafeIngressEx.Ingress.Annotations["nginx.org/use-cluster-ip"] = "true"
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expected := createExpectedConfigForCafeIngressWithUseClusterIP()
@@ -1031,7 +1031,7 @@ func TestGenerateNginxCfgWithUseClusterIPWithNamedPorts(t *testing.T) {
 	cafeIngressEx.Ingress.Spec.Rules[0].HTTP.Paths[0].Backend.Service.Port.Name = customPortName
 
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expected := createExpectedConfigForCafeIngressWithUseClusterIPNamedPorts()
@@ -1070,7 +1070,7 @@ func TestGenerateNginxCfgForLimitReq(t *testing.T) {
 	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-zone-size"] = "11m"
 
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expectedZones := []version1.LimitReqZone{
@@ -1127,7 +1127,7 @@ func TestGenerateNginxCfgForLimitReqDefaults(t *testing.T) {
 	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-delay"] = "80"
 
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expectedZones := []version1.LimitReqZone{
@@ -1230,7 +1230,7 @@ func TestGenerateNginxCfgForMergeableIngressesForLimitReq(t *testing.T) {
 
 	isPlus := false
 
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
@@ -1276,7 +1276,7 @@ func TestGenerateNginxCfgForLimitReqWithScaling(t *testing.T) {
 	cafeIngressEx.Ingress.Annotations["nginx.org/limit-req-scale"] = "true"
 
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expectedZones := []version1.LimitReqZone{
@@ -1384,7 +1384,7 @@ func TestGenerateNginxCfgForMergeableIngressesForLimitReqWithScaling(t *testing.
 
 	isPlus := false
 
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	result, warnings := generateNginxCfgForMergeableIngresses(NginxCfgParams{
@@ -1796,7 +1796,7 @@ func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 	t.Parallel()
 	cafeIngressEx := createCafeIngressEx()
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expected := createExpectedConfigForCafeIngressEx(isPlus)
@@ -1831,7 +1831,7 @@ func TestGenerateNginxCfgForInternalRoute(t *testing.T) {
 	cafeIngressEx := createCafeIngressEx()
 	cafeIngressEx.Ingress.Annotations[internalRouteAnnotation] = "true"
 	isPlus := false
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	expected := createExpectedConfigForCafeIngressEx(isPlus)
@@ -2315,7 +2315,7 @@ func TestGenerateNginxCfgForAppProtect(t *testing.T) {
 
 	isPlus := true
 
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 	apResources := &AppProtectResources{
 		AppProtectPolicy:   "/etc/nginx/waf/nac-policies/default_dataguard-alarm",
@@ -2378,7 +2378,7 @@ func TestGenerateNginxCfgForMergeableIngressesForAppProtect(t *testing.T) {
 	}
 
 	isPlus := true
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	apResources := &AppProtectResources{
@@ -2420,7 +2420,7 @@ func TestGenerateNginxCfgForAppProtectDos(t *testing.T) {
 	cafeIngressEx.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-resource"] = "dos-policy"
 
 	isPlus := true
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	dosResource := &appProtectDosResource{
@@ -2491,7 +2491,7 @@ func TestGenerateNginxCfgForMergeableIngressesForAppProtectDos(t *testing.T) {
 	}
 
 	isPlus := true
-	configParams := NewDefaultConfigParams(isPlus)
+	configParams := NewDefaultConfigParams(context.Background(), isPlus)
 	configParams.Context = context.Background()
 
 	configParams.Context = context.Background()

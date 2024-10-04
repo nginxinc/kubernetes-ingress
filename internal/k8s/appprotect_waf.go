@@ -19,19 +19,19 @@ func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceE
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pol := obj.(*unstructured.Unstructured)
-			nl.Debugf(lbc.logger, "Adding AppProtectPolicy: %v", pol.GetName())
+			nl.Debugf(lbc.Logger, "Adding AppProtectPolicy: %v", pol.GetName())
 			lbc.AddSyncQueue(pol)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldPol := oldObj.(*unstructured.Unstructured)
 			newPol := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(lbc.logger, oldPol, newPol)
+			different, err := areResourcesDifferent(lbc.Logger, oldPol, newPol)
 			if err != nil {
-				nl.Debugf(lbc.logger, "Error when comparing policy %v", err)
+				nl.Debugf(lbc.Logger, "Error when comparing policy %v", err)
 				lbc.AddSyncQueue(newPol)
 			}
 			if different {
-				nl.Debugf(lbc.logger, "ApPolicy %v changed, syncing", oldPol.GetName())
+				nl.Debugf(lbc.Logger, "ApPolicy %v changed, syncing", oldPol.GetName())
 				lbc.AddSyncQueue(newPol)
 			}
 		},
@@ -46,19 +46,19 @@ func createAppProtectLogConfHandlers(lbc *LoadBalancerController) cache.Resource
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			conf := obj.(*unstructured.Unstructured)
-			nl.Debugf(lbc.logger, "Adding AppProtectLogConf: %v", conf.GetName())
+			nl.Debugf(lbc.Logger, "Adding AppProtectLogConf: %v", conf.GetName())
 			lbc.AddSyncQueue(conf)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldConf := oldObj.(*unstructured.Unstructured)
 			newConf := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(lbc.logger, oldConf, newConf)
+			different, err := areResourcesDifferent(lbc.Logger, oldConf, newConf)
 			if err != nil {
-				nl.Debugf(lbc.logger, "Error when comparing LogConfs %v", err)
+				nl.Debugf(lbc.Logger, "Error when comparing LogConfs %v", err)
 				lbc.AddSyncQueue(newConf)
 			}
 			if different {
-				nl.Debugf(lbc.logger, "ApLogConf %v changed, syncing", oldConf.GetName())
+				nl.Debugf(lbc.Logger, "ApLogConf %v changed, syncing", oldConf.GetName())
 				lbc.AddSyncQueue(newConf)
 			}
 		},
@@ -73,19 +73,19 @@ func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.Resource
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			sig := obj.(*unstructured.Unstructured)
-			nl.Debugf(lbc.logger, "Adding AppProtectUserSig: %v", sig.GetName())
+			nl.Debugf(lbc.Logger, "Adding AppProtectUserSig: %v", sig.GetName())
 			lbc.AddSyncQueue(sig)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldSig := oldObj.(*unstructured.Unstructured)
 			newSig := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(lbc.logger, oldSig, newSig)
+			different, err := areResourcesDifferent(lbc.Logger, oldSig, newSig)
 			if err != nil {
-				nl.Debugf(lbc.logger, "Error when comparing UserSigs %v", err)
+				nl.Debugf(lbc.Logger, "Error when comparing UserSigs %v", err)
 				lbc.AddSyncQueue(newSig)
 			}
 			if different {
-				nl.Debugf(lbc.logger, "ApUserSig %v changed, syncing", oldSig.GetName())
+				nl.Debugf(lbc.Logger, "ApUserSig %v changed, syncing", oldSig.GetName())
 				lbc.AddSyncQueue(newSig)
 			}
 		},
@@ -125,7 +125,7 @@ func (nsi *namespacedInformer) addAppProtectUserSigHandler(handlers cache.Resour
 
 func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 	key := task.Key
-	nl.Debugf(lbc.logger, "Syncing AppProtectPolicy %v", key)
+	nl.Debugf(lbc.Logger, "Syncing AppProtectPolicy %v", key)
 
 	var obj interface{}
 	var polExists bool
@@ -142,11 +142,11 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 	var problems []appprotect.Problem
 
 	if !polExists {
-		nl.Debugf(lbc.logger, "Deleting AppProtectPolicy: %v\n", key)
+		nl.Debugf(lbc.Logger, "Deleting AppProtectPolicy: %v\n", key)
 
 		changes, problems = lbc.appProtectConfiguration.DeletePolicy(key)
 	} else {
-		nl.Debugf(lbc.logger, "Adding or Updating AppProtectPolicy: %v\n", key)
+		nl.Debugf(lbc.Logger, "Adding or Updating AppProtectPolicy: %v\n", key)
 
 		changes, problems = lbc.appProtectConfiguration.AddOrUpdatePolicy(obj.(*unstructured.Unstructured))
 	}
@@ -157,7 +157,7 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 
 func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 	key := task.Key
-	nl.Debugf(lbc.logger, "Syncing AppProtectLogConf %v", key)
+	nl.Debugf(lbc.Logger, "Syncing AppProtectLogConf %v", key)
 	var obj interface{}
 	var confExists bool
 	var err error
@@ -173,11 +173,11 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 	var problems []appprotect.Problem
 
 	if !confExists {
-		nl.Debugf(lbc.logger, "Deleting AppProtectLogConf: %v\n", key)
+		nl.Debugf(lbc.Logger, "Deleting AppProtectLogConf: %v\n", key)
 
 		changes, problems = lbc.appProtectConfiguration.DeleteLogConf(key)
 	} else {
-		nl.Debugf(lbc.logger, "Adding or Updating AppProtectLogConf: %v\n", key)
+		nl.Debugf(lbc.Logger, "Adding or Updating AppProtectLogConf: %v\n", key)
 
 		changes, problems = lbc.appProtectConfiguration.AddOrUpdateLogConf(obj.(*unstructured.Unstructured))
 	}
@@ -188,7 +188,7 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 
 func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {
 	key := task.Key
-	nl.Debugf(lbc.logger, "Syncing AppProtectUserSig %v", key)
+	nl.Debugf(lbc.Logger, "Syncing AppProtectUserSig %v", key)
 	var obj interface{}
 	var sigExists bool
 	var err error
@@ -204,11 +204,11 @@ func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {
 	var problems []appprotect.Problem
 
 	if !sigExists {
-		nl.Debugf(lbc.logger, "Deleting AppProtectUserSig: %v\n", key)
+		nl.Debugf(lbc.Logger, "Deleting AppProtectUserSig: %v\n", key)
 
 		change, problems = lbc.appProtectConfiguration.DeleteUserSig(key)
 	} else {
-		nl.Debugf(lbc.logger, "Adding or Updating AppProtectUserSig: %v\n", key)
+		nl.Debugf(lbc.Logger, "Adding or Updating AppProtectUserSig: %v\n", key)
 
 		change, problems = lbc.appProtectConfiguration.AddOrUpdateUserSig(obj.(*unstructured.Unstructured))
 	}
@@ -353,7 +353,7 @@ func (lbc *LoadBalancerController) getAppProtectPolicy(ing *networking.Ingress) 
 }
 
 func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect.Change) {
-	nl.Debugf(lbc.logger, "Processing %v App Protect changes", len(changes))
+	nl.Debugf(lbc.Logger, "Processing %v App Protect changes", len(changes))
 
 	for _, c := range changes {
 		if c.Op == appprotect.AddOrUpdate {
@@ -463,13 +463,13 @@ func (lbc *LoadBalancerController) processAppProtectUserSigChange(change appprot
 
 	warnings, err := lbc.configurator.RefreshAppProtectUserSigs(change.UserSigs, delPols, allIngExes, allMergeableIngresses, allVsExes)
 	if err != nil {
-		nl.Errorf(lbc.logger, "Error when refreshing App Protect Policy User defined signatures: %v", err)
+		nl.Errorf(lbc.Logger, "Error when refreshing App Protect Policy User defined signatures: %v", err)
 	}
 	lbc.updateResourcesStatusAndEvents(allResources, warnings, err)
 }
 
 func (lbc *LoadBalancerController) processAppProtectProblems(problems []appprotect.Problem) {
-	nl.Debugf(lbc.logger, "Processing %v App Protect problems", len(problems))
+	nl.Debugf(lbc.Logger, "Processing %v App Protect problems", len(problems))
 
 	for _, p := range problems {
 		eventType := api_v1.EventTypeWarning
@@ -479,7 +479,7 @@ func (lbc *LoadBalancerController) processAppProtectProblems(problems []appprote
 
 func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespacedInformer) {
 	for _, obj := range nsi.appProtectPolicyLister.List() {
-		nl.Debugf(lbc.logger, "Cleaning up unwatched appprotect policies in namespace: %v", nsi.namespace)
+		nl.Debugf(lbc.Logger, "Cleaning up unwatched appprotect policies in namespace: %v", nsi.namespace)
 		appPol := obj.((*unstructured.Unstructured))
 		namespace := appPol.GetNamespace()
 		name := appPol.GetName()
@@ -489,7 +489,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespac
 		lbc.processAppProtectProblems(problems)
 	}
 	for _, obj := range nsi.appProtectLogConfLister.List() {
-		nl.Debugf(lbc.logger, "Cleaning up unwatched approtect logconfs in namespace: %v", nsi.namespace)
+		nl.Debugf(lbc.Logger, "Cleaning up unwatched approtect logconfs in namespace: %v", nsi.namespace)
 		appLogConf := obj.((*unstructured.Unstructured))
 		namespace := appLogConf.GetNamespace()
 		name := appLogConf.GetName()
@@ -499,7 +499,7 @@ func (lbc *LoadBalancerController) cleanupUnwatchedAppWafResources(nsi *namespac
 		lbc.processAppProtectProblems(problems)
 	}
 	for _, obj := range nsi.appProtectUserSigLister.List() {
-		nl.Debugf(lbc.logger, "Cleaning up unwatched usersigs in namespace: %v", nsi.namespace)
+		nl.Debugf(lbc.Logger, "Cleaning up unwatched usersigs in namespace: %v", nsi.namespace)
 		appUserSig := obj.((*unstructured.Unstructured))
 		namespace := appUserSig.GetNamespace()
 		name := appUserSig.GetName()
