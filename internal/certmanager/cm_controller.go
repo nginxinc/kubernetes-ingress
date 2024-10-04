@@ -27,7 +27,9 @@ import (
 	cmlisters "github.com/cert-manager/cert-manager/pkg/client/listers/certmanager/v1"
 	controllerpkg "github.com/cert-manager/cert-manager/pkg/controller"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
+
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -60,7 +62,7 @@ const (
 type CmController struct {
 	sync          SyncFn
 	ctx           context.Context
-	queue         workqueue.RateLimitingInterface
+	queue         workqueue.TypedRateLimitingInterface[types.NamespacedName]
 	informerGroup map[string]*namespacedInformer
 	recorder      record.EventRecorder
 	cmClient      *cm_clientset.Clientset
@@ -90,7 +92,7 @@ type namespacedInformer struct {
 	lock                      sync.RWMutex
 }
 
-func (c *CmController) register() workqueue.RateLimitingInterface {
+func (c *CmController) register() workqueue.TypedRateLimitingInterface[types.NamespacedName] {
 	c.sync = SyncFnFor(c.recorder, c.cmClient, c.informerGroup)
 	return c.queue
 }
@@ -135,18 +137,16 @@ func (c *CmController) addHandlers(nsi *namespacedInformer) {
 	nsi.mustSync = append(nsi.mustSync, nsi.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().HasSynced)
 }
 
-func (c *CmController) processItem(ctx context.Context, key string) error {
+func (c *CmController) processItem(ctx context.Context, key types.NamespacedName) error {
 	l := nl.LoggerFromContext(ctx)
 	nl.Debugf(l, "processing virtual server resource ")
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
-		return err
-	}
+	namespace := key.Namespace
+	name := key.Name
+
 	nsi := getNamespacedInformer(namespace, c.informerGroup)
 
 	var vs *conf_v1.VirtualServer
-	vs, err = nsi.vsLister.VirtualServers(namespace).Get(name)
+	vs, err := nsi.vsLister.VirtualServers(namespace).Get(name)
 
 	// VS has been deleted
 	if apierrors.IsNotFound(err) {
@@ -174,7 +174,7 @@ func (c *CmController) processItem(ctx context.Context, key string) error {
 //	    name: vs-1
 //	    blockOwnerDeletion: true
 //	    uid: 7d3897c2-ce27-4144-883a-e1b5f89bd65a
-func certificateHandler(queue workqueue.RateLimitingInterface) func(obj interface{}) {
+func certificateHandler(queue workqueue.TypedRateLimitingInterface[types.NamespacedName]) func(obj interface{}) {
 	return func(obj interface{}) {
 		crt, ok := obj.(*cmapi.Certificate)
 		if !ok {
@@ -196,7 +196,10 @@ func certificateHandler(queue workqueue.RateLimitingInterface) func(obj interfac
 			return
 		}
 
-		queue.Add(crt.Namespace + "/" + ref.Name)
+		queue.Add(types.NamespacedName{
+			Namespace: crt.Namespace,
+			Name:      ref.Name,
+		})
 	}
 }
 
@@ -209,7 +212,7 @@ func NewCmController(opts *CmOpts) *CmController {
 
 	cm := &CmController{
 		ctx:           opts.context,
-		queue:         workqueue.NewNamedRateLimitingQueue(controllerpkg.DefaultItemBasedRateLimiter(), ControllerName),
+		queue:         workqueue.NewTypedRateLimitingQueueWithConfig(controllerpkg.DefaultItemBasedRateLimiter(), workqueue.TypedRateLimitingQueueConfig[types.NamespacedName]{Name: ControllerName}),
 		informerGroup: ig,
 		recorder:      opts.eventRecorder,
 		cmClient:      intcl,
@@ -287,16 +290,11 @@ func (c *CmController) runWorker(ctx context.Context) {
 			break
 		}
 
-		var key string
 		// use an inlined function so we can use defer
 		func() {
 			defer c.queue.Done(obj)
-			var ok bool
-			if key, ok = obj.(string); !ok {
-				return
-			}
 
-			err := c.processItem(ctx, key)
+			err := c.processItem(ctx, obj)
 			if err != nil {
 				nl.Debugf(l, "Re-queuing item due to error processing: %v", err)
 				c.queue.AddRateLimited(obj)
