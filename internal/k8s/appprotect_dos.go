@@ -16,19 +16,19 @@ func createAppProtectDosPolicyHandlers(lbc *LoadBalancerController) cache.Resour
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pol := obj.(*unstructured.Unstructured)
-			nl.Debugf(lbc.logger, "Adding AppProtectDosPolicy: %v", pol.GetName())
+			nl.Debugf(lbc.Logger, "Adding AppProtectDosPolicy: %v", pol.GetName())
 			lbc.AddSyncQueue(pol)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldPol := oldObj.(*unstructured.Unstructured)
 			newPol := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(lbc.logger, oldPol, newPol)
+			different, err := areResourcesDifferent(lbc.Logger, oldPol, newPol)
 			if err != nil {
-				nl.Debugf(lbc.logger, "Error when comparing policy %v", err)
+				nl.Debugf(lbc.Logger, "Error when comparing policy %v", err)
 				lbc.AddSyncQueue(newPol)
 			}
 			if different {
-				nl.Debugf(lbc.logger, "ApDosPolicy %v changed, syncing", oldPol.GetName())
+				nl.Debugf(lbc.Logger, "ApDosPolicy %v changed, syncing", oldPol.GetName())
 				lbc.AddSyncQueue(newPol)
 			}
 		},
@@ -43,19 +43,19 @@ func createAppProtectDosLogConfHandlers(lbc *LoadBalancerController) cache.Resou
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			conf := obj.(*unstructured.Unstructured)
-			nl.Debugf(lbc.logger, "Adding AppProtectDosLogConf: %v", conf.GetName())
+			nl.Debugf(lbc.Logger, "Adding AppProtectDosLogConf: %v", conf.GetName())
 			lbc.AddSyncQueue(conf)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldConf := oldObj.(*unstructured.Unstructured)
 			newConf := obj.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(lbc.logger, oldConf, newConf)
+			different, err := areResourcesDifferent(lbc.Logger, oldConf, newConf)
 			if err != nil {
-				nl.Debugf(lbc.logger, "Error when comparing DosLogConfs %v", err)
+				nl.Debugf(lbc.Logger, "Error when comparing DosLogConfs %v", err)
 				lbc.AddSyncQueue(newConf)
 			}
 			if different {
-				nl.Debugf(lbc.logger, "ApDosLogConf %v changed, syncing", oldConf.GetName())
+				nl.Debugf(lbc.Logger, "ApDosLogConf %v changed, syncing", oldConf.GetName())
 				lbc.AddSyncQueue(newConf)
 			}
 		},
@@ -70,7 +70,7 @@ func createAppProtectDosProtectedResourceHandlers(lbc *LoadBalancerController) c
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			conf := obj.(*v1beta1.DosProtectedResource)
-			nl.Debugf(lbc.logger, "Adding DosProtectedResource: %v", conf.GetName())
+			nl.Debugf(lbc.Logger, "Adding DosProtectedResource: %v", conf.GetName())
 			lbc.AddSyncQueue(conf)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
@@ -78,7 +78,7 @@ func createAppProtectDosProtectedResourceHandlers(lbc *LoadBalancerController) c
 			newConf := obj.(*v1beta1.DosProtectedResource)
 
 			if !reflect.DeepEqual(oldConf.Spec, newConf.Spec) {
-				nl.Debugf(lbc.logger, "DosProtectedResource %v changed, syncing", oldConf.GetName())
+				nl.Debugf(lbc.Logger, "DosProtectedResource %v changed, syncing", oldConf.GetName())
 				lbc.AddSyncQueue(newConf)
 			}
 		},
@@ -118,7 +118,7 @@ func (nsi *namespacedInformer) addAppProtectDosProtectedResourceHandler(handlers
 
 func (lbc *LoadBalancerController) syncAppProtectDosPolicy(task task) {
 	key := task.Key
-	nl.Debugf(lbc.logger, "Syncing AppProtectDosPolicy %v", key)
+	nl.Debugf(lbc.Logger, "Syncing AppProtectDosPolicy %v", key)
 	var obj interface{}
 	var polExists bool
 	var err error
@@ -134,10 +134,10 @@ func (lbc *LoadBalancerController) syncAppProtectDosPolicy(task task) {
 	var problems []appprotectdos.Problem
 
 	if !polExists {
-		nl.Debugf(lbc.logger, "Deleting APDosPolicy: %v\n", key)
+		nl.Debugf(lbc.Logger, "Deleting APDosPolicy: %v\n", key)
 		changes, problems = lbc.dosConfiguration.DeletePolicy(key)
 	} else {
-		nl.Debugf(lbc.logger, "Adding or Updating APDosPolicy: %v\n", key)
+		nl.Debugf(lbc.Logger, "Adding or Updating APDosPolicy: %v\n", key)
 		changes, problems = lbc.dosConfiguration.AddOrUpdatePolicy(obj.(*unstructured.Unstructured))
 	}
 
@@ -147,7 +147,7 @@ func (lbc *LoadBalancerController) syncAppProtectDosPolicy(task task) {
 
 func (lbc *LoadBalancerController) syncAppProtectDosLogConf(task task) {
 	key := task.Key
-	nl.Debugf(lbc.logger, "Syncing APDosLogConf %v", key)
+	nl.Debugf(lbc.Logger, "Syncing APDosLogConf %v", key)
 	var obj interface{}
 	var confExists bool
 	var err error
@@ -163,10 +163,10 @@ func (lbc *LoadBalancerController) syncAppProtectDosLogConf(task task) {
 	var problems []appprotectdos.Problem
 
 	if !confExists {
-		nl.Debugf(lbc.logger, "Deleting APDosLogConf: %v\n", key)
+		nl.Debugf(lbc.Logger, "Deleting APDosLogConf: %v\n", key)
 		changes, problems = lbc.dosConfiguration.DeleteLogConf(key)
 	} else {
-		nl.Debugf(lbc.logger, "Adding or Updating APDosLogConf: %v\n", key)
+		nl.Debugf(lbc.Logger, "Adding or Updating APDosLogConf: %v\n", key)
 		changes, problems = lbc.dosConfiguration.AddOrUpdateLogConf(obj.(*unstructured.Unstructured))
 	}
 
@@ -176,7 +176,7 @@ func (lbc *LoadBalancerController) syncAppProtectDosLogConf(task task) {
 
 func (lbc *LoadBalancerController) syncDosProtectedResource(task task) {
 	key := task.Key
-	nl.Debugf(lbc.logger, "Syncing DosProtectedResource %v", key)
+	nl.Debugf(lbc.Logger, "Syncing DosProtectedResource %v", key)
 	var obj interface{}
 	var confExists bool
 	var err error
@@ -192,10 +192,10 @@ func (lbc *LoadBalancerController) syncDosProtectedResource(task task) {
 	var problems []appprotectdos.Problem
 
 	if confExists {
-		nl.Debugf(lbc.logger, "Adding or Updating DosProtectedResource: %v\n", key)
+		nl.Debugf(lbc.Logger, "Adding or Updating DosProtectedResource: %v\n", key)
 		changes, problems = lbc.dosConfiguration.AddOrUpdateDosProtectedResource(obj.(*v1beta1.DosProtectedResource))
 	} else {
-		nl.Debugf(lbc.logger, "Deleting DosProtectedResource: %v\n", key)
+		nl.Debugf(lbc.Logger, "Deleting DosProtectedResource: %v\n", key)
 		changes, problems = lbc.dosConfiguration.DeleteProtectedResource(key)
 	}
 
@@ -204,13 +204,13 @@ func (lbc *LoadBalancerController) syncDosProtectedResource(task task) {
 }
 
 func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprotectdos.Change) {
-	nl.Debugf(lbc.logger, "Processing %v App Protect Dos changes", len(changes))
+	nl.Debugf(lbc.Logger, "Processing %v App Protect Dos changes", len(changes))
 
 	for _, c := range changes {
 		if c.Op == appprotectdos.AddOrUpdate {
 			switch impl := c.Resource.(type) {
 			case *appprotectdos.DosProtectedResourceEx:
-				nl.Debugf(lbc.logger, "handling change UPDATE OR ADD for DOS protected %s/%s", impl.Obj.Namespace, impl.Obj.Name)
+				nl.Debugf(lbc.Logger, "handling change UPDATE OR ADD for DOS protected %s/%s", impl.Obj.Namespace, impl.Obj.Name)
 				resources := lbc.configuration.FindResourcesForAppProtectDosProtected(impl.Obj.Namespace, impl.Obj.Name)
 				resourceExes := lbc.createExtendedResources(resources)
 				warnings, err := lbc.configurator.AddOrUpdateResourcesThatUseDosProtected(resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
@@ -240,7 +240,7 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				lbc.configurator.DeleteAppProtectDosLogConf(impl.Obj)
 
 			case *appprotectdos.DosProtectedResourceEx:
-				nl.Debugf(lbc.logger, "handling change DELETE for DOS protected %s/%s", impl.Obj.Namespace, impl.Obj.Name)
+				nl.Debugf(lbc.Logger, "handling change DELETE for DOS protected %s/%s", impl.Obj.Namespace, impl.Obj.Name)
 				resources := lbc.configuration.FindResourcesForAppProtectDosProtected(impl.Obj.Namespace, impl.Obj.Name)
 				resourceExes := lbc.createExtendedResources(resources)
 				warnings, err := lbc.configurator.AddOrUpdateResourcesThatUseDosProtected(resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
@@ -251,7 +251,7 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 }
 
 func (lbc *LoadBalancerController) processAppProtectDosProblems(problems []appprotectdos.Problem) {
-	nl.Debugf(lbc.logger, "Processing %v App Protect Dos problems", len(problems))
+	nl.Debugf(lbc.Logger, "Processing %v App Protect Dos problems", len(problems))
 
 	for _, p := range problems {
 		eventType := api_v1.EventTypeWarning

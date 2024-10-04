@@ -15,7 +15,7 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pol := obj.(*conf_v1.Policy)
-			nl.Debugf(lbc.logger, "Adding Policy: %v", pol.Name)
+			nl.Debugf(lbc.Logger, "Adding Policy: %v", pol.Name)
 			lbc.AddSyncQueue(pol)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -23,23 +23,23 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			if !isPol {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				pol, ok = deletedState.Obj.(*conf_v1.Policy)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-Policy object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-Policy object: %v", deletedState.Obj)
 					return
 				}
 			}
-			nl.Debugf(lbc.logger, "Removing Policy: %v", pol.Name)
+			nl.Debugf(lbc.Logger, "Removing Policy: %v", pol.Name)
 			lbc.AddSyncQueue(pol)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curPol := cur.(*conf_v1.Policy)
 			oldPol := old.(*conf_v1.Policy)
 			if !reflect.DeepEqual(oldPol.Spec, curPol.Spec) {
-				nl.Debugf(lbc.logger, "Policy %v changed, syncing", curPol.Name)
+				nl.Debugf(lbc.Logger, "Policy %v changed, syncing", curPol.Name)
 				lbc.AddSyncQueue(curPol)
 			}
 		},
@@ -67,7 +67,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 		return
 	}
 
-	nl.Debugf(lbc.logger, "Adding, Updating or Deleting Policy: %v\n", key)
+	nl.Debugf(lbc.Logger, "Adding, Updating or Deleting Policy: %v\n", key)
 
 	if polExists && lbc.HasCorrectIngressClass(obj) {
 		pol := obj.(*conf_v1.Policy)
@@ -79,7 +79,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 			if lbc.reportCustomResourceStatusEnabled() {
 				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
 				if err != nil {
-					nl.Debugf(lbc.logger, "Failed to update policy %s status: %v", key, err)
+					nl.Debugf(lbc.Logger, "Failed to update policy %s status: %v", key, err)
 				}
 			}
 		} else {
@@ -89,7 +89,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 			if lbc.reportCustomResourceStatusEnabled() {
 				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
 				if err != nil {
-					nl.Debugf(lbc.logger, "Failed to update policy %s status: %v", key, err)
+					nl.Debugf(lbc.Logger, "Failed to update policy %s status: %v", key, err)
 				}
 			}
 		}

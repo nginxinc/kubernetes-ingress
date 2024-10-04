@@ -16,7 +16,7 @@ import (
 func createTestConfiguration() *Configuration {
 	lbc := LoadBalancerController{
 		ingressClass: "nginx",
-		logger:       nic_logger.LoggerFromContext(context.Background()),
+		Logger:       nic_logger.LoggerFromContext(context.Background()),
 	}
 	isPlus := false
 	appProtectEnabled := false
