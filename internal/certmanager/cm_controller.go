@@ -138,8 +138,7 @@ func (c *CmController) addHandlers(nsi *namespacedInformer) {
 }
 
 func (c *CmController) processItem(ctx context.Context, key types.NamespacedName) error {
-	l := nl.LoggerFromContext(ctx)
-	nl.Debugf(l, "processing virtual server resource ")
+	glog.V(3).Infof("processing virtual server resource")
 	namespace := key.Namespace
 	name := key.Name
 
