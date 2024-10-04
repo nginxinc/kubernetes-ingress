@@ -841,10 +841,11 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 }
 
 func (lbc *LoadBalancerController) updateAllConfigs() {
-	cfgParams := configs.NewDefaultConfigParams(lbc.ctx, lbc.isNginxPlus)
+	ctx := nl.ContextWithLogger(context.Background(), lbc.Logger)
+	cfgParams := configs.NewDefaultConfigParams(ctx, lbc.isNginxPlus)
 
 	if lbc.configMap != nil {
-		cfgParams = configs.ParseConfigMap(lbc.ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled)
+		cfgParams = configs.ParseConfigMap(ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled)
 	}
 
 	resources := lbc.configuration.GetResources()
