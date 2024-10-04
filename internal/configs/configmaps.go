@@ -16,6 +16,7 @@ import (
 func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool) *ConfigParams {
 	l := nl.LoggerFromContext(ctx)
 	cfgParams := NewDefaultConfigParams(nginxPlus)
+	cfgParams.Context = ctx
 
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
 		if err != nil {
