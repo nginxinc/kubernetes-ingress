@@ -130,8 +130,8 @@ func main() {
 
 	mustProcessGlobalConfiguration(ctx)
 
-	cfgParams := configs.NewDefaultConfigParams(*nginxPlus)
-	cfgParams = processConfigMaps(ctx, kubeClient, cfgParams, nginxManager, templateExecutor)
+	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
+	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
 
 	staticCfgParams := &configs.StaticConfigParams{
 		DisableIPV6:                    *disableIPV6,
@@ -162,7 +162,7 @@ func main() {
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
-	mustProcessNginxConfig(ctx, staticCfgParams, cfgParams, templateExecutor, nginxManager)
+	mustProcessNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
 
 	if *enableTLSPassthrough {
 		var emptyFile []byte
@@ -202,7 +202,7 @@ func main() {
 	)
 
 	if *enableServiceInsight {
-		createHealthProbeEndpoint(ctx, kubeClient, plusClient, cnf)
+		createHealthProbeEndpoint(kubeClient, plusClient, cnf)
 	}
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
@@ -266,7 +266,7 @@ func main() {
 		}()
 	}
 
-	go handleTermination(ctx, lbc, nginxManager, syslogListener, process)
+	go handleTermination(lbc, nginxManager, syslogListener, process)
 
 	lbc.Run()
 
@@ -606,8 +606,8 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 
 // mustProcessNginxConfig calls internally os.Exit
 // if can't generate a valid NGINX config.
-func mustProcessNginxConfig(ctx context.Context, staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
-	l := nl.LoggerFromContext(ctx)
+func mustProcessNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
+	l := nl.LoggerFromContext(cfgParams.Context)
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
 	if err != nil {
@@ -655,24 +655,23 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	return secret, nil
 }
 
-func handleTermination(ctx context.Context, lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, cpcfg childProcesses) {
-	l := nl.LoggerFromContext(ctx)
+func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, cpcfg childProcesses) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
 	select {
 	case err := <-cpcfg.nginxDone:
 		if err != nil {
-			nl.Fatalf(l, "nginx command exited unexpectedly with status: %v", err)
+			nl.Fatalf(lbc.Logger, "nginx command exited unexpectedly with status: %v", err)
 		} else {
-			nl.Info(l, "nginx command exited successfully")
+			nl.Info(lbc.Logger, "nginx command exited successfully")
 		}
 	case err := <-cpcfg.aPPluginDone:
-		nl.Fatalf(l, "AppProtectPlugin command exited unexpectedly with status: %v", err)
+		nl.Fatalf(lbc.Logger, "AppProtectPlugin command exited unexpectedly with status: %v", err)
 	case err := <-cpcfg.aPDosDone:
-		nl.Fatalf(l, "AppProtectDosAgent command exited unexpectedly with status: %v", err)
+		nl.Fatalf(lbc.Logger, "AppProtectDosAgent command exited unexpectedly with status: %v", err)
 	case <-signalChan:
-		nl.Info(l, "Received SIGTERM, shutting down")
+		nl.Info(lbc.Logger, "Received SIGTERM, shutting down")
 		lbc.Stop()
 		nginxManager.Quit()
 		<-cpcfg.nginxDone
@@ -686,7 +685,7 @@ func handleTermination(ctx context.Context, lbc *k8s.LoadBalancerController, ngi
 		}
 		listener.Stop()
 	}
-	nl.Info(l, "Exiting successfully")
+	nl.Info(lbc.Logger, "Exiting successfully")
 	os.Exit(0)
 }
 
@@ -801,8 +800,8 @@ func createPlusAndLatencyCollectors(
 	return plusCollector, syslogListener, lc
 }
 
-func createHealthProbeEndpoint(ctx context.Context, kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) {
-	l := nl.LoggerFromContext(ctx)
+func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *client.NginxClient, cnf *configs.Configurator) {
+	l := nl.LoggerFromContext(cnf.CfgParams.Context)
 	if !*enableServiceInsight {
 		return
 	}
@@ -834,8 +833,8 @@ func mustProcessGlobalConfiguration(ctx context.Context) {
 	}
 }
 
-func processConfigMaps(ctx context.Context, kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) *configs.ConfigParams {
-	l := nl.LoggerFromContext(ctx)
+func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) *configs.ConfigParams {
+	l := nl.LoggerFromContext(cfgParams.Context)
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
 		if err != nil {
@@ -845,7 +844,7 @@ func processConfigMaps(ctx context.Context, kubeClient *kubernetes.Clientset, cf
 		if err != nil {
 			nl.Fatalf(l, "Error when getting %v: %v", *nginxConfigMaps, err)
 		}
-		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough)
+		cfgParams = configs.ParseConfigMap(cfgParams.Context, cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough)
 		if cfgParams.MainServerSSLDHParamFileContent != nil {
 			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
 			if err != nil {

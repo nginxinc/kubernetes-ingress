@@ -22,7 +22,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ingress := obj.(*networking.Ingress)
-			nl.Debugf(lbc.logger, "Adding Ingress: %v", ingress.Name)
+			nl.Debugf(lbc.Logger, "Adding Ingress: %v", ingress.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -30,23 +30,23 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			if !isIng {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				ingress, ok = deletedState.Obj.(*networking.Ingress)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
 					return
 				}
 			}
-			nl.Debugf(lbc.logger, "Removing Ingress: %v", ingress.Name)
+			nl.Debugf(lbc.Logger, "Removing Ingress: %v", ingress.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, current interface{}) {
 			c := current.(*networking.Ingress)
 			o := old.(*networking.Ingress)
 			if hasChanges(o, c) {
-				nl.Debugf(lbc.logger, "Ingress %v changed, syncing", c.Name)
+				nl.Debugf(lbc.Logger, "Ingress %v changed, syncing", c.Name)
 				lbc.AddSyncQueue(c)
 			}
 		},
@@ -59,10 +59,10 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 		AddFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
 			if !secrets.IsSupportedSecretType(secret.Type) {
-				nl.Debugf(lbc.logger, "Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
+				nl.Debugf(lbc.Logger, "Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
 				return
 			}
-			nl.Debugf(lbc.logger, "Adding Secret: %v", secret.Name)
+			nl.Debugf(lbc.Logger, "Adding Secret: %v", secret.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -70,33 +70,33 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			if !isSecr {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				secret, ok = deletedState.Obj.(*v1.Secret)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-Secret object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-Secret object: %v", deletedState.Obj)
 					return
 				}
 			}
 			if !secrets.IsSupportedSecretType(secret.Type) {
-				nl.Debugf(lbc.logger, "Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
+				nl.Debugf(lbc.Logger, "Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
 				return
 			}
 
-			nl.Debugf(lbc.logger, "Removing Secret: %v", secret.Name)
+			nl.Debugf(lbc.Logger, "Removing Secret: %v", secret.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			// A secret cannot change its type. That's why we only need to check the type of the current secret.
 			curSecret := cur.(*v1.Secret)
 			if !secrets.IsSupportedSecretType(curSecret.Type) {
-				nl.Debugf(lbc.logger, "Ignoring Secret %v of unsupported type %v", curSecret.Name, curSecret.Type)
+				nl.Debugf(lbc.Logger, "Ignoring Secret %v of unsupported type %v", curSecret.Name, curSecret.Type)
 				return
 			}
 
 			if !reflect.DeepEqual(old, cur) {
-				nl.Debugf(lbc.logger, "Secret %v changed, syncing", cur.(*v1.Secret).Name)
+				nl.Debugf(lbc.Logger, "Secret %v changed, syncing", cur.(*v1.Secret).Name)
 				lbc.AddSyncQueue(cur)
 			}
 		},
@@ -107,7 +107,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
-			nl.Debugf(lbc.logger, "Adding VirtualServer: %v", vs.Name)
+			nl.Debugf(lbc.Logger, "Adding VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -115,16 +115,16 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			if !isVs {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				vs, ok = deletedState.Obj.(*conf_v1.VirtualServer)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-VirtualServer object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-VirtualServer object: %v", deletedState.Obj)
 					return
 				}
 			}
-			nl.Debugf(lbc.logger, "Removing VirtualServer: %v", vs.Name)
+			nl.Debugf(lbc.Logger, "Removing VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -135,13 +135,13 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 				var curVsCopy, oldVsCopy conf_v1.VirtualServer
 				err := copier.CopyWithOption(&curVsCopy, curVs, copier.Option{DeepCopy: true})
 				if err != nil {
-					nl.Debugf(lbc.logger, "Error copying VirtualServer %v: %v for Dynamic Weight Changes", curVs.Name, err)
+					nl.Debugf(lbc.Logger, "Error copying VirtualServer %v: %v for Dynamic Weight Changes", curVs.Name, err)
 					return
 				}
 
 				err = copier.CopyWithOption(&oldVsCopy, oldVs, copier.Option{DeepCopy: true})
 				if err != nil {
-					nl.Debugf(lbc.logger, "Error copying VirtualServer %v: %v for Dynamic Weight Changes", oldVs.Name, err)
+					nl.Debugf(lbc.Logger, "Error copying VirtualServer %v: %v for Dynamic Weight Changes", oldVs.Name, err)
 					return
 				}
 
@@ -156,7 +156,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			}
 
 			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
-				nl.Debugf(lbc.logger, "VirtualServer %v changed, syncing", curVs.Name)
+				nl.Debugf(lbc.Logger, "VirtualServer %v changed, syncing", curVs.Name)
 				lbc.AddSyncQueue(curVs)
 			}
 		},
@@ -167,7 +167,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
-			nl.Debugf(lbc.logger, "Adding VirtualServerRoute: %v", vsr.Name)
+			nl.Debugf(lbc.Logger, "Adding VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -175,16 +175,16 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			if !isVsr {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				vsr, ok = deletedState.Obj.(*conf_v1.VirtualServerRoute)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-VirtualServerRoute object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-VirtualServerRoute object: %v", deletedState.Obj)
 					return
 				}
 			}
-			nl.Debugf(lbc.logger, "Removing VirtualServerRoute: %v", vsr.Name)
+			nl.Debugf(lbc.Logger, "Removing VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -195,13 +195,13 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 				var curVsrCopy, oldVsrCopy conf_v1.VirtualServerRoute
 				err := copier.CopyWithOption(&curVsrCopy, curVsr, copier.Option{DeepCopy: true})
 				if err != nil {
-					nl.Debugf(lbc.logger, "Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", curVsr.Name, err)
+					nl.Debugf(lbc.Logger, "Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", curVsr.Name, err)
 					return
 				}
 
 				err = copier.CopyWithOption(&oldVsrCopy, oldVsr, copier.Option{DeepCopy: true})
 				if err != nil {
-					nl.Debugf(lbc.logger, "Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", oldVsr.Name, err)
+					nl.Debugf(lbc.Logger, "Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", oldVsr.Name, err)
 					return
 				}
 
@@ -216,7 +216,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			}
 
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
-				nl.Debugf(lbc.logger, "VirtualServerRoute %v changed, syncing", curVsr.Name)
+				nl.Debugf(lbc.Logger, "VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
 			}
 		},
