@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
@@ -164,7 +163,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		if hasTLSPassthrough {
 			msg := "Configmap %s/%s: key real-ip-header is ignored, directive real_ip_header is automatically set to 'proxy_protocol' when TLS passthrough is enabled."
 			if realIPHeader == "proxy_protocol" {
-				glog.Infof(msg, cfgm.GetNamespace(), cfgm.GetName())
+				nl.Infof(l, msg, cfgm.GetNamespace(), cfgm.GetName())
 			} else {
 				nl.Errorf(l, msg, cfgm.GetNamespace(), cfgm.GetName())
 			}
@@ -212,7 +211,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if accessLog, exists := cfgm.Data["access-log"]; exists {
 		if !strings.HasPrefix(accessLog, "syslog:") {
-			glog.Warningf("Configmap %s/%s: Invalid value for key access-log: %q", cfgm.GetNamespace(), cfgm.GetName(), accessLog)
+			nl.Warnf(l, "Configmap %s/%s: Invalid value for key access-log: %q", cfgm.GetNamespace(), cfgm.GetName(), accessLog)
 		} else {
 			cfgParams.MainAccessLog = accessLog
 		}
@@ -370,7 +369,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		if nginxPlus {
 			cfgParams.ResolverAddresses = resolverAddresses
 		} else {
-			glog.Warning("ConfigMap key 'resolver-addresses' requires NGINX Plus")
+			nl.Warn(l, "ConfigMap key 'resolver-addresses' requires NGINX Plus")
 		}
 	}
 
@@ -381,7 +380,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 			if nginxPlus {
 				cfgParams.ResolverIPV6 = resolverIpv6
 			} else {
-				glog.Warning("ConfigMap key 'resolver-ipv6' requires NGINX Plus")
+				nl.Warn(l, "ConfigMap key 'resolver-ipv6' requires NGINX Plus")
 			}
 		}
 	}
@@ -390,7 +389,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		if nginxPlus {
 			cfgParams.ResolverValid = resolverValid
 		} else {
-			glog.Warning("ConfigMap key 'resolver-valid' requires NGINX Plus")
+			nl.Warn(l, "ConfigMap key 'resolver-valid' requires NGINX Plus")
 		}
 	}
 
@@ -398,7 +397,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		if nginxPlus {
 			cfgParams.ResolverTimeout = resolverTimeout
 		} else {
-			glog.Warning("ConfigMap key 'resolver-timeout' requires NGINX Plus")
+			nl.Warn(l, "ConfigMap key 'resolver-timeout' requires NGINX Plus")
 		}
 	}
 
