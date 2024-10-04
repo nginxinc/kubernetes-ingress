@@ -315,14 +315,14 @@ func (cnf *Configurator) virtualServerForHost(hostname string) *conf_v1.VirtualS
 // upstreamsForVirtualServer takes VirtualServer and returns a list of associated upstreams.
 func (cnf *Configurator) upstreamsForVirtualServer(vs *conf_v1.VirtualServer) []string {
 	l := nl.LoggerFromContext(cnf.CfgParams.Context)
-	nl.Infof(l, "Get upstreamName for vs: %s", vs.Spec.Host)
+	nl.Debugf(l, "Get upstreamName for vs: %s", vs.Spec.Host)
 	upstreamNames := make([]string, 0, len(vs.Spec.Upstreams))
 
 	virtualServerUpstreamNamer := NewUpstreamNamerForVirtualServer(vs)
 
 	for _, u := range vs.Spec.Upstreams {
 		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
-		nl.Infof(l, "upstream: %s, upstreamName: %s", u.Name, upstreamName)
+		nl.Debugf(l, "upstream: %s, upstreamName: %s", u.Name, upstreamName)
 		upstreamNames = append(upstreamNames, upstreamName)
 	}
 	return upstreamNames
@@ -331,7 +331,7 @@ func (cnf *Configurator) upstreamsForVirtualServer(vs *conf_v1.VirtualServer) []
 // UpstreamsForHost takes a hostname and returns upstreams for the given hostname.
 func (cnf *Configurator) UpstreamsForHost(hostname string) []string {
 	l := nl.LoggerFromContext(cnf.CfgParams.Context)
-	nl.Infof(l, "Get upstream for host: %s", hostname)
+	nl.Debugf(l, "Get upstream for host: %s", hostname)
 	vs := cnf.virtualServerForHost(hostname)
 	if vs != nil {
 		return cnf.upstreamsForVirtualServer(vs)
@@ -344,7 +344,7 @@ func (cnf *Configurator) UpstreamsForHost(hostname string) []string {
 // (TransportServer) action name.
 func (cnf *Configurator) StreamUpstreamsForName(name string) []string {
 	l := nl.LoggerFromContext(cnf.CfgParams.Context)
-	nl.Infof(l, "Get stream upstreams for name: '%s'", name)
+	nl.Debugf(l, "Get stream upstreams for name: '%s'", name)
 	ts := cnf.transportServerForActionName(name)
 	if ts != nil {
 		return cnf.streamUpstreamsForTransportServer(ts)
@@ -357,7 +357,7 @@ func (cnf *Configurator) StreamUpstreamsForName(name string) []string {
 func (cnf *Configurator) transportServerForActionName(name string) *conf_v1.TransportServer {
 	l := nl.LoggerFromContext(cnf.CfgParams.Context)
 	for _, tsEx := range cnf.transportServers {
-		nl.Infof(l, "Check ts action '%s' for requested name: '%s'", tsEx.TransportServer.Spec.Action.Pass, name)
+		nl.Debugf(l, "Check ts action '%s' for requested name: '%s'", tsEx.TransportServer.Spec.Action.Pass, name)
 		if tsEx.TransportServer.Spec.Action.Pass == name {
 			return tsEx.TransportServer
 		}
@@ -935,7 +935,7 @@ func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, sec
 			return fmt.Errorf("error when reloading NGINX when updating the special Secrets: %w", err)
 		}
 	} else {
-		nl.Infof(l, "Skipping reload for %d special Secrets", len(secretNames))
+		nl.Debugf(l, "Skipping reload for %d special Secrets", len(secretNames))
 	}
 
 	return nil
@@ -1064,7 +1064,7 @@ func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
 	}
 
 	if cnf.isPlus && !reloadPlus {
-		nl.Info(l, "No need to reload nginx")
+		nl.Debug(l, "No need to reload nginx")
 		return nil
 	}
 
@@ -1099,7 +1099,7 @@ func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergeableIngresses []*M
 	}
 
 	if cnf.isPlus && !reloadPlus {
-		nl.Info(l, "No need to reload nginx")
+		nl.Debug(l, "No need to reload nginx")
 		return nil
 	}
 
@@ -1132,7 +1132,7 @@ func (cnf *Configurator) UpdateEndpointsForVirtualServers(virtualServerExes []*V
 	}
 
 	if cnf.isPlus && !reloadPlus {
-		nl.Info(l, "No need to reload nginx")
+		nl.Debug(l, "No need to reload nginx")
 		return nil
 	}
 
@@ -1180,7 +1180,7 @@ func (cnf *Configurator) UpdateEndpointsForTransportServers(transportServerExes 
 	}
 
 	if cnf.isPlus && !reloadPlus {
-		nl.Info(l, "No need to reload nginx")
+		nl.Debug(l, "No need to reload nginx")
 		return nil
 	}
 	if err := cnf.reload(nginx.ReloadForEndpointsUpdate); err != nil {
@@ -1223,7 +1223,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 		endps, exists := ingEx.Endpoints[ingEx.Ingress.Spec.DefaultBackend.Service.Name+GetBackendPortAsString(ingEx.Ingress.Spec.DefaultBackend.Service.Port)]
 		if exists {
 			if _, isExternalName := ingEx.ExternalNameSvcs[ingEx.Ingress.Spec.DefaultBackend.Service.Name]; isExternalName {
-				nl.Infof(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", ingEx.Ingress.Spec.DefaultBackend.Service.Name)
+				nl.Debugf(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", ingEx.Ingress.Spec.DefaultBackend.Service.Name)
 			} else {
 				name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.DefaultBackend)
 				err := cnf.updateServersInPlus(name, endps, cfg)
@@ -1244,7 +1244,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 			endps, exists := ingEx.Endpoints[path.Backend.Service.Name+GetBackendPortAsString(path.Backend.Service.Port)]
 			if exists {
 				if _, isExternalName := ingEx.ExternalNameSvcs[path.Backend.Service.Name]; isExternalName {
-					nl.Infof(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", path.Backend.Service.Name)
+					nl.Debugf(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", path.Backend.Service.Name)
 					continue
 				}
 

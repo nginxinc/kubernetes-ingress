@@ -1486,7 +1486,7 @@ func (p *policiesCfg) addWAFConfig(
 	}
 
 	if waf.SecurityLog != nil && waf.SecurityLogs == nil {
-		nl.Info(l, "the field securityLog is deprecated and will be removed in future releases. Use field securityLogs instead")
+		nl.Debug(l, "the field securityLog is deprecated and will be removed in future releases. Use field securityLogs instead")
 		waf.SecurityLogs = append(waf.SecurityLogs, waf.SecurityLog)
 	}
 
@@ -2830,7 +2830,7 @@ func createUpstreamsForPlus(
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(virtualServerEx.VirtualServer.Namespace, u.Service)]
 		if isExternalNameSvc {
-			nl.Infof(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
+			nl.Debugf(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
 			continue
 		}
 
@@ -2854,7 +2854,7 @@ func createUpstreamsForPlus(
 		for _, u := range vsr.Spec.Upstreams {
 			isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(vsr.Namespace, u.Service)]
 			if isExternalNameSvc {
-				nl.Infof(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
+				nl.Debugf(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
 				continue
 			}
 
