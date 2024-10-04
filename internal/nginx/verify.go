@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/golang/glog"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 )
 
 // verifyClient is a client for verifying the config version.
@@ -73,20 +74,20 @@ func (c *verifyClient) GetConfigVersion() (int, error) {
 
 // WaitForCorrectVersion calls the config version endpoint until it gets the expectedVersion,
 // which ensures that a new worker process has been started for that config version.
-func (c *verifyClient) WaitForCorrectVersion(expectedVersion int) error {
+func (c *verifyClient) WaitForCorrectVersion(l *slog.Logger, expectedVersion int) error {
 	interval := 25 * time.Millisecond
 	startTime := time.Now()
 	endTime := startTime.Add(c.timeout)
 
-	glog.V(3).Infof("Starting poll for updated nginx config")
+	nl.Debugf(l, "Starting poll for updated nginx config")
 	for time.Now().Before(endTime) {
 		version, err := c.GetConfigVersion()
 		if err != nil {
-			glog.V(3).Infof("Unable to fetch version: %v", err)
+			nl.Debugf(l, "Unable to fetch version: %v", err)
 			continue
 		}
 		if version == expectedVersion {
-			glog.V(3).Infof("success, version %v ensured. took: %v", expectedVersion, time.Since(startTime))
+			nl.Debugf(l, "success, version %v ensured. took: %v", expectedVersion, time.Since(startTime))
 			return nil
 		}
 		time.Sleep(interval)

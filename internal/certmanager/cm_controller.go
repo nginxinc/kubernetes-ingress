@@ -26,7 +26,6 @@ import (
 	cm_informers "github.com/cert-manager/cert-manager/pkg/client/informers/externalversions"
 	cmlisters "github.com/cert-manager/cert-manager/pkg/client/listers/certmanager/v1"
 	controllerpkg "github.com/cert-manager/cert-manager/pkg/controller"
-	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	kubeinformers "k8s.io/client-go/informers"
@@ -36,6 +35,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	vsinformers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
@@ -136,7 +136,8 @@ func (c *CmController) addHandlers(nsi *namespacedInformer) {
 }
 
 func (c *CmController) processItem(ctx context.Context, key string) error {
-	glog.V(3).Infof("processing virtual server resource ")
+	l := nl.LoggerFromContext(ctx)
+	nl.Debugf(l, "processing virtual server resource ")
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
@@ -236,7 +237,9 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(c.ctx)
 	defer cancel()
 
-	glog.Infof("Starting cert-manager control loop")
+	l := nl.LoggerFromContext(ctx)
+
+	nl.Info(l, "Starting cert-manager control loop")
 
 	var mustSync []cache.InformerSynced
 	for _, ig := range c.informerGroup {
@@ -245,17 +248,17 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 	}
 	// wait for all the informer caches we depend on are synced
 
-	glog.V(3).Infof("Waiting for %d caches to sync", len(mustSync))
+	nl.Debugf(l, "Waiting for %d caches to sync", len(mustSync))
 	if !cache.WaitForNamedCacheSync(ControllerName, stopCh, mustSync...) {
-		glog.Fatal("error syncing cm queue")
+		nl.Fatal(l, "error syncing cm queue")
 	}
 
-	glog.V(3).Infof("Queue is %v", c.queue.Len())
+	nl.Debugf(l, "Queue is %v", c.queue.Len())
 
 	go c.runWorker(ctx)
 
 	<-stopCh
-	glog.V(3).Infof("shutting down queue as workqueue signaled shutdown")
+	nl.Debugf(l, "shutting down queue as workqueue signaled shutdown")
 	for _, ig := range c.informerGroup {
 		ig.stop()
 	}
@@ -276,7 +279,8 @@ func (nsi *namespacedInformer) stop() {
 // processItem function in order to read and process a message on the
 // workqueue.
 func (c *CmController) runWorker(ctx context.Context) {
-	glog.V(3).Infof("processing items on the workqueue")
+	l := nl.LoggerFromContext(ctx)
+	nl.Debugf(l, "processing items on the workqueue")
 	for {
 		obj, shutdown := c.queue.Get()
 		if shutdown {
@@ -294,11 +298,11 @@ func (c *CmController) runWorker(ctx context.Context) {
 
 			err := c.processItem(ctx, key)
 			if err != nil {
-				glog.V(3).Infof("Re-queuing item due to error processing: %v", err)
+				nl.Debugf(l, "Re-queuing item due to error processing: %v", err)
 				c.queue.AddRateLimited(obj)
 				return
 			}
-			glog.V(3).Infof("finished processing work item")
+			nl.Debugf(l, "finished processing work item")
 			c.queue.Forget(obj)
 		}()
 	}
@@ -306,7 +310,8 @@ func (c *CmController) runWorker(ctx context.Context) {
 
 // AddNewNamespacedInformer adds watchers for a new namespace
 func (c *CmController) AddNewNamespacedInformer(ns string) {
-	glog.V(3).Infof("Adding or Updating cert-manager Watchers for Namespace: %v", ns)
+	l := nl.LoggerFromContext(c.ctx)
+	nl.Debugf(l, "Adding or Updating cert-manager Watchers for Namespace: %v", ns)
 	nsi := getNamespacedInformer(ns, c.informerGroup)
 	if nsi == nil {
 		nsi = c.newNamespacedInformer(ns)
@@ -319,7 +324,8 @@ func (c *CmController) AddNewNamespacedInformer(ns string) {
 
 // RemoveNamespacedInformer removes watchers for a namespace we are no longer watching
 func (c *CmController) RemoveNamespacedInformer(ns string) {
-	glog.V(3).Infof("Deleting cert-manager Watchers for Deleted Namespace: %v", ns)
+	l := nl.LoggerFromContext(c.ctx)
+	nl.Debugf(l, "Deleting cert-manager Watchers for Deleted Namespace: %v", ns)
 	nsi := getNamespacedInformer(ns, c.informerGroup)
 	if nsi != nil {
 		nsi.lock.Lock()
