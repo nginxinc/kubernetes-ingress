@@ -8,8 +8,8 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	api_v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -83,7 +83,7 @@ type NginxCfgParams struct {
 	mergeableIngs             *MergeableIngresses
 	apResources               *AppProtectResources
 	dosResource               *appProtectDosResource
-	baseCfgParams             *ConfigParams
+	BaseCfgParams             *ConfigParams
 	isMinion                  bool
 	isPlus                    bool
 	isResolverConfigured      bool
@@ -93,14 +93,15 @@ type NginxCfgParams struct {
 
 //nolint:gocyclo
 func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) {
+	l := nl.LoggerFromContext(p.BaseCfgParams.Context)
 	hasAppProtect := p.staticParams.MainAppProtectLoadModule
 	hasAppProtectDos := p.staticParams.MainAppProtectDosLoadModule
 
-	cfgParams := parseAnnotations(p.ingEx, p.baseCfgParams, p.isPlus, hasAppProtect, hasAppProtectDos, p.staticParams.EnableInternalRoutes)
+	cfgParams := parseAnnotations(p.ingEx, p.BaseCfgParams, p.isPlus, hasAppProtect, hasAppProtectDos, p.staticParams.EnableInternalRoutes)
 
 	wsServices := getWebsocketServices(p.ingEx)
-	spServices := getSessionPersistenceServices(p.ingEx)
-	rewrites := getRewrites(p.ingEx)
+	spServices := getSessionPersistenceServices(p.BaseCfgParams.Context, p.ingEx)
+	rewrites := getRewrites(p.BaseCfgParams.Context, p.ingEx)
 	sslServices := getSSLServices(p.ingEx)
 	grpcServices := getGrpcServices(p.ingEx)
 
@@ -109,7 +110,7 @@ func generateNginxCfg(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) 
 
 	// HTTP2 is required for gRPC to function
 	if len(grpcServices) > 0 && !cfgParams.HTTP2 {
-		glog.Errorf("Ingress %s/%s: annotation nginx.org/grpc-services requires HTTP2, ignoring", p.ingEx.Ingress.Namespace, p.ingEx.Ingress.Name)
+		nl.Errorf(l, "Ingress %s/%s: annotation nginx.org/grpc-services requires HTTP2, ignoring", p.ingEx.Ingress.Namespace, p.ingEx.Ingress.Name)
 		grpcServices = make(map[string]bool)
 	}
 
@@ -521,6 +522,7 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 		ResourceName:      ingEx.Ingress.Name,
 		ResourceNamespace: ingEx.Ingress.Namespace,
 	}
+	l := nl.LoggerFromContext(cfg.Context)
 	if isPlus {
 		queue, timeout := upstreamRequiresQueue(backend.Service.Name+GetBackendPortAsString(backend.Service.Port), ingEx, cfg)
 		ups = version1.Upstream{Name: name, StickyCookie: stickyCookie, Queue: queue, QueueTimeout: timeout, UpstreamLabels: labels}
@@ -537,7 +539,7 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 		// Always false for NGINX OSS
 		_, isExternalNameSvc := ingEx.ExternalNameSvcs[backend.Service.Name]
 		if isExternalNameSvc && !isResolverConfigured {
-			glog.Warningf("A resolver must be configured for Type ExternalName service %s, no upstream servers will be created", backend.Service.Name)
+			nl.Warnf(l, "A resolver must be configured for Type ExternalName service %s, no upstream servers will be created", backend.Service.Name)
 			endps = []string{}
 		}
 
@@ -622,6 +624,7 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 }
 
 func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNginxConfig, Warnings) {
+	l := nl.LoggerFromContext(p.BaseCfgParams.Context)
 	var masterServer version1.Server
 	var locations []version1.Location
 	var upstreams []version1.Upstream
@@ -635,7 +638,7 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 
 	removedAnnotations := filterMasterAnnotations(p.mergeableIngs.Master.Ingress.Annotations)
 	if len(removedAnnotations) != 0 {
-		glog.Errorf("Ingress Resource %v/%v with the annotation 'nginx.org/mergeable-ingress-type' set to 'master' cannot contain the '%v' annotation(s). They will be ignored",
+		nl.Errorf(l, "Ingress Resource %v/%v with the annotation 'nginx.org/mergeable-ingress-type' set to 'master' cannot contain the '%v' annotation(s). They will be ignored",
 			p.mergeableIngs.Master.Ingress.Namespace, p.mergeableIngs.Master.Ingress.Name, strings.Join(removedAnnotations, ","))
 	}
 	isMinion := false
@@ -647,7 +650,7 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 		dosResource:               p.dosResource,
 		isMinion:                  isMinion,
 		isPlus:                    p.isPlus,
-		baseCfgParams:             p.baseCfgParams,
+		BaseCfgParams:             p.BaseCfgParams,
 		isResolverConfigured:      p.isResolverConfigured,
 		isWildcardEnabled:         p.isWildcardEnabled,
 		ingressControllerReplicas: p.ingressControllerReplicas,
@@ -683,7 +686,7 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 
 		removedAnnotations = filterMinionAnnotations(minion.Ingress.Annotations)
 		if len(removedAnnotations) != 0 {
-			glog.Errorf("Ingress Resource %v/%v with the annotation 'nginx.org/mergeable-ingress-type' set to 'minion' cannot contain the %v annotation(s). They will be ignored",
+			nl.Errorf(l, "Ingress Resource %v/%v with the annotation 'nginx.org/mergeable-ingress-type' set to 'minion' cannot contain the %v annotation(s). They will be ignored",
 				minion.Ingress.Namespace, minion.Ingress.Name, strings.Join(removedAnnotations, ","))
 		}
 
@@ -698,7 +701,7 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 			dosResource:               dummyDosResource,
 			isMinion:                  isMinion,
 			isPlus:                    p.isPlus,
-			baseCfgParams:             p.baseCfgParams,
+			BaseCfgParams:             p.BaseCfgParams,
 			isResolverConfigured:      p.isResolverConfigured,
 			isWildcardEnabled:         p.isWildcardEnabled,
 			ingressControllerReplicas: p.ingressControllerReplicas,
@@ -735,7 +738,7 @@ func generateNginxCfgForMergeableIngresses(p NginxCfgParams) (version1.IngressNg
 		Upstreams:               upstreams,
 		Keepalive:               keepalive,
 		Ingress:                 masterNginxCfg.Ingress,
-		SpiffeClientCerts:       p.staticParams.NginxServiceMesh && !p.baseCfgParams.SpiffeServerCerts,
+		SpiffeClientCerts:       p.staticParams.NginxServiceMesh && !p.BaseCfgParams.SpiffeServerCerts,
 		DynamicSSLReloadEnabled: p.staticParams.DynamicSSLReload,
 		StaticSSLPath:           p.staticParams.StaticSSLPath,
 		LimitReqZones:           limitReqZones,
