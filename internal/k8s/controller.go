@@ -120,7 +120,7 @@ type LoadBalancerController struct {
 	ingressLinkLister             cache.Store
 	namespaceLabeledLister        cache.Store
 	syncQueue                     *taskQueue
-	context                       context.Context
+	ctx                           context.Context
 	Logger                        *slog.Logger
 	cancel                        context.CancelFunc
 	configurator                  *configs.Configurator
@@ -549,14 +549,14 @@ func (nsi *namespacedInformer) addVirtualServerRouteHandler(handlers cache.Resou
 
 // Run starts the loadbalancer controller
 func (lbc *LoadBalancerController) Run() {
-	lbc.context, lbc.cancel = context.WithCancel(context.Background())
+	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
 
 	if lbc.namespaceWatcherController != nil {
-		go lbc.namespaceWatcherController.Run(lbc.context.Done())
+		go lbc.namespaceWatcherController.Run(lbc.ctx.Done())
 	}
 
 	if lbc.spiffeCertFetcher != nil {
-		_, _, err := lbc.spiffeCertFetcher.Start(lbc.context)
+		_, _, err := lbc.spiffeCertFetcher.Start(lbc.ctx)
 		lbc.addInternalRouteServer()
 		if err != nil {
 			nl.Fatal(lbc.Logger, err)
@@ -585,25 +585,25 @@ func (lbc *LoadBalancerController) Run() {
 		}()
 	}
 	if lbc.certManagerController != nil {
-		go lbc.certManagerController.Run(lbc.context.Done())
+		go lbc.certManagerController.Run(lbc.ctx.Done())
 	}
 	if lbc.externalDNSController != nil {
-		go lbc.externalDNSController.Run(lbc.context.Done())
+		go lbc.externalDNSController.Run(lbc.ctx.Done())
 	}
 
 	if lbc.leaderElector != nil {
-		go lbc.leaderElector.Run(lbc.context)
+		go lbc.leaderElector.Run(lbc.ctx)
 	}
 
 	if lbc.telemetryCollector != nil {
 		go func(ctx context.Context) {
 			select {
 			case <-lbc.telemetryChan:
-				lbc.telemetryCollector.Start(lbc.context)
+				lbc.telemetryCollector.Start(lbc.ctx)
 			case <-ctx.Done():
 				return
 			}
-		}(lbc.context)
+		}(lbc.ctx)
 	}
 
 	for _, nif := range lbc.namespacedInformers {
@@ -611,14 +611,14 @@ func (lbc *LoadBalancerController) Run() {
 	}
 
 	if lbc.watchNginxConfigMaps {
-		go lbc.configMapController.Run(lbc.context.Done())
+		go lbc.configMapController.Run(lbc.ctx.Done())
 	}
 
 	if lbc.watchGlobalConfiguration {
-		go lbc.globalConfigurationController.Run(lbc.context.Done())
+		go lbc.globalConfigurationController.Run(lbc.ctx.Done())
 	}
 	if lbc.watchIngressLink {
-		go lbc.ingressLinkInformer.Run(lbc.context.Done())
+		go lbc.ingressLinkInformer.Run(lbc.ctx.Done())
 	}
 
 	totalCacheSyncs := lbc.cacheSyncs
@@ -629,7 +629,7 @@ func (lbc *LoadBalancerController) Run() {
 
 	nl.Debugf(lbc.Logger, "Waiting for %d caches to sync", len(totalCacheSyncs))
 
-	if !cache.WaitForCacheSync(lbc.context.Done(), totalCacheSyncs...) {
+	if !cache.WaitForCacheSync(lbc.ctx.Done(), totalCacheSyncs...) {
 		return
 	}
 
@@ -637,8 +637,8 @@ func (lbc *LoadBalancerController) Run() {
 
 	nl.Debugf(lbc.Logger, "Starting the queue with %d initial elements", lbc.syncQueue.Len())
 
-	go lbc.syncQueue.Run(time.Second, lbc.context.Done())
-	<-lbc.context.Done()
+	go lbc.syncQueue.Run(time.Second, lbc.ctx.Done())
+	<-lbc.ctx.Done()
 }
 
 // Stop shutsdown the load balancer controller
@@ -841,10 +841,10 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 }
 
 func (lbc *LoadBalancerController) updateAllConfigs() {
-	cfgParams := configs.NewDefaultConfigParams(lbc.context, lbc.isNginxPlus)
+	cfgParams := configs.NewDefaultConfigParams(lbc.ctx, lbc.isNginxPlus)
 
 	if lbc.configMap != nil {
-		cfgParams = configs.ParseConfigMap(lbc.context, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled)
+		cfgParams = configs.ParseConfigMap(lbc.ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled)
 	}
 
 	resources := lbc.configuration.GetResources()
