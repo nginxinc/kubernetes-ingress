@@ -771,7 +771,8 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 
 	// update TLS Passthrough Hosts config in case we have a TLS Passthrough TransportServer
 	// only TLS Passthrough TransportServers have non-empty hosts
-	if transportServerEx.TransportServer.Spec.Host != "" {
+	isTLSPassthrough := transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName
+	if transportServerEx.TransportServer.Spec.Host != "" && isTLSPassthrough {
 		key := generateNamespaceNameKey(&transportServerEx.TransportServer.ObjectMeta)
 		cnf.tlsPassthroughPairs[key] = tlsPassthroughPair{
 			Host:       transportServerEx.TransportServer.Spec.Host,

@@ -78,7 +78,7 @@ func validateTLS(
 
 	if hostSpecified {
 		if tls == nil || tls.Secret == "" {
-			return field.ErrorList{field.Required(fieldPath, "must specify spec.tls.secret when host is specified")}
+			return field.ErrorList{field.Required(fieldPath, "must specify spec.tls.secret when host is specified, and the TransportServer is not using the TLS Passthrough listener")}
 		}
 		return validateSecretName(tls.Secret, fieldPath.Child("secret"))
 	}
