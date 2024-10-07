@@ -1,11 +1,14 @@
 package healthcheck_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/go-cmp/cmp"
@@ -15,9 +18,20 @@ import (
 
 // testHandler creates http handler for testing HealthServer.
 func testHandler(hs *healthcheck.HealthServer) http.Handler {
+	// Mock Configurator
+	cnf := &configs.Configurator{
+		CfgParams: &configs.ConfigParams{
+			Context: context.Background(),
+		},
+	}
+
 	mux := chi.NewRouter()
-	mux.Get("/probe/{hostname}", hs.UpstreamStats)
-	mux.Get("/probe/ts/{name}", hs.StreamStats)
+	mux.Get("/probe/{hostname}", func(w http.ResponseWriter, r *http.Request) {
+		hs.UpstreamStats(w, r, cnf)
+	})
+	mux.Get("/probe/ts/{name}", func(w http.ResponseWriter, r *http.Request) {
+		hs.StreamStats(w, r, cnf)
+	})
 	return mux
 }
 
