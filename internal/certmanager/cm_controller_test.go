@@ -18,6 +18,7 @@ package certmanager
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -29,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
@@ -147,7 +149,7 @@ func Test_controller_Register(t *testing.T) {
 
 			cm := &CmController{
 				ctx:           b.RootContext,
-				queue:         workqueue.NewNamedRateLimitingQueue(controllerpkg.DefaultItemBasedRateLimiter(), ControllerName),
+				queue:         workqueue.NewTypedRateLimitingQueueWithConfig(controllerpkg.DefaultItemBasedRateLimiter(), workqueue.TypedRateLimitingQueueConfig[types.NamespacedName]{Name: ControllerName}),
 				informerGroup: ig,
 				recorder:      b.Recorder,
 				kubeClient:    b.Client,
@@ -178,7 +180,7 @@ func Test_controller_Register(t *testing.T) {
 				if done {
 					break
 				}
-				gotKeys = append(gotKeys, gotKey.(string))
+				gotKeys = append(gotKeys, fmt.Sprintf("%s/%s", gotKey.Namespace, gotKey.Name))
 			}
 			assert.Equal(t, 0, queue.Len(), "queue should be empty")
 

@@ -11,13 +11,13 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.1@sha256:3429430ccd05f3b8d8462a7d6f6f38d493439e0fb429fd77ff46fac9af436af1 AS opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.1-alpine@sha256:424d069bc44b9cb768ac231043b6c0b54ab4ec1f76f40560000f6d4addb40493 AS alpine-opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.1@sha256:a802f5f540f47f2ceb8cbefe9a8c9095df76527a9641671be66ab35f8ea1fe8d AS opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.1-alpine@sha256:2db6027182e3a080209705447b973759be9246d77475666ee940065a959c7335 AS alpine-opentracing-lib
 FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.1@sha256:0bab61e2bd639b269ec54343ea66b7acbdb0eb67bed44383e1be937c483c451d AS ubi-ppc64le
 FROM ghcr.io/nginxinc/alpine-fips:0.2.2-alpine3.17@sha256:0dcd9149b66a6b35c1253b7662c8ed7ef0e0172ceae893a82058c30668799bf2 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.2-alpine3.20@sha256:0ddcfb906a5dc931336db5ba6e0d09d5f77cc48c67e3781aba66a0a27dc14605 AS alpine-fips-3.20
 FROM redhat/ubi9-minimal@sha256:c0e70387664f30cd9cf2795b547e4a9a51002c44a4a86aa9335ab030134bf392 AS ubi-minimal
-FROM golang:1.23-alpine@sha256:ac67716dd016429be8d4c2c53a248d7bcdf06d34127d3dc451bda6aa5a87bc06 AS golang-builder
+FROM golang:1.23-alpine@sha256:9dd2625a1ff2859b8d8b01d8f7822c0f528942fe56cfe7a1e7c38d3b8d72d679 AS golang-builder
 
 
 ############################################# Base image for Alpine #############################################
@@ -31,7 +31,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.27.1@sha256:135fbc7ed19c8f644ddf678e68292e678696908451dad7ee2fd4e0cf861f4b6f AS debian
+FROM nginx:1.27.1@sha256:287ff321f9e3cde74b600cc26197424404157a72043226cbbf07ee8304a2c720 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -207,7 +207,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:12-slim@sha256:a629e796d77a7b2ff82186ed15d01a493801c020eed5ce6adaa2704356f15a1c AS debian-plus
+FROM debian:12-slim@sha256:ad86386827b083b3d71139050b47ffb32bbd9559ea9b1345a739b14fec2d9ecf AS debian-plus
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}

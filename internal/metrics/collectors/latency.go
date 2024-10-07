@@ -1,13 +1,15 @@
 package collectors
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/golang/glog"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -73,10 +75,12 @@ type LatencyMetricsCollector struct {
 	metricsPublishedMap          metricsPublishedMap
 	metricsPublishedMutex        sync.Mutex
 	variableLabelsMutex          sync.RWMutex
+	logger                       *slog.Logger
 }
 
 // NewLatencyMetricsCollector creates a new LatencyMetricsCollector
 func NewLatencyMetricsCollector(
+	ctx context.Context,
 	constLabels map[string]string,
 	upstreamServerLabelNames []string,
 	upstreamServerPeerLabelNames []string,
@@ -96,6 +100,7 @@ func NewLatencyMetricsCollector(
 		metricsPublishedMap:          make(metricsPublishedMap),
 		upstreamServerLabelNames:     upstreamServerLabelNames,
 		upstreamServerPeerLabelNames: upstreamServerPeerLabelNames,
+		logger:                       nl.LoggerFromContext(ctx),
 	}
 }
 
@@ -141,7 +146,7 @@ func (l *LatencyMetricsCollector) DeleteMetrics(upstreamServerPeerNames []string
 		for _, labelValues := range l.listAndDeleteMetricsPublished(name) {
 			success := l.httpLatency.DeleteLabelValues(labelValues...)
 			if !success {
-				glog.Warningf("could not delete metric for upstream server peer: %s with values: %v", name, labelValues)
+				nl.Warnf(l.logger, "could not delete metric for upstream server peer: %s with values: %v", name, labelValues)
 			}
 		}
 	}
@@ -178,7 +183,7 @@ func (l *LatencyMetricsCollector) Collect(ch chan<- prometheus.Metric) {
 func (l *LatencyMetricsCollector) RecordLatency(syslogMsg string) {
 	lm, err := parseMessage(syslogMsg)
 	if err != nil {
-		glog.V(3).Infof("could not parse syslog message: %v", err)
+		nl.Debugf(l.logger, "could not parse syslog message: %v", err)
 		return
 	}
 
@@ -188,13 +193,13 @@ func (l *LatencyMetricsCollector) RecordLatency(syslogMsg string) {
 	// https://github.com/nginxinc/kubernetes-ingress/issues/5010
 	// https://github.com/nginxinc/kubernetes-ingress/issues/6124
 	if lm.Upstream == "-" {
-		glog.V(3).Infof("latency metrics for gRPC upstreams: %v", lm)
+		nl.Debugf(l.logger, "latency metrics for gRPC upstreams: %v", lm)
 		return
 	}
 
 	labelValues, err := l.createLatencyLabelValues(lm)
 	if err != nil {
-		glog.Errorf("cannot record latency for upstream %s and server %s: %v", lm.Upstream, lm.Server, err)
+		nl.Errorf(l.logger, "cannot record latency for upstream %s and server %s: %v", lm.Upstream, lm.Server, err)
 		return
 	}
 	l.httpLatency.WithLabelValues(labelValues...).Observe(lm.Latency * 1000)
