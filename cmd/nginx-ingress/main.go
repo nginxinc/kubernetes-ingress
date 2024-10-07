@@ -714,7 +714,7 @@ func createManagerAndControllerCollectors(ctx context.Context, constLabels map[s
 		registry = prometheus.NewRegistry()
 		mc = collectors.NewLocalManagerMetricsCollector(constLabels)
 		cc = collectors.NewControllerMetricsCollector(*enableCustomResources, constLabels)
-		processCollector := collectors.NewNginxProcessesMetricsCollector(constLabels)
+		processCollector := collectors.NewNginxProcessesMetricsCollector(ctx, constLabels)
 		workQueueCollector := collectors.NewWorkQueueMetricsCollector(constLabels)
 
 		err = mc.Register(registry)
@@ -781,18 +781,18 @@ func createPlusAndLatencyCollectors(
 			logger := kitlog.NewLogfmtLogger(os.Stdout)
 			logger = level.NewFilter(logger, level.AllowError())
 			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels, logger)
-			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
+			go metrics.RunPrometheusListenerForNginxPlus(ctx, *prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
 		} else {
 			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
 			client := metrics.NewNginxMetricsClient(httpClient)
-			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels, prometheusSecret)
+			go metrics.RunPrometheusListenerForNginx(ctx, *prometheusMetricsListenPort, client, registry, constLabels, prometheusSecret)
 		}
 		if *enableLatencyMetrics {
-			lc = collectors.NewLatencyMetricsCollector(constLabels, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
+			lc = collectors.NewLatencyMetricsCollector(ctx, constLabels, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
 			if err := lc.Register(registry); err != nil {
 				nl.Errorf(l, "Error registering Latency Prometheus metrics: %v", err)
 			}
-			syslogListener = metrics.NewLatencyMetricsListener("/var/lib/nginx/nginx-syslog.sock", lc)
+			syslogListener = metrics.NewLatencyMetricsListener(ctx, "/var/lib/nginx/nginx-syslog.sock", lc)
 			go syslogListener.Run()
 		}
 	}

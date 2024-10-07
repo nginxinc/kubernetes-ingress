@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,12 +14,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/level"
-	"github.com/golang/glog"
 	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	v1 "k8s.io/api/core/v1"
+
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 )
 
 // NewNginxMetricsClient creates an NginxClient to fetch stats from NGINX over an unix socket
@@ -27,28 +29,29 @@ func NewNginxMetricsClient(httpClient *http.Client) *prometheusClient.NginxClien
 }
 
 // RunPrometheusListenerForNginx runs an http server to expose Prometheus metrics for NGINX
-func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string, prometheusSecret *v1.Secret) {
+func RunPrometheusListenerForNginx(ctx context.Context, port int, client *prometheusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string, prometheusSecret *v1.Secret) {
 	logger := kitlog.NewLogfmtLogger(os.Stdout)
 	logger = level.NewFilter(logger, level.AllowError())
 	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", constLabels, logger))
-	runServer(strconv.Itoa(port), registry, prometheusSecret)
+	runServer(ctx, strconv.Itoa(port), registry, prometheusSecret)
 }
 
 // RunPrometheusListenerForNginxPlus runs an http server to expose Prometheus metrics for NGINX Plus
-func RunPrometheusListenerForNginxPlus(port int, nginxPlusCollector prometheus.Collector, registry *prometheus.Registry, prometheusSecret *v1.Secret) {
+func RunPrometheusListenerForNginxPlus(ctx context.Context, port int, nginxPlusCollector prometheus.Collector, registry *prometheus.Registry, prometheusSecret *v1.Secret) {
 	registry.MustRegister(nginxPlusCollector)
-	runServer(strconv.Itoa(port), registry, prometheusSecret)
+	runServer(ctx, strconv.Itoa(port), registry, prometheusSecret)
 }
 
 // runServer starts the metrics server.
-func runServer(port string, registry prometheus.Gatherer, prometheusSecret *v1.Secret) {
+func runServer(ctx context.Context, port string, registry prometheus.Gatherer, prometheusSecret *v1.Secret) {
 	addr := fmt.Sprintf(":%s", port)
-	s, err := NewServer(addr, registry, prometheusSecret)
+	l := nl.LoggerFromContext(ctx)
+	s, err := newServer(ctx, addr, registry, prometheusSecret)
 	if err != nil {
-		glog.Fatal(err)
+		nl.Fatal(l, err)
 	}
-	glog.Infof("Starting prometheus listener on: %s/metrics", addr)
-	glog.Fatal(s.ListenAndServe())
+	nl.Infof(l, "Starting prometheus listener on: %s/metrics", addr)
+	nl.Fatal(l, s.ListenAndServe())
 }
 
 // Server holds information about NIC metrics server.
@@ -56,12 +59,13 @@ type Server struct {
 	Server   *http.Server
 	URL      string
 	Registry prometheus.Gatherer
+	logger   *slog.Logger
 }
 
 // NewServer creates HTTP server for serving NIC metrics for Prometheus.
 //
 // Metrics are exposed on the `/metrics` endpoint.
-func NewServer(addr string, registry prometheus.Gatherer, secret *v1.Secret) (*Server, error) {
+func newServer(ctx context.Context, addr string, registry prometheus.Gatherer, secret *v1.Secret) (*Server, error) {
 	s := Server{
 		Server: &http.Server{
 			Addr:         addr,
@@ -70,6 +74,7 @@ func NewServer(addr string, registry prometheus.Gatherer, secret *v1.Secret) (*S
 		},
 		URL:      fmt.Sprintf("http://%s/", addr),
 		Registry: registry,
+		logger:   nl.LoggerFromContext(ctx),
 	}
 	// Secrets are read from K8s API. If the secret for Prometheus is present
 	// we configure Metrics Server with the key and cert.
@@ -99,7 +104,7 @@ func (s *Server) Home(w http.ResponseWriter, r *http.Request) { //nolint:revive
 			</body>
 			</html>`))
 	if err != nil {
-		glog.Errorf("error while sending a response for the '/' path: %v", err)
+		nl.Errorf(s.logger, "error while sending a response for the '/' path: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
