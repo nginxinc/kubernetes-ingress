@@ -47,9 +47,6 @@ type Collector struct {
 
 // CollectorConfig contains configuration options for a Collector
 type CollectorConfig struct {
-	// Context to hold the logger
-	Context context.Context
-
 	// Period to collect telemetry
 	Period time.Duration
 
@@ -114,7 +111,7 @@ func (c *Collector) Start(ctx context.Context) {
 // Collect collects and exports telemetry data.
 // It exports data using provided exporter.
 func (c *Collector) Collect(ctx context.Context) {
-	l := nl.LoggerFromContext(c.Config.Context)
+	l := nl.LoggerFromContext(c.Config.Configurator.CfgParams.Context)
 	nl.Debug(l, "Collecting telemetry data")
 	report, err := c.BuildReport(ctx)
 	if err != nil {
@@ -215,7 +212,7 @@ type Report struct {
 
 // BuildReport takes context, collects telemetry data and builds the report.
 func (c *Collector) BuildReport(ctx context.Context) (Report, error) {
-	l := nl.LoggerFromContext(c.Config.Context)
+	l := nl.LoggerFromContext(c.Config.Configurator.CfgParams.Context)
 	vsCount := 0
 	vsrCount := 0
 	tsCount := 0

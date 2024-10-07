@@ -374,7 +374,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 			nl.Fatalf(lbc.Logger, "failed to initialize telemetry exporter: %v", err)
 		}
 		collectorConfig := telemetry.CollectorConfig{
-			Context:             input.LoggerContext,
 			Period:              24 * time.Hour,
 			K8sClientReader:     input.KubeClient,
 			Version:             input.NICVersion,
