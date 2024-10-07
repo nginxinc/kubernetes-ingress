@@ -31,7 +31,7 @@ func RunHealthCheck(port int, plusClient *client.NginxClient, cnf *configs.Confi
 		nl.Fatal(l, err)
 	}
 	nl.Infof(l, "Starting Service Insight listener on: %v%v", addr, "/probe")
-	nl.Fatal(l, hs.ListenAndServe(cnf))
+	nl.Fatal(l, hs.ListenAndServe) //nolint:govet
 }
 
 // HealthServer holds data required for running
@@ -43,6 +43,7 @@ type HealthServer struct {
 	NginxUpstreams         func() (*client.Upstreams, error)
 	StreamUpstreamsForName func(host string) []string
 	NginxStreamUpstreams   func() (*client.StreamUpstreams, error)
+	Configurator           *configs.Configurator
 }
 
 // NewHealthServer creates Health Server. If secret is provided,
@@ -59,6 +60,7 @@ func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configura
 		NginxUpstreams:         nc.GetUpstreams,
 		StreamUpstreamsForName: cnf.StreamUpstreamsForName,
 		NginxStreamUpstreams:   nc.GetStreamUpstreams,
+		Configurator:           cnf,
 	}
 
 	if secret != nil {
@@ -76,13 +78,13 @@ func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configura
 }
 
 // ListenAndServe starts healthcheck server.
-func (hs *HealthServer) ListenAndServe(cnf *configs.Configurator) error {
+func (hs *HealthServer) ListenAndServe() error {
 	mux := chi.NewRouter()
 	mux.Get("/probe/{hostname}", func(w http.ResponseWriter, r *http.Request) {
-		hs.UpstreamStats(w, r, cnf)
+		hs.UpstreamStats(w, r)
 	})
 	mux.Get("/probe/ts/{name}", func(w http.ResponseWriter, r *http.Request) {
-		hs.StreamStats(w, r, cnf)
+		hs.StreamStats(w, r)
 	})
 	hs.Server.Handler = mux
 	if hs.Server.TLSConfig != nil {
@@ -97,8 +99,8 @@ func (hs *HealthServer) Shutdown(ctx context.Context) error {
 }
 
 // UpstreamStats calculates health stats for the host identified by the hostname in the request URL.
-func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request, cnf *configs.Configurator) {
-	l := nl.LoggerFromContext(cnf.CfgParams.Context)
+func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
+	l := nl.LoggerFromContext(hs.Configurator.CfgParams.Context)
 	hostname := chi.URLParam(r, "hostname")
 	host := sanitize(hostname)
 
@@ -138,8 +140,8 @@ func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request, cn
 
 // StreamStats calculates health stats for the TransportServer(s)
 // identified by the service (action) name in the request URL.
-func (hs *HealthServer) StreamStats(w http.ResponseWriter, r *http.Request, cnf *configs.Configurator) {
-	l := nl.LoggerFromContext(cnf.CfgParams.Context)
+func (hs *HealthServer) StreamStats(w http.ResponseWriter, r *http.Request) {
+	l := nl.LoggerFromContext(hs.Configurator.CfgParams.Context)
 	name := chi.URLParam(r, "name")
 	n := sanitize(name)
 	streamUpstreamNames := hs.StreamUpstreamsForName(n)
