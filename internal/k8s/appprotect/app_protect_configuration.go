@@ -3,6 +3,7 @@ package appprotect
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"sort"
 	"time"
 
@@ -116,19 +117,21 @@ type ConfigurationImpl struct {
 	Policies map[string]*PolicyEx
 	LogConfs map[string]*LogConfEx
 	UserSigs map[string]*UserSigEx
+	Logger   *slog.Logger
 }
 
 // NewConfiguration creates a new App Protect Configuration
-func NewConfiguration() Configuration {
-	return newConfigurationImpl()
+func NewConfiguration(l *slog.Logger) Configuration {
+	return newConfigurationImpl(l)
 }
 
 // NewConfiguration creates a new App Protect Configuration
-func newConfigurationImpl() *ConfigurationImpl {
+func newConfigurationImpl(l *slog.Logger) *ConfigurationImpl {
 	return &ConfigurationImpl{
 		Policies: make(map[string]*PolicyEx),
 		LogConfs: make(map[string]*LogConfEx),
 		UserSigs: make(map[string]*UserSigEx),
+		Logger:   l,
 	}
 }
 
@@ -205,8 +208,8 @@ func (s appProtectUserSigSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func createAppProtectPolicyEx(policyObj *unstructured.Unstructured) (*PolicyEx, error) {
-	err := validation.ValidateAppProtectPolicy(policyObj)
+func createAppProtectPolicyEx(policyObj *unstructured.Unstructured, l *slog.Logger) (*PolicyEx, error) {
+	err := validation.ValidateAppProtectPolicy(policyObj, l)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error validating policy %s: %v", policyObj.GetName(), err)
 		return &PolicyEx{Obj: policyObj, IsValid: false, ErrorMsg: failedValidationErrorMsg}, errors.New(errMsg)
@@ -347,7 +350,7 @@ func (ci *ConfigurationImpl) verifyPolicyAgainstUserSigs(policy *PolicyEx) bool 
 // AddOrUpdatePolicy adds or updates an App Protect Policy to App Protect Configuration
 func (ci *ConfigurationImpl) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
 	resNsName := appprotectcommon.GetNsName(policyObj)
-	policy, err := createAppProtectPolicyEx(policyObj)
+	policy, err := createAppProtectPolicyEx(policyObj, ci.Logger)
 	if err != nil {
 		ci.Policies[resNsName] = policy
 		return append(changes, Change{Op: Delete, Resource: policy}),
