@@ -4065,7 +4065,7 @@ func TestFindResourcesForResourceReference(t *testing.T) {
 			},
 			expected: []Resource{
 				configuration.hosts["ts.example.com"],
-				configuration.listeners[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
+				configuration.listenerHosts[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
 			},
 			msg: "only TransportServers",
 		},
@@ -4121,7 +4121,7 @@ func TestGetResources(t *testing.T) {
 	expected := []Resource{
 		configuration.hosts["foo.example.com"],
 		configuration.hosts["abc.example.com"],
-		configuration.listeners[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
+		configuration.listenerHosts[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
 		configuration.hosts["qwe.example.com"],
 	}
 
@@ -4150,7 +4150,7 @@ func TestGetResources(t *testing.T) {
 
 	expected = []Resource{
 		configuration.hosts["abc.example.com"],
-		configuration.listeners[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
+		configuration.listenerHosts[listenerHostKey{ListenerName: "tcp-7777", Host: ""}],
 	}
 
 	result = configuration.GetResourcesWithFilter(resourceFilter{TransportServers: true})

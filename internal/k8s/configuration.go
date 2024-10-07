@@ -342,9 +342,9 @@ type TransportServerMetrics struct {
 // The IC needs to ensure that at any point in time the NGINX config on the filesystem reflects the state
 // of the objects in the Configuration.
 type Configuration struct {
-	hosts       map[string]Resource
-	listeners   map[listenerHostKey]*TransportServerConfiguration
-	listenerMap map[string]conf_v1.Listener
+	hosts         map[string]Resource
+	listenerHosts map[listenerHostKey]*TransportServerConfiguration
+	listenerMap   map[string]conf_v1.Listener
 
 	// only valid resources with the matching IngressClass are stored
 	ingresses           map[string]*networking.Ingress
@@ -399,7 +399,7 @@ func NewConfiguration(
 ) *Configuration {
 	return &Configuration{
 		hosts:                        make(map[string]Resource),
-		listeners:                    make(map[listenerHostKey]*TransportServerConfiguration),
+		listenerHosts:                make(map[listenerHostKey]*TransportServerConfiguration),
 		ingresses:                    make(map[string]*networking.Ingress),
 		virtualServers:               make(map[string]*conf_v1.VirtualServer),
 		virtualServerRoutes:          make(map[string]*conf_v1.VirtualServerRoute),
@@ -621,7 +621,7 @@ func (c *Configuration) AddOrUpdateGlobalConfiguration(gc *conf_v1.GlobalConfigu
 	c.globalConfiguration = gc
 	c.setGlobalConfigListenerMap()
 
-	listenerChanges, listenerProblems := c.rebuildListeners()
+	listenerChanges, listenerProblems := c.rebuildListenerHosts()
 
 	changes = append(changes, listenerChanges...)
 	problems = append(problems, listenerProblems...)
@@ -643,7 +643,7 @@ func (c *Configuration) DeleteGlobalConfiguration() ([]ResourceChange, []Configu
 
 	c.globalConfiguration = nil
 	c.setGlobalConfigListenerMap()
-	listenerChanges, listenerProblems := c.rebuildListeners()
+	listenerChanges, listenerProblems := c.rebuildListenerHosts()
 	changes = append(changes, listenerChanges...)
 	problems = append(problems, listenerProblems...)
 
@@ -681,7 +681,7 @@ func (c *Configuration) AddOrUpdateTransportServer(ts *conf_v1.TransportServer) 
 		}
 	}
 
-	changes, problems := c.rebuildListeners()
+	changes, problems := c.rebuildListenerHosts()
 
 	if c.isTLSPassthroughEnabled {
 		hostChanges, hostProblems := c.rebuildHosts()
@@ -691,7 +691,7 @@ func (c *Configuration) AddOrUpdateTransportServer(ts *conf_v1.TransportServer) 
 	}
 
 	if validationErr != nil {
-		// If the invalid resource has an active host/listener, rebuildHosts/rebuildListeners will create a change
+		// If the invalid resource has an active host/listener, rebuildHosts/rebuildListenerHosts will create a change
 		// to remove the resource.
 		// Here we add the validationErr to that change.
 		kind := getResourceKeyWithKind(transportServerKind, &ts.ObjectMeta)
@@ -706,7 +706,7 @@ func (c *Configuration) AddOrUpdateTransportServer(ts *conf_v1.TransportServer) 
 
 		// On the other hand, the invalid resource might not have any active host/listener.
 		// Or the resource was invalid before and is still invalid (in some different way).
-		// In those cases,  rebuildHosts/rebuildListeners will create no change for that resource.
+		// In those cases,  rebuildHosts/rebuildListenerHosts will create no change for that resource.
 		// To make sure the validationErr is reported to the user, we create a problem.
 		p := ConfigurationProblem{
 			Object:  ts,
@@ -732,7 +732,7 @@ func (c *Configuration) DeleteTransportServer(key string) ([]ResourceChange, []C
 
 	delete(c.transportServers, key)
 
-	changes, problems := c.rebuildListeners()
+	changes, problems := c.rebuildListenerHosts()
 
 	if c.isTLSPassthroughEnabled {
 		hostChanges, hostProblems := c.rebuildHosts()
@@ -744,13 +744,13 @@ func (c *Configuration) DeleteTransportServer(key string) ([]ResourceChange, []C
 	return changes, problems
 }
 
-func (c *Configuration) rebuildListeners() ([]ResourceChange, []ConfigurationProblem) {
-	newListeners, newTSConfigs := c.buildListenersAndTSConfigurations()
+func (c *Configuration) rebuildListenerHosts() ([]ResourceChange, []ConfigurationProblem) {
+	newListenerHosts, newTSConfigs := c.buildListenerHostsAndTSConfigurations()
 
-	removedListeners, updatedListeners, addedListeners := detectChangesInListeners(c.listeners, newListeners)
-	changes := createResourceChangesForListeners(removedListeners, updatedListeners, addedListeners, c.listeners, newListeners)
+	removedListenerHosts, updatedListenerHosts, addedListenerHosts := detectChangesInListenerHosts(c.listenerHosts, newListenerHosts)
+	changes := createResourceChangesForListeners(removedListenerHosts, updatedListenerHosts, addedListenerHosts, c.listenerHosts, newListenerHosts)
 
-	c.listeners = newListeners
+	c.listenerHosts = newListenerHosts
 
 	changes = squashResourceChanges(changes)
 
@@ -776,8 +776,8 @@ func (c *Configuration) rebuildListeners() ([]ResourceChange, []ConfigurationPro
 	return changes, newOrUpdatedProblems
 }
 
-func (c *Configuration) buildListenersAndTSConfigurations() (map[listenerHostKey]*TransportServerConfiguration, map[string]*TransportServerConfiguration) {
-	newListeners := make(map[listenerHostKey]*TransportServerConfiguration)
+func (c *Configuration) buildListenerHostsAndTSConfigurations() (map[listenerHostKey]*TransportServerConfiguration, map[string]*TransportServerConfiguration) {
+	newListenerHosts := make(map[listenerHostKey]*TransportServerConfiguration)
 	newTSConfigs := make(map[string]*TransportServerConfiguration)
 
 	for key, ts := range c.transportServers {
@@ -812,9 +812,9 @@ func (c *Configuration) buildListenersAndTSConfigurations() (map[listenerHostKey
 		host := ts.Spec.Host
 		listenerKey := listenerHostKey{ListenerName: listener.Name, Host: host}
 
-		holder, exists := newListeners[listenerKey]
+		holder, exists := newListenerHosts[listenerKey]
 		if !exists {
-			newListeners[listenerKey] = tsc
+			newListenerHosts[listenerKey] = tsc
 			continue
 		}
 
@@ -823,13 +823,13 @@ func (c *Configuration) buildListenersAndTSConfigurations() (map[listenerHostKey
 
 		if !holder.Wins(tsc) {
 			holder.AddWarning(warning)
-			newListeners[listenerKey] = tsc
+			newListenerHosts[listenerKey] = tsc
 		} else {
 			tsc.AddWarning(warning)
 		}
 	}
 
-	return newListeners, newTSConfigs
+	return newListenerHosts, newTSConfigs
 }
 
 func (c *Configuration) buildListenersForVSConfiguration(vsc *VirtualServerConfiguration) {
@@ -890,7 +890,7 @@ func (c *Configuration) GetResourcesWithFilter(filter resourceFilter) []Resource
 	}
 
 	if filter.TransportServers {
-		for _, r := range c.listeners {
+		for _, r := range c.listenerHosts {
 			resources[r.GetKeyWithKind()] = r
 		}
 	}
@@ -986,8 +986,8 @@ func (c *Configuration) findResourcesForResourceReference(namespace string, name
 		}
 	}
 
-	for _, l := range getSortedListenerHostKeys(c.listeners) {
-		tsConfig := c.listeners[l]
+	for _, lh := range getSortedListenerHostKeys(c.listenerHosts) {
+		tsConfig := c.listenerHosts[lh]
 
 		if checker.IsReferencedByTransportServer(namespace, name, tsConfig.TransportServer) {
 			result = append(result, tsConfig)
@@ -1086,7 +1086,7 @@ func (c *Configuration) addProblemsForTSConfigsWithoutActiveListener(
 			hostDescription = host
 		}
 		key := listenerHostKey{ListenerName: listenerName, Host: host}
-		holder, exists := c.listeners[key]
+		holder, exists := c.listenerHosts[key]
 		if !exists {
 			p := ConfigurationProblem{
 				Object:  tsc.TransportServer,
@@ -1680,7 +1680,7 @@ func (c *Configuration) GetTransportServerMetrics() *TransportServerMetrics {
 		}
 	}
 
-	for _, tsConfig := range c.listeners {
+	for _, tsConfig := range c.listenerHosts {
 		if tsConfig.TransportServer.Spec.Listener.Protocol == "TCP" {
 			metrics.TotalTCP++
 		} else {
@@ -1847,31 +1847,31 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 	return removedHosts, updatedHosts, addedHosts
 }
 
-func detectChangesInListeners(
-	oldListeners map[listenerHostKey]*TransportServerConfiguration,
-	newListeners map[listenerHostKey]*TransportServerConfiguration,
-) (removedListeners []listenerHostKey, updatedListeners []listenerHostKey, addedListeners []listenerHostKey) {
-	oldKeys := getSortedListenerHostKeys(oldListeners)
-	newKeys := getSortedListenerHostKeys(newListeners)
+func detectChangesInListenerHosts(
+	oldListenerHosts map[listenerHostKey]*TransportServerConfiguration,
+	newListenerHosts map[listenerHostKey]*TransportServerConfiguration,
+) (removedListenerHosts []listenerHostKey, updatedListenerHosts []listenerHostKey, addedListenerHosts []listenerHostKey) {
+	oldKeys := getSortedListenerHostKeys(oldListenerHosts)
+	newKeys := getSortedListenerHostKeys(newListenerHosts)
 
 	oldKeysSet := make(map[listenerHostKey]struct{})
-	for _, l := range oldKeys {
-		oldKeysSet[l] = struct{}{}
-		if _, exists := newListeners[l]; !exists {
-			removedListeners = append(removedListeners, l)
+	for _, key := range oldKeys {
+		oldKeysSet[key] = struct{}{}
+		if _, exists := newListenerHosts[key]; !exists {
+			removedListenerHosts = append(removedListenerHosts, key)
 		}
 	}
 
-	for _, l := range newKeys {
-		if _, exists := oldListeners[l]; !exists {
-			addedListeners = append(addedListeners, l)
+	for _, key := range newKeys {
+		if _, exists := oldListenerHosts[key]; !exists {
+			addedListenerHosts = append(addedListenerHosts, key)
 		} else {
-			oldR := oldListeners[l]
-			if !oldR.IsEqual(newListeners[l]) {
-				updatedListeners = append(updatedListeners, l)
+			oldConfig := oldListenerHosts[key]
+			if !oldConfig.IsEqual(newListenerHosts[key]) {
+				updatedListenerHosts = append(updatedListenerHosts, key)
 			}
 		}
 	}
 
-	return removedListeners, updatedListeners, addedListeners
+	return removedListenerHosts, updatedListenerHosts, addedListenerHosts
 }
