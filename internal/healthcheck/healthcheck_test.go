@@ -1,14 +1,11 @@
 package healthcheck_test
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/go-cmp/cmp"
@@ -20,7 +17,6 @@ import (
 func testHandler(hs *healthcheck.HealthServer) http.Handler {
 	mux := chi.NewRouter()
 	mux.Get("/probe/{hostname}", hs.UpstreamStats)
-
 	mux.Get("/probe/ts/{name}", hs.StreamStats)
 	return mux
 }
@@ -29,11 +25,6 @@ func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXAllUp,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -54,11 +45,6 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXAllUp,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -92,11 +78,6 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testi
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXAllUnhealthy,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -131,11 +112,6 @@ func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXPartiallyUp,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -170,11 +146,6 @@ func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXNotExistingHost,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -195,11 +166,6 @@ func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXErrorFromAPI,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -220,11 +186,6 @@ func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testi
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -245,11 +206,6 @@ func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -270,11 +226,6 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -308,11 +259,6 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersU
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXPartiallyUp,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -346,11 +292,6 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersDo
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllPeersDown,
-		Configurator: &configs.Configurator{
-			CfgParams: &configs.ConfigParams{
-				Context: context.Background(),
-			},
-		},
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
