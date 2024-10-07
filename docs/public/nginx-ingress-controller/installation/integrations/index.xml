@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Integrations on NGINX Ingress Controller</title>
+    <link>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/</link>
+    <description>Recent content in Integrations on NGINX Ingress Controller</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <atom:link href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>F5 BIG-IP</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/f5-ingresslink/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/f5-ingresslink/</guid>
+      <description>&lt;p&gt;Learn how to use F5 IngressLink with NGINX Ingress Controller to configure your F5 BIG-IP device.&lt;/p&gt;&#xA;&lt;p&gt;F5 IngressLink is an integration between NGINX Ingress Controller and &lt;a href=&#34;https://clouddocs.f5.com/containers/latest/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;F5 BIG-IP Container Ingress Services&lt;/a&gt; (CIS) that configures an F5 BIG-IP device as a load balancer for NGINX Ingress Controller pods.&lt;/p&gt;&#xA;&lt;h2 &#xA;id=&#34;install-nginx-ingress-controller-with-the-integration-enabled&#34;&gt;Install NGINX Ingress Controller with the integration enabled  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#install-nginx-ingress-controller-with-the-integration-enabled&#34; title=&#34;Install NGINX Ingress Controller with the integration enabled&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;The steps to enable the integration depend on the option chosen to install NGINX Ingress Controller: Using &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/&#34;&gt;Manifests&lt;/a&gt; or using the &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/installation/installing-nic/installation-with-helm/&#34;&gt;Helm chart&lt;/a&gt;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>OpenTracing</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/opentracing/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/opentracing/</guid>
+      <description>&lt;p&gt;Learn how to use OpenTracing with F5 NGINX Ingress Controller.&lt;/p&gt;&#xA;&lt;p&gt;NGINX Ingress Controller supports &lt;a href=&#34;https://opentracing.io/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;OpenTracing&lt;/a&gt; with the third-party module &lt;a href=&#34;https://github.com/opentracing-contrib/nginx-opentracing&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;opentracing-contrib/nginx-opentracing&lt;/a&gt;.&lt;/p&gt;&#xA;&lt;h2 &#xA;id=&#34;prerequisites&#34;&gt;Prerequisites  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#prerequisites&#34; title=&#34;Prerequisites&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;ol&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;Use a NGINX Ingress Controller image that contains OpenTracing.&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;You can find the images that include OpenTracing listed &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/technical-specifications/#supported-docker-images&#34;&gt;in the technical specs doc&lt;/a&gt;.&lt;/li&gt;&#xA;&lt;li&gt;Alternatively, you follow &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/installation/build-nginx-ingress-controller/&#34;&gt;Build NGINX Ingress Controller&lt;/a&gt; using &lt;code&gt;debian-image&lt;/code&gt; (or &lt;code&gt;alpine-image&lt;/code&gt;) for NGINX or &lt;code&gt;debian-image-plus&lt;/code&gt; (or &lt;code&gt;alpine-image-plus&lt;/code&gt;) for NGINX Plus.&lt;/li&gt;&#xA;&lt;li&gt;&lt;a href=&#34;https://github.com/jaegertracing/jaeger-client-cpp&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Jaeger&lt;/a&gt;, &lt;a href=&#34;https://github.com/rnburn/zipkin-cpp-opentracing&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Zipkin&lt;/a&gt; and &lt;a href=&#34;https://github.com/DataDog/dd-opentracing-cpp/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Datadog&lt;/a&gt; tracers are installed by default.&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;/li&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;Enable snippets annotations by setting the &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-snippets&#34;&gt;&lt;code&gt;enable-snippets&lt;/code&gt;&lt;/a&gt; command-line argument to true.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

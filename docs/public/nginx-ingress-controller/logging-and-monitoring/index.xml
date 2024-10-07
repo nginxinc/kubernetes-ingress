@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Logging And Monitoring on NGINX Ingress Controller</title>
+    <link>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/</link>
+    <description>Recent content in Logging And Monitoring on NGINX Ingress Controller</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <atom:link href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Logging</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/logging/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/logging/</guid>
+      <description>&lt;p&gt;This document gives an overview of logging provided by NGINX Ingress Controller.&lt;/p&gt;&#xA;&lt;p&gt;NGINX Ingress Controller exposes the logs of the Ingress Controller process (the process that generates NGINX configuration and reloads NGINX to apply it) and NGINX access and error logs. All logs are sent to the standard output and error of the Ingress Controller process. To view the logs, you can execute the &lt;code&gt;kubectl logs&lt;/code&gt; command for an Ingress Controller pod. For example:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Status Page</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/status-page/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/status-page/</guid>
+      <description>&lt;p&gt;This document explains how to get access to the stub status in NGINX and the dashboard in NGINX Plus.&lt;/p&gt;&#xA;&lt;p&gt;NGINX comes with a status page that reports basic metrics about NGINX called the &lt;a href=&#34;https://nginx.org/en/docs/http/ngx_http_stub_status_module.html&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;stub status&lt;/a&gt;.&lt;/p&gt;&#xA;&lt;p&gt;NGINX Plus comes with a &lt;a href=&#34;https://docs.nginx.com/nginx/admin-guide/monitoring/live-activity-monitoring/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;dashboard&lt;/a&gt; that reports key load-balancing and performance metrics.&lt;/p&gt;&#xA;&lt;p&gt;NGINX App Protect DoS comes with a &lt;a href=&#34;https://docs.nginx.com/nginx-app-protect-dos/monitoring/live-activity-monitoring/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;dashboard&lt;/a&gt; that shows the status and information of the protected objects.&#xA;This doc shows how to get access to the stub status/dashboard.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Prometheus</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/prometheus/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/prometheus/</guid>
+      <description>&lt;p&gt;NGINX Ingress Controller exposes metrics in the &lt;a href=&#34;https://prometheus.io/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Prometheus&lt;/a&gt; format. Those include NGINX/NGINX Plus and the Ingress Controller metrics.&lt;/p&gt;&#xA;&lt;h2 &#xA;id=&#34;enabling-metrics&#34;&gt;Enabling Metrics  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#enabling-metrics&#34; title=&#34;Enabling Metrics&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;h3 &#xA;id=&#34;using-manifests&#34;&gt;Using Manifests  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#using-manifests&#34; title=&#34;Using Manifests&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h3&gt;&lt;p&gt;If you&amp;rsquo;re using &lt;em&gt;Kubernetes manifests&lt;/em&gt; (Deployment or DaemonSet) to install the Ingress Controller, to enable Prometheus metrics:&lt;/p&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;Run the Ingress Controller with the &lt;code&gt;-enable-prometheus-metrics&lt;/code&gt; &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/global-configuration/command-line-arguments&#34;&gt;command-line argument&lt;/a&gt;. As a result, the Ingress Controller will expose NGINX or NGINX Plus metrics in the Prometheus format via the path &lt;code&gt;/metrics&lt;/code&gt; on port &lt;code&gt;9113&lt;/code&gt; (customizable via the &lt;code&gt;-prometheus-metrics-listen-port&lt;/code&gt; command-line argument).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Service Insight</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/</guid>
+      <description>&lt;p&gt;The Service Insight feature is available only for F5 NGINX Plus. The F5 NGINX Ingress Controller exposes an endpoint which provides host statistics for services exposed using the VirtualServer (VS) and TransportServer (TS) resources.&lt;/p&gt;&#xA;&lt;p&gt;It exposes data in JSON format and returns HTTP status codes.&lt;/p&gt;&#xA;&lt;p&gt;The response body holds information about the total, down and the unhealthy number of upstream pods associated with the configured hostname. Returned HTTP codes indicate the health of the service.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

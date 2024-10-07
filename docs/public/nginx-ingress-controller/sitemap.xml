@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/overview/about/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/basic-configuration/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/installation/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/installation/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/installation/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/get-registry-image/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/overview/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-common/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/get-image-using-jwt/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/build-nginx-ingress-controller/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/configuration/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/configuration/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/technical-specifications/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/overview/design/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-configmap-policy/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/use-aws-image/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/compile-waf-policies/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/dos-protected/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/overview/nginx-plus/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-operator/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/security/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/troubleshoot-app-protect-waf/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-ingress/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/use-gcp-image/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/configuration-examples/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/f5-ingresslink/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/run-multiple-ingress-controllers/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/troubleshoot-app-protect-dos/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/custom-templates/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/ingress-nginx/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/opentracing/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/overview/product-telemetry/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/configuration/host-and-listener-collisions/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/security-monitoring/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/oidc-custom-configuration/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/custom-listen-ports/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/usage-reporting/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/ingress-path-regex-annotation/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/logging/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-istio/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-linkerd/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-osm/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/troubleshooting/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-dynamic-module/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/status-page/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tutorials/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/prometheus/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/releases/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/community/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/glossary/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/categories/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tags/docs/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/</loc>
+    </url>
+
+
+
+    <url>
+      <loc>https://docs.nginx.com/nginx-ingress-controller/tags/</loc>
+    </url>
+
+
+</urlset>
+

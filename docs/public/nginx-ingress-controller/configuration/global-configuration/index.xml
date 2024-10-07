@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Global configuration on NGINX Ingress Controller</title>
+    <link>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/</link>
+    <description>Recent content in Global configuration on NGINX Ingress Controller</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <atom:link href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Command-line arguments</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/</guid>
+      <description>&lt;p&gt;F5 NGINX Ingress Controller supports several command-line arguments, which are set based on installation method:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;If you&amp;rsquo;re using &lt;em&gt;Kubernetes Manifests&lt;/em&gt; to install NGINX Ingress Controller, modify the Manifests to set the command-line arguments. View the &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/&#34;&gt;Installation with Manifests&lt;/a&gt; topic for more information.&lt;/li&gt;&#xA;&lt;li&gt;If you&amp;rsquo;re using &lt;em&gt;Helm&lt;/em&gt; to install NGINX Ingress Controller, modify the parameters of the Helm chart to set the command-line arguments. View the &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/installation/installing-nic/installation-with-helm/&#34;&gt;Installation with Helm&lt;/a&gt; topic for more information.&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;&lt;a name=&#34;cmdoption-enable-snippets&#34;&gt;&lt;/a&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>GlobalConfiguration resource</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/</guid>
+      <description>&lt;p&gt;This page explains how to use the GlobalConfiguration resource to define the global configuration parameters of F5 NGINX Ingress Controller.&lt;/p&gt;&#xA;&lt;p&gt;The resource supports configuring listeners for TCP and UDP load balancing, and is implemented as a &lt;a href=&#34;https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Custom resource&lt;/a&gt;.&lt;/p&gt;&#xA;&lt;p&gt;Listeners are required by &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/transportserver-resource/&#34;&gt;TransportServer resources&lt;/a&gt; and can be used to &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports/&#34;&gt;configure custom listeners for VirtualServers&lt;/a&gt;.&lt;/p&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 &#xA;id=&#34;prerequisites&#34;&gt;Prerequisites  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#prerequisites&#34; title=&#34;Prerequisites&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;When &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/&#34;&gt;installing NGINX Ingress Controller using Manifests&lt;/a&gt;, you need to reference a GlobalConfiguration resource in the &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration&#34;&gt;&lt;code&gt;-global-configuration&lt;/code&gt;&lt;/a&gt; command-line argument. NGINX Ingress Controller only needs one GlobalConfiguration resource.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ConfigMap resources</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/</guid>
+      <description>&lt;p&gt;When using F5 NGINX Ingress Controller, you can customize or fine tune NGINX behavior using ConfigMap resources. Examples include setting the number of worker processes or customizing the access log format.&lt;/p&gt;&#xA;&lt;h2 &#xA;id=&#34;using-configmap&#34;&gt;Using ConfigMap  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#using-configmap&#34; title=&#34;Using ConfigMap&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;ol&gt;&#xA;&lt;li&gt;&#xA;&lt;p&gt;The &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/&#34;&gt;Installation with Manifests&lt;/a&gt; documentation deploy an empty ConfigMap while the default installation manifests specify it in the command-line arguments of the Ingress Controller. However, if you customized the manifests, to use ConfigMap, make sure to specify the ConfigMap resource to use the &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/&#34;&gt;command-line arguments&lt;/a&gt; of NGINX Ingress Controller.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Custom templates</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/custom-templates/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/custom-templates/</guid>
+      <description>&lt;p&gt;F5 NGINX Ingress Controller uses templates to generate NGINX configuration for Ingress resources, VirtualServer resources and the main NGINX configuration file. You can customize the templates and apply them via the ConfigMap. See the &lt;a href=&#34;https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.2/examples/shared-examples/custom-templates&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;corresponding example&lt;/a&gt;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Reporting resource status</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/</guid>
+      <description>&lt;p&gt;This page describes how to view the status of resources managed by F5 NGINX Ingress Controller.&lt;/p&gt;&#xA;&lt;h2 &#xA;id=&#34;ingress-resources&#34;&gt;Ingress resources  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#ingress-resources&#34; title=&#34;Ingress resources&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;An Ingress resource status includes the address (an IP address or a DNS name), through which the hosts of that Ingress resource are publicly accessible.&lt;/p&gt;&#xA;&lt;p&gt;You can see the address in the output of the &lt;code&gt;kubectl get ingress&lt;/code&gt; command, in the ADDRESS column, as shown below:&lt;/p&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;kubectl get ingresses&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;NAME           HOSTS              ADDRESS           PORTS     AGE&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;cafe-ingress   cafe.example.com   12.13.23.123      80, 443   2m&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;NGINX Ingress Controller must be configured to report an Ingress status:&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

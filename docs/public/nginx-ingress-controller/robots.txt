@@ -1,0 +1,166 @@
+User-agent: *
+
+
+Disallow: /nginx-ingress-controller/overview/about/
+
+Disallow: /nginx-ingress-controller/configuration/ingress-resources/basic-configuration/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-dos/installation/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-waf/installation/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-waf-v5/installation/
+
+Disallow: /nginx-ingress-controller/configuration/global-configuration/command-line-arguments/
+
+Disallow: /nginx-ingress-controller/installation/nic-images/get-registry-image/
+
+Disallow: /nginx-ingress-controller/configuration/global-configuration/
+
+Disallow: /nginx-ingress-controller/installation/installing-nic/
+
+Disallow: /nginx-ingress-controller/installation/installing-nic/installation-with-helm/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-waf/
+
+Disallow: /nginx-ingress-controller/overview/
+
+Disallow: /nginx-ingress-controller/troubleshooting/troubleshoot-common/
+
+Disallow: /nginx-ingress-controller/installation/nic-images/get-image-using-jwt/
+
+Disallow: /nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/
+
+Disallow: /nginx-ingress-controller/installation/build-nginx-ingress-controller/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-dos/configuration/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-waf-v5/configuration/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/
+
+Disallow: /nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/
+
+Disallow: /nginx-ingress-controller/configuration/ingress-resources/
+
+Disallow: /nginx-ingress-controller/installation/installing-nic/installation-with-manifests/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-waf-v5/
+
+Disallow: /nginx-ingress-controller/technical-specifications/
+
+Disallow: /nginx-ingress-controller/overview/design/
+
+Disallow: /nginx-ingress-controller/troubleshooting/troubleshoot-configmap-policy/
+
+Disallow: /nginx-ingress-controller/installation/nic-images/use-aws-image/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-waf/compile-waf-policies/
+
+Disallow: /nginx-ingress-controller/configuration/global-configuration/configmap-resource/
+
+Disallow: /nginx-ingress-controller/configuration/ingress-resources/custom-annotations/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-dos/dos-protected/
+
+Disallow: /nginx-ingress-controller/overview/nginx-plus/
+
+Disallow: /nginx-ingress-controller/installation/installing-nic/installation-with-operator/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-dos/
+
+Disallow: /nginx-ingress-controller/installation/nic-images/
+
+Disallow: /nginx-ingress-controller/configuration/security/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-waf/troubleshoot-app-protect-waf/
+
+Disallow: /nginx-ingress-controller/troubleshooting/troubleshoot-ingress/
+
+Disallow: /nginx-ingress-controller/installation/nic-images/use-gcp-image/
+
+Disallow: /nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/
+
+Disallow: /nginx-ingress-controller/configuration/configuration-examples/
+
+Disallow: /nginx-ingress-controller/installation/integrations/f5-ingresslink/
+
+Disallow: /nginx-ingress-controller/installation/
+
+Disallow: /nginx-ingress-controller/installation/run-multiple-ingress-controllers/
+
+Disallow: /nginx-ingress-controller/installation/integrations/app-protect-dos/troubleshoot-app-protect-dos/
+
+Disallow: /nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/
+
+Disallow: /nginx-ingress-controller/configuration/global-configuration/custom-templates/
+
+Disallow: /nginx-ingress-controller/installation/ingress-nginx/
+
+Disallow: /nginx-ingress-controller/installation/integrations/opentracing/
+
+Disallow: /nginx-ingress-controller/overview/product-telemetry/
+
+Disallow: /nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver/
+
+Disallow: /nginx-ingress-controller/installation/integrations/
+
+Disallow: /nginx-ingress-controller/configuration/policy-resource/
+
+Disallow: /nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/
+
+Disallow: /nginx-ingress-controller/configuration/transportserver-resource/
+
+Disallow: /nginx-ingress-controller/configuration/
+
+Disallow: /nginx-ingress-controller/logging-and-monitoring/
+
+Disallow: /nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/
+
+Disallow: /nginx-ingress-controller/configuration/host-and-listener-collisions/
+
+Disallow: /nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports/
+
+Disallow: /nginx-ingress-controller/tutorials/security-monitoring/
+
+Disallow: /nginx-ingress-controller/tutorials/oidc-custom-configuration/
+
+Disallow: /nginx-ingress-controller/tutorials/custom-listen-ports/
+
+Disallow: /nginx-ingress-controller/usage-reporting/
+
+Disallow: /nginx-ingress-controller/tutorials/ingress-path-regex-annotation/
+
+Disallow: /nginx-ingress-controller/logging-and-monitoring/logging/
+
+Disallow: /nginx-ingress-controller/tutorials/nginx-ingress-istio/
+
+Disallow: /nginx-ingress-controller/tutorials/nginx-ingress-linkerd/
+
+Disallow: /nginx-ingress-controller/tutorials/nginx-ingress-osm/
+
+Disallow: /nginx-ingress-controller/troubleshooting/
+
+Disallow: /nginx-ingress-controller/tutorials/nginx-dynamic-module/
+
+Disallow: /nginx-ingress-controller/logging-and-monitoring/status-page/
+
+Disallow: /nginx-ingress-controller/tutorials/
+
+Disallow: /nginx-ingress-controller/logging-and-monitoring/prometheus/
+
+Disallow: /nginx-ingress-controller/releases/
+
+Disallow: /nginx-ingress-controller/logging-and-monitoring/service-insight/
+
+Disallow: /nginx-ingress-controller/community/
+
+Disallow: /nginx-ingress-controller/glossary/
+
+Disallow: /nginx-ingress-controller/categories/
+
+Disallow: /nginx-ingress-controller/tags/docs/
+
+Disallow: /nginx-ingress-controller/
+
+Disallow: /nginx-ingress-controller/tags/

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Categories | NGINX Ingress Controller</title>
+
+
+
+
+
+
+<link rel="canonical" href="https://docs.nginx.com/nginx-ingress-controller/categories/">
+
+
+
+
+
+
+<meta name="robots" content="noindex,nofollow" />
+
+
+<meta property="article:publisher" content="https://www.facebook.com/nginxinc" />
+<meta property="og:image" content="https://docs.nginx.com/images/icons/NGINX-Docs-new-docs-dark-1200x630.png" />
+<meta property="og:image:width" content="500" />
+<meta property="og:image:height" content="300" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:description" content="" />
+<meta name="twitter:title" content="Categories" />
+<meta name="twitter:site" content="@nginx" />
+<meta name="twitter:image" content="https://docs.nginx.com/images/icons/NGINX-Docs-new-docs-dark-1200x630.png" />
+<meta name="twitter:creator" content="@nginx" />
+
+
+
+
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'
+    https://consent.trustarc.com/ https://mktg.tags.f5.com/basic/prod/utag.sync.js https://static.cloud.coveo.com/ https://*.f5.com/
+    https://*.netlify.app https://gist.github.com
+    https://tag.demandbase.com/pscSDsz4.min.js
+    https://munchkin.brightfunnel.com/js/build/bf-munchkin.min.js
+    https://www.googletagmanager.com/gtm.js
+    https://www.google-analytics.com/
+    https://www.google-analytics.com/analytics.js
+    https://www.google-analytics.com/plugins/ua/linkid.js
+    https://cdn.bizible.com/scripts/bizible.js
+    https://cdn.bizible.com/xdc.js
+    https://f5networksglobalprod.122.2o7.net/
+    https://f5networksnginxdocs.122.2o7.net/
+    ;
+    worker-src 'self' blob:">
+
+
+
+<meta property="environment" type="production" />
+<meta property="buildtype" type="webdocs" />
+<meta property="isServer" type="false" />
+
+
+<meta name="product" content="NGINX Ingress Controller">
+<meta name="version" content="">
+<meta name="doc_type" content="Manual">
+
+<link rel="shortcut icon" type="image/x-icon" href="https://docs.nginx.com/images/favicon-48x48.ico">
+
+
+
+
+
+
+
+
+
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/all.min.4a71f958af9b67180f1ece38b96217f8b2c9009f7fd8f90f299e508808fa4daf3ac3e7ec6f64e47267d1c955f7a419cc15c57ba103c9925f507af4825abdd6e8.css" integrity="sha512-SnH5WK&#43;bZxgPHs44uWIX&#43;LLJAJ9/2PkPKZ5QiAj6Ta86w&#43;fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/v4-font-face.min.5870089ba06cf03e9721f87919eaf15c961a65e071845949ed2da58c5bfbd18a714c5dab2c155f0455ebcd2f45bfd598a5e47ae19976e7aa3a51e22914eac1b6.css" integrity="sha512-WHAIm6Bs8D6XIfh5GerxXJYaZeBxhFlJ7S2ljFv70YpxTF2rLBVfBFXrzS9Fv9WYpeR64Zl256o6UeIpFOrBtg==" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/v5-font-face.min.81bdf1c9f8ff16b1eda613d52d868a059f16c8c6045c3d7e0a0b771622a11666cdd94b8ea62b5edb0d4b826c3a3737ec3663065fe05b56b6b871e57de73f556b.css" integrity="sha512-gb3xyfj/FrHtphPVLYaKBZ8WyMYEXD1&#43;Cgt3FiKhFmbN2UuOpite2w1Lgmw6NzfsNmMGX&#43;BbVra4ceV95z9Vaw==" rel="stylesheet" type="text/css">
+
+
+
+<link href="/nginx-ingress-controller/css/bootstrap.min.3f9320327d6304dd356ac060534cfad10938431897a3cebec2515a84aaec41fdfb73d72ba39d7b5b35523cf575b432b3864bb6889d855602faef01b4dd21a734.css" integrity="sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86&#43;wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA==" rel="stylesheet" type="text/css">
+
+
+
+<link rel="stylesheet" href="https://static.cloud.coveo.com/searchui/v2.10104/0/css/CoveoFullSearch.min.css" integrity="sha512-9/A9yVCU4GS6/iIwTRJKnan4Hf8gDKj3anwItN9QCsU8SixaT5xkjjWsZ/iq0TWaizhtqOLacadXJfxHlwYCcA==" crossorigin="anonymous" />
+
+
+<link href="/nginx-ingress-controller/css/docs-nginx-com/nginx-site-header.min.80b10ed49ecfad93607ee771acca88d13dc958e6eecc642af3aa2b170c86b8dcce442e7b86c3e5298c95b0ab2b053a71074c2f15c28266c3a2c502275415b3a7.css" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/css/docs-nginx-com/style.min.2cd4748c438c49d012a5fdc6b98770223c4875fe0f89517b17423b6a5328af4d93d9d772207bfc51d9449781281e1eb8707dcc2f7467e6e24330c9b8c7c5f734.css" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/css/bootstrap-docs.min.8a70c94c72e3783cecd631bc1705c7843b2fdef99f1549f0bf7f774a4083173ee25974413a8206c2340c0fee9bb7a07acd41d41c78ae2280c96a2ce0faca2847.css" rel="stylesheet" type="text/css">
+
+
+
+<link href="/nginx-ingress-controller/css/coveo.min.fce7d4df31de99e4f86510a90915820f236b8dcd02be030b27529af7ff10189f807c78cedacb91afa9d07f310a172c6046b1921832f199b9158898a7f74fa117.css" rel="stylesheet" type="text/css">
+
+
+
+<link href="/nginx-ingress-controller/css/f5-hugo.min.d668cd51e42f94f8d4fb9a81de0dcf6329a121173422b5695c37a707ac9df6ee4f90ee81b4dbecd797731a81f593ef80d85471bda37cb9af5ce617482982aa35.css" rel="stylesheet" type="text/css">
+
+
+
+
+
+<link href="/nginx-ingress-controller/css/highlight.min.fe5647c4b67f4b3fcf0ea60b483479d567ba1b05ee6e816439207edfa3d310dbee79536278c67d89c1db5da275bde962a10163da375f05bd19743e2a80e1ad02.css" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+
+<script async="async" src="https://consent.trustarc.com/notice?domain=f5.com&c=teconsent&js=nj&noticeType=bb&text=true&gtm=1" crossorigin=""></script>
+
+
+
+<script src="https://mktg.tags.f5.com/basic/prod/utag.sync.js"></script>
+
+
+
+
+
+
+
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-K5HG9JT');</script>
+
+</head>
+
+<body>
+
+
+<script type="text/javascript">
+    (function(a,b,c,d) {
+        a='//mktg.tags.f5.com/basic/prod/utag.js';
+        b=document;c='script';d=b.createElement(c);d.src=a;
+        d.type='text/java'+c;d.async=true;
+        a=b.getElementsByTagName(c)[0];a.parentNode.insertBefore(d,a)})();
+</script>
+
+
+  <header>
+
+<div class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar navbar-fixed-top">
+  <div class="container-fluid flex-md-row flex-column">
+    <a class="navbar-brand mr-0 mr-md-2" href="/" aria-label="NGINX Docs">
+      <img class="navbar-img" src="https://docs.nginx.com/images/icons/NGINX-Docs-horiz-white-type.svg" alt="NGINX Docs">
+    </a>
+
+      <div class="navbar navbar-nav">
+
+        <div id="searchbox">
+
+          <div class="CoveoSearchbox" data-placeholder='Search NGINX Docs...'></div>
+        </div>
+      </div>
+
+
+
+    <ul class="navbar navbar-nav">
+        <li class="nav-item-explore active">
+          <button class="button navbar-button"><a href="https://www.f5.com/products" alt="Explore all products on f5.com" target="_blank">Explore All Products</a></button>
+        </li>
+    </ul>
+  </div>
+</div>
+
+
+  </header>
+
+
+
+    <nav aria-label="breadcrumb" class="breadcrumb navbar">
+    <div class="nav flex-md-row">
+        <ol class="breadcrumb">
+            <li><a href="/" alt="NGINX Docs Home">Home</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+                <li><i class="fas fa-chevron-right"></i><a href="/nginx-ingress-controller/">NGINX Ingress Controller</a></a><i class="fas fa-chevron-right"></i></li>
+
+
+                Categories
+        </ol>
+    </div>
+</nav>
+
+
+
+
+
+  <div class="main container-fluid min-page-height" data-menu-id="/nginx-ingress-controller/categories/">
+
+
+<div class="row flex-xl-nowrap">
+  <main class="content col-xl-9 d-block" role="main">
+    <div class="list-page">
+    <div class="col-md-12 col-xl-12 py-md-3 pl-md-5">
+        <div class="page-header list">
+            <h1 class="bd-title">
+                Categories Index
+            </h1>
+
+        </div>
+    </div>
+
+    <section class="col-md-12 col-xl-12 py-md-3 pl-md-5" id="section-content-list">
+
+        <div class="row">
+            <div class="card-deck">
+
+                <ul>
+
+
+                </ul>
+
+
+
+          </div>
+        </div>
+    </section>
+
+</div>
+
+  </main>
+</div>
+
+
+  </div>
+
+  <footer>
+
+
+    <footer id="footer">
+   <div class="container-fluid">
+
+       <div class="row align-items-center">
+
+         <div class="col-md-6 d-md-flex">
+             <img class="nginx-logo-footer" src="https://docs.nginx.com/images/icons/NGINX-Part-of-F5-horiz-all-white-525x208@2x.png"/>
+         </div>
+
+
+         <div class="col-md d-flex footer-text">
+           <div class="col-xl d-none d-md-block align-self-center text-semibold align-right">
+             <span>Found a bug? Looking for something new?</span>
+           </div>
+           <div class="col-lg d-none d-md-block pl-0">
+             <button class="button footer-button"><a href="https://docs.nginx.com/feedback/" alt="Select if you have feedback">Let Us Know</a></button>
+           </div>
+         </div>
+
+
+       </div>
+
+
+
+       <div class="row d-print-none d-none d-md-flex">
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">Company</span>
+           <ul class="footer-text">
+             <li><a href="https://www.f5.com/go/product/welcome-to-nginx" target="_blank" alt="Select to learn about F5 NGINX">About F5 NGINX</a></li>
+             <li><a href="https://www.f5.com/company/events" target="_blank" alt="Select to learn about F5 events">Events</a></li>
+           </ul>
+           <br />
+           <span class="footer-head">Resources</span>
+           <ul class="footer-text">
+             <li><a href="https://www.f5.com/company/blog/nginx" target="_blank" alt="Select to visit the F5 NGINX blog" >Blog</a></li>
+             <li><a href="https://www.f5.com/go/faq/nginx-faq" target="_blank" alt="Select to visit the F5 NGINX frequently asked questions page" >FAQ</a></li>
+             <li><a href="https://www.f5.com/services" target="_blank" alt="Select to learn about F5 NGINX Support">Professional Services</a></li>
+             <li><a href="https://www.f5.com/learn/training" target="_blank" alt="Select to learn about F5 training offerings" >Training</a></li>
+           </ul>
+         </div>
+
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">Products</span>
+             <ul class="footer-text">
+                 <li><a title="F5 NGINX Plus" aria-label="F5 NGINX Plus" href="https://www.f5.com/products/nginx/nginx-plus">F5 NGINX Plus</a></li>
+                 <li><a title="F5 NGINX App Protect" aria-label="F5 NGINX App Protect" href="https://www.f5.com/products/nginx/nginx-app-protect">F5 NGINX App Protect</a></li>
+                 <li><a title="F5 NGINX Instance Manager" aria-label="F5 NGINX Instance Manager" href="https://www.f5.com/products/nginx/instance-manager">F5 NGINX Instance Manager</a></li>
+                 <li><a title="F5 NGINX Ingress Controller" aria-label="F5 NGINX Ingress Controller" href="https://www.f5.com/products/nginx/nginx-ingress-controller">F5 NGINX Ingress Controller</a></li>
+                 <li><a title="F5 NGINX Gateway Fabric" aria-label="F5 NGINX Gateway Fabric" href="https://www.f5.com/products/nginx/nginx-gateway-fabric">F5 NGINX Gateway Fabric</a></li>
+                 <li><a title="F5 NGINXaaS for Azure" aria-label="F5 NGINXaaS for Azure" href="https://www.f5.com/products/nginx/f5-nginxaas-for-azure">F5 NGINXaaS for Azure</a></li>
+             </ul>
+         </div>
+
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">NGINX on GitHub</span>
+           <ul class="footer-text">
+             <li><a title="NGINX Open Source" aria-label="NGINX Open Source" href="https://github.com/nginx/nginx"><span class="inner">NGINX Open Source</span></a></li>
+             <li><a title="NGINX Unit" aria-label="NGINX Unit" href="https://github.com/nginx/unit"><span class="inner">NGINX Unit</span></a></li>
+             <li><a title="NGINX Amplify" aria-label="NGINX Amplify" href="https://github.com/nginxinc/nginx-amplify-agent"><span class="inner">NGINX Amplify</span></a></li>
+             <li><a title="NGINX Agent" aria-label="NGINX Agent" href="https://github.com/nginx/Agent"><span class="inner">NGINX Agent</span></a></li>
+             <li><a title="NGINX Kubernetes Ingress Controller" aria-label="NGINX Kubernetes Ingress Controller" href="https://github.com/nginxinc/kubernetes-ingress"><span class="inner">NGINX Kubernetes Ingress Controller</span></a></li>
+             <li><a title="NGINX Gateway Fabric" aria-label="NGINX Gateway Fabric" href="https://github.com/nginxinc/nginx-gateway-fabric"><span class="inner">NGINX Gateway Fabric</span></a></li>
+         </ul>
+         </div>
+
+         <div class="col-md-2 d-none d-md-block">
+           <span class="footer-head">Social</span>
+               <ul class="footer-social">
+                 <li><a href="https://www.facebook.com/nginxinc" title="facebook" aria-label="facebook" target="_blank" rel="noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i>
+                  </a></li>
+                 <li><a href="https://twitter.com/nginx" title="X" aria-label="x" target="_blank" rel="noreferrer"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a></li>
+                 <li><a href="https://www.linkedin.com/company/nginx" title="linkedin" aria-label="linkedin" target="_blank" rel="noreferrer"><i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+                  </a></li>
+                 <li><a href="https://www.youtube.com/user/NginxInc" title="youtube" aria-label="youtube" target="_blank" rel="noreferrer" alt="NGINX Youtube Channel"><i class="fa-brands fa-square-youtube" aria-hidden="true"></i>
+                  </a></li>
+               </ul>
+         </div>
+       </div>
+
+       <div class="site-info footer-text">
+
+           <div class="text-center">
+           <p><a href="https://www.f5.com/"><img class="f5-logo-footer" src="https://docs.nginx.com/images/icons/Logo_F5.svg" alt="F5 logo"></a>
+              ©2024 F5, Inc. All rights reserved.</p><p><a href="https://www.f5.com/company/policies/trademarks" rel="noopener" target="_blank">Trademarks</a>  <a href="https://www.f5.com/company/policies" rel="noopener" target="_blank">Policies</a> <a href="https://docs.nginx.com/ossc">Open Source Components</a>  <a href="https://www.f5.com/company/policies/privacy-notice" rel="noopener" target="_blank">Privacy</a>  <a href="https://www.f5.com/company/policies/F5-California-privacy-summary" rel="noopener" target="_blank">California Privacy</a>  <a href="https://www.f5.com/company/policies/privacy-notice#no-sell" rel="noopener" target="_blank">Do Not Sell My Personal Information</a>  <span id="teconsent"></span></p>
+           </div>
+
+       </div>
+   </div>
+</footer>
+
+
+
+  </footer>
+
+
+<script src="/nginx-ingress-controller/js/jquery-3-6-4.min.js" type="text/javascript" integrity=""></script>
+
+
+<script src="/nginx-ingress-controller/js/kube.min.a3a07cceb64989e2f0bf41653ab4d8346ba4312270eb5cc80d6afad3bf30a0ca9768aaa2559cb582e663332c541edab6a4068ef2e88b739fa425e2e870eb0aff.js" type="text/javascript" integrity="sha512-o6B8zrZJieLwv0FlOrTYNGukMSJw61zIDWr6078woMqXaKqiVZy1guZjMyxUHtq2pAaO8uiLc5&#43;kJeLocOsK/w=="></script>
+
+
+
+<script src="/nginx-ingress-controller/js/bootstrap.bundle.min.c15ed88f56a52190ea645094409cbce5537eaaf108972f777c840037b8aa0c508f12e70b09e345cf8af7e450a8f6ce96ae974340f8bcd316e58d707c063b6f72.js" type="text/javascript" integrity="sha512-wV7Yj1alIZDqZFCUQJy85VN&#43;qvEIly93fIQAN7iqDFCPEucLCeNFz4r35FCo9s6WrpdDQPi80xbljXB8Bjtvcg=="></script>
+
+
+
+<script src="/nginx-ingress-controller/js/code-copy.b424b9cf3f8a69320d1a74e5b4345962141999ae58795c39fb9c5ac8953f3aef3373d7a334971f578e4dc4ee212cbe8f42951d16edb285e6a7931634998d900c.js" type="text/javascript" ></script>
+
+
+
+
+
+<script class="coveo-script" src="https://static.cloud.coveo.com/searchui/v2.10104/0/js/CoveoJsSearch.Lazy.min.js" integrity="sha512-HxdDBIp5snbqtu1TPkBnXLKEvN9IPz3PeZW8zT9KfsflV9Ck822XDroDlpVbfCfXeiu8C0RDVn0fdu7aGy/H1g==" crossorigin="anonymous"></script>
+
+<script src="https://static.cloud.coveo.com/searchui/v2.10104/0/js/templates/templates.js" integrity="sha512-CR0Yk/LIwgh1MsKqjecDp/r6F9ipKc6gA+4+E1pplT3N3r1pk+la/HaqyDiKtjOFwrwIIbIYBFrUJgPql93QHw==" crossorigin="anonymous"></script>
+
+
+
+
+
+
+<script src="/nginx-ingress-controller/js/coveo.min.6e0e2c15ea8204cc128d34f0e7e13d16783166196b052d33cb05ec26a38415801ab03141a36256976745037faedb2da32dd8f3600b92b5f3c7d22fa634b0624f.js" integrity="sha512-bg4sFeqCBMwSjTTw5&#43;E9FngxZhlrBS0zywXsJqOEFYAasDFBo2JWl2dFA3&#43;u2y2jLdjzYAuStfPH0i&#43;mNLBiTw==" type="text/javascript"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script src="/nginx-ingress-controller/js/sidebar.min.89a78ac76492f78b44370cf6bbaa09457606d00a4b14db603de939e128451bf31bd29e46c179fbc3a1d632302f5ebfe61c5b9e65e2c171acd4981185cd3329b6.js" type="text/javascript" integrity="sha512-iaeKx2SS94tENwz2u6oJRXYG0ApLFNtgPek54ShFG/Mb0p5GwXn7w6HWMjAvXr/mHFueZeLBcazUmBGFzTMptg=="></script>
+
+<div id="consent_blackbar" style="position:fixed;top:0px;width:100%"></div>
+</body>
+</html>

@@ -101,6 +101,7 @@ func generateTransportServerConfig(p transportServerConfigParams) (*version2.Tra
 	host := p.transportServerEx.TransportServer.Spec.Host
 	isTLSPassthrough := p.transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName
 	serverName := generateServerName(host, isTLSPassthrough)
+	isUDP := p.transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP"
 
 	tsConfig := &version2.TransportServerConfig{
 		Server: version2.StreamServer{
@@ -108,7 +109,7 @@ func generateTransportServerConfig(p transportServerConfigParams) (*version2.Tra
 			TLSPassthrough:           isTLSPassthrough,
 			UnixSocket:               generateUnixSocket(p.transportServerEx),
 			Port:                     p.listenerPort,
-			UDP:                      p.transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
+			UDP:                      isUDP,
 			StatusZone:               statusZone,
 			ProxyRequests:            proxyRequests,
 			ProxyResponses:           proxyResponses,

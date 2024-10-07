@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>NGINX App Protect WAF v5 on NGINX Ingress Controller</title>
+    <link>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/</link>
+    <description>Recent content in NGINX App Protect WAF v5 on NGINX Ingress Controller</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <atom:link href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Build NGINX Ingress Controller with NGINX App Protect WAF v5</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/installation/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/installation/</guid>
+      <description>&lt;p&gt;This document explains how to build a F5 NGINX Ingress Controller image with F5 NGINX App Protect WAF v5 from source code.&lt;/p&gt;&#xA;&lt;blockquote class=&#34;tip&#34;&gt;&#xA;  &lt;div&gt;&lt;strong&gt;Pre-built image alternatives&lt;/strong&gt;&lt;br/&gt;If you&amp;rsquo;d rather not build your own NGINX Ingress Controller image, see the &lt;a href=&#34;#pre-built-images&#34;&gt;pre-built image options&lt;/a&gt; at the end of this guide.&lt;/div&gt;&#xA;&lt;/blockquote&gt;&#xA;&#xA;&lt;h2 &#xA;id=&#34;before-you-start&#34;&gt;Before you start  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#before-you-start&#34; title=&#34;Before you start&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;ul&gt;&#xA;&lt;li&gt;To use NGINX App Protect WAF with NGINX Ingress Controller, you must have NGINX Plus.&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;h2 &#xA;id=&#34;prepare-the-environment&#34;&gt;Prepare the environment  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#prepare-the-environment&#34; title=&#34;Prepare the environment&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;Get your system ready for building and pushing the NGINX Ingress Controller image with NGINX App Protect WAF v5.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Configuration</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/configuration/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/configuration/</guid>
+      <description>&lt;h2 &#xA;id=&#34;overview&#34;&gt;Overview  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#overview&#34; title=&#34;Overview&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;This document explains how to use F5 NGINX Ingress Controller to configure &lt;a href=&#34;https://docs.nginx.com/nginx-app-protect-waf/v5/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;NGINX App Protect WAF v5&lt;/a&gt;.&lt;/p&gt;&#xA;&lt;blockquote class=&#34;note&#34;&gt;&#xA;  &lt;div&gt;&lt;strong&gt;Note:&lt;/strong&gt;&lt;br/&gt; &lt;p&gt;There are complete NGINX Ingress Controller with NGINX App Protect WAF &lt;a href=&#34;https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.2/examples/custom-resources/app-protect-waf-v5&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;example resources on GitHub&lt;/a&gt;.&lt;/p&gt;&#xA;&lt;p&gt;F5 recommends recompiling your NGINX AppProtect WAF Policy Bundles with each release of NGINX Ingress Controller. This ensures Policies remain compatible and are compiled with the latest attack signatures, bot signatures, and Ttreat campaigns.&lt;/p&gt;&#xA;&lt;/div&gt;&#xA;&lt;/blockquote&gt;&#xA;&#xA;&lt;h2 &#xA;id=&#34;global-configuration&#34;&gt;Global configuration  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#global-configuration&#34; title=&#34;Global configuration&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;NGINX Ingress Controller has global configuration parameters that match those in NGINX App Protect WAF. They are found in the &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#modules&#34;&gt;ConfigMap resource&lt;/a&gt;: the NGINX App Protect WAF parameters are prefixed with &lt;code&gt;app-protect*&lt;/code&gt;.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

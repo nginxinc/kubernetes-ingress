@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>The design of NGINX Ingress Controller | NGINX Ingress Controller</title>
+
+
+
+
+
+
+<link rel="canonical" href="https://docs.nginx.com/nginx-ingress-controller/overview/design/">
+
+
+
+
+
+
+
+<meta property="article:publisher" content="https://www.facebook.com/nginxinc" />
+<meta property="og:image" content="https://docs.nginx.com/images/icons/NGINX-Docs-new-docs-dark-1200x630.png" />
+<meta property="og:image:width" content="500" />
+<meta property="og:image:height" content="300" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:description" content="" />
+<meta name="twitter:title" content="The design of NGINX Ingress Controller" />
+<meta name="twitter:site" content="@nginx" />
+<meta name="twitter:image" content="https://docs.nginx.com/images/icons/NGINX-Docs-new-docs-dark-1200x630.png" />
+<meta name="twitter:creator" content="@nginx" />
+
+
+
+
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'
+    https://consent.trustarc.com/ https://mktg.tags.f5.com/basic/prod/utag.sync.js https://static.cloud.coveo.com/ https://*.f5.com/
+    https://*.netlify.app https://gist.github.com
+    https://tag.demandbase.com/pscSDsz4.min.js
+    https://munchkin.brightfunnel.com/js/build/bf-munchkin.min.js
+    https://www.googletagmanager.com/gtm.js
+    https://www.google-analytics.com/
+    https://www.google-analytics.com/analytics.js
+    https://www.google-analytics.com/plugins/ua/linkid.js
+    https://cdn.bizible.com/scripts/bizible.js
+    https://cdn.bizible.com/xdc.js
+    https://f5networksglobalprod.122.2o7.net/
+    https://f5networksnginxdocs.122.2o7.net/
+    ;
+    worker-src 'self' blob:">
+
+
+
+<meta property="environment" type="production" />
+<meta property="buildtype" type="webdocs" />
+<meta property="isServer" type="false" />
+
+
+<meta name="product" content="NGINX Ingress Controller">
+<meta name="version" content="">
+<meta name="doc_type" content="Manual">
+
+<link rel="shortcut icon" type="image/x-icon" href="https://docs.nginx.com/images/favicon-48x48.ico">
+
+
+
+
+
+
+
+
+
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/all.min.4a71f958af9b67180f1ece38b96217f8b2c9009f7fd8f90f299e508808fa4daf3ac3e7ec6f64e47267d1c955f7a419cc15c57ba103c9925f507af4825abdd6e8.css" integrity="sha512-SnH5WK&#43;bZxgPHs44uWIX&#43;LLJAJ9/2PkPKZ5QiAj6Ta86w&#43;fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/v4-font-face.min.5870089ba06cf03e9721f87919eaf15c961a65e071845949ed2da58c5bfbd18a714c5dab2c155f0455ebcd2f45bfd598a5e47ae19976e7aa3a51e22914eac1b6.css" integrity="sha512-WHAIm6Bs8D6XIfh5GerxXJYaZeBxhFlJ7S2ljFv70YpxTF2rLBVfBFXrzS9Fv9WYpeR64Zl256o6UeIpFOrBtg==" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/v5-font-face.min.81bdf1c9f8ff16b1eda613d52d868a059f16c8c6045c3d7e0a0b771622a11666cdd94b8ea62b5edb0d4b826c3a3737ec3663065fe05b56b6b871e57de73f556b.css" integrity="sha512-gb3xyfj/FrHtphPVLYaKBZ8WyMYEXD1&#43;Cgt3FiKhFmbN2UuOpite2w1Lgmw6NzfsNmMGX&#43;BbVra4ceV95z9Vaw==" rel="stylesheet" type="text/css">
+
+
+
+<link href="/nginx-ingress-controller/css/bootstrap.min.3f9320327d6304dd356ac060534cfad10938431897a3cebec2515a84aaec41fdfb73d72ba39d7b5b35523cf575b432b3864bb6889d855602faef01b4dd21a734.css" integrity="sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86&#43;wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA==" rel="stylesheet" type="text/css">
+
+
+
+<link rel="stylesheet" href="https://static.cloud.coveo.com/searchui/v2.10104/0/css/CoveoFullSearch.min.css" integrity="sha512-9/A9yVCU4GS6/iIwTRJKnan4Hf8gDKj3anwItN9QCsU8SixaT5xkjjWsZ/iq0TWaizhtqOLacadXJfxHlwYCcA==" crossorigin="anonymous" />
+
+
+<link href="/nginx-ingress-controller/css/docs-nginx-com/nginx-site-header.min.80b10ed49ecfad93607ee771acca88d13dc958e6eecc642af3aa2b170c86b8dcce442e7b86c3e5298c95b0ab2b053a71074c2f15c28266c3a2c502275415b3a7.css" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/css/docs-nginx-com/style.min.2cd4748c438c49d012a5fdc6b98770223c4875fe0f89517b17423b6a5328af4d93d9d772207bfc51d9449781281e1eb8707dcc2f7467e6e24330c9b8c7c5f734.css" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/css/bootstrap-docs.min.8a70c94c72e3783cecd631bc1705c7843b2fdef99f1549f0bf7f774a4083173ee25974413a8206c2340c0fee9bb7a07acd41d41c78ae2280c96a2ce0faca2847.css" rel="stylesheet" type="text/css">
+
+
+
+<link href="/nginx-ingress-controller/css/coveo.min.fce7d4df31de99e4f86510a90915820f236b8dcd02be030b27529af7ff10189f807c78cedacb91afa9d07f310a172c6046b1921832f199b9158898a7f74fa117.css" rel="stylesheet" type="text/css">
+
+
+
+<link href="/nginx-ingress-controller/css/f5-hugo.min.d668cd51e42f94f8d4fb9a81de0dcf6329a121173422b5695c37a707ac9df6ee4f90ee81b4dbecd797731a81f593ef80d85471bda37cb9af5ce617482982aa35.css" rel="stylesheet" type="text/css">
+
+
+
+
+
+<link href="/nginx-ingress-controller/css/highlight.min.fe5647c4b67f4b3fcf0ea60b483479d567ba1b05ee6e816439207edfa3d310dbee79536278c67d89c1db5da275bde962a10163da375f05bd19743e2a80e1ad02.css" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+
+<script async="async" src="https://consent.trustarc.com/notice?domain=f5.com&c=teconsent&js=nj&noticeType=bb&text=true&gtm=1" crossorigin=""></script>
+
+
+
+<script src="https://mktg.tags.f5.com/basic/prod/utag.sync.js"></script>
+
+
+
+
+
+
+
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-K5HG9JT');</script>
+
+</head>
+
+<body>
+
+
+<script type="text/javascript">
+    (function(a,b,c,d) {
+        a='//mktg.tags.f5.com/basic/prod/utag.js';
+        b=document;c='script';d=b.createElement(c);d.src=a;
+        d.type='text/java'+c;d.async=true;
+        a=b.getElementsByTagName(c)[0];a.parentNode.insertBefore(d,a)})();
+</script>
+
+
+  <header>
+
+<div class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar navbar-fixed-top">
+  <div class="container-fluid flex-md-row flex-column">
+    <a class="navbar-brand mr-0 mr-md-2" href="/" aria-label="NGINX Docs">
+      <img class="navbar-img" src="https://docs.nginx.com/images/icons/NGINX-Docs-horiz-white-type.svg" alt="NGINX Docs">
+    </a>
+
+      <div class="navbar navbar-nav">
+
+        <div id="searchbox">
+
+          <div class="CoveoSearchbox" data-placeholder='Search NGINX Docs...'></div>
+        </div>
+      </div>
+
+
+
+    <ul class="navbar navbar-nav">
+        <li class="nav-item-explore active">
+          <button class="button navbar-button"><a href="https://www.f5.com/products" alt="Explore all products on f5.com" target="_blank">Explore All Products</a></button>
+        </li>
+    </ul>
+  </div>
+</div>
+
+
+  </header>
+
+
+
+    <nav aria-label="breadcrumb" class="breadcrumb navbar">
+    <div class="nav flex-md-row">
+        <ol class="breadcrumb">
+            <li><a href="/" alt="NGINX Docs Home">Home</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <li><i class="fas fa-chevron-right"></i><a href="/nginx-ingress-controller/">NGINX Ingress Controller</a></a><i class="fas fa-chevron-right"></i></li>
+
+
+                <li><a href="/nginx-ingress-controller/overview/">Overview</a><i class="fas fa-chevron-right"></i></li>
+
+
+                The design of NGINX Ingress Controller
+        </ol>
+    </div>
+</nav>
+
+
+
+
+
+  <div class="main container-fluid min-page-height" data-menu-id="/nginx-ingress-controller/overview/design/">
+
+
+<div class="row" style="max-width: calc(100% + 30px) !important; flex-wrap: nowrap;">
+  <nav class="sidenav overflow-auto col-md-3 d-none d-xl-block d-print-none align-top" style="width: 25%;">
+
+
+
+<div id="sidebar-wrapper">
+
+    <div id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+        <button id="sidebar-toggle-button" title="Toggle sidebar navigation" role="button" aria-controls="sidebar-content">
+            <i class="fa fa-chevron-right sidebar-visible-collapsed"></i>
+            <i class="fa fa-chevron-left sidebar-visible-expanded"></i>
+        </button>
+        <div id="sidebar-content">
+            <h3>
+                <a class="sidebar-title" href="https://docs.nginx.com/nginx-ingress-controller/" alt="NGINX Ingress Controller"><img
+                        class="card-img-top" src="https://docs.nginx.com/images/icons/NGINX-Ingress-Controller-product-icon.svg"
+                        alt="NGINX Ingress Controller">
+                    NGINX Ingress Controller</a>
+            </h3>
+            <ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/overview/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#overview--overview"
+                                    aria-controls="overview--overview">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Overview</a>
+                            </li>
+                        </div>
+                        <div id="overview--overview" class="accordion-body collapse">
+                            <div class="accordion-inner">
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/overview/about/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/overview/about/">About</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/overview/design/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/overview/design/">The design of NGINX Ingress Controller</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/overview/nginx-plus/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/overview/nginx-plus/">Extensibility with NGINX Plus</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/overview/product-telemetry/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/overview/product-telemetry/">Product telemetry</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/technical-specifications/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/technical-specifications/">Technical specifications</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+
+
+
+
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/installation/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#installation--installation"
+                                    aria-controls="installation--installation">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Installation</a>
+                            </li>
+                        </div>
+                        <div id="installation--installation" class="accordion-body collapse">
+                            <div class="accordion-inner">
+
+
+
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/installing-nic/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#installation--installation--install-nginx-ingress-controller">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>Install NGINX Ingress Controller</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="installation--installation--install-nginx-ingress-controller" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/installing-nic/installation-with-helm/" href="https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm/">Installation with Helm</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/" href="https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/">Installation with Manifests</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/installing-nic/installation-with-operator/" href="https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-operator/">Installation with NGINX Ingress Operator</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/build-nginx-ingress-controller/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/installation/build-nginx-ingress-controller/">Build NGINX Ingress Controller</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/nic-images/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#installation--installation--nginx-ingress-controller-images">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>NGINX Ingress Controller images</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="installation--installation--nginx-ingress-controller-images" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/nic-images/get-registry-image/" href="https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/get-registry-image/">Get NGINX Ingress Controller from the F5 Registry</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/nic-images/get-image-using-jwt/" href="https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/get-image-using-jwt/">Get the NGINX Ingress Controller image with JWT</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/nic-images/use-aws-image/" href="https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/use-aws-image/">Use the AWS Marketplace NGINX Ingress Controller image</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/nic-images/use-gcp-image/" href="https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/use-gcp-image/">Use the GCP Marketplace NGINX Ingress Controller image</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/run-multiple-ingress-controllers/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/installation/run-multiple-ingress-controllers/">Run multiple NGINX Ingress Controllers</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/ingress-nginx/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/installation/ingress-nginx/">Migrate from Ingress-NGINX Controller to NGINX Ingress Controller</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/integrations/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#installation--installation--integrations">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>Integrations</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="installation--installation--integrations" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+
+
+
+                                                    <div class="accordion" id="Accordion3">
+                                                        <div class="sidebar-l2-padding">
+                                                            <div class="accordion-group sidebar-il-border">
+                                                                <div class="accordion-heading">
+                                                                    <ul>
+                                                                        <li class="nginx-toc-link l2">
+                                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/" class="accordion-toggle"
+                                                                                aria-expanded="false" data-toggle="collapse"
+                                                                                href="#installation--integrations--nginx-app-protect-waf">
+                                                                                <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                                    class="fa fa-2xs fa-fw fa-chevron-down"></i>NGINX App Protect WAF</a>
+                                                                        </li>
+                                                                    <ul>
+                                                                </div>
+                                                                <div id="installation--integrations--nginx-app-protect-waf" class="accordion-body collapse leaf">
+                                                                    <div class="accordion-inner">
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/installation/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/installation/">Build NGINX Ingress Controller with NGINX App Protect WAF</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/">Configuration</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/compile-waf-policies/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/compile-waf-policies/">Compile NGINX App Protect WAF policies using NGINX Instance Manager</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/troubleshoot-app-protect-waf/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/troubleshoot-app-protect-waf/">Troubleshoot NGINX App Protect WAF</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+
+
+
+                                                    <div class="accordion" id="Accordion3">
+                                                        <div class="sidebar-l2-padding">
+                                                            <div class="accordion-group sidebar-il-border">
+                                                                <div class="accordion-heading">
+                                                                    <ul>
+                                                                        <li class="nginx-toc-link l2">
+                                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/" class="accordion-toggle"
+                                                                                aria-expanded="false" data-toggle="collapse"
+                                                                                href="#installation--integrations--nginx-app-protect-waf-v5">
+                                                                                <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                                    class="fa fa-2xs fa-fw fa-chevron-down"></i>NGINX App Protect WAF v5</a>
+                                                                        </li>
+                                                                    <ul>
+                                                                </div>
+                                                                <div id="installation--integrations--nginx-app-protect-waf-v5" class="accordion-body collapse leaf">
+                                                                    <div class="accordion-inner">
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/installation/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/installation/">Build NGINX Ingress Controller with NGINX App Protect WAF v5</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/configuration/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/configuration/">Configuration</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+
+
+
+                                                    <div class="accordion" id="Accordion3">
+                                                        <div class="sidebar-l2-padding">
+                                                            <div class="accordion-group sidebar-il-border">
+                                                                <div class="accordion-heading">
+                                                                    <ul>
+                                                                        <li class="nginx-toc-link l2">
+                                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/" class="accordion-toggle"
+                                                                                aria-expanded="false" data-toggle="collapse"
+                                                                                href="#installation--integrations--nginx-app-protect-dos">
+                                                                                <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                                    class="fa fa-2xs fa-fw fa-chevron-down"></i>NGINX App Protect DoS</a>
+                                                                        </li>
+                                                                    <ul>
+                                                                </div>
+                                                                <div id="installation--integrations--nginx-app-protect-dos" class="accordion-body collapse leaf">
+                                                                    <div class="accordion-inner">
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/installation/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/installation/">Build NGINX Ingress Controller with NGINX App Protect DoS</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/configuration/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/configuration/">Configuration</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/dos-protected/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/dos-protected/">DoS protected resource specification</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+
+
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/troubleshoot-app-protect-dos/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/troubleshoot-app-protect-dos/">Troubleshoot NGINX App Protect DoS</a>
+                                                                            </li>
+                                                                        </ul>
+
+
+
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/f5-ingresslink/" href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/f5-ingresslink/">F5 BIG-IP</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/opentracing/" href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/opentracing/">OpenTracing</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/configuration/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#configuration--configuration"
+                                    aria-controls="configuration--configuration">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Configuration</a>
+                            </li>
+                        </div>
+                        <div id="configuration--configuration" class="accordion-body collapse">
+                            <div class="accordion-inner">
+
+
+
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#configuration--configuration--global-configuration">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>Global configuration</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="configuration--configuration--global-configuration" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/">Command-line arguments</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/">GlobalConfiguration resource</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/configmap-resource/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/">ConfigMap resources</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/custom-templates/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/custom-templates/">Custom templates</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/">Reporting resource status</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#configuration--configuration--ingress-resources">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>Ingress resources</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="configuration--configuration--ingress-resources" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/basic-configuration/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/basic-configuration/">Basic configuration</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/">Advanced configuration with Annotations</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/">Custom annotations</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/">Advanced configuration with Snippets</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+
+
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/">Cross-namespace configuration</a>
+                                                        </li>
+                                                    </ul>
+
+
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/security/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/security/">Security recommendations</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/configuration-examples/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/configuration-examples/">Configuration examples</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/policy-resource/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/">Policy resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/transportserver-resource/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/">TransportServer resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/">VirtualServer and VirtualServerRoute resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/host-and-listener-collisions/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/host-and-listener-collisions/">Host and Listener collisions</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#logging-and-monitoring--logging-and-monitoring"
+                                    aria-controls="logging-and-monitoring--logging-and-monitoring">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Logging And Monitoring</a>
+                            </li>
+                        </div>
+                        <div id="logging-and-monitoring--logging-and-monitoring" class="accordion-body collapse">
+                            <div class="accordion-inner">
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/logging/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/logging/">Logging</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/status-page/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/status-page/">Status Page</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/prometheus/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/prometheus/">Prometheus</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/service-insight/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/">Service Insight</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/usage-reporting/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/usage-reporting/">Enable Usage Reporting</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+
+
+
+
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/troubleshooting/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#troubleshooting--troubleshooting"
+                                    aria-controls="troubleshooting--troubleshooting">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Troubleshooting</a>
+                            </li>
+                        </div>
+                        <div id="troubleshooting--troubleshooting" class="accordion-body collapse">
+                            <div class="accordion-inner">
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/troubleshooting/troubleshoot-common/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-common/">Troubleshooting common issues</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/troubleshooting/troubleshoot-configmap-policy/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-configmap-policy/">Troubleshooting Policy resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/troubleshooting/troubleshoot-ingress/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-ingress/">Troubleshooting Ingress resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver/">Troubleshooting VirtualServer resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/tutorials/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#tutorials--tutorials"
+                                    aria-controls="tutorials--tutorials">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Tutorials</a>
+                            </li>
+                        </div>
+                        <div id="tutorials--tutorials" class="accordion-body collapse">
+                            <div class="accordion-inner">
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports/">Configuring VirtualServer with custom HTTP and HTTPS listener ports</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/security-monitoring/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/security-monitoring/">Connect NGINX App Protect WAF to NGINX Security Monitoring</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/oidc-custom-configuration/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/oidc-custom-configuration/">Customize OIDC Configuration with NGINX Ingress Controller</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/custom-listen-ports/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/custom-listen-ports/">Customizing NGINX Ingress Controller Ports</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/ingress-path-regex-annotation/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/ingress-path-regex-annotation/">Ingresses Path Matching Using Path-Regex Annotation</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/nginx-ingress-istio/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-istio/">NGINX Ingress Controller and Istio Service Mesh</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/nginx-ingress-linkerd/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-linkerd/">NGINX Ingress Controller and Linkerd</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/nginx-ingress-osm/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-osm/">NGINX Ingress Controller and Open Service Mesh</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+
+
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/nginx-dynamic-module/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-dynamic-module/">Using NGINX Ingress Controller with NGINX Dynamic Modules</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/releases/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/releases/">Releases</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+
+
+
+
+
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/community/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/community/">Community and contributing</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+
+
+
+
+
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/glossary/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/glossary/">Glossary</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+
+
+
+
+
+            </ul>
+        </div>
+
+    </div>
+
+</div>
+
+
+  </nav>
+
+
+  <main class="content col d-block align-top content-has-toc" role="main">
+
+
+    <h1>The design of NGINX Ingress Controller</h1>
+
+
+
+
+
+    <p>This document explains how the F5 NGINX Ingress Controller is designed, and how it differs when using NGINX or NGINX Plus.</p>
+<p>The intended audience for this information is primarily the two following groups:</p>
+<ul>
+<li><em>Operators</em> who want to know how the software works and understand how it can fail.</li>
+<li><em>Developers</em> who want to <a href="https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">contribute</a> to the project.</li>
+</ul>
+<p>We assume that the reader is familiar with core Kubernetes concepts, such as Pods, Deployments, Services, and Endpoints. For an understanding of how NGINX itself works, you can read the <a href="https://www.nginx.com/blog/inside-nginx-how-we-designed-for-performance-scale/" target="_blank" rel="noopener">&ldquo;Inside NGINX: How We Designed for Performance &amp; Scale&rdquo;</a> blog post.</p>
+<p>For conciseness in diagrams, NGINX Ingress Controller is often labelled &ldquo;IC&rdquo; on this page.</p>
+<hr>
+<h2
+id="nginx-ingress-controller-at-a-high-level">NGINX Ingress Controller at a high level  <a class="headerlink float-right" href="#nginx-ingress-controller-at-a-high-level" title="NGINX Ingress Controller at a high level"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>This figure depicts an example of NGINX Ingress Controller exposing two web applications within a Kubernetes cluster to clients on the internet:</p>
+<figure><img class="figure-bitmap" src="/nginx-ingress-controller/img/ic-high-level.png">
+</figure>
+<blockquote class="note">
+  <div><strong>Note:</strong><br/> For simplicity, necessary Kubernetes resources like Deployments and Services aren&rsquo;t shown, which Admin and the users also need to create.</div>
+</blockquote>
+
+<p>The figure shows:</p>
+<ul>
+<li>A <em>Kubernetes cluster</em>.</li>
+<li>Cluster users <em>Admin</em>, <em>User A</em> and <em>User B</em>, which use the cluster via the <em>Kubernetes API</em>.</li>
+<li><em>Clients A</em> and <em>Clients B</em>, which connect to the <em>Applications A</em> and <em>B</em> deployed by the corresponding users.</li>
+<li><em>NGINX Ingress Controller</em>, deployed in a pod with the namespace <em>nginx-ingress</em> and configured using the <em>ConfigMap resource</em> <em>nginx-ingress</em>. A single pod is depicted; at least two pods are typically deployed for redundancy. <em>NGINX Ingress Controller</em> uses the <em>Kubernetes API</em> to get the latest Ingress resources created in the cluster and then configures <em>NGINX</em> according to those resources.</li>
+<li><em>Application A</em> with two pods deployed in the <em>namespace A</em> by <em>User A</em>. To expose the application to its clients (<em>Clients A</em>) via the host <code>a.example.com</code>, <em>User A</em> creates <em>Ingress A</em>.</li>
+<li><em>Application B</em> with one pod deployed in the <em>namespace B</em> by <em>User B</em>. To expose the application to its clients (<em>Clients B</em>) via the host <code>b.example.com</code>, <em>User B</em> creates <em>VirtualServer B</em>.</li>
+<li><em>Public Endpoint</em>, which fronts the <em>NGINX Ingress Controller</em> pod(s). This is typically a standalone TCP load balancer (Cloud, software, or hardware) or a combination of a load balancer with a NodePort service. <em>Clients A</em> and <em>B</em> connect to their applications via the <em>Public Endpoint</em>.</li>
+</ul>
+<p>The yellow and purple arrows represent connections related to the client traffic, and the black arrows represent access to the Kubernetes API.</p>
+<hr>
+<h2
+id="the-nginx-ingress-controller-pod">The NGINX Ingress Controller pod  <a class="headerlink float-right" href="#the-nginx-ingress-controller-pod" title="The NGINX Ingress Controller pod"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>The NGINX Ingress Controller pod consists of a single container, which includes the following:</p>
+<ul>
+<li>The <em>NGINX Ingress Controller process</em>, which configures NGINX according to Ingress and other resources created in the cluster.</li>
+<li>The <em>NGINX master process</em>, which controls NGINX worker processes.</li>
+<li><em>NGINX worker processes</em>, which handle the client traffic and load balance the traffic to the backend applications.</li>
+</ul>
+<p>The following is an architectural diagram depicting how those processes interact together and with some external entities:</p>
+<figure><img class="figure-bitmap" src="/nginx-ingress-controller/img/ic-pod.png">
+</figure>
+<p>This table describes each connection, starting with its type:</p>
+
+
+
+
+
+<table class="table table-bordered table-striped table-responsive">
+  <thead>
+      <tr>
+          <th style="text-align: left">#</th>
+          <th style="text-align: left">Protocols</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">1</td>
+          <td style="text-align: left">HTTP</td>
+          <td style="text-align: left"><em>Prometheus</em> fetches NGINX Ingress Controller and NGINX metrics with an NGINX Ingress Controller HTTP endpoint (Default <code>:9113/metrics</code>). <strong>Note</strong>: <em>Prometheus</em> is not required and the endpoint can be turned off.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">2</td>
+          <td style="text-align: left">HTTPS</td>
+          <td style="text-align: left"><em>NGINX Ingress Controller</em> reads the <em>Kubernetes API</em> for the latest versions of the resources in the cluster and writes to the API to update the handled resources&rsquo; statuses and emit events.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">3</td>
+          <td style="text-align: left">HTTP</td>
+          <td style="text-align: left"><em>Kubelet</em> checks the <em>NGINX Ingress Controller</em> readiness probe (Default <code>:8081/nginx-ready</code>) to consider the <em>NGINX Ingress Controller</em> pod <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-conditions" target="_blank" rel="noopener">ready</a>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">4</td>
+          <td style="text-align: left">File I/O</td>
+          <td style="text-align: left">When <em>NGINX Ingress Controller</em> starts, it reads the <em>configuration templates</em> from the filesystem necessary for configuration generation. The templates are located in the <code>/</code> directory of the container and have the <code>.tmpl</code> extension</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">5</td>
+          <td style="text-align: left">File I/O</td>
+          <td style="text-align: left"><em>NGINX Ingress Controller</em> writes logs to <em>stdout</em> and <em>stderr</em>, which are collected by the container runtime.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">6</td>
+          <td style="text-align: left">File I/O</td>
+          <td style="text-align: left"><em>NGINX Ingress Controller</em> generates NGINX <em>configuration</em> based on the resources created in the cluster (See <a href="#nginx-ingress-controller-is-a-kubernetes-controller">NGINX Ingress Controller is a Kubernetes Controller</a>) and writes it on the filesystem in the <code>/etc/nginx</code> folder. The configuration files have a <code>.conf</code> extension.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">7</td>
+          <td style="text-align: left">File I/O</td>
+          <td style="text-align: left"><em>NGINX Ingress Controller</em> writes <em>TLS certificates</em> and <em>keys</em> from any <a href="https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets" target="_blank" rel="noopener">TLS Secrets</a> referenced in the Ingress and other resources to the filesystem.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">8</td>
+          <td style="text-align: left">HTTP</td>
+          <td style="text-align: left"><em>NGINX Ingress Controller</em> fetches the <a href="https://nginx.org/en/docs/http/ngx_http_stub_status_module.html#stub_status" target="_blank" rel="noopener">NGINX metrics</a> via the <code>unix:/var/lib/nginx/nginx-status.sock</code> UNIX socket and converts it to Prometheus format used in #1.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">9</td>
+          <td style="text-align: left">HTTP</td>
+          <td style="text-align: left">To verify a successful configuration reload, <em>NGINX Ingress Controller</em> ensures at least one <em>NGINX worker</em> has the new configuration. To do that, the <em>IC</em> checks a particular endpoint via the <code>unix:/var/lib/nginx/nginx-config-version.sock</code> UNIX socket.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">10</td>
+          <td style="text-align: left">N/A</td>
+          <td style="text-align: left">To start NGINX, NGINX Ingress Controller runs the <code>nginx</code> command, which launches the <em>NGINX master</em>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">11</td>
+          <td style="text-align: left">Signal</td>
+          <td style="text-align: left">To reload NGINX, the <em>NGINX Ingress Controller</em> runs the <code>nginx -s reload</code> command, which validates the configuration and sends the <a href="https://nginx.org/en/docs/control.html" target="_blank" rel="noopener">reload signal</a> to the <em>NGINX master</em>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">12</td>
+          <td style="text-align: left">Signal</td>
+          <td style="text-align: left">To shutdown NGINX, the <em>NGINX Ingress Controller</em> executes <code>nginx -s quit</code> command, which sends the graceful shutdown signal to the <em>NGINX master</em>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">13</td>
+          <td style="text-align: left">File I/O</td>
+          <td style="text-align: left">The <em>NGINX master</em> sends logs to its <em>stdout</em> and <em>stderr</em>, which are collected by the container runtime.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">14</td>
+          <td style="text-align: left">File I/O</td>
+          <td style="text-align: left">The <em>NGINX master</em> reads the <em>TLS cert and keys</em> referenced in the configuration when it starts or reloads.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">15</td>
+          <td style="text-align: left">File I/O</td>
+          <td style="text-align: left">The <em>NGINX master</em> reads <em>configuration files</em> when it starts or during a reload.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">16</td>
+          <td style="text-align: left">Signal</td>
+          <td style="text-align: left">The <em>NGINX master</em> controls the <a href="https://nginx.org/en/docs/control.html#reconfiguration" target="_blank" rel="noopener">lifecycle of <em>NGINX workers</em></a> it creates workers with the new configuration and shutdowns workers with the old configuration.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">17</td>
+          <td style="text-align: left">File I/O</td>
+          <td style="text-align: left">An <em>NGINX worker</em> writes logs to its <em>stdout</em> and <em>stderr</em>, which are collected by the container runtime.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">18</td>
+          <td style="text-align: left">UDP</td>
+          <td style="text-align: left">An <em>NGINX worker</em> sends the HTTP upstream server response latency logs via the Syslog protocol over the UNIX socket <code>/var/lib/nginx/nginx-syslog.sock</code> to <em>NGINX Ingress Controller</em>. In turn, <em>NGINX Ingress Controller</em> analyzes and transforms the logs into Prometheus metrics.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">19</td>
+          <td style="text-align: left">HTTP,HTTPS,TCP,UDP</td>
+          <td style="text-align: left">A <em>client</em> sends traffic to and receives traffic from any of the <em>NGINX workers</em> on ports 80 and 443 and any additional ports exposed by the <a href="/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource">GlobalConfiguration resource</a>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">20</td>
+          <td style="text-align: left">HTTP,HTTPS,TCP,UDP</td>
+          <td style="text-align: left">An <em>NGINX worker</em> sends traffic to and receives traffic from the <em>backends</em>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">21</td>
+          <td style="text-align: left">HTTP</td>
+          <td style="text-align: left"><em>Admin</em> can connect to the <a href="http://nginx.org/en/docs/http/ngx_http_stub_status_module.html#stub_status" target="_blank" rel="noopener">NGINX stub_status</a> using port 8080 via an <em>NGINX worker</em>. By default, NGINX only allows connections from <code>localhost</code>.</td>
+      </tr>
+  </tbody>
+</table>
+
+<hr>
+<h3
+id="differences-with-nginx-plus">Differences with NGINX Plus  <a class="headerlink float-right" href="#differences-with-nginx-plus" title="Differences with NGINX Plus"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>The previous diagram depicts NGINX Ingress Controller using NGINX. NGINX Ingress Controller with NGINX Plus has the following differences:</p>
+<ul>
+<li>To configure NGINX Plus, NGINX Ingress Controller uses <a href="#reloading-nginx">configuration reloads</a> and the <a href="http://nginx.org/en/docs/http/ngx_http_api_module.html#api" target="_blank" rel="noopener">NGINX Plus API</a>. This allows NGINX Ingress Controller to dynamically change the upstream servers.</li>
+<li>Instead of the stub status metrics, the extended metrics available from the NGINX Plus API are used.</li>
+<li>In addition to TLS certs and keys, NGINX Ingress Controller writes JWKs from the secrets of the type <code>nginx.org/jwk</code>, and NGINX workers read them.</li>
+</ul>
+<hr>
+<h2
+id="the-nginx-ingress-controller-process">The NGINX Ingress Controller process  <a class="headerlink float-right" href="#the-nginx-ingress-controller-process" title="The NGINX Ingress Controller process"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>This section covers the architecture of the NGINX Ingress Controller process, including:</p>
+<ul>
+<li>How NGINX Ingress Controller processes a new Ingress resource created by a user.</li>
+<li>A summary of how NGINX Ingress Controller works in relation to others Kubernetes Controllers.</li>
+<li>The different components of the IC process.</li>
+</ul>
+<hr>
+<h3
+id="processing-a-new-ingress-resource">Processing a new Ingress resource  <a class="headerlink float-right" href="#processing-a-new-ingress-resource" title="Processing a new Ingress resource"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>The following diagram depicts how NGINX Ingress Controller processes a new Ingress resource. The the NGINX master and worker processes are represented as a single rectangle, <em>NGINX</em> for simplicity. VirtualServer and VirtualServerRoute resources are indicated similarly.</p>
+<figure><img class="figure-bitmap" src="/nginx-ingress-controller/img/ic-process.png">
+</figure>
+<p>Processing a new Ingress resource involves the following steps: each step corresponds to the arrow on the diagram with the same number:</p>
+<ol>
+<li><em>User</em> creates a new Ingress resource.</li>
+<li>The NGINX Ingress Controller process has a <em>Cache</em> of the resources in the cluster. The <em>Cache</em> includes only the resources NGINX Ingress Controller is concerned with such as Ingresses. The <em>Cache</em> stays in sync with the Kubernetes API by <a href="https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes" target="_blank" rel="noopener">watching for changes to the resources</a>.</li>
+<li>Once the <em>Cache</em> has the new Ingress resource, it notifies the <em>Control Loop</em> about the changed resource.</li>
+<li>The <em>Control Loop</em> gets the latest version of the Ingress resource from the <em>Cache</em>. Since the Ingress resource references other resources, such as TLS Secrets, the <em>Control loop</em> gets the latest versions of those referenced resources as well.</li>
+<li>The <em>Control Loop</em> generates TLS certificates and keys from the TLS Secrets and writes them to the filesystem.</li>
+<li>The <em>Control Loop</em> generates and writes the NGINX <em>configuration files</em>, which correspond to the Ingress resource, and writes them to the filesystem.</li>
+<li>The <em>Control Loop</em> reloads <em>NGINX</em> and waits for <em>NGINX</em> to successfully reload. As part of the reload:
+<ol>
+<li><em>NGINX</em> reads the <em>TLS certs and keys</em>.</li>
+<li><em>NGINX</em> reads the <em>configuration files</em>.</li>
+</ol>
+</li>
+<li>The <em>Control Loop</em> emits an event for the Ingress resource and updates its status. If the reload fails, the event includes the error message.</li>
+</ol>
+<hr>
+<h3
+id="nginx-ingress-controller-is-a-kubernetes-controller">NGINX Ingress Controller is a Kubernetes controller  <a class="headerlink float-right" href="#nginx-ingress-controller-is-a-kubernetes-controller" title="NGINX Ingress Controller is a Kubernetes controller"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>With the context from the previous sections, we can generalize how NGINX Ingress Controller works:</p>
+<p><em>NGINX Ingress Controller constantly processes both new resources and changes to the existing resources in the cluster. As a result, the NGINX configuration stays up-to-date with the resources in the cluster.</em></p>
+<p>NGINX Ingress Controller is an example of a <a href="https://kubernetes.io/docs/concepts/architecture/controller/" target="_blank" rel="noopener">Kubernetes Controller</a>: NGINX Ingress Controller runs a control loop that ensures NGINX is configured according to the desired state (Ingresses and other resources).</p>
+<p>The desired state is based on the following built-in Kubernetes resources and Custom Resources (CRs):</p>
+<ul>
+<li>Layer 7 Load balancing configuration:
+<ul>
+<li>Ingresses</li>
+<li>VirtualServers (CR)</li>
+<li>VirtualServerRoutes (CR)</li>
+</ul>
+</li>
+<li>Layer 7 policies:
+<ul>
+<li>Policies (CR)</li>
+</ul>
+</li>
+<li>Layer 4 load balancing configuration:
+<ul>
+<li>TransportServers (CR)</li>
+</ul>
+</li>
+<li>Service discovery:
+<ul>
+<li>Services</li>
+<li>Endpoints</li>
+<li>Pods</li>
+</ul>
+</li>
+<li>Secret configuration:
+<ul>
+<li>Secrets</li>
+</ul>
+</li>
+<li>Global Configuration:
+<ul>
+<li>ConfigMap (only one resource)</li>
+<li>GlobalConfiguration (CR, only one resource)</li>
+</ul>
+</li>
+</ul>
+<p>NGINX Ingress Controller can watch additional Custom Resources, which are less common and not enabled by default:</p>
+<ul>
+<li><a href="/nginx-ingress-controller/installation/integrations/app-protect-dos/configuration/">NGINX App Protect resources</a> (APPolicies, APLogConfs, APUserSigs)</li>
+<li>IngressLink resource (only one resource)</li>
+</ul>
+<hr>
+<h2
+id="nginx-ingress-controller-process-components">NGINX Ingress Controller process components  <a class="headerlink float-right" href="#nginx-ingress-controller-process-components" title="NGINX Ingress Controller process components"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>In this section, we describe the components of the NGINX Ingress Controller process and how they interact, including:</p>
+<ol>
+<li>How NGINX Ingress Controller watches for resources changes.</li>
+<li>The main components of the NGINX Ingress Controller <em>Control Loop</em>.</li>
+<li>How those components process a resource change.</li>
+<li>Additional components that are crucial for processing changes.</li>
+</ol>
+<p>NGINX Ingress Controller is written in <a href="https://golang.org/" target="_blank" rel="noopener">Go</a> and relies heavily on the <a href="https://github.com/kubernetes/client-go" target="_blank" rel="noopener">Go client for Kubernetes</a>. Where relevant, we include links to the source code on GitHub.</p>
+<h3
+id="resource-caches">Resource caches  <a class="headerlink float-right" href="#resource-caches" title="Resource caches"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>In an earlier section, <a href="#processing-a-new-ingress-resource">Processing a New Ingress Resource</a>, we mentioned that NGINX Ingress Controller has a cache of the resources in the cluster that stays in sync with the Kubernetes API by watching them for changes.</p>
+<p>We also mentioned that once the cache is updated, it notifies the control loop about the changed resources. The cache is actually a collection of <em>informers</em>. The following diagram shows how changes to resources are processed by NGINX Ingress Controller.</p>
+<figure><img class="figure-bitmap" src="/nginx-ingress-controller/img/ic-process-components.png">
+</figure>
+<ul>
+<li>For every resource type that NGINX Ingress Controller monitors, it creates an <a href="https://pkg.go.dev/k8s.io/client-go@v0.21.0/tools/cache#SharedInformer" target="_blank" rel="noopener"><em>Informer</em></a>. The <em>Informer</em> includes a <em>Store</em> that holds the resources of that type. To keep the <em>Store</em> in sync with the latest versions of the resources in the cluster, the <em>Informer</em> calls the Watch and List <em>Kubernetes APIs</em> for that resource type (see the arrow <em>1. Watch and List</em> on the diagram).</li>
+<li>When a change happens in the cluster (for example, a new resource is created), the <em>Informer</em> updates its <em>Store</em> and invokes <a href="https://pkg.go.dev/k8s.io/client-go@v0.21.0/tools/cache#ResourceEventHandler" target="_blank" rel="noopener"><em>Handlers</em></a> (See the arrow <em>2. Invoke</em>) for that <em>Informer</em>.</li>
+<li>NGINX Ingress Controller registers <em>Handlers</em> for every <em>Informer</em>. Most of the time, a <em>Handler</em> creates an entry for the affected resource in the <em>Workqueue</em> where a workqueue element includes the type of the resource and its namespace and name (See the arrow <em>3. Put</em>).</li>
+<li>The <em>Workqueue</em> always tries to drain itself: if there is an element at the front, the queue will remove the element and send it to the <em>Controller</em> by calling a callback function (See the arrow <em>4. Send</em>).</li>
+<li>The <em>Controller</em> is the primary component of NGINX Ingress Controller, which represents the <em>Control Loop</em>, explained in <a href="#the-control-loop">The Control Loop</a> section. To process a workqueue element, the <em>Controller</em> component gets the latest version of the resource from the <em>Store</em> (See the arrow <em>5. Get</em>), reconfigures <em>NGINX</em> according to the resource (See the arrow <em>6. Reconfigure*</em>, updates the resource status, and emits an event via the <em>Kubernetes API</em> (See the arrow  <em>7. Update status and emit event</em>).</li>
+</ul>
+<hr>
+<h3
+id="the-control-loop">The control loop  <a class="headerlink float-right" href="#the-control-loop" title="The control loop"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>This section discusses the main components of NGINX Ingress Controller, which comprise the control loop:</p>
+<ul>
+<li><a href="https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/controller.go#L90" target="_blank" rel="noopener">Controller</a>
+<ul>
+<li>Runs the NGINX Ingress Controller control loop.</li>
+<li>Instantiates <em>Informers</em>, <em>Handlers</em>, the <em>Workqueue</em> and additional helper components.</li>
+<li>Includes the sync method), which is called by the <em>Workqueue</em> to process a changed resource.</li>
+<li>Passes changed resources to <em>Configurator</em> to re-configure NGINX.</li>
+</ul>
+</li>
+<li><a href="https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/configs/configurator.go#L95" target="_blank" rel="noopener">Configurator</a>
+<ul>
+<li>Generates NGINX configuration files, TLS and cert keys, and JWKs based on the Kubernetes resource.</li>
+<li>Uses <em>Manager</em> to write the generated files and reload NGINX.</li>
+</ul>
+</li>
+<li><a href="https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/nginx/manager.go#L52" target="_blank" rel="noopener">Manager</a>
+<ul>
+<li>Controls the lifecycle of NGINX (starting, reloading, quitting). See <a href="#reloading-nginx">Reloading NGINX</a> for more details about reloading.</li>
+<li>Manages the configuration files, TLS keys and certs, and JWKs.</li>
+</ul>
+</li>
+</ul>
+<p>The following diagram shows how the three components interact:</p>
+<figure><img class="figure-bitmap" src="/nginx-ingress-controller/img/control-loop.png">
+</figure>
+<hr>
+<h4
+id="the-controller-sync-method">The Controller sync method  <a class="headerlink float-right" href="#the-controller-sync-method" title="The Controller sync method"><i class="fas fa-link fa-xs"></i></a>
+</h4><p>The Controller <a href="https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/controller.go#L663" target="_blank" rel="noopener">sync</a> method is called by the <em>Workqueue</em> to process a change of a resource. The method determines the <em>kind</em> of the resource and calls the appropriate <em>sync</em> method (Such as <em>syncIngress</em> for Ingress resources).</p>
+<p>To explain how the sync methods work, we will examine the most important one: the <em>syncIngress</em> method, and describe how it processes a new Ingress resource.</p>
+<figure><img class="figure-bitmap" src="/nginx-ingress-controller/img/controller-sync.png">
+</figure>
+<ol>
+<li>The <em>Workqueue</em> calls the <em>sync</em> method and passes a workqueue element to it that includes the changed resource <em>kind</em> and <em>key</em> (The key is the resource namespace/name such as “default/cafe-ingress”).</li>
+<li>Using the <em>kind</em>, the <em>sync</em> method calls the appropriate sync method and passes the resource key. For Ingress resources, the method is <em>syncIngress</em>.</li>
+<li><em>syncIngress</em> gets the Ingress resource from the <em>Ingress Store</em> using the key. The <em>Store</em> is controlled by the <em>Ingress Informer</em>. In the code, we use the helper <em>storeToIngressLister</em> type that wraps the <em>Store</em>.</li>
+<li><em>syncIngress</em> calls <em>AddOrUpdateIngress</em> of the <em>Configuration</em>, passing the Ingress along. The <a href="https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L320" target="_blank" rel="noopener">Configuration</a> is a component that represents a valid collection of load balancing configuration resources (Ingresses, VirtualServers, VirtualServerRoutes, TransportServers), ready to be converted to the NGINX configuration (see the <a href="#configuration">Configuration section</a> for more details). <em>AddOrUpdateIngress</em> returns a list of <a href="https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L59" target="_blank" rel="noopener">ResourceChanges</a>, which must be reflected in the NGINX config. Typically, for a new Ingress resource, the <em>Configuration</em> returns only a single <em>ResourceChange</em>.</li>
+<li><em>syncIngress</em> calls <em>processChanges</em>, which processes the single Ingress <em>ResourceChange</em>.
+<ol>
+<li><em>processChanges</em> creates an extended Ingress resource (<em>IngressEx</em>) that includes the original Ingress resource and its dependencies, such as Endpoints and Secrets, to generate the NGINX configuration. For simplicity, we don’t show this step on the diagram.</li>
+<li><em>processChanges</em> calls <em>AddOrUpdateIngress</em> of the <em>Configurator</em> and passes the extended Ingress resource.</li>
+</ol>
+</li>
+<li><em>Configurator</em> generates an NGINX configuration file based on the extended Ingress resource, then:
+<ol>
+<li>Calls <em>Manager’s CreateConfig()</em> to  update the config for the Ingress resource.</li>
+<li>Calls <em>Manager’s Reload()</em> to reload NGINX.</li>
+</ol>
+</li>
+<li>The reload status is propagated from <em>Manager</em> to <em>processChanges</em>, and is either a success or a failure with an error message.</li>
+<li><em>processChanges</em> calls <em>updateRegularIngressStatusAndEvent</em> to update the status of the Ingress resource and emit an event with the status of the reload: both make an API call to the Kubernetes API.</li>
+</ol>
+<p><strong>Additional notes</strong>:</p>
+<ul>
+<li>Many details are not included for conciseness: the source code provides the most granular detail.</li>
+<li>The <em>syncVirtualServer</em>, <em>syncVirtualServerRoute</em>, and <em>syncTransportServer</em> methods are similar to <em>syncIngress</em>, while other sync methods are different. However, those methods typically find the affected Ingress, VirtualServer, and TransportServer resources and regenerate the configuration for them.</li>
+<li>The <em>Workqueue</em> has only a single worker thread that calls the sync method synchronously, meaning the <em>Control Loop</em> processes only one change at a time.</li>
+</ul>
+<hr>
+<h4
+id="helper-components">Helper components  <a class="headerlink float-right" href="#helper-components" title="Helper components"><i class="fas fa-link fa-xs"></i></a>
+</h4><p>There are two additional helper components crucial for processing changes: <em>Configuration</em> and <em>LocalSecretStore</em>.</p>
+<hr>
+<h5
+id="configuration">Configuration  <a class="headerlink float-right" href="#configuration" title="Configuration"><i class="fas fa-link fa-xs"></i></a>
+</h5><p><a href="https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/configuration.go#L320" target="_blank" rel="noopener"><em>Configuration</em></a> holds the latest valid state of the NGINX Ingress Controller load balancing configuration resources: Ingresses, VirtualServers, VirtualServerRoutes, TransportServers, and GlobalConfiguration.</p>
+<p>The <em>Configuration</em> supports add, update and delete operations on the resources. When you invoke these operations on a resource in the Configuration, it performs the following:</p>
+<ol>
+<li>Validates the object (For add or update)</li>
+<li>Calculates the changes to the affected resources that are necessary to propagate to the NGINX configuration, returning the changes to the caller.</li>
+</ol>
+<p>For example, when you add a new Ingress resource, the <em>Configuration</em> returns a change requiring NGINX Ingress Controller to add the configuration for that Ingress to the NGINX configuration files. If you made an existing Ingress resource invalid, the <em>Configuration</em> returns a change requiring NGINX Ingress Controller to remove the configuration for that Ingress from the NGINX configuration files.</p>
+<p>Additionally, the <em>Configuration</em> ensures that only one Ingress/VirtualServer/TransportServer (TLS Passthrough) resource holds a particular host (For example, cafe.example.com) and only one TransportServer (TCP/UDP) holds a particular listener (Such as port 53 for UDP). This ensures that no host or listener collisions happen in the NGINX configuration.</p>
+<p>Ultimately, NGINX Ingress Controller ensures the NGINX config on the filesystem reflects the state of the objects in the <em>Configuration</em> at any point in time.</p>
+<hr>
+<h5
+id="localsecretstore">LocalSecretStore  <a class="headerlink float-right" href="#localsecretstore" title="LocalSecretStore"><i class="fas fa-link fa-xs"></i></a>
+</h5><p><a href="https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.0/internal/k8s/secrets/store.go#L32" target="_blank" rel="noopener"><em>LocalSecretStore</em></a> (of the <em>SecretStore</em> interface) holds the valid Secret resources and keeps the corresponding files on the filesystem in sync with them. Secrets are used to hold TLS certificates and keys (type <code>kubernetes.io/tls</code>), CAs (<code>nginx.org/ca</code>), JWKs (<code>nginx.org/jwk</code>), and client secrets for an OIDC provider (<code>nginx.org/oidc</code>).</p>
+<p>When <em>Controller</em> processes a change to a configuration resource like Ingress, it creates an extended version of a resource that includes the dependencies (Such as Secrets) necessary to generate the NGINX configuration. <em>LocalSecretStore</em> allows <em>Controller</em> to reference the filesystem for a secret using the secret key (namespace/name).</p>
+<hr>
+<h2
+id="reloading-nginx">Reloading NGINX  <a class="headerlink float-right" href="#reloading-nginx" title="Reloading NGINX"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>The following sections describe how NGINX reloads and how NGINX Ingress Controller specifically affects this process.</p>
+<hr>
+<h3
+id="how-nginx-reloads-work">How NGINX reloads work  <a class="headerlink float-right" href="#how-nginx-reloads-work" title="How NGINX reloads work"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>Reloading NGINX is necessary to apply new configuration changes and occurs with these steps:</p>
+<ol>
+<li>The administrator sends a HUP (hangup) signal to the NGINX master process to trigger a reload.</li>
+<li>The master process brings down the worker processes with the old configuration and starts worker processes with the new configuration.</li>
+<li>The administrator verifies the reload has successfully finished.</li>
+</ol>
+<p>The <a href="https://nginx.org/en/docs/control.html#reconfiguration" target="_blank" rel="noopener">NGINX documentation</a> has more details about reloading.</p>
+<hr>
+<h4
+id="how-to-reload-nginx-and-confirm-success">How to reload NGINX and confirm success  <a class="headerlink float-right" href="#how-to-reload-nginx-and-confirm-success" title="How to reload NGINX and confirm success"><i class="fas fa-link fa-xs"></i></a>
+</h4><p>The NGINX binary (<code>nginx</code>) supports the reload operation with the <code>-s reload</code> option. When you run this option:</p>
+<ol>
+<li>It validates the new NGINX configuration and exits if it is invalid printing the error messages to the stderr.</li>
+<li>It sends a HUP signal to the NGINX master process and exits.</li>
+</ol>
+<p>As an alternative, you can send a HUP signal to the NGINX master process directly.</p>
+<p>Once the reload operation has been invoked with <code>nginx -s reload</code>, there is no wait period for NGINX to finish reloading. This means it is the responsibility of an administator to check it is finished, for which there are a few options:</p>
+<ul>
+<li>Check if the master process created new worker processes. Two ways are by running <code>ps</code> or reading the <code>/proc</code> file system.</li>
+<li>Send an HTTP request to NGINX, to see if a new worker process responds. This signifies that NGINX reloaded successfully: this method requires additional NGINX configuration, explained below.</li>
+</ul>
+<p>NGINX reloads take roughly 200ms. The factors affecting reload time are configuration size and details, the number of TLS certificates/keys, enabled modules, and available CPU resources.</p>
+<hr>
+<h4
+id="potential-problems">Potential problems  <a class="headerlink float-right" href="#potential-problems" title="Potential problems"><i class="fas fa-link fa-xs"></i></a>
+</h4><p>Most of the time, if <code>nginx -s reload</code> executes, the reload will also succeed. In the rare case a reload fails, the NGINX master process will print the an error message. This is an example:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">2022/07/09 00:56:42 <span class="o">[</span>emerg<span class="o">]</span> 1353#1353: limit_req <span class="s2">&#34;one&#34;</span> uses the <span class="s2">&#34;</span><span class="nv">$remote_addr</span><span class="s2">&#34;</span> key <span class="k">while</span> previously it used the <span class="s2">&#34;</span><span class="nv">$binary_remote_addr</span><span class="s2">&#34;</span> key
+</span></span></code></pre></div><p>The operation is graceful; reloading doesn&rsquo;t lead to any traffic loss by NGINX. However, frequent reloads can lead to high memory utilization and potential OOM (Out-Of-Memory) errors, resulting in traffic loss. This can most likely happen if you (1) proxy traffic that utilizes long-lived connections (ex: Websockets, gRPC) and (2) reload frequently. In these scenarios, you can end up with multiple generations of NGINX worker processes that are shutting down which will force old workers to shut down after the timeout). Eventually, all those worker processes can exhaust the system&rsquo;s available memory.</p>
+<p>Old NGINX workers will not shut down until all connections are terminated either by clients or backends, unless you configure <a href="https://nginx.org/en/docs/ngx_core_module.html#worker_shutdown_timeout" target="_blank" rel="noopener">worker_shutdown_timeout</a>. Since both the old and new NGINX worker processes coexist during a reload, reloading can lead to two spikes in memory utilization. With a lack of available memory, the NGINX master process can fail to create new worker processes.</p>
+<hr>
+<h3
+id="reloading-in-nginx-ingress-controller">Reloading in NGINX Ingress Controller  <a class="headerlink float-right" href="#reloading-in-nginx-ingress-controller" title="Reloading in NGINX Ingress Controller"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>NGINX Ingress Controller reloads NGINX to apply configuration changes.</p>
+<p>To facilitate reloading, NGINX Ingress Controller configures a server listening on the Unix socket <code>unix:/var/lib/nginx/nginx-config-version.sock</code> that responds with the configuration version for <code>/configVersion</code> URI. NGINX Ingress Controller writes the configuration to  <code>/etc/nginx/config-version.conf</code>.</p>
+<p>Reloads occur with this sequence of steps:</p>
+<ol>
+<li>NGINX Ingress Controller updates generated configuration files, including any secrets.</li>
+<li>NGINX Ingress Controller updates the config version in <code>/etc/nginx/config-version.conf</code>.</li>
+<li>NGINX Ingress Controller runs <code>nginx -s reload</code>. If the command fails, NGINX Ingress Controller logs the error and considers the reload failed.</li>
+<li>If the command succeeds, NGINX Ingress Controller periodically checks for the config version by sending an HTTP request to the config version server on  <code>unix:/var/lib/nginx/nginx-config-version.sock</code>.</li>
+<li>Once NGINX Ingress Controller sees the correct config version returned by NGINX, it considers the reload successful. If it doesn&rsquo;t see the correct configuration version after the configurable timeout ( <a href="/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/"><code>-nginx-reload-timeout</code></a>), NGINX Ingress Controller considers the reload failed.</li>
+</ol>
+<p>The <a href="#the-control-loop">NGINX Ingress Controller Control Loop</a> stops during a reload so that it cannot affect configuration files or reload NGINX until the current reload succeeds or fails.</p>
+<hr>
+<h3
+id="when-nginx-ingress-controller-reloads-nginx">When NGINX Ingress Controller reloads NGINX  <a class="headerlink float-right" href="#when-nginx-ingress-controller-reloads-nginx" title="When NGINX Ingress Controller reloads NGINX"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>NGINX Ingress Controller reloads NGINX every time the Control Loop processes a change that affects the generated NGINX configuration. In general, every time a monitored resource is changed, NGINX Ingress Controller will regenerate the configuration and reload NGINX.</p>
+<p>There are three special cases:</p>
+<ul>
+<li><em>Start</em>. When NGINX Ingress Controller starts, it processes all resources in the cluster and only then reloads NGINX. This avoids a &ldquo;reload storm&rdquo; by reloading only once.</li>
+<li><em>Batch updates</em>. When NGINX Ingress Controller receives a number of concurrent requests from the Kubernetes API, it will pause NGINX reloads until the task queue is empty. This reduces the number of reloads to minimize the impact of batch updates and reduce the risk of OOM (Out of Memory) errors.</li>
+<li><em>NGINX Plus</em>. If NGINX Ingress Controller is using NGINX Plus, it will not reload NGINX Plus for changes to the Endpoints resources. In this case, NGINX Ingress Controller will use the NGINX Plus API to update the corresponding upstreams and skip reloading.</li>
+</ul>
+
+
+  <hr>
+
+
+
+<div class="container flex">
+	<ul class="next-prev-icon">
+
+
+
+		<li style="flex:1; text-align: left; white-space: nowrap;"><a href="https://docs.nginx.com/nginx-ingress-controller/overview/about/" class="" title="Previous -- About "><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M23.378 46.5L1.94 25.06C1.80067 24.9209 1.69014 24.7556 1.61472 24.5738C1.53931 24.3919 1.50049 24.1969 1.50049 24C1.50049 23.8031 1.53931 23.6081 1.61472 23.4262C1.69014 23.2444 1.80067 23.0791 1.94 22.94L23.378 1.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45.878 46.5L24.44 25.06C24.3007 24.9209 24.1901 24.7556 24.1147 24.5738C24.0393 24.3919 24.0005 24.1969 24.0005 24C24.0005 23.8031 24.0393 23.6081 24.1147 23.4262C24.1901 23.2444 24.3007 23.0791 24.44 22.94L45.878 1.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</a></li>
+
+
+
+			<li style="flex:1; text-align: right; white-space: nowrap;"><a href="https://docs.nginx.com/nginx-ingress-controller/overview/nginx-plus/" class="" title="Next -- Extensibility with NGINX Plus"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M24.622 1.5L46.06 22.94C46.1993 23.0791 46.3099 23.2444 46.3853 23.4262C46.4607 23.6081 46.4995 23.8031 46.4995 24C46.4995 24.1969 46.4607 24.3919 46.3853 24.5738C46.3099 24.7556 46.1993 24.9209 46.06 25.06L24.622 46.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2.122 1.5L23.56 22.94C23.6993 23.0791 23.8099 23.2444 23.8853 23.4262C23.9607 23.6081 23.9995 23.8031 23.9995 24C23.9995 24.1969 23.9607 24.3919 23.8853 24.5738C23.8099 24.7556 23.6993 24.9209 23.56 25.06L2.122 46.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</a></li>
+
+		</ul>
+	</div>
+
+
+  </main>
+
+
+      <div class="col-md-3 d-none d-xl-block d-print-none nginx-toc align-top" style="width: 25%;">
+      <nav class="bd-links" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <h3 class="bd-toc-link">What's on This Page</h3>
+
+
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#nginx-ingress-controller-at-a-high-level">NGINX Ingress Controller at a high level</a></li>
+    <li><a href="#the-nginx-ingress-controller-pod">The NGINX Ingress Controller pod</a>
+      <ul>
+        <li><a href="#differences-with-nginx-plus">Differences with NGINX Plus</a></li>
+      </ul>
+    </li>
+    <li><a href="#the-nginx-ingress-controller-process">The NGINX Ingress Controller process</a>
+      <ul>
+        <li><a href="#processing-a-new-ingress-resource">Processing a new Ingress resource</a></li>
+        <li><a href="#nginx-ingress-controller-is-a-kubernetes-controller">NGINX Ingress Controller is a Kubernetes controller</a></li>
+      </ul>
+    </li>
+    <li><a href="#nginx-ingress-controller-process-components">NGINX Ingress Controller process components</a>
+      <ul>
+        <li><a href="#resource-caches">Resource caches</a></li>
+        <li><a href="#the-control-loop">The control loop</a></li>
+      </ul>
+    </li>
+    <li><a href="#reloading-nginx">Reloading NGINX</a>
+      <ul>
+        <li><a href="#how-nginx-reloads-work">How NGINX reloads work</a></li>
+        <li><a href="#reloading-in-nginx-ingress-controller">Reloading in NGINX Ingress Controller</a></li>
+        <li><a href="#when-nginx-ingress-controller-reloads-nginx">When NGINX Ingress Controller reloads NGINX</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+  </div>
+</nav>
+      </div>
+
+
+</div>
+
+
+
+
+
+  </div>
+
+  <footer>
+
+
+    <footer id="footer">
+   <div class="container-fluid">
+
+       <div class="row align-items-center">
+
+         <div class="col-md-6 d-md-flex">
+             <img class="nginx-logo-footer" src="https://docs.nginx.com/images/icons/NGINX-Part-of-F5-horiz-all-white-525x208@2x.png"/>
+         </div>
+
+
+         <div class="col-md d-flex footer-text">
+           <div class="col-xl d-none d-md-block align-self-center text-semibold align-right">
+             <span>Found a bug? Looking for something new?</span>
+           </div>
+           <div class="col-lg d-none d-md-block pl-0">
+             <button class="button footer-button"><a href="https://docs.nginx.com/feedback/" alt="Select if you have feedback">Let Us Know</a></button>
+           </div>
+         </div>
+
+
+       </div>
+
+
+
+       <div class="row d-print-none d-none d-md-flex">
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">Company</span>
+           <ul class="footer-text">
+             <li><a href="https://www.f5.com/go/product/welcome-to-nginx" target="_blank" alt="Select to learn about F5 NGINX">About F5 NGINX</a></li>
+             <li><a href="https://www.f5.com/company/events" target="_blank" alt="Select to learn about F5 events">Events</a></li>
+           </ul>
+           <br />
+           <span class="footer-head">Resources</span>
+           <ul class="footer-text">
+             <li><a href="https://www.f5.com/company/blog/nginx" target="_blank" alt="Select to visit the F5 NGINX blog" >Blog</a></li>
+             <li><a href="https://www.f5.com/go/faq/nginx-faq" target="_blank" alt="Select to visit the F5 NGINX frequently asked questions page" >FAQ</a></li>
+             <li><a href="https://www.f5.com/services" target="_blank" alt="Select to learn about F5 NGINX Support">Professional Services</a></li>
+             <li><a href="https://www.f5.com/learn/training" target="_blank" alt="Select to learn about F5 training offerings" >Training</a></li>
+           </ul>
+         </div>
+
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">Products</span>
+             <ul class="footer-text">
+                 <li><a title="F5 NGINX Plus" aria-label="F5 NGINX Plus" href="https://www.f5.com/products/nginx/nginx-plus">F5 NGINX Plus</a></li>
+                 <li><a title="F5 NGINX App Protect" aria-label="F5 NGINX App Protect" href="https://www.f5.com/products/nginx/nginx-app-protect">F5 NGINX App Protect</a></li>
+                 <li><a title="F5 NGINX Instance Manager" aria-label="F5 NGINX Instance Manager" href="https://www.f5.com/products/nginx/instance-manager">F5 NGINX Instance Manager</a></li>
+                 <li><a title="F5 NGINX Ingress Controller" aria-label="F5 NGINX Ingress Controller" href="https://www.f5.com/products/nginx/nginx-ingress-controller">F5 NGINX Ingress Controller</a></li>
+                 <li><a title="F5 NGINX Gateway Fabric" aria-label="F5 NGINX Gateway Fabric" href="https://www.f5.com/products/nginx/nginx-gateway-fabric">F5 NGINX Gateway Fabric</a></li>
+                 <li><a title="F5 NGINXaaS for Azure" aria-label="F5 NGINXaaS for Azure" href="https://www.f5.com/products/nginx/f5-nginxaas-for-azure">F5 NGINXaaS for Azure</a></li>
+             </ul>
+         </div>
+
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">NGINX on GitHub</span>
+           <ul class="footer-text">
+             <li><a title="NGINX Open Source" aria-label="NGINX Open Source" href="https://github.com/nginx/nginx"><span class="inner">NGINX Open Source</span></a></li>
+             <li><a title="NGINX Unit" aria-label="NGINX Unit" href="https://github.com/nginx/unit"><span class="inner">NGINX Unit</span></a></li>
+             <li><a title="NGINX Amplify" aria-label="NGINX Amplify" href="https://github.com/nginxinc/nginx-amplify-agent"><span class="inner">NGINX Amplify</span></a></li>
+             <li><a title="NGINX Agent" aria-label="NGINX Agent" href="https://github.com/nginx/Agent"><span class="inner">NGINX Agent</span></a></li>
+             <li><a title="NGINX Kubernetes Ingress Controller" aria-label="NGINX Kubernetes Ingress Controller" href="https://github.com/nginxinc/kubernetes-ingress"><span class="inner">NGINX Kubernetes Ingress Controller</span></a></li>
+             <li><a title="NGINX Gateway Fabric" aria-label="NGINX Gateway Fabric" href="https://github.com/nginxinc/nginx-gateway-fabric"><span class="inner">NGINX Gateway Fabric</span></a></li>
+         </ul>
+         </div>
+
+         <div class="col-md-2 d-none d-md-block">
+           <span class="footer-head">Social</span>
+               <ul class="footer-social">
+                 <li><a href="https://www.facebook.com/nginxinc" title="facebook" aria-label="facebook" target="_blank" rel="noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i>
+                  </a></li>
+                 <li><a href="https://twitter.com/nginx" title="X" aria-label="x" target="_blank" rel="noreferrer"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a></li>
+                 <li><a href="https://www.linkedin.com/company/nginx" title="linkedin" aria-label="linkedin" target="_blank" rel="noreferrer"><i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+                  </a></li>
+                 <li><a href="https://www.youtube.com/user/NginxInc" title="youtube" aria-label="youtube" target="_blank" rel="noreferrer" alt="NGINX Youtube Channel"><i class="fa-brands fa-square-youtube" aria-hidden="true"></i>
+                  </a></li>
+               </ul>
+         </div>
+       </div>
+
+       <div class="site-info footer-text">
+
+           <div class="text-center">
+           <p><a href="https://www.f5.com/"><img class="f5-logo-footer" src="https://docs.nginx.com/images/icons/Logo_F5.svg" alt="F5 logo"></a>
+              ©2024 F5, Inc. All rights reserved.</p><p><a href="https://www.f5.com/company/policies/trademarks" rel="noopener" target="_blank">Trademarks</a>  <a href="https://www.f5.com/company/policies" rel="noopener" target="_blank">Policies</a> <a href="https://docs.nginx.com/ossc">Open Source Components</a>  <a href="https://www.f5.com/company/policies/privacy-notice" rel="noopener" target="_blank">Privacy</a>  <a href="https://www.f5.com/company/policies/F5-California-privacy-summary" rel="noopener" target="_blank">California Privacy</a>  <a href="https://www.f5.com/company/policies/privacy-notice#no-sell" rel="noopener" target="_blank">Do Not Sell My Personal Information</a>  <span id="teconsent"></span></p>
+           </div>
+
+       </div>
+   </div>
+</footer>
+
+
+
+  </footer>
+
+
+<script src="/nginx-ingress-controller/js/jquery-3-6-4.min.js" type="text/javascript" integrity=""></script>
+
+
+<script src="/nginx-ingress-controller/js/kube.min.a3a07cceb64989e2f0bf41653ab4d8346ba4312270eb5cc80d6afad3bf30a0ca9768aaa2559cb582e663332c541edab6a4068ef2e88b739fa425e2e870eb0aff.js" type="text/javascript" integrity="sha512-o6B8zrZJieLwv0FlOrTYNGukMSJw61zIDWr6078woMqXaKqiVZy1guZjMyxUHtq2pAaO8uiLc5&#43;kJeLocOsK/w=="></script>
+
+
+
+<script src="/nginx-ingress-controller/js/bootstrap.bundle.min.c15ed88f56a52190ea645094409cbce5537eaaf108972f777c840037b8aa0c508f12e70b09e345cf8af7e450a8f6ce96ae974340f8bcd316e58d707c063b6f72.js" type="text/javascript" integrity="sha512-wV7Yj1alIZDqZFCUQJy85VN&#43;qvEIly93fIQAN7iqDFCPEucLCeNFz4r35FCo9s6WrpdDQPi80xbljXB8Bjtvcg=="></script>
+
+
+
+<script src="/nginx-ingress-controller/js/code-copy.b424b9cf3f8a69320d1a74e5b4345962141999ae58795c39fb9c5ac8953f3aef3373d7a334971f578e4dc4ee212cbe8f42951d16edb285e6a7931634998d900c.js" type="text/javascript" ></script>
+
+
+
+
+
+<script class="coveo-script" src="https://static.cloud.coveo.com/searchui/v2.10104/0/js/CoveoJsSearch.Lazy.min.js" integrity="sha512-HxdDBIp5snbqtu1TPkBnXLKEvN9IPz3PeZW8zT9KfsflV9Ck822XDroDlpVbfCfXeiu8C0RDVn0fdu7aGy/H1g==" crossorigin="anonymous"></script>
+
+<script src="https://static.cloud.coveo.com/searchui/v2.10104/0/js/templates/templates.js" integrity="sha512-CR0Yk/LIwgh1MsKqjecDp/r6F9ipKc6gA+4+E1pplT3N3r1pk+la/HaqyDiKtjOFwrwIIbIYBFrUJgPql93QHw==" crossorigin="anonymous"></script>
+
+
+
+
+
+
+<script src="/nginx-ingress-controller/js/coveo.min.6e0e2c15ea8204cc128d34f0e7e13d16783166196b052d33cb05ec26a38415801ab03141a36256976745037faedb2da32dd8f3600b92b5f3c7d22fa634b0624f.js" integrity="sha512-bg4sFeqCBMwSjTTw5&#43;E9FngxZhlrBS0zywXsJqOEFYAasDFBo2JWl2dFA3&#43;u2y2jLdjzYAuStfPH0i&#43;mNLBiTw==" type="text/javascript"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script src="/nginx-ingress-controller/js/sidebar.min.89a78ac76492f78b44370cf6bbaa09457606d00a4b14db603de939e128451bf31bd29e46c179fbc3a1d632302f5ebfe61c5b9e65e2c171acd4981185cd3329b6.js" type="text/javascript" integrity="sha512-iaeKx2SS94tENwz2u6oJRXYG0ApLFNtgPek54ShFG/Mb0p5GwXn7w6HWMjAvXr/mHFueZeLBcazUmBGFzTMptg=="></script>
+
+<div id="consent_blackbar" style="position:fixed;top:0px;width:100%"></div>
+</body>
+</html>
+
+

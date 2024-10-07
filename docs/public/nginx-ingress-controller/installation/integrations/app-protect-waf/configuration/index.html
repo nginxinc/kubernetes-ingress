@@ -1,0 +1,2283 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>  
+
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Configuration | NGINX Ingress Controller</title>
+
+
+
+
+
+
+<link rel="canonical" href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/">
+
+
+
+
+
+
+
+<meta property="article:publisher" content="https://www.facebook.com/nginxinc" />
+<meta property="og:image" content="https://docs.nginx.com/images/icons/NGINX-Docs-new-docs-dark-1200x630.png" />
+<meta property="og:image:width" content="500" />
+<meta property="og:image:height" content="300" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:description" content="" />
+<meta name="twitter:title" content="Configuration" />
+<meta name="twitter:site" content="@nginx" />
+<meta name="twitter:image" content="https://docs.nginx.com/images/icons/NGINX-Docs-new-docs-dark-1200x630.png" />
+<meta name="twitter:creator" content="@nginx" />
+
+
+
+
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'
+    https://consent.trustarc.com/ https://mktg.tags.f5.com/basic/prod/utag.sync.js https://static.cloud.coveo.com/ https://*.f5.com/
+    https://*.netlify.app https://gist.github.com
+    https://tag.demandbase.com/pscSDsz4.min.js
+    https://munchkin.brightfunnel.com/js/build/bf-munchkin.min.js
+    https://www.googletagmanager.com/gtm.js
+    https://www.google-analytics.com/
+    https://www.google-analytics.com/analytics.js
+    https://www.google-analytics.com/plugins/ua/linkid.js
+    https://cdn.bizible.com/scripts/bizible.js
+    https://cdn.bizible.com/xdc.js
+    https://f5networksglobalprod.122.2o7.net/
+    https://f5networksnginxdocs.122.2o7.net/
+    ;
+    worker-src 'self' blob:">
+
+
+
+<meta property="environment" type="production" />
+<meta property="buildtype" type="webdocs" />
+<meta property="isServer" type="false" />
+
+
+<meta name="product" content="NGINX Ingress Controller">
+<meta name="version" content="">
+<meta name="doc_type" content="Manual">
+
+<link rel="shortcut icon" type="image/x-icon" href="https://docs.nginx.com/images/favicon-48x48.ico">
+
+
+
+
+
+
+
+
+
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/all.min.4a71f958af9b67180f1ece38b96217f8b2c9009f7fd8f90f299e508808fa4daf3ac3e7ec6f64e47267d1c955f7a419cc15c57ba103c9925f507af4825abdd6e8.css" integrity="sha512-SnH5WK&#43;bZxgPHs44uWIX&#43;LLJAJ9/2PkPKZ5QiAj6Ta86w&#43;fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/v4-font-face.min.5870089ba06cf03e9721f87919eaf15c961a65e071845949ed2da58c5bfbd18a714c5dab2c155f0455ebcd2f45bfd598a5e47ae19976e7aa3a51e22914eac1b6.css" integrity="sha512-WHAIm6Bs8D6XIfh5GerxXJYaZeBxhFlJ7S2ljFv70YpxTF2rLBVfBFXrzS9Fv9WYpeR64Zl256o6UeIpFOrBtg==" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/fontawesome/css/v5-font-face.min.81bdf1c9f8ff16b1eda613d52d868a059f16c8c6045c3d7e0a0b771622a11666cdd94b8ea62b5edb0d4b826c3a3737ec3663065fe05b56b6b871e57de73f556b.css" integrity="sha512-gb3xyfj/FrHtphPVLYaKBZ8WyMYEXD1&#43;Cgt3FiKhFmbN2UuOpite2w1Lgmw6NzfsNmMGX&#43;BbVra4ceV95z9Vaw==" rel="stylesheet" type="text/css">
+
+  
+
+<link href="/nginx-ingress-controller/css/bootstrap.min.3f9320327d6304dd356ac060534cfad10938431897a3cebec2515a84aaec41fdfb73d72ba39d7b5b35523cf575b432b3864bb6889d855602faef01b4dd21a734.css" integrity="sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86&#43;wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA==" rel="stylesheet" type="text/css">
+
+
+
+<link rel="stylesheet" href="https://static.cloud.coveo.com/searchui/v2.10104/0/css/CoveoFullSearch.min.css" integrity="sha512-9/A9yVCU4GS6/iIwTRJKnan4Hf8gDKj3anwItN9QCsU8SixaT5xkjjWsZ/iq0TWaizhtqOLacadXJfxHlwYCcA==" crossorigin="anonymous" />
+
+
+<link href="/nginx-ingress-controller/css/docs-nginx-com/nginx-site-header.min.80b10ed49ecfad93607ee771acca88d13dc958e6eecc642af3aa2b170c86b8dcce442e7b86c3e5298c95b0ab2b053a71074c2f15c28266c3a2c502275415b3a7.css" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/css/docs-nginx-com/style.min.2cd4748c438c49d012a5fdc6b98770223c4875fe0f89517b17423b6a5328af4d93d9d772207bfc51d9449781281e1eb8707dcc2f7467e6e24330c9b8c7c5f734.css" rel="stylesheet" type="text/css">
+
+
+<link href="/nginx-ingress-controller/css/bootstrap-docs.min.8a70c94c72e3783cecd631bc1705c7843b2fdef99f1549f0bf7f774a4083173ee25974413a8206c2340c0fee9bb7a07acd41d41c78ae2280c96a2ce0faca2847.css" rel="stylesheet" type="text/css">
+
+
+
+<link href="/nginx-ingress-controller/css/coveo.min.fce7d4df31de99e4f86510a90915820f236b8dcd02be030b27529af7ff10189f807c78cedacb91afa9d07f310a172c6046b1921832f199b9158898a7f74fa117.css" rel="stylesheet" type="text/css">
+
+
+
+<link href="/nginx-ingress-controller/css/f5-hugo.min.d668cd51e42f94f8d4fb9a81de0dcf6329a121173422b5695c37a707ac9df6ee4f90ee81b4dbecd797731a81f593ef80d85471bda37cb9af5ce617482982aa35.css" rel="stylesheet" type="text/css">
+
+
+
+
+
+<link href="/nginx-ingress-controller/css/highlight.min.fe5647c4b67f4b3fcf0ea60b483479d567ba1b05ee6e816439207edfa3d310dbee79536278c67d89c1db5da275bde962a10163da375f05bd19743e2a80e1ad02.css" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+      
+<script async="async" src="https://consent.trustarc.com/notice?domain=f5.com&c=teconsent&js=nj&noticeType=bb&text=true&gtm=1" crossorigin=""></script>
+
+
+
+<script src="https://mktg.tags.f5.com/basic/prod/utag.sync.js"></script> 
+
+
+
+
+
+
+
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-K5HG9JT');</script>
+
+</head>
+
+<body>
+   
+ 
+<script type="text/javascript"> 
+    (function(a,b,c,d) { 
+        a='//mktg.tags.f5.com/basic/prod/utag.js'; 
+        b=document;c='script';d=b.createElement(c);d.src=a; 
+        d.type='text/java'+c;d.async=true; 
+        a=b.getElementsByTagName(c)[0];a.parentNode.insertBefore(d,a)})(); 
+</script> 
+  
+
+  <header>
+    
+<div class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar navbar-fixed-top">
+  <div class="container-fluid flex-md-row flex-column">
+    <a class="navbar-brand mr-0 mr-md-2" href="/" aria-label="NGINX Docs">
+      <img class="navbar-img" src="https://docs.nginx.com/images/icons/NGINX-Docs-horiz-white-type.svg" alt="NGINX Docs">
+    </a>
+    
+      <div class="navbar navbar-nav">
+            
+        <div id="searchbox">
+          
+          <div class="CoveoSearchbox" data-placeholder='Search NGINX Docs...'></div>
+        </div>
+      </div>
+    
+    
+
+    <ul class="navbar navbar-nav">
+        <li class="nav-item-explore active">
+          <button class="button navbar-button"><a href="https://www.f5.com/products" alt="Explore all products on f5.com" target="_blank">Explore All Products</a></button>
+        </li>
+    </ul>
+  </div>
+</div>
+
+
+  </header>
+
+  
+    
+    <nav aria-label="breadcrumb" class="breadcrumb navbar">
+    <div class="nav flex-md-row">
+        <ol class="breadcrumb">
+            <li><a href="/" alt="NGINX Docs Home">Home</a></li>
+
+            
+            
+            
+            
+                
+            
+            
+                
+            
+            
+                
+            
+            
+                
+            
+            
+                
+            
+            
+            
+                <li><i class="fas fa-chevron-right"></i><a href="/nginx-ingress-controller/">NGINX Ingress Controller</a></a><i class="fas fa-chevron-right"></i></li>
+                
+            
+                <li><a href="/nginx-ingress-controller/installation/">Installation</a><i class="fas fa-chevron-right"></i></li>
+                
+            
+                <li><a href="/nginx-ingress-controller/installation/integrations/">Integrations</a><i class="fas fa-chevron-right"></i></li>
+                
+            
+                <li><a href="/nginx-ingress-controller/installation/integrations/app-protect-waf/">NGINX App Protect WAF</a><i class="fas fa-chevron-right"></i></li>
+                
+            
+                Configuration
+        </ol>
+    </div>
+</nav>
+
+  
+    
+  
+
+  <div class="main container-fluid min-page-height" data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/">
+    
+    
+<div class="row" style="max-width: calc(100% + 30px) !important; flex-wrap: nowrap;">
+  <nav class="sidenav overflow-auto col-md-3 d-none d-xl-block d-print-none align-top" style="width: 25%;">
+    
+
+
+<div id="sidebar-wrapper">
+
+    <div id="sidebar" class="sidebar" aria-label="Sidebar navigation">
+        <button id="sidebar-toggle-button" title="Toggle sidebar navigation" role="button" aria-controls="sidebar-content">
+            <i class="fa fa-chevron-right sidebar-visible-collapsed"></i>
+            <i class="fa fa-chevron-left sidebar-visible-expanded"></i>
+        </button>
+        <div id="sidebar-content">
+            <h3>
+                <a class="sidebar-title" href="https://docs.nginx.com/nginx-ingress-controller/" alt="NGINX Ingress Controller"><img
+                        class="card-img-top" src="https://docs.nginx.com/images/icons/NGINX-Ingress-Controller-product-icon.svg"
+                        alt="NGINX Ingress Controller">
+                    NGINX Ingress Controller</a>
+            </h3>
+            <ul>
+            
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+                
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/overview/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#overview--overview"
+                                    aria-controls="overview--overview">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Overview</a>
+                            </li>
+                        </div>
+                        <div id="overview--overview" class="accordion-body collapse">
+                            <div class="accordion-inner">
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/overview/about/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/overview/about/">About</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/overview/design/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/overview/design/">The design of NGINX Ingress Controller</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/overview/nginx-plus/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/overview/nginx-plus/">Extensibility with NGINX Plus</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/overview/product-telemetry/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/overview/product-telemetry/">Product telemetry</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            
+                
+                
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/technical-specifications/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/technical-specifications/">Technical specifications</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+                
+                
+            
+                
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/installation/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#installation--installation"
+                                    aria-controls="installation--installation">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Installation</a>
+                            </li>
+                        </div>
+                        <div id="installation--installation" class="accordion-body collapse">
+                            <div class="accordion-inner">
+                            
+                            
+                                
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/installing-nic/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#installation--installation--install-nginx-ingress-controller">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>Install NGINX Ingress Controller</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="installation--installation--install-nginx-ingress-controller" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/installing-nic/installation-with-helm/" href="https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm/">Installation with Helm</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/" href="https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-manifests/">Installation with Manifests</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/installing-nic/installation-with-operator/" href="https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-operator/">Installation with NGINX Ingress Operator</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/build-nginx-ingress-controller/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/installation/build-nginx-ingress-controller/">Build NGINX Ingress Controller</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/nic-images/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#installation--installation--nginx-ingress-controller-images">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>NGINX Ingress Controller images</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="installation--installation--nginx-ingress-controller-images" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/nic-images/get-registry-image/" href="https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/get-registry-image/">Get NGINX Ingress Controller from the F5 Registry</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/nic-images/get-image-using-jwt/" href="https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/get-image-using-jwt/">Get the NGINX Ingress Controller image with JWT</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/nic-images/use-aws-image/" href="https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/use-aws-image/">Use the AWS Marketplace NGINX Ingress Controller image</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/nic-images/use-gcp-image/" href="https://docs.nginx.com/nginx-ingress-controller/installation/nic-images/use-gcp-image/">Use the GCP Marketplace NGINX Ingress Controller image</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/run-multiple-ingress-controllers/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/installation/run-multiple-ingress-controllers/">Run multiple NGINX Ingress Controllers</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/ingress-nginx/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/installation/ingress-nginx/">Migrate from Ingress-NGINX Controller to NGINX Ingress Controller</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/installation/integrations/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#installation--installation--integrations">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>Integrations</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="installation--installation--integrations" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+                                                
+                                                    
+                                                    
+                                                    <div class="accordion" id="Accordion3">
+                                                        <div class="sidebar-l2-padding">
+                                                            <div class="accordion-group sidebar-il-border">
+                                                                <div class="accordion-heading">
+                                                                    <ul>
+                                                                        <li class="nginx-toc-link l2">
+                                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/" class="accordion-toggle"
+                                                                                aria-expanded="false" data-toggle="collapse"
+                                                                                href="#installation--integrations--nginx-app-protect-waf">
+                                                                                <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                                    class="fa fa-2xs fa-fw fa-chevron-down"></i>NGINX App Protect WAF</a>
+                                                                        </li>
+                                                                    <ul>
+                                                                </div>
+                                                                <div id="installation--integrations--nginx-app-protect-waf" class="accordion-body collapse leaf">
+                                                                    <div class="accordion-inner">
+                                                                    
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/installation/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/installation/">Build NGINX Ingress Controller with NGINX App Protect WAF</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/configuration/">Configuration</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/compile-waf-policies/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/compile-waf-policies/">Compile NGINX App Protect WAF policies using NGINX Instance Manager</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf/troubleshoot-app-protect-waf/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/troubleshoot-app-protect-waf/">Troubleshoot NGINX App Protect WAF</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <div class="accordion" id="Accordion3">
+                                                        <div class="sidebar-l2-padding">
+                                                            <div class="accordion-group sidebar-il-border">
+                                                                <div class="accordion-heading">
+                                                                    <ul>
+                                                                        <li class="nginx-toc-link l2">
+                                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/" class="accordion-toggle"
+                                                                                aria-expanded="false" data-toggle="collapse"
+                                                                                href="#installation--integrations--nginx-app-protect-waf-v5">
+                                                                                <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                                    class="fa fa-2xs fa-fw fa-chevron-down"></i>NGINX App Protect WAF v5</a>
+                                                                        </li>
+                                                                    <ul>
+                                                                </div>
+                                                                <div id="installation--integrations--nginx-app-protect-waf-v5" class="accordion-body collapse leaf">
+                                                                    <div class="accordion-inner">
+                                                                    
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/installation/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/installation/">Build NGINX Ingress Controller with NGINX App Protect WAF v5</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/configuration/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf-v5/configuration/">Configuration</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <div class="accordion" id="Accordion3">
+                                                        <div class="sidebar-l2-padding">
+                                                            <div class="accordion-group sidebar-il-border">
+                                                                <div class="accordion-heading">
+                                                                    <ul>
+                                                                        <li class="nginx-toc-link l2">
+                                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/" class="accordion-toggle"
+                                                                                aria-expanded="false" data-toggle="collapse"
+                                                                                href="#installation--integrations--nginx-app-protect-dos">
+                                                                                <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                                    class="fa fa-2xs fa-fw fa-chevron-down"></i>NGINX App Protect DoS</a>
+                                                                        </li>
+                                                                    <ul>
+                                                                </div>
+                                                                <div id="installation--integrations--nginx-app-protect-dos" class="accordion-body collapse leaf">
+                                                                    <div class="accordion-inner">
+                                                                    
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/installation/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/installation/">Build NGINX Ingress Controller with NGINX App Protect DoS</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/configuration/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/configuration/">Configuration</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/dos-protected/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/dos-protected/">DoS protected resource specification</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    
+                                                                    
+                                                                        <ul class="sidebar-l2-padding">
+                                                                            <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                                <a data-menu-id="/nginx-ingress-controller/installation/integrations/app-protect-dos/troubleshoot-app-protect-dos/"
+                                                                                    href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-dos/troubleshoot-app-protect-dos/">Troubleshoot NGINX App Protect DoS</a>
+                                                                            </li>
+                                                                        </ul>
+                                                                    
+                                                                    
+                                                                        
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/f5-ingresslink/" href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/f5-ingresslink/">F5 BIG-IP</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/installation/integrations/opentracing/" href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/opentracing/">OpenTracing</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            
+                
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/configuration/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#configuration--configuration"
+                                    aria-controls="configuration--configuration">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Configuration</a>
+                            </li>
+                        </div>
+                        <div id="configuration--configuration" class="accordion-body collapse">
+                            <div class="accordion-inner">
+                            
+                            
+                                
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#configuration--configuration--global-configuration">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>Global configuration</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="configuration--configuration--global-configuration" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/">Command-line arguments</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource/">GlobalConfiguration resource</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/configmap-resource/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/">ConfigMap resources</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/custom-templates/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/custom-templates/">Custom templates</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/">Reporting resource status</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            
+                            
+                                
+                                <div class="accordion" id="Accordion2">
+                                    <div class="sidebar-l1-padding">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/" class="accordion-toggle"
+                                                            aria-expanded="false" data-toggle="collapse"
+                                                            href="#configuration--configuration--ingress-resources">
+                                                            <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                                                class="fa fa-2xs fa-fw fa-chevron-down"></i>Ingress resources</a>
+                                                    </li>
+                                                <ul>
+                                            </div>
+                                            <div id="configuration--configuration--ingress-resources" class="accordion-body collapse leaf">
+                                                <div class="accordion-inner">
+
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/basic-configuration/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/basic-configuration/">Basic configuration</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/">Advanced configuration with Annotations</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/">Custom annotations</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/">Advanced configuration with Snippets</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                    
+                                                    
+                                                    <ul class="sidebar-l2-padding">
+                                                        <li class="nginx-toc-link l3 sidebar-il-border">
+                                                            <a data-menu-id="/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/" href="https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/">Cross-namespace configuration</a>
+                                                        </li>
+                                                    </ul>
+                                                    
+                                                    
+                                                
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/security/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/security/">Security recommendations</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/configuration-examples/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/configuration-examples/">Configuration examples</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/policy-resource/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/">Policy resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/transportserver-resource/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/">TransportServer resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/">VirtualServer and VirtualServerRoute resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/configuration/host-and-listener-collisions/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/configuration/host-and-listener-collisions/">Host and Listener collisions</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            
+                
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#logging-and-monitoring--logging-and-monitoring"
+                                    aria-controls="logging-and-monitoring--logging-and-monitoring">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Logging And Monitoring</a>
+                            </li>
+                        </div>
+                        <div id="logging-and-monitoring--logging-and-monitoring" class="accordion-body collapse">
+                            <div class="accordion-inner">
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/logging/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/logging/">Logging</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/status-page/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/status-page/">Status Page</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/prometheus/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/prometheus/">Prometheus</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/logging-and-monitoring/service-insight/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/service-insight/">Service Insight</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            
+                
+                
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/usage-reporting/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/usage-reporting/">Enable Usage Reporting</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+                
+                
+            
+                
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/troubleshooting/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#troubleshooting--troubleshooting"
+                                    aria-controls="troubleshooting--troubleshooting">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Troubleshooting</a>
+                            </li>
+                        </div>
+                        <div id="troubleshooting--troubleshooting" class="accordion-body collapse">
+                            <div class="accordion-inner">
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/troubleshooting/troubleshoot-common/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-common/">Troubleshooting common issues</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/troubleshooting/troubleshoot-configmap-policy/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-configmap-policy/">Troubleshooting Policy resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/troubleshooting/troubleshoot-ingress/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-ingress/">Troubleshooting Ingress resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/troubleshooting/troubleshoot-virtualserver/">Troubleshooting VirtualServer resources</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            
+                
+                <div class="accordion" id="accordion1">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <li class="nginx-toc-link l1">
+                                <a data-menu-id="/nginx-ingress-controller/tutorials/" class="accordion-toggle" aria-expanded="false"
+                                    data-toggle="collapse" href="#" data-target="#tutorials--tutorials"
+                                    aria-controls="tutorials--tutorials">
+                                    <i class="fa fa-2xs fa-fw fa-chevron-right"></i><i
+                                        class="fa fa-2xs fa-fw fa-chevron-down"></i>Tutorials</a>
+                            </li>
+                        </div>
+                        <div id="tutorials--tutorials" class="accordion-body collapse">
+                            <div class="accordion-inner">
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/virtual-server-with-custom-listener-ports/">Configuring VirtualServer with custom HTTP and HTTPS listener ports</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/security-monitoring/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/security-monitoring/">Connect NGINX App Protect WAF to NGINX Security Monitoring</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/oidc-custom-configuration/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/oidc-custom-configuration/">Customize OIDC Configuration with NGINX Ingress Controller</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/custom-listen-ports/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/custom-listen-ports/">Customizing NGINX Ingress Controller Ports</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/ingress-path-regex-annotation/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/ingress-path-regex-annotation/">Ingresses Path Matching Using Path-Regex Annotation</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/nginx-ingress-istio/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-istio/">NGINX Ingress Controller and Istio Service Mesh</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/nginx-ingress-linkerd/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-linkerd/">NGINX Ingress Controller and Linkerd</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/nginx-ingress-osm/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-ingress-osm/">NGINX Ingress Controller and Open Service Mesh</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            
+                                
+                                <ul class="sidebar-reg-padding">
+                                    <div class="accordion" id="accordion2">
+                                        <div class="accordion-group sidebar-il-border">
+                                            <div class="accordion-heading">
+                                                <ul>
+                                                    <li class="nginx-toc-link l2">
+                                                        <a data-menu-id="/nginx-ingress-controller/tutorials/nginx-dynamic-module/"
+                                                            href="https://docs.nginx.com/nginx-ingress-controller/tutorials/nginx-dynamic-module/">Using NGINX Ingress Controller with NGINX Dynamic Modules</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ul>
+                                
+                                
+                            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            
+                
+                
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/releases/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/releases/">Releases</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+                
+                
+            
+                
+                
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/community/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/community/">Community and contributing</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+                
+                
+            
+                
+                
+                <ul class="sidebar-reg-padding">
+                    <div class="accordion" id="accordion1">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <ul>
+                                    <li class="nginx-toc-link l1">
+                                        <a data-menu-id="/nginx-ingress-controller/glossary/"
+                                            href="https://docs.nginx.com/nginx-ingress-controller/glossary/">Glossary</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </ul>
+                
+                
+            
+        
+
+            </ul>
+        </div>
+    
+    </div>
+
+</div>
+
+
+  </nav>
+  
+  
+  <main class="content col d-block align-top content-has-toc" role="main">
+  
+    
+    <h1>Configuration</h1>
+
+      
+
+      
+  
+    <p>This document explains how to use F5 NGINX Ingress Controller to configure NGINX App Protect WAF.</p>
+<blockquote class="note">
+  <div><strong>Note:</strong><br/> Check out the complete NGINX Ingress Controller with NGINX App Protect WAF example resources on GitHub <a href="https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.2/examples/custom-resources/app-protect-waf" target="_blank" rel="noopener">for VirtualServer resources</a> and <a href="https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.2/examples/ingress-resources/app-protect-waf" target="_blank" rel="noopener">for Ingress resources</a>.</div>
+</blockquote>
+
+<h2 
+id="global-configuration">Global Configuration  <a class="headerlink float-right" href="#global-configuration" title="Global Configuration"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>NGINX Ingress Controller has global configuration parameters that match those in NGINX App Protect WAF. They are found in the <a href="/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#modules">ConfigMap resource</a>: the NGINX App Protect WAF parameters are prefixed with <code>app-protect*</code>.</p>
+<h2 
+id="enable-nginx-app-protect-waf">Enable NGINX App Protect WAF  <a class="headerlink float-right" href="#enable-nginx-app-protect-waf" title="Enable NGINX App Protect WAF"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>NGINX App Protect WAF can be enabled and configured for custom resources (VirtualServer, VirtualServerRoute) or Ingress resources.</p>
+<ul>
+<li>For custom resources, you need to create a Policy Custom Resource referencing the <code>APPolicy</code> custom resource or bundle, then add it to the VirtualServer definition. Additional detail can be found in the <a href="/nginx-ingress-controller/configuration/policy-resource/#waf">Policy Resource documentation</a>.</li>
+<li>For Ingress resources, apply the <a href="/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect"><code>app-protect</code> annotations</a> to each desired resource.</li>
+</ul>
+<h2 
+id="waf-policies">NGINX App Protect WAF Policies  <a class="headerlink float-right" href="#waf-policies" title="NGINX App Protect WAF Policies"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>NGINX App Protect WAF Policies can be created for VirtualServer, VirtualServerRoute, or Ingress resources by creating an <code>APPolicy</code> <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/" target="_blank" rel="noopener">custom resource</a>. There are some caveats:</p>
+<ul>
+<li>The fields <code>policy.signature-requirements[].minRevisionDatetime</code> and <code>policy.signature-requirements[].maxRevisionDatetime</code> are not supported.</li>
+<li><a href="/nginx-app-protect-waf/v4/configuration-guide/configuration/#grpc-protection-for-unary-traffic">The Advanced gRPC Protection for Unary Traffic</a> only supports providing an <code>idl-file</code> inline. The fields <code>policy.idl-files[].link</code>, <code>policy.idl-files[].$ref</code>, and
+<code>policy.idl-files[].file</code> are not supported. The IDL file should be provided in field <code>policy.idl-files[].contents</code>. The value of this field can be base64 encoded. In this case the field <code>policy.idl-files[].isBase64</code> should be set to <code>true</code>.</li>
+</ul>
+<blockquote class="warning">
+  <div><strong>Warning:</strong><br/> External references are deprecated in NGINX Ingress Controller and will not be supported in future releases.</div>
+</blockquote>
+
+<p>To add an <a href="/nginx-app-protect-waf/v4/declarative-policy/policy/">NGINX App Protect WAF policy</a> to an Ingress resource:</p>
+<ol>
+<li>Create an <code>APPolicy</code> custom resource manifest.</li>
+<li>Add the policy to the <code>spec</code> field in the <code>APPolicy</code> resource.</li>
+</ol>
+<p>A resource specification and its Policy JSON <strong>must</strong> match. The fields must be identical in name and nesting level. If the resources are defined with YAML, the policy must also be represented in YAML.</p>
+<p>As an example, this is a <a href="/nginx-app-protect-waf/v4/declarative-policy/policy/#policy/data-guard">DataGuard policy</a>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nt">&#34;policy&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;dataguard_blocking&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;template&#34;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;POLICY_TEMPLATE_NGINX_BASE&#34;</span> <span class="p">},</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;applicationLanguage&#34;</span><span class="p">:</span> <span class="s2">&#34;utf-8&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;enforcementMode&#34;</span><span class="p">:</span> <span class="s2">&#34;blocking&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;blocking-settings&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;violations&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">                <span class="p">{</span>
+</span></span><span class="line"><span class="cl">                    <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;VIOL_DATA_GUARD&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                    <span class="nt">&#34;alarm&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                    <span class="nt">&#34;block&#34;</span><span class="p">:</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">                <span class="p">}</span>
+</span></span><span class="line"><span class="cl">            <span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="p">},</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;data-guard&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;enabled&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;maskData&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;creditCardNumbers&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;usSocialSecurityNumbers&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;enforcementMode&#34;</span><span class="p">:</span> <span class="s2">&#34;ignore-urls-in-list&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;enforcementUrls&#34;</span><span class="p">:</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>This is what its corresponding <code>APPolicy</code> resource defined in the <code>spec</code> would look like:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">appprotect.f5.com/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">APPolicy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">dataguard-blocking</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">policy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">dataguard_blocking</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">POLICY_TEMPLATE_NGINX_BASE</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">applicationLanguage</span><span class="p">:</span><span class="w"> </span><span class="l">utf-8</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">enforcementMode</span><span class="p">:</span><span class="w"> </span><span class="l">blocking</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">blocking-settings</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">violations</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_DATA_GUARD</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">alarm</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">data-guard</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">maskData</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">creditCardNumbers</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">usSocialSecurityNumbers</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">enforcementMode</span><span class="p">:</span><span class="w"> </span><span class="l">ignore-urls-in-list</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">enforcementUrls</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w">
+</span></span></span></code></pre></div><p>Notice that the fields match in name and nesting: NGINX Ingress Controller will transform the YAML into a valid JSON WAF policy config.</p>
+<h2 
+id="waf-logs">NGINX App Protect WAF Logs  <a class="headerlink float-right" href="#waf-logs" title="NGINX App Protect WAF Logs"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>Configuring</p>
+<p>You can set the <a href="/nginx-app-protect-waf/v4/logging-overview/logs-overview/">NGINX App Protect WAF log configurations</a> by creating an <code>APLogConf</code> <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/" target="_blank" rel="noopener">Custom Resource</a>.</p>
+<p>To add the <a href="/nginx-app-protect-waf/v4/logging-overview/security-log/">log configurations</a> to a VirtualServer or an Ingress resource:</p>
+<ol>
+<li>Create an <code>APLogConf</code> Custom Resource manifest.</li>
+<li>Add the log configuration to the <code>spec</code> field in the <code>APLogConf</code> resource.</li>
+<li>Add a reference to <code>APLogConf</code> in the <a href="/nginx-ingress-controller/configuration/policy-resource/#waf">VirtualServer Policy resource</a> or the <a href="/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect">Ingress resource</a> as per the documentation.</li>
+</ol>
+<blockquote class="note">
+  <div><strong>Note:</strong><br/> The fields from the JSON must be presented in the YAML <em>exactly</em> the same, in name and level. NGINX Ingress Controller will transform the YAML into a valid JSON WAF log config.</div>
+</blockquote>
+
+<p>For example, say you want to <a href="/nginx-app-protect-waf/v4/logging-overview/security-log/#security-log-configuration-file">log state changing requests</a> for your VirtualServer or Ingress resources using NGINX App Protect WAF. The  log configuration looks like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nt">&#34;filter&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;request_type&#34;</span><span class="p">:</span> <span class="s2">&#34;all&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="nt">&#34;content&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;format&#34;</span><span class="p">:</span> <span class="s2">&#34;default&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;max_request_size&#34;</span><span class="p">:</span> <span class="s2">&#34;any&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;max_message_size&#34;</span><span class="p">:</span> <span class="s2">&#34;64k&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>You would define that config in the <code>spec</code> of your <code>APLogConf</code> resource as follows:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">appprotect.f5.com/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">APLogConf</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">logconf</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">filter</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">request_type</span><span class="p">:</span><span class="w"> </span><span class="l">all</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">content</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">max_request_size</span><span class="p">:</span><span class="w"> </span><span class="l">any</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">max_message_size</span><span class="p">:</span><span class="w"> </span><span class="l">64k</span><span class="w">
+</span></span></span></code></pre></div><h2 
+id="nginx-app-protect-waf-user-defined-signatures">NGINX App Protect WAF User Defined Signatures  <a class="headerlink float-right" href="#nginx-app-protect-waf-user-defined-signatures" title="NGINX App Protect WAF User Defined Signatures"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>You can define NGINX App Protect WAF <a href="/nginx-app-protect-waf/v4/configuration-guide/configuration/#user-defined-signatures">User-Defined Signatures</a> for your VirtualServer or Ingress resources by creating an <code>APUserSig</code> <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/" target="_blank" rel="noopener">Custom Resource</a>.</p>
+<blockquote class="note">
+  <div><strong>Note:</strong><br/> <p>The field <code>revisionDatetime</code> is not currently supported.</p>
+<p><code>APUserSig</code> resources increase the reload time of NGINX Plus compared with <code>APPolicy</code> and <code>APLogConf</code> resources. Read <a href="/nginx-ingress-controller/installation/integrations/app-protect-waf/troubleshoot-app-protect-waf/#nginx-fails-to-start-or-reload">NGINX fails to start or reload</a> for more information.</p>
+</div>
+</blockquote>
+
+<p>To add the <a href="/nginx-app-protect-waf/v4/configuration-guide/configuration/#user-defined-signatures">User Defined Signatures</a> to a VirtualServer or Ingress resource:</p>
+<ol>
+<li>Create an <code>APUserSig</code> Custom resource manifest.</li>
+<li>Add the desired User defined signature to the <code>spec</code> field in the <code>APUserSig</code> resource.</li>
+</ol>
+<blockquote class="note">
+  <div><strong>Note:</strong><br/> <p>The fields from the JSON must be presented in the YAML <em>exactly</em> the same, in name and level.</p>
+<p>NGINX Ingress Controller will transform the YAML into a valid JSON User-Defined signature. There is no need to reference the user defined signature resource in the Policy or Ingress resources.</p>
+</div>
+</blockquote>
+
+<p>For example, say you want to create the following user defined signature:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>  <span class="nt">&#34;softwareVersion&#34;</span><span class="p">:</span> <span class="s2">&#34;15.1.0&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="nt">&#34;tag&#34;</span><span class="p">:</span> <span class="s2">&#34;Fruits&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="nt">&#34;signatures&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">      <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;Apple_medium_acc&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;rule&#34;</span><span class="p">:</span> <span class="s2">&#34;content:\&#34;apple\&#34;; nocase;&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;signatureType&#34;</span><span class="p">:</span> <span class="s2">&#34;request&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;attackType&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">         <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;Brute Force Attack&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="p">},</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;systems&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">         <span class="p">{</span><span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;Microsoft Windows&#34;</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl">         <span class="p">{</span><span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;Unix/Linux&#34;</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">                     <span class="p">],</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;risk&#34;</span><span class="p">:</span> <span class="s2">&#34;medium&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;accuracy&#34;</span><span class="p">:</span> <span class="s2">&#34;medium&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;description&#34;</span><span class="p">:</span> <span class="s2">&#34;Medium accuracy user defined signature with tag (Fruits)&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">   <span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>You would add that config in the <code>spec</code> of your <code>APUserSig</code> resource as follows:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">appprotect.f5.com/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">APUserSig</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">apple</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">signatures</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">accuracy</span><span class="p">:</span><span class="w"> </span><span class="l">medium</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">attackType</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Brute Force Attack</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Medium accuracy user defined signature with tag (Fruits)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Apple_medium_acc</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">risk</span><span class="p">:</span><span class="w"> </span><span class="l">medium</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">rule</span><span class="p">:</span><span class="w"> </span><span class="l">content:&#34;apple&#34;; nocase;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">signatureType</span><span class="p">:</span><span class="w"> </span><span class="l">request</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">systems</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Microsoft Windows</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Unix/Linux</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">softwareVersion</span><span class="p">:</span><span class="w"> </span><span class="m">15.1.0</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="l">Fruits</span><span class="w">
+</span></span></span></code></pre></div><h2 
+id="waf-bundles">NGINX App Protect WAF Bundles  <a class="headerlink float-right" href="#waf-bundles" title="NGINX App Protect WAF Bundles"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>You can define App Protect WAF bundles for VirtualServer custom resources by creating policy bundles and putting them on a mounted volume accessible from NGINX Ingress Controller.</p>
+<p>Before applying a policy, a WAF policy bundle must be created, then copied to a volume mounted to <code>/etc/nginx/waf/bundles</code>.</p>
+<blockquote class="note">
+  <div><strong>Note:</strong><br/> NGINX Ingress Controller supports <code>securityLogs</code> for policy bundles when using <code>apLogBundle</code> instead of <code>apLogConf</code>. Log bundles must also be copied to a volume mounted to <code>/etc/nginx/waf/bundles</code>.</div>
+</blockquote>
+
+<p>This example shows how a policy is configured by referencing a generated WAF Policy Bundle:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">k8s.nginx.org/v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Policy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;policy_name&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">waf</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">apBundle</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&lt;policy_bundle_name&gt;.tgz&#34;</span><span class="w">
+</span></span></span></code></pre></div><p>This example shows the same policy as above but with a log bundle used for security log configuration:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">k8s.nginx.org/v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Policy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;policy_name&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">waf</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">apBundle</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&lt;policy_bundle_name&gt;.tgz&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">securityLogs</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">apLogBundle</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;&lt;log_bundle_name&gt;.tgz&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">logDest</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;syslog:server=syslog-svc.default:514&#34;</span><span class="w">
+</span></span></span></code></pre></div><h2 
+id="openapi-specification-in-nginx-ingress-controller">OpenAPI Specification in NGINX Ingress Controller  <a class="headerlink float-right" href="#openapi-specification-in-nginx-ingress-controller" title="OpenAPI Specification in NGINX Ingress Controller"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>The OpenAPI Specification defines the spec file format needed to describe RESTful APIs. The spec file can be written either in JSON or YAML. Using a spec file simplifies the work of implementing API protection. Refer to the <a href="https://github.com/OAI/OpenAPI-Specification" target="_blank" rel="noopener">OpenAPI Specification</a> (formerly called Swagger) for details.</p>
+<p>NGINX Ingress Controller supports OpenAPI Specification versions 2.0 and 3.0.</p>
+<p>The simplest way to create an API protection policy is using an OpenAPI Specification file to import the details of the APIs. If you use an OpenAPI Specification file, NGINX App Protect WAF will automatically create a policy for the following properties (depending on what&rsquo;s included in the spec file):</p>
+<ul>
+<li>Methods</li>
+<li>URLs</li>
+<li>Parameters</li>
+<li>JSON profiles</li>
+</ul>
+<p>An OpenAPI-ready policy template is provided with the NGINX App Protect WAF packages and is located in: <code>/etc/app_protect/conf/NginxApiSecurityPolicy.json</code></p>
+<p>It contains violations related to OpenAPI set to blocking (enforced).</p>
+<h3 
+id="types-of-openapi-references">Types of OpenAPI References  <a class="headerlink float-right" href="#types-of-openapi-references" title="Types of OpenAPI References"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>There are different ways of referencing OpenAPI Specification files. The configuration is similar to <a href="/nginx-app-protect-waf/v4/configuration-guide/configuration/#external-references">External References</a>.</p>
+<p><strong>Note</strong>: Any update of an OpenAPI Specification file referenced in the policy will not trigger a policy compilation. This action needs to be done actively by reloading the NGINX configuration.</p>
+<h4 
+id="url-reference">URL Reference  <a class="headerlink float-right" href="#url-reference" title="URL Reference"><i class="fas fa-link fa-xs"></i></a>
+</h4><p>URL reference is the method of referencing an external source by providing its full URL.</p>
+<p>Make sure to configure certificates prior to using the HTTPS protocol - see the <a href="/nginx-app-protect-waf/v4/configuration-guide/configuration/#types-of-references">External References</a> for details.</p>
+<h2 
+id="configuration-in-nginx-ingress-controller">Configuration in NGINX Ingress Controller  <a class="headerlink float-right" href="#configuration-in-nginx-ingress-controller" title="Configuration in NGINX Ingress Controller"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingress Controller:</p>
+<ol>
+<li>Copy the API security policy <code>/etc/app_protect/conf/NginxApiSecurityPolicy.json</code> to a different file so that it can be edited.</li>
+<li>Add the reference to the desired OpenAPI file.</li>
+<li>Make other custom changes if needed (e.g. enable Data Guard protection).</li>
+<li>Use a tool to convert the result to YAML. There are many, for example: <a href="https://github.com/mikefarah/yq" target="_blank" rel="noopener"><code>yq</code> utility</a>.</li>
+<li>Add the YAML properties to create an <code>APPolicy</code> Custom Resource putting the policy itself (as in step 4) within the <code>spec</code> property of the Custom Resource. Refer to the <a href="#nginx-app-protect-waf-policies">NGINX App Protect Policies</a> section above.</li>
+<li>Create a <code>Policy</code> object which references the <code>APPolicy</code> Custom Resource as in <a href="https://github.com/nginxinc/kubernetes-ingress/blob/v3.6.2/examples/custom-resources/app-protect-waf/waf.yaml" target="_blank" rel="noopener">this example</a>.</li>
+<li>Finally, attach the <code>Policy</code> object to a <code>VirtualServer</code> resource as in <a href="https://github.com/nginxinc/kubernetes-ingress/blob/v3.6.2/examples/custom-resources/app-protect-waf/virtual-server.yaml" target="_blank" rel="noopener">this example</a>.</li>
+</ol>
+<blockquote class="note">
+  <div><strong>Note:</strong><br/> You need to make sure that the server where the resource files are located is available while you are compiling your policy.</div>
+</blockquote>
+
+<h3 
+id="example-configuration">Example Configuration  <a class="headerlink float-right" href="#example-configuration" title="Example Configuration"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>In this example, we are adding an OpenAPI Specification file reference to <code>/etc/app_protect/conf/NginxApiSecurityPolicy.yaml</code> using the <a href="https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml" target="_blank" rel="noopener">link</a>. This will configure allowed data types for <code>query_int</code> and <code>query_str</code> parameters values.</p>
+<p><strong>Policy configuration:</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nn">---</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">appprotect.f5.com/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">APPolicy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">petstore_api_security_policy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">policy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">petstore_api_security_policy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">NGINX App Protect WAF API Security Policy for the Petstore API</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">POLICY_TEMPLATE_NGINX_BASE</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">open-api-files</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">link</span><span class="p">:</span><span class="w"> </span><span class="l">https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">blocking-settings</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">violations</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Disallowed file upload content detected in body</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_FILE_UPLOAD_IN_BODY</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Mandatory request body is missing</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_MANDATORY_REQUEST_BODY</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal parameter location</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_LOCATION</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Mandatory parameter is missing</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_MANDATORY_PARAMETER</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">JSON data does not comply with JSON schema</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_JSON_SCHEMA</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal parameter array value</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_ARRAY_VALUE</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal Base64 value</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_VALUE_BASE64</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Disallowed file upload content detected</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_FILE_UPLOAD</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal request content type</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_URL_CONTENT_TYPE</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal static parameter value</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_STATIC_VALUE</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal parameter value length</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_VALUE_LENGTH</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal parameter data type</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_DATA_TYPE</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal parameter numeric value</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_NUMERIC_VALUE</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Parameter value does not comply with regular expression</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_VALUE_REGEXP</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal URL</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_URL</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal parameter</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal empty parameter value</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_EMPTY_VALUE</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">block</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Illegal repeated parameter name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">VIOL_PARAMETER_REPEATED</span><span class="w">
+</span></span></span></code></pre></div><p>Content of the referenced file <code>myapi.yaml</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">openapi</span><span class="p">:</span><span class="w"> </span><span class="m">3.0.1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">info</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;Primitive data types&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;Primitive data types.&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;2.5.0&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">servers</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l">http://localhost</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">paths</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">/query</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">get</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">tags</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="l">query_int_str</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">query_int_str</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">operationId</span><span class="p">:</span><span class="w"> </span><span class="l">query_int_str</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">parameters</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">query_int</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">in</span><span class="p">:</span><span class="w"> </span><span class="l">query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">allowEmptyValue</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">schema</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">integer</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">query_str</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">in</span><span class="p">:</span><span class="w"> </span><span class="l">query</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">allowEmptyValue</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">schema</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">responses</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">200</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">OK</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">404</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">NotFound</span><span class="w">
+</span></span></span></code></pre></div><p>In this case, the following request will trigger an <code>Illegal parameter data type</code> violation, as we expect to have an integer value in the <code>query_int</code> parameter:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">http://localhost/query?query_int=abc
+</span></span></code></pre></div><p>The request will be blocked.</p>
+<p>The <code>link</code> option is also available in the <code>openApiFileReference</code> property and is synonymous with the <code>open-api-files</code> property as seen in the policy example above.</p>
+<p><strong>Note</strong>: <code>openApiFileReference</code> is not an array.</p>
+<h2 
+id="configuration-in-nginx-plus-ingress-controller-using-virtual-server-resource">Configuration in NGINX Plus Ingress Controller using Virtual Server Resource  <a class="headerlink float-right" href="#configuration-in-nginx-plus-ingress-controller-using-virtual-server-resource" title="Configuration in NGINX Plus Ingress Controller using Virtual Server Resource"><i class="fas fa-link fa-xs"></i></a>
+</h2><p>In this example we deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF, deploy a simple web application, and then configure load balancing and WAF protection for that application using the VirtualServer resource.</p>
+<blockquote class="note">
+  <div><strong>Note:</strong><br/> You can find the example, and the files referenced, on <a href="https://github.com/nginxinc/kubernetes-ingress/tree/v3.6.2/examples/custom-resources/app-protect-waf" target="_blank" rel="noopener">GitHub</a>.</div>
+</blockquote>
+
+<h2 
+id="prerequisites">Prerequisites  <a class="headerlink float-right" href="#prerequisites" title="Prerequisites"><i class="fas fa-link fa-xs"></i></a>
+</h2><ol>
+<li>
+<p>Follow the installation <a href="/nginx-ingress-controller/installation/integrations/app-protect-waf/installation/">instructions</a> to deploy NGINX Ingress Controller with NGINX Plus and NGINX App Protect WAF.</p>
+</li>
+<li>
+<p>Save the public IP address of NGINX Ingress Controller into a shell variable:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"> <span class="nv">IC_IP</span><span class="o">=</span>XXX.YYY.ZZZ.III
+</span></span></code></pre></div></li>
+<li>
+<p>Save the HTTP port of NGINX Ingress Controller into a shell variable:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"> <span class="nv">IC_HTTP_PORT</span><span class="o">=</span>&lt;port number&gt;
+</span></span></code></pre></div></li>
+</ol>
+<h3 
+id="step-1-deploy-a-web-application">Step 1. Deploy a Web Application  <a class="headerlink float-right" href="#step-1-deploy-a-web-application" title="Step 1. Deploy a Web Application"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>Create the application deployment and service:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/examples/custom-resources/app-protect-waf/webapp.yaml
+</span></span></span></code></pre></div><h3 
+id="step-2-deploy-the-ap-policy">Step 2. Deploy the AP Policy  <a class="headerlink float-right" href="#step-2-deploy-the-ap-policy" title="Step 2. Deploy the AP Policy"><i class="fas fa-link fa-xs"></i></a>
+</h3><ol>
+<li>
+<p>Create the syslog service and pod for the NGINX App Protect WAF security logs:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/examples/custom-resources/app-protect-waf/syslog.yaml
+</span></span></span></code></pre></div></li>
+<li>
+<p>Create the User-Defined Signature, WAF policy, and log configuration:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/examples/custom-resources/app-protect-waf/ap-apple-uds.yaml
+</span></span></span><span class="line"><span class="cl"><span class="go">kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/examples/custom-resources/app-protect-waf/ap-dataguard-alarm-policy.yaml
+</span></span></span><span class="line"><span class="cl"><span class="go">kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/examples/custom-resources/app-protect-waf/ap-logconf.yaml
+</span></span></span></code></pre></div></li>
+</ol>
+<h3 
+id="step-3---deploy-the-waf-policy">Step 3 - Deploy the WAF Policy  <a class="headerlink float-right" href="#step-3---deploy-the-waf-policy" title="Step 3 - Deploy the WAF Policy"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>Create the WAF policy</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go"> kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/examples/custom-resources/app-protect-waf/waf.yaml
+</span></span></span></code></pre></div><p>Note the NGINX App Protect WAF configuration settings in the Policy resource. They enable WAF protection by configuring NGINX App Protect WAF with the policy and log configuration created in the previous step.</p>
+<h3 
+id="step-4---configure-load-balancing">Step 4 - Configure Load Balancing  <a class="headerlink float-right" href="#step-4---configure-load-balancing" title="Step 4 - Configure Load Balancing"><i class="fas fa-link fa-xs"></i></a>
+</h3><ol>
+<li>
+<p>Create the VirtualServer Resource:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="go">kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/examples/custom-resources/app-protect-waf/virtual-server.yaml
+</span></span></span></code></pre></div></li>
+</ol>
+<p>Note that the VirtualServer references the policy waf-policy created in Step 3.</p>
+<h3 
+id="step-5---test-the-application">Step 5 - Test the Application  <a class="headerlink float-right" href="#step-5---test-the-application" title="Step 5 - Test the Application"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>To access the application, curl the coffee and the tea services. We&rsquo;ll use the &ndash;resolve option to set the Host header of a request with <code>webapp.example.com</code></p>
+<ol>
+<li>Send a request to the application:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">curl --resolve webapp.example.com:<span class="nv">$IC_HTTP_PORT</span>:<span class="nv">$IC_IP</span> http://webapp.example.com:<span class="nv">$IC_HTTP_PORT</span>/
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">Server address: 10.12.0.18:80
+</span></span><span class="line"><span class="cl">Server name: webapp-7586895968-r26zn
+</span></span></code></pre></div><ol start="2">
+<li>Now, let&rsquo;s try to send a request with a suspicious URL:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">curl --resolve webapp.example.com:<span class="nv">$IC_HTTP_PORT</span>:<span class="nv">$IC_IP</span> <span class="s2">&#34;http://webapp.example.com:</span><span class="nv">$IC_HTTP_PORT</span><span class="s2">/&lt;script&gt;&#34;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">&lt;html&gt;&lt;head&gt;&lt;title&gt;Request Rejected&lt;/title&gt;&lt;/head&gt;&lt;body&gt;
+</span></span></code></pre></div><ol start="3">
+<li>Lastly, let&rsquo;s try to send some suspicious data that matches the user defined signature.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">curl --resolve webapp.example.com:<span class="nv">$IC_HTTP_PORT</span>:<span class="nv">$IC_IP</span> -X POST -d <span class="s2">&#34;apple&#34;</span> http://webapp.example.com:<span class="nv">$IC_HTTP_PORT</span>/
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">&lt;html&gt;&lt;head&gt;&lt;title&gt;Request Rejected&lt;/title&gt;&lt;/head&gt;&lt;body&gt;
+</span></span></code></pre></div><p>As you can see, the suspicious requests were blocked by NGINX App Protect WAF.</p>
+<ol start="4">
+<li>To check the security logs in the syslog pod:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">kubectl <span class="nb">exec</span> -it &lt;SYSLOG_POD&gt; -- cat /var/log/messages
+</span></span></code></pre></div><h3 
+id="configuration-example-of-virtual-server">Configuration Example of Virtual Server  <a class="headerlink float-right" href="#configuration-example-of-virtual-server" title="Configuration Example of Virtual Server"><i class="fas fa-link fa-xs"></i></a>
+</h3><p>Refer to GitHub repo for <a href="https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/examples/custom-resources/app-protect-waf/webapp.yaml" target="_blank" rel="noopener">Virtual Server example</a>.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">k8s.nginx.org/v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VirtualServer</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">webapp</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l">webapp.example.com</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">policies</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">waf-policy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">upstreams</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">webapp</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">service</span><span class="p">:</span><span class="w"> </span><span class="l">webapp-svc</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">80</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">routes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">pass</span><span class="p">:</span><span class="w"> </span><span class="l">webapp</span><span class="w">
+</span></span></span></code></pre></div>
+    
+  <hr>
+    
+
+	
+<div class="container flex">
+	<ul class="next-prev-icon">
+
+		
+		
+		<li style="flex:1; text-align: left; white-space: nowrap;"><a href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/installation/" class="" title="Previous -- Build NGINX Ingress Controller with NGINX App Protect WAF "><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M23.378 46.5L1.94 25.06C1.80067 24.9209 1.69014 24.7556 1.61472 24.5738C1.53931 24.3919 1.50049 24.1969 1.50049 24C1.50049 23.8031 1.53931 23.6081 1.61472 23.4262C1.69014 23.2444 1.80067 23.0791 1.94 22.94L23.378 1.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M45.878 46.5L24.44 25.06C24.3007 24.9209 24.1901 24.7556 24.1147 24.5738C24.0393 24.3919 24.0005 24.1969 24.0005 24C24.0005 23.8031 24.0393 23.6081 24.1147 23.4262C24.1901 23.2444 24.3007 23.0791 24.44 22.94L45.878 1.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</a></li>
+		
+
+		
+			<li style="flex:1; text-align: right; white-space: nowrap;"><a href="https://docs.nginx.com/nginx-ingress-controller/installation/integrations/app-protect-waf/compile-waf-policies/" class="" title="Next -- Compile NGINX App Protect WAF policies using NGINX Instance Manager"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M24.622 1.5L46.06 22.94C46.1993 23.0791 46.3099 23.2444 46.3853 23.4262C46.4607 23.6081 46.4995 23.8031 46.4995 24C46.4995 24.1969 46.4607 24.3919 46.3853 24.5738C46.3099 24.7556 46.1993 24.9209 46.06 25.06L24.622 46.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2.122 1.5L23.56 22.94C23.6993 23.0791 23.8099 23.2444 23.8853 23.4262C23.9607 23.6081 23.9995 23.8031 23.9995 24C23.9995 24.1969 23.9607 24.3919 23.8853 24.5738C23.8099 24.7556 23.6993 24.9209 23.56 25.06L2.122 46.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</a></li>
+		
+		</ul>
+	</div>
+
+    
+  </main>
+  
+    
+      <div class="col-md-3 d-none d-xl-block d-print-none nginx-toc align-top" style="width: 25%;">
+      <nav class="bd-links" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <h3 class="bd-toc-link">What's on This Page</h3>
+    
+      
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#global-configuration">Global Configuration</a></li>
+    <li><a href="#enable-nginx-app-protect-waf">Enable NGINX App Protect WAF</a></li>
+    <li><a href="#waf-policies">NGINX App Protect WAF Policies</a></li>
+    <li><a href="#waf-logs">NGINX App Protect WAF Logs</a></li>
+    <li><a href="#nginx-app-protect-waf-user-defined-signatures">NGINX App Protect WAF User Defined Signatures</a></li>
+    <li><a href="#waf-bundles">NGINX App Protect WAF Bundles</a></li>
+    <li><a href="#openapi-specification-in-nginx-ingress-controller">OpenAPI Specification in NGINX Ingress Controller</a>
+      <ul>
+        <li><a href="#types-of-openapi-references">Types of OpenAPI References</a></li>
+      </ul>
+    </li>
+    <li><a href="#configuration-in-nginx-ingress-controller">Configuration in NGINX Ingress Controller</a>
+      <ul>
+        <li><a href="#example-configuration">Example Configuration</a></li>
+      </ul>
+    </li>
+    <li><a href="#configuration-in-nginx-plus-ingress-controller-using-virtual-server-resource">Configuration in NGINX Plus Ingress Controller using Virtual Server Resource</a></li>
+    <li><a href="#prerequisites">Prerequisites</a>
+      <ul>
+        <li><a href="#step-1-deploy-a-web-application">Step 1. Deploy a Web Application</a></li>
+        <li><a href="#step-2-deploy-the-ap-policy">Step 2. Deploy the AP Policy</a></li>
+        <li><a href="#step-3---deploy-the-waf-policy">Step 3 - Deploy the WAF Policy</a></li>
+        <li><a href="#step-4---configure-load-balancing">Step 4 - Configure Load Balancing</a></li>
+        <li><a href="#step-5---test-the-application">Step 5 - Test the Application</a></li>
+        <li><a href="#configuration-example-of-virtual-server">Configuration Example of Virtual Server</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      
+    
+  </div>
+</nav>
+      </div>
+    
+  
+</div>
+
+
+
+
+
+  </div>
+
+  <footer>
+
+    
+    <footer id="footer">
+   <div class="container-fluid">
+
+       <div class="row align-items-center">
+
+         <div class="col-md-6 d-md-flex">
+             <img class="nginx-logo-footer" src="https://docs.nginx.com/images/icons/NGINX-Part-of-F5-horiz-all-white-525x208@2x.png"/>
+         </div>
+
+         
+         <div class="col-md d-flex footer-text">
+           <div class="col-xl d-none d-md-block align-self-center text-semibold align-right">
+             <span>Found a bug? Looking for something new?</span>
+           </div>
+           <div class="col-lg d-none d-md-block pl-0">
+             <button class="button footer-button"><a href="https://docs.nginx.com/feedback/" alt="Select if you have feedback">Let Us Know</a></button>
+           </div>
+         </div>
+         
+
+       </div>
+
+
+       
+       <div class="row d-print-none d-none d-md-flex">
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">Company</span>
+           <ul class="footer-text">
+             <li><a href="https://www.f5.com/go/product/welcome-to-nginx" target="_blank" alt="Select to learn about F5 NGINX">About F5 NGINX</a></li>
+             <li><a href="https://www.f5.com/company/events" target="_blank" alt="Select to learn about F5 events">Events</a></li>
+           </ul>
+           <br />
+           <span class="footer-head">Resources</span>
+           <ul class="footer-text">
+             <li><a href="https://www.f5.com/company/blog/nginx" target="_blank" alt="Select to visit the F5 NGINX blog" >Blog</a></li>
+             <li><a href="https://www.f5.com/go/faq/nginx-faq" target="_blank" alt="Select to visit the F5 NGINX frequently asked questions page" >FAQ</a></li>
+             <li><a href="https://www.f5.com/services" target="_blank" alt="Select to learn about F5 NGINX Support">Professional Services</a></li>
+             <li><a href="https://www.f5.com/learn/training" target="_blank" alt="Select to learn about F5 training offerings" >Training</a></li>
+           </ul>
+         </div>
+
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">Products</span>
+             <ul class="footer-text">
+                 <li><a title="F5 NGINX Plus" aria-label="F5 NGINX Plus" href="https://www.f5.com/products/nginx/nginx-plus">F5 NGINX Plus</a></li>
+                 <li><a title="F5 NGINX App Protect" aria-label="F5 NGINX App Protect" href="https://www.f5.com/products/nginx/nginx-app-protect">F5 NGINX App Protect</a></li>
+                 <li><a title="F5 NGINX Instance Manager" aria-label="F5 NGINX Instance Manager" href="https://www.f5.com/products/nginx/instance-manager">F5 NGINX Instance Manager</a></li>
+                 <li><a title="F5 NGINX Ingress Controller" aria-label="F5 NGINX Ingress Controller" href="https://www.f5.com/products/nginx/nginx-ingress-controller">F5 NGINX Ingress Controller</a></li>
+                 <li><a title="F5 NGINX Gateway Fabric" aria-label="F5 NGINX Gateway Fabric" href="https://www.f5.com/products/nginx/nginx-gateway-fabric">F5 NGINX Gateway Fabric</a></li>
+                 <li><a title="F5 NGINXaaS for Azure" aria-label="F5 NGINXaaS for Azure" href="https://www.f5.com/products/nginx/f5-nginxaas-for-azure">F5 NGINXaaS for Azure</a></li>
+             </ul>
+         </div>
+
+         <div class="col-md-3 d-none d-md-block">
+           <span class="footer-head">NGINX on GitHub</span>
+           <ul class="footer-text">
+             <li><a title="NGINX Open Source" aria-label="NGINX Open Source" href="https://github.com/nginx/nginx"><span class="inner">NGINX Open Source</span></a></li>
+             <li><a title="NGINX Unit" aria-label="NGINX Unit" href="https://github.com/nginx/unit"><span class="inner">NGINX Unit</span></a></li>
+             <li><a title="NGINX Amplify" aria-label="NGINX Amplify" href="https://github.com/nginxinc/nginx-amplify-agent"><span class="inner">NGINX Amplify</span></a></li>
+             <li><a title="NGINX Agent" aria-label="NGINX Agent" href="https://github.com/nginx/Agent"><span class="inner">NGINX Agent</span></a></li>
+             <li><a title="NGINX Kubernetes Ingress Controller" aria-label="NGINX Kubernetes Ingress Controller" href="https://github.com/nginxinc/kubernetes-ingress"><span class="inner">NGINX Kubernetes Ingress Controller</span></a></li>
+             <li><a title="NGINX Gateway Fabric" aria-label="NGINX Gateway Fabric" href="https://github.com/nginxinc/nginx-gateway-fabric"><span class="inner">NGINX Gateway Fabric</span></a></li>
+         </ul>
+         </div>
+
+         <div class="col-md-2 d-none d-md-block">
+           <span class="footer-head">Social</span>
+               <ul class="footer-social">
+                 <li><a href="https://www.facebook.com/nginxinc" title="facebook" aria-label="facebook" target="_blank" rel="noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i>
+                  </a></li>
+                 <li><a href="https://twitter.com/nginx" title="X" aria-label="x" target="_blank" rel="noreferrer"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a></li>
+                 <li><a href="https://www.linkedin.com/company/nginx" title="linkedin" aria-label="linkedin" target="_blank" rel="noreferrer"><i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+                  </a></li>
+                 <li><a href="https://www.youtube.com/user/NginxInc" title="youtube" aria-label="youtube" target="_blank" rel="noreferrer" alt="NGINX Youtube Channel"><i class="fa-brands fa-square-youtube" aria-hidden="true"></i>
+                  </a></li>
+               </ul>
+         </div>
+       </div>
+       
+       <div class="site-info footer-text">
+
+           <div class="text-center">
+           <p><a href="https://www.f5.com/"><img class="f5-logo-footer" src="https://docs.nginx.com/images/icons/Logo_F5.svg" alt="F5 logo"></a>
+              ©2024 F5, Inc. All rights reserved.</p><p><a href="https://www.f5.com/company/policies/trademarks" rel="noopener" target="_blank">Trademarks</a>  <a href="https://www.f5.com/company/policies" rel="noopener" target="_blank">Policies</a> <a href="https://docs.nginx.com/ossc">Open Source Components</a>  <a href="https://www.f5.com/company/policies/privacy-notice" rel="noopener" target="_blank">Privacy</a>  <a href="https://www.f5.com/company/policies/F5-California-privacy-summary" rel="noopener" target="_blank">California Privacy</a>  <a href="https://www.f5.com/company/policies/privacy-notice#no-sell" rel="noopener" target="_blank">Do Not Sell My Personal Information</a>  <span id="teconsent"></span></p>
+           </div>
+
+       </div>
+   </div>
+</footer>
+
+    
+
+  </footer>
+
+
+<script src="/nginx-ingress-controller/js/jquery-3-6-4.min.js" type="text/javascript" integrity=""></script>
+
+
+<script src="/nginx-ingress-controller/js/kube.min.a3a07cceb64989e2f0bf41653ab4d8346ba4312270eb5cc80d6afad3bf30a0ca9768aaa2559cb582e663332c541edab6a4068ef2e88b739fa425e2e870eb0aff.js" type="text/javascript" integrity="sha512-o6B8zrZJieLwv0FlOrTYNGukMSJw61zIDWr6078woMqXaKqiVZy1guZjMyxUHtq2pAaO8uiLc5&#43;kJeLocOsK/w=="></script>
+
+
+
+<script src="/nginx-ingress-controller/js/bootstrap.bundle.min.c15ed88f56a52190ea645094409cbce5537eaaf108972f777c840037b8aa0c508f12e70b09e345cf8af7e450a8f6ce96ae974340f8bcd316e58d707c063b6f72.js" type="text/javascript" integrity="sha512-wV7Yj1alIZDqZFCUQJy85VN&#43;qvEIly93fIQAN7iqDFCPEucLCeNFz4r35FCo9s6WrpdDQPi80xbljXB8Bjtvcg=="></script>
+
+
+
+<script src="/nginx-ingress-controller/js/code-copy.b424b9cf3f8a69320d1a74e5b4345962141999ae58795c39fb9c5ac8953f3aef3373d7a334971f578e4dc4ee212cbe8f42951d16edb285e6a7931634998d900c.js" type="text/javascript" ></script>
+
+
+
+
+
+<script class="coveo-script" src="https://static.cloud.coveo.com/searchui/v2.10104/0/js/CoveoJsSearch.Lazy.min.js" integrity="sha512-HxdDBIp5snbqtu1TPkBnXLKEvN9IPz3PeZW8zT9KfsflV9Ck822XDroDlpVbfCfXeiu8C0RDVn0fdu7aGy/H1g==" crossorigin="anonymous"></script>
+
+<script src="https://static.cloud.coveo.com/searchui/v2.10104/0/js/templates/templates.js" integrity="sha512-CR0Yk/LIwgh1MsKqjecDp/r6F9ipKc6gA+4+E1pplT3N3r1pk+la/HaqyDiKtjOFwrwIIbIYBFrUJgPql93QHw==" crossorigin="anonymous"></script>
+
+
+
+
+
+
+<script src="/nginx-ingress-controller/js/coveo.min.6e0e2c15ea8204cc128d34f0e7e13d16783166196b052d33cb05ec26a38415801ab03141a36256976745037faedb2da32dd8f3600b92b5f3c7d22fa634b0624f.js" integrity="sha512-bg4sFeqCBMwSjTTw5&#43;E9FngxZhlrBS0zywXsJqOEFYAasDFBo2JWl2dFA3&#43;u2y2jLdjzYAuStfPH0i&#43;mNLBiTw==" type="text/javascript"></script>
+
+
+
+
+
+
+  
+  
+
+  
+  
+
+
+
+
+
+<script src="/nginx-ingress-controller/js/sidebar.min.89a78ac76492f78b44370cf6bbaa09457606d00a4b14db603de939e128451bf31bd29e46c179fbc3a1d632302f5ebfe61c5b9e65e2c171acd4981185cd3329b6.js" type="text/javascript" integrity="sha512-iaeKx2SS94tENwz2u6oJRXYG0ApLFNtgPek54ShFG/Mb0p5GwXn7w6HWMjAvXr/mHFueZeLBcazUmBGFzTMptg=="></script>
+ 
+<div id="consent_blackbar" style="position:fixed;top:0px;width:100%"></div>
+</body>
+</html>
+
+

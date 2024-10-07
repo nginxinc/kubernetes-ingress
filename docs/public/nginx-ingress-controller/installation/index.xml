@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Installation on NGINX Ingress Controller</title>
+    <link>https://docs.nginx.com/nginx-ingress-controller/installation/</link>
+    <description>Recent content in Installation on NGINX Ingress Controller</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <atom:link href="https://docs.nginx.com/nginx-ingress-controller/installation/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Build NGINX Ingress Controller</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/installation/build-nginx-ingress-controller/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/installation/build-nginx-ingress-controller/</guid>
+      <description>&lt;p&gt;This document describes how to build an F5 NGINX Ingress Controller image from source code and upload it to a private Docker registry.&lt;/p&gt;&#xA;&lt;p&gt;It also includes information on the Makefile targets and variables.&lt;/p&gt;&#xA;&lt;blockquote class=&#34;tip&#34;&gt;&#xA;  &lt;div&gt;&lt;strong&gt;Pre-built image alternatives&lt;/strong&gt;&lt;br/&gt;If you do not need to build a custom image, see the &lt;a href=&#34;#pre-built-images&#34;&gt;pre-built image options&lt;/a&gt; at the end of this guide.&lt;/div&gt;&#xA;&lt;/blockquote&gt;&#xA;&#xA;&lt;h2 &#xA;id=&#34;before-you-start&#34;&gt;Before you start  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#before-you-start&#34; title=&#34;Before you start&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;To get started, you need the following software installed on your machine:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Run multiple NGINX Ingress Controllers</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/installation/run-multiple-ingress-controllers/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/installation/run-multiple-ingress-controllers/</guid>
+      <description>&lt;p&gt;This document describes how to run multiple F5 NGINX Ingress Controller instances.&lt;/p&gt;&#xA;&lt;p&gt;It explains the following topics:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Ingress class concept.&lt;/li&gt;&#xA;&lt;li&gt;How to run NGINX Ingress Controller in the same cluster with another Ingress Controller and prevent conflicts between them&lt;/li&gt;&#xA;&lt;li&gt;How to run multiple NGINX Ingress Controllers.&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;blockquote class=&#34;note&#34;&gt;&#xA;  &lt;div&gt;&lt;strong&gt;Note:&lt;/strong&gt;&lt;br/&gt; This document refers to &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/ingress-resources/basic-configuration/&#34;&gt;Ingress&lt;/a&gt;, &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification&#34;&gt;VirtualServer&lt;/a&gt;, &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute-specification&#34;&gt;VirtualServerRoute&lt;/a&gt;, and &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/configuration/transportserver-resource/&#34;&gt;TransportServer&lt;/a&gt; resources as &amp;ldquo;configuration resources&amp;rdquo;.&lt;/div&gt;&#xA;&lt;/blockquote&gt;&#xA;&#xA;&lt;hr&gt;&#xA;&lt;h2 &#xA;id=&#34;ingress-class&#34;&gt;Ingress class  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#ingress-class&#34; title=&#34;Ingress class&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;The &lt;a href=&#34;https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;IngressClass&lt;/a&gt; resource allows for multiple Ingress Controller to operate in the same cluster. It also allow developers to select which Ingress Controller implementation to use for their Ingress resource.&#xA;The IngressClass has the following characteristics:&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Migrate from Ingress-NGINX Controller to NGINX Ingress Controller</title>
+      <link>https://docs.nginx.com/nginx-ingress-controller/installation/ingress-nginx/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://docs.nginx.com/nginx-ingress-controller/installation/ingress-nginx/</guid>
+      <description>&lt;p&gt;This document describes how to migrate from the community-maintained Ingress-NGINX Controller to F5 NGINX Ingress Controller.&lt;/p&gt;&#xA;&lt;h2 &#xA;id=&#34;overview&#34;&gt;Overview  &lt;a class=&#34;headerlink float-right&#34; href=&#34;#overview&#34; title=&#34;Overview&#34;&gt;&lt;i class=&#34;fas fa-link fa-xs&#34;&gt;&lt;/i&gt;&lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;This page explains two different ways to migrate from the community-maintained &lt;a href=&#34;https://github.com/kubernetes/ingress-nginx&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Ingress-NGINX Controller&lt;/a&gt; project to NGINX Ingress Controller: using NGINX&amp;rsquo;s Ingress Resources or with Kubernetes&amp;rsquo;s built-in Ingress Resources. This is typically because of implementation differences, and to take advantage of features such as &lt;a href=&#34;https://docs.nginx.com/nginx-ingress-controller/nginx-ingress-controller/overview/nginx-plus/&#34;&gt;NGINX Plus integration&lt;/a&gt;.&lt;/p&gt;&#xA;&lt;p&gt;The information in this guide is extracted from a free eBook called &amp;ldquo;&lt;em&gt;Kubernetes Ingress Controller Deployment and Security with NGINX&lt;/em&gt;&amp;rdquo;, which can be downloaded from the &lt;a href=&#34;https://www.nginx.com/resources/library/kubernetes-ingress-controller-deployment-security-nginx/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;NGINX Library&lt;/a&gt;.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
