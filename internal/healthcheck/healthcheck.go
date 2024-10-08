@@ -16,6 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	"k8s.io/utils/strings/slices"
@@ -166,7 +167,7 @@ func (hs *HealthServer) StreamStats(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 	if _, err := w.Write(data); err != nil {
-		// glog.Error("error writing result", err)
+		glog.Error("error writing result", err) // if this is commented out - nic will fail
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
 }
