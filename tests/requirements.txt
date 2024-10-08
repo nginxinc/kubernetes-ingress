@@ -217,8 +217,9 @@ cryptography==43.0.1 \
     # via
     #   -r requirements.txt
     #   pyopenssl
-durationpy==0.8 \
-    --hash=sha256:e90941562e260bdb0e2244cd9eee9be5b3aa0efc0557fca754f36d18fe080f9d
+durationpy==0.9 \
+    --hash=sha256:e65359a7af5cedad07fb77a2dd3f390f8eb0b74cb845589fa6c057086834dd38 \
+    --hash=sha256:fd3feb0a69a0057d582ef643c355c40d2fa1c942191f914d12203b1a01ac722a
     # via
     #   -r requirements.txt
     #   kubernetes
