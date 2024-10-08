@@ -16,7 +16,7 @@ func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.Resour
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			gc := obj.(*conf_v1.GlobalConfiguration)
-			nl.Debugf(lbc.logger, "Adding GlobalConfiguration: %v", gc.Name)
+			nl.Debugf(lbc.Logger, "Adding GlobalConfiguration: %v", gc.Name)
 			lbc.AddSyncQueue(gc)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -24,22 +24,22 @@ func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.Resour
 			if !isGc {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				gc, ok = deletedState.Obj.(*conf_v1.GlobalConfiguration)
 				if !ok {
-					nl.Debugf(lbc.logger, "Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj)
 					return
 				}
 			}
-			lbc.logger.Debug(fmt.Sprintf("Removing GlobalConfiguration: %v", gc.Name))
+			lbc.Logger.Debug(fmt.Sprintf("Removing GlobalConfiguration: %v", gc.Name))
 			lbc.AddSyncQueue(gc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curGc := cur.(*conf_v1.GlobalConfiguration)
 			if !reflect.DeepEqual(old, cur) {
-				nl.Debugf(lbc.logger, "GlobalConfiguration %v changed, syncing", curGc.Name)
+				nl.Debugf(lbc.Logger, "GlobalConfiguration %v changed, syncing", curGc.Name)
 				lbc.AddSyncQueue(curGc)
 			}
 		},
@@ -74,11 +74,11 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 	var validationErr error
 
 	if !gcExists {
-		nl.Debugf(lbc.logger, "Deleting GlobalConfiguration: %v\n", key)
+		nl.Debugf(lbc.Logger, "Deleting GlobalConfiguration: %v\n", key)
 
 		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
 	} else {
-		nl.Debugf(lbc.logger, "Adding or Updating GlobalConfiguration: %v\n", key)
+		nl.Debugf(lbc.Logger, "Adding or Updating GlobalConfiguration: %v\n", key)
 
 		gc := obj.(*conf_v1.GlobalConfiguration)
 		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)

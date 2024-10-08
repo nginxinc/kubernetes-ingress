@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"testing"
@@ -164,7 +165,7 @@ func TestMergeMasterAnnotationsIntoMinion(t *testing.T) {
 }
 
 func TestParseRateLimitAnnotations(t *testing.T) {
-	context := &networking.Ingress{
+	ctx := &networking.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "context",
@@ -181,37 +182,37 @@ func TestParseRateLimitAnnotations(t *testing.T) {
 		"nginx.org/limit-req-zone-size":   "11m",
 		"nginx.org/limit-req-dry-run":     "true",
 		"nginx.org/limit-req-log-level":   "info",
-	}, NewDefaultConfigParams(false), context); len(errors) > 0 {
+	}, NewDefaultConfigParams(context.Background(), false), ctx); len(errors) > 0 {
 		t.Error("Errors when parsing valid limit-req annotations")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-rate": "200",
-	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+	}, NewDefaultConfigParams(context.Background(), false), ctx); len(errors) == 0 {
 		t.Error("No Errors when parsing invalid request rate")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-rate": "200r/h",
-	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+	}, NewDefaultConfigParams(context.Background(), false), ctx); len(errors) == 0 {
 		t.Error("No Errors when parsing invalid request rate")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-rate": "0r/s",
-	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+	}, NewDefaultConfigParams(context.Background(), false), ctx); len(errors) == 0 {
 		t.Error("No Errors when parsing invalid request rate")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-zone-size": "10abc",
-	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+	}, NewDefaultConfigParams(context.Background(), false), ctx); len(errors) == 0 {
 		t.Error("No Errors when parsing invalid zone size")
 	}
 
 	if errors := parseRateLimitAnnotations(map[string]string{
 		"nginx.org/limit-req-log-level": "foobar",
-	}, NewDefaultConfigParams(false), context); len(errors) == 0 {
+	}, NewDefaultConfigParams(context.Background(), false), ctx); len(errors) == 0 {
 		t.Error("No Errors when parsing invalid log level")
 	}
 }

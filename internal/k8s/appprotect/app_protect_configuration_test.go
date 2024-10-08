@@ -1,8 +1,13 @@
 package appprotect
 
 import (
+	"io"
+	"log/slog"
 	"testing"
 	"time"
+
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -178,8 +183,8 @@ func TestCreateAppProtectPolicyEx(t *testing.T) {
 
 	for _, test := range tests {
 		test.expectedPolicyEx.Obj = test.policy
-
-		policyEx, err := createAppProtectPolicyEx(test.policy)
+		l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+		policyEx, err := createAppProtectPolicyEx(test.policy, l)
 		if (err != nil) != test.wantErr {
 			t.Errorf("createAppProtectPolicyEx() returned %v, for the case of %s", err, test.msg)
 		}
@@ -511,7 +516,8 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 			},
 		},
 	}
-	apc := newConfigurationImpl()
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+	apc := newConfigurationImpl(l)
 	apc.UserSigs["testing/TestUsersig"] = &UserSigEx{Tag: "test", RevTime: parseTime("2019-01-01T18:32:02Z"), IsValid: true}
 	tests := []struct {
 		policy           *unstructured.Unstructured
@@ -643,7 +649,8 @@ func TestAddOrUpdateLogConf(t *testing.T) {
 			},
 		},
 	}
-	apc := NewConfiguration()
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+	apc := NewConfiguration(l)
 	tests := []struct {
 		logconf          *unstructured.Unstructured
 		expectedChanges  []Change
@@ -792,7 +799,8 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 		},
 	}
 
-	appProtectConfiguration := newConfigurationImpl()
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+	appProtectConfiguration := newConfigurationImpl(l)
 	appProtectConfiguration.UserSigs["testing/test1"] = &UserSigEx{
 		Obj:      testUserSig1,
 		Tag:      "test1",
@@ -906,7 +914,8 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 
 func TestDeletePolicy(t *testing.T) {
 	t.Parallel()
-	appProtectConfiguration := newConfigurationImpl()
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+	appProtectConfiguration := newConfigurationImpl(l)
 	appProtectConfiguration.Policies["testing/test"] = &PolicyEx{}
 	tests := []struct {
 		key              string
@@ -945,7 +954,8 @@ func TestDeletePolicy(t *testing.T) {
 
 func TestDeleteLogConf(t *testing.T) {
 	t.Parallel()
-	appProtectConfiguration := newConfigurationImpl()
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+	appProtectConfiguration := newConfigurationImpl(l)
 	appProtectConfiguration.LogConfs["testing/test"] = &LogConfEx{}
 	tests := []struct {
 		key              string
@@ -1018,7 +1028,8 @@ func TestDeleteUserSig(t *testing.T) {
 			},
 		},
 	}
-	appProtectConfiguration := newConfigurationImpl()
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+	appProtectConfiguration := newConfigurationImpl(l)
 	appProtectConfiguration.UserSigs["testing/test1"] = &UserSigEx{
 		IsValid: true,
 		Obj:     testUserSig1,
@@ -1165,7 +1176,8 @@ func TestGetAppProtectResource(t *testing.T) {
 			msg:     "Invalid kind, Negative",
 		},
 	}
-	appProtectConfiguration := newConfigurationImpl()
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+	appProtectConfiguration := newConfigurationImpl(l)
 	appProtectConfiguration.Policies["testing/test1"] = &PolicyEx{IsValid: true, Obj: &unstructured.Unstructured{}}
 	appProtectConfiguration.Policies["testing/test2"] = &PolicyEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "validation failed"}
 	appProtectConfiguration.LogConfs["testing/test1"] = &LogConfEx{IsValid: true, Obj: &unstructured.Unstructured{}}
