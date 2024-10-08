@@ -94,7 +94,7 @@ spec:
          #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
          #- -enable-app-protect
          #- -enable-app-protect-dos
-         #- -v=3 # Enables extensive logging. Useful for troubleshooting.
+         #- -log-level=debug # Enables extensive logging. Useful for troubleshooting.
          #- -enable-prometheus-metrics
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
 #      initContainers:
