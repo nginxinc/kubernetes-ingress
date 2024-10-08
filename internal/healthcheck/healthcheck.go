@@ -8,12 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/golang/glog"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -25,14 +23,18 @@ import (
 
 // RunHealthCheck starts the deep healthcheck service.
 func RunHealthCheck(port int, plusClient *client.NginxClient, cnf *configs.Configurator, healthProbeTLSSecret *v1.Secret) {
-	l := nl.LoggerFromContext(cnf.CfgParams.Context)
 	addr := fmt.Sprintf(":%s", strconv.Itoa(port))
 	hs, err := NewHealthServer(addr, plusClient, cnf, healthProbeTLSSecret)
 	if err != nil {
-		nl.Fatal(l, err)
+		// glog.Fatal(err)
+		os.Exit(1)
 	}
-	nl.Infof(l, "Starting Service Insight listener on: %v%v", addr, "/probe")
-	nl.Fatal(l, hs.ListenAndServe())
+	// glog.Infof("Starting Service Insight listener on: %v%v", addr, "/probe")
+	// glog.Fatal(hs.ListenAndServe())
+	err = hs.ListenAndServe()
+	if err != nil {
+		os.Exit(1)
+	}
 }
 
 // HealthServer holds data required for running
@@ -44,7 +46,6 @@ type HealthServer struct {
 	NginxUpstreams         func() (*client.Upstreams, error)
 	StreamUpstreamsForName func(host string) []string
 	NginxStreamUpstreams   func() (*client.StreamUpstreams, error)
-	Configurator           *configs.Configurator
 }
 
 // NewHealthServer creates Health Server. If secret is provided,
@@ -96,20 +97,19 @@ func (hs *HealthServer) Shutdown(ctx context.Context) error {
 
 // UpstreamStats calculates health stats for the host identified by the hostname in the request URL.
 func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
-	l := nl.LoggerFromContext(hs.Configurator.CfgParams.Context)
 	hostname := chi.URLParam(r, "hostname")
 	host := sanitize(hostname)
 
 	upstreamNames := hs.UpstreamsForHost(host)
 	if len(upstreamNames) == 0 {
-		nl.Errorf(l, "no upstreams for requested hostname %s or hostname does not exist", host)
+		// glog.Errorf("no upstreams for requested hostname %s or hostname does not exist", host)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	upstreams, err := hs.NginxUpstreams()
 	if err != nil {
-		nl.Errorf(l, "error retrieving upstreams for requested hostname: %s", host)
+		// glog.Errorf("error retrieving upstreams for requested hostname: %s", host)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -117,7 +117,7 @@ func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
 	stats := countStats(upstreams, upstreamNames)
 	data, err := json.Marshal(stats)
 	if err != nil {
-		nl.Error(l, "error marshaling result", err)
+		// glog.Error("error marshaling result", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -129,7 +129,7 @@ func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 	if _, err = w.Write(data); err != nil {
-		nl.Error(l, "error writing result", err)
+		// glog.Error("error writing result", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
 }
@@ -137,25 +137,24 @@ func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
 // StreamStats calculates health stats for the TransportServer(s)
 // identified by the service (action) name in the request URL.
 func (hs *HealthServer) StreamStats(w http.ResponseWriter, r *http.Request) {
-	l := nl.LoggerFromContext(hs.Configurator.CfgParams.Context)
 	name := chi.URLParam(r, "name")
 	n := sanitize(name)
 	streamUpstreamNames := hs.StreamUpstreamsForName(n)
 	if len(streamUpstreamNames) == 0 {
-		nl.Errorf(l, "no stream upstreams for requested name '%s' or name does not exist", n)
+		// glog.Errorf("no stream upstreams for requested name '%s' or name does not exist", n)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	streams, err := hs.NginxStreamUpstreams()
 	if err != nil {
-		nl.Errorf(l, "error retrieving stream upstreams for requested name: %s", n)
+		// glog.Errorf("error retrieving stream upstreams for requested name: %s", n)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	stats := countStreamStats(streams, streamUpstreamNames)
 	data, err := json.Marshal(stats)
 	if err != nil {
-		nl.Error(l, "error marshaling result", err)
+		// glog.Error("error marshaling result", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -167,7 +166,7 @@ func (hs *HealthServer) StreamStats(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 	if _, err := w.Write(data); err != nil {
-		glog.Error("error writing result", err)
+		// glog.Error("error writing result", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
 }
