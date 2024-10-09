@@ -141,5 +141,6 @@ spec:
             - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
 #          - -cluster-display-name=my-cluster
 #          - -log-level=debug
+#          - -log-format=glog
 #          - -skip-tls-verify
 #          - -min-update-interval=24h

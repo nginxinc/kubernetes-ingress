@@ -95,6 +95,7 @@ spec:
          #- -enable-app-protect
          #- -enable-app-protect-dos
          #- -log-level=debug # Enables extensive logging. Useful for troubleshooting.
+         #- -log-format=glog # Sets the log format. Options include: glog, json, text
          #- -enable-prometheus-metrics
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
 #      initContainers:
