@@ -316,14 +316,6 @@ Path to the TransportServer NGINX configuration template for a TransportServer r
 - Default for NGINX is `nginx.transportserver.tmpl`.
 - Default for NGINX Plus is `nginx-plus.transportserver.tmpl`.
 
-<a name="cmdoption-v"></a>
-
----
-
-### -v `<value>`
-
-Log level for V logs.
-
 <a name="cmdoption-log-level"></a>
 
 ---
