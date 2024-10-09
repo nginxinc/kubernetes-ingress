@@ -15,9 +15,9 @@ NGINX Ingress Controller exposes the logs of the Ingress Controller process (the
 kubectl logs <nginx-ingress-pod> -n nginx-ingress
 ```
 
-## Ingress Controller Process Logs
+## NGINX Ingress Controller Process Logs
 
-The Ingress Controller process logs are configured through the `-v` command-line argument of the Ingress Controller, which sets the log verbosity level. The default value is `1`, for which the minimum amount of logs is reported. The value `3` is useful for troubleshooting: you will be able to see how the Ingress Controller gets updates from the Kubernetes API, generates NGINX configuration and reloads NGINX.
+The NGINX Ingress Controller process logs are configured through the `-log-level` command-line argument of the Ingress Controller, which sets the log level. The default value is `info`. Other options include: `trace`, `debug`, `info`, `warning`, `error` and `fatal`. The value `debug` is useful for troubleshooting: you will be able to see how the Ingress Controller gets updates from the Kubernetes API, generates NGINX configuration and reloads NGINX.
 
 See also the doc about Ingress Controller [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments).
 
