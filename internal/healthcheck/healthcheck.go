@@ -7,12 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 
 	v1 "k8s.io/api/core/v1"
 

@@ -3,13 +3,14 @@ package healthcheck_test
 import (
 	"encoding/json"
 	"errors"
-	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/go-cmp/cmp"
