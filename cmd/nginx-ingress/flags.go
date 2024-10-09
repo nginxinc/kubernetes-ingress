@@ -265,15 +265,6 @@ func initValidate(ctx context.Context) {
 
 func mustValidateInitialChecks(ctx context.Context) {
 	l := nl.LoggerFromContext(ctx)
-	err := flag.Lookup("logtostderr").Value.Set("true")
-	if err != nil {
-		nl.Fatalf(l, "Error setting logtostderr to true: %v", err)
-	}
-
-	err = flag.Lookup("include_year").Value.Set("true")
-	if err != nil {
-		nl.Fatalf(l, "Error setting include_year flag: %v", err)
-	}
 
 	if startupCheckFn != nil {
 		err := startupCheckFn()
