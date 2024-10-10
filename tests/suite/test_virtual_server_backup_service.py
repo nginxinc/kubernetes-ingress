@@ -116,7 +116,7 @@ def vs_externalname_setup(
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-v=3",
+                    f"-log-level=debug",
                 ],
             },
             {

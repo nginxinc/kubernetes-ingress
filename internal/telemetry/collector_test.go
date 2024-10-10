@@ -1056,21 +1056,21 @@ func TestCollectInstallationFlags(t *testing.T) {
 		{
 			name: "second flag",
 			setFlags: []string{
-				"-v=3",
+				"-log-level=debug",
 			},
 			wantFlags: []string{
-				"-v=3",
+				"-log-level=debug",
 			},
 		},
 		{
 			name: "multiple flags",
 			setFlags: []string{
 				"nginx-plus=true",
-				"-v=3",
+				"-log-level=debug",
 			},
 			wantFlags: []string{
 				"nginx-plus=true",
-				"-v=3",
+				"-log-level=debug",
 			},
 		},
 		{
