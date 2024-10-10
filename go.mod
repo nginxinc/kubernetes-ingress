@@ -11,7 +11,6 @@ require (
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-kit/log v0.2.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/golang/glog v1.2.2
 	github.com/google/go-cmp v0.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/kr/pretty v0.3.1
@@ -150,8 +149,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/golang/glog => github.com/nginxinc/glog v1.1.2
 
 replace google.golang.org/protobuf v1.26.0 => google.golang.org/protobuf v1.33.0
 

@@ -409,9 +409,37 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 		return fmt.Errorf("error updating servers of %v upstream: %w", upstream, err)
 	}
 
-	nl.Debugf(lm.logger, "Updated servers of %v; Added: %v, Removed: %v, Updated: %v", upstream, added, removed, updated)
+	logAdded := formatUpdateServersInPlusLog(added)
+	logRemoved := formatUpdateServersInPlusLog(removed)
+	logUpdated := formatUpdateServersInPlusLog(updated)
+
+	nl.Debugf(lm.logger, "Updated servers of %v; Added: %+v, Removed: %+v, Updated: %+v", upstream, logAdded, logRemoved, logUpdated)
 
 	return nil
+}
+
+func formatUpdateServersInPlusLog(us []client.UpstreamServer) string {
+	var logEntries []string
+	for _, server := range us {
+		logEntry := fmt.Sprintf("{MaxConns:%v MaxFails:%v Backup:%v Down:%v Weight:%v Server:%v FailTimeout:%v SlowStart:%v Route:%v Service:%v ID:%v Drain:%v}",
+			derefInt(server.MaxConns), derefInt(server.MaxFails), derefBool(server.Backup), derefBool(server.Down), derefInt(server.Weight), server.Server, server.FailTimeout, server.SlowStart, server.Route, server.Service, server.ID, server.Drain)
+		logEntries = append(logEntries, logEntry)
+	}
+	return fmt.Sprintf("[%s]", strings.Join(logEntries, " "))
+}
+
+func derefBool(p *bool) bool {
+	if p != nil {
+		return *p
+	}
+	return false
+}
+
+func derefInt(p *int) int {
+	if p != nil {
+		return *p
+	}
+	return 0
 }
 
 // UpdateStreamServersInPlus updates NGINX Plus stream servers of the given upstream.
