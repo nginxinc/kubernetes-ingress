@@ -1,8 +1,9 @@
 package nginx
 
 import (
-	"github.com/nginxinc/nginx-plus-go-client/client"
 	"testing"
+
+	"github.com/nginxinc/nginx-plus-go-client/client"
 )
 
 // Helper functions to create pointers
