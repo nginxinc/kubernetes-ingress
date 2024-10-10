@@ -279,7 +279,7 @@ func TestValidateTransportServerUpstreams_FailsOnInvalidInput(t *testing.T) {
 
 func TestValidateTransportServerHost(t *testing.T) {
 	t.Parallel()
-	tests := []struct {
+	validCases := []struct {
 		host                     string
 		isTLSPassthroughListener bool
 		protocol                 string
@@ -296,6 +296,14 @@ func TestValidateTransportServerHost(t *testing.T) {
 		{
 			host:                     "nginx.org",
 			isTLSPassthroughListener: true,
+			protocol:                 "TLS_PASSTHROUGH",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
+		},
+		{
+			host:                     "nginx.org",
+			isTLSPassthroughListener: false,
 			protocol:                 "TCP",
 			tls: &conf_v1.TransportServerTLS{
 				Secret: "secret-name",
@@ -303,10 +311,58 @@ func TestValidateTransportServerHost(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range validCases {
 		allErrs := validateTransportServerHost(test.host, field.NewPath("host"), test.isTLSPassthroughListener, test.protocol, test.tls)
 		if len(allErrs) > 0 {
 			t.Errorf("validateTransportServerHost(%q, %v) returned errors %v for valid input", test.host, test.isTLSPassthroughListener, allErrs)
+		}
+	}
+
+	invalidCases := []struct {
+		host                     string
+		isTLSPassthroughListener bool
+		protocol                 string
+		tls                      *conf_v1.TransportServerTLS
+	}{
+		// Invalid case: host is empty but isTLSPassthroughListener is true
+		{
+			host:                     "",
+			isTLSPassthroughListener: true,
+			protocol:                 "TLS_PASSTHROUGH",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
+		},
+		{
+			host:                     "nginx.org",
+			isTLSPassthroughListener: false,
+			protocol:                 "UDP",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
+		},
+		{
+			host:                     "invalid host name",
+			isTLSPassthroughListener: true,
+			protocol:                 "TCP",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
+		},
+		{
+			host:                     "nginx.org",
+			isTLSPassthroughListener: true,
+			protocol:                 "UDP",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
+		},
+	}
+
+	for _, test := range invalidCases {
+		allErrs := validateTransportServerHost(test.host, field.NewPath("host"), test.isTLSPassthroughListener, test.protocol, test.tls)
+		if len(allErrs) == 0 {
+			t.Errorf("validateTransportServerHost(%q, %v) returned no errors for invalid input", test.host, test.isTLSPassthroughListener)
 		}
 	}
 }

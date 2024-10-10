@@ -2006,6 +2006,136 @@ func TestAddTransportServer(t *testing.T) {
 	}
 }
 
+func TestAddTransportServerWithHost(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	listeners := []conf_v1.Listener{
+		{
+			Name:     "tcp-7777",
+			Port:     7777,
+			Protocol: "TCP",
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
+
+	secretName := "echo-secret"
+
+	ts := createTestTransportServerWithHost("transportserver", "echo.example.com", "tcp-7777", "TCP", secretName)
+
+	// no problems are expected for all cases
+	var expectedProblems []ConfigurationProblem
+	var expectedChanges []ResourceChange
+
+	// Add TransportServer
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: ts,
+			},
+		},
+	}
+
+	changes, problems := configuration.AddOrUpdateTransportServer(ts)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Update TransportServer
+
+	updatedTS := ts.DeepCopy()
+	updatedTS.Generation++
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: updatedTS,
+			},
+		},
+	}
+
+	changes, problems = configuration.AddOrUpdateTransportServer(updatedTS)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Make TransportServer invalid
+
+	invalidTS := updatedTS.DeepCopy()
+	invalidTS.Generation++
+	invalidTS.Spec.Upstreams = nil
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: Delete,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: updatedTS,
+			},
+			Error: `spec.action.pass: Not found: "myapp"`,
+		},
+	}
+
+	changes, problems = configuration.AddOrUpdateTransportServer(invalidTS)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Restore TransportServer
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: updatedTS,
+			},
+		},
+	}
+
+	changes, problems = configuration.AddOrUpdateTransportServer(updatedTS)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Delete TransportServer
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: Delete,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: updatedTS,
+			},
+		},
+	}
+
+	changes, problems = configuration.DeleteTransportServer("default/transportserver")
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("DeleteTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("DeleteTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+}
+
 func TestAddTransportServerForTLSPassthrough(t *testing.T) {
 	configuration := createTestConfiguration()
 
@@ -3708,6 +3838,14 @@ func createTestTransportServer(name string, listenerName string, listenerProtoco
 			},
 		},
 	}
+}
+
+func createTestTransportServerWithHost(name string, host string, listenerName string, listenerProtocol string, secretName string) *conf_v1.TransportServer {
+	ts := createTestTransportServer(name, listenerName, listenerProtocol)
+	ts.Spec.Host = host
+	ts.Spec.TLS = &conf_v1.TransportServerTLS{Secret: secretName}
+
+	return ts
 }
 
 func createTestTLSPassthroughTransportServer(name string, host string) *conf_v1.TransportServer {

@@ -98,7 +98,6 @@ func validateSnippets(serverSnippet string, fieldPath *field.Path, snippetsEnabl
 }
 
 func validateTransportServerHost(host string, fieldPath *field.Path, isTLSPassthroughListener bool, protocol string, tls *conf_v1.TransportServerTLS) field.ErrorList {
-	// TODO: Are UDP listeners allowed for TLS Passthrough, if so I should loosen this restriction below
 	if protocol == "UDP" {
 		if host != "" {
 			return field.ErrorList{field.Forbidden(fieldPath, "host field is not allowed for UDP TransportServers")}
