@@ -33,11 +33,11 @@ IC_HTTP_PORT=<port number>
 
 ## Deploy the example application
 
-Create the file *webapp.yaml* with the following contents:
+Create the file _webapp.yaml_ with the following contents:
 
 {{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/webapp.yaml" >}}
 
-Apply it using *kubectl*:
+Apply it using `kubectl`:
 
 ```shell
 kubectl apply -f webapp.yaml
@@ -47,7 +47,7 @@ kubectl apply -f webapp.yaml
 
 ## Deploy an Access Control policy
 
-Create a file named *access-control-policy-deny.yaml*. The highlighted *deny* field will be used by the example application, and should be changed to the subnet of your machine.
+Create a file named _access-control-policy-deny.yaml_. The highlighted _deny_ field will be used by the example application, and should be changed to the subnet of your machine.
 
 {{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/access-control-policy-deny.yaml" "hl_lines=7-8" >}}
 
@@ -61,7 +61,7 @@ kubectl apply -f access-control-policy-deny.yaml
 
 ## Configure load balancing
 
-Create a file named *virtual-server.yaml* for the VirtualServer resource. The *policies* field references the access control Policy created in the previous section.
+Create a file named _virtual-server.yaml_ for the VirtualServer resource. The _policies_ field references the access control Policy created in the previous section.
 
 {{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/virtual-server.yaml" "hl_lines=7-8" >}}
 
@@ -75,7 +75,7 @@ kubectl apply -f virtual-server.yaml
 
 ## Test the example application
 
-Use *curl* to attempt to access the application:
+Use `curl` to attempt to access the application:
 
 ```shell
 curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.com:$IC_HTTP_PORT
@@ -95,7 +95,7 @@ The *403* response is expected, successfully blocking your machine.
 
 ## Update the policy
 
-Create a new policy with the file *access-control-policy-allow.yaml*, updating the *allow* field to the subnet of your machine.
+Create a new policy with the file _access-control-policy-allow.yaml_, updating the _allow_ field to the subnet of your machine.
 
 {{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/access-control-policy-allow.yaml" "hl_lines=7-8" >}}
 
