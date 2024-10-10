@@ -486,6 +486,26 @@ func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 	snaps.MatchSnapshot(t, string(got))
 }
 
+func TestExecuteTemplateForNGINXOSSTransportServerWithSNI(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINX(t)
+	got, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithSNI)
+	if err != nil {
+		t.Errorf("Failed to execute template: %v", err)
+	}
+	snaps.MatchSnapshot(t, string(got))
+}
+
+func TestExecuteTemplateForNGINXPlusTransportServerWithSNI(t *testing.T) {
+	t.Parallel()
+	executor := newTmplExecutorNGINXPlus(t)
+	got, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithSNI)
+	if err != nil {
+		t.Errorf("Failed to execute template: %v", err)
+	}
+	snaps.MatchSnapshot(t, string(got))
+}
+
 func TestTransportServerForNginx(t *testing.T) {
 	t.Parallel()
 	executor := newTmplExecutorNGINX(t)
@@ -5318,6 +5338,37 @@ var (
 				Fails:    1,
 				Match:    "match_udp-upstream",
 			},
+		},
+	}
+
+	transportServerCfgWithSNI = TransportServerConfig{
+		Upstreams: []StreamUpstream{
+			{
+				Name: "cafe-upstream",
+				Servers: []StreamUpstreamServer{
+					{
+						Address: "10.0.0.20:5001",
+					},
+				},
+			},
+		},
+		Server: StreamServer{
+			Port:           1234,
+			ServerName:     "cafe.example.com",
+			TLSPassthrough: false,
+			SSL: &StreamSSL{
+				Enabled:        true,
+				Certificate:    "cafe-secret.pem",
+				CertificateKey: "cafe-secret.pem",
+			},
+			ProxyRequests:            createPointerFromInt(1),
+			ProxyResponses:           createPointerFromInt(2),
+			ProxyPass:                "cafe-upstream",
+			ProxyTimeout:             "10s",
+			ProxyConnectTimeout:      "10s",
+			ProxyNextUpstream:        true,
+			ProxyNextUpstreamTimeout: "10s",
+			ProxyNextUpstreamTries:   5,
 		},
 	}
 

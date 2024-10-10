@@ -37,6 +37,7 @@ type StreamUpstreamBackupServer struct {
 
 // StreamServer defines a server in the stream module.
 type StreamServer struct {
+	ServerName               string
 	TLSPassthrough           bool
 	UnixSocket               string
 	Port                     int
