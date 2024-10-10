@@ -23,7 +23,7 @@ For ease of use in shell commands, set two shell variables:
 IC_IP=<ip-address>
 ```
 
-2. The HTTP port of the same instance
+2. The HTTP port of the same instance.
 
 ```shell
 IC_HTTP_PORT=<port number>
@@ -61,7 +61,7 @@ kubectl apply -f access-control-policy-deny.yaml
 
 ## Configure load balancing
 
-Create a file named *virtual-server.yaml* for the VirtualServer resource. The *policies* field references the example application.
+Create a file named *virtual-server.yaml* for the VirtualServer resource. The *policies* field references the access control Policy created in the previous section.
 
 {{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/virtual-server.yaml" "hl_lines=7-8" >}}
 
