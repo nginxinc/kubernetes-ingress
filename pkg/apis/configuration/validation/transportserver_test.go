@@ -1125,25 +1125,35 @@ func TestValidateTsTLS(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
-		tls           *conf_v1.TransportServerTLS
-		hostSpecified bool
+		tls              *conf_v1.TransportServerTLS
+		isTLSPassthrough bool
+		hostSpecified    bool
 	}
 
 	validTestCases := []testCase{
 		{
-			tls:           nil,
-			hostSpecified: false,
+			tls:              nil,
+			isTLSPassthrough: false,
+			hostSpecified:    false,
 		},
 		{
 			tls: &conf_v1.TransportServerTLS{
 				Secret: "my-secret",
 			},
-			hostSpecified: true,
+			isTLSPassthrough: false,
+			hostSpecified:    true,
+		},
+		{
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "my-secret",
+			},
+			isTLSPassthrough: false,
+			hostSpecified:    false,
 		},
 	}
 
 	for _, tc := range validTestCases {
-		allErrs := validateTLS(tc.tls, false, field.NewPath("tls"), tc.hostSpecified)
+		allErrs := validateTLS(tc.tls, tc.isTLSPassthrough, field.NewPath("tls"), tc.hostSpecified)
 		if len(allErrs) > 0 {
 			t.Errorf("validateTLS() returned errors %v for valid input %+v", allErrs, tc)
 		}
