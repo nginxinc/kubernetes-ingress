@@ -651,7 +651,7 @@ class TestTransportServerTcpLoadBalance:
                     "-global-configuration=nginx-ingress/nginx-configuration",
                     "-enable-leader-election=false",
                     "-enable-prometheus-metrics",
-                    "-v=3",
+                    "-log-level=debug",
                 ],
             },
             {"example": "transport-server-tcp-load-balance"},

@@ -140,6 +140,7 @@ spec:
             - -nms-server-address=https://apigw.nms.svc.cluster.local:443/api/platform/v1
             - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
 #          - -cluster-display-name=my-cluster
-#          - -v=3
+#          - -log-level=debug
+#          - -log-format=glog
 #          - -skip-tls-verify
 #          - -min-update-interval=24h

@@ -11,17 +11,17 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.1@sha256:a802f5f540f47f2ceb8cbefe9a8c9095df76527a9641671be66ab35f8ea1fe8d AS opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.1-alpine@sha256:2db6027182e3a080209705447b973759be9246d77475666ee940065a959c7335 AS alpine-opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2@sha256:0f5479b17fc9d8d698255a7ff026a567e2971220b3887de61f5d4fa0eb71624d AS opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2-alpine@sha256:54a20c617c03cde6327e27900662c1fbc44ebc3a51512626846eb9fbb2aa091f AS alpine-opentracing-lib
 FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.1@sha256:0bab61e2bd639b269ec54343ea66b7acbdb0eb67bed44383e1be937c483c451d AS ubi-ppc64le
-FROM ghcr.io/nginxinc/alpine-fips:0.2.2-alpine3.17@sha256:0dcd9149b66a6b35c1253b7662c8ed7ef0e0172ceae893a82058c30668799bf2 AS alpine-fips-3.17
-FROM ghcr.io/nginxinc/alpine-fips:0.2.2-alpine3.20@sha256:0ddcfb906a5dc931336db5ba6e0d09d5f77cc48c67e3781aba66a0a27dc14605 AS alpine-fips-3.20
+FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
+FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
 FROM redhat/ubi9-minimal@sha256:c0e70387664f30cd9cf2795b547e4a9a51002c44a4a86aa9335ab030134bf392 AS ubi-minimal
 FROM golang:1.23-alpine@sha256:9dd2625a1ff2859b8d8b01d8f7822c0f528942fe56cfe7a1e7c38d3b8d72d679 AS golang-builder
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.27.1-alpine@sha256:a5127daff3d6f4606be3100a252419bfa84fd6ee5cd74d0feaca1a5068f97dcf AS alpine
+FROM nginx:1.27.2-alpine@sha256:2140dad235c130ac861018a4e13a6bc8aea3a35f3a40e20c1b060d51a7efd250 AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -31,7 +31,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.27.1@sha256:287ff321f9e3cde74b600cc26197424404157a72043226cbbf07ee8304a2c720 AS debian
+FROM nginx:1.27.2@sha256:d2eb56950b84efe34f966a2b92efb1a1a2ea53e7e93b94cdf45a27cf3cd47fc0 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
