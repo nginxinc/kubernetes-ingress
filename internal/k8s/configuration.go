@@ -1773,18 +1773,6 @@ func getSortedTransportServerKeys(m map[string]*conf_v1.TransportServer) []strin
 	return keys
 }
 
-func getSortedTransportServerConfigurationKeys(m map[string]*TransportServerConfiguration) []string {
-	var keys []string
-
-	for k := range m {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-
-	return keys
-}
-
 func getSortedListenerHostKeys(m map[listenerHostKey]*TransportServerConfiguration) []listenerHostKey {
 	var keys []listenerHostKey
 
