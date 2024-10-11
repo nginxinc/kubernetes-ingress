@@ -11,7 +11,7 @@ In this example we create two different TransportServers that listen on the same
         protocol: TCP
 ```
 
-1. Add a custom port to the NIC pod via the helm chart
+2. Add a custom port to the NGINX Ingress Controller pod with the Helm chart.
 
 ```yaml
 controller.customPorts:
@@ -20,7 +20,7 @@ controller.customPorts:
       protocol: TCP
 ```
 
-1. Add a custom port to the NIC service
+3. Add a custom port to the NGINX Ingress Controller service.
 
 ```yaml
 controller.service.customPorts:
@@ -30,22 +30,22 @@ controller.service.customPorts:
             targetPort: 7000 
 ```
 
-1. Create the cafe-secret, and mongo-secret. These secrets are used for TLS in the TransportServers
+4. Use `kubectl` to create the cafe-secret, and mongo-secret. These secrets are used for TLS in the TransportServers.
 `kubectl apply -f cafe-secret.yaml`
 `kubectl apply -f mongo-secret.yaml`
 
-1. Create the mongo and tcp echo example applications
+5. Create the mongo and tcp echo example applications.
 `kubectl apply -f mongo.yaml`
 `kubectl apply -f tcp-echo-server.yaml`
 
-1. Wait until these are ready.
+6. Wait until these are ready.
 `kubectl get deploy -w`
 
-1. Create the TransportServers for each application
+7. Create the TransportServers for each application.
 `kubectl apply -f cafe-transport-server.yaml`
 `kubectl apply -f mongo-transport-server.yaml`
 
-1. Ensure they are in valid state
+8. Ensure they are in valid state.
 `kubectl get ts`
 
 ```bash
@@ -54,10 +54,10 @@ cafe-ts    Valid   AddedOrUpdated   2m
 mongo-ts   Valid   AddedOrUpdated   2m
 ```
 
-1. Set up /etc/hosts or DNS
-In this example I am running NIC locally, so I will set
-cafe.example.com and mongo.example.com in my /etc/hosts to localhost
-If running NIC as a live service, the server names would be set at the DNS layer
+9. Set up /etc/hosts or DNS
+This example uses a local NGINX Ingress Controller instance, so the /etc/hosts file
+is being used to set cafe.example.com and mongo.example.com to localhost.
+In a production instance, the server names would be set at the DNS layer.
 `cat /etc/hosts`
 
 ```bash
@@ -66,25 +66,27 @@ If running NIC as a live service, the server names would be set at the DNS layer
 127.0.0.1 mongo.example.com
 ```
 
-1. Expose port 7000 of the NIC Loadbalancer Service
+10. Expose port 7000 of the LoadBalancer service.
 `k port-forward svc/my-release-nginx-ingress-controller 7000:7000`
 
-1. Use ncat to ping cafe.example.com on port 7000 with ssl
+11. Use `ncat` to ping cafe.example.com on port 7000 with SSL.
 `ncat --ssl cafe.example.com 7000`
-When you write a message you should get sent back
+When you write a message you should receive the following response:
 
 ```bash
 hi
 hi
 ```
 
-And once the connection is closed (ctrl + c) you should see the request and response in the NIC logs are both 2 bytes
+Close the connection (CTRL+ c), then view the NGINX Ingress Controller logs.
+
+The request and response should both be 2 bytes.
 
 ```bash
 127.0.0.1 [24/Sep/2024:15:48:58 +0000] TCP 200 3 3 2.702 "-
 ```
 
-1. Use mongosh to connect to the mongodb container, via the TransportServer, also on port 7000
+12. Use mongosh to connect to the mongodb container through the TransportServer on port 7000.
 `mongosh --host mongo.example.com --port 7000 --tls --tlsAllowInvalidCertificates`
 
 ```bash
