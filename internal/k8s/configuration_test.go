@@ -2021,7 +2021,7 @@ func TestAddTransportServerWithHost(t *testing.T) {
 
 	secretName := "echo-secret"
 
-	ts := createTestTransportServerWithHost("transportserver", "echo.example.com", "tcp-7777", "TCP", secretName)
+	ts := createTestTransportServerWithHost("transportserver", "echo.example.com", "tcp-7777", secretName)
 
 	// no problems are expected for all cases
 	var expectedProblems []ConfigurationProblem
@@ -3840,8 +3840,8 @@ func createTestTransportServer(name string, listenerName string, listenerProtoco
 	}
 }
 
-func createTestTransportServerWithHost(name string, host string, listenerName string, listenerProtocol string, secretName string) *conf_v1.TransportServer {
-	ts := createTestTransportServer(name, listenerName, listenerProtocol)
+func createTestTransportServerWithHost(name string, host string, listenerName string, secretName string) *conf_v1.TransportServer {
+	ts := createTestTransportServer(name, listenerName, "TCP")
 	ts.Spec.Host = host
 	ts.Spec.TLS = &conf_v1.TransportServerTLS{Secret: secretName}
 
@@ -4754,3 +4754,141 @@ var (
 		},
 	}
 )
+
+func TestTransportServerListenerHostCollisions(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	listeners := []conf_v1.Listener{
+		{
+			Name:     "tcp-7777",
+			Port:     7777,
+			Protocol: "TCP",
+		},
+		{
+			Name:     "tcp-8888",
+			Port:     8888,
+			Protocol: "TCP",
+		},
+	}
+
+	addOrUpdateGlobalConfiguration(t, configuration, listeners, noChanges, noProblems)
+
+	// Create TransportServers with the same listener and host
+	ts1 := createTestTransportServerWithHost("ts1", "example.com", "tcp-7777", "secret1")
+	ts2 := createTestTransportServerWithHost("ts2", "example.com", "tcp-7777", "secret2") // same listener and host
+	ts3 := createTestTransportServerWithHost("ts3", "example.org", "tcp-7777", "secret3") // different host
+	ts4 := createTestTransportServer("ts4", "tcp-7777", "TCP")                            // No host same listener
+	ts5 := createTestTransportServer("ts5", "tcp-7777", "TCP")                            // same as ts4 to induce error with empty host twice
+	ts6 := createTestTransportServerWithHost("ts6", "example.com", "tcp-8888", "secret4") // different listener
+
+	// Add ts1 to the configuration
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: ts1,
+			},
+		},
+	}
+	changes, problems := configuration.AddOrUpdateTransportServer(ts1)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts1) returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(problems) != 0 {
+		t.Errorf("AddOrUpdateTransportServer(ts1) returned problems %v", problems)
+	}
+
+	// Try to add ts2, should be rejected due to conflict
+	changes, problems = configuration.AddOrUpdateTransportServer(ts2)
+	expectedChanges = nil // No changes expected
+	expectedProblems := []ConfigurationProblem{
+		{
+			Object:  ts2,
+			IsError: false,
+			Reason:  "Rejected",
+			Message: "Listener tcp-7777 with host example.com is taken by another resource",
+		},
+	}
+
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts2) returned unexpected changes (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts2) returned unexpected problems (-want +got):\n%s", diff)
+	}
+
+	// Add ts3 with a different host, should be accepted
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: ts3,
+			},
+		},
+	}
+	changes, problems = configuration.AddOrUpdateTransportServer(ts3)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts3) returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(problems) != 0 {
+		t.Errorf("AddOrUpdateTransportServer(ts3) returned problems %v", problems)
+	}
+
+	// Add ts4 with no host, should be accepted
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    7777,
+				TransportServer: ts4,
+			},
+		},
+	}
+	changes, problems = configuration.AddOrUpdateTransportServer(ts4)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts4) returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(problems) != 0 {
+		t.Errorf("AddOrUpdateTransportServer(ts4) returned problems %v", problems)
+	}
+
+	// Try to add ts5 with no host, should be rejected due to conflict
+	changes, problems = configuration.AddOrUpdateTransportServer(ts5)
+	expectedChanges = nil
+	expectedProblems = []ConfigurationProblem{
+		{
+			Object:  ts5,
+			IsError: false,
+			Reason:  "Rejected",
+			Message: "Listener tcp-7777 with host empty host is taken by another resource",
+		},
+	}
+
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts5) returned unexpected changes (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts5) returned unexpected problems (-want +got):\n%s", diff)
+	}
+
+	// Try to add ts6 with different listener, but same domain as initial ts, should be fine as different listener
+	changes, problems = configuration.AddOrUpdateTransportServer(ts6)
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				ListenerPort:    8888,
+				TransportServer: ts6,
+			},
+		},
+	}
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer(ts6) returned unexpected changes (-want +got):\n%s", diff)
+	}
+
+	if len(problems) != 0 {
+		t.Errorf("AddOrUpdateTransportServer(ts6) returned problems %v", problems)
+	}
+}
