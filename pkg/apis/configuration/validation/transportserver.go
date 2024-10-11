@@ -112,6 +112,9 @@ func validateTransportServerHost(host string, fieldPath *field.Path, isTLSPassth
 			}
 			return validateHost(host, fieldPath)
 		}
+		if tls != nil && tls.Secret != "" {
+			return field.ErrorList{field.Required(fieldPath, "must not specify spec.tls.secret when host using TLS Passthrough")}
+		}
 		return validateHost(host, fieldPath)
 	}
 

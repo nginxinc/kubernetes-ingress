@@ -293,14 +293,7 @@ func TestValidateTransportServerHost(t *testing.T) {
 				Secret: "secret-name",
 			},
 		},
-		{
-			host:                     "nginx.org",
-			isTLSPassthroughListener: true,
-			protocol:                 "TLS_PASSTHROUGH",
-			tls: &conf_v1.TransportServerTLS{
-				Secret: "secret-name",
-			},
-		},
+
 		{
 			host:                     "nginx.org",
 			isTLSPassthroughListener: false,
@@ -353,6 +346,14 @@ func TestValidateTransportServerHost(t *testing.T) {
 			host:                     "nginx.org",
 			isTLSPassthroughListener: true,
 			protocol:                 "UDP",
+			tls: &conf_v1.TransportServerTLS{
+				Secret: "secret-name",
+			},
+		},
+		{
+			host:                     "nginx.org",
+			isTLSPassthroughListener: true,
+			protocol:                 "TLS_PASSTHROUGH",
 			tls: &conf_v1.TransportServerTLS{
 				Secret: "secret-name",
 			},
