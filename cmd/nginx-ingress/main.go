@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log/slog"
 	"net"
 	"net/http"
@@ -46,7 +47,6 @@ import (
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
-	"io/ioutil"
 )
 
 // Injected during build
