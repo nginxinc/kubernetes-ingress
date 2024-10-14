@@ -1,14 +1,17 @@
 # TransportServer SNI
 
 In this example we create two different TransportServers that listen on the same interface, which are distinguished by their Host field.
+The applications (a TCP echo server, and MongoDB) will be accessed via `ncat` and `mongosh`.
+The `ncat` binary is available via `nmap`. On mac/linux this can be installed via homebrew/linuxbrew with `brew install nmap`
+`mongosh` installation instructions are [available here](https://www.mongodb.com/docs/mongodb-shell/install/).
 
 ## Create a GlobalConfiguration resource with the following listener
 
 ```yaml
-     listeners:
-      - name: tcp-listener
-        port: 7000 
-        protocol: TCP
+listeners:
+    - name: tcp-listener
+      port: 7000 
+      protocol: TCP
 ```
 
 ## Add a custom port to the NGINX Ingress Controller pod with the Helm chart
@@ -24,10 +27,10 @@ controller.customPorts:
 
 ```yaml
 controller.service.customPorts:
-          - name: tcp-port 
-            port: 7000 
-            protocol: TCP
-            targetPort: 7000 
+    - name: tcp-port 
+      port: 7000 
+      protocol: TCP
+      targetPort: 7000 
 ```
 
 ## Use `kubectl` to create the cafe-secret, and mongo-secret. These secrets are used for TLS in the TransportServers

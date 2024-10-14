@@ -18,10 +18,7 @@
          command: ["/bin/sh"]
          args:
          - -c
-         - |
-           apk add --no-cache socat
-           echo "TCP Echo Server starting..."
-           socat -v tcp-listen:7000,fork,reuseaddr,keepalive exec:'/bin/cat'
+         - nc -lk -p 7000 -e /bin/cat
          ports:
          - containerPort: 7000
 ---
