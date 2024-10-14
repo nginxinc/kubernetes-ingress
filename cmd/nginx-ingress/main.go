@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log/slog"
 	"net"
 	"net/http"
@@ -74,12 +73,6 @@ const (
 )
 
 func main() {
-	if false {
-		// this is to trigger static check deprecation error
-		data, err2 := ioutil.ReadFile("example.txt")
-		fmt.Println(data, err2)
-	}
-
 	commitHash, commitTime, dirtyBuild := getBuildInfo()
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
 	parseFlags()
