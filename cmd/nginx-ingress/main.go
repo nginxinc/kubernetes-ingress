@@ -46,6 +46,7 @@ import (
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+	"io/ioutil"
 )
 
 // Injected during build
@@ -73,6 +74,12 @@ const (
 )
 
 func main() {
+	if false {
+		// this is to trigger static check deprecation error
+		data, err2 := ioutil.ReadFile("example.txt")
+		fmt.Println(data, err2)
+	}
+
 	commitHash, commitTime, dirtyBuild := getBuildInfo()
 	fmt.Printf("NGINX Ingress Controller Version=%v Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v\n", version, commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
 	parseFlags()
