@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
@@ -94,16 +95,18 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 			},
 		})
 
-	tsLister, _ := cache.NewInformer(
-		cache.NewListWatchFromClient(
-			fakeClient.K8sV1().RESTClient(),
-			"transportservers",
-			"nginx-ingress",
-			fields.Everything(),
-		),
-		&conf_v1.TransportServer{},
-		2,
-		nil,
+	tsLister, _ := cache.NewInformerWithOptions(
+		cache.InformerOptions{
+			ListerWatcher: cache.NewListWatchFromClient(
+				fakeClient.K8sV1().RESTClient(),
+				"transportservers",
+				"nginx-ingress",
+				fields.Everything(),
+			),
+			ObjectType:   &conf_v1.TransportServer{},
+			ResyncPeriod: 2 * time.Second,
+			Handler:      nil,
+		},
 	)
 
 	err := tsLister.Add(ts)
@@ -156,16 +159,18 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 			Items: []conf_v1.TransportServer{},
 		})
 
-	tsLister, _ := cache.NewInformer(
-		cache.NewListWatchFromClient(
-			fakeClient.K8sV1().RESTClient(),
-			"transportservers",
-			"nginx-ingress",
-			fields.Everything(),
-		),
-		&conf_v1.TransportServer{},
-		2,
-		nil,
+	tsLister, _ := cache.NewInformerWithOptions(
+		cache.InformerOptions{
+			ListerWatcher: cache.NewListWatchFromClient(
+				fakeClient.K8sV1().RESTClient(),
+				"transportservers",
+				"nginx-ingress",
+				fields.Everything(),
+			),
+			ObjectType:   &conf_v1.TransportServer{},
+			ResyncPeriod: 2 * time.Second,
+			Handler:      nil,
+		},
 	)
 
 	nsi := make(map[string]*namespacedInformer)
@@ -219,9 +224,19 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 		}},
 	)
 	ingLister := storeToIngressLister{}
-	ingLister.Store, _ = cache.NewInformer(
-		cache.NewListWatchFromClient(fakeClient.NetworkingV1().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
-		&networking.Ingress{}, 2, nil)
+	ingLister.Store, _ = cache.NewInformerWithOptions(
+		cache.InformerOptions{
+			ListerWatcher: cache.NewListWatchFromClient(
+				fakeClient.NetworkingV1().RESTClient(),
+				"ingresses",
+				"nginx-ingress",
+				fields.Everything(),
+			),
+			ObjectType:   &networking.Ingress{},
+			ResyncPeriod: 2 * time.Second,
+			Handler:      nil,
+		},
+	)
 
 	err := ingLister.Store.Add(&ing)
 	if err != nil {
@@ -328,9 +343,19 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 		}},
 	)
 	ingLister := storeToIngressLister{}
-	ingLister.Store, _ = cache.NewInformer(
-		cache.NewListWatchFromClient(fakeClient.NetworkingV1().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
-		&networking.Ingress{}, 2, nil)
+	ingLister.Store, _ = cache.NewInformerWithOptions(
+		cache.InformerOptions{
+			ListerWatcher: cache.NewListWatchFromClient(
+				fakeClient.NetworkingV1().RESTClient(),
+				"ingresses",
+				"nginx-ingress",
+				fields.Everything(),
+			),
+			ObjectType:   &networking.Ingress{},
+			ResyncPeriod: 2 * time.Second,
+			Handler:      nil,
+		},
+	)
 
 	err := ingLister.Store.Add(&ing)
 	if err != nil {
