@@ -537,7 +537,7 @@ pytest-metadata==3.1.1 \
     # via
     #   -r requirements.txt
     #   pytest-html
-# Broken on pyton version 3.13+
+# Broken on python version 3.13+
 # pytest-profiling==1.7.0 \
 #     --hash=sha256:93938f147662225d2b8bd5af89587b979652426a8a6ffd7e73ec4a23e24b7f29 \
 #     --hash=sha256:999cc9ac94f2e528e3f5d43465da277429984a1c237ae9818f8cfd0b06acb019
