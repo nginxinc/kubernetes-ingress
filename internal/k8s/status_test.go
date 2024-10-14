@@ -224,7 +224,6 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 		}},
 	)
 	ingLister := storeToIngressLister{}
-
 	ingLister.Store, _ = cache.NewInformerWithOptions(
 		cache.InformerOptions{
 			ListerWatcher: cache.NewListWatchFromClient(
@@ -344,7 +343,6 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 		}},
 	)
 	ingLister := storeToIngressLister{}
-
 	ingLister.Store, _ = cache.NewInformerWithOptions(
 		cache.InformerOptions{
 			ListerWatcher: cache.NewListWatchFromClient(
