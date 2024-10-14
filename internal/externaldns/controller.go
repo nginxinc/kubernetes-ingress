@@ -14,6 +14,7 @@ import (
 	extdnslisters "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/externaldns/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
@@ -31,7 +32,7 @@ const (
 type ExtDNSController struct {
 	sync          SyncFn
 	ctx           context.Context
-	queue         workqueue.RateLimitingInterface
+	queue         workqueue.TypedRateLimitingInterface[types.NamespacedName]
 	recorder      record.EventRecorder
 	client        k8s_nginx.Interface
 	informerGroup map[string]*namespacedInformer
@@ -60,9 +61,14 @@ type ExtDNSOpts struct {
 // NewController takes external dns config and return a new External DNS Controller.
 func NewController(opts *ExtDNSOpts) *ExtDNSController {
 	ig := make(map[string]*namespacedInformer)
+
+	rateLimiter := workqueue.DefaultTypedControllerRateLimiter[types.NamespacedName]()
+
+	queue := workqueue.NewTypedRateLimitingQueueWithConfig(rateLimiter, workqueue.TypedRateLimitingQueueConfig[types.NamespacedName]{Name: ControllerName})
+
 	c := &ExtDNSController{
 		ctx:           opts.context,
-		queue:         workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), ControllerName),
+		queue:         queue,
 		informerGroup: ig,
 		recorder:      opts.eventRecorder,
 		client:        opts.client,
@@ -155,39 +161,31 @@ func (c *ExtDNSController) runWorker(ctx context.Context) {
 	l := nl.LoggerFromContext(ctx)
 	nl.Debugf(l, "processing items on the workqueue")
 	for {
-		obj, shutdown := c.queue.Get()
+		key, shutdown := c.queue.Get()
 		if shutdown {
 			break
 		}
 
 		func() {
-			defer c.queue.Done(obj)
-			key, ok := obj.(string)
-			if !ok {
-				return
-			}
-
+			defer c.queue.Done(key)
 			if err := c.processItem(ctx, key); err != nil {
 				nl.Debugf(l, "Re-queuing item due to error processing: %v", err)
-				c.queue.AddRateLimited(obj)
+				c.queue.AddRateLimited(key)
 				return
 			}
 			nl.Debugf(l, "finished processing work item")
-			c.queue.Forget(obj)
+			c.queue.Forget(key)
 		}()
 	}
 }
 
-func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
-		return err
-	}
+func (c *ExtDNSController) processItem(ctx context.Context, key types.NamespacedName) error {
+	namespace := key.Namespace
+	name := key.Name
 	l := nl.LoggerFromContext(ctx)
 	var vs *conf_v1.VirtualServer
 	nsi := getNamespacedInformer(namespace, c.informerGroup)
-	vs, err = nsi.vsLister.VirtualServers(namespace).Get(name)
+	vs, err := nsi.vsLister.VirtualServers(namespace).Get(name)
 
 	// VS has been deleted
 	if apierrors.IsNotFound(err) {
@@ -201,7 +199,7 @@ func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
 	return c.sync(ctx, vs)
 }
 
-func externalDNSHandler(queue workqueue.RateLimitingInterface) func(obj interface{}) {
+func externalDNSHandler(queue workqueue.TypedRateLimitingInterface[types.NamespacedName]) func(obj interface{}) {
 	return func(obj interface{}) {
 		ep, ok := obj.(*extdns_v1.DNSEndpoint)
 		if !ok {
@@ -223,7 +221,8 @@ func externalDNSHandler(queue workqueue.RateLimitingInterface) func(obj interfac
 			return
 		}
 
-		queue.Add(ep.Namespace + "/" + ref.Name)
+		key := types.NamespacedName{Namespace: ep.Namespace, Name: ref.Name}
+		queue.Add(key)
 	}
 }
 
