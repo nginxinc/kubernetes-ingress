@@ -73,7 +73,10 @@ func TestTemplateExecutorUsesOriginalIngressTemplate(t *testing.T) {
 		t.Fatalf("Ingress config starts with unwanted prefix: %s", prefix)
 	}
 
-	te.UpdateIngressTemplate(&customIngressTemplate)
+	err = te.UpdateIngressTemplate(&customIngressTemplate)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ingressConfig, err = te.ExecuteIngressConfigTemplate(&ingressCfg)
 	if err != nil {
