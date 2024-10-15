@@ -347,6 +347,8 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if mainTemplate, exists := cfgm.Data["main-template"]; exists {
 		cfgParams.MainTemplate = &mainTemplate
+	} else {
+		cfgParams.MainTemplate = nil
 	}
 
 	if ingressTemplate, exists := cfgm.Data["ingress-template"]; exists {
