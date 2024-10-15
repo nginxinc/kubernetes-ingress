@@ -1,7 +1,6 @@
 package version1
 
 import (
-	_ "embed"
 	"strings"
 	"testing"
 )
