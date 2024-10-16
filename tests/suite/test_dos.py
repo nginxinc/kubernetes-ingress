@@ -152,7 +152,7 @@ def dos_setup(
             "extra_args": [
                 f"-enable-custom-resources",
                 f"-enable-app-protect-dos",
-                f"-v=3",
+                f"-log-level=debug",
                 f"-app-protect-dos-debug",
             ]
         }

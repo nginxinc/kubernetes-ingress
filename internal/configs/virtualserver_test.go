@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -1200,6 +1201,7 @@ func TestGenerateVirtualServerConfigWithBackupForNGINXPlus(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -1512,6 +1514,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupNameFor
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -1818,6 +1821,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortFor
 		},
 	}
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -2122,6 +2126,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortAnd
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -2597,6 +2602,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -3281,7 +3287,7 @@ func TestGenerateVirtualServerConfigIPV6Disabled(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -3497,7 +3503,8 @@ func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
-		HTTP2: true,
+		Context: context.Background(),
+		HTTP2:   true,
 	}
 
 	expected := version2.VirtualServerConfig{
@@ -3770,6 +3777,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -3882,6 +3890,7 @@ func TestGenerateVirtualServerConfigWithInternalRoutes(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -3995,6 +4004,7 @@ func TestGenerateVirtualServerConfigWithInternalRoutesWarning(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -4176,7 +4186,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -4467,7 +4477,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -4880,7 +4890,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := []version2.Location{
 		{
@@ -5181,7 +5191,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Maps: []version2.Map{
@@ -5791,6 +5801,7 @@ func TestGenerateVirtualServerConfigJWKSPolicy(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -6048,6 +6059,7 @@ func TestGenerateVirtualServerConfigAPIKeyPolicy(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -6221,6 +6233,7 @@ func TestGenerateVirtualServerConfigAPIKeyClientMaps(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -7151,7 +7164,7 @@ func TestGeneratePolicies(t *testing.T) {
 		},
 	}
 
-	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+	vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
 	// required to test the scaling of the ratelimit
 	vsc.IngressControllerReplicas = 2
 
@@ -7251,7 +7264,7 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+			vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
 			res := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOptions{apResources: &appProtectResourcesForVS{}})
 			res.BundleValidator = nil
 			if !cmp.Equal(tc.want, res) {
@@ -8814,7 +8827,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+			vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
 
 			if test.oidcPolCfg != nil {
 				vsc.oidcPolCfg = test.oidcPolCfg
@@ -8929,6 +8942,7 @@ func TestGenerateUpstream(t *testing.T) {
 		"backup.service.svc.test.corp.local:8080",
 	}
 	cfgParams := ConfigParams{
+		Context:          context.Background(),
 		LBMethod:         "random",
 		MaxFails:         1,
 		MaxConns:         0,
@@ -9056,7 +9070,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	name := "test-upstream"
 	endpoints := []string{"example.com"}
 	upstream := conf_v1.Upstream{Service: name}
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.Upstream{
 		Name: name,
@@ -9090,6 +9104,7 @@ func TestGenerateUpstreamWithNTLM(t *testing.T) {
 		"192.168.10.10:8080",
 	}
 	cfgParams := ConfigParams{
+		Context:          context.Background(),
 		LBMethod:         "random",
 		MaxFails:         1,
 		MaxConns:         0,
@@ -9354,6 +9369,7 @@ func TestGenerateBuffer(t *testing.T) {
 func TestGenerateLocationForProxying(t *testing.T) {
 	t.Parallel()
 	cfgParams := ConfigParams{
+		Context:              context.Background(),
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
 		ProxySendTimeout:     "32s",
@@ -9400,6 +9416,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 func TestGenerateLocationForGrpcProxying(t *testing.T) {
 	t.Parallel()
 	cfgParams := ConfigParams{
+		Context:              context.Background(),
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
 		ProxySendTimeout:     "32s",
@@ -9634,7 +9651,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 		{
 			inputTLS:         nil,
 			inputSecretRefs:  map[string]*secrets.SecretReference{},
-			inputCfgParams:   &ConfigParams{},
+			inputCfgParams:   &ConfigParams{Context: context.Background()},
 			wildcard:         false,
 			expectedSSL:      nil,
 			expectedWarnings: Warnings{},
@@ -9645,7 +9662,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				Secret: "",
 			},
 			inputSecretRefs:  map[string]*secrets.SecretReference{},
-			inputCfgParams:   &ConfigParams{},
+			inputCfgParams:   &ConfigParams{Context: context.Background()},
 			wildcard:         false,
 			expectedSSL:      nil,
 			expectedWarnings: Warnings{},
@@ -9656,7 +9673,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				Secret: "",
 			},
 			inputSecretRefs: map[string]*secrets.SecretReference{},
-			inputCfgParams:  &ConfigParams{},
+			inputCfgParams:  &ConfigParams{Context: context.Background()},
 			wildcard:        true,
 			expectedSSL: &version2.SSL{
 				HTTP2:           false,
@@ -9671,7 +9688,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLS: &conf_v1.TLS{
 				Secret: "missing",
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/missing": {
@@ -9691,7 +9708,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLS: &conf_v1.TLS{
 				Secret: "mistyped",
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/mistyped": {
@@ -9721,7 +9738,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 					Path: "secret.pem",
 				},
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			expectedSSL: &version2.SSL{
 				HTTP2:           false,
@@ -9737,7 +9754,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 	namespace := "default"
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, test.wildcard, &fakeBV)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, test.wildcard, &fakeBV)
 
 		// it is ok to use nil as the owner
 		result := vsc.generateSSLConfig(nil, test.inputTLS, namespace, test.inputSecretRefs, test.inputCfgParams)
@@ -10025,7 +10042,7 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 		},
 	}
 
-	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{}, &StaticConfigParams{})
+	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{Context: context.Background()}, &StaticConfigParams{})
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("createUpstreamsForPlus returned \n%v but expected \n%v", result, expected)
 	}
@@ -10180,7 +10197,7 @@ func TestGenerateSplits(t *testing.T) {
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := NewVSVariableNamer(&virtualServer)
 	scIndex := 1
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -11796,7 +11813,7 @@ func TestGenerateSplitsWeightChangesDynamicReload(t *testing.T) {
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := NewVSVariableNamer(&virtualServer)
 	scIndex := 1
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -12117,7 +12134,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	locSnippet := ""
 	enableSnippets := false
 	weightChangesDynamicReload := false
@@ -12519,7 +12536,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	enableSnippets := false
 	weightChangesDynamicReload := false
 	locSnippets := ""
@@ -12932,7 +12949,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	enableSnippets := false
 	weightChangesWithoutReload := false
 	locSnippets := ""
@@ -13682,7 +13699,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 	for _, test := range tests {
 		isWildcardEnabled := false
 		vsc := newVirtualServerConfigurator(
-			&ConfigParams{},
+			&ConfigParams{Context: context.Background()},
 			test.isPlus,
 			test.isResolverConfigured,
 			&StaticConfigParams{},
@@ -13728,7 +13745,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	}
 
 	for _, lbMethod := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false, &fakeBV)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, true, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
@@ -13762,7 +13779,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false, &fakeBV)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, true, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
@@ -13863,7 +13880,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{}, false, &fakeBV)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, test.isPlus, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{}, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
@@ -14998,7 +15015,7 @@ func TestAddWafConfig(t *testing.T) {
 
 	for _, test := range tests {
 		polCfg := newPoliciesConfig(&fakeBV)
-		result := polCfg.addWAFConfig(test.wafInput, test.polKey, test.polNamespace, test.apResources)
+		result := polCfg.addWAFConfig(context.Background(), test.wafInput, test.polKey, test.polNamespace, test.apResources)
 		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
 			t.Errorf("policiesCfg.addWAFConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}

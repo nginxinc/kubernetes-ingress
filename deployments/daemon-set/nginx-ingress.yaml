@@ -32,7 +32,7 @@ spec:
 #      - name: nginx-log
 #        emptyDir: {}
       containers:
-      - image: nginx/nginx-ingress:3.6.2
+      - image: nginx/nginx-ingress:3.7.0
         imagePullPolicy: IfNotPresent
         name: nginx-ingress
         ports:
@@ -91,11 +91,12 @@ spec:
           - -report-ingress-status
           - -external-service=nginx-ingress
          #- -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
-         #- -v=3 # Enables extensive logging. Useful for troubleshooting.
+         #- -log-level=debug # Enables extensive logging. Useful for troubleshooting. Options include: trace, debug, info, warning, error, fatal
+         #- -log-format=glog # Sets the log format. Options include: glog, json, text
          #- -enable-prometheus-metrics
          #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
 #      initContainers:
-#      - image: nginx/nginx-ingress:3.6.2
+#      - image: nginx/nginx-ingress:3.7.0
 #        imagePullPolicy: IfNotPresent
 #        name: init-nginx-ingress
 #        command: ['cp', '-vdR', '/etc/nginx/.', '/mnt/etc']

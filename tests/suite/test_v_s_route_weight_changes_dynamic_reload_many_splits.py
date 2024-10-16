@@ -127,7 +127,7 @@ def vsr_weight_changes_dynamic_reload_many_splits_setup(
                     "-enable-custom-resources",
                     "-enable-prometheus-metrics",
                     "-weight-changes-dynamic-reload=true",
-                    "-v=3",
+                    "-log-level=debug",
                 ],
             },
             {"example": "virtual-server-route-weight-changes-dynamic-reload"},

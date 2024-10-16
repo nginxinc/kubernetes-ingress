@@ -1056,21 +1056,21 @@ func TestCollectInstallationFlags(t *testing.T) {
 		{
 			name: "second flag",
 			setFlags: []string{
-				"-v=3",
+				"-log-level=debug",
 			},
 			wantFlags: []string{
-				"-v=3",
+				"-log-level=debug",
 			},
 		},
 		{
 			name: "multiple flags",
 			setFlags: []string{
 				"nginx-plus=true",
-				"-v=3",
+				"-log-level=debug",
 			},
 			wantFlags: []string{
 				"nginx-plus=true",
-				"-v=3",
+				"-log-level=debug",
 			},
 		},
 		{
@@ -2350,7 +2350,7 @@ func newConfigurator(t *testing.T) *configs.Configurator {
 			StubStatusOverUnixSocketForOSS: false,
 			NginxVersion:                   nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
 		},
-		Config:                  configs.NewDefaultConfigParams(false),
+		Config:                  configs.NewDefaultConfigParams(context.Background(), false),
 		TemplateExecutor:        templateExecutor,
 		TemplateExecutorV2:      templateExecutorV2,
 		LatencyCollector:        nil,
@@ -2360,7 +2360,6 @@ func newConfigurator(t *testing.T) *configs.Configurator {
 		IsPrometheusEnabled:     false,
 		IsLatencyMetricsEnabled: false,
 	})
-
 	return cnf
 }
 

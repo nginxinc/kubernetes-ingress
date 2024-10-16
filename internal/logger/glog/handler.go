@@ -11,21 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-)
 
-const (
-	// LevelTrace - Trace Level Logging same as glog.V(3)
-	LevelTrace = slog.Level(-8)
-	// LevelDebug - Debug Level Logging same as glog.V(2)
-	LevelDebug = slog.LevelDebug
-	// LevelInfo - Info Level Logging same as glog.Info()
-	LevelInfo = slog.LevelInfo
-	// LevelWarning - Warn Level Logging same as glog.Warning()
-	LevelWarning = slog.LevelWarn
-	// LevelError - Error Level Logging same as glog.Error()
-	LevelError = slog.LevelError
-	// LevelFatal - Fatal Level Logging same as glog.Fatal()
-	LevelFatal = slog.Level(12)
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 )
 
 // Handler holds all the parameters for the handler
@@ -80,17 +67,17 @@ func (h *Handler) Handle(_ context.Context, r slog.Record) error {
 	buf := make([]byte, 0, 1024)
 	// LogLevel
 	switch r.Level {
-	case LevelTrace:
+	case levels.LevelTrace:
 		buf = append(buf, "I"...)
-	case LevelDebug:
+	case levels.LevelDebug:
 		buf = append(buf, "I"...)
-	case LevelInfo:
+	case levels.LevelInfo:
 		buf = append(buf, "I"...)
-	case LevelWarning:
+	case levels.LevelWarning:
 		buf = append(buf, "W"...)
-	case LevelError:
+	case levels.LevelError:
 		buf = append(buf, "E"...)
-	case LevelFatal:
+	case levels.LevelFatal:
 		buf = append(buf, "F"...)
 	}
 

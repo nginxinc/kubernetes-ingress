@@ -10,7 +10,7 @@ config:
 # Define glob expressions to ignore
 ignores:
   - ".github/**"
-  - "docs/**" # Ignore docs folder for now
+  - "site/**" # Ignore docs folder for now
 
 # Fix any fixable errors
 fix: true

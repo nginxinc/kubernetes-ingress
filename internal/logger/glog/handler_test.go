@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"regexp"
 	"testing"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 )
 
 func TestGlogFormat(t *testing.T) {
@@ -28,32 +30,32 @@ func TestGlogLogLevels(t *testing.T) {
 	}{
 		{
 			name:   "Trace level log message",
-			level:  LevelTrace,
+			level:  levels.LevelTrace,
 			wantre: `^I\d{8}\s\d+:\d+:\d+.\d{6}\s+\d+\s\w+\.go:\d+\]\s.*\s$`,
 		},
 		{
 			name:   "Debug level log message",
-			level:  LevelDebug,
+			level:  levels.LevelDebug,
 			wantre: `^I\d{8}\s\d+:\d+:\d+.\d{6}\s+\d+\s\w+\.go:\d+\]\s.*\s$`,
 		},
 		{
 			name:   "Info level log message",
-			level:  LevelInfo,
+			level:  levels.LevelInfo,
 			wantre: `^I\d{8}\s\d+:\d+:\d+.\d{6}\s+\d+\s\w+\.go:\d+\]\s.*\s$`,
 		},
 		{
 			name:   "Warning level log message",
-			level:  LevelWarning,
+			level:  levels.LevelWarning,
 			wantre: `^W\d{8}\s\d+:\d+:\d+.\d{6}\s+\d+\s\w+\.go:\d+\]\s.*\s$`,
 		},
 		{
 			name:   "Error level log message",
-			level:  LevelError,
+			level:  levels.LevelError,
 			wantre: `^E\d{8}\s\d+:\d+:\d+.\d{6}\s+\d+\s\w+\.go:\d+\]\s.*\s$`,
 		},
 		{
 			name:   "Fatal level log message",
-			level:  LevelFatal,
+			level:  levels.LevelFatal,
 			wantre: `^F\d{8}\s\d+:\d+:\d+.\d{6}\s+\d+\s\w+\.go:\d+\]\s.*\s$`,
 		},
 	}
@@ -84,7 +86,7 @@ func TestGlogDefaultLevel(t *testing.T) {
 
 func TestGlogHigherLevel(t *testing.T) {
 	var buf bytes.Buffer
-	l := slog.New(New(&buf, &Options{Level: LevelError}))
+	l := slog.New(New(&buf, &Options{Level: levels.LevelError}))
 
 	l.Info("test")
 	if got := buf.Len(); got != 0 {

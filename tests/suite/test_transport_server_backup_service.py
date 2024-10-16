@@ -169,7 +169,7 @@ def transport_server_tls_passthrough_setup(
                 "type": "complete",
                 "extra_args": [
                     "-enable-tls-passthrough=true",
-                    "-v=3",
+                    "-log-level=debug",
                 ],
             },
             {"example": "transport-server-backup-service", "tls_passthrough_port": 443},

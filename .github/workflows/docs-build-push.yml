@@ -12,18 +12,26 @@ on:
           - dev
           - staging
           - prod
+      hugo_theme_override:
+        description: 'Override hugo theme (leave blank to use latest version)'
+        required: false
+        default: ''
+        type: string
   pull_request:
     branches:
       - "*"
     paths:
-      - "docs/**"
+      - "site/**"
+  push:
+    branches:
+      - "release-3.7"
 
 permissions:
   contents: read
 
 jobs:
   call-docs-build-push:
-    uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@f88844356d32c94be057b60033b3a933bebabf77 # v1.0.5
+    uses: nginxinc/docs-actions/.github/workflows/docs-build-push.yml@69843fb5d009e99750e50c23e90c23a899e4637e # v1.0.6
     permissions:
       pull-requests: write # needed to write preview url comment to PR
       contents: read
@@ -31,9 +39,12 @@ jobs:
       production_url_path: "/nginx-ingress-controller"
       preview_url_path: "/previews/nginx-ingress-controller"
       docs_source_path: "public/nginx-ingress-controller"
-      docs_build_path: "./docs"
+      docs_build_path: "./site"
       doc_type: "hugo"
       environment: ${{ inputs.environment }}
+      force_hugo_theme_version: ${{inputs.hugo_theme_override}}
+      auto_deploy_branch: "release-3.7"
+      auto_deploy_env: "prod"
     secrets:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS_DOCS }}
       AZURE_KEY_VAULT: ${{ secrets.AZURE_KEY_VAULT_DOCS }}

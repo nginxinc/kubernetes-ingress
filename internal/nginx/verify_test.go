@@ -3,10 +3,14 @@ package nginx
 import (
 	"bytes"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 )
 
 type Transport struct{}
@@ -42,11 +46,12 @@ func TestVerifyClient(t *testing.T) {
 		t.Errorf("got bad config version, expected 42 got %v", configVersion)
 	}
 
-	err = c.WaitForCorrectVersion(43)
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
+	err = c.WaitForCorrectVersion(l, 43)
 	if err == nil {
 		t.Error("expected error from WaitForCorrectVersion ")
 	}
-	err = c.WaitForCorrectVersion(42)
+	err = c.WaitForCorrectVersion(l, 42)
 	if err != nil {
 		t.Errorf("error waiting for config version: %v", err)
 	}
