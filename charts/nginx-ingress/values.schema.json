@@ -1799,7 +1799,6 @@
           },
           "tolerations": [],
           "affinity": {},
-          "topologySpreadConstraints": {},
           "env": [],
           "volumes": [],
           "volumeMounts": [],
@@ -1854,13 +1853,13 @@
             "httpPort": {
               "enable": true,
               "port": 80,
-              "nodePort": "",
+              "nodePort": 8443,
               "targetPort": 80
             },
             "httpsPort": {
               "enable": true,
               "port": 443,
-              "nodePort": "",
+              "nodePort": 8443,
               "targetPort": 443
             },
             "customPorts": []
@@ -2414,7 +2413,6 @@
         },
         "tolerations": [],
         "affinity": {},
-        "topologySpreadConstraints": {},
         "env": [],
         "volumes": [],
         "volumeMounts": [],
@@ -2469,13 +2467,13 @@
           "httpPort": {
             "enable": true,
             "port": 80,
-            "nodePort": "",
+            "nodePort": 8080,
             "targetPort": 80
           },
           "httpsPort": {
             "enable": true,
             "port": 443,
-            "nodePort": "",
+            "nodePort": 8443,
             "targetPort": 443
           },
           "customPorts": []
@@ -2561,7 +2559,7 @@
         "logLevel": "error",
         "syslog": {
           "host": "127.0.0.1",
-          "port": "1514"
+          "port": 1514
         },
         "napMonitoring": {
           "collectorBufferSize": 50000,
