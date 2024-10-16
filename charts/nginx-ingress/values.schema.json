@@ -1656,13 +1656,55 @@
       },
       "examples": [
         {
-          "name": "",
+          "name": "controller",
           "kind": "deployment",
           "nginxplus": false,
           "nginxReloadTimeout": 60000,
           "appprotect": {
             "enable": false,
-            "logLevel": "fatal"
+            "v5": false,
+            "logLevel": "fatal",
+            "volumes": [
+              {
+                "name": "app-protect-bd-config",
+                "emptyDir": {}
+              },
+              {
+                "name": "app-protect-config",
+                "emptyDir": {}
+              },
+              {
+                "name": "app-protect-bundles",
+                "emptyDir": {}
+              }
+            ],
+            "enforcer": {
+              "host": "127.0.0.1",
+              "port": 50000,
+              "image": {
+                "repository": "private-registry.nginx.com/nap/waf-enforcer",
+                "tag": "5.3.0",
+                "pullPolicy": "IfNotPresent"
+              },
+              "securityContext": {}
+            },
+            "configManager": {
+              "image": {
+                "repository": "private-registry.nginx.com/nap/waf-config-mgr",
+                "tag": "5.3.0",
+                "pullPolicy": "IfNotPresent"
+              },
+              "securityContext": {
+                "allowPrivilegeEscalation": false,
+                "runAsUser": 101,
+                "runAsNonRoot": true,
+                "capabilities": {
+                  "drop": [
+                    "all"
+                  ]
+                }
+              }
+            }
           },
           "appprotectdos": {
             "enable": false,
@@ -1672,9 +1714,20 @@
             "memory": 0
           },
           "hostNetwork": false,
+          "hostPort": {
+            "enable": false,
+            "http": 80,
+            "https": 443
+          },
+          "containerPort": {
+            "http": 80,
+            "https": 443
+          },
+          "dnsPolicy": "ClusterFirst",
           "nginxDebug": false,
           "shareProcessNamespace": false,
-          "logLevel": 1,
+          "logLevel": "info",
+          "logFormat": "glog",
           "customPorts": [],
           "image": {
             "repository": "nginx/nginx-ingress",
@@ -1701,6 +1754,21 @@
           },
           "nodeSelector": {},
           "terminationGracePeriodSeconds": 30,
+          "autoscaling": {
+            "enabled": false,
+            "annotations": {},
+            "minReplicas": 1,
+            "maxReplicas": 3,
+            "targetCPUUtilizationPercentage": 50,
+            "targetMemoryUtilizationPercentage": 50,
+            "behavior": {}
+          },
+          "resources": {
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          },
           "podSecurityContext": {
             "seccompProfile": {
               "type": "RuntimeDefault"
@@ -1708,12 +1776,6 @@
           },
           "securityContext": {},
           "initContainerSecurityContext": {},
-          "resources": {
-            "requests": {
-              "cpu": "100m",
-              "memory": "128Mi"
-            }
-          },
           "initContainerResources": {
             "requests": {
               "cpu": "100m",
@@ -1728,11 +1790,20 @@
           "volumeMounts": [],
           "initContainers": [],
           "minReadySeconds": 0,
+          "podDisruptionBudget": {
+            "enabled": false,
+            "annotations": {},
+            "minAvailable": 1,
+            "minUnavailable": 1
+          },
           "strategy": {},
           "extraContainers": [],
           "replicaCount": 1,
-          "ingressClass": "nginx",
-          "setAsDefaultIngress": false,
+          "ingressClass": {
+            "name": "nginx",
+            "create": true,
+            "setAsDefaultIngress": false
+          },
           "watchNamespace": "",
           "enableCustomResources": true,
           "enableOIDC": false,
@@ -1759,6 +1830,7 @@
             "annotations": {},
             "extraLabels": {},
             "loadBalancerIP": "",
+            "clusterIP": "",
             "externalIPs": [],
             "loadBalancerSourceRanges": [],
             "allocateLoadBalancerNodePorts": false,
@@ -1767,25 +1839,22 @@
             "httpPort": {
               "enable": true,
               "port": 80,
+              "nodePort": "",
               "targetPort": 80
             },
             "httpsPort": {
               "enable": true,
               "port": 443,
+              "nodePort": "",
               "targetPort": 443
             },
             "customPorts": []
           },
           "serviceAccount": {
+            "annotations": {},
             "name": "",
             "imagePullSecretName": "",
             "imagePullSecretsNames": []
-          },
-          "serviceMonitor": {
-            "create": false,
-            "labels": {},
-            "selectorMatchLabels": {},
-            "endpoints": {}
           },
           "reportIngressStatus": {
             "enable": true,
@@ -1809,7 +1878,12 @@
           "disableIPV6": false,
           "defaultHTTPListenerPort": 80,
           "defaultHTTPSListenerPort": 443,
-          "readOnlyRootFilesystem": false
+          "readOnlyRootFilesystem": false,
+          "enableSSLDynamicReload": true,
+          "telemetryReporting": {
+            "enable": true
+          },
+          "enableWeightChangesDynamicReload": false
         }
       ]
     },
@@ -2197,13 +2271,55 @@
   "examples": [
     {
       "controller": {
-        "name": "",
+        "name": "controller",
         "kind": "deployment",
         "nginxplus": false,
         "nginxReloadTimeout": 60000,
         "appprotect": {
           "enable": false,
-          "logLevel": "fatal"
+          "v5": false,
+          "logLevel": "fatal",
+          "volumes": [
+            {
+              "name": "app-protect-bd-config",
+              "emptyDir": {}
+            },
+            {
+              "name": "app-protect-config",
+              "emptyDir": {}
+            },
+            {
+              "name": "app-protect-bundles",
+              "emptyDir": {}
+            }
+          ],
+          "enforcer": {
+            "host": "127.0.0.1",
+            "port": 50000,
+            "image": {
+              "repository": "private-registry.nginx.com/nap/waf-enforcer",
+              "tag": "5.3.0",
+              "pullPolicy": "IfNotPresent"
+            },
+            "securityContext": {}
+          },
+          "configManager": {
+            "image": {
+              "repository": "private-registry.nginx.com/nap/waf-config-mgr",
+              "tag": "5.3.0",
+              "pullPolicy": "IfNotPresent"
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "runAsUser": 101,
+              "runAsNonRoot": true,
+              "capabilities": {
+                "drop": [
+                  "all"
+                ]
+              }
+            }
+          }
         },
         "appprotectdos": {
           "enable": false,
@@ -2213,8 +2329,20 @@
           "memory": 0
         },
         "hostNetwork": false,
+        "hostPort": {
+          "enable": false,
+          "http": 80,
+          "https": 443
+        },
+        "containerPort": {
+          "http": 80,
+          "https": 443
+        },
+        "dnsPolicy": "ClusterFirst",
         "nginxDebug": false,
-        "logLevel": 1,
+        "shareProcessNamespace": false,
+        "logLevel": "info",
+        "logFormat": "glog",
         "customPorts": [],
         "image": {
           "repository": "nginx/nginx-ingress",
@@ -2241,12 +2369,28 @@
         },
         "nodeSelector": {},
         "terminationGracePeriodSeconds": 30,
+        "autoscaling": {
+          "enabled": false,
+          "annotations": {},
+          "minReplicas": 1,
+          "maxReplicas": 3,
+          "targetCPUUtilizationPercentage": 50,
+          "targetMemoryUtilizationPercentage": 50,
+          "behavior": {}
+        },
         "resources": {
           "requests": {
             "cpu": "100m",
             "memory": "128Mi"
           }
         },
+        "podSecurityContext": {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "securityContext": {},
+        "initContainerSecurityContext": {},
         "initContainerResources": {
           "requests": {
             "cpu": "100m",
@@ -2261,15 +2405,25 @@
         "volumeMounts": [],
         "initContainers": [],
         "minReadySeconds": 0,
+        "podDisruptionBudget": {
+          "enabled": false,
+          "annotations": {},
+          "minAvailable": 1,
+          "minUnavailable": 1
+        },
         "strategy": {},
         "extraContainers": [],
         "replicaCount": 1,
-        "ingressClass": "nginx",
-        "setAsDefaultIngress": false,
+        "ingressClass": {
+          "name": "nginx",
+          "create": true,
+          "setAsDefaultIngress": false
+        },
         "watchNamespace": "",
         "enableCustomResources": true,
         "enableOIDC": false,
         "enableTLSPassthrough": false,
+        "tlsPassthroughPort": 443,
         "enableCertManager": false,
         "enableExternalDNS": false,
         "globalConfiguration": {
@@ -2291,6 +2445,7 @@
           "annotations": {},
           "extraLabels": {},
           "loadBalancerIP": "",
+          "clusterIP": "",
           "externalIPs": [],
           "loadBalancerSourceRanges": [],
           "allocateLoadBalancerNodePorts": false,
@@ -2311,15 +2466,10 @@
           "customPorts": []
         },
         "serviceAccount": {
+          "annotations": {},
           "name": "",
           "imagePullSecretName": "",
           "imagePullSecretsNames": []
-        },
-        "podDisruptionBudget": {
-          "enabled": false,
-          "annotations": {},
-          "minAvailable": 0,
-          "minUnavailable": 0
         },
         "reportIngressStatus": {
           "enable": true,
@@ -2343,10 +2493,18 @@
         "disableIPV6": false,
         "defaultHTTPListenerPort": 80,
         "defaultHTTPSListenerPort": 443,
-        "readOnlyRootFilesystem": false
+        "readOnlyRootFilesystem": false,
+        "enableSSLDynamicReload": true,
+        "telemetryReporting": {
+          "enable": true
+        },
+        "enableWeightChangesDynamicReload": false
       },
       "rbac": {
-        "create": true
+        "create": true,
+        "clusterrole": {
+          "create": true
+        }
       },
       "prometheus": {
         "create": true,
@@ -2355,17 +2513,25 @@
         "scheme": "http",
         "service": {
           "create": false,
-          "labels": {}
+          "labels": {
+            "service": "nginx-ingress-prometheus-service"
+          }
         },
         "serviceMonitor": {
           "create": false,
           "labels": {},
-          "selectorMatchLabels": {},
-          "endpoints": {}
+          "selectorMatchLabels": {
+            "service": "nginx-ingress-prometheus-service"
+          },
+          "endpoints": [
+            {
+              "port": "prometheus"
+            }
+          ]
         }
       },
       "serviceInsight": {
-        "create": true,
+        "create": false,
         "port": 9114,
         "secret": "",
         "scheme": "http"
@@ -2373,6 +2539,31 @@
       "nginxServiceMesh": {
         "enable": false,
         "enableEgress": false
+      },
+      "nginxAgent": {
+        "enable": false,
+        "instanceGroup": "",
+        "logLevel": "error",
+        "syslog": {
+          "host": "127.0.0.1",
+          "port": "1514"
+        },
+        "napMonitoring": {
+          "collectorBufferSize": 50000,
+          "processorBufferSize": 50000
+        },
+        "instanceManager": {
+          "host": "",
+          "grpcPort": 443,
+          "sni": "",
+          "tls": {
+            "enabled": true,
+            "skipVerify": false,
+            "secret": "",
+            "caSecret": ""
+          }
+        },
+        "customConfigMap": ""
       }
     }
   ]
