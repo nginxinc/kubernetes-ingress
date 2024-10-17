@@ -1310,11 +1310,15 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		cfgParams.MainServerSSLDHParam = fileName
 	}
 
+	// Apply custom main-template defined in ConfigMap obj
 	if cfgParams.MainTemplate != nil {
 		err := cnf.templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the main template: %w", err)
 		}
+	} else {
+		// Reverse to default main template parsed at NIC startup.
+		cnf.templateExecutor.UseOriginalMainTemplate()
 	}
 
 	if cfgParams.IngressTemplate != nil {
