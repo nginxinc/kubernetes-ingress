@@ -613,6 +613,43 @@ func TestMakeTransportIPListener(t *testing.T) {
 	}
 }
 
+func TestMakeServerName(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		server   StreamServer
+		expected string
+	}{
+		{server: StreamServer{
+			TLSPassthrough: false,
+			ServerName:     "cafe.example.com",
+			SSL:            &StreamSSL{},
+		}, expected: "server_name \"cafe.example.com\";"},
+		{server: StreamServer{
+			TLSPassthrough: true,
+			ServerName:     "cafe.example.com",
+			SSL:            &StreamSSL{},
+		}, expected: ""},
+		{server: StreamServer{
+			TLSPassthrough: false,
+			ServerName:     "",
+			SSL:            &StreamSSL{},
+		}, expected: ""},
+		{server: StreamServer{
+			TLSPassthrough: false,
+			ServerName:     "cafe.example.com",
+			SSL:            nil,
+		}, expected: ""},
+	}
+
+	for _, tc := range testCases {
+		got := makeServerName(tc.server)
+		if got != tc.expected {
+			t.Errorf("Function generated wrong config, got %q but expected %q.", got, tc.expected)
+		}
+	}
+}
+
 func newContainsTemplate(t *testing.T) *template.Template {
 	t.Helper()
 	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(`{{contains .InputString .Substring}}`)
