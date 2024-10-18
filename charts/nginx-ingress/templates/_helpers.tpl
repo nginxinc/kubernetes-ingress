@@ -322,6 +322,11 @@ volumes:
 List of volumes for controller.
 */}}
 {{- define "nginx-ingress.volumeEntries" -}}
+{{- if .Values.controller.nginxplus -}}
+- name: nginx-plus-license
+  secret:
+    secretName: {{ .Values.controller.mgmt.licenseTokenSecretName }}
+{{- end }}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - name: nginx-etc
   emptyDir: {}
@@ -372,8 +377,12 @@ volumeMounts:
 {{ include "nginx-ingress.volumeMountEntries" . }}
 {{- end -}}
 {{- end -}}
-
 {{- define "nginx-ingress.volumeMountEntries" -}}
+{{- if .Values.controller.nginxplus -}}
+- name: nginx-plus-license
+  mountPath: "/etc/nginx/license.jwt"
+  subPath: "license.jwt"
+{{- end -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - mountPath: /etc/nginx
   name: nginx-etc

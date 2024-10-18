@@ -12,7 +12,7 @@ controller:
   annotations: {}
 
   ## Deploys the Ingress Controller for NGINX Plus.
-  nginxplus: false
+  nginxplus: true
 
   mgmt:
     # usageReport:
@@ -21,7 +21,7 @@ controller:
 
     # enforceInitialReport: on
 
-    licenseTokenSecretName: nginx-plus-secret
+    licenseTokenSecretName: license-token
 
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
   nginxReloadTimeout: 60000
