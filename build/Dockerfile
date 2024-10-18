@@ -31,7 +31,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.27.2@sha256:d2eb56950b84efe34f966a2b92efb1a1a2ea53e7e93b94cdf45a27cf3cd47fc0 AS debian
+FROM nginx:1.27.2@sha256:28402db69fec7c17e179ea87882667f1e054391138f77ffaf0c3eb388efc3ffb AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -207,7 +207,7 @@ RUN --mount=type=bind,from=alpine-fips-3.17,target=/tmp/fips/ \
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
-FROM debian:12-slim@sha256:a2500dba20ee82616f6ec13daa5a55f20bc63a2df5ce6082dacfba682b13b451 AS debian-plus
+FROM debian:12-slim@sha256:36e591f228bb9b99348f584e83f16e012c33ba5cad44ef5981a1d7c0a93eca22 AS debian-plus
 ARG NGINX_PLUS_VERSION
 
 ENV NGINX_VERSION=${NGINX_PLUS_VERSION}
