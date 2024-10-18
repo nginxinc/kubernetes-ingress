@@ -1,4 +1,62 @@
 
+[TestExecuteTemplateForNGINXOSSTransportServerWithSNI - 1]
+
+upstream cafe-upstream {
+    zone cafe-upstream 512k;
+    server 10.0.0.20:5001 max_fails=0 fail_timeout= max_conns=0;
+}
+server {
+    listen 1234 ssl;
+    listen [::]:1234 ssl;
+    server_name "cafe.example.com";
+    ssl_certificate cafe-secret.pem;
+    ssl_certificate_key cafe-secret.pem;
+    proxy_requests 1;
+    proxy_responses 2;
+
+    proxy_pass cafe-upstream;
+
+    proxy_timeout 10s;
+    proxy_connect_timeout 10s;
+    proxy_next_upstream on;
+    proxy_next_upstream_timeout 10s;
+    proxy_next_upstream_tries 5;
+}
+
+---
+
+[TestExecuteTemplateForNGINXPlusTransportServerWithSNI - 1]
+
+upstream cafe-upstream {
+    zone cafe-upstream 512k;
+    server 10.0.0.20:5001 max_fails=0 fail_timeout= max_conns=0;
+}
+
+
+server {
+    listen 1234 ssl;
+    listen [::]:1234 ssl;
+    server_name "cafe.example.com";
+    ssl_certificate cafe-secret.pem;
+    ssl_certificate_key cafe-secret.pem;
+
+    status_zone ;
+    proxy_requests 1;
+    proxy_responses 2;
+
+    proxy_pass cafe-upstream;
+
+    
+
+    proxy_timeout 10s;
+    proxy_connect_timeout 10s;
+    proxy_next_upstream on;
+    proxy_next_upstream_timeout 10s;
+    proxy_next_upstream_tries 5;
+}
+
+---
+
 [TestExecuteTemplateForTransportServerWithBackupServerForNGINXPlus - 1]
 
 upstream udp-upstream {

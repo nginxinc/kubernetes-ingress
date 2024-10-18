@@ -98,13 +98,18 @@ func generateTransportServerConfig(p transportServerConfigParams) (*version2.Tra
 	if p.transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName {
 		statusZone = p.transportServerEx.TransportServer.Spec.Host
 	}
+	host := p.transportServerEx.TransportServer.Spec.Host
+	isTLSPassthrough := p.transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName
+	serverName := generateServerName(host, isTLSPassthrough)
+	isUDP := p.transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP"
 
 	tsConfig := &version2.TransportServerConfig{
 		Server: version2.StreamServer{
-			TLSPassthrough:           p.transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName,
+			ServerName:               serverName,
+			TLSPassthrough:           isTLSPassthrough,
 			UnixSocket:               generateUnixSocket(p.transportServerEx),
 			Port:                     p.listenerPort,
-			UDP:                      p.transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
+			UDP:                      isUDP,
 			StatusZone:               statusZone,
 			ProxyRequests:            proxyRequests,
 			ProxyResponses:           proxyResponses,
@@ -350,4 +355,11 @@ func generateLoadBalancingMethod(method string) string {
 		return ""
 	}
 	return method
+}
+
+func generateServerName(host string, isTLSPassthrough bool) string {
+	if isTLSPassthrough {
+		return ""
+	}
+	return host
 }

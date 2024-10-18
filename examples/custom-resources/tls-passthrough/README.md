@@ -46,8 +46,9 @@ You can see how the Secure App is implemented in the `secure-app.yaml` file.
 
 1. Save the HTTPS port of the Ingress Controller where TLS Passthrough is enabled into a shell variable:
 
-    ```console
-    $ IC_HTTPS_PORT=<port number>
+```console
+IC_HTTPS_PORT=<port number>
+```
 
 1. Save the HTTPS port of the Ingress Controller into a shell variable:
 
