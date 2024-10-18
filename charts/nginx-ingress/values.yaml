@@ -14,6 +14,15 @@ controller:
   ## Deploys the Ingress Controller for NGINX Plus.
   nginxplus: false
 
+  mgmt:
+    # usageReport:
+    #   endpoint: product.connect.nginx.com
+    #   interval: 1h
+
+    # enforceInitialReport: on
+
+    licenseTokenSecretName: nginx-plus-secret
+
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
   nginxReloadTimeout: 60000
 
@@ -124,7 +133,7 @@ controller:
   shareProcessNamespace: false
 
   ## The log level of the Ingress Controller. Options include: trace, debug, info, warning, error, fatal
-  logLevel: info
+  logLevel: debug
 
   ## Sets the log format of Ingress Controller. Options include: glog, json, text
   logFormat: glog
