@@ -1,13 +1,11 @@
 ---
-title: Deploy an Access Control policy
+title: Deploy a Policy for access control
 weight: 900
 toc: true
 docs: DOCS-000
 ---
 
-This topic describes how to apply and update an Access Control policy with F5 NGINX Ingress Controller.
-
-It demonstrates this using an example application and a [VirtualServer custom resource]({{< ref "/configuration/virtualserver-and-virtualserverroute-resources.md" >}})
+This topic describes how to use F5 NGINX Ingress Controller to apply and update a Policy for access control. It demonstrates it using an example application and a [VirtualServer custom resource]({{< ref "/configuration/virtualserver-and-virtualserverroute-resources.md" >}}).
 
 ---
 
@@ -45,7 +43,7 @@ kubectl apply -f webapp.yaml
 
 ---
 
-## Deploy an Access Control policy
+## Deploy a Policy to create a deny rule
 
 Create a file named _access-control-policy-deny.yaml_. The highlighted _deny_ field will be used by the example application, and should be changed to the subnet of your machine.
 
@@ -93,13 +91,13 @@ The *403* response is expected, successfully blocking your machine.
 
 ---
 
-## Update the policy
+## Update the Policy to create an allow rule
 
-Create a new policy with the file _access-control-policy-allow.yaml_, updating the _allow_ field to the subnet of your machine.
+Update the Policy with the file _access-control-policy-allow.yaml_, setting the _allow_ field to the subnet of your machine.
 
 {{< ghcode "https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/refs/heads/main/examples/custom-resources/access-control/access-control-policy-allow.yaml" "hl_lines=7-8" >}}
 
-Apply the policy:
+Apply the Policy:
 
 ```shell
 kubectl apply -f access-control-policy-allow.yaml
@@ -107,7 +105,7 @@ kubectl apply -f access-control-policy-allow.yaml
 
 ----
 
-## Verify the policy update
+## Verify the Policy update
 
 Attempt to access the application again:
 
