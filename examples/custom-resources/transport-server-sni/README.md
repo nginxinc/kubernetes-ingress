@@ -56,7 +56,7 @@ controller.service.customPorts:
 
 `kubectl get ts`
 
-```bash
+```shell
 NAME       STATE   REASON           AGE
 cafe-ts    Valid   AddedOrUpdated   2m
 mongo-ts   Valid   AddedOrUpdated   2m
@@ -69,7 +69,7 @@ is being used to set cafe.example.com and mongo.example.com to localhost.
 In a production instance, the server names would be set at the DNS layer.
 `cat /etc/hosts`
 
-```bash
+```shell
 ...
 127.0.0.1 cafe.example.com
 127.0.0.1 mongo.example.com
@@ -84,7 +84,7 @@ In a production instance, the server names would be set at the DNS layer.
 `ncat --ssl cafe.example.com 7000`
 When you write a message you should receive the following response:
 
-```bash
+```shell
 hi
 hi
 ```
@@ -93,7 +93,7 @@ Close the connection (CTRL+ c), then view the NGINX Ingress Controller logs.
 
 The request and response should both be 2 bytes.
 
-```bash
+```shell
 127.0.0.1 [24/Sep/2024:15:48:58 +0000] TCP 200 3 3 2.702 "-
 ```
 
@@ -101,7 +101,7 @@ The request and response should both be 2 bytes.
 
 `mongosh --host mongo.example.com --port 7000 --tls --tlsAllowInvalidCertificates`
 
-```bash
+```shell
 test> show dbs
 admin   40.00 KiB
 config  60.00 KiB
