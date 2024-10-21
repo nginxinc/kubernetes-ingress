@@ -89,6 +89,11 @@ jobs:
           RHEL: ${{ secrets.RHEL_LICENSE }}
         if: ${{ contains(inputs.target, 'plus') }}
 
+      - name: Lowercase actor name
+        id: actor
+        run: |
+          echo "actor=$(echo ${{ github.actor }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
         uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
@@ -100,7 +105,7 @@ jobs:
         run: |
           make ${{ inputs.target }}
         env:
-          REGISTRY: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ github.actor }}-dev
+          REGISTRY: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ steps.actor.outputs.actor }}-dev
           PREFIX: ${{ inputs.prefix }}
           TAG: ${{ inputs.tag }}
           PLUS_REPO: ${{ inputs.plus_repo }}
