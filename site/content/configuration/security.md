@@ -41,7 +41,7 @@ NGINX Ingress Controller is designed to be resilient against attacks in various 
 
 This is not enabled by default, but can be enabled with **Helm** using the [**controller.readOnlyRootFilesystem**]({{< relref "installation/installing-nic/installation-with-helm.md#configuration" >}}) argument, and in security contexts in both: `waf_enforcer` [**controller.appprotect.enforcer.securityContext{}**]({{ < relref "installation/installing-nic/installation-with-helm.md#configuration" >}}) and `waf_config_mgr` [**controller.appprotect.configManager.securityContext{}**]({{ < relref "installation/installing-nic/installation-with-helm.md#configuration" >}}).
 
-For **Manifests**, uncomment the following sections of the deployment:
+For **Manifests**, uncomment the following sections of the deployment and add sections for `waf_enforcer` and `waf_config_mgr` containers:
 
 - `readOnlyRootFilesystem: true`
 - The entire **volumeMounts** section
@@ -76,7 +76,6 @@ The block below shows the code you will look for:
 #        - mountPath: /var/log/nginx
 #          name: nginx-log
 ```
-
 
 ### Prometheus
 
