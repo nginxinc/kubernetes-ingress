@@ -162,7 +162,7 @@ volumeMounts:
 
 ### Enabling WAF v5
 
-Start by setting `controller.appprotect.enable` to `true` in your Helm values. This will the standard App Protect WAF fetatures.
+Start by setting `controller.appprotect.enable` to `true` in your Helm values. This will the standard App Protect WAF features.
 Afterwords, set `controller.approtect.v5` to `true`.
 This ensures that both the `waf-enforcer` and `waf-config-mgr` containers are deployed alongside the NGINX Ingress Controller containers.
 These two additional containers are required when using App Protect WAF v5.
@@ -226,6 +226,51 @@ You have two options for deploying NGINX Ingress Controller:
 
 - **Deployment**. Choose this method for the flexibility to dynamically change the number of NGINX Ingress Controller replicas.
 - **DaemonSet**. Choose this method if you want NGINX Ingress Controller to run on all nodes or a subset of nodes.
+
+
+### Configuring `readOnlyRootFilesystem`
+
+Set `controller.securityContext.readOnlyRootFilesystem` to `true`.
+
+Example helm values:
+
+```yaml
+controller:
+  ...
+  securityContext:
+    readOnlyRootFilesystem: true
+  ...
+```
+
+Set `controller.appprotect.enforcer.securityContext.readOnlyRootFilesystem` to `true`.
+
+Example helm values:
+
+```yaml
+controller:
+  ...
+  appprotect:
+    ...
+    enforcer:
+      securityContext:
+        readOnlyRootFilesystem: true
+  ...
+```
+
+Set `controller.appprotect.configManager.securityContext.readOnlyRootFilesystem` to `true`.
+
+Example helm values:
+
+```yaml
+controller:
+  ...
+  appprotect:
+    ...
+    configManager:
+      securityContext:
+        readOnlyRootFilesystem: true
+  ...
+```
 
 ---
 
