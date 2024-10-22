@@ -98,9 +98,6 @@
           "type": "object",
           "default": {},
           "title": "The mgmt block Schema",
-          "required": [
-            "licenseTokenSecretName"
-          ],
           "properties": {
             "licenseTokenSecretName": {
               "type": "string",

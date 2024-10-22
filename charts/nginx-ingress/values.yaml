@@ -14,9 +14,10 @@ controller:
   ## Deploys the Ingress Controller for NGINX Plus.
   nginxplus: true
 
-  mgmt:
+  ## Configures NGINX mgmt block for NGINX Plus
+  mgmt: {}  ## Ensure both curly brackets are removed when using NGINX Plus.
     ## Secret name of license token for NGINX Plus
-    licenseTokenSecretName: license-token
+    # licenseTokenSecretName: "" # required for NGINX Plus
 
     # ## SSL certification of the mgmt block
     # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
