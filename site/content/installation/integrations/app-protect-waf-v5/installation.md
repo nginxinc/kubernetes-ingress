@@ -232,7 +232,7 @@ You have two options for deploying NGINX Ingress Controller:
 
 Set `controller.securityContext.readOnlyRootFilesystem` to `true`.
 
-Example helm values:
+Example Helm values:
 
 ```yaml
 controller:
@@ -244,7 +244,7 @@ controller:
 
 Set `controller.appprotect.enforcer.securityContext.readOnlyRootFilesystem` to `true`.
 
-Example helm values:
+Example Helm values:
 
 ```yaml
 controller:
@@ -259,7 +259,7 @@ controller:
 
 Set `controller.appprotect.configManager.securityContext.readOnlyRootFilesystem` to `true`.
 
-Example helm values:
+Example Helm values:
 
 ```yaml
 controller:
