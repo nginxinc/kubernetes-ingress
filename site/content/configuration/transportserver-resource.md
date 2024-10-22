@@ -28,6 +28,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
   metadata:
     name: dns-tcp
   spec:
+    host: dns.example.com
     listener:
       name: dns-tcp
       protocol: TCP
@@ -87,7 +88,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``listener`` | The listener on NGINX that will accept incoming connections/datagrams. | [listener](#listener) | Yes |
-|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed. Required for TLS Passthrough load balancing. | ``string`` | No |
+|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed. When specified, NGINX will use this host for SNI-based routing. For TLS Passthrough, this field is required. For TCP with TLS termination, specifying the host enables SNI routing and requires specifying a TLS secret.| ``string`` | No |
 |``tls`` | The TLS termination configuration. Not supported for TLS Passthrough load balancing. | [tls](#tls) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | Yes |
 |``upstreamParameters`` | The upstream parameters. | [upstreamParameters](#upstreamparameters) | No |
@@ -102,6 +103,8 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 ### Listener
 
 The listener field references a listener that NGINX will use to accept incoming traffic for the TransportServer. For TCP and UDP, the listener must be defined in the [GlobalConfiguration resource]({{< relref "configuration/global-configuration/globalconfiguration-resource.md" >}}). When referencing a listener, both the name and the protocol must match. For TLS Passthrough, use the built-in listener with the name `tls-passthrough` and the protocol `TLS_PASSTHROUGH`.
+
+The combination of ``spec.listener.name`` and ``spec.host`` must be unique among all TransportServers. If two TransportServers specify the same combination of ``spec.listener.name`` and ``spec.host``, one of them will be rejected to prevent conflicts. In the case where no host is specified, it is considered an empty string.
 
 An example:
 
@@ -120,7 +123,7 @@ listener:
 
 ### TLS
 
-The tls field defines TLS configuration for a TransportServer. Please note the current implementation supports TLS termination on multiple ports, where each application owns a dedicated port - NGINX Ingress Controller terminates TLS connections on each port, where each application uses its own cert/key, and routes connections to appropriate application (service) based on that incoming port (any TLS connection regardless of the SNI on a port will be routed to the application that corresponds to that port). An example configuration is shown below:
+The tls field defines TLS configuration for a TransportServer. When using TLS termination (not TLS Passthrough), you can specify the host field to enable SNI-based routing, allowing multiple applications to share the same listener port and be distinguished by the TLS SNI hostname. Each application can use its own TLS certificate and key specified via the secret field.
 
 ```yaml
 secret: cafe-secret

@@ -770,8 +770,9 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 	cnf.transportServers[name] = transportServerEx
 
 	// update TLS Passthrough Hosts config in case we have a TLS Passthrough TransportServer
-	// only TLS Passthrough TransportServers have non-empty hosts
-	if transportServerEx.TransportServer.Spec.Host != "" {
+	// A non empty Host, may be a TLS Passthrough TransportServer but we have to check for the existence of the TLS Passthrough listener also, as TransportServers that terminate at the NGINX level can have non empty Hosts now too
+	isTLSPassthrough := transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName
+	if transportServerEx.TransportServer.Spec.Host != "" && isTLSPassthrough {
 		key := generateNamespaceNameKey(&transportServerEx.TransportServer.ObjectMeta)
 		cnf.tlsPassthroughPairs[key] = tlsPassthroughPair{
 			Host:       transportServerEx.TransportServer.Spec.Host,

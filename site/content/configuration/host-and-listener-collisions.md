@@ -106,11 +106,13 @@ It is *not* possible to merge configuration for multiple TransportServer resourc
 
 ---
 
-## Listener collisions
+## Listener/Host collisions
 
-Listener collisions occur when multiple TransportServer resources (Configured for TCP/UDP load balancing) target the same `listener`. 
+Listener/Host collisions occur when multiple TransportServer resources (configured for TCP/UDP load balancing) specify the same combination of `spec.listener.name` and `spec.host`.
 
-NGINX Ingress Controller will choose the winner, which will own the listener.
+The combination of `spec.listener.name` and `spec.host` must be unique among all TransportServer resources. If two TransportServer resources specify the same spec.listener.name and spec.host, one of them will be rejected to prevent conflicts. In the case where spec.host is not specified, it is considered an empty string.
+
+NGINX Ingress Controller will choose the winner, which will own that listener and host combination.
 
 ---
 
@@ -126,6 +128,7 @@ Consider the following two resources:
     metadata:
       name: tcp-1
     spec:
+      host: dns.example.com
       listener:
         name: dns-tcp
         protocol: TCP
@@ -140,6 +143,7 @@ Consider the following two resources:
     metadata:
       name: tcp-2
     spec:
+      host: dns.example.com
       listener:
         name: dns-tcp
         protocol: TCP

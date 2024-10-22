@@ -15,9 +15,11 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	api_v1 "k8s.io/api/core/v1"
 )
 
 func createTestStaticConfigParams() *StaticConfigParams {
@@ -1686,6 +1688,21 @@ func TestGetVitualServerCountsNotExistingVS(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateTransportServer(t *testing.T) {
+	t.Parallel()
+	cnf := createTestConfigurator(t)
+
+	ts := createTransportServerExWithHostNoTLSPassthrough()
+
+	warnings, err := cnf.AddOrUpdateTransportServer(&ts)
+	if err != nil {
+		t.Errorf("AddOrUpdateTransportServer returned:  \n%v, but expected: \n%v", err, nil)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("AddOrUpdateTransportServer returned warnings: %v", warnings)
+	}
+}
+
 var (
 	invalidVirtualServerEx = &VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{},
@@ -1793,6 +1810,45 @@ func TestGenerateApDosAllowListFileContent(t *testing.T) {
 				t.Errorf("generateApDosAllowListFileContent() = \n%#v, \nwant \n%#v", gotFormatted, wantFormatted)
 			}
 		})
+	}
+}
+
+func createTransportServerExWithHostNoTLSPassthrough() TransportServerEx {
+	return TransportServerEx{
+		SecretRefs: map[string]*secrets.SecretReference{
+			"default/echo-secret": {
+				Secret: &api_v1.Secret{
+					Type: api_v1.SecretTypeTLS,
+				},
+				Path: "secret.pem",
+			},
+		},
+		TransportServer: &conf_v1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "echo-app",
+				Namespace: "default",
+			},
+			Spec: conf_v1.TransportServerSpec{
+				Listener: conf_v1.TransportServerListener{
+					Name:     "tcp-listener",
+					Protocol: "TCP",
+				},
+				Host: "example.com",
+				TLS: &conf_v1.TransportServerTLS{
+					Secret: "echo-secret",
+				},
+				Upstreams: []conf_v1.TransportServerUpstream{
+					{
+						Name:    "echo-app",
+						Service: "echo-app",
+						Port:    7000,
+					},
+				},
+				Action: &conf_v1.TransportServerAction{
+					Pass: "echo-app",
+				},
+			},
+		},
 	}
 }
 
