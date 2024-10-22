@@ -325,7 +325,7 @@ List of volumes for controller.
 {{- if .Values.controller.nginxplus -}}
 - name: nginx-plus-license
   secret:
-    secretName: {{ .Values.controller.mgmt.licenseTokenSecretName }}
+    secretName: {{ required "Error: 'licenseTokenSecretName' is required when 'nginxplus' is enabled." .Values.controller.mgmt.licenseTokenSecretName }}
 {{- end }}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - name: nginx-etc

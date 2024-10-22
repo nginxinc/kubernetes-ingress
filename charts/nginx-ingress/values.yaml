@@ -15,13 +15,17 @@ controller:
   nginxplus: true
 
   mgmt:
-    # usageReport:
-    #   endpoint: product.connect.nginx.com
-    #   interval: 1h
-
-    # enforceInitialReport: on
-
+    ## Secret name of license token for NGINX Plus
     licenseTokenSecretName: license-token
+
+    # ## SSL certification of the mgmt block
+    # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
+    #
+    # ## SSL trusted certificate of the mgmt block
+    # sslTrustedCertificate:
+    #   secretName: ssl-trusted-cert
+    #   fileName: trusted.crt # ssl_trusted_certificate /etc/nginx/trusted.crt;
+
 
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
   nginxReloadTimeout: 60000

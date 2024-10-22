@@ -104,7 +104,7 @@
           "properties": {
             "licenseTokenSecretName": {
               "type": "string",
-              "default": "license-token",
+              "default": "",
               "title": "The licenseTokenSecretName Schema",
               "examples": [
                 "nginx-plus-secret",
