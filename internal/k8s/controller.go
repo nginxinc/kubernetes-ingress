@@ -159,6 +159,7 @@ type LoadBalancerController struct {
 	appProtectConfiguration       appprotect.Configuration
 	dosConfiguration              *appprotectdos.Configuration
 	configMap                     *api_v1.ConfigMap
+	mgmtConfigMap                 *api_v1.ConfigMap
 	certManagerController         *cm_controller.CmController
 	externalDNSController         *ed_controller.ExtDNSController
 	batchSyncEnabled              bool
@@ -198,6 +199,7 @@ type NewLoadBalancerControllerInput struct {
 	LeaderElectionLockName       string
 	WildcardTLSSecret            string
 	ConfigMaps                   string
+	MGMTConfigMap                string
 	GlobalConfiguration          string
 	AreCustomResourcesEnabled    bool
 	EnableOIDC                   bool
@@ -309,13 +311,26 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		}
 	}
 
-	if input.ConfigMaps != "" {
-		nginxConfigMapsNS, nginxConfigMapsName, err := ParseNamespaceName(input.ConfigMaps)
+	// if input.ConfigMaps != "" {
+	// 	nginxConfigMapsNS, nginxConfigMapsName, err := ParseNamespaceName(input.ConfigMaps)
+	// 	if err != nil {
+	// 		nl.Warn(lbc.Logger, err)
+	// 	} else {
+	// 		lbc.watchNginxConfigMaps = true
+	// 		lbc.addConfigMapHandler(createConfigMapHandlers(lbc, nginxConfigMapsName), nginxConfigMapsNS)
+	// 	}
+	// }
+
+	if input.MGMTConfigMap != "" {
+		mgmtConfigMapNS, mgmtConfigMapName, err := ParseNamespaceName(input.MGMTConfigMap)
+		nl.Debugf(lbc.Logger, "mgmtConfigMapNS: %+v, mgmtConfigMapName: %+v, err: %+v", mgmtConfigMapNS, mgmtConfigMapName, err)
 		if err != nil {
 			nl.Warn(lbc.Logger, err)
 		} else {
 			lbc.watchNginxConfigMaps = true
-			lbc.addConfigMapHandler(createConfigMapHandlers(lbc, nginxConfigMapsName), nginxConfigMapsNS)
+			handlers := createConfigMapHandlers(lbc, mgmtConfigMapName)
+			nl.Debugf(lbc.Logger, "handlers %+v", handlers)
+			lbc.addConfigMapHandler(handlers, mgmtConfigMapNS)
 		}
 	}
 
@@ -848,6 +863,14 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	if lbc.configMap != nil {
 		cfgParams = configs.ParseConfigMap(ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled)
 	}
+	if lbc.mgmtConfigMap != nil {
+		var err error
+		mgmtCfgParams, err = configs.ParseMGMTConfigMap(ctx, lbc.mgmtConfigMap, lbc.isNginxPlus)
+		if err != nil {
+			nl.Errorf(lbc.Logger, "Error parsing MGMT ConfigMap: %v", err)
+		}
+
+	}
 
 	resources := lbc.configuration.GetResources()
 
@@ -874,6 +897,11 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	if lbc.configMap != nil {
 		key := getResourceKey(&lbc.configMap.ObjectMeta)
 		lbc.recorder.Eventf(lbc.configMap, eventType, eventTitle, "Configuration from %v was updated %s", key, eventWarningMessage)
+	}
+
+	if lbc.mgmtConfigMap != nil {
+		key := getResourceKey(&lbc.mgmtConfigMap.ObjectMeta)
+		lbc.recorder.Eventf(lbc.mgmtConfigMap, eventType, eventTitle, "Configuration from %v was updated %s", key, eventWarningMessage)
 	}
 
 	gc := lbc.configuration.GetGlobalConfiguration()
@@ -939,6 +967,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 			lbc.updateAllConfigsOnBatch = true
 		}
 		lbc.syncConfigMap(task)
+		lbc.syncMGMTConfigMap(task)
 	case endpointslice:
 		resourcesFound := lbc.syncEndpointSlices(task)
 		if lbc.batchSyncEnabled && resourcesFound {
