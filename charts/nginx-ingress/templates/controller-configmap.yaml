@@ -30,3 +30,19 @@ data:
   nginx-agent.conf: |-
 {{ include "nginx-ingress.agentConfiguration" . | indent 4 }}
 {{- end }}
+---
+{{- if and .Values.controller.nginxplus (eq (.Values.controller.mgmt.configMap | default "") "") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nginx-ingress.mgmtConfigName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
+{{- if .Values.controller.config.annotations }}
+  annotations:
+{{ toYaml .Values.controller.config.annotations | indent 4 }}
+{{- end }}
+data:
+  ssl-verify: "on"
+{{- end }}
