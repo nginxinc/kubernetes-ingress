@@ -108,6 +108,14 @@
                 "license-token",
                 "license"
               ]
+            },
+            "configMap": {
+              "type": "string",
+              "default": "",
+              "title": "The configMap Schema",
+              "examples": [
+                ""
+              ]
             }
           },
           "examples": [

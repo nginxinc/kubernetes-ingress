@@ -102,6 +102,17 @@ Expand the name of the configmap.
 {{- end -}}
 
 {{/*
+Expand the name of the mgmt configmap.
+*/}}
+{{- define "nginx-ingress.mgmtConfigName" -}}
+{{- if .Values.controller.mgmt.configMap -}}
+{{ .Values.controller.mgmt.configMap }}
+{{- else -}}
+{{- default (printf "%s-mgmt" (include "nginx-ingress.fullname" .)) .Values.controller.config.name -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Expand the name of the configmap used for NGINX Agent.
 */}}
 {{- define "nginx-ingress.agentConfigName" -}}

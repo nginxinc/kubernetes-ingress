@@ -130,6 +130,9 @@ func main() {
 
 	mustProcessGlobalConfiguration(ctx)
 
+	mgmtCfgParams := configs.NewDefaultMGMTConfigParams(ctx)
+	mgmtCfgParams = processMGMTConfigMap(kubeClient, mgmtCfgParams)
+
 	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
 	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
 
@@ -162,7 +165,7 @@ func main() {
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
-	mustProcessNginxConfig(staticCfgParams, cfgParams, templateExecutor, nginxManager)
+	mustProcessNginxConfig(staticCfgParams, cfgParams, mgmtCfgParams, templateExecutor, nginxManager)
 
 	if *enableTLSPassthrough {
 		var emptyFile []byte
@@ -606,9 +609,9 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 
 // mustProcessNginxConfig calls internally os.Exit
 // if can't generate a valid NGINX config.
-func mustProcessNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
+func mustProcessNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, mgmtCfgParams *configs.MGMTConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
 	l := nl.LoggerFromContext(cfgParams.Context)
-	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
+	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams, mgmtCfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
 	if err != nil {
 		nl.Fatalf(l, "Error generating NGINX main config: %v", err)
@@ -867,6 +870,29 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 		}
 	}
 	return cfgParams
+}
+
+func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *configs.MGMTConfigParams) *configs.MGMTConfigParams {
+	l := nl.LoggerFromContext(mgmtCfgParams.Context)
+	if !*nginxPlus {
+		return mgmtCfgParams
+	}
+
+	if *mgmtConfigMap != "" {
+		ns, name, err := k8s.ParseNamespaceName(*mgmtConfigMap)
+		if err != nil {
+			nl.Fatalf(l, "Error parsing the mgmt-configmap argument: %v", err)
+		}
+		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
+		if err != nil {
+			nl.Fatalf(l, "Error when getting %v: %v", *mgmtConfigMap, err)
+		}
+		mgmtCfgParams, err = configs.ParseMGMTConfigMap(mgmtCfgParams.Context, cfm, *nginxPlus)
+		if err != nil {
+			nl.Fatalf(l, "Error when getting %v: %v", mgmtCfgParams, err)
+		}
+	}
+	return mgmtCfgParams
 }
 
 func updateSelfWithVersionInfo(ctx context.Context, kubeClient *kubernetes.Clientset, version, appProtectVersion, agentVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {

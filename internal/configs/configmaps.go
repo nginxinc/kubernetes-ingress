@@ -2,6 +2,7 @@ package configs
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
@@ -527,8 +528,27 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	return cfgParams
 }
 
+// ParseMGMTConfigMap parses the mgmt block ConfigMap into MGMTConfigParams.
+func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool) (*MGMTConfigParams, error) {
+	l := nl.LoggerFromContext(ctx)
+	if !nginxPlus {
+		return nil, fmt.Errorf("mgmt ConfigMap requires NGINX Plus")
+	}
+
+	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
+
+	if sslVerify, exists := cfgm.Data["ssl-verify"]; exists {
+		if parsedOnOff, err := ParseOnOff(sslVerify); err != nil {
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-verify key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
+		} else {
+			mgmtCfgParams.SSLVerify = parsedOnOff
+		}
+	}
+	return nil, nil
+}
+
 // GenerateNginxMainConfig generates MainConfig.
-func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams) *version1.MainConfig {
+func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams, mgmtCfgParams *MGMTConfigParams) *version1.MainConfig {
 	nginxCfg := &version1.MainConfig{
 		AccessLog:                          config.MainAccessLog,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
@@ -546,6 +566,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		LogFormat:                          config.MainLogFormat,
 		LogFormatEscaping:                  config.MainLogFormatEscaping,
 		MainSnippets:                       config.MainMainSnippets,
+		MGMTSSLVerify:                      mgmtCfgParams.SSLVerify,
 		NginxStatus:                        staticCfgParams.NginxStatus,
 		NginxStatusAllowCIDRs:              staticCfgParams.NginxStatusAllowCIDRs,
 		NginxStatusPort:                    staticCfgParams.NginxStatusPort,

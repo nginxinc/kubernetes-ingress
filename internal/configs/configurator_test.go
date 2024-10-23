@@ -99,7 +99,9 @@ func TestConfiguratorUpdatesConfigWithNilCustomMainTemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		MainTemplate: nil,
-	}, ExtendedResources{})
+	},
+		&MGMTConfigParams{},
+		ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +119,8 @@ func TestConfiguratorUpdatesConfigWithCustomMainTemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		MainTemplate: &customTestMainTemplate,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{},
+		ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +142,8 @@ func TestConfiguratorUpdatesConfigWithNilCustomIngressTemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		IngressTemplate: nil,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{},
+		ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +161,8 @@ func TestConfiguratorUpdatesConfigWithCustomIngressTemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		IngressTemplate: &customTestIngressTemplate,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{},
+		ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}

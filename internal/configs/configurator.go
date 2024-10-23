@@ -120,6 +120,7 @@ type Configurator struct {
 	nginxManager              nginx.Manager
 	staticCfgParams           *StaticConfigParams
 	CfgParams                 *ConfigParams
+	MgmtCfgParams             *MGMTConfigParams
 	templateExecutor          *version1.TemplateExecutor
 	templateExecutorV2        *version2.TemplateExecutor
 	ingresses                 map[string]*IngressEx
@@ -1297,8 +1298,9 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 // UpdateConfig updates NGINX configuration parameters.
 //
 //gocyclo:ignore
-func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources ExtendedResources) (Warnings, error) {
+func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MGMTConfigParams, resources ExtendedResources) (Warnings, error) {
 	cnf.CfgParams = cfgParams
+	cnf.MgmtCfgParams = mgmtCfgParams
 	allWarnings := newWarnings()
 	allWeightUpdates := []WeightUpdate{}
 
@@ -1342,7 +1344,7 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		}
 	}
 
-	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams)
+	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams, mgmtCfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
 		return allWarnings, fmt.Errorf("error when writing main Config")
@@ -1948,7 +1950,7 @@ func (cnf *Configurator) DeleteAppProtectDosAllowList(obj *v1beta1.DosProtectedR
 func (cnf *Configurator) AddInternalRouteConfig() error {
 	cnf.staticCfgParams.EnableInternalRoutes = true
 	cnf.staticCfgParams.InternalRouteServerName = fmt.Sprintf("%s.%s.svc", os.Getenv("POD_SERVICEACCOUNT"), os.Getenv("POD_NAMESPACE"))
-	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cnf.CfgParams)
+	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cnf.CfgParams, cnf.MgmtCfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
 		return fmt.Errorf("error when writing main Config: %w", err)

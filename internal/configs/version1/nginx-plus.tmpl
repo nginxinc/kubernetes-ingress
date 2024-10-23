@@ -361,5 +361,11 @@ stream {
 {{- if (.NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r31") }}
 mgmt {
     usage_report interval=0s;
+    {{if .MGMTSSLVerify -}}
+    ssl_verify on;
+    {{- else -}}
+    ssl_verify off;{{end}}
+
+
 }
 {{- end}}
