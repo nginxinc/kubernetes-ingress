@@ -224,6 +224,13 @@ func makeHeaderQueryValue(apiKey APIKey) string {
 	return fmt.Sprintf("\"%s\"", strings.Join(parts, ""))
 }
 
+func makeServerName(s StreamServer) string {
+	if s.TLSPassthrough || s.ServerName == "" || s.SSL == nil {
+		return ""
+	}
+	return fmt.Sprintf("server_name \"%s\";", s.ServerName)
+}
+
 var helperFunctions = template.FuncMap{
 	"headerListToCIMap":     headerListToCIMap,
 	"hasCIKey":              hasCIKey,
@@ -238,4 +245,5 @@ var helperFunctions = template.FuncMap{
 	"makeSecretPath":        commonhelpers.MakeSecretPath,
 	"makeHeaderQueryValue":  makeHeaderQueryValue,
 	"makeTransportListener": makeTransportListener,
+	"makeServerName":        makeServerName,
 }
