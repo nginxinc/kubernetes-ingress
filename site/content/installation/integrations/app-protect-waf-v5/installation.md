@@ -218,16 +218,6 @@ controller:
 ```
 {{< /note >}}
 
-{{%/tab%}}
-
-{{%tab name="With Manifest"%}}
-
-You have two options for deploying NGINX Ingress Controller:
-
-- **Deployment**. Choose this method for the flexibility to dynamically change the number of NGINX Ingress Controller replicas.
-- **DaemonSet**. Choose this method if you want NGINX Ingress Controller to run on all nodes or a subset of nodes.
-
-
 ### Configuring `readOnlyRootFilesystem`
 
 Set `controller.securityContext.readOnlyRootFilesystem` to `true`.
@@ -271,6 +261,15 @@ controller:
         readOnlyRootFilesystem: true
   ...
 ```
+
+{{%/tab%}}
+
+{{%tab name="With Manifest"%}}
+
+You have two options for deploying NGINX Ingress Controller:
+
+- **Deployment**. Choose this method for the flexibility to dynamically change the number of NGINX Ingress Controller replicas.
+- **DaemonSet**. Choose this method if you want NGINX Ingress Controller to run on all nodes or a subset of nodes.
 
 ---
 
@@ -371,6 +370,50 @@ Add `volumeMounts` as below:
       mountPath: /opt/app_protect/config
     - name: app-protect-bundles
       mountPath: /etc/app_protect/bundles
+...
+```
+
+### Configure `readOnlyRootFilesystem`
+
+Add `readOnlyRootFilesystem` to the NIC container as below:
+
+```yaml
+...
+- image: <my_docker_registery>:<version_tag>
+  imagePullPolicy: IfNotPresent
+  name: nginx-plus-ingress
+  ...
+  securityContext:
+    readOnlyRootFilesystem: true
+    ...
+...
+```
+
+Add `readOnlyRootFilesystem: true` to the `waf-config-mgr` container:
+
+```yaml
+...
+- name: waf-config-mgr
+  image: private-registry.nginx.com/nap/waf-config-mgr:<version-tag>
+  imagePullPolicy: IfNotPresent
+  ...
+  securityContext:
+    readOnlyRootFilesystem: true
+    ...
+...
+```
+
+Add `readOnlyRootFilesystem: true` to the `waf-enforcer` container:
+
+```yaml
+...
+- name: waf-enforcer
+  image: private-registry.nginx.com/nap/waf-enforcer:<version-tag>
+  imagePullPolicy: IfNotPresent
+  ...
+  securityContext:
+    readOnlyRootFilesystem: true
+    ...
 ...
 ```
 
