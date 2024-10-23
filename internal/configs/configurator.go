@@ -147,6 +147,7 @@ type ConfiguratorParams struct {
 	NginxManager                        nginx.Manager
 	StaticCfgParams                     *StaticConfigParams
 	Config                              *ConfigParams
+	MGMTCfgParams                       *MGMTConfigParams
 	TemplateExecutor                    *version1.TemplateExecutor
 	TemplateExecutorV2                  *version2.TemplateExecutor
 	LabelUpdater                        collector.LabelUpdater
@@ -178,6 +179,7 @@ func NewConfigurator(p ConfiguratorParams) *Configurator {
 		nginxManager:              p.NginxManager,
 		staticCfgParams:           p.StaticCfgParams,
 		CfgParams:                 p.Config,
+		MgmtCfgParams:             p.MGMTCfgParams,
 		ingresses:                 make(map[string]*IngressEx),
 		virtualServers:            make(map[string]*VirtualServerEx),
 		transportServers:          make(map[string]*TransportServerEx),

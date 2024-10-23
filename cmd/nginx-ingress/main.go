@@ -181,6 +181,7 @@ func main() {
 		NginxManager:                        nginxManager,
 		StaticCfgParams:                     staticCfgParams,
 		Config:                              cfgParams,
+		MGMTCfgParams:                       mgmtCfgParams,
 		TemplateExecutor:                    templateExecutor,
 		TemplateExecutorV2:                  templateExecutorV2,
 		LatencyCollector:                    latencyCollector,
