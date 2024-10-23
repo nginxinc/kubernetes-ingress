@@ -843,6 +843,7 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 func (lbc *LoadBalancerController) updateAllConfigs() {
 	ctx := nl.ContextWithLogger(context.Background(), lbc.Logger)
 	cfgParams := configs.NewDefaultConfigParams(ctx, lbc.isNginxPlus)
+	mgmtCfgParams := configs.NewDefaultMGMTConfigParams(ctx) // maybe take nginx plus
 
 	if lbc.configMap != nil {
 		cfgParams = configs.ParseConfigMap(ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled)
@@ -854,7 +855,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 
 	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, resourceExes)
+	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, mgmtCfgParams, resourceExes)
 
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal

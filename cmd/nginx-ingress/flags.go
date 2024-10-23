@@ -55,6 +55,11 @@ var (
 	but the Ingress Controller is not able to fetch it from Kubernetes API, the Ingress Controller will fail to start.
 	Format: <namespace>/<name>`)
 
+	mgmtConfigMap = flag.String("mgmt-configmap", "",
+		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
+	but the Ingress Controller is not able to fetch it from Kubernetes API, the Ingress Controller will fail to start.
+	Format: <namespace>/<name>`)
+
 	nginxPlus = flag.Bool("nginx-plus", false, "Enable support for NGINX Plus")
 
 	appProtect = flag.Bool("enable-app-protect", false, "Enable support for NGINX App Protect. Requires -nginx-plus.")

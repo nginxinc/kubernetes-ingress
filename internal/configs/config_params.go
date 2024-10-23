@@ -170,6 +170,12 @@ type GlobalConfigParams struct {
 	Listeners map[string]Listener
 }
 
+// MGMTConfigParams holds mgmt block parameters. For now, it only holds listeners.
+type MGMTConfigParams struct {
+	Context   context.Context
+	SSLVerify bool
+}
+
 // Listener represents a listener that can be used in a TransportServer resource.
 type Listener struct {
 	Port     int
@@ -218,6 +224,14 @@ func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 		LimitReqZoneSize:              "10m",
 		LimitReqLogLevel:              "error",
 		LimitReqRejectCode:            429,
+	}
+}
+
+// NewDefaultMGMTConfigParams creates a ConfigParams with mgmt values.
+func NewDefaultMGMTConfigParams(ctx context.Context) *MGMTConfigParams {
+	return &MGMTConfigParams{
+		Context:   ctx,
+		SSLVerify: true,
 	}
 }
 
