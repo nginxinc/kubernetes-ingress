@@ -375,7 +375,7 @@ Add `volumeMounts` as below:
 
 ### Configure `readOnlyRootFilesystem`
 
-Add `readOnlyRootFilesystem` to the NIC container as below:
+Add `readOnlyRootFilesystem` to the NIC container and set valut to `true` as below:
 
 ```yaml
 ...
@@ -389,7 +389,7 @@ Add `readOnlyRootFilesystem` to the NIC container as below:
 ...
 ```
 
-Add `readOnlyRootFilesystem: true` to the `waf-config-mgr` container:
+Add `readOnlyRootFilesystem` to the `waf-config-mgr` container and set value to `true` as below:
 
 ```yaml
 ...
@@ -403,7 +403,7 @@ Add `readOnlyRootFilesystem: true` to the `waf-config-mgr` container:
 ...
 ```
 
-Add `readOnlyRootFilesystem: true` to the `waf-enforcer` container:
+Add `readOnlyRootFilesystem` to the `waf-enforcer` container and set value to `true` as below:
 
 ```yaml
 ...
