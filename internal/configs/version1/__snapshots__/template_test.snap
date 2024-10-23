@@ -405,6 +405,9 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    ssl_verify off;
+
+
 }
 
 ---
@@ -1811,6 +1814,9 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    ssl_verify off;
+
+
 }
 
 ---
@@ -1949,6 +1955,9 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    ssl_verify off;
+
+
 }
 
 ---
@@ -2087,6 +2096,9 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    ssl_verify off;
+
+
 }
 
 ---
@@ -2225,6 +2237,9 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    ssl_verify off;
+
+
 }
 
 ---
@@ -2381,6 +2396,9 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    ssl_verify off;
+
+
 }
 
 ---
@@ -2683,6 +2701,9 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    ssl_verify off;
+
+
 }
 
 ---
@@ -2989,6 +3010,9 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    ssl_verify off;
+
+
 }
 
 ---

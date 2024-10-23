@@ -51,6 +51,7 @@ func createTestConfigurator(t *testing.T) *Configurator {
 		NginxManager:            manager,
 		StaticCfgParams:         createTestStaticConfigParams(),
 		Config:                  NewDefaultConfigParams(context.Background(), false),
+		MGMTCfgParams:           NewDefaultMGMTConfigParams(context.Background()),
 		TemplateExecutor:        templateExecutor,
 		TemplateExecutorV2:      templateExecutorV2,
 		LatencyCollector:        nil,
