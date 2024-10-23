@@ -97,3 +97,35 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 
 	lbc.updateAllConfigs()
 }
+
+func (lbc *LoadBalancerController) syncMGMTConfigMap(task task) {
+	key := task.Key
+	nl.Debugf(lbc.Logger, "Syncing configmap %v", key)
+
+	obj, configExists, err := lbc.configMapLister.GetByKey(key)
+	if err != nil {
+		lbc.syncQueue.Requeue(task, err)
+		return
+	}
+	if configExists {
+		lbc.mgmtConfigMap = obj.(*v1.ConfigMap)
+		externalStatusAddress, exists := lbc.mgmtConfigMap.Data["external-status-address"]
+		if exists {
+			lbc.statusUpdater.SaveStatusFromExternalStatus(externalStatusAddress)
+		}
+	} else {
+		lbc.mgmtConfigMap = nil
+	}
+
+	if !lbc.isNginxReady {
+		nl.Debugf(lbc.Logger, "Skipping ConfigMap update because the pod is not ready yet")
+		return
+	}
+
+	if lbc.batchSyncEnabled {
+		nl.Debugf(lbc.Logger, "Skipping ConfigMap update because batch sync is on")
+		return
+	}
+
+	lbc.updateAllConfigs()
+}

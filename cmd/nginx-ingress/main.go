@@ -233,6 +233,7 @@ func main() {
 		LeaderElectionLockName:       *leaderElectionLockName,
 		WildcardTLSSecret:            *wildcardTLSSecret,
 		ConfigMaps:                   *nginxConfigMaps,
+		MGMTConfigMap:                *mgmtConfigMap,
 		GlobalConfiguration:          *globalConfiguration,
 		AreCustomResourcesEnabled:    *enableCustomResources,
 		EnableOIDC:                   *enableOIDC,
