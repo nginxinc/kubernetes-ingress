@@ -544,7 +544,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 			mgmtCfgParams.SSLVerify = parsedOnOff
 		}
 	}
-	return nil, nil
+	return mgmtCfgParams, nil
 }
 
 // GenerateNginxMainConfig generates MainConfig.
