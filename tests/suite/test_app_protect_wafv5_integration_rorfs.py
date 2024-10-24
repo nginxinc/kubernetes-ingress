@@ -25,7 +25,7 @@ def waf_setup(kube_apis, test_namespace) -> None:
     [
         (
             {
-                "type": "complete",
+                "type": "rorfs",
                 "extra_args": [
                     f"-enable-app-protect",
                 ],
@@ -38,7 +38,7 @@ def waf_setup(kube_apis, test_namespace) -> None:
     ],
     indirect=True,
 )
-class TestAppProtectWAFv5IntegrationVS:
+class TestAppProtectWAFv5IntegrationVSrorfs:
     def restore_default_vs(self, kube_apis, virtual_server_setup) -> None:
         """
         Restore VirtualServer without policy spec
@@ -94,7 +94,7 @@ class TestAppProtectWAFv5IntegrationVS:
     [
         (
             {
-                "type": "complete",
+                "type": "rorfs",
                 "extra_args": [
                     f"-enable-app-protect",
                 ],
@@ -106,7 +106,7 @@ class TestAppProtectWAFv5IntegrationVS:
     ],
     indirect=True,
 )
-class TestAppProtectWAFv5IntegrationVSR:
+class TestAppProtectWAFv5IntegrationVSRrorfs:
 
     def restore_default_vsr(self, kube_apis, v_s_route_setup) -> None:
         """
