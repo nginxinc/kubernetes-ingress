@@ -66,6 +66,22 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.configMapController.HasSynced)
 }
 
+// addConfigMapHandler adds the handler for config maps to the controller
+func (lbc *LoadBalancerController) addMGMTConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
+	options := cache.InformerOptions{
+		ListerWatcher: cache.NewListWatchFromClient(
+			lbc.client.CoreV1().RESTClient(),
+			"configmaps",
+			namespace,
+			fields.Everything()),
+		ObjectType:   &v1.ConfigMap{},
+		ResyncPeriod: lbc.resync,
+		Handler:      handlers,
+	}
+	lbc.mgmtConfigMapLister.Store, lbc.mgmtConfigMapController = cache.NewInformerWithOptions(options)
+	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.mgmtConfigMapController.HasSynced)
+}
+
 func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	key := task.Key
 	nl.Debugf(lbc.Logger, "Syncing configmap %v", key)

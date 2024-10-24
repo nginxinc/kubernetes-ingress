@@ -113,9 +113,11 @@ type LoadBalancerController struct {
 	cacheSyncs                    []cache.InformerSynced
 	namespacedInformers           map[string]*namespacedInformer
 	configMapController           cache.Controller
+	mgmtConfigMapController       cache.Controller
 	globalConfigurationController cache.Controller
 	ingressLinkInformer           cache.SharedIndexInformer
 	configMapLister               storeToConfigMapLister
+	mgmtConfigMapLister           storeToConfigMapLister
 	globalConfigurationLister     cache.Store
 	ingressLinkLister             cache.Store
 	namespaceLabeledLister        cache.Store
@@ -125,6 +127,7 @@ type LoadBalancerController struct {
 	cancel                        context.CancelFunc
 	configurator                  *configs.Configurator
 	watchNginxConfigMaps          bool
+	watchMGMTConfigMap            bool
 	watchGlobalConfiguration      bool
 	watchIngressLink              bool
 	isNginxPlus                   bool
@@ -311,15 +314,15 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		}
 	}
 
-	// if input.ConfigMaps != "" {
-	// 	nginxConfigMapsNS, nginxConfigMapsName, err := ParseNamespaceName(input.ConfigMaps)
-	// 	if err != nil {
-	// 		nl.Warn(lbc.Logger, err)
-	// 	} else {
-	// 		lbc.watchNginxConfigMaps = true
-	// 		lbc.addConfigMapHandler(createConfigMapHandlers(lbc, nginxConfigMapsName), nginxConfigMapsNS)
-	// 	}
-	// }
+	if input.ConfigMaps != "" {
+		nginxConfigMapsNS, nginxConfigMapsName, err := ParseNamespaceName(input.ConfigMaps)
+		if err != nil {
+			nl.Warn(lbc.Logger, err)
+		} else {
+			lbc.watchNginxConfigMaps = true
+			lbc.addConfigMapHandler(createConfigMapHandlers(lbc, nginxConfigMapsName), nginxConfigMapsNS)
+		}
+	}
 
 	if input.MGMTConfigMap != "" {
 		mgmtConfigMapNS, mgmtConfigMapName, err := ParseNamespaceName(input.MGMTConfigMap)
@@ -327,10 +330,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		if err != nil {
 			nl.Warn(lbc.Logger, err)
 		} else {
-			lbc.watchNginxConfigMaps = true
+			lbc.watchMGMTConfigMap = true
 			handlers := createConfigMapHandlers(lbc, mgmtConfigMapName)
 			nl.Debugf(lbc.Logger, "handlers %+v", handlers)
-			lbc.addConfigMapHandler(handlers, mgmtConfigMapNS)
+			lbc.addMGMTConfigMapHandler(handlers, mgmtConfigMapNS)
 		}
 	}
 
@@ -627,6 +630,10 @@ func (lbc *LoadBalancerController) Run() {
 
 	if lbc.watchNginxConfigMaps {
 		go lbc.configMapController.Run(lbc.ctx.Done())
+	}
+
+	if lbc.watchMGMTConfigMap {
+		go lbc.mgmtConfigMapController.Run(lbc.ctx.Done())
 	}
 
 	if lbc.watchGlobalConfiguration {
