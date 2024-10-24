@@ -770,8 +770,9 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 	cnf.transportServers[name] = transportServerEx
 
 	// update TLS Passthrough Hosts config in case we have a TLS Passthrough TransportServer
-	// only TLS Passthrough TransportServers have non-empty hosts
-	if transportServerEx.TransportServer.Spec.Host != "" {
+	// A non empty Host, may be a TLS Passthrough TransportServer but we have to check for the existence of the TLS Passthrough listener also, as TransportServers that terminate at the NGINX level can have non empty Hosts now too
+	isTLSPassthrough := transportServerEx.TransportServer.Spec.Listener.Name == conf_v1.TLSPassthroughListenerName
+	if transportServerEx.TransportServer.Spec.Host != "" && isTLSPassthrough {
 		key := generateNamespaceNameKey(&transportServerEx.TransportServer.ObjectMeta)
 		cnf.tlsPassthroughPairs[key] = tlsPassthroughPair{
 			Host:       transportServerEx.TransportServer.Spec.Host,
@@ -1310,11 +1311,15 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		cfgParams.MainServerSSLDHParam = fileName
 	}
 
+	// Apply custom main-template defined in ConfigMap obj
 	if cfgParams.MainTemplate != nil {
 		err := cnf.templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the main template: %w", err)
 		}
+	} else {
+		// Reverse to default main template parsed at NIC startup.
+		cnf.templateExecutor.UseOriginalMainTemplate()
 	}
 
 	if cfgParams.IngressTemplate != nil {
