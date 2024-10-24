@@ -220,6 +220,26 @@ controller:
 
 ### Configuring `readOnlyRootFilesystem`
 
+Create required volumes:
+
+```yaml
+volumes:
+  - name: nginx-etc
+    emptyDir: {}
+  - name: nginx-cache
+    emptyDir: {}
+  - name: nginx-lib
+    emptyDir: {}
+  - name: nginx-log
+    emptyDir: {}
+  - emptyDir: {}
+    name: app-protect-bd-config
+  - emptyDir: {}
+    name: app-protect-config
+  - emptyDir: {}
+    name: app-protect-bundles
+```
+
 Set `controller.securityContext.readOnlyRootFilesystem` to `true`.
 
 Example Helm values:
@@ -384,8 +404,32 @@ Add `readOnlyRootFilesystem` to the NIC container and set valut to `true` as bel
   name: nginx-plus-ingress
   ...
   securityContext:
+    allowPrivilegeEscalation: false
+      capabilities:
+        add:
+        - NET_BIND_SERVICE
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 101
     readOnlyRootFilesystem: true
-    ...
+  ...
+  volumeMounts:
+    - mountPath: /etc/nginx
+      name: nginx-etc
+    - mountPath: /var/cache/nginx
+      name: nginx-cache
+    - mountPath: /var/lib/nginx
+      name: nginx-lib
+    - mountPath: /var/log/nginx
+      name: nginx-log
+    - mountPath: /opt/app_protect/bd_config
+      name: app-protect-bd-config
+    - mountPath: /opt/app_protect/config
+      name: app-protect-config
+    - mountPath: /etc/app_protect/bundles
+      name: app-protect-bundles
 ...
 ```
 
