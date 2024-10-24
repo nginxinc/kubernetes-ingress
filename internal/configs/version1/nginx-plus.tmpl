@@ -361,6 +361,7 @@ stream {
 {{- if (.NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r31") }}
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     {{if .MGMTSSLVerify -}}
     ssl_verify on;
     {{- else -}}
