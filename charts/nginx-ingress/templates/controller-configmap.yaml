@@ -31,7 +31,7 @@ data:
 {{ include "nginx-ingress.agentConfiguration" . | indent 4 }}
 {{- end }}
 ---
-{{- if and .Values.controller.nginxplus (eq (.Values.controller.mgmt.configMap | default "") "") }}
+{{- if and .Values.controller.nginxplus (eq (.Values.controller.mgmt.customConfigMap | default "") "") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -44,5 +44,8 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
-  ssl-verify: "on"
+{{/*  if sslVerify is not an empty ,  string can only be on or off, add key and value to config map */}}
+{{- if .Values.controller.mgmt.sslVerify }}
+  ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
+{{- end }}
 {{- end }}
