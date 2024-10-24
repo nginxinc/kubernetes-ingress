@@ -308,7 +308,6 @@ def crd_ingress_controller_with_waf_v5(
                 "regcred",
                 request.param.get("extra_args", None),
             )
-        input("Press Enter to continue...")
         try:
             with open(f"{dir}/wafv5.tgz", "rb") as f:
                 file_content = f.read()
