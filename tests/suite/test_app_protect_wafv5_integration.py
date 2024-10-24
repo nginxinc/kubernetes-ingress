@@ -34,7 +34,7 @@ def waf_setup(kube_apis, test_namespace) -> None:
                 "example": "ap-waf-v5",
                 "app_type": "simple",
             },
-        ),
+        )
     ],
     indirect=True,
 )
