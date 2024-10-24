@@ -392,8 +392,7 @@ volumeMounts:
 {{- define "nginx-ingress.volumeMountEntries" -}}
 {{- if .Values.controller.nginxplus -}}
 - name: nginx-plus-license
-  mountPath: "/etc/nginx/license.jwt"
-  subPath: "license.jwt"
+  mountPath: "/etc/nginx/license/"
 {{- end -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - mountPath: /etc/nginx
