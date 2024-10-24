@@ -25,6 +25,18 @@ def waf_setup(kube_apis, test_namespace) -> None:
     [
         (
             {
+                "type": "rorfs",
+                "extra_args": [
+                    f"-enable-app-protect",
+                ],
+            },
+            {
+                "example": "ap-waf-v5",
+                "app_type": "simple",
+            },
+        ),
+        (
+            {
                 "type": "complete",
                 "extra_args": [
                     f"-enable-app-protect",
@@ -34,7 +46,7 @@ def waf_setup(kube_apis, test_namespace) -> None:
                 "example": "ap-waf-v5",
                 "app_type": "simple",
             },
-        )
+        ),
     ],
     indirect=True,
 )
