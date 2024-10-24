@@ -19,6 +19,9 @@ controller:
     ## Secret name of license token for NGINX Plus
     licenseTokenSecretName: "license-token" # required for NGINX Plus
 
+    ## Configures the ssl_verify directive in the mgmt block
+    sslVerify: "on" # on | off
+
     # ## SSL certification of the mgmt block
     # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
     #
@@ -27,7 +30,7 @@ controller:
     #   secretName: ssl-trusted-cert
     #   fileName: trusted.crt # ssl_trusted_certificate /etc/nginx/trusted.crt;
 
-    configMap: ""
+#    customConfigMap: ""
 
 
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.

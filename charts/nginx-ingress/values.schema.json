@@ -109,6 +109,19 @@
                 "license"
               ]
             },
+            "sslVerify": {
+              "type": "string",
+              "default": "",
+              "title": "The sslVerify Schema",
+              "enum": [
+                "on",
+                "off"
+              ],
+              "examples": [
+                "on",
+                "off"
+              ]
+            },
             "configMap": {
               "type": "string",
               "default": "",
