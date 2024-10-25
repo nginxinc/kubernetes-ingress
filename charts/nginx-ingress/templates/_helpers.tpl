@@ -108,7 +108,7 @@ Expand the name of the mgmt configmap.
 {{- if .Values.controller.mgmt.customConfigMap -}}
 {{ .Values.controller.mgmt.customConfigMap }}
 {{- else -}}
-{{- default (printf "%s-mgmt" (include "nginx-ingress.fullname" .)) .Values.controller.config.name -}}
+{{- default (printf "%s-mgmt" (include "nginx-ingress.fullname" .)) -}}
 {{- end -}}
 {{- end -}}
 
