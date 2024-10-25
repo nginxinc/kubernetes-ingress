@@ -80,7 +80,6 @@ The block below shows the code you will look for:
 - Add **waf-enforcer** and **waf-config-mgr** container sections
 - Add `readOnlyFilesystem: true` in both containers security context sections
 
-
 ### Prometheus
 
 If Prometheus metrics are [enabled]({{< relref "/logging-and-monitoring/prometheus.md" >}}), we recommend [using HTTPS]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-prometheus-tls-secret" >}}).
