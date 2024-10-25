@@ -112,7 +112,7 @@ func (s *Server) Home(w http.ResponseWriter, r *http.Request) { //nolint:revive
 // ListenAndServe starts metrics server.
 func (s *Server) ListenAndServe() error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /", s.Home)
+	mux.HandleFunc("GET /{$}", s.Home)
 	mux.Handle("/metrics", promhttp.HandlerFor(s.Registry, promhttp.HandlerOpts{}))
 	s.Server.Handler = mux
 	if s.Server.TLSConfig != nil {
