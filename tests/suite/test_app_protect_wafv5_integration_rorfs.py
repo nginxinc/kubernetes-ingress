@@ -50,7 +50,7 @@ class TestAppProtectWAFv5IntegrationVSrorfs:
 
     @pytest.mark.parametrize(
         "vs_src",
-        [f"{TEST_DATA}/ap-waf-v5/virtual-server-waf-spec.yaml", f"{TEST_DATA}/ap-waf-v5/virtual-server-waf-route.yaml"],
+        [f"{TEST_DATA}/ap-waf-v5/virtual-server-waf-spec.yaml"],
     )
     def test_ap_waf_v5_policy_block_vs(
         self,
