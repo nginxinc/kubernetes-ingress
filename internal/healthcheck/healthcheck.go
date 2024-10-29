@@ -14,8 +14,6 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	"k8s.io/utils/strings/slices"
@@ -75,9 +73,9 @@ func NewHealthServer(addr string, nc *client.NginxClient, cnf *configs.Configura
 
 // ListenAndServe starts healthcheck server.
 func (hs *HealthServer) ListenAndServe() error {
-	mux := chi.NewRouter()
-	mux.Get("/probe/{hostname}", hs.UpstreamStats)
-	mux.Get("/probe/ts/{name}", hs.StreamStats)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /probe/{hostname}", hs.UpstreamStats)
+	mux.HandleFunc("GET /probe/ts/{name}", hs.StreamStats)
 	hs.Server.Handler = mux
 	if hs.Server.TLSConfig != nil {
 		return hs.Server.ListenAndServeTLS("", "")
@@ -92,7 +90,7 @@ func (hs *HealthServer) Shutdown(ctx context.Context) error {
 
 // UpstreamStats calculates health stats for the host identified by the hostname in the request URL.
 func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
-	hostname := chi.URLParam(r, "hostname")
+	hostname := r.PathValue("hostname")
 	host := sanitize(hostname)
 
 	upstreamNames := hs.UpstreamsForHost(host)
@@ -132,7 +130,7 @@ func (hs *HealthServer) UpstreamStats(w http.ResponseWriter, r *http.Request) {
 // StreamStats calculates health stats for the TransportServer(s)
 // identified by the service (action) name in the request URL.
 func (hs *HealthServer) StreamStats(w http.ResponseWriter, r *http.Request) {
-	name := chi.URLParam(r, "name")
+	name := r.PathValue("name")
 	n := sanitize(name)
 	streamUpstreamNames := hs.StreamUpstreamsForName(n)
 	if len(streamUpstreamNames) == 0 {

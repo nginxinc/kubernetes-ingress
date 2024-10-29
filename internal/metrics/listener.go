@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/golang/glog"
@@ -107,8 +106,8 @@ func (s *Server) Home(w http.ResponseWriter, r *http.Request) { //nolint:revive
 
 // ListenAndServe starts metrics server.
 func (s *Server) ListenAndServe() error {
-	mux := chi.NewRouter()
-	mux.Get("/", s.Home)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{$}", s.Home)
 	mux.Handle("/metrics", promhttp.HandlerFor(s.Registry, promhttp.HandlerOpts{}))
 	s.Server.Handler = mux
 	if s.Server.TLSConfig != nil {

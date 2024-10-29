@@ -7,7 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
 	"github.com/nginxinc/nginx-plus-go-client/client"
@@ -15,9 +17,9 @@ import (
 
 // testHandler creates http handler for testing HealthServer.
 func testHandler(hs *healthcheck.HealthServer) http.Handler {
-	mux := chi.NewRouter()
-	mux.Get("/probe/{hostname}", hs.UpstreamStats)
-	mux.Get("/probe/ts/{name}", hs.StreamStats)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /probe/{hostname}", hs.UpstreamStats)
+	mux.HandleFunc("GET /probe/ts/{name}", hs.StreamStats)
 	return mux
 }
 
