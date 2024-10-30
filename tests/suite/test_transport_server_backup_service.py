@@ -132,6 +132,9 @@ def transport_server_tls_passthrough_setup(
     """
     print("------------------------- Deploy Transport Server with tls passthrough -----------------------------------")
     # deploy secure_app
+    create_items_from_yaml(
+        kube_apis, f"{TEST_DATA}/{request.param['example']}/standard/app-tls-secret.yaml", test_namespace
+    )
     secure_app_file = f"{TEST_DATA}/{request.param['example']}/standard/secure-app.yaml"
     create_items_from_yaml(kube_apis, secure_app_file, test_namespace)
 
