@@ -326,14 +326,11 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	if input.MGMTConfigMap != "" {
 		mgmtConfigMapNS, mgmtConfigMapName, err := ParseNamespaceName(input.MGMTConfigMap)
-		nl.Debugf(lbc.Logger, "mgmtConfigMapNS: %+v, mgmtConfigMapName: %+v, err: %+v", mgmtConfigMapNS, mgmtConfigMapName, err)
 		if err != nil {
 			nl.Warn(lbc.Logger, err)
 		} else {
 			lbc.watchMGMTConfigMap = true
-			handlers := createConfigMapHandlers(lbc, mgmtConfigMapName)
-			nl.Debugf(lbc.Logger, "handlers %+v", handlers)
-			lbc.addMGMTConfigMapHandler(handlers, mgmtConfigMapNS)
+			lbc.addMGMTConfigMapHandler(createConfigMapHandlers(lbc, mgmtConfigMapName), mgmtConfigMapNS)
 		}
 	}
 
