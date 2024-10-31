@@ -173,6 +173,8 @@ type LoadBalancerController struct {
 	telemetryCollector            *telemetry.Collector
 	telemetryChan                 chan struct{}
 	weightChangesDynamicReload    bool
+	nginxConfigMapName            string
+	mgmtConfigMapName             string
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -261,6 +263,8 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 		isIPV6Disabled:               input.IsIPV6Disabled,
 		weightChangesDynamicReload:   input.DynamicWeightChangesReload,
+		nginxConfigMapName:           input.ConfigMaps,
+		mgmtConfigMapName:            input.MGMTConfigMap,
 	}
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
@@ -971,7 +975,6 @@ func (lbc *LoadBalancerController) sync(task task) {
 			lbc.updateAllConfigsOnBatch = true
 		}
 		lbc.syncConfigMap(task)
-		lbc.syncMGMTConfigMap(task)
 	case endpointslice:
 		resourcesFound := lbc.syncEndpointSlices(task)
 		if lbc.batchSyncEnabled && resourcesFound {
