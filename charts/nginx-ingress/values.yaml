@@ -12,7 +12,7 @@ controller:
   annotations: {}
 
   ## Deploys the Ingress Controller for NGINX Plus.
-  nginxplus: true
+  nginxplus: false
 
   ## Configures NGINX mgmt block for NGINX Plus
   mgmt:  ## Ensure both curly brackets are removed when using NGINX Plus.

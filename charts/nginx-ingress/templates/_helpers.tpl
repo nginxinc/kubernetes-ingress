@@ -237,7 +237,9 @@ Build the args for the service binary.
 - -app-protect-dos-memory={{ .Values.controller.appprotectdos.memory }}
 {{ end }}
 - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
+{{- if .Values.controller.nginxplus }}
 - -mgmt-configmap=$(POD_NAMESPACE)/{{ include "nginx-ingress.mgmtConfigName" . }}
+{{- end }}
 {{- if .Values.controller.defaultTLS.secret }}
 - -default-server-tls-secret={{ .Values.controller.defaultTLS.secret }}
 {{ else if and (.Values.controller.defaultTLS.cert) (.Values.controller.defaultTLS.key) }}
