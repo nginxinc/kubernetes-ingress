@@ -294,9 +294,20 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 
 func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	if apiKey == nil {
+		allErrs = append(allErrs, field.Required(fieldPath, "apiKey cannot be nil"))
+		return allErrs
+	}
+
+	if apiKey.SuppliedIn == nil {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("suppliedIn"), "suppliedIn cannot be nil"))
+		return allErrs
+	}
+
 	if apiKey.SuppliedIn.Query == nil && apiKey.SuppliedIn.Header == nil {
 		msg := "at least one query or header name must be provided"
-		allErrs = append(allErrs, field.Required(fieldPath.Child("SuppliedIn"), msg))
+		allErrs = append(allErrs, field.Required(fieldPath.Child("suppliedIn"), msg))
 	}
 
 	if apiKey.SuppliedIn.Header != nil {
@@ -316,10 +327,10 @@ func validateAPIKey(apiKey *v1.APIKey, fieldPath *field.Path) field.ErrorList {
 	}
 
 	if apiKey.ClientSecret == "" {
-		allErrs = append(allErrs, field.Required(fieldPath.Child("clientSecret"), ""))
+		allErrs = append(allErrs, field.Required(fieldPath.Child("clientSecret"), "clientSecret cannot be empty"))
+	} else {
+		allErrs = append(allErrs, validateSecretName(apiKey.ClientSecret, fieldPath.Child("clientSecret"))...)
 	}
-
-	allErrs = append(allErrs, validateSecretName(apiKey.ClientSecret, fieldPath.Child("clientSecret"))...)
 
 	return allErrs
 }
