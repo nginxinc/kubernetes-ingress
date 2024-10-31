@@ -405,6 +405,7 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     ssl_verify off;
 
 
@@ -1814,6 +1815,7 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     ssl_verify off;
 
 
@@ -1955,6 +1957,7 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     ssl_verify off;
 
 
@@ -2096,6 +2099,7 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     ssl_verify off;
 
 
@@ -2237,6 +2241,7 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     ssl_verify off;
 
 
@@ -2396,6 +2401,7 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     ssl_verify off;
 
 
@@ -2701,6 +2707,7 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     ssl_verify off;
 
 
@@ -3010,6 +3017,7 @@ stream {
 }
 mgmt {
     usage_report interval=0s;
+    license_token /etc/nginx/license/license.jwt;
     ssl_verify off;
 
 
