@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.8
 FROM nginx:1.27.1@sha256:287ff321f9e3cde74b600cc26197424404157a72043226cbbf07ee8304a2c720 AS nginx
 
-FROM redhat/ubi9:9.4@sha256:b00d5990a00937bd1ef7f44547af6c7fd36e3fd410e2c89b5d2dfc1aff69fe99 AS rpm-build
+FROM redhat/ubi9:9.4@sha256:ee0b908e958a1822afc57e5d386d1ea128eebe492cb2e01b6903ee19c133ea75 AS rpm-build
 ARG NGINX
 ARG NJS
 ENV NGINX_VERSION ${NGINX}
