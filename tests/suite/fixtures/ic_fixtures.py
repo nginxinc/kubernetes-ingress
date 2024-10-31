@@ -289,14 +289,25 @@ def crd_ingress_controller_with_waf_v5(
             ap_uds_crd_name,
             f"{CRDS}/appprotect.f5.com_apusersigs.yaml",
         )
-        name = create_ingress_controller_wafv5(
-            kube_apis.v1,
-            kube_apis.apps_v1_api,
-            cli_arguments,
-            namespace,
-            "regcred",
-            request.param.get("extra_args", None),
-        )
+        if request.param["type"] == "rorfs":  # WAFv5 with readOnlyRootFileSystem
+            name = create_ingress_controller_wafv5(
+                kube_apis.v1,
+                kube_apis.apps_v1_api,
+                cli_arguments,
+                namespace,
+                "regcred",
+                request.param.get("extra_args", None),
+                True,
+            )
+        else:
+            name = create_ingress_controller_wafv5(
+                kube_apis.v1,
+                kube_apis.apps_v1_api,
+                cli_arguments,
+                namespace,
+                "regcred",
+                request.param.get("extra_args", None),
+            )
         try:
             with open(f"{dir}/wafv5.tgz", "rb") as f:
                 file_content = f.read()
