@@ -360,10 +360,10 @@ stream {
 
 {{- if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r33" }}
 mgmt {
-    usage_report endpoint=product.connect.nginx.com interval=24h;
+    usage_report endpoint=product.connect.nginx.com interval=1h;
     uuid_file /var/lib/nginx/nginx.id;
     license_token conf/license.jwt;
-    deployment_ctx /etc/nginx/reporting/tracking.info;
+    deployment_context /etc/nginx/reporting/tracking.info;
 }
 {{- else if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r31" }}
 mgmt {

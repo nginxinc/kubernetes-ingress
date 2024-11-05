@@ -2,6 +2,10 @@ package licensereporting
 
 import (
 	"encoding/json"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,8 +36,9 @@ func TestWriteLicenseInfo(t *testing.T) {
 	reportingDir = tempDir
 	defer func() { reportingDir = oldReportingDir }()
 
+	l := slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo}))
 	info := newLicenseInfo("test-cluster", "test-installation", 5)
-	writeLicenseInfo(info)
+	writeLicenseInfo(l, info)
 
 	filePath := filepath.Join(tempDir, reportingFile)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {

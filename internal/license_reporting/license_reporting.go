@@ -3,11 +3,12 @@ package licensereporting
 import (
 	"context"
 	"encoding/json"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/golang/glog"
 	clusterInfo "github.com/nginxinc/kubernetes-ingress/internal/common_cluster_info"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -20,10 +21,10 @@ var (
 )
 
 type licenseInfo struct {
-	Integration      string `json:"Integration"`
-	ClusterID        string `json:"ClusterID"`
-	ClusterNodeCount int    `json:"ClusterNodeCount"`
-	InstallationID   string `json:"InstallationID"`
+	Integration      string `json:"integration"`
+	ClusterID        string `json:"cluster_id"`
+	ClusterNodeCount int    `json:"cluster_node_count"`
+	InstallationID   string `json:"installation_id"`
 }
 
 func newLicenseInfo(clusterID, installationID string, clusterNodeCount int) *licenseInfo {
@@ -35,15 +36,15 @@ func newLicenseInfo(clusterID, installationID string, clusterNodeCount int) *lic
 	}
 }
 
-func writeLicenseInfo(info *licenseInfo) {
+func writeLicenseInfo(l *slog.Logger, info *licenseInfo) {
 	jsonData, err := json.Marshal(info)
 	if err != nil {
-		glog.Errorf("failed to marshal LicenseInfo to JSON: %v", err)
+		nl.Errorf(l, "failed to marshal LicenseInfo to JSON: %v", err)
 		return
 	}
 	filePath := filepath.Join(reportingDir, reportingFile)
 	if err := os.WriteFile(filePath, jsonData, 0o600); err != nil {
-		glog.Errorf("failed to write license reporting info to file: %v", err)
+		nl.Errorf(l, "failed to write license reporting info to file: %v", err)
 	}
 }
 
@@ -76,18 +77,19 @@ func (lr *LicenseReporter) Start(ctx context.Context) {
 }
 
 func (lr *LicenseReporter) collectAndWrite(ctx context.Context) {
+	l := nl.LoggerFromContext(ctx)
 	clusterID, err := clusterInfo.GetClusterID(ctx, lr.config.K8sClientReader)
 	if err != nil {
-		glog.Errorf("Error collecting ClusterIDS: %v", err)
+		nl.Errorf(l, "Error collecting ClusterIDS: %v", err)
 	}
 	nodeCount, err := clusterInfo.GetNodeCount(ctx, lr.config.K8sClientReader)
 	if err != nil {
-		glog.Errorf("Error collecting ClusterNodeCount: %v", err)
+		nl.Errorf(l, "Error collecting ClusterNodeCount: %v", err)
 	}
 	installationID, err := clusterInfo.GetInstallationID(ctx, lr.config.K8sClientReader, lr.config.PodNSName)
 	if err != nil {
-		glog.Errorf("Error collecting InstallationID: %v", err)
+		nl.Errorf(l, "Error collecting InstallationID: %v", err)
 	}
 	info := newLicenseInfo(clusterID, installationID, nodeCount)
-	writeLicenseInfo(info)
+	writeLicenseInfo(l, info)
 }
