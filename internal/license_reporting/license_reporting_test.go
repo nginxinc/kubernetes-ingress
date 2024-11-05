@@ -2,13 +2,14 @@ package licensereporting
 
 import (
 	"encoding/json"
-	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"testing"
+
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 
 	"k8s.io/client-go/kubernetes/fake"
 )

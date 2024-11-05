@@ -3,11 +3,12 @@ package licensereporting
 import (
 	"context"
 	"encoding/json"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
+
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 
 	clusterInfo "github.com/nginxinc/kubernetes-ingress/internal/common_cluster_info"
 	"k8s.io/apimachinery/pkg/types"
