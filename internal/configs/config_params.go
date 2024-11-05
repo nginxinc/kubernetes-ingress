@@ -174,6 +174,8 @@ type GlobalConfigParams struct {
 type MGMTConfigParams struct {
 	Context   context.Context
 	SSLVerify bool
+	Endpoint  string
+	Interval  string
 }
 
 // Listener represents a listener that can be used in a TransportServer resource.

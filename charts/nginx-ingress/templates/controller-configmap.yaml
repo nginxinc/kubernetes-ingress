@@ -44,8 +44,14 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
-{{/*  if sslVerify is not an empty ,  string can only be on or off, add key and value to config map */}}
+{{/*  if sslVerify is not an empty string, can only be on or off, add key and value to config map */}}
 {{- if .Values.controller.mgmt.sslVerify }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
 {{- end }}
+{{/*  if endpoint is not empty, add key and value to config map */}}
+{{- if .Values.controller.mgmt.endpoint }}
+  endpoint: {{ quote .Values.controller.mgmt.endpoint }}
+{{- end }}
+{{/*  if interval is not empty, add key and value to config map */}}
+  interval: {{ quote .Values.controller.mgmt.interval | default "1h" }}
 {{- end }}

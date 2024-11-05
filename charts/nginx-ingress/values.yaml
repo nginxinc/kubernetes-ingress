@@ -19,6 +19,10 @@ controller:
     ## Secret name of license token for NGINX Plus
     licenseTokenSecretName: "license-token" # required for NGINX Plus
 
+    ## Endpoint for usage report
+    # endpoint: "" # defaults to product.connect.nginx.com
+    # interval: 1h
+
     ## Configures the ssl_verify directive in the mgmt block
     sslVerify: "on" # on | off
 
