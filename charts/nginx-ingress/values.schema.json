@@ -109,6 +109,25 @@
                 "license"
               ]
             },
+            "endpoint": {
+              "type": "string",
+              "default": "",
+              "title": "The usage report endpoint Schema",
+              "examples": [
+                "",
+                "product.connect.nginx.com",
+                "nginx-mgmt.local"
+              ]
+            },
+            "interval": {
+              "type": "string",
+              "default": "1h",
+              "title": "The usage report interval Schema",
+              "examples": [
+                "1h",
+                "24h"
+              ]
+            },
             "sslVerify": {
               "type": "string",
               "default": "",

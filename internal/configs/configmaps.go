@@ -4,11 +4,17 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+)
+
+const (
+	minimumInterval = 60
+	defaultInterval = "1h"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -544,6 +550,23 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 			mgmtCfgParams.SSLVerify = parsedOnOff
 		}
 	}
+	if endpoint, exists := cfgm.Data["endpoint"]; exists {
+		mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
+	}
+	if interval, exists := cfgm.Data["interval"]; exists {
+		i := strings.TrimSpace(interval)
+		t, err := time.ParseDuration(i)
+		if err != nil {
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the interval key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), i, err)
+		}
+		if t.Seconds() < minimumInterval {
+			nl.Errorf(l, "Configmap %s/%s: Value too low for the interval key, got: %v, need higher than %ds.  Falling back to default %s", cfgm.GetNamespace(), cfgm.GetName(), i, minimumInterval, defaultInterval)
+			mgmtCfgParams.Interval = defaultInterval
+		} else {
+			mgmtCfgParams.Interval = i
+		}
+
+	}
 	return mgmtCfgParams, nil
 }
 
@@ -567,6 +590,8 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		LogFormatEscaping:                  config.MainLogFormatEscaping,
 		MainSnippets:                       config.MainMainSnippets,
 		MGMTSSLVerify:                      mgmtCfgParams.SSLVerify,
+		MGMTEndpoint:                       mgmtCfgParams.Endpoint,
+		MGMTInterval:                       mgmtCfgParams.Interval,
 		NginxStatus:                        staticCfgParams.NginxStatus,
 		NginxStatusAllowCIDRs:              staticCfgParams.NginxStatusAllowCIDRs,
 		NginxStatusPort:                    staticCfgParams.NginxStatusPort,
