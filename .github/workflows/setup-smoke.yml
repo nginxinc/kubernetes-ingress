@@ -49,18 +49,18 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set image variables
         id: image_details
         run: |
-          echo "name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap-modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap-modules, 'waf') && '-nap' || '' }}/nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress" >> $GITHUB_OUTPUT
+          echo "name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(inputs.nap-modules, 'dos') && '-dos' || '' }}${{ contains(inputs.nap-modules, 'waf') && '-nap' || '' }}${{ contains(inputs.image, 'v5') && '-v5' || '' }}/nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress" >> $GITHUB_OUTPUT
           echo "build_tag=${{ inputs.build-tag }}${{ contains(inputs.image, 'ubi-9') && '-ubi' || '' }}${{ contains(inputs.image, 'ubi-8') && '-ubi8' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}" >> $GITHUB_OUTPUT
           echo "stable_tag=${{ inputs.stable-tag }}${{ contains(inputs.image, 'ubi-9') && '-ubi' || '' }}${{ contains(inputs.image, 'ubi-8') && '-ubi8' || '' }}${{ contains(inputs.image, 'alpine') && '-alpine' || '' }}${{ contains(inputs.target, 'aws') && '-mktpl' || '' }}${{ contains(inputs.image, 'fips') && '-fips' || ''}}" >> $GITHUB_OUTPUT
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -98,7 +98,7 @@ jobs:
         if: ${{ inputs.authenticated && steps.stable_exists.outputs.exists != 'true'  }}
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ inputs.go-md5 }}
@@ -108,25 +108,25 @@ jobs:
       - name: Check if test image exists
         id: check-image
         run: |
-          docker manifest inspect "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
+          docker manifest inspect "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') || 'latest' }}"
         shell: bash
         continue-on-error: true
         if: ${{ inputs.authenticated  }}
 
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           file: tests/Dockerfile
           context: "."
           cache-from: type=gha,scope=test-runner
-          tags: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
+          tags: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') || 'latest' }}"
           pull: true
           push: ${{ inputs.authenticated }}
           load: ${{ !inputs.authenticated }}
         if: ${{ ( !inputs.authenticated || steps.check-image.outcome == 'failure' )  }}
 
       - name: Build ${{ inputs.image }} Container
-        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           file: build/Dockerfile
           context: "."
@@ -147,6 +147,11 @@ jobs:
             ${{ contains(inputs.image, 'ubi') && format('"rhel_license={0}"', secrets.RHEL_LICENSE) || '' }}
         if: ${{ !inputs.authenticated }}
 
+      - name: Generate WAF v5 tgz from JSON
+        run: |
+          docker run --rm --user root -v /var/run/docker.sock:/var/run/docker.sock -v ${{ github.workspace }}/tests/data/ap-waf-v5:/data gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nap/waf-compiler:5.3.0 -p /data/wafv5.json -o /data/wafv5.tgz
+        if: ${{ contains(inputs.image, 'nap-v5')}}
+
       - name: Run Smoke Tests
         id: smoke-tests
         uses: ./.github/actions/smoke-tests
@@ -158,11 +163,12 @@ jobs:
           label: ${{ inputs.label }}
           k8s-version: ${{ inputs.k8s-version }}
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
-          test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
+          registry-token: ${{ steps.auth.outputs.access_token }}
+          test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') || 'latest' }}"
         if: ${{ steps.stable_exists.outputs.exists != 'true'  }}
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ steps.smoke-tests.outputs.test-results-path }}

@@ -77,15 +77,15 @@ func TestGetValidTargets(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			targets, recordType, err := getValidTargets(tc.endpoints)
+			targets, recordType, err := getValidTargets(context.Background(), tc.endpoints)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if !cmp.Equal(tc.wantTargets, targets) {
-				t.Errorf(cmp.Diff(tc.wantTargets, targets))
+				t.Error(cmp.Diff(tc.wantTargets, targets))
 			}
 			if recordType != tc.wantRecord {
-				t.Errorf(cmp.Diff(tc.wantRecord, recordType))
+				t.Error(cmp.Diff(tc.wantRecord, recordType))
 			}
 		})
 	}

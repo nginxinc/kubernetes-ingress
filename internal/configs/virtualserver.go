@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -11,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
@@ -87,6 +88,10 @@ type VirtualServerEx struct {
 	VirtualServer       *conf_v1.VirtualServer
 	HTTPPort            int
 	HTTPSPort           int
+	HTTPIPv4            string
+	HTTPIPv6            string
+	HTTPSIPv4           string
+	HTTPSIPv6           string
 	Endpoints           map[string][]string
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
@@ -835,6 +840,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			StatusZone:                vsEx.VirtualServer.Spec.Host,
 			HTTPPort:                  vsEx.HTTPPort,
 			HTTPSPort:                 vsEx.HTTPSPort,
+			HTTPIPv4:                  vsEx.HTTPIPv4,
+			HTTPIPv6:                  vsEx.HTTPIPv6,
+			HTTPSIPv4:                 vsEx.HTTPSIPv4,
+			HTTPSIPv6:                 vsEx.HTTPSIPv6,
 			CustomListeners:           useCustomListeners,
 			ProxyProtocol:             vsc.cfgParams.ProxyProtocol,
 			SSL:                       sslConfig,
@@ -1432,11 +1441,13 @@ func generateAPIKeyClientMap(mapName string, apiKeyClients []apiKeyClient) *vers
 }
 
 func (p *policiesCfg) addWAFConfig(
+	ctx context.Context,
 	waf *conf_v1.WAF,
 	polKey string,
 	polNamespace string,
 	apResources *appProtectResourcesForVS,
 ) *validationResults {
+	l := nl.LoggerFromContext(ctx)
 	res := newValidationResults()
 	if p.WAF != nil {
 		res.addWarningf("Multiple WAF policies in the same context is not valid. WAF policy %s will be ignored", polKey)
@@ -1475,7 +1486,7 @@ func (p *policiesCfg) addWAFConfig(
 	}
 
 	if waf.SecurityLog != nil && waf.SecurityLogs == nil {
-		glog.V(2).Info("the field securityLog is deprecated and will be removed in future releases. Use field securityLogs instead")
+		nl.Debug(l, "the field securityLog is deprecated and will be removed in future releases. Use field securityLogs instead")
 		waf.SecurityLogs = append(waf.SecurityLogs, waf.SecurityLog)
 	}
 
@@ -1565,7 +1576,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				res = config.addAPIKeyConfig(pol.Spec.APIKey, key, polNamespace, ownerDetails.vsNamespace,
 					ownerDetails.vsName, policyOpts.secretRefs)
 			case pol.Spec.WAF != nil:
-				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
+				res = config.addWAFConfig(vsc.cfgParams.Context, pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			default:
 				res = newValidationResults()
 			}
@@ -2809,6 +2820,7 @@ func createUpstreamsForPlus(
 	baseCfgParams *ConfigParams,
 	staticParams *StaticConfigParams,
 ) []version2.Upstream {
+	l := nl.LoggerFromContext(baseCfgParams.Context)
 	var upstreams []version2.Upstream
 
 	isPlus := true
@@ -2818,7 +2830,7 @@ func createUpstreamsForPlus(
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(virtualServerEx.VirtualServer.Namespace, u.Service)]
 		if isExternalNameSvc {
-			glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
+			nl.Debugf(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
 			continue
 		}
 
@@ -2842,7 +2854,7 @@ func createUpstreamsForPlus(
 		for _, u := range vsr.Spec.Upstreams {
 			isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(vsr.Namespace, u.Service)]
 			if isExternalNameSvc {
-				glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
+				nl.Debugf(l, "Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
 				continue
 			}
 

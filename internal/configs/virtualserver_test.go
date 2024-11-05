@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -1200,6 +1201,7 @@ func TestGenerateVirtualServerConfigWithBackupForNGINXPlus(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -1479,7 +1481,7 @@ func TestGenerateVirtualServerConfigWithBackupForNGINXPlus(t *testing.T) {
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -1512,6 +1514,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupNameFor
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -1786,7 +1789,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupNameFor
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -1818,6 +1821,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortFor
 		},
 	}
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -2092,7 +2096,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortFor
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -2122,6 +2126,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortAnd
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -2396,7 +2401,7 @@ func TestGenerateVirtualServerConfig_DoesNotGenerateBackupOnMissingBackupPortAnd
 
 	got, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
+		t.Error(cmp.Diff(want, got))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
@@ -2597,6 +2602,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -3025,6 +3031,165 @@ func TestGenerateVirtualServerConfigWithCustomHttpsListener(t *testing.T) {
 	}
 }
 
+func TestGenerateVirtualServerConfigWithCustomHttpAndHttpsIPListeners(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPAndHTTPSIPListeners.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPAndHTTPSIPListeners.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPAndHTTPSIPListeners,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpIPListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPIPListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPIPListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPIPListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPIPListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPIPListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPIPListener.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPIPListener.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPIPListener.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPIPListener.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPIPListener.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPIPListener,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithCustomHttpsIPListener(t *testing.T) {
+	t.Parallel()
+
+	expected := version2.VirtualServerConfig{
+		Upstreams:     nil,
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Server: version2.Server{
+			ServerName:      virtualServerExWithCustomHTTPSIPListener.VirtualServer.Spec.Host,
+			StatusZone:      virtualServerExWithCustomHTTPSIPListener.VirtualServer.Spec.Host,
+			VSNamespace:     virtualServerExWithCustomHTTPSIPListener.VirtualServer.ObjectMeta.Namespace,
+			VSName:          virtualServerExWithCustomHTTPSIPListener.VirtualServer.ObjectMeta.Name,
+			DisableIPV6:     false,
+			HTTPPort:        virtualServerExWithCustomHTTPSIPListener.HTTPPort,
+			HTTPSPort:       virtualServerExWithCustomHTTPSIPListener.HTTPSPort,
+			HTTPIPv4:        virtualServerExWithCustomHTTPSIPListener.HTTPIPv4,
+			HTTPIPv6:        virtualServerExWithCustomHTTPSIPListener.HTTPIPv6,
+			HTTPSIPv4:       virtualServerExWithCustomHTTPSIPListener.HTTPSIPv4,
+			HTTPSIPv6:       virtualServerExWithCustomHTTPSIPListener.HTTPSIPv6,
+			CustomListeners: true,
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			Locations:       nil,
+		},
+	}
+
+	vsc := newVirtualServerConfigurator(
+		&baseCfgParams,
+		false,
+		false,
+		&StaticConfigParams{DisableIPV6: false},
+		false,
+		&fakeBV,
+	)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(
+		&virtualServerExWithCustomHTTPSIPListener,
+		nil,
+		nil)
+
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
 func TestGenerateVirtualServerConfigWithNilListener(t *testing.T) {
 	t.Parallel()
 
@@ -3122,7 +3287,7 @@ func TestGenerateVirtualServerConfigIPV6Disabled(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -3338,7 +3503,8 @@ func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
-		HTTP2: true,
+		Context: context.Background(),
+		HTTP2:   true,
 	}
 
 	expected := version2.VirtualServerConfig{
@@ -3611,6 +3777,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -3723,6 +3890,7 @@ func TestGenerateVirtualServerConfigWithInternalRoutes(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -3836,6 +4004,7 @@ func TestGenerateVirtualServerConfigWithInternalRoutesWarning(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -4017,7 +4186,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -4308,7 +4477,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
@@ -4721,7 +4890,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := []version2.Location{
 		{
@@ -5022,7 +5191,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 		},
 	}
 
-	baseCfgParams := ConfigParams{}
+	baseCfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.VirtualServerConfig{
 		Maps: []version2.Map{
@@ -5632,6 +5801,7 @@ func TestGenerateVirtualServerConfigJWKSPolicy(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -5889,6 +6059,7 @@ func TestGenerateVirtualServerConfigAPIKeyPolicy(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -6062,6 +6233,7 @@ func TestGenerateVirtualServerConfigAPIKeyClientMaps(t *testing.T) {
 	}
 
 	baseCfgParams := ConfigParams{
+		Context:         context.Background(),
 		ServerTokens:    "off",
 		Keepalive:       16,
 		ServerSnippets:  []string{"# server snippet"},
@@ -6188,19 +6360,19 @@ func TestGenerateVirtualServerConfigAPIKeyClientMaps(t *testing.T) {
 			})
 
 			if !cmp.Equal(tc.expectedSpecAPIKey, vsConf.Server.APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedSpecAPIKey, vsConf.Server.APIKey))
+				t.Error(cmp.Diff(tc.expectedSpecAPIKey, vsConf.Server.APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey))
+				t.Error(cmp.Diff(tc.expectedRoute1APIKey, vsConf.Server.Locations[0].APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey) {
-				t.Errorf(cmp.Diff(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey))
+				t.Error(cmp.Diff(tc.expectedRoute2APIKey, vsConf.Server.Locations[1].APIKey))
 			}
 
 			if !cmp.Equal(tc.expectedMapList, vsConf.Maps) {
-				t.Errorf(cmp.Diff(tc.expectedMapList, vsConf.Maps))
+				t.Error(cmp.Diff(tc.expectedMapList, vsConf.Maps))
 			}
 
 			if len(warnings) != 0 {
@@ -6992,7 +7164,7 @@ func TestGeneratePolicies(t *testing.T) {
 		},
 	}
 
-	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+	vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
 	// required to test the scaling of the ratelimit
 	vsc.IngressControllerReplicas = 2
 
@@ -7002,7 +7174,7 @@ func TestGeneratePolicies(t *testing.T) {
 			result.BundleValidator = nil
 
 			if !cmp.Equal(tc.expected, result) {
-				t.Errorf(cmp.Diff(tc.expected, result))
+				t.Error(cmp.Diff(tc.expected, result))
 			}
 			if len(vsc.warnings) > 0 {
 				t.Errorf("generatePolicies() returned unexpected warnings %v for the case of %s", vsc.warnings, tc.msg)
@@ -7092,7 +7264,7 @@ func TestGeneratePolicies_GeneratesWAFPolicyOnValidApBundle(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+			vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
 			res := vsc.generatePolicies(ownerDetails, tc.policyRefs, tc.policies, tc.context, policyOptions{apResources: &appProtectResourcesForVS{}})
 			res.BundleValidator = nil
 			if !cmp.Equal(tc.want, res) {
@@ -8655,7 +8827,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false, &fakeBV)
+			vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, false, &fakeBV)
 
 			if test.oidcPolCfg != nil {
 				vsc.oidcPolCfg = test.oidcPolCfg
@@ -8770,6 +8942,7 @@ func TestGenerateUpstream(t *testing.T) {
 		"backup.service.svc.test.corp.local:8080",
 	}
 	cfgParams := ConfigParams{
+		Context:          context.Background(),
 		LBMethod:         "random",
 		MaxFails:         1,
 		MaxConns:         0,
@@ -8897,7 +9070,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	name := "test-upstream"
 	endpoints := []string{"example.com"}
 	upstream := conf_v1.Upstream{Service: name}
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 
 	expected := version2.Upstream{
 		Name: name,
@@ -8931,6 +9104,7 @@ func TestGenerateUpstreamWithNTLM(t *testing.T) {
 		"192.168.10.10:8080",
 	}
 	cfgParams := ConfigParams{
+		Context:          context.Background(),
 		LBMethod:         "random",
 		MaxFails:         1,
 		MaxConns:         0,
@@ -9195,6 +9369,7 @@ func TestGenerateBuffer(t *testing.T) {
 func TestGenerateLocationForProxying(t *testing.T) {
 	t.Parallel()
 	cfgParams := ConfigParams{
+		Context:              context.Background(),
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
 		ProxySendTimeout:     "32s",
@@ -9241,6 +9416,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 func TestGenerateLocationForGrpcProxying(t *testing.T) {
 	t.Parallel()
 	cfgParams := ConfigParams{
+		Context:              context.Background(),
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
 		ProxySendTimeout:     "32s",
@@ -9475,7 +9651,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 		{
 			inputTLS:         nil,
 			inputSecretRefs:  map[string]*secrets.SecretReference{},
-			inputCfgParams:   &ConfigParams{},
+			inputCfgParams:   &ConfigParams{Context: context.Background()},
 			wildcard:         false,
 			expectedSSL:      nil,
 			expectedWarnings: Warnings{},
@@ -9486,7 +9662,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				Secret: "",
 			},
 			inputSecretRefs:  map[string]*secrets.SecretReference{},
-			inputCfgParams:   &ConfigParams{},
+			inputCfgParams:   &ConfigParams{Context: context.Background()},
 			wildcard:         false,
 			expectedSSL:      nil,
 			expectedWarnings: Warnings{},
@@ -9497,7 +9673,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				Secret: "",
 			},
 			inputSecretRefs: map[string]*secrets.SecretReference{},
-			inputCfgParams:  &ConfigParams{},
+			inputCfgParams:  &ConfigParams{Context: context.Background()},
 			wildcard:        true,
 			expectedSSL: &version2.SSL{
 				HTTP2:           false,
@@ -9512,7 +9688,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLS: &conf_v1.TLS{
 				Secret: "missing",
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/missing": {
@@ -9532,7 +9708,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLS: &conf_v1.TLS{
 				Secret: "mistyped",
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/mistyped": {
@@ -9562,7 +9738,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 					Path: "secret.pem",
 				},
 			},
-			inputCfgParams: &ConfigParams{},
+			inputCfgParams: &ConfigParams{Context: context.Background()},
 			wildcard:       false,
 			expectedSSL: &version2.SSL{
 				HTTP2:           false,
@@ -9578,7 +9754,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 	namespace := "default"
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, test.wildcard, &fakeBV)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, false, false, &StaticConfigParams{}, test.wildcard, &fakeBV)
 
 		// it is ok to use nil as the owner
 		result := vsc.generateSSLConfig(nil, test.inputTLS, namespace, test.inputSecretRefs, test.inputCfgParams)
@@ -9866,7 +10042,7 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 		},
 	}
 
-	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{}, &StaticConfigParams{})
+	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{Context: context.Background()}, &StaticConfigParams{})
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("createUpstreamsForPlus returned \n%v but expected \n%v", result, expected)
 	}
@@ -10021,7 +10197,7 @@ func TestGenerateSplits(t *testing.T) {
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := NewVSVariableNamer(&virtualServer)
 	scIndex := 1
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -11637,7 +11813,7 @@ func TestGenerateSplitsWeightChangesDynamicReload(t *testing.T) {
 	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := NewVSVariableNamer(&virtualServer)
 	scIndex := 1
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -11958,7 +12134,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	locSnippet := ""
 	enableSnippets := false
 	weightChangesDynamicReload := false
@@ -12360,7 +12536,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	enableSnippets := false
 	weightChangesDynamicReload := false
 	locSnippets := ""
@@ -12773,7 +12949,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		},
 	}
 
-	cfgParams := ConfigParams{}
+	cfgParams := ConfigParams{Context: context.Background()}
 	enableSnippets := false
 	weightChangesWithoutReload := false
 	locSnippets := ""
@@ -13523,7 +13699,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 	for _, test := range tests {
 		isWildcardEnabled := false
 		vsc := newVirtualServerConfigurator(
-			&ConfigParams{},
+			&ConfigParams{Context: context.Background()},
 			test.isPlus,
 			test.isResolverConfigured,
 			&StaticConfigParams{},
@@ -13569,7 +13745,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	}
 
 	for _, lbMethod := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false, &fakeBV)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, true, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
@@ -13603,7 +13779,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false, &fakeBV)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, true, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
@@ -13704,7 +13880,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{}, false, &fakeBV)
+		vsc := newVirtualServerConfigurator(&ConfigParams{Context: context.Background()}, test.isPlus, false, &StaticConfigParams{}, false, &fakeBV)
 		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{}, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
@@ -14839,7 +15015,7 @@ func TestAddWafConfig(t *testing.T) {
 
 	for _, test := range tests {
 		polCfg := newPoliciesConfig(&fakeBV)
-		result := polCfg.addWAFConfig(test.wafInput, test.polKey, test.polNamespace, test.apResources)
+		result := polCfg.addWAFConfig(context.Background(), test.wafInput, test.polKey, test.polNamespace, test.apResources)
 		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
 			t.Errorf("policiesCfg.addWAFConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
@@ -15543,6 +15719,66 @@ var (
 		},
 	}
 
+	virtualServerExWithCustomHTTPAndHTTPSIPListeners = VirtualServerEx{
+		HTTPPort:  8083,
+		HTTPSPort: 8443,
+		HTTPIPv4:  "192.168.0.2",
+		HTTPIPv6:  "::1",
+		HTTPSIPv4: "192.168.0.6",
+		HTTPSIPv6: "::2",
+
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTP:  "http-8083",
+					HTTPS: "https-8443",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPIPListener = VirtualServerEx{
+		HTTPPort: 8083,
+		HTTPIPv4: "192.168.0.2",
+		HTTPIPv6: "::1",
+
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTP: "http-8083",
+				},
+			},
+		},
+	}
+
+	virtualServerExWithCustomHTTPSIPListener = VirtualServerEx{
+		HTTPSPort: 8443,
+		HTTPSIPv4: "192.168.0.6",
+		HTTPSIPv6: "::2",
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Listener: &conf_v1.VirtualServerListener{
+					HTTPS: "https-8443",
+				},
+			},
+		},
+	}
+
 	virtualServerExWithNilListener = VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -15584,7 +15820,7 @@ func TestRFC1123ToSnake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !cmp.Equal(rfc1123ToSnake(tt.input), tt.expected) {
-				t.Errorf(cmp.Diff(rfc1123ToSnake(tt.input), tt.expected))
+				t.Error(cmp.Diff(rfc1123ToSnake(tt.input), tt.expected))
 			}
 		})
 	}

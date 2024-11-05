@@ -48,10 +48,10 @@ jobs:
       image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
 
@@ -72,7 +72,7 @@ jobs:
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
@@ -80,7 +80,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -120,15 +120,15 @@ jobs:
       security-events: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
 
       - name: govulncheck
-        uses: golang/govulncheck-action@dd0578b371c987f96d1185abb54344b44352bd58 # v1.0.3
+        uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1.0.4
         with:
           output-format: sarif
           output-file: govulncheck.sarif
@@ -143,7 +143,7 @@ jobs:
           fi
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
+        uses: github/codeql-action/upload-sarif@662472033e021d55d94146f66f6058822b0b39fd # v3.27.0
         if: steps.check-sarif.outputs.sarif_has_results == 'true'
         with:
           sarif_file: govulncheck.sarif
@@ -156,10 +156,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -184,7 +184,7 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
@@ -372,7 +372,7 @@ jobs:
     needs: [release-oss]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Certify UBI OSS images in quay
         uses: ./.github/actions/certify-openshift-image
@@ -396,7 +396,7 @@ jobs:
       matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_oss ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Make directory for security scan results
         id: directory
@@ -419,7 +419,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -432,14 +432,14 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
-        continue-on-error: true
-        with:
-          image-ref: ${{ steps.meta.outputs.tags }}
-          format: "sarif"
-          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
-          ignore-unfixed: "true"
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+      #   continue-on-error: true
+      #   with:
+      #     image-ref: ${{ steps.meta.outputs.tags }}
+      #     format: "sarif"
+      #     output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
+      #     ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -449,7 +449,7 @@ jobs:
 
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
-        uses: docker/scout-action@e71a6e518e912cc9094cb8c89e29bb0dcef01668 # v1.13.0
+        uses: docker/scout-action@e1c0d589b972d5605e035bbf74ed95cfc306d597 # v1.15.0
         with:
           command: cves,recommendations
           image: ${{ steps.meta.outputs.tags }}
@@ -461,14 +461,14 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to Github Artifacts
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
+        uses: github/codeql-action/upload-sarif@662472033e021d55d94146f66f6058822b0b39fd # v3.27.0
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -486,7 +486,7 @@ jobs:
       matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_plus ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Make directory for security scan results
         id: directory
@@ -509,7 +509,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -522,14 +522,14 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
-        continue-on-error: true
-        with:
-          image-ref: ${{ steps.meta.outputs.tags }}
-          format: "sarif"
-          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
-          ignore-unfixed: "true"
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+      #   continue-on-error: true
+      #   with:
+      #     image-ref: ${{ steps.meta.outputs.tags }}
+      #     format: "sarif"
+      #     output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
+      #     ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -539,7 +539,7 @@ jobs:
 
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
-        uses: docker/scout-action@e71a6e518e912cc9094cb8c89e29bb0dcef01668 # v1.13.0
+        uses: docker/scout-action@e1c0d589b972d5605e035bbf74ed95cfc306d597 # v1.15.0
         with:
           command: cves,recommendations
           image: ${{ steps.meta.outputs.tags }}
@@ -551,14 +551,14 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to Github Artifacts
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
+        uses: github/codeql-action/upload-sarif@662472033e021d55d94146f66f6058822b0b39fd # v3.27.0
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -576,7 +576,7 @@ jobs:
       matrix: ${{ fromJSON( needs.checks.outputs.image_matrix_nap ) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: NAP modules
         id: nap_modules
@@ -606,7 +606,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -619,14 +619,14 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
-        continue-on-error: true
-        with:
-          image-ref: ${{ steps.meta.outputs.tags }}
-          format: "sarif"
-          output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
-          ignore-unfixed: "true"
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+      #   continue-on-error: true
+      #   with:
+      #     image-ref: ${{ steps.meta.outputs.tags }}
+      #     format: "sarif"
+      #     output: "${{ steps.directory.outputs.directory }}/trivy.sarif"
+      #     ignore-unfixed: "true"
 
       - name: DockerHub Login for Docker Scout
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -636,7 +636,7 @@ jobs:
 
       - name: Run Docker Scout vulnerability scanner
         id: docker-scout
-        uses: docker/scout-action@e71a6e518e912cc9094cb8c89e29bb0dcef01668 # v1.13.0
+        uses: docker/scout-action@e1c0d589b972d5605e035bbf74ed95cfc306d597 # v1.15.0
         with:
           command: cves,recommendations
           image: ${{ steps.meta.outputs.tags }}
@@ -648,14 +648,14 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to Github Artifacts
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: "${{ github.ref_name }}-${{ steps.directory.outputs.directory }}"
           path: "${{ steps.directory.outputs.directory }}/"
           overwrite: true
 
       - name: Upload Scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
+        uses: github/codeql-action/upload-sarif@662472033e021d55d94146f66f6058822b0b39fd # v3.27.0
         with:
           sarif_file: "${{ steps.directory.outputs.directory }}/"
 
@@ -667,7 +667,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Create/Update Draft
         uses: lucacome/draft-release@5d29432a46bff6c122cd4b07a1fb94e1bb158d34 # v1.1.1

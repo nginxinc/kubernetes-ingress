@@ -35,6 +35,7 @@ jobs:
       id-token: write
     outputs:
       docs_only: ${{ github.event.pull_request && steps.docs.outputs.docs_only == 'true' }}
+      some_docs: ${{ github.event.pull_request && steps.docs.outputs.some_docs == 'true' }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
       go_path: ${{ steps.vars.outputs.go_path }}
       go_code_md5: ${{ steps.vars.outputs.go_code_md5 }}
@@ -52,25 +53,34 @@ jobs:
       image_matrix_nap: ${{ steps.vars.outputs.image_matrix_nap }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Filter only docs changes
         id: docs
         run: |
-          files=$(git diff --name-only HEAD^ | egrep -v "^docs/" | egrep -v "^examples/" | egrep -v "^README.md")
+          files=$(git diff --name-only HEAD^ | egrep -v "^site/" | egrep -v "^examples/" | egrep -v "^README.md")
+          docs_files=$(git diff --name-only HEAD^ | grep "^site/")
           if [ -z "$files" ]; then
             echo "docs_only=true" >> $GITHUB_OUTPUT
           else
             echo "docs_only=false" >> $GITHUB_OUTPUT
           fi
+
+          if [ -n "$docs_files" ]; then
+            echo "some_docs=true" >> $GITHUB_OUTPUT
+          else
+            echo "some_docs=false" >> $GITHUB_OUTPUT
+          fi
+
           echo $files
+          echo $docs_files
           cat $GITHUB_OUTPUT
         shell: bash --noprofile --norc -o pipefail {0}
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
 
@@ -109,7 +119,7 @@ jobs:
 
       - name: Fetch Cached Binary Artifacts
         id: binary-cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ steps.vars.outputs.go_code_md5 }}
@@ -117,7 +127,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -164,12 +174,13 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    needs: checks
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
 
@@ -193,16 +204,20 @@ jobs:
           export PATH=$PATH:$(go env GOPATH)/bin
           make telemetry-schema && git diff --name-only --exit-code internal/telemetry
 
+      - name: Check if make docs builds
+        if: ${{ needs.checks.outputs.some_docs == 'true' }}
+        run: cd site && make docs-ci
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-24.04
     needs: checks
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -212,10 +227,17 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }} # required
+        if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
+
+      - name: Run static check
+        uses: dominikh/staticcheck-action@fe1dd0c3658873b46f8c9bb3291096a617310ca6 # v1.3.1
+        with:
+          version: "v0.5.1"
+          install-go: false
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
   binaries:
@@ -228,12 +250,12 @@ jobs:
       issues: write # for goreleaser/goreleaser-action to close milestone
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Setup Golang Environment
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
@@ -258,7 +280,7 @@ jobs:
         if: ${{ needs.checks.outputs.binary_cache_hit != 'true' }}
 
       - name: Store Artifacts in Cache
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
@@ -377,11 +399,11 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -410,18 +432,18 @@ jobs:
         if: ${{ ( needs.checks.outputs.forked_workflow == 'false' || needs.checks.outputs.docs_only == 'false' ) && steps.stable_exists.outputs.exists != 'true' }}
 
       - name: Fetch Cached Artifacts
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ needs.checks.outputs.go_code_md5 }}
         if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
         if: ${{ needs.checks.outputs.forked_workflow == 'true' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Docker Image ${{ matrix.base-os }}
-        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           file: build/Dockerfile
           context: "."
@@ -502,7 +524,7 @@ jobs:
       matrix_nap: ${{ steps.set-matrix.outputs.matrix_nap }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - id: set-matrix
         run: |
@@ -511,11 +533,11 @@ jobs:
           echo "matrix_nap=$(cat .github/data/matrix-smoke-nap.json | jq -c --arg latest "${{ needs.checks.outputs.k8s_latest }}" '.k8s += [$latest]')" >> $GITHUB_OUTPUT
 
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
 
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           token_format: access_token
           workload_identity_provider: ${{ secrets.GCR_WORKLOAD_IDENTITY }}
@@ -533,18 +555,18 @@ jobs:
       - name: Check if test image exists
         id: check-image
         run: |
-          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') || 'latest' }}
         shell: bash
         continue-on-error: true
         if: ${{ needs.checks.outputs.forked_workflow == 'false' && needs.checks.outputs.docs_only == 'false' }}
 
       - name: Build Test-Runner Container
-        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           file: tests/Dockerfile
           context: "."
           cache-from: type=gha,scope=test-runner
-          tags: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt') || 'latest' }}"
+          tags: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') || 'latest' }}"
           pull: true
           push: ${{ needs.checks.outputs.forked_workflow == 'false' }}
           load: false
@@ -633,7 +655,7 @@ jobs:
 
   tag-stable:
     name: Tag tested image as stable
-    needs: [checks, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
+    needs: [checks, build-docker, build-docker-plus, build-docker-nap, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
     permissions:
       contents: read # To checkout repository
       id-token: write # To sign into Google Container Registry
@@ -649,7 +671,7 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04
     name: Final CI Results
-    needs: [tag-stable, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
+    needs: [tag-stable, build-docker, build-docker-plus, build-docker-nap, smoke-tests-oss, smoke-tests-plus, smoke-tests-nap]
     steps:
       - run: |
           tagResult="${{ needs.tag-stable.result }}"

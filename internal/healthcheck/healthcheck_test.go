@@ -3,11 +3,15 @@ package healthcheck_test
 import (
 	"encoding/json"
 	"errors"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
 	"github.com/nginxinc/nginx-plus-go-client/client"
@@ -15,9 +19,9 @@ import (
 
 // testHandler creates http handler for testing HealthServer.
 func testHandler(hs *healthcheck.HealthServer) http.Handler {
-	mux := chi.NewRouter()
-	mux.Get("/probe/{hostname}", hs.UpstreamStats)
-	mux.Get("/probe/ts/{name}", hs.StreamStats)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /probe/{hostname}", hs.UpstreamStats)
+	mux.HandleFunc("GET /probe/ts/{name}", hs.StreamStats)
 	return mux
 }
 
@@ -25,6 +29,7 @@ func TestHealthCheckServer_Returns404OnMissingHostname(t *testing.T) {
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXAllUp,
+		Logger:           slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -45,6 +50,7 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersUp(t *testing
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXAllUp,
+		Logger:           slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -78,6 +84,7 @@ func TestHealthCheckServer_ReturnsCorrectStatsForHostnameOnAllPeersDown(t *testi
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXAllUnhealthy,
+		Logger:           slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -112,6 +119,7 @@ func TestHealthCheckServer_ReturnsCorrectStatsForValidHostnameOnPartOfPeersDown(
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXPartiallyUp,
+		Logger:           slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -146,6 +154,7 @@ func TestHealthCheckServer_RespondsWith404OnNotExistingHostname(t *testing.T) {
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXNotExistingHost,
+		Logger:           slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -166,6 +175,7 @@ func TestHealthCheckServer_RespondsWith500OnErrorFromNGINXAPI(t *testing.T) {
 	hs := healthcheck.HealthServer{
 		UpstreamsForHost: getUpstreamsForHost,
 		NginxUpstreams:   getUpstreamsFromNGINXErrorFromAPI,
+		Logger:           slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -186,6 +196,7 @@ func TestHealthCheckServer_Returns404OnMissingTransportServerActionName(t *testi
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+		Logger:                 slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -206,6 +217,7 @@ func TestHealthCheckServer_Returns404OnBogusTransportServerActionName(t *testing
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+		Logger:                 slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -226,6 +238,7 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersUp
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllUp,
+		Logger:                 slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -259,6 +272,7 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnSomePeersU
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXPartiallyUp,
+		Logger:                 slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))
@@ -292,6 +306,7 @@ func TestHealthCheckServer_ReturnsCorrectTransportServerStatsForNameOnAllPeersDo
 	hs := healthcheck.HealthServer{
 		StreamUpstreamsForName: streamUpstreamsForName,
 		NginxStreamUpstreams:   streamUpstreamsFromNGINXAllPeersDown,
+		Logger:                 slog.New(nic_glog.New(io.Discard, &nic_glog.Options{Level: levels.LevelInfo})),
 	}
 
 	ts := httptest.NewServer(testHandler(&hs))

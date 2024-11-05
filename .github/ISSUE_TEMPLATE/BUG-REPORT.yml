@@ -1,7 +1,7 @@
 name: Bug Report
 description: File a bug report.
 title: "[Bug]: "
-labels: ["bug", "ready for refinement"]
+labels: ["bug", "needs triage"]
 body:
   - type: markdown
     attributes:
@@ -14,6 +14,7 @@ body:
       description: What version of our F5 NGINX Ingress Controller are you running?
       options:
         - edge
+        - 3.7.0
         - 3.6.2
         - 3.6.1
         - 3.6.0
@@ -69,14 +70,6 @@ body:
     validations:
       required: true
   - type: textarea
-    id: describe-bug
-    attributes:
-      label: What happened?
-      description: Add as much details about the bug as you can.
-      placeholder: Tell is what you see!
-    validations:
-      required: true
-  - type: textarea
     id: steps-to-reproduce
     attributes:
       label: Steps to reproduce
@@ -86,36 +79,4 @@ body:
         2. View logs on '....'
         3. See error
     validations:
-      required: false
-  - type: textarea
-    id: expected-behaviour
-    attributes:
-      label: Expected behaviour
-      description: How did you expect the product/feature to behave?
-      placeholder: What way did you expect this to behave?
-    validations:
-      required: false
-  - type: textarea
-    id: kubernetes-describe-output
-    attributes:
-      label: Kubectl Describe output
-      description: Please run `kubectl describe` on any relevant Kubernetes resources. e.g. `kubectl describe deployment my-nginx-ingress-controller-deployment`. This will be automatically formatted into code, so no need for backticks.
-      render: shell
-    validations:
-      required: false
-  - type: textarea
-    id: logs
-    attributes:
-      label: Log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
-    validations:
-      required: false
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Contributing Guidelines
-      description: By submitting this issue, you agree that you have read the [Report a Bug](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md#report-a-bug) section of our [Contributing Guidelines](https://github.com/nginxinc/kubernetes-ingress/blob/main/CONTRIBUTING.md)
-      options:
-        - label: I confirm that I have read the Report a Bug section of the Contributing Guidelines
-          required: true
+      required: true

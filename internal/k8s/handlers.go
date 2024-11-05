@@ -2,13 +2,13 @@ package k8s
 
 import (
 	"fmt"
+	"log/slog"
 	"reflect"
-	"sort"
 
 	"github.com/jinzhu/copier"
 
-	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/client-go/tools/cache"
@@ -22,7 +22,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ingress := obj.(*networking.Ingress)
-			glog.V(3).Infof("Adding Ingress: %v", ingress.Name)
+			nl.Debugf(lbc.Logger, "Adding Ingress: %v", ingress.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -30,23 +30,23 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			if !isIng {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				ingress, ok = deletedState.Obj.(*networking.Ingress)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing Ingress: %v", ingress.Name)
+			nl.Debugf(lbc.Logger, "Removing Ingress: %v", ingress.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, current interface{}) {
 			c := current.(*networking.Ingress)
 			o := old.(*networking.Ingress)
 			if hasChanges(o, c) {
-				glog.V(3).Infof("Ingress %v changed, syncing", c.Name)
+				nl.Debugf(lbc.Logger, "Ingress %v changed, syncing", c.Name)
 				lbc.AddSyncQueue(c)
 			}
 		},
@@ -59,10 +59,10 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 		AddFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
 			if !secrets.IsSupportedSecretType(secret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
+				nl.Debugf(lbc.Logger, "Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
 				return
 			}
-			glog.V(3).Infof("Adding Secret: %v", secret.Name)
+			nl.Debugf(lbc.Logger, "Adding Secret: %v", secret.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -70,147 +70,44 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			if !isSecr {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				secret, ok = deletedState.Obj.(*v1.Secret)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Secret object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-Secret object: %v", deletedState.Obj)
 					return
 				}
 			}
 			if !secrets.IsSupportedSecretType(secret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
+				nl.Debugf(lbc.Logger, "Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
 				return
 			}
 
-			glog.V(3).Infof("Removing Secret: %v", secret.Name)
+			nl.Debugf(lbc.Logger, "Removing Secret: %v", secret.Name)
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			// A secret cannot change its type. That's why we only need to check the type of the current secret.
 			curSecret := cur.(*v1.Secret)
 			if !secrets.IsSupportedSecretType(curSecret.Type) {
-				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", curSecret.Name, curSecret.Type)
+				nl.Debugf(lbc.Logger, "Ignoring Secret %v of unsupported type %v", curSecret.Name, curSecret.Type)
 				return
 			}
 
 			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Secret %v changed, syncing", cur.(*v1.Secret).Name)
+				nl.Debugf(lbc.Logger, "Secret %v changed, syncing", cur.(*v1.Secret).Name)
 				lbc.AddSyncQueue(cur)
 			}
 		},
 	}
 }
 
-// createServiceHandlers builds the handler funcs for services.
-//
-// In the update handlers below we catch two cases:
-// (1) the service is the external service
-// (2) the service had a change like a change of the port field of a service port (for such a change Kubernetes doesn't
-// update the corresponding endpoints resource, that we monitor as well)
-// or a change of the externalName field of an ExternalName service.
-//
-// In both cases we enqueue the service to be processed by syncService
-func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			svc := obj.(*v1.Service)
-
-			glog.V(3).Infof("Adding service: %v", svc.Name)
-			lbc.AddSyncQueue(svc)
-		},
-		DeleteFunc: func(obj interface{}) {
-			svc, isSvc := obj.(*v1.Service)
-			if !isSvc {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				svc, ok = deletedState.Obj.(*v1.Service)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Service object: %v", deletedState.Obj)
-					return
-				}
-			}
-
-			glog.V(3).Infof("Removing service: %v", svc.Name)
-			lbc.AddSyncQueue(svc)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				curSvc := cur.(*v1.Service)
-				if lbc.IsExternalServiceForStatus(curSvc) {
-					lbc.AddSyncQueue(curSvc)
-					return
-				}
-				oldSvc := old.(*v1.Service)
-				if hasServiceChanges(oldSvc, curSvc) {
-					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
-					lbc.AddSyncQueue(curSvc)
-				}
-			}
-		},
-	}
-}
-
-type portSort []v1.ServicePort
-
-func (a portSort) Len() int {
-	return len(a)
-}
-
-func (a portSort) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-func (a portSort) Less(i, j int) bool {
-	if a[i].Name == a[j].Name {
-		return a[i].Port < a[j].Port
-	}
-	return a[i].Name < a[j].Name
-}
-
-// hasServicedChanged checks if the service has changed based on custom rules we define (eg. port).
-func hasServiceChanges(oldSvc, curSvc *v1.Service) bool {
-	if hasServicePortChanges(oldSvc.Spec.Ports, curSvc.Spec.Ports) {
-		return true
-	}
-	if hasServiceExternalNameChanges(oldSvc, curSvc) {
-		return true
-	}
-	return false
-}
-
-// hasServiceExternalNameChanges only compares Service.Spec.Externalname for Type ExternalName services.
-func hasServiceExternalNameChanges(oldSvc, curSvc *v1.Service) bool {
-	return curSvc.Spec.Type == v1.ServiceTypeExternalName && oldSvc.Spec.ExternalName != curSvc.Spec.ExternalName
-}
-
-// hasServicePortChanges only compares ServicePort.Name and .Port.
-func hasServicePortChanges(oldServicePorts []v1.ServicePort, curServicePorts []v1.ServicePort) bool {
-	if len(oldServicePorts) != len(curServicePorts) {
-		return true
-	}
-
-	sort.Sort(portSort(oldServicePorts))
-	sort.Sort(portSort(curServicePorts))
-
-	for i := range oldServicePorts {
-		if oldServicePorts[i].Port != curServicePorts[i].Port ||
-			oldServicePorts[i].Name != curServicePorts[i].Name {
-			return true
-		}
-	}
-	return false
-}
-
 func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
-			glog.V(3).Infof("Adding VirtualServer: %v", vs.Name)
+			nl.Debugf(lbc.Logger, "Adding VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -218,16 +115,16 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			if !isVs {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				vs, ok = deletedState.Obj.(*conf_v1.VirtualServer)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-VirtualServer object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-VirtualServer object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing VirtualServer: %v", vs.Name)
+			nl.Debugf(lbc.Logger, "Removing VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -238,13 +135,13 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 				var curVsCopy, oldVsCopy conf_v1.VirtualServer
 				err := copier.CopyWithOption(&curVsCopy, curVs, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServer %v: %v for Dynamic Weight Changes", curVs.Name, err)
+					nl.Debugf(lbc.Logger, "Error copying VirtualServer %v: %v for Dynamic Weight Changes", curVs.Name, err)
 					return
 				}
 
 				err = copier.CopyWithOption(&oldVsCopy, oldVs, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServer %v: %v for Dynamic Weight Changes", oldVs.Name, err)
+					nl.Debugf(lbc.Logger, "Error copying VirtualServer %v: %v for Dynamic Weight Changes", oldVs.Name, err)
 					return
 				}
 
@@ -259,7 +156,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			}
 
 			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
-				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
+				nl.Debugf(lbc.Logger, "VirtualServer %v changed, syncing", curVs.Name)
 				lbc.AddSyncQueue(curVs)
 			}
 		},
@@ -270,7 +167,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
-			glog.V(3).Infof("Adding VirtualServerRoute: %v", vsr.Name)
+			nl.Debugf(lbc.Logger, "Adding VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -278,16 +175,16 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			if !isVsr {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					nl.Debugf(lbc.Logger, "Error received unexpected object: %v", obj)
 					return
 				}
 				vsr, ok = deletedState.Obj.(*conf_v1.VirtualServerRoute)
 				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-VirtualServerRoute object: %v", deletedState.Obj)
+					nl.Debugf(lbc.Logger, "Error DeletedFinalStateUnknown contained non-VirtualServerRoute object: %v", deletedState.Obj)
 					return
 				}
 			}
-			glog.V(3).Infof("Removing VirtualServerRoute: %v", vsr.Name)
+			nl.Debugf(lbc.Logger, "Removing VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -298,13 +195,13 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 				var curVsrCopy, oldVsrCopy conf_v1.VirtualServerRoute
 				err := copier.CopyWithOption(&curVsrCopy, curVsr, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", curVsr.Name, err)
+					nl.Debugf(lbc.Logger, "Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", curVsr.Name, err)
 					return
 				}
 
 				err = copier.CopyWithOption(&oldVsrCopy, oldVsr, copier.Option{DeepCopy: true})
 				if err != nil {
-					glog.V(3).Infof("Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", oldVsr.Name, err)
+					nl.Debugf(lbc.Logger, "Error copying VirtualServerRoute %v: %v for Dynamic Weight Changes", oldVsr.Name, err)
 					return
 				}
 
@@ -319,129 +216,18 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			}
 
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
-				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
+				nl.Debugf(lbc.Logger, "VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
 			}
 		},
 	}
 }
 
-func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			ts := obj.(*conf_v1.TransportServer)
-			glog.V(3).Infof("Adding TransportServer: %v", ts.Name)
-			lbc.AddSyncQueue(ts)
-		},
-		DeleteFunc: func(obj interface{}) {
-			ts, isTs := obj.(*conf_v1.TransportServer)
-			if !isTs {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				ts, ok = deletedState.Obj.(*conf_v1.TransportServer)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-TransportServer object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing TransportServer: %v", ts.Name)
-			lbc.AddSyncQueue(ts)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			curTs := cur.(*conf_v1.TransportServer)
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("TransportServer %v changed, syncing", curTs.Name)
-				lbc.AddSyncQueue(curTs)
-			}
-		},
-	}
-}
-
-func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			pol := obj.(*conf_v1.Policy)
-			glog.V(3).Infof("Adding Policy: %v", pol.Name)
-			lbc.AddSyncQueue(pol)
-		},
-		DeleteFunc: func(obj interface{}) {
-			pol, isPol := obj.(*conf_v1.Policy)
-			if !isPol {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				pol, ok = deletedState.Obj.(*conf_v1.Policy)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Policy object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing Policy: %v", pol.Name)
-			lbc.AddSyncQueue(pol)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			curPol := cur.(*conf_v1.Policy)
-			oldPol := old.(*conf_v1.Policy)
-			if !reflect.DeepEqual(oldPol.Spec, curPol.Spec) {
-				glog.V(3).Infof("Policy %v changed, syncing", curPol.Name)
-				lbc.AddSyncQueue(curPol)
-			}
-		},
-	}
-}
-
-func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			link := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding IngressLink: %v", link.GetName())
-			lbc.AddSyncQueue(link)
-		},
-		DeleteFunc: func(obj interface{}) {
-			link, isUnstructured := obj.(*unstructured.Unstructured)
-
-			if !isUnstructured {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				link, ok = deletedState.Obj.(*unstructured.Unstructured)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Unstructured object: %v", deletedState.Obj)
-					return
-				}
-			}
-
-			glog.V(3).Infof("Removing IngressLink: %v", link.GetName())
-			lbc.AddSyncQueue(link)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			oldLink := old.(*unstructured.Unstructured)
-			curLink := cur.(*unstructured.Unstructured)
-			different, err := areResourcesDifferent(oldLink, curLink)
-			if err != nil {
-				glog.V(3).Infof("Error when comparing IngressLinks: %v", err)
-				lbc.AddSyncQueue(curLink)
-			}
-			if different {
-				glog.V(3).Infof("IngressLink %v changed, syncing", oldLink.GetName())
-				lbc.AddSyncQueue(curLink)
-			}
-		},
-	}
-}
-
 // areResourcesDifferent returns true if the resources are different based on their spec.
-func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bool, error) {
+func areResourcesDifferent(l *slog.Logger, oldresource, resource *unstructured.Unstructured) (bool, error) {
 	oldSpec, found, err := unstructured.NestedMap(oldresource.Object, "spec")
 	if !found {
-		glog.V(3).Infof("Warning, oldspec has unexpected format")
+		nl.Debugf(l, "Warning, oldspec has unexpected format")
 	}
 	if err != nil {
 		return false, err
@@ -455,43 +241,9 @@ func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bo
 	}
 	eq := reflect.DeepEqual(oldSpec, spec)
 	if eq {
-		glog.V(3).Infof("New spec of %v same as old spec", oldresource.GetName())
+		nl.Debugf(l, "New spec of %v same as old spec", oldresource.GetName())
 	}
 	return !eq, nil
-}
-
-// createNamespaceHandlers builds the handler funcs for namespaces
-func createNamespaceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			ns := obj.(*v1.Namespace)
-			glog.V(3).Infof("Adding Namespace to list of watched Namespaces: %v", ns.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			ns, isNs := obj.(*v1.Namespace)
-			if !isNs {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				ns, ok = deletedState.Obj.(*v1.Namespace)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Namespace object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing Namespace from list of watched Namespaces: %v", ns.Name)
-			lbc.AddSyncQueue(obj)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Namespace %v changed, syncing", cur.(*v1.Namespace).Name)
-				lbc.AddSyncQueue(cur)
-			}
-		},
-	}
 }
 
 func zeroOutVirtualServerSplitWeights(vs *conf_v1.VirtualServer) {
