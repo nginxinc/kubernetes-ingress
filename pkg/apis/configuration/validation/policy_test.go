@@ -1680,6 +1680,16 @@ func TestValidateAPIKeyPolicy_FailsOnInvalidInput(t *testing.T) {
 			},
 			msg: "invalid secret name",
 		},
+		{
+			apiKey: &v1.APIKey{
+				ClientSecret: "secret_1",
+			},
+			msg: "no suppliedIn provided",
+		},
+
+		{
+			apiKey: nil, msg: "no apikey provided",
+		},
 	}
 
 	for _, test := range tests {
