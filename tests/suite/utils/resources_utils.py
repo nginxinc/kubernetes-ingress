@@ -1206,7 +1206,7 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
 
 
 def create_ingress_controller_wafv5(
-    v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments, namespace, reg_secret, args=None
+    v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments, namespace, reg_secret, args=None, rorfs=False
 ) -> str:
     """
     Create an Ingress Controller according to the params.
@@ -1225,6 +1225,9 @@ def create_ingress_controller_wafv5(
     dep["spec"]["replicas"] = int(cli_arguments["replicas"])
     dep["spec"]["template"]["spec"]["containers"][0]["image"] = cli_arguments["image"]
     dep["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = cli_arguments["image-pull-policy"]
+    if "readOnlyRootFilesystem" not in dep["spec"]["template"]["spec"]["containers"][0]["securityContext"]:
+        dep["spec"]["template"]["spec"]["containers"][0]["securityContext"]["readOnlyRootFilesystem"] = rorfs
+
     template_spec = dep["spec"]["template"]["spec"]
     if "imagePullSecrets" not in template_spec:
         template_spec["imagePullSecrets"] = []
@@ -1233,43 +1236,109 @@ def create_ingress_controller_wafv5(
     if "volumes" not in template_spec:
         template_spec["volumes"] = []
 
-    template_spec["volumes"].extend(
-        [
-            {
-                "name": "app-protect-bd-config",
-                "emptyDir": {},
-            },
-            {
-                "name": "app-protect-config",
-                "emptyDir": {},
-            },
-            {
-                "name": "app-protect-bundles",
-                "emptyDir": {},
-            },
-        ]
-    )
+    if rorfs and "initContainers" not in template_spec:
+        template_spec["initContainers"] = []
+        template_spec["initContainers"].extend(
+            [
+                {
+                    "name": "init-nginx-ingress",
+                    "image": cli_arguments["image"],
+                    "imagePullPolicy": "IfNotPresent",
+                    "command": ["cp", "-vdR", "/etc/nginx/.", "/mnt/etc"],
+                    "securityContext": {
+                        "allowPrivilegeEscalation": False,
+                        "readOnlyRootFilesystem": True,
+                        "runAsUser": 101,  # nginx
+                        "runAsNonRoot": True,
+                        "capabilities": {"drop": ["ALL"]},
+                    },
+                    "volumeMounts": [{"mountPath": "/mnt/etc", "name": "nginx-etc"}],
+                }
+            ]
+        )
+
+    if rorfs:
+        template_spec["volumes"].extend(
+            [
+                {
+                    "name": "app-protect-bd-config",
+                    "emptyDir": {},
+                },
+                {
+                    "name": "app-protect-config",
+                    "emptyDir": {},
+                },
+                {
+                    "name": "app-protect-bundles",
+                    "emptyDir": {},
+                },
+                {"name": "nginx-etc", "emptyDir": {}},
+                {"name": "nginx-log", "emptyDir": {}},
+                {"name": "nginx-cache", "emptyDir": {}},
+                {"name": "nginx-lib", "emptyDir": {}},
+            ]
+        )
+    else:
+        template_spec["volumes"].extend(
+            [
+                {
+                    "name": "app-protect-bd-config",
+                    "emptyDir": {},
+                },
+                {
+                    "name": "app-protect-config",
+                    "emptyDir": {},
+                },
+                {
+                    "name": "app-protect-bundles",
+                    "emptyDir": {},
+                },
+            ]
+        )
 
     container = dep["spec"]["template"]["spec"]["containers"][0]
     if "volumeMounts" not in container:
         container["volumeMounts"] = []
 
-    container["volumeMounts"].extend(
-        [
-            {
-                "name": "app-protect-bd-config",
-                "mountPath": "/opt/app_protect/bd_config",
-            },
-            {
-                "name": "app-protect-config",
-                "mountPath": "/opt/app_protect/config",
-            },
-            {
-                "name": "app-protect-bundles",
-                "mountPath": "/etc/app_protect/bundles",
-            },
-        ]
-    )
+    if rorfs:
+        container["volumeMounts"].extend(
+            [
+                {
+                    "name": "app-protect-bd-config",
+                    "mountPath": "/opt/app_protect/bd_config",
+                },
+                {
+                    "name": "app-protect-config",
+                    "mountPath": "/opt/app_protect/config",
+                },
+                {
+                    "name": "app-protect-bundles",
+                    "mountPath": "/etc/app_protect/bundles",
+                },
+                {"name": "nginx-etc", "mountPath": "/etc/nginx"},
+                {"name": "nginx-log", "mountPath": "/var/log/nginx"},
+                {"name": "nginx-cache", "mountPath": "/var/cache/nginx"},
+                {"name": "nginx-lib", "mountPath": "/var/lib/nginx"},
+            ]
+        )
+    else:
+        container["volumeMounts"].extend(
+            [
+                {
+                    "name": "app-protect-bd-config",
+                    "mountPath": "/opt/app_protect/bd_config",
+                },
+                {
+                    "name": "app-protect-config",
+                    "mountPath": "/opt/app_protect/config",
+                },
+                {
+                    "name": "app-protect-bundles",
+                    "mountPath": "/etc/app_protect/bundles",
+                },
+            ]
+        )
+
     dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(
         [
             f"-default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret",
@@ -1281,7 +1350,11 @@ def create_ingress_controller_wafv5(
         "name": "waf-config-mgr",
         "image": f"{NGX_REG}/nap/waf-config-mgr:{WAF_V5_VERSION}",
         "imagePullPolicy": "IfNotPresent",
-        "securityContext": {"allowPrivilegeEscalation": False, "capabilities": {"drop": ["all"]}},
+        "securityContext": {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["all"]},
+            "readOnlyRootFilesystem": rorfs,
+        },
         "volumeMounts": [
             {
                 "name": "app-protect-bd-config",
@@ -1301,6 +1374,11 @@ def create_ingress_controller_wafv5(
         "name": "waf-enforcer",
         "image": f"{NGX_REG}/nap/waf-enforcer:{WAF_V5_VERSION}",
         "imagePullPolicy": "IfNotPresent",
+        "securityContext": {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["all"]},
+            "readOnlyRootFilesystem": rorfs,
+        },
         "env": [{"name": "ENFORCER_PORT", "value": "50000"}],
         "volumeMounts": [
             {
