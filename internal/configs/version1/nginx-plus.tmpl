@@ -364,6 +364,11 @@ mgmt {
     {{- if ne .MGMTEndpoint "" }} endpoint={{ .MGMTEndpoint }} {{- end }} interval={{ .MGMTInterval }};
     license_token /etc/nginx/license/license.jwt;
     uuid_file /var/lib/nginx/nginx.id;
+    {{ if .MGMTEnforceInitialReport -}}
+    enforce_initial_report on;
+    {{- else -}}
+    enforce_initial_report off;
+    {{ end }}
     {{ if .MGMTSSLVerify -}}
     ssl_verify on;
     {{- else -}}

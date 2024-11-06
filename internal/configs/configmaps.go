@@ -550,6 +550,13 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 			mgmtCfgParams.SSLVerify = parsedOnOff
 		}
 	}
+	if enforceInitialReport, exists := cfgm.Data["enforce-initial-report"]; exists {
+		if parsedOnOff, err := ParseOnOff(enforceInitialReport); err != nil {
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the enforce-initial-report key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
+		} else {
+			mgmtCfgParams.EnforceInitialReport = parsedOnOff
+		}
+	}
 	if endpoint, exists := cfgm.Data["endpoint"]; exists {
 		mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
 	}
@@ -590,6 +597,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		LogFormatEscaping:                  config.MainLogFormatEscaping,
 		MainSnippets:                       config.MainMainSnippets,
 		MGMTSSLVerify:                      mgmtCfgParams.SSLVerify,
+		MGMTEnforceInitialReport:           mgmtCfgParams.EnforceInitialReport,
 		MGMTEndpoint:                       mgmtCfgParams.Endpoint,
 		MGMTInterval:                       mgmtCfgParams.Interval,
 		NginxStatus:                        staticCfgParams.NginxStatus,

@@ -19,12 +19,16 @@ controller:
     ## Secret name of license token for NGINX Plus
     licenseTokenSecretName: "license-token" # required for NGINX Plus
 
+    ## Enables or disables the 180-day grace period for sending the initial usage report
+    #enforceInitialReport: "on" # on | off
+
     ## Endpoint for usage report
     # endpoint: "" # defaults to product.connect.nginx.com
     # interval: 1h
 
     ## Configures the ssl_verify directive in the mgmt block
     sslVerify: "on" # on | off
+
 
     # ## SSL certification of the mgmt block
     # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type

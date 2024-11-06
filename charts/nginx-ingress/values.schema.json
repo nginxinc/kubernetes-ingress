@@ -128,6 +128,19 @@
                 "24h"
               ]
             },
+            "enforceInitialReport": {
+              "type": "string",
+              "default": "",
+              "title": "The enforceInitialReport Schema",
+              "enum": [
+                "on",
+                "off"
+              ],
+              "examples": [
+                "on",
+                "off"
+              ]
+            },
             "sslVerify": {
               "type": "string",
               "default": "",
