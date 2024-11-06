@@ -6,6 +6,7 @@ doctypes:
 title: Releases
 toc: true
 weight: 2100
+
 ---
 {{< note >}} 
 FIPS compliant images are currently impacted by compatibility issues with a dependent library.
@@ -65,7 +66,6 @@ or build your own image using the 3.7.1 source code
 We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
 its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
 versions: 1.25-1.31.
-
 
 ---
 ## 3.7.0
