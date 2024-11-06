@@ -124,6 +124,13 @@ Expand the name of the configmap used for NGINX Agent.
 {{- end -}}
 
 {{/*
+Expand license-token secret name.
+*/}}
+{{- define "nginx-ingress.licenseTokenSecretName" -}}
+{{- .Values.controller.mgmt.licenseTokenSecretName -}}
+{{- end -}}
+
+{{/*
 Expand leader election lock name.
 */}}
 {{- define "nginx-ingress.leaderElectionName" -}}
@@ -339,7 +346,7 @@ List of volumes for controller.
 {{- if .Values.controller.nginxplus -}}
 - name: nginx-plus-license
   secret:
-    secretName: {{ required "Error: 'licenseTokenSecretName' is required when 'nginxplus' is enabled." (index .Values.controller "mgmt" "licenseTokenSecretName") }}
+    secretName: {{ required "Error: 'licenseTokenSecretName' is required when 'nginxplus' is enabled." (include "nginx-ingress.licenseTokenSecretName" .) }}
 {{- end }}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - name: nginx-etc
