@@ -40,10 +40,13 @@ When `v4.0.0` is released, the release notes will contain the required upgrade s
 06 Nov 2024
 
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
-
-### <i class="fa-solid fa-box"></i> Helm Chart
+- [6735](https://github.com/nginxinc/kubernetes-ingress/pull/6735) Add nil check to apikey suppliedIn
+- [6761](https://github.com/nginxinc/kubernetes-ingress/pull/6761) Add OIDC fix for ID token nonce claim validation
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+- [6545](https://github.com/nginxinc/kubernetes-ingress/pull/6545), [6560](https://github.com/nginxinc/kubernetes-ingress/pull/6560), [6560](https://github.com/nginxinc/kubernetes-ingress/pull/6560), [6619](https://github.com/nginxinc/kubernetes-ingress/pull/6619), [6640](https://github.com/nginxinc/kubernetes-ingress/pull/6640), [6664](https://github.com/nginxinc/kubernetes-ingress/pull/6664), [6686](https://github.com/nginxinc/kubernetes-ingress/pull/6686), [6703](https://github.com/nginxinc/kubernetes-ingress/pull/6703), [6720](https://github.com/nginxinc/kubernetes-ingress/pull/6720), [6755](https://github.com/nginxinc/kubernetes-ingress/pull/6755) & [6751](https://github.com/nginxinc/kubernetes-ingress/pull/6751) Bump the Docker dependencies
+- [6553](https://github.com/nginxinc/kubernetes-ingress/pull/6553), [6591](https://github.com/nginxinc/kubernetes-ingress/pull/6591), [6618](https://github.com/nginxinc/kubernetes-ingress/pull/6618), [6648](https://github.com/nginxinc/kubernetes-ingress/pull/6648), [6688](https://github.com/nginxinc/kubernetes-ingress/pull/6688), [6674](https://github.com/nginxinc/kubernetes-ingress/pull/6674), [6707](https://github.com/nginxinc/kubernetes-ingress/pull/6707), [6730](https://github.com/nginxinc/kubernetes-ingress/pull/6730) & [6751](https://github.com/nginxinc/kubernetes-ingress/pull/6751) Bump the go dependencies
+- [6570](https://github.com/nginxinc/kubernetes-ingress/pull/6570) & [6549](https://github.com/nginxinc/kubernetes-ingress/pull/6549) Bump the go version
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
