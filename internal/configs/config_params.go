@@ -172,10 +172,11 @@ type GlobalConfigParams struct {
 
 // MGMTConfigParams holds mgmt block parameters. For now, it only holds listeners.
 type MGMTConfigParams struct {
-	Context   context.Context
-	SSLVerify bool
-	Endpoint  string
-	Interval  string
+	Context              context.Context
+	SSLVerify            bool
+	EnforceInitialReport bool
+	Endpoint             string
+	Interval             string
 }
 
 // Listener represents a listener that can be used in a TransportServer resource.
@@ -232,8 +233,9 @@ func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 // NewDefaultMGMTConfigParams creates a ConfigParams with mgmt values.
 func NewDefaultMGMTConfigParams(ctx context.Context) *MGMTConfigParams {
 	return &MGMTConfigParams{
-		Context:   ctx,
-		SSLVerify: true,
+		Context:              ctx,
+		SSLVerify:            true,
+		EnforceInitialReport: true,
 	}
 }
 

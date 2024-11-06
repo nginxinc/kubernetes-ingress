@@ -208,6 +208,7 @@ type MainConfig struct {
 	LogFormatEscaping                  string
 	MainSnippets                       []string
 	MGMTSSLVerify                      bool
+	MGMTEnforceInitialReport           bool
 	MGMTEndpoint                       string
 	MGMTInterval                       string
 	NginxStatus                        bool

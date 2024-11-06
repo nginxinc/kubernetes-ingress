@@ -48,6 +48,10 @@ data:
 {{- if .Values.controller.mgmt.sslVerify }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
 {{- end }}
+{{/*  if enforceInitialReport is not an empty string, can only be on or off, add key and value to config map */}}
+{{- if .Values.controller.mgmt.sslVerify }}
+  enforce-initial-report: {{ quote .Values.controller.mgmt.enforceInitialReport }}
+{{- end }}
 {{/*  if endpoint is not empty, add key and value to config map */}}
 {{- if .Values.controller.mgmt.endpoint }}
   endpoint: {{ quote .Values.controller.mgmt.endpoint }}
