@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	license_reporting "github.com/nginxinc/kubernetes-ingress/internal/license_reporting"
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
@@ -101,7 +102,7 @@ type Manager interface {
 	DeleteKeyValStateFiles(virtualServerName string)
 }
 
-// LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
+// LocalManager updates NGINX configuration, starts, reloads and quits NGINX, updates License Reporting file
 // updates NGINX Plus upstream servers. It assumes that NGINX is running in the same container.
 type LocalManager struct {
 	confdPath                    string
@@ -119,15 +120,18 @@ type LocalManager struct {
 	plusClient                   *client.NginxClient
 	plusConfigVersionCheckClient *http.Client
 	metricsCollector             collectors.ManagerCollector
+	licenseReporter              *license_reporting.LicenseReporter
+	licenseReporterCancel        context.CancelFunc
 	OpenTracing                  bool
 	appProtectPluginPid          int
 	appProtectDosAgentPid        int
 	agentPid                     int
 	logger                       *slog.Logger
+	nginxPlus                    bool
 }
 
 // NewLocalManager creates a LocalManager.
-func NewLocalManager(ctx context.Context, confPath string, debug bool, mc collectors.ManagerCollector, timeout time.Duration) *LocalManager {
+func NewLocalManager(ctx context.Context, confPath string, debug bool, mc collectors.ManagerCollector, lr *license_reporting.LicenseReporter, timeout time.Duration, nginxPlus bool) *LocalManager {
 	l := nl.LoggerFromContext(ctx)
 	verifyConfigGenerator, err := newVerifyConfigGenerator()
 	if err != nil {
@@ -148,6 +152,8 @@ func NewLocalManager(ctx context.Context, confPath string, debug bool, mc collec
 		configVersion:               0,
 		verifyClient:                newVerifyClient(timeout),
 		metricsCollector:            mc,
+		licenseReporter:             lr,
+		nginxPlus:                   nginxPlus,
 		logger:                      l,
 	}
 
@@ -296,6 +302,19 @@ func (lm *LocalManager) ClearAppProtectFolder(name string) {
 
 // Start starts NGINX.
 func (lm *LocalManager) Start(done chan error) {
+	if lm.nginxPlus {
+		isR33OrGreater, versionErr := lm.Version().PlusGreaterThanOrEqualTo("nginx-plus-r33")
+		if versionErr != nil {
+			nl.Errorf(lm.logger, "Error determining whether nginx version is >= r33: %v", versionErr)
+		}
+		if isR33OrGreater {
+			ctx, cancel := context.WithCancel(context.Background())
+			nl.ContextWithLogger(ctx, lm.logger)
+			go lm.licenseReporter.Start(ctx)
+			lm.licenseReporterCancel = cancel
+		}
+	}
+
 	nl.Debug(lm.logger, "Starting nginx")
 
 	binaryFilename := getBinaryFileName(lm.debug)
@@ -346,6 +365,16 @@ func (lm *LocalManager) Reload(isEndpointsUpdate bool) error {
 // Quit shutdowns NGINX gracefully.
 func (lm *LocalManager) Quit() {
 	nl.Debugf(lm.logger, "Quitting nginx")
+
+	if lm.nginxPlus {
+		isR33OrGreater, err := lm.Version().PlusGreaterThanOrEqualTo("nginx-plus-r33")
+		if err != nil {
+			nl.Errorf(lm.logger, "Error determining whether nginx version is >= r33: %v", err)
+		}
+		if isR33OrGreater && lm.licenseReporterCancel != nil {
+			lm.licenseReporterCancel()
+		}
+	}
 
 	binaryFilename := getBinaryFileName(lm.debug)
 	if err := shellOut(lm.logger, fmt.Sprintf("%v -s %v", binaryFilename, "quit")); err != nil {
