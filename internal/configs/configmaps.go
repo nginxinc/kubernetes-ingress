@@ -574,6 +574,10 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		}
 
 	}
+	if trustedCertificate, exists := cfgm.Data["ssl-trusted-certificate"]; exists {
+		// TODO: add validation to make sure the secret exists and emit an event to the pod if it doesn't
+		mgmtCfgParams.TrustedCert = strings.TrimSpace(trustedCertificate)
+	}
 	return mgmtCfgParams, nil
 }
 
@@ -600,6 +604,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		MGMTEnforceInitialReport:           mgmtCfgParams.EnforceInitialReport,
 		MGMTEndpoint:                       mgmtCfgParams.Endpoint,
 		MGMTInterval:                       mgmtCfgParams.Interval,
+		MGMTTrustedCerticate:               mgmtCfgParams.TrustedCert,
 		NginxStatus:                        staticCfgParams.NginxStatus,
 		NginxStatusAllowCIDRs:              staticCfgParams.NginxStatusAllowCIDRs,
 		NginxStatusPort:                    staticCfgParams.NginxStatusPort,

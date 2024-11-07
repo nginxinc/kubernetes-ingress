@@ -177,6 +177,7 @@ type MGMTConfigParams struct {
 	EnforceInitialReport bool
 	Endpoint             string
 	Interval             string
+	TrustedCert          string
 }
 
 // Listener represents a listener that can be used in a TransportServer resource.

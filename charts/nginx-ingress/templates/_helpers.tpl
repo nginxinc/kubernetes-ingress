@@ -347,6 +347,11 @@ List of volumes for controller.
 - name: nginx-plus-license
   secret:
     secretName: {{ required "Error: 'licenseTokenSecretName' is required when 'nginxplus' is enabled." (include "nginx-ingress.licenseTokenSecretName" .) }}
+{{- if .Values.controller.mgmt.sslTrustedCertificate.secretName }}
+- name: nginx-plus-mgmt-trusted-certificate
+  secret:
+    secretName: {{ .Values.controller.mgmt.sslTrustedCertificate.secretName }}
+{{- end }}
 {{- end }}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - name: nginx-etc
@@ -402,6 +407,10 @@ volumeMounts:
 {{- if .Values.controller.nginxplus -}}
 - name: nginx-plus-license
   mountPath: "/etc/nginx/license/"
+{{- if .Values.controller.mgmt.sslTrustedCertificate.secretName }}
+- name: nginx-plus-mgmt-trusted-certificate
+  mountPath: "/etc/nginx/secrets/mgmt"
+{{- end -}}
 {{- end -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - mountPath: /etc/nginx

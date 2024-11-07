@@ -363,7 +363,6 @@ mgmt {
     usage_report
     {{- if ne .MGMTEndpoint "" }} endpoint={{ .MGMTEndpoint }} {{- end }} interval={{ .MGMTInterval }};
     license_token /etc/nginx/license/license.jwt;
-    uuid_file /var/lib/nginx/nginx.id;
     {{ if .MGMTEnforceInitialReport -}}
     enforce_initial_report on;
     {{- else -}}
@@ -374,6 +373,9 @@ mgmt {
     {{- else -}}
     ssl_verify off;
     {{ end }}
+    {{ if ne .MGMTTrustedCerticate "" -}}
+    ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTTrustedCerticate }};
+    {{ end -}}
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 {{- end }}

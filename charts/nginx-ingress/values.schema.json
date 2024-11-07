@@ -154,6 +154,32 @@
                 "off"
               ]
             },
+            "sslTrustedCertificate": {
+              "type": "object",
+              "default": {},
+              "title": "The sslTrustedCertificate Schema",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "default": "ssl-trusted-cert",
+                  "title": "The TrustedCertificate secretName Schema",
+                  "examples": [
+                    "ssl-trusted-cert",
+                    "certificate-secret"
+                  ]
+                },
+                "fileName": {
+                  "type": "string",
+                  "default": "trusted.crt",
+                  "title": "The TrustedCertificate fileName Schema",
+                  "examples": [
+                    "trusted.crt",
+                    "ca.crt",
+                    "root.crt"
+                  ]
+                }
+              }
+            },
             "configMap": {
               "type": "string",
               "default": "",

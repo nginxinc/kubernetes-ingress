@@ -211,6 +211,7 @@ type MainConfig struct {
 	MGMTEnforceInitialReport           bool
 	MGMTEndpoint                       string
 	MGMTInterval                       string
+	MGMTTrustedCerticate               string
 	NginxStatus                        bool
 	NginxStatusAllowCIDRs              []string
 	NginxStatusPort                    int

@@ -33,10 +33,10 @@ controller:
     # ## SSL certification of the mgmt block
     # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
     #
-    # ## SSL trusted certificate of the mgmt block
-    # sslTrustedCertificate:
-    #   secretName: ssl-trusted-cert
-    #   fileName: trusted.crt # ssl_trusted_certificate /etc/nginx/trusted.crt;
+    ## Secret containing trusted CA certificate
+    sslTrustedCertificate: {} ## Ensure both curly brackets are removed when specifying secret name & file.
+      # secretName: ssl-trusted-cert
+      # fileName: trusted.crt
 
 #    customConfigMap: ""
 

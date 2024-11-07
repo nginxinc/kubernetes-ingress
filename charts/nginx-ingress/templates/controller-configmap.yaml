@@ -58,4 +58,6 @@ data:
 {{- end }}
 {{/*  if interval is not empty, add key and value to config map */}}
   interval: {{ quote .Values.controller.mgmt.interval | default "1h" }}
+{{/*  if sslTrustedCertificate.secretName is not empty, add key and value to config map */}}
+  ssl-trusted-certificate: {{ quote .Values.controller.mgmt.sslTrustedCertificate.fileName }}
 {{- end }}
