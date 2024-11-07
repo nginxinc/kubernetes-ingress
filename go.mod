@@ -9,7 +9,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/gkampitakis/go-snaps v0.5.7
 	github.com/go-kit/log v0.2.1
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/go-cmp v0.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/nginxinc/nginx-plus-go-client v1.3.0
