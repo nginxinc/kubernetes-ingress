@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	license_reporting "github.com/nginxinc/kubernetes-ingress/internal/license_reporting"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+	license_reporting "github.com/nginxinc/kubernetes-ingress/v3/internal/license_reporting"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/metrics/collectors"
 
 	"github.com/nginxinc/nginx-plus-go-client/client"
 )

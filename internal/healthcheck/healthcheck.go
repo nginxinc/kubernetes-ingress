@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	"k8s.io/utils/strings/slices"
 )

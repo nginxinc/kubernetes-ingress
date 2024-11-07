@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/gkampitakis/go-snaps/snaps"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/nginx"
 )
 
 func TestMain(m *testing.M) {

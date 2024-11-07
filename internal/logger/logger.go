@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/logger/levels"
 )
 
 type ctxLogger struct{}

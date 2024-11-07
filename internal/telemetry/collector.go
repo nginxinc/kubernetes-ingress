@@ -7,14 +7,14 @@ import (
 	"runtime"
 	"time"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/secrets"
 
 	tel "github.com/nginxinc/telemetry-exporter/pkg/telemetry"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"

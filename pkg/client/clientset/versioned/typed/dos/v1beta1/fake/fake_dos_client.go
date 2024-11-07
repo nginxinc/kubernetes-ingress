@@ -3,7 +3,7 @@
 package fake
 
 import (
-	v1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
+	v1beta1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/clientset/versioned/typed/dos/v1beta1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

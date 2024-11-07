@@ -6,8 +6,8 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version1"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.

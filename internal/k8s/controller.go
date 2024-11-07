@@ -27,15 +27,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/telemetry"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/telemetry"
 	"golang.org/x/exp/maps"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/appprotect"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/appprotectdos"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/rest"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/secrets"
 	"github.com/nginxinc/nginx-service-mesh/pkg/spiffe"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 
@@ -50,22 +50,22 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/record"
 
-	cm_controller "github.com/nginxinc/kubernetes-ingress/internal/certmanager"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	ed_controller "github.com/nginxinc/kubernetes-ingress/internal/externaldns"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+	cm_controller "github.com/nginxinc/kubernetes-ingress/v3/internal/certmanager"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
+	ed_controller "github.com/nginxinc/kubernetes-ingress/v3/internal/externaldns"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/metrics/collectors"
 
 	api_v1 "k8s.io/api/core/v1"
 	discovery_v1 "k8s.io/api/discovery/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
-	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	k8s_nginx_informers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/validation"
+	k8s_nginx "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/clientset/versioned"
+	k8s_nginx_informers "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/informers/externalversions"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"

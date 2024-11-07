@@ -13,12 +13,12 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version1"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/k8s/secrets"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/nginx"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
+	"github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/dos/v1beta1"
 	api_v1 "k8s.io/api/core/v1"
 )
 
@@ -1855,7 +1855,7 @@ func createTransportServerExWithHostNoTLSPassthrough() TransportServerEx {
 var (
 	// custom test Main Template represents a main-template passed via ConfigMap
 	customTestMainTemplate = `# TEST NEW MAIN TEMPLATE
-{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.MainConfig*/ -}}
+{{- /*gotype: github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version1.MainConfig*/ -}}
 worker_processes  {{.WorkerProcesses}};
 {{- if .WorkerRlimitNofile}}
 worker_rlimit_nofile {{.WorkerRlimitNofile}};{{end}}
@@ -2224,7 +2224,7 @@ mgmt {
 
 	// custom test Ingress Template represents an ingress-template passed via ConfigMap
 	customTestIngressTemplate = `# TEST NEW CUSTOM INGRESS TEMPLATE
-{{- /*gotype: github.com/nginxinc/kubernetes-ingress/internal/configs/version1.IngressNginxConfig*/ -}}
+{{- /*gotype: github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version1.IngressNginxConfig*/ -}}
 # configuration for {{.Ingress.Namespace}}/{{.Ingress.Name}}
 {{- range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {

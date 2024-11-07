@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/dlclark/regexp2"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	ap_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs"
+	ap_validation "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"

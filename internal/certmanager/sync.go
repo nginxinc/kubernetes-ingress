@@ -36,8 +36,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
+	vsapi "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )

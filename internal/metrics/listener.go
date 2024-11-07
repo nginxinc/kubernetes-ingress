@@ -19,7 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	v1 "k8s.io/api/core/v1"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
 )
 
 // NewNginxMetricsClient creates an NginxClient to fetch stats from NGINX over an unix socket

@@ -1,8 +1,8 @@
 package version1
 
 import (
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/nginx"
 )
 
 // UpstreamLabels describes the Prometheus labels for an NGINX upstream.

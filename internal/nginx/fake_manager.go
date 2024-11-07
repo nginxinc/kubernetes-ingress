@@ -6,9 +6,9 @@ import (
 	"os"
 	"path"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/v3/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/logger/levels"
 	"github.com/nginxinc/nginx-plus-go-client/client"
 )
 

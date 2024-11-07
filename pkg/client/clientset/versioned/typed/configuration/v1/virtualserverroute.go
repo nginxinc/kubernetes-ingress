@@ -5,8 +5,8 @@ package v1
 import (
 	"context"
 
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
+	v1 "github.com/nginxinc/kubernetes-ingress/v3/pkg/apis/configuration/v1"
+	scheme "github.com/nginxinc/kubernetes-ingress/v3/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

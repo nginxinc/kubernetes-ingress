@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	nl "github.com/nginxinc/kubernetes-ingress/v3/internal/logger"
 
-	clusterInfo "github.com/nginxinc/kubernetes-ingress/internal/common_cluster_info"
+	clusterInfo "github.com/nginxinc/kubernetes-ingress/v3/internal/common_cluster_info"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"

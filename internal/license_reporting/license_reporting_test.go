@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
+	nic_glog "github.com/nginxinc/kubernetes-ingress/v3/internal/logger/glog"
+	"github.com/nginxinc/kubernetes-ingress/v3/internal/logger/levels"
 
 	"k8s.io/client-go/kubernetes/fake"
 )
