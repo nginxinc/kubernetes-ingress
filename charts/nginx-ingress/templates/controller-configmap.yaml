@@ -60,4 +60,6 @@ data:
   interval: {{ quote .Values.controller.mgmt.interval | default "1h" }}
 {{/*  if sslTrustedCertificate.secretName is not empty, add key and value to config map */}}
   ssl-trusted-certificate: {{ quote .Values.controller.mgmt.sslTrustedCertificate.fileName }}
+{{/*  if EnableClientAuth is not empty, add key and value to config map */}}
+  ssl-client-authentication: {{ quote .Values.controller.mgmt.EnableClientAuth }}
 {{- end }}

@@ -30,9 +30,11 @@ controller:
     sslVerify: "on" # on | off
 
 
-    # ## SSL certification of the mgmt block
-    # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
-    #
+    ## SSL certification of the mgmt block
+    ## Make sure this is enabled for ssl certificate to work
+#    EnableClientAuth: "on" # on | off
+#    sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
+
     ## Secret containing trusted CA certificate
     sslTrustedCertificate: {} ## Ensure both curly brackets are removed when specifying secret name & file.
       # secretName: ssl-trusted-cert

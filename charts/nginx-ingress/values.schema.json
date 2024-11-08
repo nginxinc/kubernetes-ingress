@@ -109,6 +109,27 @@
                 "license"
               ]
             },
+            "EnableClientAuth": {
+              "type": "string",
+              "default": "",
+              "title": "The EnableClientAuth Schema",
+              "enum": [
+                "on",
+                "off"
+              ],
+              "examples": [
+                "on",
+                "off"
+              ]
+            },
+            "sslCertificateSecretName": {
+              "type": "string",
+              "default": "",
+              "title": "The sslCertificateSecretName Schema",
+              "examples": [
+                "ssl-certificate"
+              ]
+            },
             "endpoint": {
               "type": "string",
               "default": "",

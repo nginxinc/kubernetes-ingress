@@ -352,6 +352,11 @@ List of volumes for controller.
   secret:
     secretName: {{ .Values.controller.mgmt.sslTrustedCertificate.secretName }}
 {{- end }}
+{{- if .Values.controller.mgmt.sslCertificateSecretName }}
+- name: nginx-plus-mgmt-certificate
+  secret:
+    secretName: {{ .Values.controller.mgmt.sslCertificateSecretName }}
+{{- end }}
 {{- end }}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
 - name: nginx-etc
@@ -410,6 +415,10 @@ volumeMounts:
 {{- if .Values.controller.mgmt.sslTrustedCertificate.secretName }}
 - name: nginx-plus-mgmt-trusted-certificate
   mountPath: "/etc/nginx/secrets/mgmt"
+{{- end -}}
+{{- if .Values.controller.mgmt.sslCertificateSecretName }}
+- name: nginx-plus-mgmt-certificate
+  mountPath: "/etc/nginx/secrets/mgmt_client"
 {{- end -}}
 {{- end -}}
 {{- if eq (include "nginx-ingress.readOnlyRootFilesystem" .) "true" }}
