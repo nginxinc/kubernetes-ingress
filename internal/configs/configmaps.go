@@ -578,6 +578,13 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		// TODO: add validation to make sure the secret exists and emit an event to the pod if it doesn't
 		mgmtCfgParams.TrustedCert = strings.TrimSpace(trustedCertificate)
 	}
+	if enableClientAuth, exists := cfgm.Data["ssl-client-authentication"]; exists {
+		if parsedOnOff, err := ParseOnOff(enableClientAuth); err != nil {
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-client-authentication key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), enableClientAuth, err)
+		} else {
+			mgmtCfgParams.EnableClientAuth = parsedOnOff
+		}
+	}
 	return mgmtCfgParams, nil
 }
 
@@ -605,6 +612,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		MGMTEndpoint:                       mgmtCfgParams.Endpoint,
 		MGMTInterval:                       mgmtCfgParams.Interval,
 		MGMTTrustedCerticate:               mgmtCfgParams.TrustedCert,
+		MGMTEnableClientAuth:               mgmtCfgParams.EnableClientAuth,
 		NginxStatus:                        staticCfgParams.NginxStatus,
 		NginxStatusAllowCIDRs:              staticCfgParams.NginxStatusAllowCIDRs,
 		NginxStatusPort:                    staticCfgParams.NginxStatusPort,

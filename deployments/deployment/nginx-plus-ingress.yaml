@@ -27,9 +27,12 @@ spec:
         - name: nginx-plus-license
           secret:
             secretName: license-token
-        # - name: nim-ca
-        #   secret:
-        #     secretName: nim-ca
+        - name: nim-ca
+          secret:
+            secretName: nim-ca
+        - name: nim-client-cert
+          secret:
+            secretName: nim-client-cert
 #      - name: nginx-etc
 #        emptyDir: {}
 #      - name: nginx-cache
@@ -80,6 +83,8 @@ spec:
             name: nginx-plus-license
           - mountPath: /etc/nginx/secrets/mgmt
             name: nim-ca
+          - mountPath: /etc/nginx/secrets/mgmt_client
+            name: nim-client-cert
 #        - mountPath: /var/cache/nginx
 #          name: nginx-cache
 #        - mountPath: /var/lib/nginx

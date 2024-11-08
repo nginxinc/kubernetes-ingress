@@ -212,6 +212,7 @@ type MainConfig struct {
 	MGMTEndpoint                       string
 	MGMTInterval                       string
 	MGMTTrustedCerticate               string
+	MGMTEnableClientAuth               bool
 	NginxStatus                        bool
 	NginxStatusAllowCIDRs              []string
 	NginxStatusPort                    int

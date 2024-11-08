@@ -376,6 +376,10 @@ mgmt {
     {{ if ne .MGMTTrustedCerticate "" -}}
     ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTTrustedCerticate }};
     {{ end -}}
+    {{ if .MGMTEnableClientAuth -}}
+    ssl_certificate {{ printf "%s/%s" .StaticSSLPath "mgmt_client/tls.crt" }};
+    ssl_certificate_key {{ printf "%s/%s" .StaticSSLPath "mgmt_client/tls.key" }};
+    {{ end -}}
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 {{- end }}

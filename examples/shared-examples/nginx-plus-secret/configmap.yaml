@@ -4,3 +4,7 @@ metadata:
   name: nginx-config-mgmt
   namespace: nginx-ingress
 data:
+  endpoint: 54.93.206.214:443
+  interval: 1m
+  ssl-trusted-certificate: ca.pem
+  ssl-client-authentication: "on"

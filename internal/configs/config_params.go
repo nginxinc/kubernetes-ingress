@@ -178,6 +178,7 @@ type MGMTConfigParams struct {
 	Endpoint             string
 	Interval             string
 	TrustedCert          string
+	EnableClientAuth     bool
 }
 
 // Listener represents a listener that can be used in a TransportServer resource.
