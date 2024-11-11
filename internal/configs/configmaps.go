@@ -14,7 +14,6 @@ import (
 
 const (
 	minimumInterval = 60
-	defaultInterval = "1h"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -567,8 +566,8 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 			nl.Errorf(l, "Configmap %s/%s: Invalid value for the interval key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), i, err)
 		}
 		if t.Seconds() < minimumInterval {
-			nl.Errorf(l, "Configmap %s/%s: Value too low for the interval key, got: %v, need higher than %ds.  Falling back to default %s", cfgm.GetNamespace(), cfgm.GetName(), i, minimumInterval, defaultInterval)
-			mgmtCfgParams.Interval = defaultInterval
+			nl.Errorf(l, "Configmap %s/%s: Value too low for the interval key, got: %v, need higher than %ds.", cfgm.GetNamespace(), cfgm.GetName(), i, minimumInterval)
+			mgmtCfgParams.Interval = ""
 		} else {
 			mgmtCfgParams.Interval = i
 		}

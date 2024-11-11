@@ -10,7 +10,15 @@ from unittest import mock
 import pytest
 import requests
 import yaml
-from kubernetes.client import AppsV1Api, CoreV1Api, NetworkingV1Api, RbacAuthorizationV1Api, V1Service
+from kubernetes.client import (
+    AppsV1Api,
+    CoreV1Api,
+    NetworkingV1Api,
+    RbacAuthorizationV1Api,
+    V1ObjectMeta,
+    V1Secret,
+    V1Service,
+)
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from more_itertools import first
@@ -554,6 +562,15 @@ def create_secret(v1: CoreV1Api, namespace, body) -> str:
     v1.create_namespaced_secret(namespace, body)
     print(f"Secret created: {body['metadata']['name']}")
     return body["metadata"]["name"]
+
+
+def create_opaque_license_secret(v1: CoreV1Api, namespace, jwt, license_token_name="license-token") -> str:
+    sec = V1Secret()
+    sec.type = "Opaque"
+    sec.metadata = V1ObjectMeta(name=license_token_name)
+    sec.data = {"license.jwt": base64.b64encode(jwt.encode("ascii")).decode()}
+    v1.create_namespaced_secret(namespace=namespace, body=sec)
+    return license_token_name
 
 
 def replace_secret(v1: CoreV1Api, name, namespace, yaml_manifest) -> str:

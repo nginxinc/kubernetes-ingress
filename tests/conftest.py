@@ -56,6 +56,11 @@ def pytest_addoption(parser) -> None:
         help="The type of the Ingress Controller: nginx-ingress or nginx-plus-ingress.",
     )
     parser.addoption(
+        "--plus-jwt",
+        action="store",
+        help="The plus jwt for the Ingress Controller image.",
+    )
+    parser.addoption(
         "--service",
         action="store",
         default=DEFAULT_SERVICE,
