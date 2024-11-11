@@ -403,13 +403,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-mgmt {
-    usage_report interval=0s;
-    license_token /etc/nginx/license/license.jwt;
-    ssl_verify off;
-
-
-}
 
 ---
 
@@ -1813,13 +1806,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-mgmt {
-    usage_report interval=0s;
-    license_token /etc/nginx/license/license.jwt;
-    ssl_verify off;
-
-
-}
 
 ---
 
@@ -1954,13 +1940,6 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
-}
-mgmt {
-    usage_report interval=0s;
-    license_token /etc/nginx/license/license.jwt;
-    ssl_verify off;
-
-
 }
 
 ---
@@ -2097,13 +2076,6 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
-mgmt {
-    usage_report interval=0s;
-    license_token /etc/nginx/license/license.jwt;
-    ssl_verify off;
-
-
-}
 
 ---
 
@@ -2238,13 +2210,6 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
-}
-mgmt {
-    usage_report interval=0s;
-    license_token /etc/nginx/license/license.jwt;
-    ssl_verify off;
-
-
 }
 
 ---
@@ -2398,13 +2363,6 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
-}
-mgmt {
-    usage_report interval=0s;
-    license_token /etc/nginx/license/license.jwt;
-    ssl_verify off;
-
-
 }
 
 ---
@@ -2704,13 +2662,6 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
-}
-mgmt {
-    usage_report interval=0s;
-    license_token /etc/nginx/license/license.jwt;
-    ssl_verify off;
-
-
 }
 
 ---
@@ -3014,13 +2965,6 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
-}
-mgmt {
-    usage_report interval=0s;
-    license_token /etc/nginx/license/license.jwt;
-    ssl_verify off;
-
-
 }
 
 ---
