@@ -267,6 +267,16 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
+}
 
 ---
 
@@ -402,6 +412,16 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
+}
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
 }
 
 ---
@@ -1806,6 +1826,16 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
+}
 
 ---
 
@@ -1940,6 +1970,16 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
+}
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
 }
 
 ---
@@ -2076,6 +2116,16 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
+}
 
 ---
 
@@ -2210,6 +2260,16 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
+}
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
 }
 
 ---
@@ -2364,6 +2424,16 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
+}
 
 ---
 
@@ -2514,6 +2584,16 @@ stream {
 
     include /etc/nginx/stream-conf.d/*.conf;
 }
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
+}
 
 ---
 
@@ -2662,6 +2742,16 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
+}
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
 }
 
 ---
@@ -2812,6 +2902,16 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
+}
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
 }
 
 ---
@@ -2965,6 +3065,16 @@ stream {
     
 
     include /etc/nginx/stream-conf.d/*.conf;
+}
+mgmt {
+    ##
+    usage_report;
+    license_token /etc/nginx/license/license.jwt;
+    enforce_initial_report off;
+    
+    ssl_verify off;
+    
+    deployment_context /etc/nginx/reporting/tracking.info;
 }
 
 ---

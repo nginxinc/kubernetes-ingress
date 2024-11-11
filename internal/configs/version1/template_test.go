@@ -2039,7 +2039,7 @@ var (
 		KeepaliveRequests:                  100,
 		VariablesHashBucketSize:            256,
 		VariablesHashMaxSize:               1024,
-		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r30)"),
+		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AppProtectLoadModule:               true,
 		AppProtectV5LoadModule:             false,
 		AppProtectV5EnforcerAddr:           "",
@@ -2083,7 +2083,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AppProtectV5LoadModule:   true,
 		AppProtectV5EnforcerAddr: "enforcer.svc.local",
 		AccessLog:                "/dev/stdout main",
@@ -2113,7 +2113,7 @@ var (
 		KeepaliveRequests:                  100,
 		VariablesHashBucketSize:            256,
 		VariablesHashMaxSize:               1024,
-		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:                       nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AppProtectLoadModule:               true,
 		AppProtectV5LoadModule:             false,
 		AppProtectV5EnforcerAddr:           "",
@@ -2152,7 +2152,7 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      8443,
-		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:               "/dev/stdout main",
 	}
 
@@ -2179,7 +2179,7 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          false,
 		TLSPassthroughPort:      8443,
-		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:               "/dev/stdout main",
 	}
 
@@ -2206,7 +2206,7 @@ var (
 		VariablesHashMaxSize:    1024,
 		TLSPassthrough:          true,
 		TLSPassthroughPort:      443,
-		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:            nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:               "/dev/stdout main",
 	}
 
@@ -2233,7 +2233,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:                "/dev/stdout main",
 	}
 
@@ -2260,7 +2260,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:                "/dev/stdout main",
 	}
 
@@ -2287,7 +2287,7 @@ var (
 		KeepaliveRequests:        100,
 		VariablesHashBucketSize:  256,
 		VariablesHashMaxSize:     1024,
-		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.25.3 (nginx-plus-r31)"),
+		NginxVersion:             nginx.NewVersion("nginx version: nginx/1.27.2 (nginx-plus-r33)"),
 		AccessLog:                "/dev/stdout main",
 	}
 
