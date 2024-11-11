@@ -1327,6 +1327,9 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the ingress template: %w", err)
 		}
+	} else {
+		// reverse to default ingress template parsed at NIC startup.
+		cnf.templateExecutor.UseOriginalIngressTemplate()
 	}
 
 	if cfgParams.VirtualServerTemplate != nil {
@@ -1334,6 +1337,9 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the VirtualServer template: %w", err)
 		}
+	} else {
+		// Reverse to default TransportServer template
+		cnf.templateExecutorV2.UseOriginalVStemplate()
 	}
 
 	if cfgParams.TransportServerTemplate != nil {
@@ -1341,6 +1347,9 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the TransportServer template: %w", err)
 		}
+	} else {
+		// Reverse to defualt TransportServer template
+		cnf.templateExecutorV2.UseOriginalTStemplate()
 	}
 
 	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams)
