@@ -165,6 +165,8 @@ jobs:
           azure-ad-secret: ${{ secrets.AZURE_AD_AUTOMATION }}
           registry-token: ${{ steps.auth.outputs.access_token }}
           test-image: "gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/test-runner:${{ hashFiles('./tests/requirements.txt', './tests/Dockerfile') || 'latest' }}"
+          plus-jwt: ${{ secrets.PLUS_JWT }}
+
         if: ${{ steps.stable_exists.outputs.exists != 'true'  }}
 
       - name: Upload Test Results
