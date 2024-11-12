@@ -207,6 +207,31 @@ _inputs:
       step: 100
       empty_type: 'null'
 _snippets:
+  relref_link:
+    snippet: "\\[[[text]]\\]({{< relref [[link]]>}})"
+    params:
+      text:
+        parser: content
+        options:
+          editor_key: link_text
+          raw: true
+          forbidden_tokens:
+            - "]"
+      link:
+        parser: argument
+        options:
+          model:
+            editor_key: link_destination
+          format:
+            string_boundary:
+              - '"'
+              - "'"
+    preview:
+      view: "inline"
+      text:
+        - template: "RelRef Link: {link_text} → {link_destination}"
+        - RelRef Link
+      icon: dataset_linked
   important:
     template: hugo_paired_shortcode_named_args
     inline: false
