@@ -11,8 +11,8 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2@sha256:35d74b793f60f8b2f5753903cdb72b4581faf630902150a86bf4ea53a407f1dc AS opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2-alpine@sha256:f7aab2f3b4de6e7477a1ddc349b34ca97feace791f381257f8c584e0f8f89903 AS alpine-opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2@sha256:022d9c1e36caedfb502d6ac56b6b8e40977be73517f61f1b525686dec147355d AS opentracing-lib
+FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2-alpine@sha256:7379ceee1ffc21669312a3e882ecd504e14a7f30bdc9bcfdc632030ea3777b0a AS alpine-opentracing-lib
 FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.2@sha256:6288dc0ec71dfcacfbe3578bb0731c03e7e012956e5b01393d28650df54d9b9e AS ubi-ppc64le
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
