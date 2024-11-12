@@ -543,17 +543,17 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
 
 	if sslVerify, exists := cfgm.Data["ssl-verify"]; exists {
-		if parsedOnOff, err := ParseOnOff(sslVerify); err != nil {
+		if parsedBool, err := ParseBool(sslVerify); err != nil {
 			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-verify key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
 		} else {
-			mgmtCfgParams.SSLVerify = parsedOnOff
+			mgmtCfgParams.SSLVerify = parsedBool
 		}
 	}
 	if enforceInitialReport, exists := cfgm.Data["enforce-initial-report"]; exists {
-		if parsedOnOff, err := ParseOnOff(enforceInitialReport); err != nil {
+		if parsedBool, err := ParseBool(enforceInitialReport); err != nil {
 			nl.Errorf(l, "Configmap %s/%s: Invalid value for the enforce-initial-report key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
 		} else {
-			mgmtCfgParams.EnforceInitialReport = parsedOnOff
+			mgmtCfgParams.EnforceInitialReport = parsedBool
 		}
 	}
 	if endpoint, exists := cfgm.Data["endpoint"]; exists {

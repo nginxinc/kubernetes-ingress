@@ -360,7 +360,6 @@ stream {
 
 {{- if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r33" }}
 mgmt {
-    #{{ .MGMTInterval }}#
     usage_report
     {{- if ne .MGMTEndpoint "" }} endpoint={{ .MGMTEndpoint }} {{- end }} {{- if ne .MGMTInterval "" }} interval={{ .MGMTInterval }} {{- end }};
     license_token /etc/nginx/license/license.jwt;

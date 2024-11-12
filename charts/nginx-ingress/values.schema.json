@@ -150,29 +150,21 @@
               ]
             },
             "enforceInitialReport": {
-              "type": "string",
-              "default": "",
+              "type": "boolean",
+              "default": true,
               "title": "The enforceInitialReport Schema",
-              "enum": [
-                "on",
-                "off"
-              ],
               "examples": [
-                "on",
-                "off"
+                true,
+                false
               ]
             },
             "sslVerify": {
-              "type": "string",
-              "default": "",
+              "type": "boolean",
+              "default": true,
               "title": "The sslVerify Schema",
-              "enum": [
-                "on",
-                "off"
-              ],
               "examples": [
-                "on",
-                "off"
+                true,
+                false
               ]
             },
             "sslTrustedCertificate": {

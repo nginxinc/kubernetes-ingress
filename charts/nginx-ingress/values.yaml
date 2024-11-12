@@ -20,24 +20,23 @@ controller:
     licenseTokenSecretName: "license-token" # required for NGINX Plus
 
     ## Enables or disables the 180-day grace period for sending the initial usage report
-    #enforceInitialReport: "on" # on | off
+    enforceInitialReport: true
 
     ## Endpoint for usage report
     # endpoint: "" # defaults to product.connect.nginx.com
     # interval: 1h
 
     ## Configures the ssl_verify directive in the mgmt block
-    sslVerify: "on" # on | off
-
+    sslVerify: false
 
     ## SSL certification of the mgmt block
     ## Make sure this is enabled for ssl certificate to work
-#    EnableClientAuth: "on" # on | off
-#    sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
+    # EnableClientAuth: "on" # on | off
+    # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
 
     ## Secret containing trusted CA certificate
     sslTrustedCertificate: {} ## Ensure both curly brackets are removed when specifying secret name & file.
-      # secretName: ssl-trusted-cert
+      # secretName: ssl-trusted-cert
       # fileName: trusted.crt
 
 #    customConfigMap: ""

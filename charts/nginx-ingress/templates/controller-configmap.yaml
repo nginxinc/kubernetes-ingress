@@ -44,22 +44,19 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
-{{/*  if sslVerify is not an empty string, can only be on or off, add key and value to config map */}}
-{{- if .Values.controller.mgmt.sslVerify }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
-{{- end }}
-{{/*  if enforceInitialReport is not an empty string, can only be on or off, add key and value to config map */}}
-{{- if .Values.controller.mgmt.sslVerify }}
   enforce-initial-report: {{ quote .Values.controller.mgmt.enforceInitialReport }}
-{{- end }}
 {{/*  if endpoint is not empty, add key and value to config map */}}
 {{- if .Values.controller.mgmt.endpoint }}
   endpoint: {{ quote .Values.controller.mgmt.endpoint }}
 {{- end }}
-{{/*  if interval is not empty, add key and value to config map */}}
-  interval: {{ quote .Values.controller.mgmt.interval | default "1h" }}
-{{/*  if sslTrustedCertificate.secretName is not empty, add key and value to config map */}}
+{{- if .Values.controller.mgmt.interval}}
+  interval: {{ quote .Values.controller.mgmt.interval }}
+ {{- end }}
+{{- if .Values.controller.mgmt.sslTrustedCertificate.fileName }}
   ssl-trusted-certificate: {{ quote .Values.controller.mgmt.sslTrustedCertificate.fileName }}
-{{/*  if EnableClientAuth is not empty, add key and value to config map */}}
+{{- end }}
+{{- if .Values.controller.mgmt.EnableClientAuth }}
   ssl-client-authentication: {{ quote .Values.controller.mgmt.EnableClientAuth }}
+{{- end }}
 {{- end }}
