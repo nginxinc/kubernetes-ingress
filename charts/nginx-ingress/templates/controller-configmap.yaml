@@ -44,7 +44,9 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
+{{- if hasKey .Values.controller.mgmt "sslVerify" }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
+{{- end }}
   resolver: {{ quote .Values.controller.mgmt.resolver }}
   enforce-initial-report: {{ quote .Values.controller.mgmt.enforceInitialReport }}
 {{/*  if endpoint is not empty, add key and value to config map */}}
