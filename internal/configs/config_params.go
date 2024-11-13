@@ -170,7 +170,7 @@ type GlobalConfigParams struct {
 	Listeners map[string]Listener
 }
 
-// MGMTConfigParams holds mgmt block parameters. For now, it only holds listeners.
+// MGMTConfigParams holds mgmt block parameters.
 type MGMTConfigParams struct {
 	Context              context.Context
 	SSLVerify            *bool

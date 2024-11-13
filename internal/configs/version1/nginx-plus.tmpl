@@ -360,22 +360,22 @@ stream {
 
 {{- if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r33" }}
 mgmt {
-    {{- if or (ne .MGMTEndpoint "") (ne .MGMTInterval "") }}
+    {{- if or (ne .MGMTConfig.Endpoint "") (ne .MGMTConfig.Interval "") }}
     usage_report
-    {{- if ne .MGMTEndpoint "" }} endpoint={{ .MGMTEndpoint }} {{- end }} {{- if ne .MGMTInterval "" }} interval={{ .MGMTInterval }} {{- end }};
+    {{- if ne .MGMTConfig.Endpoint "" }} endpoint={{ .MGMTConfig.Endpoint }} {{- end }} {{- if ne .MGMTConfig.Interval "" }} interval={{ .MGMTConfig.Interval }} {{- end }};
     {{- end }}
     license_token /etc/nginx/license/license.jwt;
-    {{ if .MGMTEnforceInitialReport -}}
-    enforce_initial_report {{ makeOnOffFromBool .MGMTEnforceInitialReport}};
+    {{ if .MGMTConfig.EnforceInitialReport -}}
+    enforce_initial_report {{ makeOnOffFromBool .MGMTConfig.EnforceInitialReport}};
     {{ end -}}
-    {{ if .MGMTSSLVerify -}}
-    ssl_verify {{ makeOnOffFromBool .MGMTSSLVerify }};
+    {{ if .MGMTConfig.SSLVerify -}}
+    ssl_verify {{ makeOnOffFromBool .MGMTConfig.SSLVerify }};
     {{ end -}}
-    {{ if ne .MGMTResolver "" }}resolver {{ .MGMTResolver }};{{ end -}}
-    {{ if ne .MGMTTrustedCertificate "" -}}
-    ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTTrustedCertificate }};
+    {{ if ne .MGMTConfig.Resolver "" }}resolver {{ .MGMTConfig.Resolver }};{{ end -}}
+    {{ if ne .MGMTConfig.TrustedCertificate "" -}}
+    ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTConfig.TrustedCertificate }};
     {{ end -}}
-    {{ if .MGMTEnableClientAuth -}}
+    {{ if .MGMTConfig.EnableClientAuth -}}
     ssl_certificate {{ printf "%s/%s" .StaticSSLPath "mgmt_client/tls.crt" }};
     ssl_certificate_key {{ printf "%s/%s" .StaticSSLPath "mgmt_client/tls.key" }};
     {{ end -}}

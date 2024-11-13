@@ -592,6 +592,16 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 
 // GenerateNginxMainConfig generates MainConfig.
 func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams, mgmtCfgParams *MGMTConfigParams) *version1.MainConfig {
+	mgmtConfig := version1.MGMTConfig{
+		SSLVerify:            mgmtCfgParams.SSLVerify,
+		Resolver:             mgmtCfgParams.Resolver,
+		EnforceInitialReport: mgmtCfgParams.EnforceInitialReport,
+		Endpoint:             mgmtCfgParams.Endpoint,
+		Interval:             mgmtCfgParams.Interval,
+		TrustedCertificate:   mgmtCfgParams.TrustedCert,
+		EnableClientAuth:     mgmtCfgParams.EnableClientAuth,
+	}
+
 	nginxCfg := &version1.MainConfig{
 		AccessLog:                          config.MainAccessLog,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
@@ -609,13 +619,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		LogFormat:                          config.MainLogFormat,
 		LogFormatEscaping:                  config.MainLogFormatEscaping,
 		MainSnippets:                       config.MainMainSnippets,
-		MGMTSSLVerify:                      mgmtCfgParams.SSLVerify,
-		MGMTResolver:                       mgmtCfgParams.Resolver,
-		MGMTEnforceInitialReport:           mgmtCfgParams.EnforceInitialReport,
-		MGMTEndpoint:                       mgmtCfgParams.Endpoint,
-		MGMTInterval:                       mgmtCfgParams.Interval,
-		MGMTTrustedCertificate:             mgmtCfgParams.TrustedCert,
-		MGMTEnableClientAuth:               mgmtCfgParams.EnableClientAuth,
+		MGMTConfig:                         mgmtConfig,
 		NginxStatus:                        staticCfgParams.NginxStatus,
 		NginxStatusAllowCIDRs:              staticCfgParams.NginxStatusAllowCIDRs,
 		NginxStatusPort:                    staticCfgParams.NginxStatusPort,
