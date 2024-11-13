@@ -14,6 +14,7 @@ import (
 
 const (
 	minimumInterval = 60
+	productEndpoint = "product.connect.nginx.com"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -557,7 +558,13 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		}
 	}
 	if endpoint, exists := cfgm.Data["endpoint"]; exists {
-		mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
+		parsedEndpoint := strings.TrimSpace(endpoint)
+		if parsedEndpoint == "" {
+			parsedEndpoint = productEndpoint
+		}
+		mgmtCfgParams.Endpoint = parsedEndpoint
+	} else {
+		mgmtCfgParams.Endpoint = productEndpoint
 	}
 	if interval, exists := cfgm.Data["interval"]; exists {
 		i := strings.TrimSpace(interval)
@@ -578,10 +585,10 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		mgmtCfgParams.TrustedCert = strings.TrimSpace(trustedCertificate)
 	}
 	if enableClientAuth, exists := cfgm.Data["ssl-client-authentication"]; exists {
-		if parsedOnOff, err := ParseOnOff(enableClientAuth); err != nil {
+		if parsedBool, err := ParseBool(enableClientAuth); err != nil {
 			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-client-authentication key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), enableClientAuth, err)
 		} else {
-			mgmtCfgParams.EnableClientAuth = parsedOnOff
+			mgmtCfgParams.EnableClientAuth = parsedBool
 		}
 	}
 	return mgmtCfgParams, nil

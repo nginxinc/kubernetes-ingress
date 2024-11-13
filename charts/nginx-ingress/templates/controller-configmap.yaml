@@ -44,11 +44,11 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
-  ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
-  enforce-initial-report: {{ quote .Values.controller.mgmt.enforceInitialReport }}
+  ssl-verify: {{ quote (default true .Values.controller.mgmt.sslVerify) }}
+  enforce-initial-report: {{ quote (default true .Values.controller.mgmt.enforceInitialReport) }}
 {{/*  if endpoint is not empty, add key and value to config map */}}
 {{- if .Values.controller.mgmt.endpoint }}
-  endpoint: {{ quote .Values.controller.mgmt.endpoint }}
+  endpoint: {{ quote (default "product.connect.nginx.com" .Values.controller.mgmt.endpoint) }}
 {{- end }}
 {{- if .Values.controller.mgmt.interval}}
   interval: {{ quote .Values.controller.mgmt.interval }}
@@ -56,7 +56,5 @@ data:
 {{- if .Values.controller.mgmt.sslTrustedCertificate.fileName }}
   ssl-trusted-certificate: {{ quote .Values.controller.mgmt.sslTrustedCertificate.fileName }}
 {{- end }}
-{{- if .Values.controller.mgmt.EnableClientAuth }}
-  ssl-client-authentication: {{ quote .Values.controller.mgmt.EnableClientAuth }}
-{{- end }}
+  ssl-client-authentication: {{ quote (default false .Values.controller.mgmt.enableClientAuth) }}
 {{- end }}

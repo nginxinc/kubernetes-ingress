@@ -109,17 +109,13 @@
                 "license"
               ]
             },
-            "EnableClientAuth": {
-              "type": "string",
-              "default": "",
+            "enableClientAuth": {
+              "type": "boolean",
+              "default": false,
               "title": "The EnableClientAuth Schema",
-              "enum": [
-                "on",
-                "off"
-              ],
               "examples": [
-                "on",
-                "off"
+                true,
+                false
               ]
             },
             "sslCertificateSecretName": {

@@ -89,20 +89,6 @@ func GetMapKeyAsStringSlice(m map[string]string, key string, _ apiObject, delimi
 	return nil, false
 }
 
-// GetMapKeyAsOnOff searches the map for the given key and parses the key as on or off.
-func GetMapKeyAsOnOff(m map[string]string, key string, context apiObject) (bool, bool, error) {
-	if str, exists := m[key]; exists {
-		b, err := ParseOnOff(str)
-		if err != nil {
-			return false, exists, fmt.Errorf("%s %v/%v '%s' contains invalid string: %w", context.GetObjectKind().GroupVersionKind().Kind, context.GetNamespace(), context.GetName(), key, err)
-		}
-
-		return b, exists, nil
-	}
-
-	return false, false, nil
-}
-
 // ParseLBMethod parses method and matches it to a corresponding load balancing method in NGINX. An error is returned if method is not valid.
 func ParseLBMethod(method string) (string, error) {
 	method = strings.TrimSpace(method)
@@ -200,17 +186,6 @@ func ParseUint64(s string) (uint64, error) {
 // ParseFloat64 ensures that the string value is a valid float64
 func ParseFloat64(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
-}
-
-// ParseOnOff ensures that the string value is valid on off
-func ParseOnOff(s string) (bool, error) {
-	s = strings.ToLower(s)
-	if s == "on" {
-		return true, nil
-	} else if s == "off" {
-		return false, nil
-	}
-	return false, errors.New("invalid on/off string")
 }
 
 // timeRegexp http://nginx.org/en/docs/syntax.html
