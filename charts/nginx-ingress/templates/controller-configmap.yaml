@@ -47,17 +47,22 @@ data:
 {{- if hasKey .Values.controller.mgmt "sslVerify" }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
 {{- end }}
+{{- if hasKey .Values.controller.mgmt "resolver" }}
   resolver: {{ quote .Values.controller.mgmt.resolver }}
+{{- end }}
+{{- if hasKey .Values.controller.mgmt "enforceInitialReport" }}
   enforce-initial-report: {{ quote .Values.controller.mgmt.enforceInitialReport }}
-{{/*  if endpoint is not empty, add key and value to config map */}}
-{{- if .Values.controller.mgmt.endpoint }}
+{{- end }}
+{{- if hasKey .Values.controller.mgmt "endpoint" }}
   endpoint: {{ quote .Values.controller.mgmt.endpoint }}
 {{- end }}
-{{- if .Values.controller.mgmt.interval}}
+{{- if hasKey .Values.controller.mgmt "interval" }}
   interval: {{ quote .Values.controller.mgmt.interval }}
- {{- end }}
-{{- if .Values.controller.mgmt.sslTrustedCertificate.fileName }}
+{{- end }}
+{{- if hasKey .Values.controller.mgmt.sslTrustedCertificate "fileName" }}
   ssl-trusted-certificate: {{ quote .Values.controller.mgmt.sslTrustedCertificate.fileName }}
 {{- end }}
+{{- if hasKey .Values.controller.mgmt "enableClientAuth" }}
   ssl-client-authentication: {{ quote .Values.controller.mgmt.enableClientAuth }}
+{{- end }}
 {{- end }}
