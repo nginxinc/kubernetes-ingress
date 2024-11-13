@@ -207,7 +207,7 @@ type MainConfig struct {
 	LogFormat                          []string
 	LogFormatEscaping                  string
 	MainSnippets                       []string
-	MGMTSSLVerify                      bool
+	MGMTSSLVerify                      *bool
 	MGMTResolver                       string
 	MGMTEnforceInitialReport           bool
 	MGMTEndpoint                       string

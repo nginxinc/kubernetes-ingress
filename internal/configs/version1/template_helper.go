@@ -193,5 +193,6 @@ var helperFunctions = template.FuncMap{
 	"replaceAll":              strings.ReplaceAll,
 	"makeLocationPath":        makeLocationPath,
 	"makeSecretPath":          commonhelpers.MakeSecretPath,
+	"makeOnOffFromBool":       commonhelpers.MakeOnOffFromBool,
 	"generateProxySetHeaders": generateProxySetHeaders,
 }

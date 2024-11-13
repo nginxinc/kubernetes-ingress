@@ -547,7 +547,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		if err != nil {
 			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-verify key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
 		} else {
-			mgmtCfgParams.SSLVerify = sslVerify
+			mgmtCfgParams.SSLVerify = BoolToPointerBool(sslVerify)
 		}
 	}
 	if resolver, exists := cfgm.Data["resolver"]; exists {

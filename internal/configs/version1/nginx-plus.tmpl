@@ -369,11 +369,9 @@ mgmt {
     enforce_initial_report off;
     {{ end -}}
     {{ if .MGMTSSLVerify -}}
-    ssl_verify on;
-    {{- else -}}
-    ssl_verify off;
-    {{ end }}
-    {{ if ne .MGMTResolver "" }}resolver {{ .MGMTResolver }};{{- end }}
+    ssl_verify {{ makeOnOffFromBool .MGMTSSLVerify }};
+    {{ end -}}
+    {{ if ne .MGMTResolver "" }}resolver {{ .MGMTResolver }};{{ end -}}
     {{ if ne .MGMTTrustedCerticate "" -}}
     ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTTrustedCerticate }};
     {{ end -}}

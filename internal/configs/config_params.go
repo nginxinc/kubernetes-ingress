@@ -173,7 +173,7 @@ type GlobalConfigParams struct {
 // MGMTConfigParams holds mgmt block parameters. For now, it only holds listeners.
 type MGMTConfigParams struct {
 	Context              context.Context
-	SSLVerify            bool
+	SSLVerify            *bool
 	Resolver             string
 	EnforceInitialReport bool
 	Endpoint             string
@@ -237,7 +237,7 @@ func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 func NewDefaultMGMTConfigParams(ctx context.Context) *MGMTConfigParams {
 	return &MGMTConfigParams{
 		Context:              ctx,
-		SSLVerify:            true,
+		SSLVerify:            nil,
 		EnforceInitialReport: true,
 	}
 }
