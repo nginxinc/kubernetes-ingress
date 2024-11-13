@@ -175,7 +175,7 @@ type MGMTConfigParams struct {
 	Context              context.Context
 	SSLVerify            *bool
 	Resolver             string
-	EnforceInitialReport bool
+	EnforceInitialReport *bool
 	Endpoint             string
 	Interval             string
 	TrustedCert          string
@@ -238,7 +238,7 @@ func NewDefaultMGMTConfigParams(ctx context.Context) *MGMTConfigParams {
 	return &MGMTConfigParams{
 		Context:              ctx,
 		SSLVerify:            nil,
-		EnforceInitialReport: true,
+		EnforceInitialReport: nil,
 	}
 }
 

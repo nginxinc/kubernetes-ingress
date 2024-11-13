@@ -14,7 +14,6 @@ import (
 
 const (
 	minimumInterval = 60
-	productEndpoint = "product.connect.nginx.com"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -557,17 +556,11 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		if err != nil {
 			nl.Errorf(l, "Configmap %s/%s: Invalid value for the enforce-initial-report key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
 		} else {
-			mgmtCfgParams.EnforceInitialReport = enforceInitialReport
+			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
 		}
 	}
 	if endpoint, exists := cfgm.Data["endpoint"]; exists {
-		parsedEndpoint := strings.TrimSpace(endpoint)
-		if parsedEndpoint == "" {
-			parsedEndpoint = productEndpoint
-		}
-		mgmtCfgParams.Endpoint = parsedEndpoint
-	} else {
-		mgmtCfgParams.Endpoint = productEndpoint
+		mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
 	}
 	if interval, exists := cfgm.Data["interval"]; exists {
 		i := strings.TrimSpace(interval)

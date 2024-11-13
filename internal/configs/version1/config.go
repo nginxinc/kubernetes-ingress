@@ -209,7 +209,7 @@ type MainConfig struct {
 	MainSnippets                       []string
 	MGMTSSLVerify                      *bool
 	MGMTResolver                       string
-	MGMTEnforceInitialReport           bool
+	MGMTEnforceInitialReport           *bool
 	MGMTEndpoint                       string
 	MGMTInterval                       string
 	MGMTTrustedCerticate               string

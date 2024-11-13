@@ -360,13 +360,13 @@ stream {
 
 {{- if .NginxVersion.PlusGreaterThanOrEqualTo "nginx-plus-r33" }}
 mgmt {
+    {{- if or (ne .MGMTEndpoint "") (ne .MGMTInterval "") }}
     usage_report
     {{- if ne .MGMTEndpoint "" }} endpoint={{ .MGMTEndpoint }} {{- end }} {{- if ne .MGMTInterval "" }} interval={{ .MGMTInterval }} {{- end }};
+    {{- end }}
     license_token /etc/nginx/license/license.jwt;
     {{ if .MGMTEnforceInitialReport -}}
-    enforce_initial_report on;
-    {{- else -}}
-    enforce_initial_report off;
+    enforce_initial_report {{ makeOnOffFromBool .MGMTEnforceInitialReport}};
     {{ end -}}
     {{ if .MGMTSSLVerify -}}
     ssl_verify {{ makeOnOffFromBool .MGMTSSLVerify }};
