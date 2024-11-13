@@ -20,14 +20,17 @@ controller:
     licenseTokenSecretName: "license-token" # required for NGINX Plus
 
     ## Enables the 180-day grace period for sending the initial usage report
-    enforceInitialReport: true
+    # enforceInitialReport: false
 
     ## Endpoint for usage report
-    endpoint: "product.connect.nginx.com"
-    interval: 1h
+    # endpoint: "product.connect.nginx.com"
+    # interval: 1h
 
     ## Configures the ssl_verify directive in the mgmt block
-    sslVerify: true
+    # sslVerify: true
+
+    ## Configures the resolver directive in the mgmt block
+    # resolver: ""
 
     ## SSL certification of the mgmt block
     ## Make sure this is enabled for ssl certificate to work

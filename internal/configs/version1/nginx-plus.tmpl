@@ -367,12 +367,13 @@ mgmt {
     enforce_initial_report on;
     {{- else -}}
     enforce_initial_report off;
-    {{ end }}
+    {{ end -}}
     {{ if .MGMTSSLVerify -}}
     ssl_verify on;
     {{- else -}}
     ssl_verify off;
     {{ end }}
+    {{ if ne .MGMTResolver "" }}resolver {{ .MGMTResolver }};{{- end }}
     {{ if ne .MGMTTrustedCerticate "" -}}
     ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTTrustedCerticate }};
     {{ end -}}

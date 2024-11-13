@@ -543,18 +543,21 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 
 	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
 
-	if sslVerify, exists := cfgm.Data["ssl-verify"]; exists {
-		if parsedBool, err := ParseBool(sslVerify); err != nil {
-			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-verify key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
+	if sslVerify, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-verify", cfgm); exists {
+		if err != nil {
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-verify key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
 		} else {
-			mgmtCfgParams.SSLVerify = parsedBool
+			mgmtCfgParams.SSLVerify = sslVerify
 		}
 	}
-	if enforceInitialReport, exists := cfgm.Data["enforce-initial-report"]; exists {
-		if parsedBool, err := ParseBool(enforceInitialReport); err != nil {
-			nl.Errorf(l, "Configmap %s/%s: Invalid value for the enforce-initial-report key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
+	if resolver, exists := cfgm.Data["resolver"]; exists {
+		mgmtCfgParams.Resolver = strings.TrimSpace(resolver)
+	}
+	if enforceInitialReport, exists, err := GetMapKeyAsBool(cfgm.Data, "enforce-initial-report", cfgm); exists {
+		if err != nil {
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the enforce-initial-report key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
 		} else {
-			mgmtCfgParams.EnforceInitialReport = parsedBool
+			mgmtCfgParams.EnforceInitialReport = enforceInitialReport
 		}
 	}
 	if endpoint, exists := cfgm.Data["endpoint"]; exists {
@@ -584,11 +587,11 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		// TODO: add validation to make sure the secret exists and emit an event to the pod if it doesn't
 		mgmtCfgParams.TrustedCert = strings.TrimSpace(trustedCertificate)
 	}
-	if enableClientAuth, exists := cfgm.Data["ssl-client-authentication"]; exists {
-		if parsedBool, err := ParseBool(enableClientAuth); err != nil {
-			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-client-authentication key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), enableClientAuth, err)
+	if enableClientAuth, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-client-authentication", cfgm); exists {
+		if err != nil {
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-client-authentication key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), enableClientAuth, err)
 		} else {
-			mgmtCfgParams.EnableClientAuth = parsedBool
+			mgmtCfgParams.EnableClientAuth = enableClientAuth
 		}
 	}
 	return mgmtCfgParams, nil
@@ -614,6 +617,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		LogFormatEscaping:                  config.MainLogFormatEscaping,
 		MainSnippets:                       config.MainMainSnippets,
 		MGMTSSLVerify:                      mgmtCfgParams.SSLVerify,
+		MGMTResolver:                       mgmtCfgParams.Resolver,
 		MGMTEnforceInitialReport:           mgmtCfgParams.EnforceInitialReport,
 		MGMTEndpoint:                       mgmtCfgParams.Endpoint,
 		MGMTInterval:                       mgmtCfgParams.Interval,

@@ -163,6 +163,15 @@
                 false
               ]
             },
+            "resolver": {
+              "type": "string",
+              "default": "",
+              "title": "The resolver Schema",
+              "examples": [
+                "kube-dns.kube-system.svc.cluster.local",
+                "127.0.0.1"
+              ]
+            },
             "sslTrustedCertificate": {
               "type": "object",
               "default": {},

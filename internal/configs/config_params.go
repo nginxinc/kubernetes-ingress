@@ -174,6 +174,7 @@ type GlobalConfigParams struct {
 type MGMTConfigParams struct {
 	Context              context.Context
 	SSLVerify            bool
+	Resolver             string
 	EnforceInitialReport bool
 	Endpoint             string
 	Interval             string
