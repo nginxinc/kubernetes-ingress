@@ -614,7 +614,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		MGMTEnforceInitialReport:           mgmtCfgParams.EnforceInitialReport,
 		MGMTEndpoint:                       mgmtCfgParams.Endpoint,
 		MGMTInterval:                       mgmtCfgParams.Interval,
-		MGMTTrustedCerticate:               mgmtCfgParams.TrustedCert,
+		MGMTTrustedCertificate:             mgmtCfgParams.TrustedCert,
 		MGMTEnableClientAuth:               mgmtCfgParams.EnableClientAuth,
 		NginxStatus:                        staticCfgParams.NginxStatus,
 		NginxStatusAllowCIDRs:              staticCfgParams.NginxStatusAllowCIDRs,

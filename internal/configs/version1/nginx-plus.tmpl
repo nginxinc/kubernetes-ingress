@@ -372,8 +372,8 @@ mgmt {
     ssl_verify {{ makeOnOffFromBool .MGMTSSLVerify }};
     {{ end -}}
     {{ if ne .MGMTResolver "" }}resolver {{ .MGMTResolver }};{{ end -}}
-    {{ if ne .MGMTTrustedCerticate "" -}}
-    ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTTrustedCerticate }};
+    {{ if ne .MGMTTrustedCertificate "" -}}
+    ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTTrustedCertificate }};
     {{ end -}}
     {{ if .MGMTEnableClientAuth -}}
     ssl_certificate {{ printf "%s/%s" .StaticSSLPath "mgmt_client/tls.crt" }};
