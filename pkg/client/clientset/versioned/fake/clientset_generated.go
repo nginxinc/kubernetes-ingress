@@ -6,8 +6,6 @@ import (
 	clientset "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	k8sv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1"
 	fakek8sv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1/fake"
-	k8sv1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1alpha1"
-	fakek8sv1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1alpha1/fake"
 	appprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
 	fakeappprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1/fake"
 	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1"
@@ -76,11 +74,6 @@ var (
 // K8sV1 retrieves the K8sV1Client
 func (c *Clientset) K8sV1() k8sv1.K8sV1Interface {
 	return &fakek8sv1.FakeK8sV1{Fake: &c.Fake}
-}
-
-// K8sV1alpha1 retrieves the K8sV1alpha1Client
-func (c *Clientset) K8sV1alpha1() k8sv1alpha1.K8sV1alpha1Interface {
-	return &fakek8sv1alpha1.FakeK8sV1alpha1{Fake: &c.Fake}
 }
 
 // AppprotectdosV1beta1 retrieves the AppprotectdosV1beta1Client

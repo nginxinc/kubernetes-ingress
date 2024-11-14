@@ -50,7 +50,7 @@ Similar to how listeners are configured in our [basic-tcp-udp](../../examples/cu
 here we deploy a GlobalConfiguration resource with the listeners we want to use in our VirtualServer.
 
    ```yaml
-   apiVersion: k8s.nginx.org/v1alpha1
+   apiVersion: k8s.nginx.org/v1
    kind: GlobalConfiguration
    metadata:
      name: nginx-configuration
