@@ -1778,7 +1778,6 @@ func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Sec
 		return
 	}
 	*secretList = append(*secretList, secretName)
-
 }
 
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
