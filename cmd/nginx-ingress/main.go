@@ -138,8 +138,10 @@ func main() {
 
 	mustProcessGlobalConfiguration(ctx)
 
-	mgmtCfgParams := configs.NewDefaultMGMTConfigParams(ctx)
-	mgmtCfgParams = processMGMTConfigMap(kubeClient, mgmtCfgParams)
+	mgmtCfgParams := processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx))
+
+	// validate any secrets in mgmtCfgParams.Secrets.
+	mustValidateMGMTSecrets(kubeClient, &mgmtCfgParams.Secrets)
 
 	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
 	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
@@ -287,6 +289,10 @@ func main() {
 		nl.Info(l, "Waiting for the controller to exit...")
 		time.Sleep(30 * time.Second)
 	}
+}
+
+func mustValidateMGMTSecrets(kubeClient *kubernetes.Clientset, secrets *configs.MGMTSecrets) (bool, error) {
+	return false, nil
 }
 
 func mustCreateConfigAndKubeClient(ctx context.Context) (*rest.Config, *kubernetes.Clientset) {

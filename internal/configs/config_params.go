@@ -170,6 +170,13 @@ type GlobalConfigParams struct {
 	Listeners map[string]Listener
 }
 
+// MGMTSecrets holds mgmt block secret names
+type MGMTSecrets struct {
+	license     string
+	clientAuth  string
+	trustedCert string
+}
+
 // MGMTConfigParams holds mgmt block parameters.
 type MGMTConfigParams struct {
 	Context              context.Context
@@ -178,8 +185,8 @@ type MGMTConfigParams struct {
 	EnforceInitialReport *bool
 	Endpoint             string
 	Interval             string
-	TrustedCert          string
-	EnableClientAuth     bool
+	TrustedCertFile      string
+	Secrets              MGMTSecrets
 }
 
 // Listener represents a listener that can be used in a TransportServer resource.
@@ -239,6 +246,7 @@ func NewDefaultMGMTConfigParams(ctx context.Context) *MGMTConfigParams {
 		Context:              ctx,
 		SSLVerify:            nil,
 		EnforceInitialReport: nil,
+		Secrets:              MGMTSecrets{},
 	}
 }
 

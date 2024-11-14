@@ -546,6 +546,10 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 
 	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
 
+	if license, exists := cfgm.Data["license-secret-name"]; exists {
+		mgmtCfgParams.Secrets.license = strings.TrimSpace(license)
+	}
+
 	if sslVerify, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-verify", cfgm); exists {
 		if err != nil {
 			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-verify key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
@@ -580,30 +584,28 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		}
 
 	}
-	if trustedCertificate, exists := cfgm.Data["ssl-trusted-certificate"]; exists {
-		// TODO: add validation to make sure the secret exists and emit an event to the pod if it doesn't
-		mgmtCfgParams.TrustedCert = strings.TrimSpace(trustedCertificate)
+	if trustedCertSecret, exists := cfgm.Data["trusted-certificate-secret-name"]; exists {
+		mgmtCfgParams.Secrets.trustedCert = strings.TrimSpace(trustedCertSecret)
 	}
-	if enableClientAuth, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-client-authentication", cfgm); exists {
-		if err != nil {
-			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-client-authentication key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), enableClientAuth, err)
-		} else {
-			mgmtCfgParams.EnableClientAuth = enableClientAuth
-		}
+	if trustedCertificateFile, exists := cfgm.Data["ssl-trusted-certificate-file"]; exists {
+		mgmtCfgParams.TrustedCertFile = strings.TrimSpace(trustedCertificateFile)
 	}
+	if clientAuthSecret, exists := cfgm.Data["client-auth-secret-name"]; exists {
+		mgmtCfgParams.Secrets.clientAuth = strings.TrimSpace(clientAuthSecret)
+	}
+
 	return mgmtCfgParams, nil
 }
 
 // GenerateNginxMainConfig generates MainConfig.
 func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams, mgmtCfgParams *MGMTConfigParams) *version1.MainConfig {
 	mgmtConfig := version1.MGMTConfig{
-		SSLVerify:            mgmtCfgParams.SSLVerify,
-		Resolver:             mgmtCfgParams.Resolver,
-		EnforceInitialReport: mgmtCfgParams.EnforceInitialReport,
-		Endpoint:             mgmtCfgParams.Endpoint,
-		Interval:             mgmtCfgParams.Interval,
-		TrustedCertificate:   mgmtCfgParams.TrustedCert,
-		EnableClientAuth:     mgmtCfgParams.EnableClientAuth,
+		SSLVerify:              mgmtCfgParams.SSLVerify,
+		Resolver:               mgmtCfgParams.Resolver,
+		EnforceInitialReport:   mgmtCfgParams.EnforceInitialReport,
+		Endpoint:               mgmtCfgParams.Endpoint,
+		Interval:               mgmtCfgParams.Interval,
+		TrustedCertificateFile: mgmtCfgParams.TrustedCertFile,
 	}
 
 	nginxCfg := &version1.MainConfig{
