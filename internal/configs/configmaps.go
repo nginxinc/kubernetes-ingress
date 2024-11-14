@@ -359,10 +359,14 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if virtualServerTemplate, exists := cfgm.Data["virtualserver-template"]; exists {
 		cfgParams.VirtualServerTemplate = &virtualServerTemplate
+	} else {
+		cfgParams.VirtualServerTemplate = nil
 	}
 
 	if transportServerTemplate, exists := cfgm.Data["transportserver-template"]; exists {
 		cfgParams.TransportServerTemplate = &transportServerTemplate
+	} else {
+		cfgParams.TransportServerTemplate = nil
 	}
 
 	if mainStreamSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "stream-snippets", cfgm, "\n"); exists {
