@@ -196,6 +196,7 @@ type MGMTConfig struct {
 	EnforceInitialReport   *bool
 	Endpoint               string
 	Interval               string
+	EnableClientAuth       bool
 	TrustedCertificateFile string
 }
 

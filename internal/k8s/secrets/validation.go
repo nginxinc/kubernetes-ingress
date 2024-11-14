@@ -53,6 +53,14 @@ func ValidateTLSSecret(secret *api_v1.Secret) error {
 	return nil
 }
 
+// ValidateMGMTTrustedCertSecret validates the secret. If it is valid, the function returns nil.
+func ValidateMGMTTrustedCertSecret(secret *api_v1.Secret, fileName string) error {
+	if secret.Type != api_v1.SecretTypeOpaque {
+		return fmt.Errorf("trusted certificate secret must be of type %v", api_v1.SecretTypeOpaque)
+	}
+	return validateCASecretData(secret, fileName)
+}
+
 // ValidateJWKSecret validates the secret. If it is valid, the function returns nil.
 func ValidateJWKSecret(secret *api_v1.Secret) error {
 	if secret.Type != SecretTypeJWK {
@@ -79,17 +87,21 @@ func ValidateCASecret(secret *api_v1.Secret) error {
 		return fmt.Errorf("CA secret must have the data field %v", CAKey)
 	}
 
-	block, _ := pem.Decode(secret.Data[CAKey])
+	return validateCASecretData(secret, CAKey)
+}
+
+func validateCASecretData(secret *api_v1.Secret, caKey string) error {
+	block, _ := pem.Decode(secret.Data[caKey])
 	if block == nil {
-		return fmt.Errorf("the data field %s must hold a valid CERTIFICATE PEM block", CAKey)
+		return fmt.Errorf("in secret %s/%s, the data field %s must hold a valid CERTIFICATE PEM block", secret.Namespace, secret.Name, caKey)
 	}
 	if block.Type != "CERTIFICATE" {
-		return fmt.Errorf("the data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", CAKey, block.Type)
+		return fmt.Errorf("in secret %s/%s, the data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", secret.Namespace, secret.Name, caKey, block.Type)
 	}
 
 	_, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return fmt.Errorf("failed to validate certificate: %w", err)
+		return fmt.Errorf("failed to validate CA certificate for secret %s/%s: %w", secret.Namespace, secret.Name, err)
 	}
 
 	return nil

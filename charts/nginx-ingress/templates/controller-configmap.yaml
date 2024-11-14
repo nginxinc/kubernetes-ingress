@@ -59,8 +59,11 @@ data:
 {{- if hasKey .Values.controller.mgmt "interval" }}
   interval: {{ quote .Values.controller.mgmt.interval }}
 {{- end }}
+{{- if hasKey .Values.controller.mgmt.sslTrustedCertificate "secretName" }}
+  trusted-certificate-secret-name: {{ quote .Values.controller.mgmt.sslTrustedCertificate.secretName }}
+{{- end }}
 {{- if hasKey .Values.controller.mgmt.sslTrustedCertificate "fileName" }}
-  ssl-trusted-certificate: {{ quote .Values.controller.mgmt.sslTrustedCertificate.fileName }}
+  trusted-certificate-file-name: {{ quote .Values.controller.mgmt.sslTrustedCertificate.fileName }}
 {{- end }}
 {{- if hasKey .Values.controller.mgmt "enableClientAuth" }}
   ssl-client-authentication: {{ quote .Values.controller.mgmt.enableClientAuth }}

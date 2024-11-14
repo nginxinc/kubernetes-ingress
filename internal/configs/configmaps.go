@@ -547,7 +547,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
 
 	if license, exists := cfgm.Data["license-secret-name"]; exists {
-		mgmtCfgParams.Secrets.license = strings.TrimSpace(license)
+		mgmtCfgParams.Secrets.License = strings.TrimSpace(license)
 	}
 
 	if sslVerify, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-verify", cfgm); exists {
@@ -584,14 +584,14 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		}
 
 	}
-	if trustedCertSecret, exists := cfgm.Data["trusted-certificate-secret-name"]; exists {
-		mgmtCfgParams.Secrets.trustedCert = strings.TrimSpace(trustedCertSecret)
+	if trustedCertSecretName, exists := cfgm.Data["trusted-certificate-secret-name"]; exists {
+		mgmtCfgParams.Secrets.TrustedCert = strings.TrimSpace(trustedCertSecretName)
 	}
-	if trustedCertificateFile, exists := cfgm.Data["ssl-trusted-certificate-file"]; exists {
-		mgmtCfgParams.TrustedCertFile = strings.TrimSpace(trustedCertificateFile)
+	if trustedCertFileName, exists := cfgm.Data["trusted-certificate-file-name"]; exists {
+		mgmtCfgParams.TrustedCertFile = strings.TrimSpace(trustedCertFileName)
 	}
 	if clientAuthSecret, exists := cfgm.Data["client-auth-secret-name"]; exists {
-		mgmtCfgParams.Secrets.clientAuth = strings.TrimSpace(clientAuthSecret)
+		mgmtCfgParams.Secrets.ClientAuth = strings.TrimSpace(clientAuthSecret)
 	}
 
 	return mgmtCfgParams, nil
@@ -605,6 +605,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		EnforceInitialReport:   mgmtCfgParams.EnforceInitialReport,
 		Endpoint:               mgmtCfgParams.Endpoint,
 		Interval:               mgmtCfgParams.Interval,
+		EnableClientAuth:       mgmtCfgParams.Secrets.ClientAuth != "",
 		TrustedCertificateFile: mgmtCfgParams.TrustedCertFile,
 	}
 

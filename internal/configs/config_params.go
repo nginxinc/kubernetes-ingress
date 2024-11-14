@@ -172,9 +172,9 @@ type GlobalConfigParams struct {
 
 // MGMTSecrets holds mgmt block secret names
 type MGMTSecrets struct {
-	license     string
-	clientAuth  string
-	trustedCert string
+	License     string
+	ClientAuth  string
+	TrustedCert string
 }
 
 // MGMTConfigParams holds mgmt block parameters.

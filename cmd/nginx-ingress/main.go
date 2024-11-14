@@ -85,6 +85,7 @@ func main() {
 	parsedFlags := os.Args[1:]
 
 	buildOS := os.Getenv("BUILD_OS")
+	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	config, kubeClient := mustCreateConfigAndKubeClient(ctx)
 	mustValidateKubernetesVersionInfo(ctx, kubeClient)
@@ -141,7 +142,9 @@ func main() {
 	mgmtCfgParams := processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx))
 
 	// validate any secrets in mgmtCfgParams.Secrets.
-	mustValidateMGMTSecrets(kubeClient, &mgmtCfgParams.Secrets)
+	if *nginxPlus {
+		mustValidateMGMTSecrets(kubeClient, *mgmtCfgParams, controllerNamespace)
+	}
 
 	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
 	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
@@ -204,8 +207,6 @@ func main() {
 		IsDynamicWeightChangesReloadEnabled: *enableDynamicWeightChangesReload,
 		NginxVersion:                        nginxVersion,
 	})
-
-	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(
@@ -291,8 +292,23 @@ func main() {
 	}
 }
 
-func mustValidateMGMTSecrets(kubeClient *kubernetes.Clientset, secrets *configs.MGMTSecrets) (bool, error) {
-	return false, nil
+func mustValidateMGMTSecrets(kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
+	l := nl.LoggerFromContext(mgmtConfigParams.Context)
+	if mgmtConfigParams.Secrets.TrustedCert != "" {
+		mustValidateTrustedCertSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
+	}
+}
+
+func mustValidateTrustedCertSecret(l *slog.Logger, kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
+	trustedSecret, err := kubeClient.CoreV1().Secrets(controllerNamespace).Get(context.TODO(), mgmtConfigParams.Secrets.TrustedCert, meta_v1.GetOptions{})
+	if err != nil {
+		nl.Fatalf(l, "could not find trusted certificate secret [%v]: %v", mgmtConfigParams.Secrets.TrustedCert, err)
+	}
+
+	err = secrets.ValidateMGMTTrustedCertSecret(trustedSecret, mgmtConfigParams.TrustedCertFile)
+	if err != nil {
+		nl.Fatalf(l, "invalid trusted certificate [%v]: %v", mgmtConfigParams.TrustedCertFile, err)
+	}
 }
 
 func mustCreateConfigAndKubeClient(ctx context.Context) (*rest.Config, *kubernetes.Clientset) {
