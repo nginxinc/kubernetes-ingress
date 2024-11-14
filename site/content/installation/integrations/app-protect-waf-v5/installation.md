@@ -162,7 +162,7 @@ volumeMounts:
 
 ### Enabling WAF v5
 
-Start by setting `controller.appprotect.enable` to `true` in your Helm values. This will the standard App Protect WAF fetatures.
+Start by setting `controller.appprotect.enable` to `true` in your Helm values. This will the standard App Protect WAF features.
 Afterwords, set `controller.approtect.v5` to `true`.
 This ensures that both the `waf-enforcer` and `waf-config-mgr` containers are deployed alongside the NGINX Ingress Controller containers.
 These two additional containers are required when using App Protect WAF v5.
@@ -217,6 +217,70 @@ controller:
 ...
 ```
 {{< /note >}}
+
+### Configuring `readOnlyRootFilesystem`
+
+Create required volumes:
+
+```yaml
+volumes:
+  - name: nginx-etc
+    emptyDir: {}
+  - name: nginx-cache
+    emptyDir: {}
+  - name: nginx-lib
+    emptyDir: {}
+  - name: nginx-log
+    emptyDir: {}
+  - emptyDir: {}
+    name: app-protect-bd-config
+  - emptyDir: {}
+    name: app-protect-config
+  - emptyDir: {}
+    name: app-protect-bundles
+```
+
+Set `controller.securityContext.readOnlyRootFilesystem` to `true`.
+
+Example Helm values:
+
+```yaml
+controller:
+  ...
+  securityContext:
+    readOnlyRootFilesystem: true
+  ...
+```
+
+Set `controller.appprotect.enforcer.securityContext.readOnlyRootFilesystem` to `true`.
+
+Example Helm values:
+
+```yaml
+controller:
+  ...
+  appprotect:
+    ...
+    enforcer:
+      securityContext:
+        readOnlyRootFilesystem: true
+  ...
+```
+
+Set `controller.appprotect.configManager.securityContext.readOnlyRootFilesystem` to `true`.
+
+Example Helm values:
+
+```yaml
+controller:
+  ...
+  appprotect:
+    ...
+    configManager:
+      securityContext:
+        readOnlyRootFilesystem: true
+  ...
+```
 
 {{%/tab%}}
 
@@ -326,6 +390,74 @@ Add `volumeMounts` as below:
       mountPath: /opt/app_protect/config
     - name: app-protect-bundles
       mountPath: /etc/app_protect/bundles
+...
+```
+
+### Configure `readOnlyRootFilesystem`
+
+Add `readOnlyRootFilesystem` to the NIC container and set valut to `true` as below:
+
+```yaml
+...
+- image: <my_docker_registery>:<version_tag>
+  imagePullPolicy: IfNotPresent
+  name: nginx-plus-ingress
+  ...
+  securityContext:
+    allowPrivilegeEscalation: false
+      capabilities:
+        add:
+        - NET_BIND_SERVICE
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 101
+    readOnlyRootFilesystem: true
+  ...
+  volumeMounts:
+    - mountPath: /etc/nginx
+      name: nginx-etc
+    - mountPath: /var/cache/nginx
+      name: nginx-cache
+    - mountPath: /var/lib/nginx
+      name: nginx-lib
+    - mountPath: /var/log/nginx
+      name: nginx-log
+    - mountPath: /opt/app_protect/bd_config
+      name: app-protect-bd-config
+    - mountPath: /opt/app_protect/config
+      name: app-protect-config
+    - mountPath: /etc/app_protect/bundles
+      name: app-protect-bundles
+...
+```
+
+Add `readOnlyRootFilesystem` to the `waf-config-mgr` container and set value to `true` as below:
+
+```yaml
+...
+- name: waf-config-mgr
+  image: private-registry.nginx.com/nap/waf-config-mgr:<version-tag>
+  imagePullPolicy: IfNotPresent
+  ...
+  securityContext:
+    readOnlyRootFilesystem: true
+    ...
+...
+```
+
+Add `readOnlyRootFilesystem` to the `waf-enforcer` container and set value to `true` as below:
+
+```yaml
+...
+- name: waf-enforcer
+  image: private-registry.nginx.com/nap/waf-enforcer:<version-tag>
+  imagePullPolicy: IfNotPresent
+  ...
+  securityContext:
+    readOnlyRootFilesystem: true
+    ...
 ...
 ```
 
