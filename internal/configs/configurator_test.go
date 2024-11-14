@@ -187,7 +187,7 @@ func TestConfigratorUpdatesConfigWithCustomVStemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		VirtualServerTemplate: &customTestVStemplate,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,7 +209,7 @@ func TestConfiguratorUpdatesConfigWithNilCustomVSemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		VirtualServerTemplate: nil,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,7 +227,7 @@ func TestConfigratorUpdatesConfigWithCustomTStemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		TransportServerTemplate: &customTestTStemplate,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +249,7 @@ func TestConfiguratorUpdatesConfigWithNilCustomTStemplate(t *testing.T) {
 	cnf := createTestConfigurator(t)
 	warnings, err := cnf.UpdateConfig(&ConfigParams{
 		TransportServerTemplate: nil,
-	}, ExtendedResources{})
+	}, &MGMTConfigParams{}, ExtendedResources{})
 	if err != nil {
 		t.Fatal(err)
 	}

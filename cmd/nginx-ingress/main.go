@@ -297,17 +297,31 @@ func mustValidateMGMTSecrets(kubeClient *kubernetes.Clientset, mgmtConfigParams 
 	if mgmtConfigParams.Secrets.TrustedCert != "" {
 		mustValidateTrustedCertSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
 	}
+	if mgmtConfigParams.Secrets.ClientAuth != "" {
+		mustValidateClientAuthSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
+	}
+}
+
+func mustValidateClientAuthSecret(l *slog.Logger, kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
+	clientAuthSecret, err := kubeClient.CoreV1().Secrets(controllerNamespace).Get(context.TODO(), mgmtConfigParams.Secrets.ClientAuth, meta_v1.GetOptions{})
+	if err != nil {
+		nl.Fatalf(l, "could not find mgmt client certificate secret [%v]: %v", mgmtConfigParams.Secrets.ClientAuth, err)
+	}
+	err = secrets.ValidateTLSSecret(clientAuthSecret)
+	if err != nil {
+		nl.Fatalf(l, "invalid mgmt ca certificate secret [%v]: %v", mgmtConfigParams.Secrets.ClientAuth, err)
+	}
 }
 
 func mustValidateTrustedCertSecret(l *slog.Logger, kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
 	trustedSecret, err := kubeClient.CoreV1().Secrets(controllerNamespace).Get(context.TODO(), mgmtConfigParams.Secrets.TrustedCert, meta_v1.GetOptions{})
 	if err != nil {
-		nl.Fatalf(l, "could not find trusted certificate secret [%v]: %v", mgmtConfigParams.Secrets.TrustedCert, err)
+		nl.Fatalf(l, "could not find mgmt trusted certificate secret [%v]: %v", mgmtConfigParams.Secrets.TrustedCert, err)
 	}
 
 	err = secrets.ValidateMGMTTrustedCertSecret(trustedSecret, mgmtConfigParams.TrustedCertFile)
 	if err != nil {
-		nl.Fatalf(l, "invalid trusted certificate [%v]: %v", mgmtConfigParams.TrustedCertFile, err)
+		nl.Fatalf(l, "invalid mgmt trusted certificate [%v]: %v", mgmtConfigParams.TrustedCertFile, err)
 	}
 }
 
