@@ -61,6 +61,17 @@ func ValidateMGMTTrustedCertSecret(secret *api_v1.Secret, fileName string) error
 	return validateCASecretData(secret, fileName)
 }
 
+// ValidateOpaqueSecretContainsKey validates the secret. If it is valid, the function returns nil.
+func ValidateOpaqueSecretContainsKey(secret *api_v1.Secret, key string) error {
+	if secret.Type != api_v1.SecretTypeOpaque {
+		return fmt.Errorf("secret %s must be of type %v", secret.Name, api_v1.SecretTypeOpaque)
+	}
+	if _, exists := secret.Data[key]; !exists {
+		return fmt.Errorf("secret %s must contain key %s", secret.Name, key)
+	}
+	return nil
+}
+
 // ValidateJWKSecret validates the secret. If it is valid, the function returns nil.
 func ValidateJWKSecret(secret *api_v1.Secret) error {
 	if secret.Type != SecretTypeJWK {

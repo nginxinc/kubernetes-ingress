@@ -294,11 +294,23 @@ func main() {
 
 func mustValidateMGMTSecrets(kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
 	l := nl.LoggerFromContext(mgmtConfigParams.Context)
+	mustValidateLicenseSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
 	if mgmtConfigParams.Secrets.TrustedCert != "" {
 		mustValidateTrustedCertSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
 	}
 	if mgmtConfigParams.Secrets.ClientAuth != "" {
 		mustValidateClientAuthSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
+	}
+}
+
+func mustValidateLicenseSecret(l *slog.Logger, kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
+	licenseSecret, err := kubeClient.CoreV1().Secrets(controllerNamespace).Get(context.TODO(), mgmtConfigParams.Secrets.License, meta_v1.GetOptions{})
+	if err != nil {
+		nl.Fatalf(l, "could not find mgmt license secret [%v]: %v", mgmtConfigParams.Secrets.License, err)
+	}
+	err = secrets.ValidateOpaqueSecretContainsKey(licenseSecret, "license.jwt")
+	if err != nil {
+		nl.Fatalf(l, "invalid license secret [%v]: %v ", mgmtConfigParams.Secrets.License, err)
 	}
 }
 

@@ -44,6 +44,7 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
+  license-secret-name: {{ quote .Values.controller.mgmt.licenseTokenSecretName }}
 {{- if hasKey .Values.controller.mgmt "sslVerify" }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
 {{- end }}
