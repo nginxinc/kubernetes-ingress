@@ -32,7 +32,6 @@ import (
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
-	api_core_v1 "k8s.io/api/core/v1"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	util_version "k8s.io/apimachinery/pkg/util/version"
@@ -932,7 +931,7 @@ func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorde
 		for key, value := range labels {
 			fmt.Fprintf(labelsString, "%s=\"%s\", ", key, value)
 		}
-		eventLog.Eventf(newPod, api_core_v1.EventTypeNormal, "UpdatePodLabel", "Successfully added version labels, %s", strings.TrimRight(labelsString.String(), ", "))
+		eventLog.Eventf(newPod, api_v1.EventTypeNormal, "UpdatePodLabel", "Successfully added version labels, %s", strings.TrimRight(labelsString.String(), ", "))
 		nl.Infof(l, "Pod label updated: %s", pod.ObjectMeta.Name)
 		podUpdated = true
 	}
