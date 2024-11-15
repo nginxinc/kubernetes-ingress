@@ -548,7 +548,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap) *MGMTConfigPara
 
 	if sslVerify, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-verify", cfgm); exists {
 		if err != nil {
-			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-verify key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the ssl-verify key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
 		} else {
 			mgmtCfgParams.SSLVerify = BoolToPointerBool(sslVerify)
 		}
@@ -558,7 +558,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap) *MGMTConfigPara
 	}
 	if enforceInitialReport, exists, err := GetMapKeyAsBool(cfgm.Data, "enforce-initial-report", cfgm); exists {
 		if err != nil {
-			nl.Errorf(l, "Configmap %s/%s: Invalid value for the enforce-initial-report key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the enforce-initial-report key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
 		} else {
 			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
 		}
@@ -570,10 +570,10 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap) *MGMTConfigPara
 		i := strings.TrimSpace(interval)
 		t, err := time.ParseDuration(i)
 		if err != nil {
-			nl.Errorf(l, "Configmap %s/%s: Invalid value for the interval key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), i, err)
+			nl.Errorf(l, "Configmap %s/%s: Invalid value for the interval key: got %q: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), i, err)
 		}
 		if t.Seconds() < minimumInterval {
-			nl.Errorf(l, "Configmap %s/%s: Value too low for the interval key, got: %v, need higher than %ds.", cfgm.GetNamespace(), cfgm.GetName(), i, minimumInterval)
+			nl.Errorf(l, "Configmap %s/%s: Value too low for the interval key, got: %v, need higher than %ds. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), i, minimumInterval)
 			mgmtCfgParams.Interval = ""
 		} else {
 			mgmtCfgParams.Interval = i
