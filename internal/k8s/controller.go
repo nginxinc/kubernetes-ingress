@@ -44,8 +44,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
-	core_v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/record"
@@ -189,6 +187,7 @@ type NewLoadBalancerControllerInput struct {
 	ConfClient                   k8s_nginx.Interface
 	DynClient                    dynamic.Interface
 	RestConfig                   *rest.Config
+	Recorder                     record.EventRecorder
 	ResyncPeriod                 time.Duration
 	LoggerContext                context.Context
 	Namespace                    []string
@@ -246,6 +245,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		confClient:                   input.ConfClient,
 		dynClient:                    input.DynClient,
 		restConfig:                   input.RestConfig,
+		recorder:                     input.Recorder,
 		Logger:                       nl.LoggerFromContext(input.LoggerContext),
 		configurator:                 input.NginxConfigurator,
 		specialSecrets:               specialSecrets,
@@ -273,15 +273,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		nginxConfigMapName:           input.ConfigMaps,
 		mgmtConfigMapName:            input.MGMTConfigMap,
 	}
-	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
-		nl.Infof(lbc.Logger, format, args...)
-	})
-	eventBroadcaster.StartRecordingToSink(&core_v1.EventSinkImpl{
-		Interface: core_v1.New(input.KubeClient.CoreV1().RESTClient()).Events(""),
-	})
-	lbc.recorder = eventBroadcaster.NewRecorder(scheme.Scheme,
-		api_v1.EventSource{Component: "nginx-ingress-controller"})
 
 	lbc.syncQueue = newTaskQueue(lbc.Logger, lbc.sync)
 	var err error
