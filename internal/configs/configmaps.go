@@ -2,27 +2,40 @@ package configs
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 )
 
+const (
+	minimumInterval    = 60
+	invalidValueReason = "InvalidValue"
+	parseErrorReason   = "ParseError"
+)
+
 // ParseConfigMap parses ConfigMap into ConfigParams.
 //
 //nolint:gocyclo
-func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool) *ConfigParams {
+func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool, eventLog record.EventRecorder) *ConfigParams {
 	l := nl.LoggerFromContext(ctx)
 	cfgParams := NewDefaultConfigParams(ctx, nginxPlus)
 
+	// valid values for server token are on | off | build | string;
+	// oss can only use on | off
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
+		// this may be a build | string
 		if err != nil {
 			if nginxPlus {
 				cfgParams.ServerTokens = cfgm.Data["server-tokens"]
 			} else {
-				nl.Error(l, err)
+				errorText := fmt.Sprintf("Configmap %s/%s: server-tokens key must be a bool for oss", cfgm.GetNamespace(), cfgm.GetName())
+				nl.Error(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 			}
 		} else {
 			cfgParams.ServerTokens = "off"
@@ -35,13 +48,17 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if lbMethod, exists := cfgm.Data["lb-method"]; exists {
 		if nginxPlus {
 			if parsedMethod, err := ParseLBMethodForPlus(lbMethod); err != nil {
-				nl.Errorf(l, "Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
+				errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
+				nl.Error(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 			} else {
 				cfgParams.LBMethod = parsedMethod
 			}
 		} else {
 			if parsedMethod, err := ParseLBMethod(lbMethod); err != nil {
-				nl.Errorf(l, "Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
+				errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the lb-method key: got %q: %v", cfgm.GetNamespace(), cfgm.GetName(), lbMethod, err)
+				nl.Error(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 			} else {
 				cfgParams.LBMethod = parsedMethod
 			}
@@ -90,7 +107,9 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if HTTP2, exists, err := GetMapKeyAsBool(cfgm.Data, "http2", cfgm); exists {
 		if err != nil {
-			nl.Error(l, err)
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the http key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), HTTP2, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 		} else {
 			cfgParams.HTTP2 = HTTP2
 		}
@@ -98,7 +117,9 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if redirectToHTTPS, exists, err := GetMapKeyAsBool(cfgm.Data, "redirect-to-https", cfgm); exists {
 		if err != nil {
-			nl.Error(l, err)
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the redirect-to-https key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), redirectToHTTPS, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 		} else {
 			cfgParams.RedirectToHTTPS = redirectToHTTPS
 		}
@@ -106,7 +127,9 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if sslRedirect, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-redirect", cfgm); exists {
 		if err != nil {
-			nl.Error(l, err)
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the ssl-redirect key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), sslRedirect, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 		} else {
 			cfgParams.SSLRedirect = sslRedirect
 		}
@@ -114,28 +137,38 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if hsts, exists, err := GetMapKeyAsBool(cfgm.Data, "hsts", cfgm); exists {
 		if err != nil {
-			nl.Error(l, err)
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the hsts key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), hsts, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 		} else {
 			parsingErrors := false
 
 			hstsMaxAge, existsMA, err := GetMapKeyAsInt64(cfgm.Data, "hsts-max-age", cfgm)
 			if existsMA && err != nil {
-				nl.Error(l, err)
+				errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the hsts-max-age key: got %d: %v", cfgm.GetNamespace(), cfgm.GetName(), hstsMaxAge, err)
+				nl.Error(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 				parsingErrors = true
 			}
 			hstsIncludeSubdomains, existsIS, err := GetMapKeyAsBool(cfgm.Data, "hsts-include-subdomains", cfgm)
 			if existsIS && err != nil {
-				nl.Error(l, err)
+				errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the hsts-include-subdomains key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), hstsIncludeSubdomains, err)
+				nl.Error(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 				parsingErrors = true
 			}
 			hstsBehindProxy, existsBP, err := GetMapKeyAsBool(cfgm.Data, "hsts-behind-proxy", cfgm)
 			if existsBP && err != nil {
-				nl.Error(l, err)
+				errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the hsts-behind-proxy key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), hstsBehindProxy, err)
+				nl.Error(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 				parsingErrors = true
 			}
 
 			if parsingErrors {
-				nl.Errorf(l, "Configmap %s/%s: There are configuration issues with hsts annotations, skipping options for all hsts settings", cfgm.GetNamespace(), cfgm.GetName())
+				errorText := fmt.Sprintf("Configmap %s/%s: There are configuration issues with hsts annotations, skipping options for all hsts settings", cfgm.GetNamespace(), cfgm.GetName())
+				nl.Error(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, parseErrorReason, errorText)
 			} else {
 				cfgParams.HSTS = hsts
 				if existsMA {
@@ -154,6 +187,9 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if proxyProtocol, exists, err := GetMapKeyAsBool(cfgm.Data, "proxy-protocol", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the proxy-protocol key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), proxyProtocol, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 		} else {
 			cfgParams.ProxyProtocol = proxyProtocol
 		}
@@ -161,11 +197,12 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if realIPHeader, exists := cfgm.Data["real-ip-header"]; exists {
 		if hasTLSPassthrough {
-			msg := "Configmap %s/%s: key real-ip-header is ignored, directive real_ip_header is automatically set to 'proxy_protocol' when TLS passthrough is enabled."
+			errorText := fmt.Sprintf("Configmap %s/%s: key real-ip-header is ignored, directive real_ip_header is automatically set to 'proxy_protocol' when TLS passthrough is enabled.", cfgm.GetNamespace(), cfgm.GetName())
 			if realIPHeader == "proxy_protocol" {
-				nl.Infof(l, msg, cfgm.GetNamespace(), cfgm.GetName())
+				nl.Info(l, errorText)
 			} else {
-				nl.Errorf(l, msg, cfgm.GetNamespace(), cfgm.GetName())
+				nl.Error(l, errorText)
+				eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 			}
 		} else {
 			cfgParams.RealIPHeader = realIPHeader
@@ -178,7 +215,9 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 
 	if realIPRecursive, exists, err := GetMapKeyAsBool(cfgm.Data, "real-ip-recursive", cfgm); exists {
 		if err != nil {
-			nl.Error(l, err)
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the real-ip-recursive key: got %t: %v", cfgm.GetNamespace(), cfgm.GetName(), realIPRecursive, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
 		} else {
 			cfgParams.RealIPRecursive = realIPRecursive
 		}
