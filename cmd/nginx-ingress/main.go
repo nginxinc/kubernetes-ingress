@@ -142,10 +142,11 @@ func main() {
 
 	mustProcessGlobalConfiguration(ctx)
 
-	mgmtCfgParams := processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx))
-
-	// validate any secrets in mgmtCfgParams.Secrets.
+	var mgmtCfgParams *configs.MGMTConfigParams
 	if *nginxPlus {
+		mgmtCfgParams = processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx))
+
+		// validate any secrets in mgmtCfgParams.Secrets.
 		mustValidateMGMTSecrets(kubeClient, *mgmtCfgParams, controllerNamespace)
 		mustFindMGMTSecretsOnPod(*mgmtCfgParams, staticSSLPath)
 	}
@@ -321,7 +322,7 @@ func mustFindMGMTSecretsOnPod(mgmtConfigParams configs.MGMTConfigParams, secrets
 }
 
 func tryFindFile(filePath string) error {
-	if _, err := os.Stat("filePath"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("could not find file at path [%s]: %w", filePath, err)
 	}
 	return nil
@@ -967,9 +968,6 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 
 func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *configs.MGMTConfigParams) *configs.MGMTConfigParams {
 	l := nl.LoggerFromContext(mgmtCfgParams.Context)
-	if !*nginxPlus {
-		return mgmtCfgParams
-	}
 
 	if *mgmtConfigMap != "" {
 		ns, name, err := k8s.ParseNamespaceName(*mgmtConfigMap)
@@ -980,10 +978,7 @@ func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *confi
 		if err != nil {
 			nl.Fatalf(l, "Error when getting %v: %v", *mgmtConfigMap, err)
 		}
-		mgmtCfgParams, err = configs.ParseMGMTConfigMap(mgmtCfgParams.Context, cfm, *nginxPlus)
-		if err != nil {
-			nl.Fatalf(l, "Error when getting %v: %v", mgmtCfgParams, err)
-		}
+		mgmtCfgParams = configs.ParseMGMTConfigMap(mgmtCfgParams.Context, cfm)
 	}
 	return mgmtCfgParams
 }

@@ -2,7 +2,6 @@ package configs
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -538,11 +537,8 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 }
 
 // ParseMGMTConfigMap parses the mgmt block ConfigMap into MGMTConfigParams.
-func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool) (*MGMTConfigParams, error) {
+func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap) *MGMTConfigParams {
 	l := nl.LoggerFromContext(ctx)
-	if !nginxPlus {
-		return nil, fmt.Errorf("mgmt ConfigMap requires NGINX Plus")
-	}
 
 	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
 
@@ -594,19 +590,22 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool)
 		mgmtCfgParams.Secrets.ClientAuth = strings.TrimSpace(clientAuthSecret)
 	}
 
-	return mgmtCfgParams, nil
+	return mgmtCfgParams
 }
 
 // GenerateNginxMainConfig generates MainConfig.
 func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams, mgmtCfgParams *MGMTConfigParams) *version1.MainConfig {
-	mgmtConfig := version1.MGMTConfig{
-		SSLVerify:              mgmtCfgParams.SSLVerify,
-		Resolver:               mgmtCfgParams.Resolver,
-		EnforceInitialReport:   mgmtCfgParams.EnforceInitialReport,
-		Endpoint:               mgmtCfgParams.Endpoint,
-		Interval:               mgmtCfgParams.Interval,
-		EnableClientAuth:       mgmtCfgParams.Secrets.ClientAuth != "",
-		TrustedCertificateFile: mgmtCfgParams.TrustedCertFile,
+	var mgmtConfig version1.MGMTConfig
+	if mgmtCfgParams != nil {
+		mgmtConfig = version1.MGMTConfig{
+			SSLVerify:              mgmtCfgParams.SSLVerify,
+			Resolver:               mgmtCfgParams.Resolver,
+			EnforceInitialReport:   mgmtCfgParams.EnforceInitialReport,
+			Endpoint:               mgmtCfgParams.Endpoint,
+			Interval:               mgmtCfgParams.Interval,
+			EnableClientAuth:       mgmtCfgParams.Secrets.ClientAuth != "",
+			TrustedCertificateFile: mgmtCfgParams.TrustedCertFile,
+		}
 	}
 
 	nginxCfg := &version1.MainConfig{

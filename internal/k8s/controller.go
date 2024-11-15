@@ -878,13 +878,8 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	if lbc.configMap != nil {
 		cfgParams = configs.ParseConfigMap(ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled)
 	}
-	if lbc.mgmtConfigMap != nil {
-		var err error
-		mgmtCfgParams, err = configs.ParseMGMTConfigMap(ctx, lbc.mgmtConfigMap, lbc.isNginxPlus)
-		if err != nil {
-			nl.Errorf(lbc.Logger, "Error parsing MGMT ConfigMap: %v", err)
-		}
-
+	if lbc.mgmtConfigMap != nil && lbc.isNginxPlus {
+		mgmtCfgParams = configs.ParseMGMTConfigMap(ctx, lbc.mgmtConfigMap)
 	}
 
 	resources := lbc.configuration.GetResources()
