@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -137,6 +138,8 @@ func main() {
 
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
+	staticSSLPath := nginxManager.GetSecretsDir()
+
 	mustProcessGlobalConfiguration(ctx)
 
 	mgmtCfgParams := processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx))
@@ -144,6 +147,7 @@ func main() {
 	// validate any secrets in mgmtCfgParams.Secrets.
 	if *nginxPlus {
 		mustValidateMGMTSecrets(kubeClient, *mgmtCfgParams, controllerNamespace)
+		mustFindMGMTSecretsOnPod(*mgmtCfgParams, staticSSLPath)
 	}
 
 	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
@@ -173,7 +177,7 @@ func main() {
 		EnableCertManager:              *enableCertManager,
 		DynamicSSLReload:               *enableDynamicSSLReload,
 		DynamicWeightChangesReload:     *enableDynamicWeightChangesReload,
-		StaticSSLPath:                  nginxManager.GetSecretsDir(),
+		StaticSSLPath:                  staticSSLPath,
 		NginxVersion:                   nginxVersion,
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
@@ -290,6 +294,37 @@ func main() {
 		nl.Info(l, "Waiting for the controller to exit...")
 		time.Sleep(30 * time.Second)
 	}
+}
+
+func mustFindMGMTSecretsOnPod(mgmtConfigParams configs.MGMTConfigParams, secretsDirectory string) {
+	l := nl.LoggerFromContext(mgmtConfigParams.Context)
+	err := tryFindFile("/etc/nginx/license/license.jwt")
+	if err != nil {
+		nl.Fatalf(l, "error finding license file %v", err)
+	}
+	if mgmtConfigParams.Secrets.TrustedCert != "" {
+		err = tryFindFile(fmt.Sprintf("%s/mgmt/%s", secretsDirectory, mgmtConfigParams.TrustedCertFile))
+		if err != nil {
+			nl.Fatalf(l, "error finding trusted cert file %v", err)
+		}
+	}
+	if mgmtConfigParams.Secrets.ClientAuth != "" {
+		err = tryFindFile(fmt.Sprintf("%s/mgmt_client/tls.crt", secretsDirectory))
+		if err != nil {
+			nl.Fatalf(l, "error finding client auth tls cert file %v", err)
+		}
+		err = tryFindFile(fmt.Sprintf("%s/mgmt_client/tls.key", secretsDirectory))
+		if err != nil {
+			nl.Fatalf(l, "error finding client auth tls key file %v", err)
+		}
+	}
+}
+
+func tryFindFile(filePath string) error {
+	if _, err := os.Stat("filePath"); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("could not find file at path [%s]: %w", filePath, err)
+	}
+	return nil
 }
 
 func mustValidateMGMTSecrets(kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
