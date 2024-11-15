@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -31,15 +32,18 @@ import (
 	"github.com/nginxinc/nginx-plus-go-client/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
+	api_core_v1 "k8s.io/api/core/v1"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	util_version "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	core_v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/tools/record"
 
 	kitlog "github.com/go-kit/log"
 
@@ -88,6 +92,15 @@ func main() {
 
 	config, kubeClient := mustCreateConfigAndKubeClient(ctx)
 	mustValidateKubernetesVersionInfo(ctx, kubeClient)
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
+		nl.Infof(l, format, args...)
+	})
+	eventBroadcaster.StartRecordingToSink(&core_v1.EventSinkImpl{
+		Interface: core_v1.New(kubeClient.CoreV1().RESTClient()).Events(""),
+	})
+	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme,
+		api_v1.EventSource{Component: "nginx-ingress-controller"})
 	mustValidateIngressClass(ctx, kubeClient)
 
 	checkNamespaces(ctx, kubeClient)
@@ -126,7 +139,7 @@ func main() {
 		agentVersion = getAgentVersionInfo(nginxManager)
 	}
 
-	go updateSelfWithVersionInfo(ctx, kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
+	go updateSelfWithVersionInfo(ctx, eventRecorder, kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors(ctx)
 
@@ -218,6 +231,7 @@ func main() {
 		ConfClient:                   confClient,
 		DynClient:                    dynClient,
 		RestConfig:                   config,
+		Recorder:                     eventRecorder,
 		ResyncPeriod:                 30 * time.Second,
 		LoggerContext:                ctx,
 		Namespace:                    watchNamespaces,
@@ -877,7 +891,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func updateSelfWithVersionInfo(ctx context.Context, kubeClient *kubernetes.Clientset, version, appProtectVersion, agentVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
+func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorder, kubeClient *kubernetes.Clientset, version, appProtectVersion, agentVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
 	l := nl.LoggerFromContext(ctx)
 	podUpdated := false
 
@@ -914,6 +928,11 @@ func updateSelfWithVersionInfo(ctx context.Context, kubeClient *kubernetes.Clien
 			continue
 		}
 
+		labelsString := new(bytes.Buffer)
+		for key, value := range labels {
+			fmt.Fprintf(labelsString, "%s=\"%s\", ", key, value)
+		}
+		eventLog.Eventf(newPod, api_core_v1.EventTypeNormal, "UpdatePodLabel", "Successfully added version labels, %s", strings.TrimRight(labelsString.String(), ", "))
 		nl.Infof(l, "Pod label updated: %s", pod.ObjectMeta.Name)
 		podUpdated = true
 	}
