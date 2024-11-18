@@ -2,13 +2,14 @@ package k8s
 
 import (
 	"fmt"
-	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
-	"k8s.io/apimachinery/pkg/labels"
 	"log/slog"
 	"reflect"
 	"sort"
 	"strings"
 	"sync"
+
+	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
@@ -1501,7 +1502,9 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 			}
 		}
 		resource := NewVirtualServerConfiguration(vs, vsrs, routeSelectorMap, warnings)
-		nl.Infof(c.logger, "resource: %v", resource)
+
+		// todo - uncomment (Jakub)
+		//nl.Infof(c.logger, "resource: %v", resource)
 
 		c.buildListenersForVSConfiguration(resource)
 
@@ -1710,7 +1713,10 @@ func (c *Configuration) buildVirtualServerRoutes(vs *conf_v1.VirtualServer) ([]*
 						warnings = append(warnings, warning)
 						continue
 					}
-					nl.Infof(c.logger, "VirtualServerRoute %s found for label selector %v", vsrKey, selector)
+
+					// todo (Jakub)
+					// nl.Infof(c.logger, "VirtualServerRoute %s found for label selector %v", vsrKey, selector)
+
 					if routeSelectorMap == nil {
 						routeSelectorMap = make(map[string][]string)
 					}
