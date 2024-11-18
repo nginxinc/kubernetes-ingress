@@ -56,7 +56,7 @@ responding to requests.
 2. Replace the service name ```secure-app``` with ```externalname-service``` and apply the change.
 
     ```yaml
-    apiVersion: k8s.nginx.org/v1alpha1
+    apiVersion: k8s.nginx.org/v1
     kind: TransportServer
     metadata:
       name: secure-app

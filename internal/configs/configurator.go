@@ -925,6 +925,7 @@ func (cnf *Configurator) addOrUpdateTLSSecret(secret *api_v1.Secret) string {
 // AddOrUpdateSpecialTLSSecrets adds or updates a file with a TLS cert and a key from a Special TLS Secret (eg. DefaultServerSecret, WildcardTLSSecret).
 func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, secretNames []string) error {
 	l := nl.LoggerFromContext(cnf.CfgParams.Context)
+	nl.Debugf(l, "AddOrUpdateSpecialTLSSecrets: secrets [%v]", secretNames)
 	data := GenerateCertAndKeyFileContent(secret)
 
 	for _, secretName := range secretNames {
