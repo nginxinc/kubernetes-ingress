@@ -20,7 +20,7 @@ const (
 // ParseConfigMap parses ConfigMap into ConfigParams.
 //
 //nolint:gocyclo
-func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool, eventLog record.EventRecorder) *ConfigParams {
+func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool, eventLog record.EventRecorder) (*ConfigParams, bool) {
 	l := nl.LoggerFromContext(ctx)
 	cfgParams := NewDefaultConfigParams(ctx, nginxPlus)
 	configOk := true
@@ -652,13 +652,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 		}
 	}
 
-	if configOk {
-		eventLog.Event(cfgm, v1.EventTypeNormal, "Updated", fmt.Sprintf("ConfigMap %s/%s updated without error", cfgm.GetNamespace(), cfgm.GetName()))
-	} else {
-		eventLog.Event(cfgm, v1.EventTypeWarning, "UpdatedWithError", fmt.Sprintf("ConfigMap %s/%s updated with errors. Ignoring invalid values", cfgm.GetNamespace(), cfgm.GetName()))
-	}
-
-	return cfgParams
+	return cfgParams, configOk
 }
 
 // GenerateNginxMainConfig generates MainConfig.
