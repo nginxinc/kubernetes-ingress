@@ -164,7 +164,7 @@ func main() {
 	}
 
 	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
-	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
+	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor, eventRecorder)
 
 	staticCfgParams := &configs.StaticConfigParams{
 		DisableIPV6:                    *disableIPV6,
@@ -943,7 +943,7 @@ func mustProcessGlobalConfiguration(ctx context.Context) {
 	}
 }
 
-func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) *configs.ConfigParams {
+func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor, eventLog record.EventRecorder) *configs.ConfigParams {
 	l := nl.LoggerFromContext(cfgParams.Context)
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
@@ -954,7 +954,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 		if err != nil {
 			nl.Fatalf(l, "Error when getting %v: %v", *nginxConfigMaps, err)
 		}
-		cfgParams = configs.ParseConfigMap(cfgParams.Context, cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough)
+		cfgParams, _ = configs.ParseConfigMap(cfgParams.Context, cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough, eventLog)
 		if cfgParams.MainServerSSLDHParamFileContent != nil {
 			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
 			if err != nil {

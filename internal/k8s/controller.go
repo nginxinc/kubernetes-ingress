@@ -865,9 +865,10 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	ctx := nl.ContextWithLogger(context.Background(), lbc.Logger)
 	cfgParams := configs.NewDefaultConfigParams(ctx, lbc.isNginxPlus)
 	mgmtCfgParams := configs.NewDefaultMGMTConfigParams(ctx) // maybe take nginx plus
+	var isNGINXConfigValid bool
 
 	if lbc.configMap != nil {
-		cfgParams = configs.ParseConfigMap(ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled)
+		cfgParams, isNGINXConfigValid = configs.ParseConfigMap(ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled, lbc.recorder)
 	}
 	if lbc.mgmtConfigMap != nil && lbc.isNginxPlus {
 		mgmtCfgParams = configs.ParseMGMTConfigMap(ctx, lbc.mgmtConfigMap)
@@ -896,8 +897,11 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	}
 
 	if lbc.configMap != nil {
-		key := getResourceKey(&lbc.configMap.ObjectMeta)
-		lbc.recorder.Eventf(lbc.configMap, eventType, eventTitle, "Configuration from %v was updated %s", key, eventWarningMessage)
+		if isNGINXConfigValid {
+			lbc.recorder.Event(lbc.configMap, api_v1.EventTypeNormal, "Updated", fmt.Sprintf("ConfigMap %s/%s updated without error", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
+		} else {
+			lbc.recorder.Event(lbc.configMap, api_v1.EventTypeWarning, "UpdatedWithError", fmt.Sprintf("ConfigMap %s/%s updated with errors. Ignoring invalid values", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
+		}
 	}
 
 	if lbc.mgmtConfigMap != nil {
