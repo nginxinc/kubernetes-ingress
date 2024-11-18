@@ -54,7 +54,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
 	api_v1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	discovery_v1 "k8s.io/api/discovery/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -872,9 +871,9 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 
 	if lbc.configMap != nil {
 		if isNGINXConfigValid {
-			lbc.recorder.Event(lbc.configMap, v1.EventTypeNormal, "Updated", fmt.Sprintf("ConfigMap %s/%s updated without error", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
+			lbc.recorder.Event(lbc.configMap, api_v1.EventTypeNormal, "Updated", fmt.Sprintf("ConfigMap %s/%s updated without error", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
 		} else {
-			lbc.recorder.Event(lbc.configMap, v1.EventTypeWarning, "UpdatedWithError", fmt.Sprintf("ConfigMap %s/%s updated with errors. Ignoring invalid values", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
+			lbc.recorder.Event(lbc.configMap, api_v1.EventTypeWarning, "UpdatedWithError", fmt.Sprintf("ConfigMap %s/%s updated with errors. Ignoring invalid values", lbc.configMap.GetNamespace(), lbc.configMap.GetName()))
 		}
 	}
 
