@@ -27,7 +27,7 @@ NGINX Ingress Controller requires custom resource definitions (CRDs) installed i
 
 If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false` and `controller.appprotectdos.enable` set to `false`), the installation of the CRDs can be skipped by specifying `--skip-crds` for the helm install command.
 
---- 
+---
 
 ### Upgrade the CRDs
 
@@ -287,7 +287,7 @@ The steps you should follow depend on the Helm release name:
 
 ## Run multiple NGINX Ingress Controllers
 
-If you are running NGINX Ingress Controller releases in your cluster with custom resources enabled, the releases will share a single version of the CRDs. 
+If you are running NGINX Ingress Controller releases in your cluster with custom resources enabled, the releases will share a single version of the CRDs.
 
 Ensure the NGINX Ingress Controller versions match the version of the CRDs. When uninstalling a release, ensure that you don’t remove the CRDs until there are no other NGINX Ingress Controller releases running in the cluster.
 
@@ -472,7 +472,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |**nginxAgent.instanceManager.tls.enable** | Enable TLS for Instance Manager connection. | true |
 |**nginxAgent.instanceManager.tls.skipVerify** | Skip certification verification for Instance Manager connection. | false |
 |**nginxAgent.instanceManager.tls.caSecret** | Name of `nginx.org/ca` secret used for verification of Instance Manager TLS. | "" |
-|**nginxAgent.instanceManager.tls.secret** | Name of `kubernetes.io/tls` secret with a TLS certificate and key for using mTLS between NGINX Agent and Instance Manager. See the NGINX Instance Manager [docs](https://docs.nginx.com/nginx-management-suite/admin-guides/configuration/secure-traffic/#mutual-client-certificate-auth-setup-mtls) and the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
+|**nginxAgent.instanceManager.tls.secret** | Name of `kubernetes.io/tls` secret with a TLS certificate and key for using mTLS between NGINX Agent and Instance Manager. See the NGINX Instance Manager [docs](https://docs.nginx.com/nginx-instance-manager/system-configuration/secure-traffic/#mutual-client-certificate-authentication-setup-mtls) and the NGINX Agent [docs](https://docs.nginx.com/nginx-agent/configuration/encrypt-communication/) for more details. | "" |
 |**nginxAgent.syslog.host** | Address for NGINX Agent to run syslog listener. | 127.0.0.1 |
 |**nginxAgent.syslog.port** | Port for NGINX Agent to run syslog listener. | 1514 |
 |**nginxAgent.napMonitoring.collectorBufferSize** | Buffer size for collector. Will contain log lines and parsed log lines. | 50000 |
