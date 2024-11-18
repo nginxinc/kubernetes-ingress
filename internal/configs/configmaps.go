@@ -490,6 +490,7 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	if keepaliveRequests, exists, err := GetMapKeyAsInt64(cfgm.Data, "keepalive-requests", cfgm); exists {
 		if err != nil {
 			nl.Error(l, err)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
 			configOk = false
 		} else {
 			cfgParams.MainKeepaliveRequests = keepaliveRequests
