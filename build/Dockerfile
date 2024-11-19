@@ -7,7 +7,7 @@ ARG PREBUILT_BASE_IMG=nginx/nginx-ingress:${DOWNLOAD_TAG}
 ARG NGINX_AGENT=false
 ARG IMAGE_NAME=nginx/nginx-ingress
 ARG WAF_VERSION=v4
-ARG PACKAGE_REPO=pkgs-test.nginx.com
+ARG PACKAGE_REPO=pkgs.nginx.com
 
 
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
