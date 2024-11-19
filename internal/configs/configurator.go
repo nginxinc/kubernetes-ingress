@@ -47,11 +47,11 @@ const DefaultServerSecretPath = "/etc/nginx/secrets/default" //nolint:gosec // G
 // DefaultSecretPath is the full default path to where secrets are stored and accessed.
 const DefaultSecretPath = "/etc/nginx/secrets" // #nosec G101
 
-// DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server.
-const DefaultServerSecretName = "default"
+// DefaultServerFileName is the filename of the Secret with a TLS cert and a key for the default server.
+const DefaultServerFileName = "default"
 
-// WildcardSecretName is the filename of the Secret with a TLS cert and a key for the ingress resources with TLS termination enabled but not secret defined.
-const WildcardSecretName = "wildcard"
+// WildcardFileName is the filename of the Secret with a TLS cert and a key for the ingress resources with TLS termination enabled but not secret defined.
+const WildcardFileName = "wildcard"
 
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
