@@ -42,8 +42,8 @@ spec:
 #      - name: nginx-log
 #        emptyDir: {}
       containers:
-      - image: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/pdabel:r33-test
-        imagePullPolicy: Always
+      - image: nginx-plus-ingress:3.7.0
+        imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
         - name: http
