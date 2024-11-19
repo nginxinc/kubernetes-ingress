@@ -1818,9 +1818,9 @@ func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Sec
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
 	switch secret.Name {
 	case lbc.specialSecrets.defaultServerSecret:
-		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerFileName)
+		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName)
 	case lbc.specialSecrets.wildcardTLSSecret:
-		lbc.validationTLSSpecialSecret(secret, configs.WildcardFileName)
+		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName)
 	}
 
 	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secret.Namespace+"/"+secret.Name)
