@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 )
 
 func TestParseConfigMapWithAppProtectCompressedRequestsAction(t *testing.T) {
@@ -45,7 +46,7 @@ func TestParseConfigMapWithAppProtectCompressedRequestsAction(t *testing.T) {
 				"app-protect-compressed-requests-action": test.action,
 			},
 		}
-		result := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+		result, _ := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 		if result.MainAppProtectCompressedRequestsAction != test.expect {
 			t.Errorf("ParseConfigMap() returned %q but expected %q for the case %s", result.MainAppProtectCompressedRequestsAction, test.expect, test.msg)
 		}
@@ -114,7 +115,7 @@ func TestParseConfigMapWithAppProtectReconnectPeriod(t *testing.T) {
 				"app-protect-reconnect-period-seconds": test.period,
 			},
 		}
-		result := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+		result, _ := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 		if result.MainAppProtectReconnectPeriod != test.expect {
 			t.Errorf("ParseConfigMap() returned %q but expected %q for the case %s", result.MainAppProtectReconnectPeriod, test.expect, test.msg)
 		}
@@ -155,7 +156,7 @@ func TestParseConfigMapWithTLSPassthroughProxyProtocol(t *testing.T) {
 					"real-ip-header": test.realIPheader,
 				},
 			}
-			result := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+			result, _ := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 			if result.RealIPHeader != test.want {
 				t.Errorf("want %q, got %q", test.want, result.RealIPHeader)
 			}
@@ -197,7 +198,7 @@ func TestParseConfigMapWithoutTLSPassthroughProxyProtocol(t *testing.T) {
 					"real-ip-header": test.realIPheader,
 				},
 			}
-			result := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+			result, _ := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 			if result.RealIPHeader != test.want {
 				t.Errorf("want %q, got %q", test.want, result.RealIPHeader)
 			}
@@ -244,7 +245,7 @@ func TestParseConfigMapAccessLog(t *testing.T) {
 					"access-log-off": test.accessLogOff,
 				},
 			}
-			result := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+			result, _ := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 			if result.MainAccessLog != test.want {
 				t.Errorf("want %q, got %q", test.want, result.MainAccessLog)
 			}
@@ -276,10 +277,14 @@ func TestParseConfigMapAccessLogDefault(t *testing.T) {
 					"access-log-off": "False",
 				},
 			}
-			result := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+			result, _ := ParseConfigMap(context.Background(), cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough, makeEventLogger())
 			if result.MainAccessLog != test.want {
 				t.Errorf("want %q, got %q", test.want, result.MainAccessLog)
 			}
 		})
 	}
+}
+
+func makeEventLogger() record.EventRecorder {
+	return record.NewFakeRecorder(1024)
 }

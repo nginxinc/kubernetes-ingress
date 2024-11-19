@@ -12,7 +12,7 @@ import (
 	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	fake_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
+	fake_v1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/fake"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,7 +36,7 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 		},
 	}
 
-	fakeClient := fake_v1alpha1.NewSimpleClientset(
+	fakeClient := fake_v1.NewSimpleClientset(
 		&conf_v1.TransportServerList{
 			Items: []conf_v1.TransportServer{
 				*ts,
@@ -88,7 +88,7 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 		},
 	}
 
-	fakeClient := fake_v1alpha1.NewSimpleClientset(
+	fakeClient := fake_v1.NewSimpleClientset(
 		&conf_v1.TransportServerList{
 			Items: []conf_v1.TransportServer{
 				*ts,
@@ -154,7 +154,7 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 		},
 	}
 
-	fakeClient := fake_v1alpha1.NewSimpleClientset(
+	fakeClient := fake_v1.NewSimpleClientset(
 		&conf_v1.TransportServerList{
 			Items: []conf_v1.TransportServer{},
 		})

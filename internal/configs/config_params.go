@@ -5,7 +5,6 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
 // ConfigParams holds NGINX configuration parameters that affect the main NGINX config
@@ -218,21 +217,5 @@ func NewDefaultConfigParams(ctx context.Context, isPlus bool) *ConfigParams {
 		LimitReqZoneSize:              "10m",
 		LimitReqLogLevel:              "error",
 		LimitReqRejectCode:            429,
-	}
-}
-
-// NewDefaultGlobalConfigParams creates a GlobalConfigParams with default values.
-func NewDefaultGlobalConfigParams() *GlobalConfigParams {
-	return &GlobalConfigParams{Listeners: map[string]Listener{}}
-}
-
-// NewGlobalConfigParamsWithTLSPassthrough creates new GlobalConfigParams with enabled TLS Passthrough listener.
-func NewGlobalConfigParamsWithTLSPassthrough() *GlobalConfigParams {
-	return &GlobalConfigParams{
-		Listeners: map[string]Listener{
-			conf_v1.TLSPassthroughListenerName: {
-				Protocol: conf_v1.TLSPassthroughListenerProtocol,
-			},
-		},
 	}
 }
