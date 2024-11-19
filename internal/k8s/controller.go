@@ -1688,7 +1688,7 @@ func (lbc *LoadBalancerController) reportCustomResourceStatusEnabled() bool {
 func (lbc *LoadBalancerController) syncSecret(task task) {
 	key := task.Key
 	var obj interface{}
-	var secrExists bool
+	var secretWatched bool
 	var err error
 
 	namespace, name, err := ParseNamespaceName(key)
@@ -1696,7 +1696,7 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 		nl.Warnf(lbc.Logger, "Secret key %v is invalid: %v", key, err)
 		return
 	}
-	obj, secrExists, err = lbc.getNamespacedInformer(namespace).secretLister.GetByKey(key)
+	obj, secretWatched, err = lbc.getNamespacedInformer(namespace).secretLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1715,7 +1715,7 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 
 	nl.Debugf(lbc.Logger, "Found %v Resources with Secret %v", len(resources), key)
 
-	if !secrExists {
+	if !secretWatched {
 		lbc.secretStore.DeleteSecret(key)
 
 		nl.Debugf(lbc.Logger, "Deleting Secret: %v", key)
@@ -1818,9 +1818,9 @@ func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Sec
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
 	switch secret.Name {
 	case lbc.specialSecrets.defaultServerSecret:
-		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretName)
+		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerFileName)
 	case lbc.specialSecrets.wildcardTLSSecret:
-		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretName)
+		lbc.validationTLSSpecialSecret(secret, configs.WildcardFileName)
 	}
 
 	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secret.Namespace+"/"+secret.Name)
