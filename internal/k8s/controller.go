@@ -1763,7 +1763,8 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
 }
 
-func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Secret, secretName string, secretList *[]string) {
+func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Secret, secretName string) {
+	var specialSecretsToUpdate []string
 	secretNsName := secret.Namespace + "/" + secret.Name
 
 	err := secrets.ValidateTLSSecret(secret)
@@ -1772,28 +1773,25 @@ func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Sec
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
 		return
 	}
-	*secretList = append(*secretList, secretName)
-}
+	specialSecretsToUpdate = append(specialSecretsToUpdate, secretName)
 
-func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
-	var specialTLSSecretsToUpdate []string
-	secretNsName := secret.Namespace + "/" + secret.Name
-	switch secretNsName {
-	case lbc.specialSecrets.defaultServerSecret:
-		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, &specialTLSSecretsToUpdate)
-	case lbc.specialSecrets.wildcardTLSSecret:
-		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, &specialTLSSecretsToUpdate)
-	default:
-		nl.Warnf(lbc.Logger, "special secret not found")
-		return
-	}
-	err := lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
+	err = lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialSecretsToUpdate)
 	if err != nil {
 		nl.Errorf(lbc.Logger, "Error when updating the special Secret %v: %v", secretNsName, err)
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
 		return
 	}
-	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
+}
+
+func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
+	switch secret.Name {
+	case lbc.specialSecrets.defaultServerSecret:
+		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName)
+	case lbc.specialSecrets.wildcardTLSSecret:
+		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName)
+	}
+
+	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secret.Namespace+"/"+secret.Name)
 }
 
 func getStatusFromEventTitle(eventTitle string) string {
