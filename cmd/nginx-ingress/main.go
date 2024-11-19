@@ -572,7 +572,7 @@ func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clie
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		nginxManager.CreateSecret(configs.DefaultServerFileName, bytes, nginx.TLSSecretFileMode)
+		nginxManager.CreateSecret(configs.DefaultServerSecretFileName, bytes, nginx.TLSSecretFileMode)
 	} else {
 		_, err := os.Stat(configs.DefaultServerSecretPath)
 		if err != nil {
@@ -596,7 +596,7 @@ func processWildcardSecret(ctx context.Context, kubeClient *kubernetes.Clientset
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		nginxManager.CreateSecret(configs.WildcardFileName, bytes, nginx.TLSSecretFileMode)
+		nginxManager.CreateSecret(configs.WildcardSecretFileName, bytes, nginx.TLSSecretFileMode)
 	}
 	return *wildcardTLSSecret != ""
 }

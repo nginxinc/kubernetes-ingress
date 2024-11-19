@@ -1780,9 +1780,9 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 	secretNsName := secret.Namespace + "/" + secret.Name
 	switch secretNsName {
 	case lbc.specialSecrets.defaultServerSecret:
-		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerFileName, &specialTLSSecretsToUpdate)
+		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, &specialTLSSecretsToUpdate)
 	case lbc.specialSecrets.wildcardTLSSecret:
-		lbc.validationTLSSpecialSecret(secret, configs.WildcardFileName, &specialTLSSecretsToUpdate)
+		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, &specialTLSSecretsToUpdate)
 	default:
 		nl.Warnf(lbc.Logger, "special secret not found")
 		return
