@@ -182,6 +182,26 @@ func generateProxySetHeaders(loc *Location, ingressAnnotations map[string]string
 	return combinedHeaders, nil
 }
 
+func makeResolver(resolverAddresses []string, resolverValid string, resolverIPV6 bool) string {
+	var builder strings.Builder
+	if len(resolverAddresses) > 0 {
+		builder.WriteString("resolver")
+		for _, address := range resolverAddresses {
+			builder.WriteString(" ")
+			builder.WriteString(address)
+		}
+		if resolverValid != "" {
+			builder.WriteString(" valid=")
+			builder.WriteString(resolverValid)
+		}
+		if !resolverIPV6 {
+			builder.WriteString(" ipv6=off")
+		}
+		builder.WriteString(";")
+	}
+	return builder.String()
+}
+
 var helperFunctions = template.FuncMap{
 	"split":                   split,
 	"trim":                    trim,
@@ -194,4 +214,5 @@ var helperFunctions = template.FuncMap{
 	"makeLocationPath":        makeLocationPath,
 	"makeSecretPath":          commonhelpers.MakeSecretPath,
 	"generateProxySetHeaders": generateProxySetHeaders,
+	"makeResolver":            makeResolver,
 }
