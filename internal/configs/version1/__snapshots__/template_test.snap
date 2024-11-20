@@ -200,7 +200,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -259,7 +260,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -340,7 +341,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -399,7 +401,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -1747,7 +1749,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -1806,7 +1809,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -1886,7 +1889,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -1945,7 +1949,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -2025,7 +2029,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -2084,7 +2089,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -2164,7 +2169,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -2223,7 +2229,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -2303,7 +2309,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -2363,7 +2370,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -2475,7 +2482,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -2534,7 +2542,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -2627,7 +2635,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -2687,7 +2696,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -2782,7 +2791,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -2841,7 +2851,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
@@ -2921,7 +2931,8 @@ http {
         default upgrade;
         ''      $default_connection_header;
     }
-    resolver example.com127.0.0.1 valid=10s ipv6=off;resolver_timeout 15s;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
+    resolver_timeout 15s;
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
@@ -2981,7 +2992,7 @@ stream {
 
     access_log  /dev/stdout  stream-main;
     # comment
-    resolver example.com127.0.0.1 valid=10s ipv6=off;
+    resolver example.com 127.0.0.1 valid=10s ipv6=off;
     resolver_timeout 15s;
 
     map_hash_max_size ;
