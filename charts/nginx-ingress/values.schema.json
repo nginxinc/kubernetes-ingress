@@ -555,10 +555,10 @@
             },
             "tag": {
               "type": "string",
-              "default": "3.7.0",
+              "default": "3.7.1",
               "title": "The tag of the Ingress Controller image",
               "examples": [
-                "3.7.0"
+                "3.7.1"
               ]
             },
             "digest": {
@@ -595,7 +595,7 @@
           "examples": [
             {
               "repository": "nginx/nginx-ingress",
-              "tag": "3.7.0",
+              "tag": "3.7.1",
               "pullPolicy": "IfNotPresent"
             }
           ]
@@ -1746,7 +1746,7 @@
           "customPorts": [],
           "image": {
             "repository": "nginx/nginx-ingress",
-            "tag": "3.7.0",
+            "tag": "3.7.1",
             "digest": "",
             "pullPolicy": "IfNotPresent"
           },
@@ -2360,7 +2360,7 @@
         "customPorts": [],
         "image": {
           "repository": "nginx/nginx-ingress",
-          "tag": "3.7.0",
+          "tag": "3.7.1",
           "digest": "",
           "pullPolicy": "IfNotPresent"
         },
