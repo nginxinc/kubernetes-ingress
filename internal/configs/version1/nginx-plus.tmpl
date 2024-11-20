@@ -152,11 +152,8 @@ http {
     {{- if .OpenTracingLoadModule}}
     opentracing_load_tracer {{ .OpenTracingTracer }} /var/lib/nginx/tracer-config.json;
     {{- end}}
-
-    {{- if .ResolverAddresses}}
-    resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
-    {{- if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
-    {{- end}}
+    {{ makeResolver .ResolverAddresses .ResolverValid .ResolverIPV6 }}
+    {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
 
     {{- if .OIDC}}
     include oidc/oidc_common.conf;
@@ -318,11 +315,8 @@ stream {
 
     {{- range $value := .StreamSnippets}}
     {{$value}}{{end}}
-
-    {{- if .ResolverAddresses}}
-    resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
+    {{ makeResolver .ResolverAddresses .ResolverValid .ResolverIPV6 }}
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
-    {{- end}}
 
     map_hash_max_size {{.MapHashMaxSize}};
     {{if .MapHashBucketSize}}map_hash_bucket_size {{.MapHashBucketSize}};{{end}}
