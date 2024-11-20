@@ -249,7 +249,7 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
     create_secret_from_yaml(kube_apis.v1, namespace, f"{TEST_DATA}/common/default-server-secret.yaml")
 
     # setup Plus JWT configuration
-    if cli_arguments["ic-type"] == "nginx-plus-ingress" and "plus-jwt" in cli_arguments:
+    if cli_arguments["ic-type"] == "nginx-plus-ingress":
         print("Create Plus JWT Secret:")
         secret_name = create_opaque_license_secret(kube_apis.v1, namespace, cli_arguments["plus-jwt"])
         print(f"Secret created: {secret_name}")
@@ -334,10 +334,7 @@ def cli_arguments(request) -> {}:
     assert result["ic-type"] in ALLOWED_IC_TYPES, f"IC type {result['ic-type']} is not allowed"
     print(f"Tests will run against the IC of type: {result['ic-type']}")
     if result["ic-type"] == "nginx-plus-ingress":
-        jwt = request.config.getoption("--plus-jwt", None)
-        assert jwt is not None and jwt != "", f"ic-type nginx-plus-ingress needs a jwt"
-        result["plus-jwt"] = jwt
-        print(f"Tests will use the Plus JWT: {result['plus-jwt']}")
+        print(f"Tests will use the Plus JWT")
 
     result["replicas"] = request.config.getoption("--replicas")
     print(f"Number of pods spun up will be : {result['replicas']}")

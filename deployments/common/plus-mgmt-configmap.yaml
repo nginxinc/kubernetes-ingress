@@ -4,3 +4,4 @@ metadata:
   name: nginx-config-mgmt
   namespace: nginx-ingress
 data:
+  license-secret-name: "license-token"
