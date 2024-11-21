@@ -138,9 +138,11 @@
             },
             "interval": {
               "type": "string",
+              "pattern": "^[0-9]+(m|h|d)$",
               "default": "1h",
               "title": "The usage report interval Schema",
               "examples": [
+                "1m",
                 "1h",
                 "24h"
               ]
@@ -164,13 +166,30 @@
               ]
             },
             "resolver": {
-              "type": "string",
-              "default": "",
+              "type": "object",
+              "default": {},
               "title": "The resolver Schema",
-              "examples": [
-                "kube-dns.kube-system.svc.cluster.local",
-                "127.0.0.1"
-              ]
+              "properties": {
+                "addresses": {
+                  "type": "array",
+                  "default": [],
+                  "title": "List of resolver addresses/fqdns"
+                },
+                "valid": {
+                  "type": "string",
+                  "pattern": "^[0-9]+(s|m|h|d|w|M|y)$",
+                  "title": "A valid nginx time",
+                  "examples": [
+                    "1m",
+                    "5d"
+                  ]
+                },
+                "ipv6": {
+                  "type": "boolean",
+                  "title": "turn on or off ipv6 support",
+                  "default": false
+                }
+              }
             },
             "sslTrustedCertificate": {
               "type": "object",

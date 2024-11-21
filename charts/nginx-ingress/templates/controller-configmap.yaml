@@ -48,9 +48,6 @@ data:
 {{- if hasKey .Values.controller.mgmt "sslVerify" }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
 {{- end }}
-{{- if hasKey .Values.controller.mgmt "resolver" }}
-  resolver: {{ quote .Values.controller.mgmt.resolver }}
-{{- end }}
 {{- if hasKey .Values.controller.mgmt "enforceInitialReport" }}
   enforce-initial-report: {{ quote .Values.controller.mgmt.enforceInitialReport }}
 {{- end }}
@@ -68,5 +65,14 @@ data:
 {{- end }}
 {{- if hasKey .Values.controller.mgmt "enableClientAuth" }}
   ssl-client-authentication: {{ quote .Values.controller.mgmt.enableClientAuth }}
+{{- end }}
+{{- if hasKey .Values.controller.mgmt.resolver "addresses" }}
+  resolver-addresses: {{ join "," .Values.controller.mgmt.resolver.addresses | quote }}
+{{- end }}
+{{- if hasKey .Values.controller.mgmt.resolver "ipv6" }}
+  resolver-ipv6: {{ quote .Values.controller.mgmt.resolver.ipv6 }}
+{{- end }}
+{{- if hasKey .Values.controller.mgmt.resolver "valid" }}
+  resolver-valid: {{ quote .Values.controller.mgmt.resolver.valid }}
 {{- end }}
 {{- end }}

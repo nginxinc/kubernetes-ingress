@@ -30,7 +30,11 @@ controller:
     # sslVerify: true
 
     ## Configures the resolver directive in the mgmt block
-    # resolver: ""
+    resolver:
+      ipv6: true
+      valid: 1s
+      addresses:
+        - kube-dns.kube-system.svc.cluster.local
 
     ## SSL certification of the mgmt block
     ## Make sure this is enabled for ssl certificate to work
