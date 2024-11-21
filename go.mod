@@ -5,7 +5,7 @@ go 1.23.3
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.28.5
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.25.6
-	github.com/cert-manager/cert-manager v1.16.1
+	github.com/cert-manager/cert-manager v1.16.2
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/gkampitakis/go-snaps v0.5.7
 	github.com/go-kit/log v0.2.1
