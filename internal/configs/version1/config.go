@@ -192,12 +192,14 @@ type Location struct {
 // MGMTConfig is tbe configuration for the MGMT block.
 type MGMTConfig struct {
 	SSLVerify              *bool
-	Resolver               string
 	EnforceInitialReport   *bool
 	Endpoint               string
 	Interval               string
 	EnableClientAuth       bool
 	TrustedCertificateFile string
+	ResolverAddresses      []string
+	ResolverIPV6           *bool
+	ResolverValid          string
 }
 
 // MainConfig describe the main NGINX configuration file.

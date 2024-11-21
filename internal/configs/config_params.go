@@ -180,7 +180,9 @@ type MGMTSecrets struct {
 type MGMTConfigParams struct {
 	Context              context.Context
 	SSLVerify            *bool
-	Resolver             string
+	ResolverAddresses    []string
+	ResolverIPV6         *bool
+	ResolverValid        string
 	EnforceInitialReport *bool
 	Endpoint             string
 	Interval             string

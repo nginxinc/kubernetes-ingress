@@ -156,7 +156,7 @@ func main() {
 
 	var mgmtCfgParams *configs.MGMTConfigParams
 	if *nginxPlus {
-		mgmtCfgParams = processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx))
+		mgmtCfgParams = processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx), eventRecorder)
 
 		// validate any secrets in mgmtCfgParams.Secrets.
 		mustValidateMGMTSecrets(kubeClient, *mgmtCfgParams, controllerNamespace)
@@ -979,7 +979,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *configs.MGMTConfigParams) *configs.MGMTConfigParams {
+func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *configs.MGMTConfigParams, eventLog record.EventRecorder) *configs.MGMTConfigParams {
 	l := nl.LoggerFromContext(mgmtCfgParams.Context)
 
 	if *mgmtConfigMap != "" {
@@ -991,7 +991,7 @@ func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *confi
 		if err != nil {
 			nl.Fatalf(l, "Error when getting %v: %v", *mgmtConfigMap, err)
 		}
-		mgmtCfgParams = configs.ParseMGMTConfigMap(mgmtCfgParams.Context, cfm)
+		mgmtCfgParams, _ = configs.ParseMGMTConfigMap(mgmtCfgParams.Context, cfm, eventLog)
 	}
 	return mgmtCfgParams
 }
