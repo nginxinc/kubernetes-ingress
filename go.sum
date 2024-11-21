@@ -38,8 +38,8 @@ github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
-github.com/cert-manager/cert-manager v1.16.1 h1:1ceFMqTtwiqY2vyfaRT85CNiVmK7pJjt3GebYCx9awY=
-github.com/cert-manager/cert-manager v1.16.1/go.mod h1:MfLVTL45hFZsqmaT1O0+b2ugaNNQQZttSFV9hASHUb0=
+github.com/cert-manager/cert-manager v1.16.2 h1:c9UU2E+8XWGruyvC/mdpc1wuLddtgmNr8foKdP7a8Jg=
+github.com/cert-manager/cert-manager v1.16.2/go.mod h1:MfLVTL45hFZsqmaT1O0+b2ugaNNQQZttSFV9hASHUb0=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr4=
