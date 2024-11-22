@@ -330,7 +330,7 @@ func processClientAuthSecret(kubeClient *kubernetes.Clientset, nginxManager ngin
 	}
 
 	bytes := configs.GenerateCertAndKeyFileContent(secret)
-	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.ClientAuthCertSecretFileName), bytes, nginx.OwnerReadWriteOnly)
+	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.ClientAuthCertSecretFileName), bytes, nginx.ReadWriteOnlyFileMode)
 	return nil
 }
 
@@ -347,7 +347,7 @@ func processTrustedCertSecret(kubeClient *kubernetes.Clientset, nginxManager ngi
 	}
 
 	bytes, _ := configs.GenerateCAFileContent(secret)
-	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.CACrtKey), bytes, nginx.OwnerReadWriteOnly)
+	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.CACrtKey), bytes, nginx.ReadWriteOnlyFileMode)
 	return nil
 }
 
@@ -626,7 +626,7 @@ func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clie
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		nginxManager.CreateSecret(configs.DefaultServerSecretFileName, bytes, nginx.OwnerReadWriteOnly)
+		nginxManager.CreateSecret(configs.DefaultServerSecretFileName, bytes, nginx.ReadWriteOnlyFileMode)
 	} else {
 		_, err := os.Stat(configs.DefaultServerSecretPath)
 		if err != nil {
@@ -650,7 +650,7 @@ func processWildcardSecret(ctx context.Context, kubeClient *kubernetes.Clientset
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		nginxManager.CreateSecret(configs.WildcardSecretFileName, bytes, nginx.OwnerReadWriteOnly)
+		nginxManager.CreateSecret(configs.WildcardSecretFileName, bytes, nginx.ReadWriteOnlyFileMode)
 	}
 	return *wildcardTLSSecret != ""
 }
@@ -667,7 +667,7 @@ func processLicenseSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.M
 	if err != nil {
 		return err
 	}
-	nginxManager.CreateSecret(configs.LicenseSecretFileName, bytes, nginx.OwnerReadWriteOnly)
+	nginxManager.CreateSecret(configs.LicenseSecretFileName, bytes, nginx.ReadWriteOnlyFileMode)
 	return nil
 }
 

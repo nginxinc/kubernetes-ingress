@@ -832,8 +832,8 @@ func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
 	crtData, crlData := GenerateCAFileContent(secret)
 	crtSecretName := fmt.Sprintf("%s-%s", name, CACrtKey)
 	crlSecretName := fmt.Sprintf("%s-%s", name, CACrlKey)
-	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.OwnerReadWriteOnly)
-	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.OwnerReadWriteOnly)
+	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.ReadWriteOnlyFileMode)
+	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.ReadWriteOnlyFileMode)
 	return fmt.Sprintf("%s %s", crtFileName, crlFileName)
 }
 
@@ -852,7 +852,7 @@ func (cnf *Configurator) addOrUpdateHtpasswdSecret(secret *api_v1.Secret) string
 func (cnf *Configurator) addOrUpdateLicenseSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := secret.Data[LicenseSecretFileName]
-	return cnf.nginxManager.CreateSecret(name, data, nginx.OwnerReadWriteOnly)
+	return cnf.nginxManager.CreateSecret(name, data, nginx.ReadWriteOnlyFileMode)
 }
 
 // AddOrUpdateResources adds or updates configuration for resources.
@@ -934,7 +934,7 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 func (cnf *Configurator) addOrUpdateTLSSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := GenerateCertAndKeyFileContent(secret)
-	return cnf.nginxManager.CreateSecret(name, data, nginx.OwnerReadWriteOnly)
+	return cnf.nginxManager.CreateSecret(name, data, nginx.ReadWriteOnlyFileMode)
 }
 
 // AddOrUpdateLicenseSecret adds or updates NGINX Plus license secret.
@@ -945,7 +945,7 @@ func (cnf *Configurator) AddOrUpdateLicenseSecret(secret *api_v1.Secret) error {
 	if err != nil {
 		nl.Errorf(l, "error generating license secret file content: %v", err)
 	}
-	cnf.nginxManager.CreateSecret(secret.Name, data, nginx.OwnerReadWriteOnly)
+	cnf.nginxManager.CreateSecret(secret.Name, data, nginx.ReadWriteOnlyFileMode)
 	if !cnf.DynamicSSLReloadEnabled() {
 		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 			nl.Errorf(l, "error when reloading NGINX when updating the special Secrets: %v", err)
@@ -964,7 +964,7 @@ func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, sec
 	data := GenerateCertAndKeyFileContent(secret)
 
 	for _, secretName := range secretNames {
-		cnf.nginxManager.CreateSecret(secretName, data, nginx.OwnerReadWriteOnly)
+		cnf.nginxManager.CreateSecret(secretName, data, nginx.ReadWriteOnlyFileMode)
 	}
 
 	if !cnf.DynamicSSLReloadEnabled() {
