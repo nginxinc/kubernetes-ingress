@@ -823,8 +823,8 @@ func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
 	crtData, crlData := GenerateCAFileContent(secret)
 	crtSecretName := fmt.Sprintf("%s-%s", name, CACrtKey)
 	crlSecretName := fmt.Sprintf("%s-%s", name, CACrlKey)
-	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.TLSSecretFileMode)
-	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.TLSSecretFileMode)
+	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.ReadWriteOnlyFileMode)
+	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.ReadWriteOnlyFileMode)
 	return fmt.Sprintf("%s %s", crtFileName, crlFileName)
 }
 
@@ -919,7 +919,7 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 func (cnf *Configurator) addOrUpdateTLSSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := GenerateCertAndKeyFileContent(secret)
-	return cnf.nginxManager.CreateSecret(name, data, nginx.TLSSecretFileMode)
+	return cnf.nginxManager.CreateSecret(name, data, nginx.ReadWriteOnlyFileMode)
 }
 
 // AddOrUpdateSpecialTLSSecrets adds or updates a file with a TLS cert and a key from a Special TLS Secret (eg. DefaultServerSecret, WildcardTLSSecret).
@@ -929,7 +929,7 @@ func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, sec
 	data := GenerateCertAndKeyFileContent(secret)
 
 	for _, secretName := range secretNames {
-		cnf.nginxManager.CreateSecret(secretName, data, nginx.TLSSecretFileMode)
+		cnf.nginxManager.CreateSecret(secretName, data, nginx.ReadWriteOnlyFileMode)
 	}
 
 	if !cnf.DynamicSSLReloadEnabled() {

@@ -26,8 +26,8 @@ const (
 	ReloadForEndpointsUpdate = true
 	// ReloadForOtherUpdate means that a reload is caused by an update for a resource(s) other than endpoints.
 	ReloadForOtherUpdate = false
-	// TLSSecretFileMode defines the default filemode for files with TLS Secrets.
-	TLSSecretFileMode = 0o600
+	// ReadWriteOnlyFileMode defines the default filemode for files with Secrets.
+	ReadWriteOnlyFileMode = 0o600
 	// JWKSecretFileMode defines the default filemode for files with JWK Secrets.
 	JWKSecretFileMode = 0o644
 	// HtpasswdSecretFileMode defines the default filemode for HTTP basic auth user files.
