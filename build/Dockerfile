@@ -13,7 +13,7 @@ ARG PACKAGE_REPO=pkgs.nginx.com
 ############################################# Base images containing libs for Opentracing and FIPS #############################################
 FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2@sha256:022d9c1e36caedfb502d6ac56b6b8e40977be73517f61f1b525686dec147355d AS opentracing-lib
 FROM ghcr.io/nginxinc/dependencies/nginx-ot:nginx-1.27.2-alpine@sha256:7379ceee1ffc21669312a3e882ecd504e14a7f30bdc9bcfdc632030ea3777b0a AS alpine-opentracing-lib
-FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.2@sha256:6288dc0ec71dfcacfbe3578bb0731c03e7e012956e5b01393d28650df54d9b9e AS ubi-ppc64le
+FROM ghcr.io/nginxinc/dependencies/nginx-ubi-ppc64le:nginx-1.27.2@sha256:4c47c1295b25018342d9f7c8383fd933e73e162a482f2f45a21326f70c6d501d AS ubi-ppc64le
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.17@sha256:67b69b49aff96e185be841e2b2ff2d8236551ea5c18002bffa4344798d803fd8 AS alpine-fips-3.17
 FROM ghcr.io/nginxinc/alpine-fips:0.2.3-alpine3.20@sha256:4c29e5c50b122354d9d4ba6b97cdf64647468e788b965fc0240ead541653454a AS alpine-fips-3.20
 FROM redhat/ubi9-minimal@sha256:c0e70387664f30cd9cf2795b547e4a9a51002c44a4a86aa9335ab030134bf392 AS ubi-minimal
@@ -300,7 +300,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get update \
 	&& if [ "${NGINX_AGENT}" = "true" ]; then apt-get install --no-install-recommends --no-install-suggests -y nginx-agent; fi \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	apt-get install --no-install-recommends --no-install-suggests -y app-protect-module-plus=32+5.144*; \
+	apt-get install --no-install-recommends --no-install-suggests -y app-protect-plugin=6.3.0* app-protect-module-plus=32+5.144* nginx-plus-module-appprotect=32+5.144*; \
 	rm -f /etc/apt/sources.list.d/app-protect.sources; \
 	nap-waf.sh; \
 	fi \
@@ -332,13 +332,7 @@ RUN --mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_s
 	--mount=type=bind,from=nginx-files,src=ubi-clean.sh,target=/usr/local/bin/ubi-clean.sh \
 	--mount=type=bind,from=ubi-ppc64le,src=/,target=/ubi-bin/ \
 	ubi-setup.sh; \
-	if [ $(uname -p) != ppc64le ]; then \
-	printf "%s\n" "[nginx]" "name=nginx repo" \
-	"baseurl=https://nginx.org/packages/mainline/centos/9/\$basearch/" \
-	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
-	&& microdnf --nodocs install -y nginx nginx-module-njs nginx-module-image-filter nginx-module-xslt \
-	&& rm /etc/yum.repos.d/nginx.repo; \
-	else \
+	if [ $(uname -p) = ppc64le ] || [ $(uname -p) = s390x ]; then \
 	rpm -qa --queryformat "%{NAME}\n" | sort > pkgs-installed \
 	&& microdnf --nodocs --setopt=install_weak_deps=0 install -y diffutils dnf \
 	&& rpm -qa --queryformat "%{NAME}\n" | sort > pkgs-new \
@@ -346,6 +340,12 @@ RUN --mount=type=bind,from=nginx-files,src=nginx_signing.key,target=/tmp/nginx_s
 	&& dnf -q repoquery --resolve --requires --recursive --whatrequires nginx --queryformat "%{NAME}" > pkgs-nginx \
 	&& dnf --setopt=protected_packages= remove -y $(comm -13 pkgs-installed pkgs-new | comm -13 pkgs-nginx -) \
 	&& rm pkgs-installed pkgs-new pkgs-nginx; \
+	else \
+	printf "%s\n" "[nginx]" "name=nginx repo" \
+	"baseurl=https://nginx.org/packages/mainline/centos/9/\$basearch/" \
+	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
+	&& microdnf --nodocs install -y nginx nginx-module-njs nginx-module-image-filter nginx-module-xslt \
+	&& rm /etc/yum.repos.d/nginx.repo; \
 	fi \
 	&& ubi-clean.sh
 

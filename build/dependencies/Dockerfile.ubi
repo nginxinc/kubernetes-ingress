@@ -10,7 +10,8 @@ ENV NJS_VERSION ${NJS}
 
 RUN mkdir -p /nginx/; \
     # only build for ppc64le but make multiarch image for mounting
-    [ $(uname -p) != ppc64le ] && exit 0; \
+    [ $(uname -p) = x86_64 ] && exit 0; \
+    [ $(uname -p) = aarch64 ] && exit 0; \
     rpm --import https://nginx.org/keys/nginx_signing.key \
     && MINOR_VERSION=$(echo ${NGINX_VERSION} | cut -d '.' -f 2) \
     && if [ $(( $MINOR_VERSION % 2)) -eq 0 ]; then echo mainline=""; else mainline="mainline/"; fi \
