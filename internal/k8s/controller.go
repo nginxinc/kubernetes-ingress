@@ -104,6 +104,9 @@ type podEndpoint struct {
 type specialSecrets struct {
 	defaultServerSecret string
 	wildcardTLSSecret   string
+	licenseSecret       string
+	clientAuthSecret    string
+	trustedCertSecret   string
 }
 
 // LoadBalancerController watches Kubernetes API and
@@ -239,6 +242,11 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	specialSecrets := specialSecrets{
 		defaultServerSecret: input.DefaultServerSecret,
 		wildcardTLSSecret:   input.WildcardTLSSecret,
+	}
+	if input.IsNginxPlus {
+		specialSecrets.licenseSecret = input.NginxConfigurator.MgmtCfgParams.Secrets.License
+		specialSecrets.clientAuthSecret = input.NginxConfigurator.MgmtCfgParams.Secrets.ClientAuth
+		specialSecrets.trustedCertSecret = input.NginxConfigurator.MgmtCfgParams.Secrets.TrustedCert
 	}
 	lbc := &LoadBalancerController{
 		client:                       input.KubeClient,
@@ -864,15 +872,19 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 func (lbc *LoadBalancerController) updateAllConfigs() {
 	ctx := nl.ContextWithLogger(context.Background(), lbc.Logger)
 	cfgParams := configs.NewDefaultConfigParams(ctx, lbc.isNginxPlus)
-	mgmtCfgParams := configs.NewDefaultMGMTConfigParams(ctx) // maybe take nginx plus
+	mgmtCfgParams := configs.NewDefaultMGMTConfigParams(ctx)
 	var isNGINXConfigValid bool
-	var isMGMTConfigValid bool
+	var mgmtConfigHasWarnings bool
+	var mgmtErr error
 
 	if lbc.configMap != nil {
 		cfgParams, isNGINXConfigValid = configs.ParseConfigMap(ctx, lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled, lbc.appProtectDosEnabled, lbc.configuration.isTLSPassthroughEnabled, lbc.recorder)
 	}
 	if lbc.mgmtConfigMap != nil && lbc.isNginxPlus {
-		mgmtCfgParams, isMGMTConfigValid = configs.ParseMGMTConfigMap(ctx, lbc.mgmtConfigMap, lbc.recorder)
+		mgmtCfgParams, mgmtConfigHasWarnings, mgmtErr = configs.ParseMGMTConfigMap(ctx, lbc.mgmtConfigMap, lbc.recorder)
+		if mgmtErr != nil {
+			nl.Errorf(lbc.Logger, "Configmap %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName(), mgmtErr)
+		}
 	}
 
 	resources := lbc.configuration.GetResources()
@@ -906,7 +918,7 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	}
 
 	if lbc.mgmtConfigMap != nil {
-		if isMGMTConfigValid {
+		if !mgmtConfigHasWarnings {
 			lbc.recorder.Event(lbc.mgmtConfigMap, api_v1.EventTypeNormal, "Updated", fmt.Sprintf("MGMT ConfigMap %s/%s updated without error", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName()))
 		} else {
 			lbc.recorder.Event(lbc.mgmtConfigMap, api_v1.EventTypeWarning, "UpdatedWithError", fmt.Sprintf("MGMT ConfigMap %s/%s updated with errors. Ignoring invalid values", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName()))
@@ -1728,7 +1740,7 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 			lbc.handleRegularSecretDeletion(resources)
 		}
 		if lbc.isSpecialSecret(key) {
-			nl.Warnf(lbc.Logger, "A special TLS Secret %v was removed. Retaining the Secret.", key)
+			nl.Warnf(lbc.Logger, "A special Secret %v was removed. Retaining the Secret.", key)
 		}
 		return
 	}
@@ -1768,6 +1780,12 @@ func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
 	case lbc.specialSecrets.defaultServerSecret:
 		return true
 	case lbc.specialSecrets.wildcardTLSSecret:
+		return true
+	case lbc.specialSecrets.licenseSecret:
+		return true
+	case lbc.specialSecrets.clientAuthSecret:
+		return true
+	case lbc.specialSecrets.trustedCertSecret:
 		return true
 	default:
 		return false
@@ -1811,8 +1829,21 @@ func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Sec
 	*secretList = append(*secretList, secretName)
 }
 
+func (lbc *LoadBalancerController) validationLicenseSpecialSecret(secret *api_v1.Secret, secretList *[]string) {
+	secretNsName := secret.Namespace + "/" + secret.Name
+
+	err := secrets.ValidateLicenseSecret(secret)
+	if err != nil {
+		nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
+		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+		return
+	}
+	*secretList = append(*secretList, configs.LicenseSecretFileName)
+}
+
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
 	var specialTLSSecretsToUpdate []string
+	var licenseSecretToUpdate []string
 	secretNsName := secret.Namespace + "/" + secret.Name
 
 	if secretNsName == lbc.specialSecrets.defaultServerSecret {
@@ -1821,6 +1852,12 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 	if secretNsName == lbc.specialSecrets.wildcardTLSSecret {
 		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, &specialTLSSecretsToUpdate)
 	}
+	if secretNsName == lbc.specialSecrets.licenseSecret {
+		lbc.validationLicenseSpecialSecret(secret, &licenseSecretToUpdate)
+	}
+	if secretNsName == lbc.specialSecrets.clientAuthSecret {
+		lbc.validationTLSSpecialSecret(secret, configs.ClientAuthCertSecretFileName, &specialTLSSecretsToUpdate)
+	}
 
 	err := lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
 	if err != nil {
@@ -1828,6 +1865,14 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
 		return
 	}
+
+	err = lbc.configurator.AddOrUpdateLicenseSecret(secret)
+	if err != nil {
+		nl.Errorf(lbc.Logger, "Error when updating the special Secret %v: %v", secretNsName, err)
+		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
+		return
+	}
+	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
 }
 
 func getStatusFromEventTitle(eventTitle string) string {

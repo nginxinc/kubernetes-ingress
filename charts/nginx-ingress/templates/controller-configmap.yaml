@@ -57,14 +57,11 @@ data:
 {{- if hasKey .Values.controller.mgmt "interval" }}
   interval: {{ quote .Values.controller.mgmt.interval }}
 {{- end }}
-{{- if hasKey .Values.controller.mgmt.sslTrustedCertificate "secretName" }}
-  trusted-certificate-secret-name: {{ quote .Values.controller.mgmt.sslTrustedCertificate.secretName }}
+{{- if hasKey .Values.controller.mgmt "trustedCertificateSecretName" }}
+  trusted-certificate-secret-name: {{ quote .Values.controller.mgmt.trustedCertificateSecretName }}
 {{- end }}
-{{- if hasKey .Values.controller.mgmt.sslTrustedCertificate "fileName" }}
-  trusted-certificate-file-name: {{ quote .Values.controller.mgmt.sslTrustedCertificate.fileName }}
-{{- end }}
-{{- if hasKey .Values.controller.mgmt "enableClientAuth" }}
-  ssl-client-authentication: {{ quote .Values.controller.mgmt.enableClientAuth }}
+{{- if hasKey .Values.controller.mgmt "clientAuthSecretName" }}
+  client-auth-secret-name: {{ quote .Values.controller.mgmt.clientAuthSecretName }}
 {{- end }}
 {{- if hasKey .Values.controller.mgmt.resolver "addresses" }}
   resolver-addresses: {{ join "," .Values.controller.mgmt.resolver.addresses | quote }}

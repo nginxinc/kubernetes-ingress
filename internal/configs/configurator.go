@@ -53,6 +53,12 @@ const DefaultServerSecretFileName = "default"
 // WildcardSecretFileName is the filename of the Secret with a TLS cert and a key for the ingress resources with TLS termination enabled but not secret defined.
 const WildcardSecretFileName = "wildcard"
 
+// LicenseSecretFileName is the filename of the Secret for the NGINX PLUS License
+const LicenseSecretFileName = "license.jwt"
+
+// ClientAuthCertSecretFileName is the filename of the Secret with a TLS cert and a key for the MGMT block for client authentication certificates.
+const ClientAuthCertSecretFileName = "client"
+
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
 
@@ -826,8 +832,8 @@ func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
 	crtData, crlData := GenerateCAFileContent(secret)
 	crtSecretName := fmt.Sprintf("%s-%s", name, CACrtKey)
 	crlSecretName := fmt.Sprintf("%s-%s", name, CACrlKey)
-	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.TLSSecretFileMode)
-	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.TLSSecretFileMode)
+	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.OwnerReadWriteOnly)
+	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.OwnerReadWriteOnly)
 	return fmt.Sprintf("%s %s", crtFileName, crlFileName)
 }
 
@@ -841,6 +847,12 @@ func (cnf *Configurator) addOrUpdateHtpasswdSecret(secret *api_v1.Secret) string
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := secret.Data[HtpasswdFileKey]
 	return cnf.nginxManager.CreateSecret(name, data, nginx.HtpasswdSecretFileMode)
+}
+
+func (cnf *Configurator) addOrUpdateLicenseSecret(secret *api_v1.Secret) string {
+	name := objectMetaToFileName(&secret.ObjectMeta)
+	data := secret.Data[LicenseSecretFileName]
+	return cnf.nginxManager.CreateSecret(name, data, nginx.OwnerReadWriteOnly)
 }
 
 // AddOrUpdateResources adds or updates configuration for resources.
@@ -922,7 +934,27 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 func (cnf *Configurator) addOrUpdateTLSSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := GenerateCertAndKeyFileContent(secret)
-	return cnf.nginxManager.CreateSecret(name, data, nginx.TLSSecretFileMode)
+	return cnf.nginxManager.CreateSecret(name, data, nginx.OwnerReadWriteOnly)
+}
+
+// AddOrUpdateLicenseSecret adds or updates NGINX Plus license secret.
+func (cnf *Configurator) AddOrUpdateLicenseSecret(secret *api_v1.Secret) error {
+	l := nl.LoggerFromContext(cnf.CfgParams.Context)
+	nl.Debugf(l, "AddOrUpdateLicenseSecret: [%v]", secret.Name)
+	data, err := GenerateLicenseSecret(secret)
+	if err != nil {
+		nl.Errorf(l, "error generating license secret file content: %v", err)
+	}
+	cnf.nginxManager.CreateSecret(secret.Name, data, nginx.OwnerReadWriteOnly)
+	if !cnf.DynamicSSLReloadEnabled() {
+		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+			nl.Errorf(l, "error when reloading NGINX when updating the special Secrets: %v", err)
+		}
+	} else {
+		nl.Debugf(l, "Skipping reload for %d license Secrets", len(secret.Name))
+	}
+
+	return nil
 }
 
 // AddOrUpdateSpecialTLSSecrets adds or updates a file with a TLS cert and a key from a Special TLS Secret (eg. DefaultServerSecret, WildcardTLSSecret).
@@ -932,7 +964,7 @@ func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, sec
 	data := GenerateCertAndKeyFileContent(secret)
 
 	for _, secretName := range secretNames {
-		cnf.nginxManager.CreateSecret(secretName, data, nginx.TLSSecretFileMode)
+		cnf.nginxManager.CreateSecret(secretName, data, nginx.OwnerReadWriteOnly)
 	}
 
 	if !cnf.DynamicSSLReloadEnabled() {
@@ -966,6 +998,19 @@ func GenerateCAFileContent(secret *api_v1.Secret) ([]byte, []byte) {
 	caCrl.Write(secret.Data[CACrlKey])
 
 	return caKey.Bytes(), caCrl.Bytes()
+}
+
+// GenerateLicenseSecret generates jwt content from the License secret which is required for NGINX Plus.
+func GenerateLicenseSecret(secret *api_v1.Secret) ([]byte, error) {
+	var licenseKey bytes.Buffer
+
+	data, exists := secret.Data[LicenseSecretFileName]
+	if !exists {
+		return nil, fmt.Errorf("license secret %s/%s must contain the key %s", secret.Namespace, secret.Name, LicenseSecretFileName)
+	}
+	licenseKey.Write(data)
+
+	return licenseKey.Bytes(), nil
 }
 
 // DeleteIngress deletes NGINX configuration for the Ingress resource.
@@ -1990,6 +2035,8 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 	case secrets.SecretTypeAPIKey:
 		// APIKey ClientSecret is not required on the filesystem, it is written directly to the config file.
 		return ""
+	case secrets.SecretTypeLicense:
+		return cnf.addOrUpdateLicenseSecret(secret)
 	default:
 		return cnf.addOrUpdateTLSSecret(secret)
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -157,10 +156,18 @@ func main() {
 	var mgmtCfgParams *configs.MGMTConfigParams
 	if *nginxPlus {
 		mgmtCfgParams = processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx), eventRecorder)
+		if err := processLicenseSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+			nl.Fatal(l, err)
+		}
 
-		// validate any secrets in mgmtCfgParams.Secrets.
-		mustValidateMGMTSecrets(kubeClient, *mgmtCfgParams, controllerNamespace)
-		mustFindMGMTSecretsOnPod(*mgmtCfgParams, staticSSLPath)
+		if err := processTrustedCertSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+			nl.Fatal(l, err)
+		}
+
+		if err := processClientAuthSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+			nl.Fatal(l, err)
+		}
+
 	}
 
 	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
@@ -310,80 +317,38 @@ func main() {
 	}
 }
 
-func mustFindMGMTSecretsOnPod(mgmtConfigParams configs.MGMTConfigParams, secretsDirectory string) {
-	l := nl.LoggerFromContext(mgmtConfigParams.Context)
-	err := tryFindFile("/etc/nginx/license/license.jwt")
-	if err != nil {
-		nl.Fatalf(l, "error finding license file %v", err)
+func processClientAuthSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams configs.MGMTConfigParams, controllerNamespace string) error {
+	if mgmtCfgParams.Secrets.ClientAuth == "" {
+		return nil
 	}
-	if mgmtConfigParams.Secrets.TrustedCert != "" {
-		err = tryFindFile(fmt.Sprintf("%s/mgmt/%s", secretsDirectory, mgmtConfigParams.TrustedCertFile))
-		if err != nil {
-			nl.Fatalf(l, "error finding trusted cert file %v", err)
-		}
-	}
-	if mgmtConfigParams.Secrets.ClientAuth != "" {
-		err = tryFindFile(fmt.Sprintf("%s/mgmt_client/tls.crt", secretsDirectory))
-		if err != nil {
-			nl.Fatalf(l, "error finding client auth tls cert file %v", err)
-		}
-		err = tryFindFile(fmt.Sprintf("%s/mgmt_client/tls.key", secretsDirectory))
-		if err != nil {
-			nl.Fatalf(l, "error finding client auth tls key file %v", err)
-		}
-	}
-}
 
-func tryFindFile(filePath string) error {
-	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("could not find file at path [%s]: %w", filePath, err)
+	clientAuthSecretNsName := controllerNamespace + "/" + mgmtCfgParams.Secrets.ClientAuth
+
+	secret, err := getAndValidateSecret(kubeClient, clientAuthSecretNsName)
+	if err != nil {
+		return fmt.Errorf("error trying to get the client auth secret %v: %w", clientAuthSecretNsName, err)
 	}
+
+	bytes := configs.GenerateCertAndKeyFileContent(secret)
+	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.ClientAuthCertSecretFileName), bytes, nginx.OwnerReadWriteOnly)
 	return nil
 }
 
-func mustValidateMGMTSecrets(kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
-	l := nl.LoggerFromContext(mgmtConfigParams.Context)
-	mustValidateLicenseSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
-	if mgmtConfigParams.Secrets.TrustedCert != "" {
-		mustValidateTrustedCertSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
-	}
-	if mgmtConfigParams.Secrets.ClientAuth != "" {
-		mustValidateClientAuthSecret(l, kubeClient, mgmtConfigParams, controllerNamespace)
-	}
-}
-
-func mustValidateLicenseSecret(l *slog.Logger, kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
-	licenseSecret, err := kubeClient.CoreV1().Secrets(controllerNamespace).Get(context.TODO(), mgmtConfigParams.Secrets.License, meta_v1.GetOptions{})
-	if err != nil {
-		nl.Fatalf(l, "could not find mgmt license secret [%v]: %v", mgmtConfigParams.Secrets.License, err)
-	}
-	err = secrets.ValidateOpaqueSecretContainsKey(licenseSecret, "license.jwt")
-	if err != nil {
-		nl.Fatalf(l, "invalid license secret [%v]: %v ", mgmtConfigParams.Secrets.License, err)
-	}
-}
-
-func mustValidateClientAuthSecret(l *slog.Logger, kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
-	clientAuthSecret, err := kubeClient.CoreV1().Secrets(controllerNamespace).Get(context.TODO(), mgmtConfigParams.Secrets.ClientAuth, meta_v1.GetOptions{})
-	if err != nil {
-		nl.Fatalf(l, "could not find mgmt client certificate secret [%v]: %v", mgmtConfigParams.Secrets.ClientAuth, err)
-	}
-	err = secrets.ValidateTLSSecret(clientAuthSecret)
-	if err != nil {
-		nl.Fatalf(l, "invalid mgmt ca certificate secret [%v]: %v", mgmtConfigParams.Secrets.ClientAuth, err)
-	}
-}
-
-func mustValidateTrustedCertSecret(l *slog.Logger, kubeClient *kubernetes.Clientset, mgmtConfigParams configs.MGMTConfigParams, controllerNamespace string) {
-	trustedSecret, err := kubeClient.CoreV1().Secrets(controllerNamespace).Get(context.TODO(), mgmtConfigParams.Secrets.TrustedCert, meta_v1.GetOptions{})
-	if err != nil {
-		nl.Fatalf(l, "could not find mgmt trusted certificate secret [%v]: %v", mgmtConfigParams.Secrets.TrustedCert, err)
+func processTrustedCertSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams configs.MGMTConfigParams, controllerNamespace string) error {
+	if mgmtCfgParams.Secrets.TrustedCert == "" {
+		return nil
 	}
 
-	err = secrets.ValidateMGMTTrustedCertSecret(trustedSecret, mgmtConfigParams.TrustedCertFile)
+	trustedCertSecretNsName := controllerNamespace + "/" + mgmtCfgParams.Secrets.TrustedCert
+
+	secret, err := getAndValidateSecret(kubeClient, trustedCertSecretNsName)
 	if err != nil {
-		nl.Fatalf(l, "invalid mgmt trusted certificate [%v]: %v", mgmtConfigParams.TrustedCertFile, err)
+		return fmt.Errorf("error trying to get the trusted cert secret %v: %w", trustedCertSecretNsName, err)
 	}
+
+	bytes, _ := configs.GenerateCAFileContent(secret)
+	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.CACrtKey), bytes, nginx.OwnerReadWriteOnly)
+	return nil
 }
 
 func mustCreateConfigAndKubeClient(ctx context.Context) (*rest.Config, *kubernetes.Clientset) {
@@ -661,7 +626,7 @@ func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clie
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		nginxManager.CreateSecret(configs.DefaultServerSecretFileName, bytes, nginx.TLSSecretFileMode)
+		nginxManager.CreateSecret(configs.DefaultServerSecretFileName, bytes, nginx.OwnerReadWriteOnly)
 	} else {
 		_, err := os.Stat(configs.DefaultServerSecretPath)
 		if err != nil {
@@ -685,9 +650,25 @@ func processWildcardSecret(ctx context.Context, kubeClient *kubernetes.Clientset
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		nginxManager.CreateSecret(configs.WildcardSecretFileName, bytes, nginx.TLSSecretFileMode)
+		nginxManager.CreateSecret(configs.WildcardSecretFileName, bytes, nginx.OwnerReadWriteOnly)
 	}
 	return *wildcardTLSSecret != ""
+}
+
+func processLicenseSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams configs.MGMTConfigParams, controllerNamespace string) error {
+	licenseSecretNsName := controllerNamespace + "/" + mgmtCfgParams.Secrets.License
+
+	secret, err := getAndValidateSecret(kubeClient, licenseSecretNsName)
+	if err != nil {
+		return fmt.Errorf("error trying to get the license secret %v: %w", licenseSecretNsName, err)
+	}
+
+	bytes, err := configs.GenerateLicenseSecret(secret)
+	if err != nil {
+		return err
+	}
+	nginxManager.CreateSecret(configs.LicenseSecretFileName, bytes, nginx.OwnerReadWriteOnly)
+	return nil
 }
 
 func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationValidator {
@@ -758,10 +739,24 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	if err != nil {
 		return nil, fmt.Errorf("could not get %v: %w", secretNsName, err)
 	}
-	err = secrets.ValidateTLSSecret(secret)
-	if err != nil {
-		return nil, fmt.Errorf("%v is invalid: %w", secretNsName, err)
+	switch secret.Type {
+	case api_v1.SecretTypeTLS:
+		err = secrets.ValidateTLSSecret(secret)
+		if err != nil {
+			return nil, fmt.Errorf("%v is invalid: %w", secretNsName, err)
+		}
+	case secrets.SecretTypeLicense:
+		err = secrets.ValidateLicenseSecret(secret)
+		if err != nil {
+			return secret, err
+		}
+	case secrets.SecretTypeCA:
+		err = secrets.ValidateCASecret(secret)
+		if err != nil {
+			return secret, err
+		}
 	}
+
 	return secret, nil
 }
 
@@ -981,7 +976,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 
 func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *configs.MGMTConfigParams, eventLog record.EventRecorder) *configs.MGMTConfigParams {
 	l := nl.LoggerFromContext(mgmtCfgParams.Context)
-
+	var fatalErr error
 	if *mgmtConfigMap != "" {
 		ns, name, err := k8s.ParseNamespaceName(*mgmtConfigMap)
 		if err != nil {
@@ -991,7 +986,9 @@ func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *confi
 		if err != nil {
 			nl.Fatalf(l, "Error when getting %v: %v", *mgmtConfigMap, err)
 		}
-		mgmtCfgParams, _ = configs.ParseMGMTConfigMap(mgmtCfgParams.Context, cfm, eventLog)
+		if mgmtCfgParams, _, fatalErr = configs.ParseMGMTConfigMap(mgmtCfgParams.Context, cfm, eventLog); fatalErr != nil {
+			nl.Fatal(l, fatalErr)
+		}
 	}
 	return mgmtCfgParams
 }

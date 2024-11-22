@@ -186,7 +186,6 @@ type MGMTConfigParams struct {
 	EnforceInitialReport *bool
 	Endpoint             string
 	Interval             string
-	TrustedCertFile      string
 	Secrets              MGMTSecrets
 }
 

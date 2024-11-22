@@ -360,7 +360,7 @@ mgmt {
     usage_report
     {{- if ne .MGMTConfig.Endpoint "" }} endpoint={{ .MGMTConfig.Endpoint }} {{- end }} {{- if ne .MGMTConfig.Interval "" }} interval={{ .MGMTConfig.Interval }} {{- end }};
     {{- end }}
-    license_token /etc/nginx/license/license.jwt;
+    license_token {{ printf "%s/license.jwt" .StaticSSLPath }};
     {{ if .MGMTConfig.EnforceInitialReport -}}
     enforce_initial_report {{ makeOnOffFromBool .MGMTConfig.EnforceInitialReport}};
     {{ end -}}
@@ -370,12 +370,12 @@ mgmt {
     {{ if .MGMTConfig.ResolverAddresses -}}
     {{ makeResolver .MGMTConfig.ResolverAddresses .MGMTConfig.ResolverValid .MGMTConfig.ResolverIPV6 }}
     {{ end -}}
-    {{ if ne .MGMTConfig.TrustedCertificateFile "" -}}
-    ssl_trusted_certificate {{ printf "%s/%s/%s" .StaticSSLPath "mgmt" .MGMTConfig.TrustedCertificateFile }};
+    {{ if .MGMTConfig.TrustedCert -}}
+    ssl_trusted_certificate {{ printf "%s/mgmt/ca.crt" .StaticSSLPath }};
     {{ end -}}
-    {{ if .MGMTConfig.EnableClientAuth -}}
-    ssl_certificate {{ printf "%s/%s" .StaticSSLPath "mgmt_client/tls.crt" }};
-    ssl_certificate_key {{ printf "%s/%s" .StaticSSLPath "mgmt_client/tls.key" }};
+    {{ if .MGMTConfig.ClientAuth -}}
+    ssl_certificate {{ printf "%s/mgmt/client" .StaticSSLPath }};
+    ssl_certificate_key {{ printf "%s/mgmt/client" .StaticSSLPath }};
     {{ end -}}
     deployment_context /etc/nginx/reporting/tracking.info;
 }

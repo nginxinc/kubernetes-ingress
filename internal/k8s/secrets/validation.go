@@ -37,6 +37,9 @@ const SecretTypeHtpasswd api_v1.SecretType = "nginx.org/htpasswd" // #nosec G101
 // SecretTypeAPIKey contains a list of client ID and key for API key authorization.. #nosec G101
 const SecretTypeAPIKey api_v1.SecretType = "nginx.org/apikey" // #nosec G101
 
+// SecretTypeLicense contains the license.jwt required for NGINX Plus. #nosec G101
+const SecretTypeLicense api_v1.SecretType = "nginx.com/license" // #nosec G101
+
 // ValidateTLSSecret validates the secret. If it is valid, the function returns nil.
 func ValidateTLSSecret(secret *api_v1.Secret) error {
 	if secret.Type != api_v1.SecretTypeTLS {
@@ -50,25 +53,6 @@ func ValidateTLSSecret(secret *api_v1.Secret) error {
 		return fmt.Errorf("failed to validate TLS cert and key: %w", err)
 	}
 
-	return nil
-}
-
-// ValidateMGMTTrustedCertSecret validates the secret. If it is valid, the function returns nil.
-func ValidateMGMTTrustedCertSecret(secret *api_v1.Secret, fileName string) error {
-	if secret.Type != api_v1.SecretTypeOpaque {
-		return fmt.Errorf("trusted certificate secret must be of type %v", api_v1.SecretTypeOpaque)
-	}
-	return validateCASecretData(secret, fileName)
-}
-
-// ValidateOpaqueSecretContainsKey validates the secret. If it is valid, the function returns nil.
-func ValidateOpaqueSecretContainsKey(secret *api_v1.Secret, key string) error {
-	if secret.Type != api_v1.SecretTypeOpaque {
-		return fmt.Errorf("secret %s must be of type %v", secret.Name, api_v1.SecretTypeOpaque)
-	}
-	if _, exists := secret.Data[key]; !exists {
-		return fmt.Errorf("secret %s must contain key %s", secret.Name, key)
-	}
 	return nil
 }
 
@@ -98,16 +82,16 @@ func ValidateCASecret(secret *api_v1.Secret) error {
 		return fmt.Errorf("CA secret must have the data field %v", CAKey)
 	}
 
-	return validateCASecretData(secret, CAKey)
+	return validateCASecretData(secret)
 }
 
-func validateCASecretData(secret *api_v1.Secret, caKey string) error {
-	block, _ := pem.Decode(secret.Data[caKey])
+func validateCASecretData(secret *api_v1.Secret) error {
+	block, _ := pem.Decode(secret.Data[CAKey])
 	if block == nil {
-		return fmt.Errorf("in secret %s/%s, the data field %s must hold a valid CERTIFICATE PEM block", secret.Namespace, secret.Name, caKey)
+		return fmt.Errorf("in secret %s/%s, the data field %s must hold a valid CERTIFICATE PEM block", secret.Namespace, secret.Name, CAKey)
 	}
 	if block.Type != "CERTIFICATE" {
-		return fmt.Errorf("in secret %s/%s, the data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", secret.Namespace, secret.Name, caKey, block.Type)
+		return fmt.Errorf("in secret %s/%s, the data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", secret.Namespace, secret.Name, CAKey, block.Type)
 	}
 
 	_, err := x509.ParseCertificate(block.Bytes)
@@ -168,6 +152,19 @@ func ValidateHtpasswdSecret(secret *api_v1.Secret) error {
 	return nil
 }
 
+// ValidateLicenseSecret validates the secret. If it is valid, the function returns nil.
+func ValidateLicenseSecret(secret *api_v1.Secret) error {
+	if secret.Type != SecretTypeLicense {
+		return fmt.Errorf("license secret must be of the type %v", SecretTypeLicense)
+	}
+
+	if _, exists := secret.Data["license.jwt"]; !exists {
+		return fmt.Errorf("license secret must have the data field %v", "license.jwt")
+	}
+
+	return nil
+}
+
 // IsSupportedSecretType checks if the secret type is supported.
 func IsSupportedSecretType(secretType api_v1.SecretType) bool {
 	return secretType == api_v1.SecretTypeTLS ||
@@ -175,7 +172,8 @@ func IsSupportedSecretType(secretType api_v1.SecretType) bool {
 		secretType == SecretTypeJWK ||
 		secretType == SecretTypeOIDC ||
 		secretType == SecretTypeHtpasswd ||
-		secretType == SecretTypeAPIKey
+		secretType == SecretTypeAPIKey ||
+		secretType == SecretTypeLicense
 }
 
 // ValidateSecret validates the secret. If it is valid, the function returns nil.
@@ -193,6 +191,8 @@ func ValidateSecret(secret *api_v1.Secret) error {
 		return ValidateHtpasswdSecret(secret)
 	case SecretTypeAPIKey:
 		return ValidateAPIKeySecret(secret)
+	case SecretTypeLicense:
+		return ValidateLicenseSecret(secret)
 	}
 
 	return fmt.Errorf("secret is of the unsupported type %v", secret.Type)

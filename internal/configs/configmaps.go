@@ -2,6 +2,7 @@ package configs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -14,8 +15,9 @@ import (
 )
 
 const (
-	minimumInterval    = 60
-	invalidValueReason = "InvalidValue"
+	minimumInterval            = 60
+	invalidValueReason         = "InvalidValue"
+	missingRequiredValueReason = "MissingRequiredValue"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -660,22 +662,27 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 // ParseMGMTConfigMap parses the mgmt block ConfigMap into MGMTConfigParams.
 //
 //nolint:gocyclo
-func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record.EventRecorder) (*MGMTConfigParams, bool) {
+func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record.EventRecorder) (*MGMTConfigParams, bool, error) {
 	l := nl.LoggerFromContext(ctx)
-	configOk := true
+	configWarnings := false
 
 	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
 
-	if license, exists := cfgm.Data["license-secret-name"]; exists {
-		mgmtCfgParams.Secrets.License = strings.TrimSpace(license)
+	license, licenseExists := cfgm.Data["license-secret-name"]
+	trimmedLicense := strings.TrimSpace(license)
+	if !licenseExists || trimmedLicense == "" {
+		errorText := fmt.Sprintf("Configmap %s/%s: Missing or empty value for the license-secret-name key. Failing.", cfgm.GetNamespace(), cfgm.GetName())
+		eventLog.Event(cfgm, v1.EventTypeWarning, missingRequiredValueReason, errorText)
+		return nil, true, errors.New(errorText)
 	}
+	mgmtCfgParams.Secrets.License = trimmedLicense
 
 	if sslVerify, exists, err := GetMapKeyAsBool(cfgm.Data, "ssl-verify", cfgm); exists {
 		if err != nil {
 			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the ssl-verify key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), sslVerify, err)
 			nl.Error(l, errorText)
 			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
-			configOk = false
+			configWarnings = true
 		} else {
 			mgmtCfgParams.SSLVerify = BoolToPointerBool(sslVerify)
 		}
@@ -689,7 +696,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 		if err != nil {
 			nl.Error(l, err)
 			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, err.Error())
-			configOk = false
+			configWarnings = true
 		} else {
 			mgmtCfgParams.ResolverIPV6 = BoolToPointerBool(resolverIpv6)
 		}
@@ -704,7 +711,7 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the enforce-initial-report key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
 			nl.Error(l, errorText)
 			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
-			configOk = false
+			configWarnings = true
 		} else {
 			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
 		}
@@ -719,13 +726,13 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the interval key: got %q: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), i, err)
 			nl.Error(l, errorText)
 			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
-			configOk = false
+			configWarnings = true
 		}
 		if t.Seconds() < minimumInterval {
 			errorText := fmt.Sprintf("Configmap %s/%s: Value too low for the interval key, got: %v, need higher than %ds. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), i, minimumInterval)
 			nl.Error(l, errorText)
 			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
-			configOk = false
+			configWarnings = true
 			mgmtCfgParams.Interval = ""
 		} else {
 			mgmtCfgParams.Interval = i
@@ -735,14 +742,12 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 	if trustedCertSecretName, exists := cfgm.Data["trusted-certificate-secret-name"]; exists {
 		mgmtCfgParams.Secrets.TrustedCert = strings.TrimSpace(trustedCertSecretName)
 	}
-	if trustedCertFileName, exists := cfgm.Data["trusted-certificate-file-name"]; exists {
-		mgmtCfgParams.TrustedCertFile = strings.TrimSpace(trustedCertFileName)
-	}
-	if clientAuthSecret, exists := cfgm.Data["client-auth-secret-name"]; exists {
-		mgmtCfgParams.Secrets.ClientAuth = strings.TrimSpace(clientAuthSecret)
+
+	if clientAuthSecretName, exists := cfgm.Data["client-auth-secret-name"]; exists {
+		mgmtCfgParams.Secrets.ClientAuth = strings.TrimSpace(clientAuthSecretName)
 	}
 
-	return mgmtCfgParams, configOk
+	return mgmtCfgParams, configWarnings, nil
 }
 
 // GenerateNginxMainConfig generates MainConfig.
@@ -750,15 +755,15 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 	var mgmtConfig version1.MGMTConfig
 	if mgmtCfgParams != nil {
 		mgmtConfig = version1.MGMTConfig{
-			SSLVerify:              mgmtCfgParams.SSLVerify,
-			ResolverAddresses:      mgmtCfgParams.ResolverAddresses,
-			ResolverIPV6:           mgmtCfgParams.ResolverIPV6,
-			ResolverValid:          mgmtCfgParams.ResolverValid,
-			EnforceInitialReport:   mgmtCfgParams.EnforceInitialReport,
-			Endpoint:               mgmtCfgParams.Endpoint,
-			Interval:               mgmtCfgParams.Interval,
-			EnableClientAuth:       mgmtCfgParams.Secrets.ClientAuth != "",
-			TrustedCertificateFile: mgmtCfgParams.TrustedCertFile,
+			SSLVerify:            mgmtCfgParams.SSLVerify,
+			ResolverAddresses:    mgmtCfgParams.ResolverAddresses,
+			ResolverIPV6:         mgmtCfgParams.ResolverIPV6,
+			ResolverValid:        mgmtCfgParams.ResolverValid,
+			EnforceInitialReport: mgmtCfgParams.EnforceInitialReport,
+			Endpoint:             mgmtCfgParams.Endpoint,
+			Interval:             mgmtCfgParams.Interval,
+			TrustedCert:          mgmtCfgParams.Secrets.TrustedCert != "",
+			ClientAuth:           mgmtCfgParams.Secrets.ClientAuth != "",
 		}
 	}
 

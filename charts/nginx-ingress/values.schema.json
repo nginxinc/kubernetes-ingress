@@ -109,19 +109,10 @@
                 "license"
               ]
             },
-            "enableClientAuth": {
-              "type": "boolean",
-              "default": false,
-              "title": "The EnableClientAuth Schema",
-              "examples": [
-                true,
-                false
-              ]
-            },
-            "sslCertificateSecretName": {
+            "clientAuthSecretName": {
               "type": "string",
               "default": "",
-              "title": "The sslCertificateSecretName Schema",
+              "title": "The clientAuthSecretName Schema",
               "examples": [
                 "ssl-certificate"
               ]
@@ -138,7 +129,7 @@
             },
             "interval": {
               "type": "string",
-              "pattern": "^[0-9]+(m|h|d)$",
+              "pattern": "^[0-9]+[mhd]$",
               "default": "1h",
               "title": "The usage report interval Schema",
               "examples": [
@@ -177,7 +168,7 @@
                 },
                 "valid": {
                   "type": "string",
-                  "pattern": "^[0-9]+(s|m|h|d|w|M|y)$",
+                  "pattern": "^[0-9]+[smhdwMy]$",
                   "title": "A valid nginx time",
                   "examples": [
                     "1m",
@@ -191,31 +182,14 @@
                 }
               }
             },
-            "sslTrustedCertificate": {
-              "type": "object",
-              "default": {},
-              "title": "The sslTrustedCertificate Schema",
-              "properties": {
-                "secretName": {
-                  "type": "string",
-                  "default": "ssl-trusted-cert",
-                  "title": "The TrustedCertificate secretName Schema",
-                  "examples": [
-                    "ssl-trusted-cert",
-                    "certificate-secret"
-                  ]
-                },
-                "fileName": {
-                  "type": "string",
-                  "default": "trusted.crt",
-                  "title": "The TrustedCertificate fileName Schema",
-                  "examples": [
-                    "trusted.crt",
-                    "ca.crt",
-                    "root.crt"
-                  ]
-                }
-              }
+            "trustedCertificateSecretName": {
+              "type": "string",
+              "default": "ssl-trusted-cert",
+              "title": "The trustedCertificateSecretName Schema",
+              "examples": [
+                "ssl-trusted-cert",
+                "certificate-secret"
+              ]
             },
             "configMap": {
               "type": "string",

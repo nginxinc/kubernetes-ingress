@@ -20,7 +20,7 @@ controller:
     licenseTokenSecretName: "license-token" # required for NGINX Plus
 
     ## Enables the 180-day grace period for sending the initial usage report
-    # enforceInitialReport: false
+    enforceInitialReport: false
 
     ## Endpoint for usage report
     # endpoint: "product.connect.nginx.com"
@@ -30,21 +30,17 @@ controller:
     # sslVerify: true
 
     ## Configures the resolver directive in the mgmt block
-    resolver:
-      ipv6: true
-      valid: 1s
-      addresses:
-        - kube-dns.kube-system.svc.cluster.local
+    resolver: {}
+#      ipv6: true
+#      valid: 1s
+#      addresses:
+#        - kube-dns.kube-system.svc.cluster.local
 
-    ## SSL certification of the mgmt block
-    ## Make sure this is enabled for ssl certificate to work
-    # enableClientAuth: false
-    # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
+    ## Secret containing TLS client certificate
+#    clientAuthSecretName: ssl-certificate # kubernetes.io/tls secret type
 
     ## Secret containing trusted CA certificate
-    sslTrustedCertificate: {} ## Ensure both curly brackets are removed when specifying secret name & file.
-      # secretName: ssl-trusted-cert
-      # fileName: trusted.crt
+#    trustedCertificateSecretName: ssl-trusted-cert
 
 #    customConfigMap: ""
 
