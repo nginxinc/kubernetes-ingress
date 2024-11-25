@@ -40,15 +40,12 @@ When `v4.0.0` is released, the release notes will contain the required upgrade s
 
 25 Nov 2024
 
-### <i class="fa-solid fa-bomb"></i> Breaking Changes
-
-### <i class="fa-solid fa-rocket"></i> Features
-
 ### <i class="fa-solid fa-bug-slash"></i> Fixes
-
-### <i class="fa-solid fa-box"></i> Helm Chart
+- [6838](https://github.com/nginxinc/kubernetes-ingress/pull/6838) Update oidc_template and conf
 
 ### <i class="fa-solid fa-upload"></i> Dependencies
+- [6779](https://github.com/nginxinc/kubernetes-ingress/pull/6779), [6790](https://github.com/nginxinc/kubernetes-ingress/pull/6790) & [6851](https://github.com/nginxinc/kubernetes-ingress/pull/6851) Bump the Docker dependencies
+- [6791](https://github.com/nginxinc/kubernetes-ingress/pull/6791), [6849](https://github.com/nginxinc/kubernetes-ingress/pull/6849) & [6839](https://github.com/nginxinc/kubernetes-ingress/pull/6839) Bump the go dependencies
 
 ### <i class="fa-solid fa-download"></i> Upgrade
 
