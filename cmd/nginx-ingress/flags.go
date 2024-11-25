@@ -263,6 +263,11 @@ func initValidate(ctx context.Context) {
 		*enableDynamicWeightChangesReload = false
 	}
 
+	if *mgmtConfigMap != "" && !*nginxPlus {
+		nl.Warn(l, "mgmt-configmap flag requires -nginx-plus, mgmt configmap will not be used")
+		*mgmtConfigMap = ""
+	}
+
 	mustValidateInitialChecks(ctx)
 	mustValidateWatchedNamespaces(ctx)
 	mustValidateFlags(ctx)
@@ -423,6 +428,10 @@ func mustValidateFlags(ctx context.Context) {
 
 	if *agent && !*appProtect {
 		nl.Fatal(l, "NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
+	}
+
+	if *nginxPlus && *mgmtConfigMap == "" {
+		nl.Fatal(l, "NGINX Plus requires a mgmt ConfigMap to be set")
 	}
 }
 

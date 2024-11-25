@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	minimumInterval            = 60
-	invalidValueReason         = "InvalidValue"
-	missingRequiredValueReason = "MissingRequiredValue"
+	minimumInterval    = 60
+	invalidValueReason = "InvalidValue"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -672,7 +671,6 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 	trimmedLicense := strings.TrimSpace(license)
 	if !licenseExists || trimmedLicense == "" {
 		errorText := fmt.Sprintf("Configmap %s/%s: Missing or empty value for the license-secret-name key. Failing.", cfgm.GetNamespace(), cfgm.GetName())
-		eventLog.Event(cfgm, v1.EventTypeWarning, missingRequiredValueReason, errorText)
 		return nil, true, errors.New(errorText)
 	}
 	mgmtCfgParams.Secrets.License = trimmedLicense

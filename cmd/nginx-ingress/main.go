@@ -34,6 +34,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	pkg_runtime "k8s.io/apimachinery/pkg/runtime"
 	util_version "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -75,6 +76,9 @@ const (
 	appProtectVersionPath    = "/opt/app_protect/RELEASE"
 	appProtectv4BundleFolder = "/etc/nginx/waf/bundles/"
 	appProtectv5BundleFolder = "/etc/app_protect/bundles/"
+	fatalEventFlushTime      = 200 * time.Millisecond
+	secretErrorReason        = "SecretError"
+	configMapErrorReason     = "ConfigMapError"
 )
 
 func main() {
@@ -89,9 +93,14 @@ func main() {
 
 	buildOS := os.Getenv("BUILD_OS")
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
+	podName := os.Getenv("POD_NAME")
 
 	config, kubeClient := mustCreateConfigAndKubeClient(ctx)
 	mustValidateKubernetesVersionInfo(ctx, kubeClient)
+	pod, err := kubeClient.CoreV1().Pods(controllerNamespace).Get(context.TODO(), podName, meta_v1.GetOptions{})
+	if err != nil {
+		nl.Fatalf(l, "Failed to get pod: %v", err)
+	}
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
 		nl.Infof(l, format, args...)
@@ -139,6 +148,23 @@ func main() {
 		agentVersion = getAgentVersionInfo(nginxManager)
 	}
 
+	var mgmtCfgParams *configs.MGMTConfigParams
+	if *nginxPlus {
+		mgmtCfgParams = processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx), eventRecorder, pod)
+		if err := processLicenseSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+		}
+
+		if err := processTrustedCertSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+		}
+
+		if err := processClientAuthSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+		}
+
+	}
+
 	go updateSelfWithVersionInfo(ctx, eventRecorder, kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors(ctx)
@@ -152,23 +178,6 @@ func main() {
 	staticSSLPath := nginxManager.GetSecretsDir()
 
 	mustProcessGlobalConfiguration(ctx)
-
-	var mgmtCfgParams *configs.MGMTConfigParams
-	if *nginxPlus {
-		mgmtCfgParams = processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx), eventRecorder)
-		if err := processLicenseSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
-			nl.Fatal(l, err)
-		}
-
-		if err := processTrustedCertSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
-			nl.Fatal(l, err)
-		}
-
-		if err := processClientAuthSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
-			nl.Fatal(l, err)
-		}
-
-	}
 
 	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
 	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor, eventRecorder)
@@ -663,6 +672,10 @@ func processLicenseSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.M
 		return fmt.Errorf("error trying to get the license secret %v: %w", licenseSecretNsName, err)
 	}
 
+	if secret.Type != secrets.SecretTypeLicense {
+		return fmt.Errorf("the secret %v must be of type \"nginx.com/license\"", licenseSecretNsName)
+	}
+
 	bytes, err := configs.GenerateLicenseSecret(secret)
 	if err != nil {
 		return err
@@ -974,21 +987,20 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *configs.MGMTConfigParams, eventLog record.EventRecorder) *configs.MGMTConfigParams {
-	l := nl.LoggerFromContext(mgmtCfgParams.Context)
+func processMGMTConfigMap(kubeClient *kubernetes.Clientset, mgmtCfgParams *configs.MGMTConfigParams, eventLog record.EventRecorder, pod *api_v1.Pod) *configs.MGMTConfigParams {
+	ctx := mgmtCfgParams.Context
 	var fatalErr error
-	if *mgmtConfigMap != "" {
-		ns, name, err := k8s.ParseNamespaceName(*mgmtConfigMap)
-		if err != nil {
-			nl.Fatalf(l, "Error parsing the mgmt-configmap argument: %v", err)
-		}
-		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
-		if err != nil {
-			nl.Fatalf(l, "Error when getting %v: %v", *mgmtConfigMap, err)
-		}
-		if mgmtCfgParams, _, fatalErr = configs.ParseMGMTConfigMap(mgmtCfgParams.Context, cfm, eventLog); fatalErr != nil {
-			nl.Fatal(l, fatalErr)
-		}
+
+	ns, name, err := k8s.ParseNamespaceName(*mgmtConfigMap)
+	if err != nil {
+		logEventAndExit(ctx, eventLog, pod, configMapErrorReason, fmt.Errorf("error parsing the mgmt-configmap argument: %w", err))
+	}
+	cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
+	if err != nil {
+		logEventAndExit(ctx, eventLog, cfm, configMapErrorReason, fmt.Errorf("error when getting mgmt-configmap [%v]: %w", *mgmtConfigMap, err))
+	}
+	if mgmtCfgParams, _, fatalErr = configs.ParseMGMTConfigMap(ctx, cfm, eventLog); fatalErr != nil {
+		logEventAndExit(ctx, eventLog, cfm, secretErrorReason, fatalErr)
 	}
 	return mgmtCfgParams
 }
@@ -1042,6 +1054,13 @@ func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorde
 	if !podUpdated {
 		nl.Errorf(l, "Failed to update pod labels after %d attempts", maxRetries)
 	}
+}
+
+func logEventAndExit(ctx context.Context, eventLog record.EventRecorder, obj pkg_runtime.Object, reason string, err error) {
+	l := nl.LoggerFromContext(ctx)
+	eventLog.Eventf(obj, api_v1.EventTypeWarning, reason, err.Error())
+	time.Sleep(fatalEventFlushTime) // wait for the event to be flushed
+	nl.Fatal(l, err.Error())
 }
 
 func initLogger(logFormat string, level slog.Level, out io.Writer) context.Context {
