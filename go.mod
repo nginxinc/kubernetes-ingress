@@ -5,7 +5,7 @@ go 1.23.3
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.28.5
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.25.6
-	github.com/cert-manager/cert-manager v1.16.1
+	github.com/cert-manager/cert-manager v1.16.2
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/gkampitakis/go-snaps v0.5.7
 	github.com/go-kit/log v0.2.1
@@ -22,10 +22,10 @@ require (
 	go.opentelemetry.io/otel v1.32.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.32.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	k8s.io/api v0.31.2
-	k8s.io/apimachinery v0.31.2
-	k8s.io/client-go v0.31.2
-	k8s.io/code-generator v0.31.2
+	k8s.io/api v0.31.3
+	k8s.io/apimachinery v0.31.3
+	k8s.io/client-go v0.31.3
+	k8s.io/code-generator v0.31.3
 	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6
 	sigs.k8s.io/controller-tools v0.16.5
 )
