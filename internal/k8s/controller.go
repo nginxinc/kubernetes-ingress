@@ -1829,21 +1829,8 @@ func (lbc *LoadBalancerController) validationTLSSpecialSecret(secret *api_v1.Sec
 	*secretList = append(*secretList, secretName)
 }
 
-func (lbc *LoadBalancerController) validationLicenseSpecialSecret(secret *api_v1.Secret, secretList *[]string) {
-	secretNsName := secret.Namespace + "/" + secret.Name
-
-	err := secrets.ValidateLicenseSecret(secret)
-	if err != nil {
-		nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
-		return
-	}
-	*secretList = append(*secretList, configs.LicenseSecretFileName)
-}
-
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
 	var specialTLSSecretsToUpdate []string
-	var licenseSecretToUpdate []string
 	secretNsName := secret.Namespace + "/" + secret.Name
 
 	if secretNsName == lbc.specialSecrets.defaultServerSecret {
@@ -1853,7 +1840,12 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, &specialTLSSecretsToUpdate)
 	}
 	if secretNsName == lbc.specialSecrets.licenseSecret {
-		lbc.validationLicenseSpecialSecret(secret, &licenseSecretToUpdate)
+		err := secrets.ValidateLicenseSecret(secret)
+		if err != nil {
+			nl.Errorf(lbc.Logger, "Couldn't validate the special Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
+			return
+		}
 	}
 	if secretNsName == lbc.specialSecrets.clientAuthSecret {
 		lbc.validationTLSSpecialSecret(secret, configs.ClientAuthCertSecretFileName, &specialTLSSecretsToUpdate)
@@ -1866,12 +1858,6 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		return
 	}
 
-	err = lbc.configurator.AddOrUpdateLicenseSecret(secret)
-	if err != nil {
-		nl.Errorf(lbc.Logger, "Error when updating the special Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
-		return
-	}
 	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
 }
 
