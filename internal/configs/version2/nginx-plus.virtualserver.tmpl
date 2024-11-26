@@ -90,6 +90,7 @@ server {
     include oidc/oidc.conf;
 
     set $oidc_pkce_enable 0;
+    set $oidc_client_auth_method "client_secret_post";
     set $oidc_logout_redirect "{{ $oidc.PostLogoutRedirectURI }}";
     set $oidc_hmac_key "{{ $s.VSName }}";
     set $zone_sync_leeway {{ $oidc.ZoneSyncLeeway }};
