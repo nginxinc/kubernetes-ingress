@@ -36,6 +36,36 @@ If a resource of `kind: GlobalConfiguration`, `kind: Policy` or `kind: Transport
 When `v4.0.0` is released, the release notes will contain the required upgrade steps to go from `v3.X.X` to `v4.X.X`
 {{< /important >}}
 
+## 3.7.2
+
+25 Nov 2024
+
+### <i class="fa-solid fa-bug-slash"></i> Fixes
+- [6838](https://github.com/nginxinc/kubernetes-ingress/pull/6838) Update oidc_template and conf
+
+### <i class="fa-solid fa-upload"></i> Dependencies
+- [6779](https://github.com/nginxinc/kubernetes-ingress/pull/6779), [6790](https://github.com/nginxinc/kubernetes-ingress/pull/6790) & [6851](https://github.com/nginxinc/kubernetes-ingress/pull/6851) Bump the Docker dependencies
+- [6791](https://github.com/nginxinc/kubernetes-ingress/pull/6791), [6849](https://github.com/nginxinc/kubernetes-ingress/pull/6849) & [6839](https://github.com/nginxinc/kubernetes-ingress/pull/6839) Bump the go dependencies
+
+### <i class="fa-solid fa-download"></i> Upgrade
+
+- For NGINX, use the 3.7.2 images from our
+[DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=3.7.2),
+[GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress),
+[Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+- For NGINX Plus, use the 3.7.2 images from the F5 Container registry,
+the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE),
+the [GCP Marketplace](https://console.cloud.google.com/marketplace/browse?filter=partner:F5,%20Inc.&filter=solution-type:k8s&filter=category:networking)
+or build your own image using the 3.7.2 source code
+- For Helm, use version 1.4.2 of the chart.
+
+### <i class="fa-solid fa-life-ring"></i> Supported Platforms
+
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by
+its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes
+versions: 1.25-1.31.
+
+---
 ## 3.7.1
 
 06 Nov 2024
