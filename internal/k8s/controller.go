@@ -244,7 +244,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		wildcardTLSSecret:   input.WildcardTLSSecret,
 	}
 	if input.IsNginxPlus {
-		specialSecrets.licenseSecret = input.NginxConfigurator.MgmtCfgParams.Secrets.License
+		specialSecrets.licenseSecret = fmt.Sprintf("%s/%s", input.ControllerNamespace, input.NginxConfigurator.MgmtCfgParams.Secrets.License)
 		specialSecrets.clientAuthSecret = input.NginxConfigurator.MgmtCfgParams.Secrets.ClientAuth
 		specialSecrets.trustedCertSecret = input.NginxConfigurator.MgmtCfgParams.Secrets.TrustedCert
 	}

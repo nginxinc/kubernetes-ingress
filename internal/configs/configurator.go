@@ -945,13 +945,10 @@ func (cnf *Configurator) AddOrUpdateLicenseSecret(secret *api_v1.Secret) error {
 	if err != nil {
 		nl.Errorf(l, "error generating license secret file content: %v", err)
 	}
-	cnf.nginxManager.CreateSecret(secret.Name, data, nginx.ReadWriteOnlyFileMode)
-	if !cnf.DynamicSSLReloadEnabled() {
-		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-			nl.Errorf(l, "error when reloading NGINX when updating the special Secrets: %v", err)
-		}
-	} else {
-		nl.Debugf(l, "Skipping reload for %d license Secrets", len(secret.Name))
+	cnf.nginxManager.CreateSecret(LicenseSecretFileName, data, nginx.ReadWriteOnlyFileMode)
+
+	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
+		nl.Errorf(l, "error when reloading NGINX when updating the special Secrets: %v", err)
 	}
 
 	return nil
