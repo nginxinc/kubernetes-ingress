@@ -245,8 +245,8 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 	if input.IsNginxPlus {
 		specialSecrets.licenseSecret = fmt.Sprintf("%s/%s", input.ControllerNamespace, input.NginxConfigurator.MgmtCfgParams.Secrets.License)
-		specialSecrets.clientAuthSecret = input.NginxConfigurator.MgmtCfgParams.Secrets.ClientAuth
-		specialSecrets.trustedCertSecret = input.NginxConfigurator.MgmtCfgParams.Secrets.TrustedCert
+		specialSecrets.clientAuthSecret = fmt.Sprintf("%s/%s", input.ControllerNamespace, input.NginxConfigurator.MgmtCfgParams.Secrets.ClientAuth)
+		specialSecrets.trustedCertSecret = fmt.Sprintf("%s/%s", input.ControllerNamespace, input.NginxConfigurator.MgmtCfgParams.Secrets.TrustedCert)
 	}
 	lbc := &LoadBalancerController{
 		client:                       input.KubeClient,
