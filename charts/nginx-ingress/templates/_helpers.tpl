@@ -124,7 +124,7 @@ Expand the name of the configmap used for NGINX Agent.
 {{- end -}}
 
 {{/*
-Expand license-token secret name.
+Expand license token secret name.
 */}}
 {{- define "nginx-ingress.licenseTokenSecretName" -}}
 {{- .Values.controller.mgmt.licenseTokenSecretName -}}

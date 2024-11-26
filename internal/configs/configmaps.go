@@ -667,10 +667,10 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 
 	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
 
-	license, licenseExists := cfgm.Data["license-secret-name"]
+	license, licenseExists := cfgm.Data["license-token-secret-name"]
 	trimmedLicense := strings.TrimSpace(license)
 	if !licenseExists || trimmedLicense == "" {
-		errorText := fmt.Sprintf("Configmap %s/%s: Missing or empty value for the license-secret-name key. Failing.", cfgm.GetNamespace(), cfgm.GetName())
+		errorText := fmt.Sprintf("Configmap %s/%s: Missing or empty value for the license-token-secret-name key. Failing.", cfgm.GetNamespace(), cfgm.GetName())
 		return nil, true, errors.New(errorText)
 	}
 	mgmtCfgParams.Secrets.License = trimmedLicense

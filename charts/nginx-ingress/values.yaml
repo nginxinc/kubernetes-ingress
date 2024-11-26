@@ -30,19 +30,19 @@ controller:
     # sslVerify: true
 
     ## Configures the resolver directive in the mgmt block
-    resolver: {}
-#      ipv6: true
-#      valid: 1s
-#      addresses:
-#        - kube-dns.kube-system.svc.cluster.local
+    # resolver: {}
+      # ipv6: true
+      # valid: 1s
+      # addresses:
+        # - kube-dns.kube-system.svc.cluster.local
 
     ## Secret containing TLS client certificate
-#    clientAuthSecretName: ssl-certificate # kubernetes.io/tls secret type
+    # clientAuthSecretName: ssl-certificate # kubernetes.io/tls secret type
 
     ## Secret containing trusted CA certificate
-#    trustedCertificateSecretName: ssl-trusted-cert
+    # trustedCertificateSecretName: ssl-trusted-cert
 
-#    customConfigMap: ""
+    # customConfigMap: ""
 
 
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.

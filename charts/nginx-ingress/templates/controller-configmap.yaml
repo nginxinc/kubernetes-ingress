@@ -44,7 +44,7 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
-  license-secret-name: {{ quote .Values.controller.mgmt.licenseTokenSecretName }}
+  license-token-secret-name: {{ include "nginx-ingress.licenseTokenSecretName" . }}
 {{- if hasKey .Values.controller.mgmt "sslVerify" }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
 {{- end }}
@@ -63,6 +63,7 @@ data:
 {{- if hasKey .Values.controller.mgmt "clientAuthSecretName" }}
   client-auth-secret-name: {{ quote .Values.controller.mgmt.clientAuthSecretName }}
 {{- end }}
+{{- if hasKey .Values.controller.mgmt "resolver" }}
 {{- if hasKey .Values.controller.mgmt.resolver "addresses" }}
   resolver-addresses: {{ join "," .Values.controller.mgmt.resolver.addresses | quote }}
 {{- end }}
@@ -71,5 +72,6 @@ data:
 {{- end }}
 {{- if hasKey .Values.controller.mgmt.resolver "valid" }}
   resolver-valid: {{ quote .Values.controller.mgmt.resolver.valid }}
+{{- end }}
 {{- end }}
 {{- end }}
