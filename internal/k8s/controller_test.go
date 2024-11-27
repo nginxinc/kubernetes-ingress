@@ -3505,3 +3505,62 @@ func TestNewTelemetryCollector(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateSecretNSName(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name     string
+		secret   *api_v1.Secret
+		expected string
+	}{
+		{
+			name: "Valid secret",
+			secret: &api_v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Namespace: "testns",
+					Name:      "test-secret",
+				},
+			},
+			expected: "testns/test-secret",
+		},
+		{
+			name: "invalid #1",
+			secret: &api_v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Namespace: "",
+					Name:      "",
+				},
+			},
+			expected: "/",
+		},
+		{
+			name: "invalid #2",
+			secret: &api_v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Namespace: "testns",
+					Name:      "",
+				},
+			},
+			expected: "testns/",
+		},
+		{
+			name: "invalid #3",
+			secret: &api_v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Namespace: "",
+					Name:      "test-secret",
+				},
+			},
+			expected: "/test-secret",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := generateSecretNSName(tc.secret)
+			if result != tc.expected {
+				t.Fatalf("Expected %v, but got %v", tc.expected, result)
+			}
+		})
+	}
+}
