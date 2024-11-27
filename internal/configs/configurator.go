@@ -47,11 +47,11 @@ const DefaultServerSecretPath = "/etc/nginx/secrets/default" //nolint:gosec // G
 // DefaultSecretPath is the full default path to where secrets are stored and accessed.
 const DefaultSecretPath = "/etc/nginx/secrets" // #nosec G101
 
-// DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server.
-const DefaultServerSecretName = "default"
+// DefaultServerSecretFileName is the filename of the Secret with a TLS cert and a key for the default server.
+const DefaultServerSecretFileName = "default"
 
-// WildcardSecretName is the filename of the Secret with a TLS cert and a key for the ingress resources with TLS termination enabled but not secret defined.
-const WildcardSecretName = "wildcard"
+// WildcardSecretFileName is the filename of the Secret with a TLS cert and a key for the ingress resources with TLS termination enabled but not secret defined.
+const WildcardSecretFileName = "wildcard"
 
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
@@ -823,8 +823,8 @@ func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
 	crtData, crlData := GenerateCAFileContent(secret)
 	crtSecretName := fmt.Sprintf("%s-%s", name, CACrtKey)
 	crlSecretName := fmt.Sprintf("%s-%s", name, CACrlKey)
-	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.TLSSecretFileMode)
-	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.TLSSecretFileMode)
+	crtFileName := cnf.nginxManager.CreateSecret(crtSecretName, crtData, nginx.ReadWriteOnlyFileMode)
+	crlFileName := cnf.nginxManager.CreateSecret(crlSecretName, crlData, nginx.ReadWriteOnlyFileMode)
 	return fmt.Sprintf("%s %s", crtFileName, crlFileName)
 }
 
@@ -919,16 +919,17 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 func (cnf *Configurator) addOrUpdateTLSSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := GenerateCertAndKeyFileContent(secret)
-	return cnf.nginxManager.CreateSecret(name, data, nginx.TLSSecretFileMode)
+	return cnf.nginxManager.CreateSecret(name, data, nginx.ReadWriteOnlyFileMode)
 }
 
 // AddOrUpdateSpecialTLSSecrets adds or updates a file with a TLS cert and a key from a Special TLS Secret (eg. DefaultServerSecret, WildcardTLSSecret).
 func (cnf *Configurator) AddOrUpdateSpecialTLSSecrets(secret *api_v1.Secret, secretNames []string) error {
 	l := nl.LoggerFromContext(cnf.CfgParams.Context)
+	nl.Debugf(l, "AddOrUpdateSpecialTLSSecrets: secrets [%v]", secretNames)
 	data := GenerateCertAndKeyFileContent(secret)
 
 	for _, secretName := range secretNames {
-		cnf.nginxManager.CreateSecret(secretName, data, nginx.TLSSecretFileMode)
+		cnf.nginxManager.CreateSecret(secretName, data, nginx.ReadWriteOnlyFileMode)
 	}
 
 	if !cnf.DynamicSSLReloadEnabled() {
@@ -1318,7 +1319,7 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 			return allWarnings, fmt.Errorf("error when parsing the main template: %w", err)
 		}
 	} else {
-		// Reverse to default main template parsed at NIC startup.
+		// Reverse to default Main template parsed at NIC startup.
 		cnf.templateExecutor.UseOriginalMainTemplate()
 	}
 
@@ -1327,6 +1328,9 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the ingress template: %w", err)
 		}
+	} else {
+		// Reverse to default Ingress template parsed at NIC startup.
+		cnf.templateExecutor.UseOriginalIngressTemplate()
 	}
 
 	if cfgParams.VirtualServerTemplate != nil {
@@ -1334,6 +1338,9 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the VirtualServer template: %w", err)
 		}
+	} else {
+		// Reverse to default TransportServer template parsed at NIC startup.
+		cnf.templateExecutorV2.UseOriginalVStemplate()
 	}
 
 	if cfgParams.TransportServerTemplate != nil {
@@ -1341,6 +1348,9 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		if err != nil {
 			return allWarnings, fmt.Errorf("error when parsing the TransportServer template: %w", err)
 		}
+	} else {
+		// Reverse to default TransportServer template parsed at NIC startup.
+		cnf.templateExecutorV2.UseOriginalTStemplate()
 	}
 
 	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams)

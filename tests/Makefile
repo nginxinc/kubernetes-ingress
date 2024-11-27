@@ -55,6 +55,7 @@ run-tests-in-kind: ## Run tests in Kind
 	docker run --network=kind --rm \
 		-v $(KIND_KUBE_CONFIG_FOLDER):/root/.kube \
 		-v $(ROOT_DIR)/tests:/workspace/tests \
+		-v $(ROOT_DIR)/examples/common-secrets:/workspace/examples/common-secrets \
 		-v $(ROOT_DIR)/deployments:/workspace/deployments \
 		-v $(ROOT_DIR)/config:/workspace/config \
 		-v $(ROOT_DIR)/pyproject.toml:/workspace/pyproject.toml \

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -21,6 +22,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
+	license_reporting "github.com/nginxinc/kubernetes-ingress/internal/license_reporting"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
@@ -36,11 +38,14 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	core_v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/tools/record"
 
 	kitlog "github.com/go-kit/log"
+
 	"github.com/go-kit/log/level"
 
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
@@ -86,6 +91,15 @@ func main() {
 
 	config, kubeClient := mustCreateConfigAndKubeClient(ctx)
 	mustValidateKubernetesVersionInfo(ctx, kubeClient)
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
+		nl.Infof(l, format, args...)
+	})
+	eventBroadcaster.StartRecordingToSink(&core_v1.EventSinkImpl{
+		Interface: core_v1.New(kubeClient.CoreV1().RESTClient()).Events(""),
+	})
+	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme,
+		api_v1.EventSource{Component: "nginx-ingress-controller"})
 	mustValidateIngressClass(ctx, kubeClient)
 
 	checkNamespaces(ctx, kubeClient)
@@ -96,7 +110,13 @@ func main() {
 
 	managerCollector, controllerCollector, registry := createManagerAndControllerCollectors(ctx, constLabels)
 
-	nginxManager, useFakeNginxManager := createNginxManager(ctx, managerCollector)
+	var licenseReporter *license_reporting.LicenseReporter
+
+	if *nginxPlus {
+		licenseReporter = license_reporting.NewLicenseReporter(kubeClient)
+	}
+
+	nginxManager, useFakeNginxManager := createNginxManager(ctx, managerCollector, licenseReporter)
 
 	nginxVersion := getNginxVersionInfo(ctx, nginxManager)
 
@@ -118,7 +138,7 @@ func main() {
 		agentVersion = getAgentVersionInfo(nginxManager)
 	}
 
-	go updateSelfWithVersionInfo(ctx, kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
+	go updateSelfWithVersionInfo(ctx, eventRecorder, kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors(ctx)
 
@@ -131,7 +151,7 @@ func main() {
 	mustProcessGlobalConfiguration(ctx)
 
 	cfgParams := configs.NewDefaultConfigParams(ctx, *nginxPlus)
-	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
+	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor, eventRecorder)
 
 	staticCfgParams := &configs.StaticConfigParams{
 		DisableIPV6:                    *disableIPV6,
@@ -210,6 +230,7 @@ func main() {
 		ConfClient:                   confClient,
 		DynClient:                    dynClient,
 		RestConfig:                   config,
+		Recorder:                     eventRecorder,
 		ResyncPeriod:                 30 * time.Second,
 		LoggerContext:                ctx,
 		Namespace:                    watchNamespaces,
@@ -452,14 +473,14 @@ func createTemplateExecutors(ctx context.Context) (*version1.TemplateExecutor, *
 	return templateExecutor, templateExecutorV2
 }
 
-func createNginxManager(ctx context.Context, managerCollector collectors.ManagerCollector) (nginx.Manager, bool) {
+func createNginxManager(ctx context.Context, managerCollector collectors.ManagerCollector, licenseReporter *license_reporting.LicenseReporter) (nginx.Manager, bool) {
 	useFakeNginxManager := *proxyURL != ""
 	var nginxManager nginx.Manager
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
 		timeout := time.Duration(*nginxReloadTimeout) * time.Millisecond
-		nginxManager = nginx.NewLocalManager(ctx, "/etc/nginx/", *nginxDebug, managerCollector, timeout)
+		nginxManager = nginx.NewLocalManager(ctx, "/etc/nginx/", *nginxDebug, managerCollector, licenseReporter, timeout, *nginxPlus)
 	}
 	return nginxManager, useFakeNginxManager
 }
@@ -551,7 +572,7 @@ func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clie
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		nginxManager.CreateSecret(configs.DefaultServerSecretName, bytes, nginx.TLSSecretFileMode)
+		nginxManager.CreateSecret(configs.DefaultServerSecretFileName, bytes, nginx.ReadWriteOnlyFileMode)
 	} else {
 		_, err := os.Stat(configs.DefaultServerSecretPath)
 		if err != nil {
@@ -575,7 +596,7 @@ func processWildcardSecret(ctx context.Context, kubeClient *kubernetes.Clientset
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		nginxManager.CreateSecret(configs.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
+		nginxManager.CreateSecret(configs.WildcardSecretFileName, bytes, nginx.ReadWriteOnlyFileMode)
 	}
 	return *wildcardTLSSecret != ""
 }
@@ -833,7 +854,7 @@ func mustProcessGlobalConfiguration(ctx context.Context) {
 	}
 }
 
-func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) *configs.ConfigParams {
+func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor, eventLog record.EventRecorder) *configs.ConfigParams {
 	l := nl.LoggerFromContext(cfgParams.Context)
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
@@ -844,7 +865,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 		if err != nil {
 			nl.Fatalf(l, "Error when getting %v: %v", *nginxConfigMaps, err)
 		}
-		cfgParams = configs.ParseConfigMap(cfgParams.Context, cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough)
+		cfgParams, _ = configs.ParseConfigMap(cfgParams.Context, cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough, eventLog)
 		if cfgParams.MainServerSSLDHParamFileContent != nil {
 			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
 			if err != nil {
@@ -869,7 +890,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 	return cfgParams
 }
 
-func updateSelfWithVersionInfo(ctx context.Context, kubeClient *kubernetes.Clientset, version, appProtectVersion, agentVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
+func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorder, kubeClient *kubernetes.Clientset, version, appProtectVersion, agentVersion string, nginxVersion nginx.Version, maxRetries int, waitTime time.Duration) {
 	l := nl.LoggerFromContext(ctx)
 	podUpdated := false
 
@@ -906,6 +927,11 @@ func updateSelfWithVersionInfo(ctx context.Context, kubeClient *kubernetes.Clien
 			continue
 		}
 
+		labelsString := new(bytes.Buffer)
+		for key, value := range labels {
+			fmt.Fprintf(labelsString, "%s=\"%s\", ", key, value)
+		}
+		eventLog.Eventf(newPod, api_v1.EventTypeNormal, "UpdatePodLabel", "Successfully added version labels, %s", strings.TrimRight(labelsString.String(), ", "))
 		nl.Infof(l, "Pod label updated: %s", pod.ObjectMeta.Name)
 		podUpdated = true
 	}
