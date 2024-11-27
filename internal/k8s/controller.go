@@ -171,6 +171,7 @@ type LoadBalancerController struct {
 	telemetryCollector            *telemetry.Collector
 	telemetryChan                 chan struct{}
 	weightChangesDynamicReload    bool
+	nginxConfigMapName            string
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -263,6 +264,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 		isIPV6Disabled:               input.IsIPV6Disabled,
 		weightChangesDynamicReload:   input.DynamicWeightChangesReload,
+		nginxConfigMapName:           input.ConfigMaps,
 	}
 
 	lbc.syncQueue = newTaskQueue(lbc.Logger, lbc.sync)

@@ -50,9 +50,8 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 	}
 }
 
-// addConfigMapHandler adds the handler for config maps to the controller
-func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
-	options := cache.InformerOptions{
+func (lbc *LoadBalancerController) getConfigMapHandlerOptions(handlers cache.ResourceEventHandlerFuncs, namespace string) cache.InformerOptions {
+	return cache.InformerOptions{
 		ListerWatcher: cache.NewListWatchFromClient(
 			lbc.client.CoreV1().RESTClient(),
 			"configmaps",
@@ -62,6 +61,12 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 		ResyncPeriod: lbc.resync,
 		Handler:      handlers,
 	}
+}
+
+// addConfigMapHandler adds the handler for config maps to the controller
+func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
+	options := lbc.getConfigMapHandlerOptions(handlers, namespace)
+
 	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformerWithOptions(options)
 	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.configMapController.HasSynced)
 }
@@ -75,14 +80,17 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 		lbc.syncQueue.Requeue(task, err)
 		return
 	}
-	if configExists {
-		lbc.configMap = obj.(*v1.ConfigMap)
-		externalStatusAddress, exists := lbc.configMap.Data["external-status-address"]
-		if exists {
-			lbc.statusUpdater.SaveStatusFromExternalStatus(externalStatusAddress)
+	switch key {
+	case lbc.nginxConfigMapName:
+		if configExists {
+			lbc.configMap = obj.(*v1.ConfigMap)
+			externalStatusAddress, exists := lbc.configMap.Data["external-status-address"]
+			if exists {
+				lbc.statusUpdater.SaveStatusFromExternalStatus(externalStatusAddress)
+			}
+		} else {
+			lbc.configMap = nil
 		}
-	} else {
-		lbc.configMap = nil
 	}
 
 	if !lbc.isNginxReady {
