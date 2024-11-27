@@ -714,10 +714,10 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
 		}
 	}
-	if endpoint, exists := cfgm.Data["endpoint"]; exists {
+	if endpoint, exists := cfgm.Data["usage-report-endpoint"]; exists {
 		mgmtCfgParams.Endpoint = strings.TrimSpace(endpoint)
 	}
-	if interval, exists := cfgm.Data["interval"]; exists {
+	if interval, exists := cfgm.Data["usage-report-interval"]; exists {
 		i := strings.TrimSpace(interval)
 		t, err := time.ParseDuration(i)
 		if err != nil {

@@ -22,9 +22,9 @@ controller:
     ## Enables the 180-day grace period for sending the initial usage report
     enforceInitialReport: false
 
-    ## Endpoint for usage report
-    # endpoint: "product.connect.nginx.com"
-    # interval: 1h
+    # usageReport: {}
+      # endpoint: "product.connect.nginx.com" # Endpoint for usage report
+      # interval: 1h
 
     ## Configures the ssl_verify directive in the mgmt block
     # sslVerify: true
