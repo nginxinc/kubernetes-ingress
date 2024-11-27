@@ -12,6 +12,8 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 )
 
+var fakeManager = nginx.NewFakeManager("/etc/nginx")
+
 func TestMain(m *testing.M) {
 	v := m.Run()
 
@@ -2017,6 +2019,7 @@ var (
 	}
 
 	mainCfg = MainConfig{
+		StaticSSLPath:                      fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:            80,
 		DefaultHTTPSListenerPort:           443,
 		ServerNamesHashMaxSize:             "512",
@@ -2061,6 +2064,7 @@ var (
 	}
 
 	mainCfgR31 = MainConfig{
+		StaticSSLPath:            fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:  80,
 		DefaultHTTPSListenerPort: 443,
 		ServerNamesHashMaxSize:   "512",
@@ -2090,6 +2094,7 @@ var (
 	}
 
 	mainCfgHTTP2On = MainConfig{
+		StaticSSLPath:                      fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:            80,
 		DefaultHTTPSListenerPort:           443,
 		HTTP2:                              true,
@@ -2130,6 +2135,7 @@ var (
 	}
 
 	mainCfgCustomTLSPassthroughPort = MainConfig{
+		StaticSSLPath:           fakeManager.GetSecretsDir(),
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",
@@ -2157,6 +2163,7 @@ var (
 	}
 
 	mainCfgWithoutTLSPassthrough = MainConfig{
+		StaticSSLPath:           fakeManager.GetSecretsDir(),
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",
@@ -2184,6 +2191,7 @@ var (
 	}
 
 	mainCfgDefaultTLSPassthroughPort = MainConfig{
+		StaticSSLPath:           fakeManager.GetSecretsDir(),
 		ServerNamesHashMaxSize:  "512",
 		ServerTokens:            "off",
 		WorkerProcesses:         "auto",
@@ -2211,6 +2219,7 @@ var (
 	}
 
 	mainCfgCustomDefaultHTTPAndHTTPSListenerPorts = MainConfig{
+		StaticSSLPath:            fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:  8083,
 		DefaultHTTPSListenerPort: 8443,
 		ServerNamesHashMaxSize:   "512",
@@ -2238,6 +2247,7 @@ var (
 	}
 
 	mainCfgCustomDefaultHTTPListenerPort = MainConfig{
+		StaticSSLPath:            fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:  8083,
 		DefaultHTTPSListenerPort: 443,
 		ServerNamesHashMaxSize:   "512",
@@ -2265,6 +2275,7 @@ var (
 	}
 
 	mainCfgCustomDefaultHTTPSListenerPort = MainConfig{
+		StaticSSLPath:            fakeManager.GetSecretsDir(),
 		DefaultHTTPListenerPort:  80,
 		DefaultHTTPSListenerPort: 8443,
 		ServerNamesHashMaxSize:   "512",
