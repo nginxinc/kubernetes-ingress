@@ -203,10 +203,9 @@ jobs:
         id: docker-scout
         uses: docker/scout-action@6ac950eb733f8b2811f25c05d97bfb3d181b8026 # v1.15.1
         with:
-          command: cves,recommendations
+          command: cves
           image: ${{ steps.meta.outputs.tags }}
           ignore-base: true
-          only-fixed: true
           sarif-file: "${{ inputs.image }}-results/scout.sarif"
           write-comment: false
           github-token: ${{ secrets.GITHUB_TOKEN }} # to be able to write the comment
