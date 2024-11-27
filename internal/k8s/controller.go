@@ -1834,10 +1834,6 @@ func generateSecretNSName(secret *api_v1.Secret) string {
 	return secret.Namespace + "/" + secret.Name
 }
 
-func generateSecretNSName(secret *api_v1.Secret) string {
-	return secret.Namespace + "/" + secret.Name
-}
-
 func getStatusFromEventTitle(eventTitle string) string {
 	switch eventTitle {
 	case "AddedOrUpdatedWithError", "Rejected", "NoVirtualServersFound", "Missing Secret", "UpdatedWithError":
