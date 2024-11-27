@@ -70,6 +70,8 @@ spec:
             add:
             - NET_BIND_SERVICE
 #        volumeMounts:
+#        - mountPath: /etc/nginx
+#          name: nginx-etc
 #        - mountPath: /var/cache/nginx
 #          name: nginx-cache
 #        - mountPath: /var/lib/nginx
