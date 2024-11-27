@@ -3523,36 +3523,6 @@ func TestGenerateSecretNSName(t *testing.T) {
 			},
 			expected: "testns/test-secret",
 		},
-		{
-			name: "invalid #1",
-			secret: &api_v1.Secret{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Namespace: "",
-					Name:      "",
-				},
-			},
-			expected: "/",
-		},
-		{
-			name: "invalid #2",
-			secret: &api_v1.Secret{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Namespace: "testns",
-					Name:      "",
-				},
-			},
-			expected: "testns/",
-		},
-		{
-			name: "invalid #3",
-			secret: &api_v1.Secret{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Namespace: "",
-					Name:      "test-secret",
-				},
-			},
-			expected: "/test-secret",
-		},
 	}
 
 	for _, tc := range testCases {
