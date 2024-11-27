@@ -943,13 +943,9 @@ func (cnf *Configurator) AddOrUpdateLicenseSecret(secret *api_v1.Secret) error {
 	nl.Debugf(l, "AddOrUpdateLicenseSecret: [%v]", secret.Name)
 	data, err := GenerateLicenseSecret(secret)
 	if err != nil {
-		nl.Errorf(l, "error generating license secret file content: %v", err)
+		return err
 	}
 	cnf.nginxManager.CreateSecret(LicenseSecretFileName, data, nginx.ReadWriteOnlyFileMode)
-
-	if err := cnf.Reload(nginx.ReloadForOtherUpdate); err != nil {
-		nl.Errorf(l, "error when reloading NGINX when updating the special Secrets: %v", err)
-	}
 
 	return nil
 }
