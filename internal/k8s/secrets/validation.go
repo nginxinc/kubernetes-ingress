@@ -82,21 +82,17 @@ func ValidateCASecret(secret *api_v1.Secret) error {
 		return fmt.Errorf("CA secret must have the data field %v", CAKey)
 	}
 
-	return validateCASecretData(secret)
-}
-
-func validateCASecretData(secret *api_v1.Secret) error {
 	block, _ := pem.Decode(secret.Data[CAKey])
 	if block == nil {
-		return fmt.Errorf("in secret %s/%s, the data field %s must hold a valid CERTIFICATE PEM block", secret.Namespace, secret.Name, CAKey)
+		return fmt.Errorf("the data field %s must hold a valid CERTIFICATE PEM block", CAKey)
 	}
 	if block.Type != "CERTIFICATE" {
-		return fmt.Errorf("in secret %s/%s, the data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", secret.Namespace, secret.Name, CAKey, block.Type)
+		return fmt.Errorf("the data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", CAKey, block.Type)
 	}
 
 	_, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return fmt.Errorf("failed to validate CA certificate for secret %s/%s: %w", secret.Namespace, secret.Name, err)
+		return fmt.Errorf("failed to validate certificate: %w", err)
 	}
 
 	return nil
