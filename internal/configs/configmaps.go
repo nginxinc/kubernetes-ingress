@@ -737,11 +737,11 @@ func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record
 		}
 
 	}
-	if trustedCertSecretName, exists := cfgm.Data["trusted-certificate-secret-name"]; exists {
+	if trustedCertSecretName, exists := cfgm.Data["ssl-trusted-certificate-secret-name"]; exists {
 		mgmtCfgParams.Secrets.TrustedCert = strings.TrimSpace(trustedCertSecretName)
 	}
 
-	if clientAuthSecretName, exists := cfgm.Data["client-auth-secret-name"]; exists {
+	if clientAuthSecretName, exists := cfgm.Data["ssl-certificate-secret-name"]; exists {
 		mgmtCfgParams.Secrets.ClientAuth = strings.TrimSpace(clientAuthSecretName)
 	}
 

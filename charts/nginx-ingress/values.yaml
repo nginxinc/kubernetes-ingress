@@ -37,10 +37,10 @@ controller:
         # - kube-dns.kube-system.svc.cluster.local
 
     ## Secret containing TLS client certificate
-    # clientAuthSecretName: ssl-certificate # kubernetes.io/tls secret type
+    # sslCertificateSecretName: ssl-certificate # kubernetes.io/tls secret type
 
     ## Secret containing trusted CA certificate
-    # trustedCertificateSecretName: ssl-trusted-cert
+    # sslTrustedCertificateSecretName: ssl-trusted-cert
 
     # customConfigMap: ""
 

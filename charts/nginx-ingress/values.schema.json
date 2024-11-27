@@ -109,10 +109,10 @@
                 "license"
               ]
             },
-            "clientAuthSecretName": {
+            "sslCertificateSecretName": {
               "type": "string",
               "default": "",
-              "title": "The clientAuthSecretName Schema",
+              "title": "The sslCertificateSecretName Schema",
               "examples": [
                 "ssl-certificate"
               ]
@@ -189,10 +189,10 @@
                 }
               }
             },
-            "trustedCertificateSecretName": {
+            "sslTrustedCertificateSecretName": {
               "type": "string",
               "default": "ssl-trusted-cert",
-              "title": "The trustedCertificateSecretName Schema",
+              "title": "The sslTrustedCertificateSecretName Schema",
               "examples": [
                 "ssl-trusted-cert",
                 "certificate-secret"

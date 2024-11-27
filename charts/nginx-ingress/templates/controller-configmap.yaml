@@ -59,11 +59,11 @@ data:
   usage-report-interval: {{ quote .Values.controller.mgmt.usageReport.interval }}
 {{- end }}
 {{- end }}
-{{- if hasKey .Values.controller.mgmt "trustedCertificateSecretName" }}
-  trusted-certificate-secret-name: {{ quote .Values.controller.mgmt.trustedCertificateSecretName }}
+{{- if hasKey .Values.controller.mgmt "sslTrustedCertificateSecretName" }}
+  ssl-trusted-certificate-secret-name: {{ quote .Values.controller.mgmt.sslTrustedCertificateSecretName }}
 {{- end }}
-{{- if hasKey .Values.controller.mgmt "clientAuthSecretName" }}
-  client-auth-secret-name: {{ quote .Values.controller.mgmt.clientAuthSecretName }}
+{{- if hasKey .Values.controller.mgmt "sslCertificateSecretName" }}
+  ssl-certificate-secret-name: {{ quote .Values.controller.mgmt.sslCertificateSecretName}}
 {{- end }}
 {{- if hasKey .Values.controller.mgmt "resolver" }}
 {{- if hasKey .Values.controller.mgmt.resolver "addresses" }}
