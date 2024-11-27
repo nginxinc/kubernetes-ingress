@@ -564,9 +564,9 @@ def create_secret(v1: CoreV1Api, namespace, body) -> str:
     return body["metadata"]["name"]
 
 
-def create_opaque_license_secret(v1: CoreV1Api, namespace, jwt, license_token_name="license-token") -> str:
+def create_license_secret(v1: CoreV1Api, namespace, jwt, license_token_name="license-token") -> str:
     sec = V1Secret()
-    sec.type = "Opaque"
+    sec.type = "nginx.com/license"
     sec.metadata = V1ObjectMeta(name=license_token_name)
     sec.data = {"license.jwt": base64.b64encode(jwt.encode("ascii")).decode()}
     v1.create_namespaced_secret(namespace=namespace, body=sec)
