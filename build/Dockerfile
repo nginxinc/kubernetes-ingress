@@ -311,7 +311,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI #############################################
-FROM redhat/ubi9-minimal:9.5@sha256:d85040b6e3ed3628a89683f51a38c709185efc3fb552db2ad1b9180f2a6c38be AS ubi
+FROM ubi-minimal AS ubi
 ARG IC_VERSION
 
 LABEL name="NGINX Ingress Controller" \
