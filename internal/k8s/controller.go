@@ -1781,20 +1781,53 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 	var specialTLSSecretsToUpdate []string
 	secretNsName := generateSecretNSName(secret)
 
-	if secretNsName == lbc.specialSecrets.defaultServerSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, &specialTLSSecretsToUpdate)
-	}
-	if secretNsName == lbc.specialSecrets.wildcardTLSSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, &specialTLSSecretsToUpdate)
-	}
-
-	err := lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
-	if err != nil {
-		nl.Errorf(lbc.Logger, "Error when updating the special Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
+	if ok := lbc.specialSecretValidation(secretNsName, secret, &specialTLSSecretsToUpdate); !ok {
+		// if not ok bail early
 		return
 	}
+
+	lbc.writeSpecialSecrets(secret, specialTLSSecretsToUpdate)
+
+	// reload nginx when the TLS special secrets are updated
+	switch secretNsName {
+	case lbc.specialSecrets.defaultServerSecret, lbc.specialSecrets.wildcardTLSSecret:
+		if ok := lbc.performDynamicSSLReload(secret); !ok {
+			return
+		}
+	}
+
 	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
+}
+
+func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, specialTLSSecretsToUpdate []string) {
+	lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
+}
+
+func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, secret *api_v1.Secret, specialTLSSecretsToUpdate *[]string) bool {
+	if secretNsName == lbc.specialSecrets.defaultServerSecret {
+		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, specialTLSSecretsToUpdate)
+	}
+	if secretNsName == lbc.specialSecrets.wildcardTLSSecret {
+		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, specialTLSSecretsToUpdate)
+	}
+	return true
+}
+
+func (lbc *LoadBalancerController) performDynamicSSLReload(secret *api_v1.Secret) bool {
+	if !lbc.configurator.DynamicSSLReloadEnabled() {
+		return lbc.performNGINXReload(secret)
+	}
+	return true
+}
+
+func (lbc *LoadBalancerController) performNGINXReload(secret *api_v1.Secret) bool {
+	secretNsName := generateSecretNSName(secret)
+	if err := lbc.configurator.Reload(false); err != nil {
+		nl.Errorf(lbc.Logger, "error when reloading NGINX when updating the special Secrets: %v", err)
+		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
+		return false
+	}
+	return true
 }
 
 func generateSecretNSName(secret *api_v1.Secret) string {
