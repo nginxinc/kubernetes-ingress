@@ -335,6 +335,7 @@ def cli_arguments(request) -> {}:
     print(f"Tests will run against the IC of type: {result['ic-type']}")
     if result["ic-type"] == "nginx-plus-ingress":
         print(f"Tests will use the Plus JWT")
+        result["plus-jwt"] = request.config.getoption("--plus-jwt")
 
     result["replicas"] = request.config.getoption("--replicas")
     print(f"Number of pods spun up will be : {result['replicas']}")
