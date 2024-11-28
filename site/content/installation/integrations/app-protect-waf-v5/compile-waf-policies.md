@@ -17,15 +17,15 @@ The following steps describe how to use the NGINX Instance Manager API to create
 
 ## Before you start
 ### Requirements
-- A working [NGINX Management Suite](https://docs.nginx.com/nginx-management-suite/installation/) instance.
-- An [NGINX Management Suite user](https://docs.nginx.com/nginx-management-suite/admin-guides/rbac/rbac-getting-started/) for API requests.
+- A working [NGINX Instance Manager](https://docs.nginx.com/nginx-instance-manager/deploy/) instance.
+- An [NGINX Instance Manager user](https://docs.nginx.com/nginx-instance-manager/admin-guide/rbac/overview-rbac/) for API requests.
 - A NGINX Ingress Controller [deployment with NGINX App Protect WAF]({{< relref "/installation/integrations/app-protect-waf/installation.md" >}}).
 
 ## Create a new security policy
 
 {{< tip >}} You can skip this step if you intend to use an existing security policy. {{< /tip >}}
 
-Create a [new security policy](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
+Create a [new security policy](https://docs.nginx.com/nginx-instance-manager/app-protect/manage-waf-security-policies/#create-security-policy) using the API: this will require the use of a tool such as [`curl`](https://curl.se/) or [Postman](https://www.postman.com/)
 
 Create the file `simple-policy.json` with the contents below:
 
@@ -82,7 +82,7 @@ It is one of two unique IDs we will use to download the bundle: it will be refer
 
 ## Create a new security bundle
 
-Once you have created (Or selected) a security policy, [create a security bundle](https://docs.nginx.com/nginx-management-suite/nim/how-to/app-protect/manage-waf-security-policies/#create-security-policy-bundles) using the API. The version in the bundle you create **must** match the WAF compiler version you intend to use. 
+Once you have created (Or selected) a security policy, [create a security bundle](https://docs.nginx.com/nginx-instance-manager/app-protect/manage-waf-security-policies/#create-security-policy-bundles) using the API. The version in the bundle you create **must** match the WAF compiler version you intend to use.
 
 You can check which version is installed in NGINX Instance Manager by checking the operating system packages. If the wrong version is noted in the JSON payload, you will receive an error similar to below:
 
@@ -191,7 +191,7 @@ curl -X GET "https://{NMS_FQDN}/api/platform/v1/security/policies/<policy-UID>/b
 This GET request uses the policy and bundle IDs from the previous examples:
 
 ```shell
-curl -X GET -k 'https://127.0.0.1/api/platform/v1/security/policies/6af9f261-658b-4be1-b07a-cebd83e917a1/bundles/de08b324-99d8-4155-b2eb-fe687b21034e' \                                                                                                     
+curl -X GET -k 'https://127.0.0.1/api/platform/v1/security/policies/6af9f261-658b-4be1-b07a-cebd83e917a1/bundles/de08b324-99d8-4155-b2eb-fe687b21034e' \
     -H "Authorization: Basic YWRtaW46UncxQXBQS3lRRTRuQXRXOFRYa1J4ZFdVSWVTSGtU" \
      | jq -r '.content' | base64 -d > security-policy-bundle.tgz
 ```

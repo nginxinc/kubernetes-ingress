@@ -13,9 +13,9 @@ This page describes how to enable Usage Reporting for F5 NGINX Ingress Controlle
 
 ## Overview
 
-Usage Reporting is a Kubernetes controller that connects to the NGINX Management Suite and reports the number of NGINX Ingress Controller nodes in the cluster. It is installed as a Kubernetes Deployment in the same cluster as NGINX Ingress Controller whose nodes you would like reported.
+Usage Reporting is a Kubernetes controller that connects to the NGINX Instance Manager and reports the number of NGINX Ingress Controller nodes in the cluster. It is installed as a Kubernetes Deployment in the same cluster as NGINX Ingress Controller whose nodes you would like reported.
 
-To use Usage Reporting, you must have access to NGINX Management Suite. For more information, see [NGINX Management Suite](https://www.f5.com/products/nginx/instance-manager/). Usage Reporting is a requirement of the new Flexible Consumption Program for NGINX Ingress Controller.
+To use Usage Reporting, you must have access to NGINX Instance Manager. For more information, see [NGINX Instance Manager](https://www.f5.com/products/nginx/instance-manager/). Usage Reporting is a requirement of the new Flexible Consumption Program for NGINX Ingress Controller.
 
 ---
 
@@ -24,11 +24,11 @@ To use Usage Reporting, you must have access to NGINX Management Suite. For more
 To deploy Usage Reporting, you must have the following:
 
 - [NGINX Ingress Controller 3.2.0](https://docs.nginx.com/nginx-ingress-controller) or later
-- [NGINX Management Suite 2.11](https://docs.nginx.com/nginx-management-suite) or later
+- [NGINX Instance Manager 2.11.0](https://docs.nginx.com/nginx-instance-manager) or later
 
 In addition to the software requirements, you will need:
 
-- Access to an NGINX Management Suite username and password for basic authentication. You will need the URL of your NGINX Management Suite system, and a username and password for Usage Reporting. The Usage Reporting user account must have access to the `/api/platform/v1/k8s-usage` endpoint.
+- Access to an NGINX Instance Manager username and password for basic authentication. You will need the URL of your NGINX Instance Manager system, and a username and password for Usage Reporting. The Usage Reporting user account must have access to the `/api/platform/v1/k8s-usage` endpoint.
 - Access to the Kubernetes cluster where NGINX Ingress Controller is deployed, with the ability to deploy a Kubernetes Deployment and a Kubernetes Secret.
 - Access to public internet to pull the Usage Reporting image. This image is hosted in the NGINX container registry at `docker-registry.nginx.com/cluster-connector`. You can pull the image and push it to a private container registry for deployment.
 
@@ -36,16 +36,16 @@ In addition to the software requirements, you will need:
 
 ---
 
-## Add a user account to NGINX Management Suite
+## Add a user account to NGINX Instance Manager
 
 Usage Reporting needs a user account to send usage data to NGINX Instance Manager: these are the steps involved.
 
-1. Create a role following the steps in [Create a Role](https://docs.nginx.com/nginx-management-suite/admin-guides/access-control/set-up-rbac/#create-role) section of the NGINX Management Suite documentation. Select these permissions in step 6 for the role:
+1. Create a role following the steps in [Create a Role](https://docs.nginx.com/nginx-instance-manager/admin-guide/rbac/create-roles/#create-roles) section of the NGINX Instance Manager documentation. Select these permissions in step 6 for the role:
    - Module: Instance Manager
    - Feature: NGINX Plus Usage
    - Access: CRUD
 
-1. Create a user account following the steps in [Add Users](https://docs.nginx.com/nginx-management-suite/admin-guides/access-control/set-up-rbac/#add-users) section of the NGINX Management Suite documentation. In step 6, assign the user to the role created above. Note that currently only "basic auth" authentication is supported for usage reporting purposes.
+1. Create a user account following the steps in [Add Users](https://docs.nginx.com/nginx-instance-manager/admin-guide/rbac/assign-roles/#assign-roles-to-users-basic-authentication) section of the NGINX Instance Manager documentation. In step 5, assign the user to the role created above. Note that currently only "basic auth" authentication is supported for usage reporting purposes.
 
 ---
 
@@ -61,11 +61,11 @@ Create the Kubernetes namespace `nginx-cluster-connector` for Usage Reporting:
 
 ---
 
-### Pass the credential to the NGINX Management Suite API
+### Pass the credential to the NGINX Instance Manager API
 
-To make the credential available to Usage Reporting, create a Kubernetes secret. The username and password created in the previous section are required to connect the NGINX Management Suite API. 
+To make the credential available to Usage Reporting, create a Kubernetes secret. The username and password created in the previous section are required to connect the NGINX Instance Manager API.
 
-Both the username and password are stored in the Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`. 
+Both the username and password are stored in the Kubernetes Secret and need to be converted to base64. In this example the username will be `foo` and the password will be `bar`.
 
 To obtain the base64 representation of a string, use the following command:
 
@@ -104,7 +104,7 @@ If you are using a different namespace, change the namespace in the `metadata` s
 kubectl apply -f nms-basic-auth.yaml
 ```
 
-If you need to update the basic-auth credentials for NGINX Management Suite in the future, update the `username` and `password` fields, and apply the changes by running the command again. Usage Reporting will automatically detect the changes, using the new username and password without redeployment.
+If you need to update the basic-auth credentials for NGINX Instance Manager in the future, update the `username` and `password` fields, and apply the changes by running the command again. Usage Reporting will automatically detect the changes, using the new username and password without redeployment.
 
 Download and save the deployment file [cluster-connector.yaml](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v{{< nic-version >}}/examples/shared-examples/usage-reporting/cluster-connector.yaml). Edit the following under the `args` section and then save the file:
 
@@ -114,10 +114,10 @@ Download and save the deployment file [cluster-connector.yaml](https://raw.githu
     - -nms-basic-auth-secret=nginx-cluster-connector/nms-basic-auth
 ```
 
-- `-nms-server-address` should be the address of the Usage Reporting API, which will be the combination of NGINX Management Suite server hostname and the URI `api/platform/v1`
+- `-nms-server-address` should be the address of the Usage Reporting API, which will be the combination of NGINX Instance Manager server hostname and the URI `api/platform/v1`
 - `nms-basic-auth-secret` should be the namespace/name of the secret created in step 3: `nginx-cluster-connector/nms-basic-auth`.
 
-{{< note >}}  OpenShift requires a SecurityContextConstraints object for NGINX Cluster Connector. 
+{{< note >}}  OpenShift requires a SecurityContextConstraints object for NGINX Cluster Connector.
 
 It can be created with the command `oc create -f scc.yaml`, using the file found in `shared-examples/` {{< /note >}}
 
@@ -135,9 +135,9 @@ kubectl apply -f cluster-connector.yaml
 
 ---
 
-## Viewing usage data from the NGINX Management Suite API
+## Viewing usage data from the NGINX Instance Manager API
 
-Usage Reporting sends the number of NGINX Ingress Controller instances and nodes in the cluster to NGINX Management Suite. To view the usage data, query the NGINX Management Suite API. The usage data is available at the following endpoint:
+Usage Reporting sends the number of NGINX Ingress Controller instances and nodes in the cluster to NGINX Instance Manager. To view the usage data, query the NGINX Instance Manager API. The usage data is available at the following endpoint:
 
 
 ```shell
@@ -243,7 +243,7 @@ kubectl delete -f cluster-connector.yaml
 
 ## Command-line arguments
 
-Usage Reporting supports several command-line arguments, which can be specified in the `args` section of the Kubernetes deployment file. 
+Usage Reporting supports several command-line arguments, which can be specified in the `args` section of the Kubernetes deployment file.
 
 The following is a list of the supported command-line arguments and their usage:
 
@@ -251,14 +251,14 @@ The following is a list of the supported command-line arguments and their usage:
 
 ### -nms-server-address `<string>`
 
-The address of the NGINX Management Suite host. IPv4 addresses and hostnames are supported.
+The address of the NGINX Instance Manager host. IPv4 addresses and hostnames are supported.
 Default: `http://apigw.nms.svc.cluster.local/api/platform/v1/k8s-usage`.
 
 ---
 
 ### -nms-basic-auth-secret `<string>`
 
-Secret for basic authentication to the NGINX Management Suite API. The secret must be in `kubernetes.io/basic-auth` format using base64 encoding.
+Secret for basic authentication to the NGINX Instance Manager API. The secret must be in `kubernetes.io/basic-auth` format using base64 encoding.
 Format: `<namespace>/<name>`.
 
 ---
@@ -271,7 +271,7 @@ The display name of the Kubernetes cluster.
 
 ### -skip-tls-verify
 
-Skip TLS verification for the NGINX Management Suite server. 
+Skip TLS verification for the NGINX Instance Manager server.
 
 {{< warning >}} This argument is intended for using a self-assigned certificate for testing purposes only. {{< /warning >}}
 
@@ -279,7 +279,7 @@ Skip TLS verification for the NGINX Management Suite server.
 
 ### -min-update-interval `<string>`
 
-The minimum interval between updates to the NGINX Management Suite.
+The minimum interval between updates to the NGINX Instance Manager.
 Default: `24h`.
 
 {{< warning >}} This argument is intended for testing purposes only. {{< /warning >}}
