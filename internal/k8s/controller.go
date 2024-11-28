@@ -1781,7 +1781,7 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 	var specialTLSSecretsToUpdate []string
 	secretNsName := generateSecretNSName(secret)
 
-	if ok := lbc.specialSecretValidation(secretNsName, secret, specialTLSSecretsToUpdate); !ok {
+	if ok := lbc.specialSecretValidation(secretNsName, secret, &specialTLSSecretsToUpdate); !ok {
 		// if not ok bail early
 		return
 	}
@@ -1803,12 +1803,12 @@ func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, sp
 	lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
 }
 
-func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, secret *api_v1.Secret, specialTLSSecretsToUpdate []string) bool {
+func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, secret *api_v1.Secret, specialTLSSecretsToUpdate *[]string) bool {
 	if secretNsName == lbc.specialSecrets.defaultServerSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, &specialTLSSecretsToUpdate)
+		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, specialTLSSecretsToUpdate)
 	}
 	if secretNsName == lbc.specialSecrets.wildcardTLSSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, &specialTLSSecretsToUpdate)
+		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, specialTLSSecretsToUpdate)
 	}
 	return true
 }
