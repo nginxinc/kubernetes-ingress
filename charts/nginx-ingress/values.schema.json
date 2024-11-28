@@ -109,34 +109,41 @@
                 "license"
               ]
             },
-            "clientAuthSecretName": {
+            "sslCertificateSecretName": {
               "type": "string",
               "default": "",
-              "title": "The clientAuthSecretName Schema",
+              "title": "The sslCertificateSecretName Schema",
               "examples": [
                 "ssl-certificate"
               ]
             },
-            "endpoint": {
-              "type": "string",
-              "default": "",
-              "title": "The usage report endpoint Schema",
-              "examples": [
-                "",
-                "product.connect.nginx.com",
-                "nginx-mgmt.local"
-              ]
-            },
-            "interval": {
-              "type": "string",
-              "pattern": "^[0-9]+[mhd]$",
-              "default": "1h",
-              "title": "The usage report interval Schema",
-              "examples": [
-                "1m",
-                "1h",
-                "24h"
-              ]
+            "usageReport": {
+              "type": "object",
+              "default": {},
+              "title": "The usageReport Schema",
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "title": "The endpoint of the usageReport",
+                  "default": "",
+                  "examples": [
+                    "",
+                    "product.connect.nginx.com",
+                    "nginx-mgmt.local"
+                  ]
+                },
+                "interval": {
+                  "type": "string",
+                  "pattern": "^[0-9]+[mhd]$",
+                  "default": "1h",
+                  "title": "The usage report interval Schema",
+                  "examples": [
+                    "1m",
+                    "1h",
+                    "24h"
+                  ]
+                }
+              }
             },
             "enforceInitialReport": {
               "type": "boolean",
@@ -182,10 +189,10 @@
                 }
               }
             },
-            "trustedCertificateSecretName": {
+            "sslTrustedCertificateSecretName": {
               "type": "string",
               "default": "ssl-trusted-cert",
-              "title": "The trustedCertificateSecretName Schema",
+              "title": "The sslTrustedCertificateSecretName Schema",
               "examples": [
                 "ssl-trusted-cert",
                 "certificate-secret"
