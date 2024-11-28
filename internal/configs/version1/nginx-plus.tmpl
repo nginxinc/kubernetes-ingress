@@ -373,6 +373,9 @@ mgmt {
     {{ if .MGMTConfig.TrustedCert -}}
     ssl_trusted_certificate {{ printf "%s/mgmt/ca.crt" .StaticSSLPath }};
     {{ end -}}
+    {{ if .MGMTConfig.TrustedCRL -}}
+    ssl_crl {{ printf "%s/mgmt/ca.crl" .StaticSSLPath }};
+    {{ end -}}
     {{ if .MGMTConfig.ClientAuth -}}
     ssl_certificate {{ printf "%s/mgmt/client" .StaticSSLPath }};
     ssl_certificate_key {{ printf "%s/mgmt/client" .StaticSSLPath }};

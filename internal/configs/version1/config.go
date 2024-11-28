@@ -196,6 +196,7 @@ type MGMTConfig struct {
 	Endpoint             string
 	Interval             string
 	TrustedCert          bool
+	TrustedCRL           bool
 	ClientAuth           bool
 	ResolverAddresses    []string
 	ResolverIPV6         *bool

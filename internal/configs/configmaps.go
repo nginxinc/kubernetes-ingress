@@ -761,6 +761,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 			Endpoint:             mgmtCfgParams.Endpoint,
 			Interval:             mgmtCfgParams.Interval,
 			TrustedCert:          mgmtCfgParams.Secrets.TrustedCert != "",
+			TrustedCRL:           mgmtCfgParams.Secrets.TrustedCRL != "",
 			ClientAuth:           mgmtCfgParams.Secrets.ClientAuth != "",
 		}
 	}

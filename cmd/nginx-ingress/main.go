@@ -148,24 +148,24 @@ func main() {
 		agentVersion = getAgentVersionInfo(nginxManager)
 	}
 
+	go updateSelfWithVersionInfo(ctx, eventRecorder, kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
+
 	var mgmtCfgParams *configs.MGMTConfigParams
 	if *nginxPlus {
 		mgmtCfgParams = processMGMTConfigMap(kubeClient, configs.NewDefaultMGMTConfigParams(ctx), eventRecorder, pod)
-		if err := processLicenseSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+		if err := processLicenseSecret(kubeClient, nginxManager, mgmtCfgParams, controllerNamespace); err != nil {
 			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
 		}
 
-		if err := processTrustedCertSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+		if err := processTrustedCertSecret(kubeClient, nginxManager, mgmtCfgParams, controllerNamespace); err != nil {
 			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
 		}
 
-		if err := processClientAuthSecret(kubeClient, nginxManager, *mgmtCfgParams, controllerNamespace); err != nil {
+		if err := processClientAuthSecret(kubeClient, nginxManager, mgmtCfgParams, controllerNamespace); err != nil {
 			logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
 		}
 
 	}
-
-	go updateSelfWithVersionInfo(ctx, eventRecorder, kubeClient, version, appProtectVersion, agentVersion, nginxVersion, 10, time.Second*5)
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors(ctx)
 
@@ -173,9 +173,9 @@ func main() {
 
 	isWildcardEnabled := processWildcardSecret(ctx, kubeClient, nginxManager)
 
-	globalConfigurationValidator := createGlobalConfigurationValidator()
-
 	staticSSLPath := nginxManager.GetSecretsDir()
+
+	globalConfigurationValidator := createGlobalConfigurationValidator()
 
 	mustProcessGlobalConfiguration(ctx)
 
@@ -211,7 +211,7 @@ func main() {
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
 
-	mustProcessNginxConfig(staticCfgParams, cfgParams, mgmtCfgParams, templateExecutor, nginxManager)
+	mustWriteNginxMainConfig(staticCfgParams, cfgParams, mgmtCfgParams, templateExecutor, nginxManager)
 
 	if *enableTLSPassthrough {
 		var emptyFile []byte
@@ -326,7 +326,7 @@ func main() {
 	}
 }
 
-func processClientAuthSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams configs.MGMTConfigParams, controllerNamespace string) error {
+func processClientAuthSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams *configs.MGMTConfigParams, controllerNamespace string) error {
 	if mgmtCfgParams.Secrets.ClientAuth == "" {
 		return nil
 	}
@@ -343,7 +343,7 @@ func processClientAuthSecret(kubeClient *kubernetes.Clientset, nginxManager ngin
 	return nil
 }
 
-func processTrustedCertSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams configs.MGMTConfigParams, controllerNamespace string) error {
+func processTrustedCertSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams *configs.MGMTConfigParams, controllerNamespace string) error {
 	if mgmtCfgParams.Secrets.TrustedCert == "" {
 		return nil
 	}
@@ -355,8 +355,12 @@ func processTrustedCertSecret(kubeClient *kubernetes.Clientset, nginxManager ngi
 		return fmt.Errorf("error trying to get the trusted cert secret %v: %w", trustedCertSecretNsName, err)
 	}
 
-	bytes, _ := configs.GenerateCAFileContent(secret)
-	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.CACrtKey), bytes, nginx.ReadWriteOnlyFileMode)
+	caBytes, crlBytes := configs.GenerateCAFileContent(secret)
+	nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.CACrtKey), caBytes, nginx.ReadWriteOnlyFileMode)
+	if _, hasCRL := secret.Data[configs.CACrlKey]; hasCRL {
+		mgmtCfgParams.Secrets.TrustedCRL = secret.Name
+		nginxManager.CreateSecret(fmt.Sprintf("mgmt/%s", configs.CACrlKey), crlBytes, nginx.ReadWriteOnlyFileMode)
+	}
 	return nil
 }
 
@@ -664,7 +668,7 @@ func processWildcardSecret(ctx context.Context, kubeClient *kubernetes.Clientset
 	return *wildcardTLSSecret != ""
 }
 
-func processLicenseSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams configs.MGMTConfigParams, controllerNamespace string) error {
+func processLicenseSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams *configs.MGMTConfigParams, controllerNamespace string) error {
 	licenseSecretNsName := controllerNamespace + "/" + mgmtCfgParams.Secrets.License
 
 	secret, err := getAndValidateSecret(kubeClient, licenseSecretNsName, secrets.SecretTypeLicense)
@@ -704,9 +708,9 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
 }
 
-// mustProcessNginxConfig calls internally os.Exit
+// mustWriteNginxMainConfig calls internally os.Exit
 // if can't generate a valid NGINX config.
-func mustProcessNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, mgmtCfgParams *configs.MGMTConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
+func mustWriteNginxMainConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *configs.ConfigParams, mgmtCfgParams *configs.MGMTConfigParams, templateExecutor *version1.TemplateExecutor, nginxManager nginx.Manager) {
 	l := nl.LoggerFromContext(cfgParams.Context)
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams, mgmtCfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)

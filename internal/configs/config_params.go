@@ -174,6 +174,7 @@ type MGMTSecrets struct {
 	License     string
 	ClientAuth  string
 	TrustedCert string
+	TrustedCRL  string
 }
 
 // MGMTConfigParams holds mgmt block parameters.
