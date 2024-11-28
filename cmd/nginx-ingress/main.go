@@ -88,6 +88,7 @@ func main() {
 	parsedFlags := os.Args[1:]
 
 	buildOS := os.Getenv("BUILD_OS")
+	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	config, kubeClient := mustCreateConfigAndKubeClient(ctx)
 	mustValidateKubernetesVersionInfo(ctx, kubeClient)
@@ -146,6 +147,8 @@ func main() {
 
 	isWildcardEnabled := processWildcardSecret(ctx, kubeClient, nginxManager)
 
+	staticSSLPath := nginxManager.GetSecretsDir()
+
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
 	mustProcessGlobalConfiguration(ctx)
@@ -177,7 +180,7 @@ func main() {
 		EnableCertManager:              *enableCertManager,
 		DynamicSSLReload:               *enableDynamicSSLReload,
 		DynamicWeightChangesReload:     *enableDynamicWeightChangesReload,
-		StaticSSLPath:                  nginxManager.GetSecretsDir(),
+		StaticSSLPath:                  staticSSLPath,
 		NginxVersion:                   nginxVersion,
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
@@ -210,8 +213,6 @@ func main() {
 		IsDynamicWeightChangesReloadEnabled: *enableDynamicWeightChangesReload,
 		NginxVersion:                        nginxVersion,
 	})
-
-	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(
