@@ -109,6 +109,7 @@ func main() {
 	})
 	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme,
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
+	defer eventBroadcaster.Shutdown()
 	mustValidateIngressClass(ctx, kubeClient)
 
 	checkNamespaces(ctx, kubeClient)
