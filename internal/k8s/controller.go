@@ -885,6 +885,17 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 		if mgmtErr != nil {
 			nl.Errorf(lbc.Logger, "Configmap %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName(), mgmtErr)
 		}
+		// update special CA secret in mgmtConfigParams
+		if mgmtCfgParams.Secrets.TrustedCert != "" {
+			secret, err := lbc.client.CoreV1().Secrets(lbc.mgmtConfigMap.GetNamespace()).Get(context.TODO(), mgmtCfgParams.Secrets.TrustedCert, meta_v1.GetOptions{})
+			if err != nil {
+				// TODO: add event here
+				nl.Fatalf(lbc.Logger, "Secret %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), mgmtCfgParams.Secrets.TrustedCert, err)
+			}
+			if _, hasCRL := secret.Data[configs.CACrlKey]; hasCRL {
+				mgmtCfgParams.Secrets.TrustedCRL = secret.Name
+			}
+		}
 	}
 
 	resources := lbc.configuration.GetResources()
@@ -1857,6 +1868,11 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		if ok := lbc.performNGINXReload(secret); !ok {
 			return
 		}
+	case lbc.specialSecrets.trustedCertSecret:
+		lbc.updateAllConfigs() // TODO: need more logic here to check if config needs to update
+		if ok := lbc.performNGINXReload(secret); !ok {
+			return
+		}
 	}
 
 	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
@@ -1864,13 +1880,19 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 
 // writeSpecialSecrets generates content and writes the secret to disk
 func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, secretNsName string, specialTLSSecretsToUpdate []string) bool {
-	err := lbc.configurator.AddOrUpdateLicenseSecret(secret)
-	if err != nil {
-		nl.Error(lbc.Logger, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the license Secret %v was updated, but not applied: %v", secretNsName, err)
-		return false
+	switch secret.Type {
+	case secrets.SecretTypeLicense:
+		err := lbc.configurator.AddOrUpdateLicenseSecret(secret)
+		if err != nil {
+			nl.Error(lbc.Logger, err)
+			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the license Secret %v was updated, but not applied: %v", secretNsName, err)
+			return false
+		}
+	case secrets.SecretTypeCA:
+		lbc.configurator.AddOrUpdateCASecret(secret, fmt.Sprintf("mgmt/%s", configs.CACrtKey), fmt.Sprintf("mgmt/%s", configs.CACrlKey))
+	case api_v1.SecretTypeTLS:
+		lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
 	}
-	lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialTLSSecretsToUpdate)
 	return true
 }
 
