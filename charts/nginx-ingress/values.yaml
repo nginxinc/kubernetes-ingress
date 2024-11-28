@@ -15,7 +15,7 @@ controller:
   nginxplus: false
 
   ## Configures NGINX mgmt block for NGINX Plus
-  mgmt:  ## Ensure both curly brackets are removed when using NGINX Plus.
+  mgmt:
     ## Secret name of license token for NGINX Plus
     licenseTokenSecretName: "license-token" # required for NGINX Plus
 
@@ -30,11 +30,11 @@ controller:
     # sslVerify: true
 
     ## Configures the resolver directive in the mgmt block
-    # resolver: {}
-      # ipv6: true
-      # valid: 1s
-      # addresses:
-        # - kube-dns.kube-system.svc.cluster.local
+    # resolver:
+    #   ipv6: true
+    #   valid: 1s
+    #   addresses:
+    #     - kube-dns.kube-system.svc.cluster.local
 
     ## Secret containing TLS client certificate
     # clientAuthSecretName: ssl-certificate # kubernetes.io/tls secret type
@@ -42,6 +42,7 @@ controller:
     ## Secret containing trusted CA certificate
     # trustedCertificateSecretName: ssl-trusted-cert
 
+    # customConfigMap allows changing the name of the MGMT config map
     # customConfigMap: ""
 
 
