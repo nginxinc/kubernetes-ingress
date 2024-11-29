@@ -79,6 +79,7 @@ const (
 	typeKeyword                                     = "type"
 	helmReleaseType                                 = "helm.sh/release.v1"
 	splitClientAmountWhenWeightChangesDynamicReload = 101
+	secretDeletedReason                             = "SecretDeleted"
 )
 
 var (
@@ -107,6 +108,11 @@ type specialSecrets struct {
 	licenseSecret       string
 	clientAuthSecret    string
 	trustedCertSecret   string
+}
+
+type controllerMetadata struct {
+	namespace string
+	pod       *api_v1.Pod
 }
 
 // LoadBalancerController watches Kubernetes API and
@@ -150,7 +156,7 @@ type LoadBalancerController struct {
 	resync                        time.Duration
 	namespaceList                 []string
 	secretNamespaceList           []string
-	controllerNamespace           string
+	metadata                      controllerMetadata
 	areCustomResourcesEnabled     bool
 	enableOIDC                    bool
 	metricsCollector              collectors.ControllerCollector
@@ -205,6 +211,7 @@ type NewLoadBalancerControllerInput struct {
 	ExternalServiceName          string
 	IngressLink                  string
 	ControllerNamespace          string
+	Pod                          *api_v1.Pod
 	ReportIngressStatus          bool
 	IsLeaderElectionEnabled      bool
 	LeaderElectionLockName       string
@@ -267,7 +274,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		resync:                       input.ResyncPeriod,
 		namespaceList:                input.Namespace,
 		secretNamespaceList:          input.SecretNamespace,
-		controllerNamespace:          input.ControllerNamespace,
+		metadata:                     controllerMetadata{namespace: input.ControllerNamespace, pod: input.Pod},
 		areCustomResourcesEnabled:    input.AreCustomResourcesEnabled,
 		enableOIDC:                   input.EnableOIDC,
 		metricsCollector:             input.MetricsCollector,
@@ -883,14 +890,13 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 	if lbc.mgmtConfigMap != nil && lbc.isNginxPlus {
 		mgmtCfgParams, mgmtConfigHasWarnings, mgmtErr = configs.ParseMGMTConfigMap(ctx, lbc.mgmtConfigMap, lbc.recorder)
 		if mgmtErr != nil {
-			nl.Errorf(lbc.Logger, "Configmap %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName(), mgmtErr)
+			nl.Errorf(lbc.Logger, "configmap %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), lbc.mgmtConfigMap.GetName(), mgmtErr)
 		}
 		// update special CA secret in mgmtConfigParams
 		if mgmtCfgParams.Secrets.TrustedCert != "" {
 			secret, err := lbc.client.CoreV1().Secrets(lbc.mgmtConfigMap.GetNamespace()).Get(context.TODO(), mgmtCfgParams.Secrets.TrustedCert, meta_v1.GetOptions{})
 			if err != nil {
-				// TODO: add event here
-				nl.Fatalf(lbc.Logger, "Secret %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), mgmtCfgParams.Secrets.TrustedCert, err)
+				nl.Errorf(lbc.Logger, "secret %s/%s: %v", lbc.mgmtConfigMap.GetNamespace(), mgmtCfgParams.Secrets.TrustedCert, err)
 			}
 			if _, hasCRL := secret.Data[configs.CACrlKey]; hasCRL {
 				mgmtCfgParams.Secrets.TrustedCRL = secret.Name
@@ -1751,6 +1757,7 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 			lbc.handleRegularSecretDeletion(resources)
 		}
 		if lbc.isSpecialSecret(key) {
+			lbc.recorder.Eventf(lbc.metadata.pod, conf_v1.StateWarning, secretDeletedReason, "A special secret [%s] was deleted.  Retaining the secret on this pod but this will affect new pods.", key)
 			nl.Warnf(lbc.Logger, "A special Secret %v was removed. Retaining the Secret.", key)
 		}
 		return
@@ -1869,7 +1876,7 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 			return
 		}
 	case lbc.specialSecrets.trustedCertSecret:
-		lbc.updateAllConfigs() // TODO: need more logic here to check if config needs to update
+		lbc.updateAllConfigs()
 		if ok := lbc.performNGINXReload(secret); !ok {
 			return
 		}

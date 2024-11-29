@@ -273,6 +273,7 @@ func main() {
 		ExternalServiceName:          *externalService,
 		IngressLink:                  *ingressLink,
 		ControllerNamespace:          controllerNamespace,
+		Pod:                          pod,
 		ReportIngressStatus:          *reportIngressStatus,
 		IsLeaderElectionEnabled:      *leaderElectionEnabled,
 		LeaderElectionLockName:       *leaderElectionLockName,
