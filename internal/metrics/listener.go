@@ -7,12 +7,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
-	kitlog "github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,9 +26,7 @@ func NewNginxMetricsClient(httpClient *http.Client) *prometheusClient.NginxClien
 
 // RunPrometheusListenerForNginx runs an http server to expose Prometheus metrics for NGINX
 func RunPrometheusListenerForNginx(ctx context.Context, port int, client *prometheusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string, prometheusSecret *v1.Secret) {
-	logger := kitlog.NewLogfmtLogger(os.Stdout)
-	logger = level.NewFilter(logger, level.AllowError())
-	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", constLabels, logger))
+	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", constLabels, nl.LoggerFromContext(ctx)))
 	runServer(ctx, strconv.Itoa(port), registry, prometheusSecret)
 }
 
