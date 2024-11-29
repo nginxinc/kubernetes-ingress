@@ -109,7 +109,7 @@ func createLeaderHandler(lbc *LoadBalancerController) leaderelection.LeaderCallb
 // addLeaderHandler adds the handler for leader election to the controller
 func (lbc *LoadBalancerController) addLeaderHandler(leaderHandler leaderelection.LeaderCallbacks) {
 	var err error
-	lbc.leaderElector, err = newLeaderElector(lbc.client, leaderHandler, lbc.controllerNamespace, lbc.leaderElectionLockName)
+	lbc.leaderElector, err = newLeaderElector(lbc.client, leaderHandler, lbc.metadata.namespace, lbc.leaderElectionLockName)
 	if err != nil {
 		nl.Debugf(lbc.Logger, "Error starting LeaderElection: %v", err)
 	}

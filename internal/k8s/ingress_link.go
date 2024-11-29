@@ -56,7 +56,7 @@ func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.Resource
 		options.FieldSelector = fields.Set{"metadata.name": name}.String()
 	}
 
-	informer := dynamicinformer.NewFilteredDynamicInformer(lbc.dynClient, ingressLinkGVR, lbc.controllerNamespace, lbc.resync,
+	informer := dynamicinformer.NewFilteredDynamicInformer(lbc.dynClient, ingressLinkGVR, lbc.metadata.namespace, lbc.resync,
 		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, optionsModifier)
 
 	informer.Informer().AddEventHandlerWithResyncPeriod(handlers, lbc.resync) //nolint:errcheck,gosec

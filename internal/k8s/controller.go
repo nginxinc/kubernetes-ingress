@@ -79,6 +79,7 @@ const (
 	typeKeyword                                     = "type"
 	helmReleaseType                                 = "helm.sh/release.v1"
 	splitClientAmountWhenWeightChangesDynamicReload = 101
+	secretDeletedReason                             = "SecretDeleted"
 )
 
 var (
@@ -104,6 +105,11 @@ type podEndpoint struct {
 type specialSecrets struct {
 	defaultServerSecret string
 	wildcardTLSSecret   string
+}
+
+type controllerMetadata struct {
+	namespace string
+	pod       *api_v1.Pod
 }
 
 // LoadBalancerController watches Kubernetes API and
@@ -144,7 +150,7 @@ type LoadBalancerController struct {
 	resync                        time.Duration
 	namespaceList                 []string
 	secretNamespaceList           []string
-	controllerNamespace           string
+	metadata                      controllerMetadata
 	areCustomResourcesEnabled     bool
 	enableOIDC                    bool
 	metricsCollector              collectors.ControllerCollector
@@ -197,6 +203,7 @@ type NewLoadBalancerControllerInput struct {
 	ExternalServiceName          string
 	IngressLink                  string
 	ControllerNamespace          string
+	Pod                          *api_v1.Pod
 	ReportIngressStatus          bool
 	IsLeaderElectionEnabled      bool
 	LeaderElectionLockName       string
@@ -253,7 +260,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		resync:                       input.ResyncPeriod,
 		namespaceList:                input.Namespace,
 		secretNamespaceList:          input.SecretNamespace,
-		controllerNamespace:          input.ControllerNamespace,
+		metadata:                     controllerMetadata{namespace: input.ControllerNamespace, pod: input.Pod},
 		areCustomResourcesEnabled:    input.AreCustomResourcesEnabled,
 		enableOIDC:                   input.EnableOIDC,
 		metricsCollector:             input.MetricsCollector,
@@ -1694,7 +1701,8 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 			lbc.handleRegularSecretDeletion(resources)
 		}
 		if lbc.isSpecialSecret(key) {
-			nl.Warnf(lbc.Logger, "A special TLS Secret %v was removed. Retaining the Secret.", key)
+			lbc.recorder.Eventf(lbc.metadata.pod, conf_v1.StateWarning, secretDeletedReason, "A special secret [%s] was deleted.  Retaining the secret on this pod but this will affect new pods.", key)
+			nl.Warnf(lbc.Logger, "A special Secret %v was removed. Retaining the Secret.", key)
 		}
 		return
 	}
