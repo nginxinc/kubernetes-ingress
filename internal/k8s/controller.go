@@ -1851,7 +1851,7 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 	var specialTLSSecretsToUpdate []string
 	secretNsName := generateSecretNSName(secret)
 
-	if ok := lbc.specialSecretValidation(secretNsName, secret, specialTLSSecretsToUpdate); !ok {
+	if ok := lbc.specialSecretValidation(secretNsName, secret, &specialTLSSecretsToUpdate); !ok {
 		// if not ok bail early
 		return
 	}
@@ -1903,12 +1903,12 @@ func (lbc *LoadBalancerController) writeSpecialSecrets(secret *api_v1.Secret, se
 	return true
 }
 
-func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, secret *api_v1.Secret, specialTLSSecretsToUpdate []string) bool {
+func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, secret *api_v1.Secret, specialTLSSecretsToUpdate *[]string) bool {
 	if secretNsName == lbc.specialSecrets.defaultServerSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, &specialTLSSecretsToUpdate)
+		lbc.validationTLSSpecialSecret(secret, configs.DefaultServerSecretFileName, specialTLSSecretsToUpdate)
 	}
 	if secretNsName == lbc.specialSecrets.wildcardTLSSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, &specialTLSSecretsToUpdate)
+		lbc.validationTLSSpecialSecret(secret, configs.WildcardSecretFileName, specialTLSSecretsToUpdate)
 	}
 	if secretNsName == lbc.specialSecrets.licenseSecret {
 		err := secrets.ValidateLicenseSecret(secret)
@@ -1927,7 +1927,7 @@ func (lbc *LoadBalancerController) specialSecretValidation(secretNsName string, 
 		}
 	}
 	if secretNsName == lbc.specialSecrets.clientAuthSecret {
-		lbc.validationTLSSpecialSecret(secret, configs.ClientAuthCertSecretFileName, &specialTLSSecretsToUpdate)
+		lbc.validationTLSSpecialSecret(secret, configs.ClientAuthCertSecretFileName, specialTLSSecretsToUpdate)
 	}
 	return true
 }
