@@ -16,8 +16,9 @@ func MakeSecretPath(path, defaultPath, variable string, useVariable bool) string
 
 // MakeOnOffFromBool will return a string on | off from a boolean pointer
 func MakeOnOffFromBool(b *bool) string {
-	if *b {
-		return "on"
+	if b == nil || !*b {
+		return "off"
 	}
-	return "off"
+
+	return "on"
 }

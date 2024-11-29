@@ -20,7 +20,7 @@ controller:
     licenseTokenSecretName: "license-token" # required for NGINX Plus
 
     ## Enables the 180-day grace period for sending the initial usage report
-    enforceInitialReport: false
+    # enforceInitialReport: false
 
     # usageReport: {}
       # endpoint: "product.connect.nginx.com" # Endpoint for usage report

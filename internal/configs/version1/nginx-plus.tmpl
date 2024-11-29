@@ -361,9 +361,7 @@ mgmt {
     {{- if ne .MGMTConfig.Endpoint "" }} endpoint={{ .MGMTConfig.Endpoint }} {{- end }} {{- if ne .MGMTConfig.Interval "" }} interval={{ .MGMTConfig.Interval }} {{- end }};
     {{- end }}
     license_token {{ printf "%s/license.jwt" .StaticSSLPath }};
-    {{ if .MGMTConfig.EnforceInitialReport -}}
     enforce_initial_report {{ makeOnOffFromBool .MGMTConfig.EnforceInitialReport}};
-    {{ end -}}
     {{ if .MGMTConfig.SSLVerify -}}
     ssl_verify {{ makeOnOffFromBool .MGMTConfig.SSLVerify }};
     {{ end -}}
