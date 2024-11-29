@@ -110,6 +110,7 @@ func main() {
 	})
 	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme,
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
+	defer eventBroadcaster.Shutdown()
 	mustValidateIngressClass(ctx, kubeClient)
 
 	checkNamespaces(ctx, kubeClient)
@@ -169,12 +170,17 @@ func main() {
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors(ctx)
 
-	sslRejectHandshake := processDefaultServerSecret(ctx, kubeClient, nginxManager)
-
-	isWildcardEnabled := processWildcardSecret(ctx, kubeClient, nginxManager)
+	sslRejectHandshake, err := processDefaultServerSecret(kubeClient, nginxManager)
+	if err != nil {
+		logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+	}
 
 	staticSSLPath := nginxManager.GetSecretsDir()
 
+	isWildcardEnabled, err := processWildcardSecret(kubeClient, nginxManager)
+	if err != nil {
+		logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+	}
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
 	mustProcessGlobalConfiguration(ctx)
@@ -629,14 +635,13 @@ func startChildProcesses(nginxManager nginx.Manager, appProtectV5 bool) childPro
 	}
 }
 
-func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
-	l := nl.LoggerFromContext(ctx)
+func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (bool, error) {
 	var sslRejectHandshake bool
 
 	if *defaultServerSecret != "" {
 		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret, api_v1.SecretTypeTLS)
 		if err != nil {
-			nl.Fatalf(l, "Error trying to get the default server TLS secret %v: %v", *defaultServerSecret, err)
+			return sslRejectHandshake, fmt.Errorf("error trying to get the default server TLS secret %v: %w", *defaultServerSecret, err)
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
@@ -648,25 +653,25 @@ func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clie
 				// file doesn't exist - it is OK! we will reject TLS connections in the default server
 				sslRejectHandshake = true
 			} else {
-				nl.Fatalf(l, "Error checking the default server TLS cert and key in %s: %v", configs.DefaultServerSecretPath, err)
+				return sslRejectHandshake, fmt.Errorf("error checking the default server TLS cert and key in %s: %w", configs.DefaultServerSecretPath, err)
 			}
 		}
 	}
-	return sslRejectHandshake
+	return sslRejectHandshake, nil
 }
 
-func processWildcardSecret(ctx context.Context, kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
-	l := nl.LoggerFromContext(ctx)
-	if *wildcardTLSSecret != "" {
+func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (bool, error) {
+	isWildcardEnabled := *wildcardTLSSecret != ""
+	if isWildcardEnabled {
 		secret, err := getAndValidateSecret(kubeClient, *wildcardTLSSecret, api_v1.SecretTypeTLS)
 		if err != nil {
-			nl.Fatalf(l, "Error trying to get the wildcard TLS secret %v: %v", *wildcardTLSSecret, err)
+			return false, fmt.Errorf("error trying to get the wildcard TLS secret %v: %w", *wildcardTLSSecret, err)
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
 		nginxManager.CreateSecret(configs.WildcardSecretFileName, bytes, nginx.ReadWriteOnlyFileMode)
 	}
-	return *wildcardTLSSecret != ""
+	return isWildcardEnabled, nil
 }
 
 func processLicenseSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager, mgmtCfgParams *configs.MGMTConfigParams, controllerNamespace string) error {

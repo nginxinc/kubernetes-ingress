@@ -88,7 +88,6 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 		lbc.syncQueue.Requeue(task, err)
 		return
 	}
-
 	switch key {
 	case lbc.nginxConfigMapName:
 		if configExists {
