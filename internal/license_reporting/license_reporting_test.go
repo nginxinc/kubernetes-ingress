@@ -11,7 +11,9 @@ import (
 	nic_glog "github.com/nginxinc/kubernetes-ingress/internal/logger/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/logger/levels"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/tools/record"
 )
 
 func TestNewLicenseInfo(t *testing.T) {
@@ -64,7 +66,7 @@ func TestWriteLicenseInfo(t *testing.T) {
 }
 
 func TestNewLicenseReporter(t *testing.T) {
-	reporter := NewLicenseReporter(fake.NewSimpleClientset())
+	reporter := NewLicenseReporter(fake.NewSimpleClientset(), record.NewFakeRecorder(2048), &v1.Pod{})
 	if reporter == nil {
 		t.Fatal("NewLicenseReporter() returned nil")
 	}

@@ -120,7 +120,7 @@ func main() {
 	var licenseReporter *license_reporting.LicenseReporter
 
 	if *nginxPlus {
-		licenseReporter = license_reporting.NewLicenseReporter(kubeClient)
+		licenseReporter = license_reporting.NewLicenseReporter(kubeClient, eventRecorder, pod)
 	}
 
 	nginxManager, useFakeNginxManager := createNginxManager(ctx, managerCollector, licenseReporter)

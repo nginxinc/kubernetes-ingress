@@ -3,6 +3,7 @@ package licensereporting
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -11,9 +12,11 @@ import (
 	nl "github.com/nginxinc/kubernetes-ingress/internal/logger"
 
 	clusterInfo "github.com/nginxinc/kubernetes-ingress/internal/common_cluster_info"
+	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/record"
 )
 
 var (
@@ -59,15 +62,19 @@ type LicenseReporterConfig struct {
 	Period          time.Duration
 	K8sClientReader kubernetes.Interface
 	PodNSName       types.NamespacedName
+	EventLog        record.EventRecorder
+	Pod             *api_v1.Pod
 }
 
 // NewLicenseReporter creates a new LicenseReporter
-func NewLicenseReporter(client kubernetes.Interface) *LicenseReporter {
+func NewLicenseReporter(client kubernetes.Interface, eventLog record.EventRecorder, pod *api_v1.Pod) *LicenseReporter {
 	return &LicenseReporter{
 		config: LicenseReporterConfig{
-			Period:          24 * time.Hour,
+			EventLog:        eventLog,
+			Period:          time.Hour,
 			K8sClientReader: client,
 			PodNSName:       types.NamespacedName{Namespace: os.Getenv("POD_NAMESPACE"), Name: os.Getenv("POD_NAME")},
+			Pod:             pod,
 		},
 	}
 }
@@ -93,4 +100,13 @@ func (lr *LicenseReporter) collectAndWrite(ctx context.Context) {
 	}
 	info := newLicenseInfo(clusterID, installationID, nodeCount)
 	writeLicenseInfo(l, info)
+	lr.checkLicenseExpiry(ctx)
+}
+
+func (lr *LicenseReporter) checkLicenseExpiry(ctx context.Context) {
+	l := nl.LoggerFromContext(ctx)
+	days := 5
+	eventText := fmt.Sprintf("Expires in %d days", days)
+	nl.Debug(l, eventText)
+	lr.config.EventLog.Event(lr.config.Pod, api_v1.EventTypeNormal, "ExpiryCheck", eventText)
 }

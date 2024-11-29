@@ -303,16 +303,9 @@ func (lm *LocalManager) ClearAppProtectFolder(name string) {
 // Start starts NGINX.
 func (lm *LocalManager) Start(done chan error) {
 	if lm.nginxPlus {
-		isR33OrGreater, versionErr := lm.Version().PlusGreaterThanOrEqualTo("nginx-plus-r33")
-		if versionErr != nil {
-			nl.Errorf(lm.logger, "Error determining whether nginx version is >= r33: %v", versionErr)
-		}
-		if isR33OrGreater {
-			ctx, cancel := context.WithCancel(context.Background())
-			nl.ContextWithLogger(ctx, lm.logger)
-			go lm.licenseReporter.Start(ctx)
-			lm.licenseReporterCancel = cancel
-		}
+		ctx, cancel := context.WithCancel(context.Background())
+		go lm.licenseReporter.Start(nl.ContextWithLogger(ctx, lm.logger))
+		lm.licenseReporterCancel = cancel
 	}
 
 	nl.Debug(lm.logger, "Starting nginx")
