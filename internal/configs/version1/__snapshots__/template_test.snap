@@ -270,6 +270,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -411,6 +412,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -1819,6 +1821,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -1959,6 +1962,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -2099,6 +2103,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -2239,6 +2244,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -2397,6 +2403,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -2552,6 +2559,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -2706,6 +2714,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -2861,6 +2870,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
@@ -3019,6 +3029,7 @@ stream {
 }
 mgmt {
     license_token /etc/nginx/secrets/license.jwt;
+    enforce_initial_report off;
     deployment_context /etc/nginx/reporting/tracking.info;
 }
 
