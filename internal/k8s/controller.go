@@ -1943,7 +1943,7 @@ func (lbc *LoadBalancerController) performNGINXReload(secret *api_v1.Secret) boo
 	secretNsName := generateSecretNSName(secret)
 	if err := lbc.configurator.Reload(false); err != nil {
 		nl.Errorf(lbc.Logger, "error when reloading NGINX when updating the special Secrets: %v", err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
+		lbc.recorder.Eventf(lbc.metadata.pod, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
 		return false
 	}
 	return true
