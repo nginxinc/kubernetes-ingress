@@ -34,6 +34,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	pkg_runtime "k8s.io/apimachinery/pkg/runtime"
 	util_version "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -75,6 +76,8 @@ const (
 	appProtectVersionPath    = "/opt/app_protect/RELEASE"
 	appProtectv4BundleFolder = "/etc/nginx/waf/bundles/"
 	appProtectv5BundleFolder = "/etc/app_protect/bundles/"
+	fatalEventFlushTime      = 200 * time.Millisecond
+	secretErrorReason        = "SecretError"
 )
 
 func main() {
@@ -88,9 +91,15 @@ func main() {
 	parsedFlags := os.Args[1:]
 
 	buildOS := os.Getenv("BUILD_OS")
+	controllerNamespace := os.Getenv("POD_NAMESPACE")
+	podName := os.Getenv("POD_NAME")
 
 	config, kubeClient := mustCreateConfigAndKubeClient(ctx)
 	mustValidateKubernetesVersionInfo(ctx, kubeClient)
+	pod, err := kubeClient.CoreV1().Pods(controllerNamespace).Get(context.TODO(), podName, meta_v1.GetOptions{})
+	if err != nil {
+		nl.Fatalf(l, "Failed to get pod: %v", err)
+	}
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
 		nl.Infof(l, format, args...)
@@ -100,6 +109,7 @@ func main() {
 	})
 	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme,
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
+	defer eventBroadcaster.Shutdown()
 	mustValidateIngressClass(ctx, kubeClient)
 
 	checkNamespaces(ctx, kubeClient)
@@ -142,10 +152,17 @@ func main() {
 
 	templateExecutor, templateExecutorV2 := createTemplateExecutors(ctx)
 
-	sslRejectHandshake := processDefaultServerSecret(ctx, kubeClient, nginxManager)
+	sslRejectHandshake, err := processDefaultServerSecret(kubeClient, nginxManager)
+	if err != nil {
+		logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+	}
 
-	isWildcardEnabled := processWildcardSecret(ctx, kubeClient, nginxManager)
+	staticSSLPath := nginxManager.GetSecretsDir()
 
+	isWildcardEnabled, err := processWildcardSecret(kubeClient, nginxManager)
+	if err != nil {
+		logEventAndExit(ctx, eventRecorder, pod, secretErrorReason, err)
+	}
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
 	mustProcessGlobalConfiguration(ctx)
@@ -177,7 +194,7 @@ func main() {
 		EnableCertManager:              *enableCertManager,
 		DynamicSSLReload:               *enableDynamicSSLReload,
 		DynamicWeightChangesReload:     *enableDynamicWeightChangesReload,
-		StaticSSLPath:                  nginxManager.GetSecretsDir(),
+		StaticSSLPath:                  staticSSLPath,
 		NginxVersion:                   nginxVersion,
 		AppProtectBundlePath:           appProtectBundlePath,
 	}
@@ -210,8 +227,6 @@ func main() {
 		IsDynamicWeightChangesReloadEnabled: *enableDynamicWeightChangesReload,
 		NginxVersion:                        nginxVersion,
 	})
-
-	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(
@@ -561,14 +576,13 @@ func startChildProcesses(nginxManager nginx.Manager, appProtectV5 bool) childPro
 	}
 }
 
-func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
-	l := nl.LoggerFromContext(ctx)
+func processDefaultServerSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (bool, error) {
 	var sslRejectHandshake bool
 
 	if *defaultServerSecret != "" {
-		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret)
+		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret, api_v1.SecretTypeTLS)
 		if err != nil {
-			nl.Fatalf(l, "Error trying to get the default server TLS secret %v: %v", *defaultServerSecret, err)
+			return sslRejectHandshake, fmt.Errorf("error trying to get the default server TLS secret %v: %w", *defaultServerSecret, err)
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
@@ -580,25 +594,25 @@ func processDefaultServerSecret(ctx context.Context, kubeClient *kubernetes.Clie
 				// file doesn't exist - it is OK! we will reject TLS connections in the default server
 				sslRejectHandshake = true
 			} else {
-				nl.Fatalf(l, "Error checking the default server TLS cert and key in %s: %v", configs.DefaultServerSecretPath, err)
+				return sslRejectHandshake, fmt.Errorf("error checking the default server TLS cert and key in %s: %w", configs.DefaultServerSecretPath, err)
 			}
 		}
 	}
-	return sslRejectHandshake
+	return sslRejectHandshake, nil
 }
 
-func processWildcardSecret(ctx context.Context, kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) bool {
-	l := nl.LoggerFromContext(ctx)
-	if *wildcardTLSSecret != "" {
-		secret, err := getAndValidateSecret(kubeClient, *wildcardTLSSecret)
+func processWildcardSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.Manager) (bool, error) {
+	isWildcardEnabled := *wildcardTLSSecret != ""
+	if isWildcardEnabled {
+		secret, err := getAndValidateSecret(kubeClient, *wildcardTLSSecret, api_v1.SecretTypeTLS)
 		if err != nil {
-			nl.Fatalf(l, "Error trying to get the wildcard TLS secret %v: %v", *wildcardTLSSecret, err)
+			return false, fmt.Errorf("error trying to get the wildcard TLS secret %v: %w", *wildcardTLSSecret, err)
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
 		nginxManager.CreateSecret(configs.WildcardSecretFileName, bytes, nginx.ReadWriteOnlyFileMode)
 	}
-	return *wildcardTLSSecret != ""
+	return isWildcardEnabled, nil
 }
 
 func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationValidator {
@@ -660,7 +674,8 @@ func getSocketClient(sockPath string) *http.Client {
 }
 
 // getAndValidateSecret gets and validates a secret.
-func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string) (secret *api_v1.Secret, err error) {
+// nolint:unparam
+func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string, secretType api_v1.SecretType) (secret *api_v1.Secret, err error) {
 	ns, name, err := k8s.ParseNamespaceName(secretNsName)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse the %v argument: %w", secretNsName, err)
@@ -669,9 +684,12 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	if err != nil {
 		return nil, fmt.Errorf("could not get %v: %w", secretNsName, err)
 	}
-	err = secrets.ValidateTLSSecret(secret)
-	if err != nil {
-		return nil, fmt.Errorf("%v is invalid: %w", secretNsName, err)
+	switch secretType {
+	case api_v1.SecretTypeTLS:
+		err = secrets.ValidateTLSSecret(secret)
+		if err != nil {
+			return nil, fmt.Errorf("%v is invalid: %w", secretNsName, err)
+		}
 	}
 	return secret, nil
 }
@@ -778,7 +796,7 @@ func createPlusAndLatencyCollectors(
 	syslogListener = metrics.NewSyslogFakeServer()
 
 	if *prometheusTLSSecretName != "" {
-		prometheusSecret, err = getAndValidateSecret(kubeClient, *prometheusTLSSecretName)
+		prometheusSecret, err = getAndValidateSecret(kubeClient, *prometheusTLSSecretName, api_v1.SecretTypeTLS)
 		if err != nil {
 			nl.Fatalf(l, "Error trying to get the prometheus TLS secret %v: %v", *prometheusTLSSecretName, err)
 		}
@@ -830,7 +848,7 @@ func createHealthProbeEndpoint(kubeClient *kubernetes.Clientset, plusClient *cli
 	var err error
 
 	if *serviceInsightTLSSecretName != "" {
-		serviceInsightSecret, err = getAndValidateSecret(kubeClient, *serviceInsightTLSSecretName)
+		serviceInsightSecret, err = getAndValidateSecret(kubeClient, *serviceInsightTLSSecretName, api_v1.SecretTypeTLS)
 		if err != nil {
 			nl.Fatalf(l, "Error trying to get the service insight TLS secret %v: %v", *serviceInsightTLSSecretName, err)
 		}
@@ -939,6 +957,13 @@ func updateSelfWithVersionInfo(ctx context.Context, eventLog record.EventRecorde
 	if !podUpdated {
 		nl.Errorf(l, "Failed to update pod labels after %d attempts", maxRetries)
 	}
+}
+
+func logEventAndExit(ctx context.Context, eventLog record.EventRecorder, obj pkg_runtime.Object, reason string, err error) {
+	l := nl.LoggerFromContext(ctx)
+	eventLog.Eventf(obj, api_v1.EventTypeWarning, reason, err.Error())
+	time.Sleep(fatalEventFlushTime) // wait for the event to be flushed
+	nl.Fatal(l, err.Error())
 }
 
 func initLogger(logFormat string, level slog.Level, out io.Writer) context.Context {
