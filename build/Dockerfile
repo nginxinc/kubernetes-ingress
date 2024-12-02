@@ -279,7 +279,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& if [ "${NGINX_AGENT}" = "true" ]; then agent.sh; fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then nap-dos.sh; fi
 
-############################################# Base image for Debian with NGINX Plus and App Protect WAFv5 ############################################# \
+############################################# Base image for Debian with NGINX Plus and App Protect WAFv5 #############################################
 FROM debian-plus AS debian-plus-nap-v5
 ARG NAP_MODULES
 ARG NGINX_AGENT
