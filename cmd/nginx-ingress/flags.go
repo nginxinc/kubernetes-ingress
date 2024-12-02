@@ -55,6 +55,11 @@ var (
 	but the Ingress Controller is not able to fetch it from Kubernetes API, the Ingress Controller will fail to start.
 	Format: <namespace>/<name>`)
 
+	mgmtConfigMap = flag.String("mgmt-configmap", "",
+		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
+	but the Ingress Controller is not able to fetch it from Kubernetes API, the Ingress Controller will fail to start.
+	Format: <namespace>/<name>`)
+
 	nginxPlus = flag.Bool("nginx-plus", false, "Enable support for NGINX Plus")
 
 	appProtect = flag.Bool("enable-app-protect", false, "Enable support for NGINX App Protect. Requires -nginx-plus.")
@@ -258,6 +263,11 @@ func initValidate(ctx context.Context) {
 		*enableDynamicWeightChangesReload = false
 	}
 
+	if *mgmtConfigMap != "" && !*nginxPlus {
+		nl.Warn(l, "mgmt-configmap flag requires -nginx-plus, mgmt configmap will not be used")
+		*mgmtConfigMap = ""
+	}
+
 	mustValidateInitialChecks(ctx)
 	mustValidateWatchedNamespaces(ctx)
 	mustValidateFlags(ctx)
@@ -418,6 +428,10 @@ func mustValidateFlags(ctx context.Context) {
 
 	if *agent && !*appProtect {
 		nl.Fatal(l, "NGINX Agent is used to enable the Security Monitoring dashboard and requires NGINX App Protect to be enabled")
+	}
+
+	if *nginxPlus && *mgmtConfigMap == "" {
+		nl.Fatal(l, "NGINX Plus requires a mgmt ConfigMap to be set")
 	}
 }
 

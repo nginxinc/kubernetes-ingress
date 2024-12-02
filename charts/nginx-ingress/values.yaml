@@ -14,6 +14,14 @@ controller:
   ## Deploys the Ingress Controller for NGINX Plus.
   nginxplus: false
 
+  ## Configures NGINX mgmt block for NGINX Plus
+  mgmt:
+    ## Secret name of license token for NGINX Plus
+    licenseTokenSecretName: "license-token" # required for NGINX Plus
+
+    ## Enables the 180-day grace period for sending the initial usage report
+    # enforceInitialReport: false
+
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
   nginxReloadTimeout: 60000
 

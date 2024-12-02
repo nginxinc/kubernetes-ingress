@@ -56,6 +56,12 @@ def pytest_addoption(parser) -> None:
         help="The type of the Ingress Controller: nginx-ingress or nginx-plus-ingress.",
     )
     parser.addoption(
+        "--plus-jwt",
+        action="store",
+        help="The plus jwt for the Ingress Controller image.",
+        default=os.environ.get("PLUS_JWT"),
+    )
+    parser.addoption(
         "--service",
         action="store",
         default=DEFAULT_SERVICE,
@@ -142,6 +148,13 @@ def pytest_addoption(parser) -> None:
 
 # import fixtures into pytest global namespace
 pytest_plugins = ["suite.fixtures.fixtures", "suite.fixtures.ic_fixtures", "suite.fixtures.custom_resource_fixtures"]
+
+
+def pytest_configure(config):
+    if config.getoption("--ic-type") == "nginx-plus-ingress" and (
+        config.getoption("--plus-jwt") == "" or config.getoption("--plus-jwt") is None
+    ):
+        pytest.exit("Please provide the plus jwt for the Nginx Ingress Controller")
 
 
 def pytest_collection_modifyitems(config, items) -> None:

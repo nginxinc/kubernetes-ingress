@@ -94,6 +94,37 @@
             }
           ]
         },
+        "mgmt": {
+          "type": "object",
+          "default": {},
+          "title": "The mgmt block Schema",
+          "properties": {
+            "licenseTokenSecretName": {
+              "type": "string",
+              "default": "",
+              "title": "The licenseTokenSecretName Schema",
+              "examples": [
+                "nginx-plus-secret",
+                "license-token",
+                "license"
+              ]
+            },
+            "enforceInitialReport": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enforceInitialReport Schema",
+              "examples": [
+                true,
+                false
+              ]
+            }
+          },
+          "examples": [
+            {
+              "licenseTokenSecretName": "license-token"
+            }
+          ]
+        },
         "nginxReloadTimeout": {
           "type": "integer",
           "default": 0,
