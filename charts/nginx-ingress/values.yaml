@@ -156,7 +156,7 @@ controller:
   shareProcessNamespace: false
 
   ## The log level of the Ingress Controller. Options include: trace, debug, info, warning, error, fatal
-  logLevel: debug
+  logLevel: info
 
   ## Sets the log format of Ingress Controller. Options include: glog, json, text
   logFormat: glog
