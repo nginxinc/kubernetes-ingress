@@ -18,7 +18,7 @@ require (
 	github.com/nginxinc/telemetry-exporter v0.1.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spiffe/go-spiffe/v2 v2.4.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.32.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.32.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
