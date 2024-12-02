@@ -115,6 +115,11 @@ type controllerMetadata struct {
 	pod       *api_v1.Pod
 }
 
+type controllerMetadata struct {
+	namespace string
+	pod       *api_v1.Pod
+}
+
 // LoadBalancerController watches Kubernetes API and
 // reconfigures NGINX via NginxController when needed
 type LoadBalancerController struct {
