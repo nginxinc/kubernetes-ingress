@@ -223,6 +223,9 @@ func main() {
 	process := startChildProcesses(nginxManager, appProtectV5)
 
 	plusClient := createPlusClient(ctx, *nginxPlus, useFakeNginxManager, nginxManager)
+	if *nginxPlus {
+		licenseReporter.Config.PlusClient = plusClient
+	}
 
 	plusCollector, syslogListener, latencyCollector := createPlusAndLatencyCollectors(ctx, registry, constLabels, kubeClient, plusClient, staticCfgParams.NginxServiceMesh)
 	cnf := configs.NewConfigurator(configs.ConfiguratorParams{
