@@ -5,20 +5,19 @@ package test
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
-	approvals "github.com/approvals/go-approval-tests"
-	testIs "github.com/matryer/is"
-
+	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/gruntwork-io/terratest/modules/k8s"
+	"github.com/gruntwork-io/terratest/modules/logger"
 )
 
 func TestMain(m *testing.M) {
-	approvals.UseFolder("./approvals/")
-	approvals.Options().WithExtension(".yaml")
 	code := m.Run()
+
+	// After all tests have run `go-snaps` will sort snapshots
+	snaps.Clean(m, snaps.CleanOpts{Sort: true})
 	os.Exit(code)
 }
 
@@ -94,11 +93,11 @@ func TestHelmNICTemplate(t *testing.T) {
 		},
 	}
 
-	is := testIs.New(t)
-
 	// Path to the helm chart we will test
 	helmChartPath, err := filepath.Abs("../nginx-ingress")
-	is.NoErr(err)
+	if err != nil {
+		t.Error("Failed to open helm chart path ../nginx-ingress")
+	}
 
 	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
@@ -111,7 +110,12 @@ func TestHelmNICTemplate(t *testing.T) {
 			}
 
 			output := helm.RenderTemplate(t, options, helmChartPath, tc.releaseName, make([]string, 0))
-			approvals.Verify(t, strings.NewReader(output), approvals.Options().WithExtension(".yaml"))
+
+			options = &helm.Options{
+				Logger:       logger.Default,
+				SnapshotPath: "__chart_manifests_snapshot__",
+			}
+			helm.UpdateSnapshot(t, options, output, tc.releaseName)
 		})
 	}
 
