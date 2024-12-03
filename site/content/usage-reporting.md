@@ -7,6 +7,10 @@ toc: true
 weight: 1800
 ---
 
+{{< important >}}
+This page is only applicable to NGINX Ingress Controller versions 3.2.0 - 3.7.2
+{{< /important >}}
+
 This page describes how to enable Usage Reporting for F5 NGINX Ingress Controller and how to view usage data through the API.
 
 ---
@@ -23,8 +27,8 @@ To use Usage Reporting, you must have access to NGINX Instance Manager. For more
 
 To deploy Usage Reporting, you must have the following:
 
-- [NGINX Ingress Controller 3.2.0](https://docs.nginx.com/nginx-ingress-controller) or later
-- [NGINX Instance Manager 2.11.0](https://docs.nginx.com/nginx-instance-manager) or later
+- [NGINX Ingress Controller](https://docs.nginx.com/nginx-ingress-controller) 3.2.0 - 3.7.2
+- [NGINX Instance Manager](https://docs.nginx.com/nginx-instance-manager) 2.11.0 or later
 
 In addition to the software requirements, you will need:
 
