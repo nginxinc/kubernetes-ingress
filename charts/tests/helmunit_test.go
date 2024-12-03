@@ -29,65 +29,54 @@ func TestHelmNICTemplate(t *testing.T) {
 		valuesFile  string
 		releaseName string
 		namespace   string
-		expectedErr error
 	}{
 		"default values file": {
 			valuesFile:  "",
-			expectedErr: nil,
 			releaseName: "default",
 			namespace:   "default",
 		},
 		"daemonset": {
 			valuesFile:  "testdata/daemonset.yaml",
-			expectedErr: nil,
 			releaseName: "daemonset",
 			namespace:   "default",
 		},
 		"namespace": {
 			valuesFile:  "",
-			expectedErr: nil,
 			releaseName: "namespace",
 			namespace:   "nginx-ingress",
 		},
 		"plus": {
 			valuesFile:  "testdata/plus.yaml",
-			expectedErr: nil,
 			releaseName: "plus",
 			namespace:   "default",
 		},
 		"ingressClass": {
 			valuesFile:  "testdata/ingress-class.yaml",
-			expectedErr: nil,
 			releaseName: "ingress-class",
 			namespace:   "default",
 		},
 		"globalConfig": {
 			valuesFile:  "testdata/global-configuration.yaml",
-			expectedErr: nil,
 			releaseName: "global-configuration",
 			namespace:   "gc",
 		},
 		"customResources": {
 			valuesFile:  "testdata/custom-resources.yaml",
-			expectedErr: nil,
 			releaseName: "custom-resources",
 			namespace:   "custom-resources",
 		},
 		"appProtectWAF": {
 			valuesFile:  "testdata/app-protect-waf.yaml",
-			expectedErr: nil,
 			releaseName: "appprotect-waf",
 			namespace:   "appprotect-waf",
 		},
 		"appProtectWAFV5": {
 			valuesFile:  "testdata/app-protect-wafv5.yaml",
-			expectedErr: nil,
 			releaseName: "appprotect-wafv5",
 			namespace:   "appprotect-wafv5",
 		},
 		"appProtectDOS": {
 			valuesFile:  "testdata/app-protect-dos.yaml",
-			expectedErr: nil,
 			releaseName: "appprotect-dos",
 			namespace:   "appprotect-dos",
 		},
