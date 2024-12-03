@@ -289,7 +289,6 @@ func TestParseMGMTConfigMapNil(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		configMap *v1.ConfigMap
-		want      *MGMTConfigParams
 		msg       string
 	}{
 		{
@@ -298,37 +297,51 @@ func TestParseMGMTConfigMapNil(t *testing.T) {
 					"license-token-secret-name": "",
 				},
 			},
-			want: nil,
-			msg:  "Must have license-token-secret-name",
+			msg: "Must have license-token-secret-name",
 		},
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{},
 			},
-			want: nil,
-			msg:  "Must have license-token-secret-name key",
+			msg: "Must have license-token-secret-name key",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			result, _, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			_, _, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
 
-			if test.want == nil {
-				if err == nil {
-					t.Fatalf("Expected error but got none")
-				}
-				if result != nil {
-					t.Errorf("Expected result to be nil, but got: %+v", result)
-				}
-			} else {
-				if err != nil {
-					t.Fatalf("Did not expect error, but got: %v", err)
-				}
+			if err == nil {
+				t.Errorf("Expected error, got nil")
+			}
+		})
+	}
+}
 
-				if result.Secrets.License != test.want.Secrets.License {
-					t.Errorf("Secrets.License: want %q, got %q", test.want.Secrets.License, result.Secrets.License)
-				}
+func TestParseMGMTConfigMapWarnings(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"enforce-initial-report":    "7",
+				},
+			},
+			msg: "enforce-initial-report is invalid",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			_, configWarnings, _ := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+
+			if !configWarnings {
+				t.Fatal("Expected warnings, got none")
 			}
 		})
 	}
