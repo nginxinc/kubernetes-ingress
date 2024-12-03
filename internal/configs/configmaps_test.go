@@ -346,8 +346,10 @@ func TestParseMGMTConfigMapWarnings(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			_, configWarnings, _ := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
-
+			_, configWarnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Errorf("expected nil, got err: %v", err)
+			}
 			if !configWarnings {
 				t.Fatal("Expected warnings, got none")
 			}
