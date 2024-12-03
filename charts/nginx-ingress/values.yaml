@@ -43,6 +43,7 @@ controller:
     # sslTrustedCertificateSecretName: ssl-trusted-cert
 
     # configMapName allows changing the name of the MGMT config map
+    # the name should not include a namespace
     # configMapName: ""
 
 
