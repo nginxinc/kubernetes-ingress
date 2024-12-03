@@ -437,14 +437,14 @@ func TestParseMGMTConfigMapEnforceInitialReport(t *testing.T) {
 				t.Fatal(err)
 			}
 			if warnings {
-				t.Fatal("Unexpected warnings")
+				t.Error("Unexpected warnings")
 			}
 
 			if result.EnforceInitialReport == nil {
-				t.Fatalf("EnforceInitialReport: want %v, got nil", *test.want.EnforceInitialReport)
+				t.Errorf("EnforceInitialReport: want %v, got nil", *test.want.EnforceInitialReport)
 			}
 			if *result.EnforceInitialReport != *test.want.EnforceInitialReport {
-				t.Fatalf("EnforceInitialReport: want %v, got %v", *test.want.EnforceInitialReport, *result.EnforceInitialReport)
+				t.Errorf("EnforceInitialReport: want %v, got %v", *test.want.EnforceInitialReport, *result.EnforceInitialReport)
 			}
 		})
 	}
