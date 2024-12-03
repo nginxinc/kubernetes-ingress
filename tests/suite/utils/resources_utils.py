@@ -1396,7 +1396,10 @@ def create_ingress_controller_wafv5(
             "capabilities": {"drop": ["all"]},
             "readOnlyRootFilesystem": rorfs,
         },
-        "env": [{"name": "ENFORCER_PORT", "value": "50000"}],
+        "env": [
+            {"name": "ENFORCER_PORT", "value": "50000"},
+            {"name": "ENFORCER_CONFIG_TIMEOUT", "value": "0"},
+        ],
         "volumeMounts": [
             {
                 "name": "app-protect-bd-config",
