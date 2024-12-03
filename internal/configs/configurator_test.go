@@ -2,6 +2,7 @@ package configs
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"os"
 	"reflect"
@@ -253,6 +254,31 @@ func TestConfiguratorUpdatesConfigWithNilCustomTStemplate(t *testing.T) {
 	}
 	if cnf.CfgParams.TransportServerTemplate != nil {
 		t.Errorf("Want nil TransportServer template, got %+v\n", cnf.CfgParams.TransportServerTemplate)
+	}
+}
+
+func TestAddOrUpdateLicenseSecret(t *testing.T) {
+	t.Parallel()
+	cnf := createTestConfigurator(t)
+	cnf.MgmtCfgParams.Secrets.License = "default/license-token"
+	license := api_v1.Secret{
+		TypeMeta: meta_v1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "license-token",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{
+			"license.jwt": []byte(base64.StdEncoding.EncodeToString([]byte("license-token"))),
+		},
+		Type: "nginx.com/license",
+	}
+
+	err := cnf.AddOrUpdateLicenseSecret(&license)
+	if err != nil {
+		t.Errorf("AddOrUpdateLicenseSecret returned:  \n%v, but expected: \n%v", err, nil)
 	}
 }
 

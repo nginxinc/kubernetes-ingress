@@ -285,6 +285,106 @@ func TestParseConfigMapAccessLogDefault(t *testing.T) {
 	}
 }
 
+func TestParseMGMTConfigMapNil(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "",
+				},
+			},
+			want: nil,
+			msg:  "Must have license-token-secret-name",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{},
+			},
+			want: nil,
+			msg:  "Must have license-token-secret-name key",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, _, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err == nil {
+				t.Fatal(err)
+			}
+			if result.Secrets.License != test.want.Secrets.License {
+				t.Errorf("want %q, got %q", test.want.Secrets.License, result.Secrets.License)
+			}
+		})
+	}
+}
+
+func TestParseMGMTConfigMap(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+				},
+			},
+			want: &MGMTConfigParams{
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "Has only license-token-secret-name",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"enforce-initial-report":    "false",
+				},
+			},
+			want: &MGMTConfigParams{
+				EnforceInitialReport: BoolToPointerBool(false),
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "Has license-token-secret-name and enforce-initial-report set to false",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			result, _, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if result.Secrets.License != test.want.Secrets.License {
+				t.Errorf("LicenseTokenSecretNane: want %q, got %q", test.want.Secrets.License, result.Secrets.License)
+			}
+
+			if test.want.EnforceInitialReport != nil {
+				if result.EnforceInitialReport == nil {
+					t.Errorf("EnforceInitialReport: want %v, got nil", *test.want.EnforceInitialReport)
+				} else if *result.EnforceInitialReport != *test.want.EnforceInitialReport {
+					t.Errorf("EnforceInitialReport: want %v, got %v", *test.want.EnforceInitialReport, *result.EnforceInitialReport)
+				}
+			} else {
+				if result.EnforceInitialReport != nil {
+					t.Errorf("EnforceInitialReport: want nil, got %v", *result.EnforceInitialReport)
+				}
+			}
+		})
+	}
+}
+
 func makeEventLogger() record.EventRecorder {
 	return record.NewFakeRecorder(1024)
 }
