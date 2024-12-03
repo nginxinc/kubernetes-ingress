@@ -71,11 +71,11 @@ staticcheck: ## Run staticcheck linter
 
 .PHONY: test
 test: ## Run GoLang tests
-	go test -tags=aws -shuffle=on -race -coverprofile=coverage.txt -covermode=atomic ./...
+	go test -tags=aws,helmunit -shuffle=on -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 .PHONY: test-update-snaps
 test-update-snaps:
-	UPDATE_SNAPS=true go test -tags=aws -shuffle=on -race ./...
+	UPDATE_SNAPS=true go test -tags=aws,helmunit -shuffle=on -race ./...
 
 cover: test ## Generate coverage report
 
