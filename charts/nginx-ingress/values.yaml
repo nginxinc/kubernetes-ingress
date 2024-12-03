@@ -42,8 +42,8 @@ controller:
     ## Secret containing trusted CA certificate
     # sslTrustedCertificateSecretName: ssl-trusted-cert
 
-    # customConfigMap allows changing the name of the MGMT config map
-    # customConfigMap: ""
+    # configMapName allows changing the name of the MGMT config map
+    # configMapName: ""
 
 
   ## Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.

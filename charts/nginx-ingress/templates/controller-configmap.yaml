@@ -31,7 +31,7 @@ data:
 {{ include "nginx-ingress.agentConfiguration" . | indent 4 }}
 {{- end }}
 ---
-{{- if and .Values.controller.nginxplus (eq (.Values.controller.mgmt.customConfigMap | default "") "") }}
+{{- if and .Values.controller.nginxplus (eq (.Values.controller.mgmt.configMapName | default "") "") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

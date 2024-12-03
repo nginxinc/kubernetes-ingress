@@ -198,7 +198,7 @@
                 "certificate-secret"
               ]
             },
-            "configMap": {
+            "configMapName": {
               "type": "string",
               "default": "",
               "title": "The configMap Schema",
