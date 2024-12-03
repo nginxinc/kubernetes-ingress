@@ -127,7 +127,11 @@ Expand the name of the configmap used for NGINX Agent.
 Expand license token secret name.
 */}}
 {{- define "nginx-ingress.licenseTokenSecretName" -}}
+{{- if hasKey .Values.controller.mgmt "licenseTokenSecretName" -}}
 {{- .Values.controller.mgmt.licenseTokenSecretName -}}
+{{- else }}
+{{- fail "Error: When using Nginx Plus, 'controller.mgmt.licenseTokenSecretName' must be set." }}
+{{- end -}}
 {{- end -}}
 
 {{/*

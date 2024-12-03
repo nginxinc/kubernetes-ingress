@@ -44,7 +44,7 @@ metadata:
 {{ toYaml .Values.controller.config.annotations | indent 4 }}
 {{- end }}
 data:
-  license-token-secret-name: {{ include "nginx-ingress.licenseTokenSecretName" . }}
+  license-token-secret-name: {{ required "When using Nginx Plus, 'controller.mgmt.licenseTokenSecretName' cannot be empty " (include "nginx-ingress.licenseTokenSecretName" . ) }}
 {{- if hasKey .Values.controller.mgmt "sslVerify" }}
   ssl-verify: {{ quote .Values.controller.mgmt.sslVerify }}
 {{- end }}
