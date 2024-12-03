@@ -473,7 +473,7 @@ func TestValidateLicenseSecret(t *testing.T) {
 
 	err := ValidateLicenseSecret(secret)
 	if err != nil {
-		t.Errorf("TestValidateLicenseSecret() returned error %v", err)
+		t.Errorf("ValidateLicenseSecret() returned error %v", err)
 	}
 }
 
@@ -511,7 +511,7 @@ func TestValidateLicenseSecretFails(t *testing.T) {
 	for _, test := range tests {
 		err := ValidateLicenseSecret(test.secret)
 		if err == nil {
-			t.Errorf("TestValidateLicenseSecretFails() returned no error for the case of %s", test.msg)
+			t.Errorf("ValidateLicenseSecret() returned no error for the case of %s", test.msg)
 		}
 	}
 }
