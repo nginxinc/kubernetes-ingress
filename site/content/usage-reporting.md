@@ -8,7 +8,7 @@ weight: 1800
 ---
 
 {{< important >}}
-This page is only applicable if you're running NGINX Ingress Controller 3.2.0 - 3.7.2
+This page is only applicable to NGINX Ingress Controller versions 3.2.0 - 3.7.2
 {{< /important >}}
 
 This page describes how to enable Usage Reporting for F5 NGINX Ingress Controller and how to view usage data through the API.
