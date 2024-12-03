@@ -115,5 +115,4 @@ func TestHelmNICTemplate(t *testing.T) {
 			t.Log(output)
 		})
 	}
-
 }
