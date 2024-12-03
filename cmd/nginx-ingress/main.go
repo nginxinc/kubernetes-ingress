@@ -632,7 +632,7 @@ func processLicenseSecret(kubeClient *kubernetes.Clientset, nginxManager nginx.M
 
 	secret, err := getAndValidateSecret(kubeClient, licenseSecretNsName, secrets.SecretTypeLicense)
 	if err != nil {
-		return fmt.Errorf("error trying to get the license secret %v: %w", licenseSecretNsName, err)
+		return fmt.Errorf("license secret: %w", err)
 	}
 
 	bytes, err := configs.GenerateLicenseSecret(secret)
@@ -710,7 +710,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string,
 	}
 	secret, err = kubeClient.CoreV1().Secrets(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("could not get %v: %w", secretNsName, err)
+		return nil, fmt.Errorf("could not find %v: %w", secretNsName, err)
 	}
 	switch secretType {
 	case api_v1.SecretTypeTLS:
