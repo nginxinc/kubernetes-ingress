@@ -444,6 +444,8 @@ volumeMounts:
   env:
     - name: ENFORCER_PORT
       value: "{{ .Values.controller.appprotect.enforcer.port | default 50000 }}"
+    - name: ENFORCER_CONFIG_TIMEOUT
+      value: "0"
   volumeMounts:
     - name: app-protect-bd-config
       mountPath: /opt/app_protect/bd_config
