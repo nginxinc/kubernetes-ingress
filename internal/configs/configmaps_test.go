@@ -313,11 +313,22 @@ func TestParseMGMTConfigMapNil(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
 			result, _, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
-			if err == nil {
-				t.Fatal(err)
-			}
-			if result.Secrets.License != test.want.Secrets.License {
-				t.Errorf("want %q, got %q", test.want.Secrets.License, result.Secrets.License)
+
+			if test.want == nil {
+				if err == nil {
+					t.Fatalf("Expected error but got none")
+				}
+				if result != nil {
+					t.Errorf("Expected result to be nil, but got: %+v", result)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("Did not expect error, but got: %v", err)
+				}
+
+				if result.Secrets.License != test.want.Secrets.License {
+					t.Errorf("Secrets.License: want %q, got %q", test.want.Secrets.License, result.Secrets.License)
+				}
 			}
 		})
 	}
