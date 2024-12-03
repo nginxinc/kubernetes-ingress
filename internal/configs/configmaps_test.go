@@ -285,7 +285,7 @@ func TestParseConfigMapAccessLogDefault(t *testing.T) {
 	}
 }
 
-func TestParseMGMTConfigMapNil(t *testing.T) {
+func TestParseMGMTConfigMapError(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		configMap *v1.ConfigMap
@@ -322,7 +322,6 @@ func TestParseMGMTConfigMapWarnings(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		configMap *v1.ConfigMap
-		want      *MGMTConfigParams
 		msg       string
 	}{
 		{
@@ -333,6 +332,15 @@ func TestParseMGMTConfigMapWarnings(t *testing.T) {
 				},
 			},
 			msg: "enforce-initial-report is invalid",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"enforce-initial-report":    "",
+				},
+			},
+			msg: "enforce-initial-report set empty",
 		},
 	}
 
@@ -347,26 +355,47 @@ func TestParseMGMTConfigMapWarnings(t *testing.T) {
 	}
 }
 
-func TestParseMGMTConfigMap(t *testing.T) {
+func TestParseMGMTConfigMapLicense(t *testing.T) {
+	t.Parallel()
+	test := struct {
+		configMap *v1.ConfigMap
+		want      *MGMTConfigParams
+		msg       string
+	}{
+		configMap: &v1.ConfigMap{
+			Data: map[string]string{
+				"license-token-secret-name": "license-token",
+			},
+		},
+		want: &MGMTConfigParams{
+			Secrets: MGMTSecrets{
+				License: "license-token",
+			},
+		},
+		msg: "Has only license-token-secret-name",
+	}
+
+	t.Run(test.msg, func(t *testing.T) {
+		result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if warnings {
+			t.Fatal("Unexpected warnings")
+		}
+		if result.Secrets.License != test.want.Secrets.License {
+			t.Errorf("LicenseTokenSecretNane: want %q, got %q", test.want.Secrets.License, result.Secrets.License)
+		}
+	})
+}
+
+func TestParseMGMTConfigMapEnforceInitialReport(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		configMap *v1.ConfigMap
 		want      *MGMTConfigParams
 		msg       string
 	}{
-		{
-			configMap: &v1.ConfigMap{
-				Data: map[string]string{
-					"license-token-secret-name": "license-token",
-				},
-			},
-			want: &MGMTConfigParams{
-				Secrets: MGMTSecrets{
-					License: "license-token",
-				},
-			},
-			msg: "Has only license-token-secret-name",
-		},
 		{
 			configMap: &v1.ConfigMap{
 				Data: map[string]string{
@@ -380,30 +409,39 @@ func TestParseMGMTConfigMap(t *testing.T) {
 					License: "license-token",
 				},
 			},
-			msg: "Has license-token-secret-name and enforce-initial-report set to false",
+			msg: "enforce-initial-report set to false",
+		},
+		{
+			configMap: &v1.ConfigMap{
+				Data: map[string]string{
+					"license-token-secret-name": "license-token",
+					"enforce-initial-report":    "true",
+				},
+			},
+			want: &MGMTConfigParams{
+				EnforceInitialReport: BoolToPointerBool(true),
+				Secrets: MGMTSecrets{
+					License: "license-token",
+				},
+			},
+			msg: "enforce-initial-report set to true",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.msg, func(t *testing.T) {
-			result, _, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
+			result, warnings, err := ParseMGMTConfigMap(context.Background(), test.configMap, makeEventLogger())
 			if err != nil {
 				t.Fatal(err)
 			}
-			if result.Secrets.License != test.want.Secrets.License {
-				t.Errorf("LicenseTokenSecretNane: want %q, got %q", test.want.Secrets.License, result.Secrets.License)
+			if warnings {
+				t.Fatal("Unexpected warnings")
 			}
 
-			if test.want.EnforceInitialReport != nil {
-				if result.EnforceInitialReport == nil {
-					t.Errorf("EnforceInitialReport: want %v, got nil", *test.want.EnforceInitialReport)
-				} else if *result.EnforceInitialReport != *test.want.EnforceInitialReport {
-					t.Errorf("EnforceInitialReport: want %v, got %v", *test.want.EnforceInitialReport, *result.EnforceInitialReport)
-				}
-			} else {
-				if result.EnforceInitialReport != nil {
-					t.Errorf("EnforceInitialReport: want nil, got %v", *result.EnforceInitialReport)
-				}
+			if result.EnforceInitialReport == nil {
+				t.Fatalf("EnforceInitialReport: want %v, got nil", *test.want.EnforceInitialReport)
+			} else if *result.EnforceInitialReport != *test.want.EnforceInitialReport {
+				t.Fatalf("EnforceInitialReport: want %v, got %v", *test.want.EnforceInitialReport, *result.EnforceInitialReport)
 			}
 		})
 	}
