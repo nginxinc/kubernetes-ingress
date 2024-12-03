@@ -11,6 +11,7 @@ This page describes how to enable Usage Reporting for F5 NGINX Ingress Controlle
 
 {{< important >}}
 This page is only applicable if you're running NGINX Ingress Controller 3.2.0 - 3.7.2
+{{< /important >}}
 
 ---
 
