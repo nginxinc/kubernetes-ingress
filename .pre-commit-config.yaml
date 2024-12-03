@@ -17,6 +17,7 @@ repos:
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
       - id: check-executables-have-shebangs
+        exclude: '(\.snap)$'
       - id: check-symlinks
       - id: check-case-conflict
       - id: check-vcs-permalinks

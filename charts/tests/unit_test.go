@@ -10,7 +10,6 @@ import (
 	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/gruntwork-io/terratest/modules/helm"
 	"github.com/gruntwork-io/terratest/modules/k8s"
-	"github.com/gruntwork-io/terratest/modules/logger"
 )
 
 func TestMain(m *testing.M) {
@@ -18,6 +17,7 @@ func TestMain(m *testing.M) {
 
 	// After all tests have run `go-snaps` will sort snapshots
 	snaps.Clean(m, snaps.CleanOpts{Sort: true})
+
 	os.Exit(code)
 }
 
@@ -67,7 +67,7 @@ func TestHelmNICTemplate(t *testing.T) {
 			releaseName: "global-configuration",
 			namespace:   "gc",
 		},
-		"customerResources": {
+		"customResources": {
 			valuesFile:  "testdata/custom-resources.yaml",
 			expectedErr: nil,
 			releaseName: "custom-resources",
@@ -111,11 +111,8 @@ func TestHelmNICTemplate(t *testing.T) {
 
 			output := helm.RenderTemplate(t, options, helmChartPath, tc.releaseName, make([]string, 0))
 
-			options = &helm.Options{
-				Logger:       logger.Default,
-				SnapshotPath: "__chart_manifests_snapshot__",
-			}
-			helm.UpdateSnapshot(t, options, output, tc.releaseName)
+			snaps.MatchSnapshot(t, output)
+			t.Log(output)
 		})
 	}
 
