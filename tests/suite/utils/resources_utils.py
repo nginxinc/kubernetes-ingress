@@ -564,7 +564,7 @@ def create_secret(v1: CoreV1Api, namespace, body) -> str:
     return body["metadata"]["name"]
 
 
-def create_license_secret(v1: CoreV1Api, namespace, jwt, license_token_name="license-token") -> str:
+def create_license(v1: CoreV1Api, namespace, jwt, license_token_name="license-token") -> str:
     sec = V1Secret()
     sec.type = "nginx.com/license"
     sec.metadata = V1ObjectMeta(name=license_token_name)

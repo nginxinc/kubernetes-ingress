@@ -23,7 +23,7 @@ from suite.utils.resources_utils import (
     cleanup_rbac,
     configure_rbac,
     create_configmap_from_yaml,
-    create_license_secret,
+    create_license,
     create_namespace_with_name_from_yaml,
     create_ns_and_sa_from_yaml,
     create_secret_from_yaml,
@@ -249,7 +249,7 @@ def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> Ingre
     # setup Plus JWT configuration
     if cli_arguments["ic-type"] == "nginx-plus-ingress":
         print("Create Plus JWT License:")
-        license_name = create_license_secret(kube_apis.v1, namespace, cli_arguments["plus-jwt"])
+        license_name = create_license(kube_apis.v1, namespace, cli_arguments["plus-jwt"])
         print(f"License created: {license_name}")
         create_configmap_from_yaml(kube_apis.v1, namespace, mgmt_config_map_yaml)
 
