@@ -96,7 +96,7 @@ func TestHelmNICTemplate(t *testing.T) {
 	// Path to the helm chart we will test
 	helmChartPath, err := filepath.Abs("../nginx-ingress")
 	if err != nil {
-		t.Error("Failed to open helm chart path ../nginx-ingress")
+		t.Fatal("Failed to open helm chart path ../nginx-ingress")
 	}
 
 	for testName, tc := range tests {
