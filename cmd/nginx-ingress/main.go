@@ -721,7 +721,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string,
 	case secrets.SecretTypeLicense:
 		err = secrets.ValidateLicenseSecret(secret)
 		if err != nil {
-			return secret, err
+			return nil, err
 		}
 	}
 	return secret, nil

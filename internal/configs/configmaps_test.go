@@ -440,7 +440,8 @@ func TestParseMGMTConfigMapEnforceInitialReport(t *testing.T) {
 
 			if result.EnforceInitialReport == nil {
 				t.Fatalf("EnforceInitialReport: want %v, got nil", *test.want.EnforceInitialReport)
-			} else if *result.EnforceInitialReport != *test.want.EnforceInitialReport {
+			}
+			if *result.EnforceInitialReport != *test.want.EnforceInitialReport {
 				t.Fatalf("EnforceInitialReport: want %v, got %v", *test.want.EnforceInitialReport, *result.EnforceInitialReport)
 			}
 		})
