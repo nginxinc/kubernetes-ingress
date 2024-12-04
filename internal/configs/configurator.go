@@ -53,6 +53,9 @@ const DefaultServerSecretFileName = "default"
 // WildcardSecretFileName is the filename of the Secret with a TLS cert and a key for the ingress resources with TLS termination enabled but not secret defined.
 const WildcardSecretFileName = "wildcard"
 
+// LicenseSecretFileName is the filename of the Secret for the NGINX PLUS License
+const LicenseSecretFileName = "license.jwt"
+
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
 
@@ -120,6 +123,7 @@ type Configurator struct {
 	nginxManager              nginx.Manager
 	staticCfgParams           *StaticConfigParams
 	CfgParams                 *ConfigParams
+	MgmtCfgParams             *MGMTConfigParams
 	templateExecutor          *version1.TemplateExecutor
 	templateExecutorV2        *version2.TemplateExecutor
 	ingresses                 map[string]*IngressEx
@@ -146,6 +150,7 @@ type ConfiguratorParams struct {
 	NginxManager                        nginx.Manager
 	StaticCfgParams                     *StaticConfigParams
 	Config                              *ConfigParams
+	MGMTCfgParams                       *MGMTConfigParams
 	TemplateExecutor                    *version1.TemplateExecutor
 	TemplateExecutorV2                  *version2.TemplateExecutor
 	LabelUpdater                        collector.LabelUpdater
@@ -177,6 +182,7 @@ func NewConfigurator(p ConfiguratorParams) *Configurator {
 		nginxManager:              p.NginxManager,
 		staticCfgParams:           p.StaticCfgParams,
 		CfgParams:                 p.Config,
+		MgmtCfgParams:             p.MGMTCfgParams,
 		ingresses:                 make(map[string]*IngressEx),
 		virtualServers:            make(map[string]*VirtualServerEx),
 		transportServers:          make(map[string]*TransportServerEx),
@@ -916,6 +922,19 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources, reloa
 	return allWarnings, nil
 }
 
+// AddOrUpdateLicenseSecret adds or updates NGINX Plus license secret.
+func (cnf *Configurator) AddOrUpdateLicenseSecret(secret *api_v1.Secret) error {
+	l := nl.LoggerFromContext(cnf.CfgParams.Context)
+	nl.Debugf(l, "AddOrUpdateLicenseSecret: [%v]", secret.Name)
+	data, err := GenerateLicenseSecret(secret)
+	if err != nil {
+		return err
+	}
+	cnf.nginxManager.CreateSecret(LicenseSecretFileName, data, nginx.ReadWriteOnlyFileMode)
+
+	return nil
+}
+
 func (cnf *Configurator) addOrUpdateTLSSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := GenerateCertAndKeyFileContent(secret)
@@ -953,6 +972,19 @@ func GenerateCAFileContent(secret *api_v1.Secret) ([]byte, []byte) {
 	caCrl.Write(secret.Data[CACrlKey])
 
 	return caKey.Bytes(), caCrl.Bytes()
+}
+
+// GenerateLicenseSecret generates jwt content from the License secret which is required for NGINX Plus.
+func GenerateLicenseSecret(secret *api_v1.Secret) ([]byte, error) {
+	var licenseKey bytes.Buffer
+
+	data, exists := secret.Data[LicenseSecretFileName]
+	if !exists {
+		return nil, fmt.Errorf("license secret %s/%s must contain the key %s", secret.Namespace, secret.Name, LicenseSecretFileName)
+	}
+	licenseKey.Write(data)
+
+	return licenseKey.Bytes(), nil
 }
 
 // DeleteIngress deletes NGINX configuration for the Ingress resource.
@@ -1290,8 +1322,9 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 // UpdateConfig updates NGINX configuration parameters.
 //
 //gocyclo:ignore
-func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources ExtendedResources) (Warnings, error) {
+func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, mgmtCfgParams *MGMTConfigParams, resources ExtendedResources) (Warnings, error) {
 	cnf.CfgParams = cfgParams
+	cnf.MgmtCfgParams = mgmtCfgParams
 	allWarnings := newWarnings()
 	allWeightUpdates := []WeightUpdate{}
 
@@ -1344,7 +1377,7 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		cnf.templateExecutorV2.UseOriginalTStemplate()
 	}
 
-	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams)
+	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams, mgmtCfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
 		return allWarnings, fmt.Errorf("error when writing main Config")
@@ -1950,7 +1983,7 @@ func (cnf *Configurator) DeleteAppProtectDosAllowList(obj *v1beta1.DosProtectedR
 func (cnf *Configurator) AddInternalRouteConfig() error {
 	cnf.staticCfgParams.EnableInternalRoutes = true
 	cnf.staticCfgParams.InternalRouteServerName = fmt.Sprintf("%s.%s.svc", os.Getenv("POD_SERVICEACCOUNT"), os.Getenv("POD_NAMESPACE"))
-	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cnf.CfgParams)
+	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cnf.CfgParams, cnf.MgmtCfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
 		return fmt.Errorf("error when writing main Config: %w", err)
@@ -1976,6 +2009,8 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 		return ""
 	case secrets.SecretTypeAPIKey:
 		// APIKey ClientSecret is not required on the filesystem, it is written directly to the config file.
+		return ""
+	case secrets.SecretTypeLicense:
 		return ""
 	default:
 		return cnf.addOrUpdateTLSSecret(secret)

@@ -202,6 +202,10 @@ func makeResolver(resolverAddresses []string, resolverValid string, resolverIPV6
 	return builder.String()
 }
 
+func boolToPointerBool(b bool) *bool {
+	return &b
+}
+
 var helperFunctions = template.FuncMap{
 	"split":                   split,
 	"trim":                    trim,
@@ -213,6 +217,8 @@ var helperFunctions = template.FuncMap{
 	"replaceAll":              strings.ReplaceAll,
 	"makeLocationPath":        makeLocationPath,
 	"makeSecretPath":          commonhelpers.MakeSecretPath,
+	"makeOnOffFromBool":       commonhelpers.MakeOnOffFromBool,
 	"generateProxySetHeaders": generateProxySetHeaders,
+	"boolToPointerBool":       boolToPointerBool,
 	"makeResolver":            makeResolver,
 }

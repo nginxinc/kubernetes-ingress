@@ -2,6 +2,7 @@ package configs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -656,8 +657,45 @@ func ParseConfigMap(ctx context.Context, cfgm *v1.ConfigMap, nginxPlus bool, has
 	return cfgParams, configOk
 }
 
+// ParseMGMTConfigMap parses the mgmt block ConfigMap into MGMTConfigParams.
+//
+//nolint:gocyclo
+func ParseMGMTConfigMap(ctx context.Context, cfgm *v1.ConfigMap, eventLog record.EventRecorder) (*MGMTConfigParams, bool, error) {
+	l := nl.LoggerFromContext(ctx)
+	configWarnings := false
+
+	mgmtCfgParams := NewDefaultMGMTConfigParams(ctx)
+
+	license, licenseExists := cfgm.Data["license-token-secret-name"]
+	trimmedLicense := strings.TrimSpace(license)
+	if !licenseExists || trimmedLicense == "" {
+		errorText := fmt.Sprintf("Configmap %s/%s: Missing or empty value for the license-token-secret-name key. Failing.", cfgm.GetNamespace(), cfgm.GetName())
+		return nil, true, errors.New(errorText)
+	}
+	mgmtCfgParams.Secrets.License = trimmedLicense
+
+	if enforceInitialReport, exists, err := GetMapKeyAsBool(cfgm.Data, "enforce-initial-report", cfgm); exists {
+		if err != nil {
+			errorText := fmt.Sprintf("Configmap %s/%s: Invalid value for the enforce-initial-report key: got %t: %v. Ignoring.", cfgm.GetNamespace(), cfgm.GetName(), enforceInitialReport, err)
+			nl.Error(l, errorText)
+			eventLog.Event(cfgm, v1.EventTypeWarning, invalidValueReason, errorText)
+			configWarnings = true
+		} else {
+			mgmtCfgParams.EnforceInitialReport = BoolToPointerBool(enforceInitialReport)
+		}
+	}
+
+	return mgmtCfgParams, configWarnings, nil
+}
+
 // GenerateNginxMainConfig generates MainConfig.
-func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams) *version1.MainConfig {
+func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams, mgmtCfgParams *MGMTConfigParams) *version1.MainConfig {
+	var mgmtConfig version1.MGMTConfig
+	if mgmtCfgParams != nil {
+		mgmtConfig = version1.MGMTConfig{
+			EnforceInitialReport: mgmtCfgParams.EnforceInitialReport,
+		}
+	}
 	nginxCfg := &version1.MainConfig{
 		AccessLog:                          config.MainAccessLog,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
@@ -675,6 +713,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		LogFormat:                          config.MainLogFormat,
 		LogFormatEscaping:                  config.MainLogFormatEscaping,
 		MainSnippets:                       config.MainMainSnippets,
+		MGMTConfig:                         mgmtConfig,
 		NginxStatus:                        staticCfgParams.NginxStatus,
 		NginxStatusAllowCIDRs:              staticCfgParams.NginxStatusAllowCIDRs,
 		NginxStatusPort:                    staticCfgParams.NginxStatusPort,
